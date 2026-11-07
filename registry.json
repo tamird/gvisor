@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:18:44+00:00",
+    "updatedAt": "2026-11-07T01:23:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33131,6 +33131,10 @@
       "url": "https://github.com/google/gvisor/pull/16588",
       "evidence": [
         {
+          "label": "All seven FIFO cases on three configurations, pipe tests and split Nogo results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42321578829/artifacts/13554590561"
+        },
+        {
           "label": "Rebased FIFO fix on the fork",
           "url": "https://github.com/tamird/gvisor/commit/d6786915f"
         },
@@ -33195,25 +33199,25 @@
           "url": "https://github.com/tamird/gvisor/commit/c16a4922a"
         }
       ],
-      "updatedAt": "2026-11-07T00:57:49+00:00",
+      "updatedAt": "2026-11-07T01:23:17+00:00",
       "status": "open",
-      "summary": "The approved FIFO fix conflicts with the pipe ring lock change on master. The rebased commit initializes the writer generation in the shared pipe constructor and retains the ring lock annotations. It also incorporates the reviewed lock-comment cleanup. The published head is 1dbbcd676.",
+      "summary": "Master moved pipe initialization into a shared constructor. The rebased change initializes the FIFO writer generation there and retains the ring lock annotations. Seven syscall cases passed on Linux and both gVisor filesystem modes. All four pipe unit tests passed, and both Nogo targets passed for AMD64 and ARM64.",
       "refinement": {
         "before": {
           "base": "509ad5337346f8cbdba515cefadd542de28d6156",
-          "head": "a8bbad97dfc28b8df159693cca8393b7466bd496"
+          "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d"
         },
         "after": {
-          "base": "509ad5337346f8cbdba515cefadd542de28d6156",
-          "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d"
+          "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+          "head": "d6786915fa60f2dc04fc6969fc8ebf3274b39328"
         }
       },
       "followup": {
         "owner": "root",
         "sourceHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-        "observedAt": "2026-11-07T00:57:49+00:00",
-        "disposition": "Approved public head conflicts with the merged pipe ring lock change.",
-        "nextAction": "Run the existing FIFO syscall cases, pipe unit tests and both architecture analyzers on the rebased commit, then request contributor review.",
+        "observedAt": "2026-11-07T01:23:17+00:00",
+        "disposition": "The approved upstream head conflicts; its rebased replacement passed qualification.",
+        "nextAction": "Publish the contributor-reviewed conflict repair and request fresh maintainer review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16588",
           "https://github.com/tamird/gvisor/commit/1dbbcd676",
@@ -33238,7 +33242,18 @@
           "outcome": "approved",
           "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456246811"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "d6786915fa60f2dc04fc6969fc8ebf3274b39328",
+        "baseHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
+        "url": "https://github.com/tamird/gvisor/commit/d6786915f",
+        "title": "Initialize the FIFO writer generation in the shared pipe constructor",
+        "requestedAt": "2026-11-07T01:23:17+00:00",
+        "summary": "Publish the conflict repair and request fresh review from Lucas? The seven original FIFO cases passed on Linux and both gVisor filesystem modes. Four pipe tests and the production and test analyzers also passed.\n\ngit -C ~/code/gvisor range-diff 1dbbcd676^! d6786915f^!",
+        "body": "A writer opens and closes a FIFO while one reader holds it open. A\nsecond nonblocking reader then opens the same FIFO. Linux reports\nPOLLHUP to the first reader only; gVisor remembers that the pipe once\nhad a writer and reports POLLHUP to both.\n\nRecord the writer generation when a nonblocking reader opens a FIFO\nwithout a writer. If the last writer has closed, report POLLHUP only\nwhen that generation has changed, as Linux does [1][2]. Once another\nwriter opens and closes, both readers see the hangup.\n\nA nonblocking writer that finds no readers returns ENXIO without\nadvancing the generation [3]. Otherwise a writer that never opened\ncould cause a concurrent reader to report a hangup.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1156-L1164\n[2]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L686-L691\n[3]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1172-L1181\n"
+      }
     },
     {
       "id": "pr:16593",
@@ -55652,15 +55667,19 @@
       "id": "branch:buildkite-source-syscalls",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/buildkite-source-syscalls",
-      "head": "e46a101fc0aebb325ec25977697a012a2e11a11b",
+      "ref": "research/mixed-presubmit-package-patterns",
+      "head": "4b87bd4875ecde1ab6b994030d59871b59363ca1",
       "title": "Run CI targets together in one Bazel invocation on RBE",
-      "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
+      "url": "https://github.com/tamird/gvisor/commit/4b87bd487",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T01:10:35+00:00",
-      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. With only the shared Go default changed, one Bazel analysis selected all 700 expected TestRunner actions. Each architecture had 346 OCI shards and four Firecracker shards requiring root and IPv6. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.\n\nThe same Bazel invocation ran all four existing uname cases on native AMD64 and ARM64 Firecracker workers. Both test executables and both namespace launchers matched their worker architectures. All eight cases executed and passed.\n\nA second paired run used the same four syscall cases inside systrap. Both workers logged a guest launch and returned four passing cases from the guest XML.",
+      "updatedAt": "2026-11-07T01:23:17+00:00",
+      "summary": "One Bazel package list now serves single-CPU and mixed presubmits. Single-CPU analysis selected the original 363 tests and 373 shards on each architecture. Mixed analysis selected 724 shards: 373 on AMD64 and 351 on ARM64. The original test labels supply AMD64. All 340 Go tests and the native uname test gain ARM64 coverage. The other 22 tests still run on AMD64 only.\n\nIn execution checks, state, TCP and VFS passed 153 cases per CPU. Four uname cases passed on each CPU directly on Linux and again inside systrap. The separate vDSO clock checks also ran on matching native workers. The single-CPU AMD64 presubmit passed all 373 shards; the ARM64 presubmit passed 371. The 724-shard mixed selection has only been analyzed.",
       "evidence": [
+        {
+          "label": "Normal and mixed package selection, original labels, worker bindings and shard counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42322549217/artifacts/13553917910"
+        },
         {
           "label": "Two native systrap guest launches, syscall results and worker assignments",
           "url": "https://github.com/tamird/gvisor/actions/runs/42322101509/artifacts/13552789391"
@@ -55889,10 +55908,10 @@
       },
       "followup": {
         "owner": "Agent",
-        "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T21:48:30.832Z",
-        "disposition": "The complete AMD64 source-presubmit graph and its worker assignments are verified on c0511e1cd.",
-        "nextAction": "Use the source-presubmit inventory to address remaining Buildkite workloads in the unified Bazel graph. Track mixed native architectures in #15370 and qualify the separate NVIDIA revision on its own source.",
+        "sourceHead": "4b87bd4875ecde1ab6b994030d59871b59363ca1",
+        "observedAt": "2026-11-07T01:23:17+00:00",
+        "disposition": "The same package patterns select the mixed graph and preserve ordinary developer tests.",
+        "nextAction": "Qualify the hardware-dependent tests among the 22 AMD64-only owners, verify build-only targets, and retain the two full ARM64 failures for investigation before switching CI.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
