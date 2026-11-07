@@ -69,8 +69,9 @@ type congestionControl interface {
 	HandleLossDetected()
 
 	// HandleRTOExpired is invoked when the retransmit timer expires.
-	// reduceThreshold is false on a repeated timeout, when ssthresh
-	// must be held constant (RFC 5681 section 3.1).
+	// Keep ssthresh when fast recovery already reduced it for this flight,
+	// or the timeout repeats without cumulative ACK progress (RFC 5681
+	// section 3.1). In both cases reduceThreshold is false.
 	HandleRTOExpired(reduceThreshold bool)
 
 	// HandleWindowRestart is invoked when the sender reduces its window
@@ -637,6 +638,14 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	// Linux tcp_enter_loss() preserves the threshold on a timeout within
+	// fast recovery. A completed recovery flight or new cumulative ACK
+	// progress in Loss permits another reduction. FastRecovery.Last is
+	// the inclusive end of the previous recovery flight.
+	reduceThreshold := s.state == tcpip.Open || s.state == tcpip.Disorder ||
+		s.FastRecovery.Last.LessThan(s.SndUna) ||
+		(s.state == tcpip.RTORecovery && !s.rtoRepeat)
+
 	// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 4.
 	//
 	// Retransmit timeouts:
@@ -646,9 +655,6 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	s.FastRecovery.Last = s.SndNxt - 1
 
 	if s.FastRecovery.Active {
-		// We were attempting fast recovery but were not successful.
-		// Leave the state. We don't need to update ssthresh because it
-		// has already been updated when entered fast-recovery.
 		s.leaveRecovery()
 	}
 
@@ -657,9 +663,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	s.recordRetransmitTS()
 
 	s.state = tcpip.RTORecovery
-	// As in Linux tcp_enter_loss(), reduce ssthresh only on the first
-	// timeout after the cumulative ACK advances.
-	s.cc.HandleRTOExpired(!s.rtoRepeat)
+	s.cc.HandleRTOExpired(reduceThreshold)
 	// RFC 5681 section 3.1: the loss window is one segment regardless of IW.
 	s.SndCwnd = 1
 
