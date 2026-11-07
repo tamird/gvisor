@@ -1,35 +1,51 @@
-name: CI
-
-"on":
+name: Verify the master build_test adapter
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/master-build-test-default-outputs]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  adapter:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the exact master product and native tools
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = e96adab0a6448c8e257b092a263f931f8e439193
+          test "$(git rev-parse HEAD~2)" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/master_build_test.py' ':!test/build_test_qualification/BUILD'
+          test "$(cat .bazelversion)" = 9.3.1
+          work="$RUNNER_TEMP/master-build-test"
+          mkdir -m 700 "$work"
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+            done > "$work/jammy.list"
+            opts=(-o "Dir::Etc::sourcelist=$work/jammy.list" -o Dir::Etc::sourceparts=-)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends build-essential crossbuild-essential-arm64
+          fi
+          cd "$work"
+          fetch() { curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 "$1" -o "$2"; }
+          fetch https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 bazel
+          fetch https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 bb
+          fetch https://github.com/bazelbuild/buildtools/releases/download/v8.5.1/buildifier-linux-amd64 buildifier
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7  buildifier
+          SUMS
+          chmod 700 bazel bb buildifier
+      - name: Check the 17 root outputs, native Go binary, direct, suite and race contracts and formatting
+        run: |
+          env -i USER="$USER" HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB .github/qualification/master_build_test.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: master-build-test-adapter
+          path: ${{ runner.temp }}/master-build-test/result.json
+          if-no-files-found: error
+          retention-days: 14
