@@ -1,7 +1,7 @@
-name: Diagnose the Gazelle query regression on two sources
+name: Run the upstream Gazelle query test with native Bazel
 on:
   push:
-    branches: [qualification/gazelle-supplier-query-diagnostic]
+    branches: [qualification/gazelle-supplier-query-native-bazel]
 permissions:
   contents: read
 jobs:
@@ -15,8 +15,8 @@ jobs:
       - name: Pin the compiler, upstream header policy and Linux client
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 2eaef0c7d5a096c61189f930f86f8f1767f7e027
-          test "$(git rev-parse HEAD^^)" = 919ef9f19ae3c55ec66808abbd39ded804806a42
+          test "$(git rev-parse HEAD^)" = 1b4ab0e4ced86345fe060569e8c3a491cdafa527
+          test "$(git rev-parse HEAD^^)" = 2eaef0c7d5a096c61189f930f86f8f1767f7e027
           d="$RUNNER_TEMP/downstream-llvm"
           mkdir -p "$d"
           cp .github/qualification/{downstream_llvm,supplier_gazelle}.py "$d/"
@@ -29,7 +29,7 @@ jobs:
           curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazelisk"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazelisk" | sha256sum -c -
           chmod 755 "$d/bazelisk"
-      - name: Inspect only the two supplier regression tests and direct queries
+      - name: Run only the two nested supplier regression tests
         run: python3 -B "$RUNNER_TEMP/downstream-llvm/supplier_gazelle.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()

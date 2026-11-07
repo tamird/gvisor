@@ -199,36 +199,40 @@ def lazy_query(arm):
 
 
 def main():
-    assert platform.machine() == "x86_64" and qa.git("rev-parse", "HEAD^") == "2eaef0c7d5a096c61189f930f86f8f1767f7e027"
+    assert platform.machine() == "x86_64" and qa.git("rev-parse", "HEAD^") == "1b4ab0e4ced86345fe060569e8c3a491cdafa527"
     assert sha256(PATCH.read_bytes()).hexdigest() == PATCH_SHA
     qa.REPORT.update(supplierMaster=MASTER, archiveSHA256=SOURCE_SHA, patchSHA256=PATCH_SHA,
-                     previousRun=42347782649, previousArtifact=13564785819)
+                     previousRun=42348501206, previousArtifact=13564587602)
     qa.save()
     SUPPLIER.mkdir()
     subprocess.run(["tar", "-xzf", str(qa.AREA / "supplier.tar.gz"), "--strip-components=1", "-C", str(SUPPLIER)], check=True)
     assert (SUPPLIER / ".bazelversion").read_text().strip() == NATIVE
-    (qa.AREA / "bazel").symlink_to(qa.AREA / "bazelisk")
+    # The nested TestRunner clears HOME and XDG_CACHE_HOME. Invoke the Bazel
+    # executable Bazelisk already resolved before entering the test environment.
+    version = "bazel " + NATIVE
+    env = {**os.environ, "USE_BAZEL_VERSION": NATIVE}
+    assert subprocess.check_output([str(qa.AREA / "bazelisk"), "--version"], cwd=SUPPLIER, env=env, text=True).strip() == version
+    cache = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    home = Path(os.environ.get("BAZELISK_HOME_LINUX") or os.environ.get("BAZELISK_HOME") or cache / "bazelisk")
+    binary_sha = "7ff2b6a675b59a791d007c526977d5262ade8fa52efc8e0d1ff9e18859909fc0"
+    binary = home / "downloads/sha256" / binary_sha / "bin/bazel"
+    assert sha256(binary.read_bytes()).hexdigest() == binary_sha
+    (qa.AREA / "bazel").symlink_to(binary)
+    assert subprocess.check_output([str(qa.AREA / "bazel"), "--version"], cwd=SUPPLIER, env={"PATH": os.defpath}, text=True).strip() == version
+    qa.REPORT["nestedBazelSHA256"] = binary_sha
+    qa.save()
     regression = SUPPLIER / "internal/runner_test.go"
     old_test = regression.read_bytes()
     patch_source()
     new_test = regression.read_bytes()
     patch_source(reverse=True)
     setup_supplier()
-    empty = qa.AREA / "empty_go_config"
-    empty.mkdir()
-    (empty / "WORKSPACE").write_text("")
     for arm in ("stock", "fixed"):
         if arm == "fixed":
             regression.write_bytes(old_test)
             patch_source()
         else:
             regression.write_bytes(new_test)
-        c = qa.REPORT["cases"][arm + "_direct_query"] = {}
-        row, out = proc(c, "query", "workspace", "query", "--override_repository=bazel_gazelle_go_repository_config=" + str(empty),
-                        "//bcr_tests/runner_qa:observe")
-        c["named"] = b"//bcr_tests/runner_qa:observe" in out.splitlines()
-        c["goEnvMissing"] = any("go_env.bzl" in s and "bazel_gazelle_go_repository_config" in s for s in row.get("diagnostics", []))
-        qa.save()
         lazy_query(arm)
     qa.REPORT["passed"] = all(qa.REPORT["cases"][a + "_query_test"]["verified"] for a in ("stock", "fixed"))
     qa.save()
