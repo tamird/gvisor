@@ -1,7 +1,7 @@
-name: Build both optimized releases locally in the empty client
+name: Diagnose the release Nogo owner on ordinary and empty clients
 on:
   push:
-    branches: [qualification/registry-llvm-local-empty-release]
+    branches: [qualification/empty-client-nogo-owner]
 permissions:
   contents: read
 jobs:
@@ -11,23 +11,24 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 2}
-      - name: Check the exact source and build both releases locally
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Build the original failing Nogo owner locally in each client
         run: |
           set -euo pipefail
           source=dd2be7670c1baaacebfdcab31bb6145ebce39037
-          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse HEAD^)" = fd0d6eb4a90fa5b74c0d110197a8026b91712705
+          test "$(git rev-parse HEAD^^)" = "$source"
           test "$(git rev-parse "$source^{tree}")" = 438ac27ac4b9019b509370e2e7b40995ca0bee1e
-          git diff --exit-code "$source" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/lean_release_client.py'
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/nogo_owner.py'
           mkdir "$RUNNER_TEMP/$source"
           git archive "$source" | tar -x -C "$RUNNER_TEMP/$source"
           test ! -e "$RUNNER_TEMP/$source/.git"
           test "$(cat "$RUNNER_TEMP/$source/.bazelversion")" = 9.3.1
-          python3 -IB .github/qualification/lean_release_client.py
+          python3 -IB .github/qualification/nogo_owner.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && !cancelled()
         with:
-          name: local-tool-free-release
-          path: ${{ runner.temp }}/lean-client.json
+          name: nogo-ordinary-empty-owner
+          path: ${{ runner.temp }}/nogo-owner.json
           if-no-files-found: error
           retention-days: 7
