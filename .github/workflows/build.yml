@@ -12,14 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 3}
-      - name: Replay the first ACK and RACK cases on each sender
+      - name: Compare in-order and reordered ACKs after a spurious timeout
         run: |
           set -euo pipefail
           dir="$RUNNER_TEMP/eifel-check"
           mkdir -m 700 "$dir"
           cp .github/qualification/eifel_check.py "$dir/"
           cp pkg/tcpip/transport/tcp/test/e2e/tcp_sack_reordered_response_test.go "$dir/"
-          test "$(git rev-parse HEAD^^)" = f23070977169b4084ae8f4a0b18fa139404467e9
+          git fetch --quiet --depth=2 https://github.com/google/gvisor.git f23070977169b4084ae8f4a0b18fa139404467e9
+          test "$(git rev-parse FETCH_HEAD^)" = e3496657de25339f11754172e448b29f71882e7d
           git fetch --quiet --depth=2 https://github.com/google/gvisor.git 62277fb4a1eaaaf515d84d284ef080a71215f627
           test "$(git rev-parse FETCH_HEAD^)" = e3496657de25339f11754172e448b29f71882e7d
           git checkout --detach f23070977169b4084ae8f4a0b18fa139404467e9
