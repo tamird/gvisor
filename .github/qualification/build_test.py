@@ -56,7 +56,7 @@ def opts(arch, native, remote):
                   "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
                   "--spawn_strategy=remote", "--noremote_local_fallback", "--remote_timeout=900",
                   "--remote_download_outputs=minimal", "--noremote_upload_local_results",
-                  "--modify_execution_info=^(TestRunner|InspectBuildTestLauncher|BuildTestBarrier|BuildTestFixture|Genrule)$=+no-remote-cache",
+                  "--modify_execution_info=^TestRunner$=+no-remote-cache",
                   "--remote_download_regex=.*(/qualification_build_test_launcher[.]json|/test[.](log|xml)|/compiled_posix_test_wrapper)$"]
     else:
         flags += ["--spawn_strategy=linux-sandbox", "--remote_cache=", "--remote_executor=", "--bes_backend="]
@@ -149,6 +149,7 @@ def observe(bep, row, host=False):
     actions, tests, targets = [], [], {}
     files = {}
     roots = []
+    default_roots = []
     for line in bep.open():
         event = json.loads(line)
         ident = event["id"]
@@ -167,6 +168,10 @@ def observe(bep, row, host=False):
             tag = ident["targetCompleted"]
             label = owner(tag.get("label"))
             targets[label] = bool(event.get("completed", {}).get("success"))
+            if label == ROOT:
+                for group in event.get("completed", {}).get("outputGroup", []):
+                    if group["name"] == "default":
+                        default_roots.extend(r["id"] for r in group.get("fileSets", []))
             if label == LAUNCH:
                 for group in event.get("completed", {}).get("outputGroup", []):
                     if group["name"] == "default":
@@ -178,6 +183,8 @@ def observe(bep, row, host=False):
                 if len(actions) < 140 or label in ("//vdso:vdso.so", "//tools/ioctl_sniffer:ioctl_hook") or label in MARKERS or label == LAUNCH or (label or "").startswith(PKG):
                     actions.append({"owner": label, "kind": kind, "success": bool(action.get("success")),
                                     "exit": int(action.get("exitCode", 0)), "failure": clean(action.get("failureDetail", {}).get("spawn", {}).get("code"))})
+            if label in LABELS and kind in ("GoLink", "GoTestLink") and actions and actions[-1]["owner"] == label:
+                actions[-1].update(config=clean(tag.get("configuration", {}).get("id")), output=clean(tag.get("primaryOutput")))
             if kind == "CppLink" and label in ("//vdso:vdso.so", "//tools/ioctl_sniffer:ioctl_hook") and actions and actions[-1]["owner"] == label:
                 actions[-1].update(config=clean(tag.get("configuration", {}).get("id")), output=clean(tag.get("primaryOutput")),
                                    stderr_sha=clean(action.get("stderr", {}).get("digest")))
@@ -228,7 +235,29 @@ def observe(bep, row, host=False):
                     row["launcher"] = {k: observation[k] for k in keys}
                     row["launcher"]["output_sha256"] = sha(data)
                     row["launcher"]["machine"] = observation.get("machine")
-    row.update(actions=actions, tests=tests, targets=targets)
+    output_files = {}
+    visited = set()
+    while default_roots:
+        ident = default_roots.pop()
+        if ident in visited:
+            continue
+        visited.add(ident)
+        node = files[ident]
+        default_roots.extend(f["id"] for f in node.get("fileSets", []))
+        for f in node.get("files", []):
+            uri = urllib.parse.urlsplit(f.get("uri", ""))
+            logical = "/".join([*f.get("pathPrefix", []), f.get("name", "")])
+            if uri.scheme == "file" and "/bazel-out/" in uri.path:
+                logical = "bazel-out/" + urllib.parse.unquote(uri.path).split("/bazel-out/", 1)[1]
+            digest = clean(f.get("digest"))
+            length = int(f.get("length", 0))
+            cas = re.search(r"/(?:blobs|compressed-blobs/zstd)/([0-9a-f]{64})/([0-9]+)$", uri.path)
+            if cas:
+                assert not digest or digest == cas[1]
+                digest, length = cas[1], int(cas[2])
+            if clean(logical):
+                output_files[logical] = {"sha256": digest, "bytes": length}
+    row.update(actions=actions, tests=tests, targets=targets, root_default_files=output_files)
 
 
 def spawns(path, row, arch):
