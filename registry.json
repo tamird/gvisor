@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:08:23+00:00",
+    "updatedAt": "2026-11-07T01:10:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3275,28 +3275,57 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "The approved allocator correction remains published, with current upstream head 36900f03504f22a8a89271d95f9beaa172f9d233. The October 25 review reports the requested Xeon comparison against 9b469b192862 and says the cold-size regression is gone. This is source-specific reported evidence, not a new execution of the current head or a new human approval. Current review and check signals come from the provider snapshot.\n\nEarlier delivery record:\n\nThe contributor-approved allocator correction is published at 9b469b1928628f1124992e8af1746435f6b04a8e. Root verified matching PR/fork heads, mergeability and the reviewed description, then replied in the original performance thread at 19:01:04Z on October 23. Publication and the contributor decision were complete; the Xeon comparison was subsequently reported as described above.\n\nEarlier source record:\n\nA separate contributor preview at 9b469b1928628f1124992e8af1746435f6b04a8e addresses the reviewer’s allocator performance finding while preserving fault-contained recycled-page clearing. The upstream PR remains at 3255a52b212edcd2f526d3fb1afaa6d1523f7520. Root owns the contributor decision and substantive reviewer response; the earlier acknowledgement did not complete the repair.\n\nEarlier published source record:\n\nThe requested post-#16046 rebase is published at 3255a52b212e on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe merge conflict is resolved in published head 854bf04d57 on upstream 3f35bca89c. Independent review verified the sole adaptation is an explicit uint64 huge-page-size conversion in the replacement loop, preserving upstream type preparation and the allocator behavior; BUILD and test files are byte-identical to the prior head. GitHub reports MERGEABLE and new-head source checks are running. Historical runtime qualification keeps its recorded source. Existing reviewer requests are preserved; no prior human approval was established.\n\nThe new exact-head conflict is assigned to hostinet_delivery in the released pr14353 checkout. The next step is a minimal rebase preserving the reviewed allocator behavior and tests, followed by independent source review and exact-lease publication. Earlier qualification remains bound to its recorded sources.\n\nGitHub now reports a merge conflict at unchanged head 4006dae11b, verified 2026-10-19T18:05:30.863749+00:00. The last published observation was mergeable at 2026-10-19T17:42:59.616657+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nThe upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
+      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. The public PR still conflicts.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
         "owner": "Agent",
         "sourceHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
-        "observedAt": "2026-11-07T00:50:21.118Z",
-        "disposition": "Merged #17086 changed disk-backed zeroing. The allocator and its tests now conflict with this PR.",
-        "nextAction": "Preserve the merged disk-backed behavior and qualify the parts of AllocateAndCommit that still need a fix.",
+        "observedAt": "2026-11-07T01:10:35+00:00",
+        "disposition": "Rebased allocator and both controls verified on native Linux.",
+        "nextAction": "Publish the amendment and its measured description after contributor review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17086",
           "https://github.com/google/gvisor/pull/15181"
         ]
       },
-      "updatedAt": "2026-11-07T00:50:21.118Z",
+      "updatedAt": "2026-11-07T01:10:35+00:00",
       "head": "36900f03504f22a8a89271d95f9beaa172f9d233",
       "evidence": [
+        {
+          "label": "Allocator conflict repair",
+          "url": "https://github.com/tamird/gvisor/commit/61470ea41"
+        },
+        {
+          "label": "Original correctness controls, package runs and benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42321163931/artifacts/13553757485"
+        },
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/3255a52b212edcd2f526d3fb1afaa6d1523f7520"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "61470ea4162137e6871edd94e369f1c03592c163",
+        "baseHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
+        "url": "https://github.com/tamird/gvisor/commit/61470ea41",
+        "title": "Preserve disk-backed reservations across the allocator rebase",
+        "requestedAt": "2026-11-07T01:10:35+00:00",
+        "summary": "Publish the rebased allocator and update its description? The one-page and recycled-disk controls failed on master. The fix passed 441 package test records. The new benchstat rows report the remaining 4 KiB cost.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 36900f035^! 61470ea41^!",
+        "body": "tmpfs uses AllocateAndCommit to reserve space for disk-backed files.\nA one-page allocation can pass through the population hint without\nbacking that page. Clearing a recycled disk-backed page can also\nsucceed without reserving its storage. In both cases Allocate can\nreport success before it has fulfilled the caller's request.\n\nTouch the advised mapping to establish its huge-page policy, then\nreserve the requested range with fallocate before calling ReaderFunc.\nKeep the disk-backed zero check for pages that cannot be written.\nClearing recycled shmem pages already commits them. Use fault-protected\nstores so Allocate can release the range and return ENOMEM if a page\ncannot be backed.\n\nUse REP STOSQ on amd64 CPUs with ERMS for clears of at least 2 KiB.\nThis keeps bulk zeroing inside safecopy's fault handler.\n\nBenchmarkAllocateRecycled [1] measures the allocation path for private\nanonymous faults and copy-on-write. Hot samples reuse one range. Cold\nsamples rotate through 256 MiB. On one pinned AMD EPYC 9V74 core, 16\nalternating samples per revision gave these changes in time [2].\n\n                              │  70008149c  │             61470ea41              │\n                              │   sec/op    │   sec/op     vs base               │\n    AllocateRecycled/4K/hot     240.7n ± 1%   250.0n ± 1%  +3.86% (p=0.000 n=16)\n    AllocateRecycled/64K/hot    4.032µ ± 0%   4.041µ ± 0%  +0.22% (p=0.004 n=16)\n    AllocateRecycled/4K/cold    517.4n ± 1%   534.2n ± 1%  +3.23% (p=0.000 n=16)\n\n[1]: https://github.com/google/gvisor/pull/15181#discussion_r4362212232\n[2]: https://github.com/tamird/gvisor/actions/runs/42321163931/artifacts/13553757485"
+      },
+      "refinement": {
+        "before": {
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
+          "head": "36900f03504f22a8a89271d95f9beaa172f9d233"
+        },
+        "after": {
+          "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+          "head": "61470ea4162137e6871edd94e369f1c03592c163"
+        }
+      }
     },
     {
       "id": "pr:15183",
@@ -55625,9 +55654,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T00:59:13+00:00",
-      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. With only the shared Go default changed, one Bazel analysis selected all 700 expected TestRunner actions. Each architecture had 346 OCI shards and four Firecracker shards requiring root and IPv6. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.\n\nThe same Bazel invocation ran all four existing uname cases on native AMD64 and ARM64 Firecracker workers. Both test executables and both namespace launchers matched their worker architectures. All eight cases executed and passed.",
+      "updatedAt": "2026-11-07T01:10:35+00:00",
+      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. With only the shared Go default changed, one Bazel analysis selected all 700 expected TestRunner actions. Each architecture had 346 OCI shards and four Firecracker shards requiring root and IPv6. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.\n\nThe same Bazel invocation ran all four existing uname cases on native AMD64 and ARM64 Firecracker workers. Both test executables and both namespace launchers matched their worker architectures. All eight cases executed and passed.\n\nA second paired run used the same four syscall cases inside systrap. Both workers logged a guest launch and returned four passing cases from the guest XML.",
       "evidence": [
+        {
+          "label": "Two native systrap guest launches, syscall results and worker assignments",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42322101509/artifacts/13552789391"
+        },
         {
           "url": "https://github.com/tamird/gvisor/actions/runs/42320690721/artifacts/13552498741",
           "label": "Original XML case outcomes, worker assignments and executable hashes"
