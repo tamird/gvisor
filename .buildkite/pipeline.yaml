@@ -11,8 +11,6 @@ _templates:
       <<: *retry_settings
   source_test: &source_test
     if: build.env("STAGED_BINARIES") == null
-  source_test_presubmit: &source_test_presubmit
-    if: build.env("STAGED_BINARIES") == null && build.branch != "master"
   source_test_continuous: &source_test_continuous
     if: build.env("STAGED_BINARIES") == null && build.branch == "master"
   gpu_test: &gpu_test
@@ -122,27 +120,6 @@ steps:
     agents:
       arch: "amd64"
       queue: "default"
-
-  # Build runsc and pkg (presubmits only).
-  - <<: *common
-    <<: *source_test_presubmit
-    label: ":world_map: Build runsc and pkg (AMD64)"
-    commands:
-      - "make build TARGETS=//pkg/..."
-      - "make build OPTIONS='--build_tag_filters=-network_plugins' TARGETS='//runsc/...'"
-    agents:
-      arch: "amd64"
-      queue: "default"
-
-  - <<: *common
-    <<: *source_test_presubmit
-    label: ":world_map: Build runsc and pkg (ARM64)"
-    commands:
-      - "make build TARGETS=//pkg/..."
-      - "make build OPTIONS='--build_tag_filters=-network_plugins' TARGETS='//runsc/...'"
-    agents:
-      arch: "arm64"
-      queue: "arm64"
 
   # Build everything (continuous only).
   - <<: *common
@@ -386,9 +363,15 @@ steps:
       queue: "cgroupv1"
   - <<: *common
     <<: *source_test
-    label: ":test_tube: Remote source unit tests (AMD64 and ARM64)"
+    label: ":test_tube: Remote source builds and unit tests (AMD64 and ARM64)"
     key: rbe-source
-    command: '"$${BUILDKITE_SOURCE_BAZEL}" test --config=source-presubmit-mixed'
+    command: |
+      echo "--- Mixed AMD64 and ARM64 unit tests"
+      "$${BUILDKITE_SOURCE_BAZEL}" test --config=source-presubmit-mixed && tests=0 || tests=$$?
+      echo "--- ARM64 source build"
+      "$${BUILDKITE_SOURCE_BAZEL}" build --config=source-presubmit-arm64 --build_tag_filters=-network_plugins --target_pattern_file=test/rbe/source-presubmit.targets && build=0 || build=$$?
+      echo "Mixed tests exited $$tests. ARM64 build exited $$build."
+      (( tests == 0 && build == 0 ))
     agents:
       cgroup: "v2"
       arch: "amd64"
