@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T05:12:09+00:00",
+    "updatedAt": "2026-11-07T05:37:39+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18437,7 +18437,7 @@
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13858",
       "status": "Maintainer internal API and support-policy discussion",
-      "summary": "The maintainer acknowledges that changing the guest kernel without changing the action cache key is a correctness problem for kernel-behavior tests. BuildBuddy will discuss the kernel-selection API, updates and old-version retirement internally before committing to a supported interface. The contributor rationale is answered; no further author source action or new support commitment has been requested.\n\nTamir replied to the maintainer’s API question: explicit kernel selection preserves the execution-environment identity needed when gVisor compares behavior with the host kernel. The response is awaiting maintainer feedback. A mutable provider track alone would not establish that cache identity; no design change or support commitment has been approved.\n\nThe guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
+      "summary": "The maintainer acknowledges that changing the guest kernel without changing the action cache key is a correctness problem for kernel-behavior tests. BuildBuddy will discuss the kernel-selection API, updates and old-version retirement internally before committing to a supported interface. The contributor rationale is answered; no further author source action or new support commitment has been requested.\n\nTamir replied to the maintainer’s API question: explicit kernel selection preserves the execution-environment identity needed when gVisor compares behavior with the host kernel. The response is awaiting maintainer feedback. A mutable provider track alone would not establish that cache identity; no design change or support commitment has been approved.\n\nThe guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate. The proposed 5.15 selector uses the default guest image, which is Linux 5.10 on ARM64. An explicit ARM64 request for 5.15 would therefore boot the wrong kernel.",
       "followup": {
         "owner": "bduffany",
         "disposition": "Maintainer-owned API and support-policy consensus pending",
@@ -18449,8 +18449,16 @@
           "https://github.com/buildbuddy-io/buildbuddy/pull/13858#issuecomment-6269685051"
         ]
       },
-      "updatedAt": "2026-10-19T14:55:29.211250+00:00",
+      "updatedAt": "2026-11-07T05:37:39+00:00",
       "evidence": [
+        {
+          "label": "ARM64 default guest pinned to Linux 5.10",
+          "url": "https://github.com/tamird/buildbuddy/blob/8c704d532/deps.bzl#L302"
+        },
+        {
+          "label": "5.15 selector uses the default kernel path and digest",
+          "url": "https://github.com/tamird/buildbuddy/blob/8c704d532/enterprise/server/remote_execution/containers/firecracker/firecracker.go#L4138"
+        },
         {
           "label": "Guest-kernel selection validation PASS",
           "url": "https://app.buildbuddy.io/invocation/295fbd6a-7d07-4d25-a56d-d9c216d1bb1b"
@@ -49182,9 +49190,17 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
-      "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers.",
+      "updatedAt": "2026-11-07T05:37:39+00:00",
+      "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers. With only gVisor declared downstream, this change removes the unsupported header-tag diagnostic. The header query and ARM64 vDSO build still fail because Gazelle rejects gVisor’s non-root go_deps.gazelle_override tags. No compiler action ran. The same restriction was reproduced before the compiler migration.",
       "evidence": [
+        {
+          "label": "External-root ARM64 vDSO build, original and root-only header selection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42343090664/artifacts/13562781656"
+        },
+        {
+          "label": "Pre-LLVM external-root Gazelle failure on Bazel 8 and 9",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41398089026/artifacts/13120208022"
+        },
         {
           "label": "Original stock, downstream and root query outputs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41410737080/artifacts/13125283113"
@@ -55946,9 +55962,21 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T05:12:09+00:00",
-      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.\n\nBoth build targets omitted on ARM64 explicitly require x86_64. On a hosted ARM64 Linux 6.8 worker, the full cmd test failed during container startup in no_directfs with ECONNRESET. Neither of that mode's posture checks ran. The other four modes passed both checks; the record contains 167 passes, two failures including the parent, and two skips.\n\nThe original AMD64 log ends in TestRunProxyModeWithSeccomp. In five fresh AMD64 runs, four passed. One run hit the diagnostic Go timeout while the parent waited for its child after completing the echo and closing the link. The parent stack does not identify which operation kept the child alive.\n\nWith the queue-drain fix on the same source, all 13 netgofer cases passed in five fresh native AMD64 runs. A separate one-worker control delivered the final frame behind 32 empty records in 16 repetitions. The socket queue and the receive workers have separate lifetimes: a worker can still have a callback pending when the NIC detaches.",
+      "updatedAt": "2026-11-07T05:37:39+00:00",
+      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.\n\nBoth build targets omitted on ARM64 explicitly require x86_64. On hosted ARM64 Linux 6.8, the no_directfs Sentry failed chroot setup with EACCES. Its remapped UID could not traverse the fixture’s root-owned temporary directory. Giving the same executable a searchable TMPDIR let all ten Sentry and gofer posture checks run and pass. The full cmd suite recorded 171 passes and two skips (KVM and coretags).\n\nThe original AMD64 log ends in TestRunProxyModeWithSeccomp. In five fresh AMD64 runs, four passed. One run hit the diagnostic Go timeout while the parent waited for its child after completing the echo and closing the link. The parent stack does not identify which operation kept the child alive.\n\nWith the queue-drain fix on the same source, all 13 netgofer cases passed in five fresh native AMD64 runs. A separate one-worker control delivered the final frame behind 32 empty records in 16 repetitions. The socket queue and the receive workers have separate lifetimes: a worker can still have a callback pending when the NIC detaches.",
       "evidence": [
+        {
+          "label": "ARM64 Linux 6.8, unchanged executable with a searchable chroot directory: 171 passed and two skipped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42343089509/artifacts/13562895513"
+        },
+        {
+          "label": "First no_directfs failure: the Sentry logged EACCES during chroot setup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42342663554/artifacts/13561868118"
+        },
+        {
+          "label": "BuildBuddy proposal for selecting the guest kernel",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13858"
+        },
         {
           "label": "Five corrected AMD64 netgofer runs and 16 repetitions of the final-frame and ioctl controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42341484734/artifacts/13561494575"
@@ -56290,9 +56318,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T04:08:00+00:00",
+        "observedAt": "2026-11-07T05:37:39+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Test final-frame delivery through multi-worker teardown and include the regression with the queue-drain fix. Diagnose the hosted ARM64 no_directfs startup reset separately from the older worker's filter-count mismatch.",
+        "nextAction": "Verify final-frame delivery with multiple receive workers. For the remote ARM64 posture cases, rerun the unchanged cmd suite on a Firecracker worker whose guest kernel includes the filter-count fix. BuildBuddy’s proposed guest-kernel selector is still under review.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
