@@ -34,6 +34,7 @@ archive_alias(name = "candidate", archive = ":stock", out = "candidate-link.tar"
     name = "read_" + name,
     srcs = ["consumer.py"],
     main = "consumer.py",
+    stamp = 0,
     deps = ["@rules_python//python/runfiles"],
     data = [":" + name],
 ) for name in ("stock", "candidate")]
@@ -65,7 +66,7 @@ print(json.dumps({"direct":inspect(Path(direct)/link, Path(direct)/canonical),
 NEGATIVE = '''import errno,hashlib,json,os,subprocess,sys
 from pathlib import Path
 p=Path(sys.argv[1])
-r={"exists":p.is_file(),"writer_sha256":hashlib.sha256(p.read_bytes()).hexdigest(),
+r={"interpreter_sha256":hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),"exists":p.is_file(),"writer_sha256":hashlib.sha256(p.read_bytes()).hexdigest(),
    "shebang":p.open("rb").readline(80).decode().strip(),"env_exists":Path("/usr/bin/env").exists(),
    "bash_exists":Path("/bin/bash").exists()}
 try:
@@ -129,19 +130,15 @@ def output_root():
 def negative():
     rc = build("script",["//"+PKG+":stock"])
     root = output_root()
-    scripts = list(root.glob("bazel-out/*/bin/external/rules_pkg+/pkg/private/tar/build_tar"))
-    sdk = list((root.parent.parent/"external").glob("*release_static_cpython*/bin/python3.11"))
-    doc = {"original_invocation":ORIGINAL,"original_writer":WRITER,"fixture_exit":rc,
-           "generated_script_count":len(scripts),"declared_runtime_count":len(sdk),"verified":False}
-    q.save("entrypoint-control",doc)
-    matches = [p for p in scripts if p.is_file() and q.digest(p) == WRITER]
-    runtimes = [p for p in sdk if p.is_file() and q.digest(p) == CPYTHON]
-    if len(matches)==len(runtimes)==1:
-        actual = namespace([container(runtimes[0]),"-I","-S","/data/negative.py",container(matches[0]),container(root)])
-        doc["actual"] = actual
-        doc["verified"] = bool(rc and actual.get("exists") and actual.get("writer_sha256")==WRITER and
-                               actual.get("shebang")=="#!/usr/bin/env bash" and not actual.get("env_exists")
-                               and not actual.get("bash_exists") and actual.get("errno")==2)
+    # ExecLog records these exact paths relative to the original action root.
+    # Resolve both inside that same mount namespace, including repository links.
+    writer = container(root) / "bazel-out/amd64-opt-exec/bin/external/rules_pkg+/pkg/private/tar/build_tar"
+    runtime = container(root) / "external/+http_archive+release_static_cpython/bin/python3.11"
+    actual = namespace([runtime,"-I","-S","/data/negative.py",writer,container(root)])
+    doc = {"original_invocation":ORIGINAL,"original_writer":WRITER,"fixture_exit":rc,"actual":actual}
+    doc["verified"] = bool(rc and actual.get("exists") and actual.get("writer_sha256")==WRITER
+                           and actual.get("interpreter_sha256")==CPYTHON and actual.get("shebang")=="#!/usr/bin/env bash"
+                           and not actual.get("env_exists") and not actual.get("bash_exists") and actual.get("errno")==2)
     q.save("entrypoint-control",doc)
     return doc["verified"]
 
