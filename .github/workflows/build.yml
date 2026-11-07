@@ -1,35 +1,84 @@
-name: CI
-
-"on":
+name: Check the native vDSO ABI with LLVM path mapping
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-mixed-vdso-test-rule]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Bind the compiler settings and the unchanged vDSO
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/mixed-vdso"
+          mkdir -p "$w/results"
+          test "$(git rev-parse HEAD^)" = 46f87ffda9209c9f284898bf4eb3e091f5b35ceb
+          test "$(git rev-parse HEAD^^)" = 097b8d31f4586709d20cf00abb75e8afabb07708
+          test "$(git rev-parse HEAD^^^)" = 6875646208f68aca6e75e24a676a1478d3d70a61
+          test "$(git rev-parse HEAD~4)" = 35aa6228edcf1eb2bc07d6aa877b4317da27d68a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/mixed_vdso/check.py' ':!.github/qualification/mixed_vdso/exec_cas.py'
+          git diff --exit-code HEAD^^ HEAD^ -- . ':!vdso/mixed_abi.bzl' ':!vdso/native_py_test.bzl'
+          git diff --exit-code HEAD^^^ HEAD^^ -- . ':!vdso/BUILD' ':!vdso/mixed_abi.py' ':!vdso/mixed_abi.bzl'
+          git diff --exit-code HEAD~4 HEAD^^^ -- . ':!.bazelrc'
+          cp .github/qualification/mixed_vdso/{check,exec_cas}.py "$w/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --fail --location --retry 2 --max-time 100 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$w/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $w/bazel" | sha256sum -c -
+          chmod 755 "$w/bazel"
+      - name: Verify both architecture-specific TestRunners and the two real vDSO compile/link graphs
+        id: graph
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/mixed-vdso"
+          for mode in mapped; do python3 -EsB "$w/check.py" "$mode" analyze; done
+          jq -e .eligible "$w/results/mapped.json"
+      - name: Build and run only the two native vDSO tests per configuration
+        if: steps.graph.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork key}"
+          w="$RUNNER_TEMP/mixed-vdso"
+          rc="$w/remote.rc"
+          for mode in mapped; do
+            (
+              trap 'rm -f "$rc"' EXIT
+              printf '%s\n' 'build:source-presubmit-mixed --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io' 'build:source-presubmit-mixed --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/' > "$rc"
+              printf 'build:source-presubmit-mixed --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+              unset BUILDBUDDY_API_KEY
+              python3 -EsB "$w/check.py" "$mode" execute
+            )
+            test ! -e "$rc"
+            env -u BUILDBUDDY_API_KEY python3 -EsB "$w/check.py" "$mode" collect || true
+          done
+      - name: Read compiler, linker and native TestRunner command metadata from the two original submissions
+        if: always() && !cancelled() && steps.graph.outcome == 'success'
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/mixed-vdso"
+          test ! -e "$w/remote.rc"
+          for mode in mapped; do
+            if jq -e '.invocation and (.spawns|length)>0' "$w/results/$mode.json" >/dev/null; then
+              python3 -EsB "$w/check.py" "$mode" physical
+            fi
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: native-paired-vdso-test-rule
+          path: |
+            ${{ runner.temp }}/mixed-vdso/results/mapped.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Require both fresh native results in the same mapped invocation
+        if: always() && !cancelled()
+        run: jq -e .verified "$RUNNER_TEMP/mixed-vdso/results/mapped.json"
