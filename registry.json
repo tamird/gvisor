@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T02:18:37+00:00",
+    "updatedAt": "2026-11-07T02:24:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55681,9 +55681,25 @@
       "url": "https://github.com/tamird/gvisor/commit/a39f38e89",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T02:18:37+00:00",
-      "summary": "The mixed RBE invocation built all 2,885 selected build-only targets and ran all 724 selected test shards uncached. AMD64 passed all 373. ARM64 passed 350 of 351. Five Sentry checks failed in one runsc/cmd shard. In both ARM64 runs the collector reported a difference between process-wide and per-thread state. All five corresponding gofer checks passed. The ARM64 netgofer test passed all six cases.\n\nThe two ordinary profiles select 373 shards each from the same package list. Mixed selects 22 fewer ARM64 shards. It also omits ARM64 configurations for some compiled libraries and coverage frontends. In separate fork checks, all 16 integration and benchmark binaries had the expected ELF machine on each CPU. On each native worker the Python SDK passed 38 methods with one non-root skip, and the vDSO checker passed.",
+      "updatedAt": "2026-11-07T02:24:56+00:00",
+      "summary": "One Buildkite step can run both ordinary RBE profiles over the existing package list. Each profile selects all 373 original shards. Buildkite’s rendered command ran both profiles in all four pass/fail controls, including after an AMD64 failure. The two complete suites previously ran separately; the combined step has only been qualified with a command recorder.\n\nThe experimental mixed invocation built 2,885 build-only targets and ran 724 shards uncached. AMD64 passed 373/373 and ARM64 passed 350/351. Five Sentry checks reported a process/thread mismatch on ARM64; their paired gofer checks passed. Netgofer passed all six cases on both CPUs. Mixed also omitted 22 ordinary ARM64 shards and some ARM64 build products.",
       "evidence": [
+        {
+          "label": "Single-step alternative with both complete profiles",
+          "url": "https://github.com/tamird/gvisor/commit/b3e6b0409"
+        },
+        {
+          "label": "Offline Buildkite upload and all four pass/fail coordinator outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42329025031/artifacts/13556940789"
+        },
+        {
+          "label": "Optional mixed-profile dependency policy: 21 roots per architecture and directed violations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42328068903/artifacts/13556088405"
+        },
+        {
+          "label": "Matched original custom-platform execution and race setting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42328954344/artifacts/13556825869"
+        },
         {
           "label": "Full mixed result: 2,885 build-only targets and 724 fresh remote test shards",
           "url": "https://github.com/tamird/gvisor/actions/runs/42324657295/artifacts/13555674170"
@@ -55941,9 +55957,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "a39f38e89dc7110a5bc35cd70821388d2d22f62a",
-        "observedAt": "2026-11-07T02:18:37+00:00",
+        "observedAt": "2026-11-07T02:24:56+00:00",
         "disposition": "All selected actions finished. Only the ARM64 runsc/cmd package failed.",
-        "nextAction": "Determine the source of the thread-consistency mismatch before enabling this job. Verify the one-step alternative that preserves all 373 ordinary shards on each architecture.",
+        "nextAction": "Resolve the ARM64 Sentry thread-consistency failure and qualify the two ordinary profiles together on RBE before enabling the Buildkite job.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
