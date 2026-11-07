@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T23:39:37+00:00",
+    "updatedAt": "2026-11-07T23:53:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52672,8 +52672,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T23:34:36+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation. The author is testing it against the same LLVM consumers.",
+      "updatedAt": "2026-11-07T23:53:42+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The coordinated supplier PR and reviewer reply are pending contributor review.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52746,6 +52746,22 @@
         {
           "label": "Existing supplier prepend proposal and maintainer review",
           "url": "https://github.com/fmeum/with_cfg.bzl/pull/178"
+        },
+        {
+          "label": "Seven LLVM consumer checks with the original prepend patch",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42426347889/artifacts/13595098610"
+        },
+        {
+          "label": "Original native module-map output from the matching Linux executable",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41502500476/artifacts/13170230377"
+        },
+        {
+          "label": "Current supplier and LLVM consumer together",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42427015026/artifacts/13595617323"
+        },
+        {
+          "label": "Single credited supplier proposal and proposed reply",
+          "url": "https://tamird.github.io/gvisor/#branch:with-cfg-prepend-list-setting"
         }
       ],
       "settledReviews": [
@@ -61602,9 +61618,9 @@
       "title": "Preserve list settings on an empty selection",
       "url": "https://github.com/tamird/with_cfg.bzl/commit/8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-07T23:34:36+00:00",
-      "summary": "The opt-in preserves the caller’s incoming list when a configurable value selects an empty list. An ordinary empty assignment still clears the setting. The corrected supplier tests passed on Bazel 7.7.1 and 9.2.0, alongside all 24 current tests and the formatter and documentation checks. David’s #908 review identified the LLVM consumer. The fork implementation selects musl on the existing binary rule and preserves the caller’s custom MSVC platform. The existing with_cfg PR #178 proposes prepending a platform, and its maintainer requested documentation and an example. The LLVM consumer is being checked against that approach before choosing a change.",
+      "status": "Superseded",
+      "updatedAt": "2026-11-07T23:53:42+00:00",
+      "summary": "The opt-in preserves the caller’s incoming list when a configurable value selects an empty list. An ordinary empty assignment still clears the setting. The corrected supplier tests passed on Bazel 7.7.1 and 9.2.0, alongside all 24 current tests and the formatter and documentation checks. David’s #908 review identified the LLVM consumer. The fork implementation selects musl on the existing binary rule and preserves the caller’s custom MSVC platform. The existing with_cfg PR #178 proposes prepending a platform, and its maintainer requested documentation and an example.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty.",
       "evidence": [
         {
           "label": "Supplier source-only branch",
@@ -61633,19 +61649,33 @@
         {
           "label": "Existing supplier prepend proposal and maintainer review",
           "url": "https://github.com/fmeum/with_cfg.bzl/pull/178"
+        },
+        {
+          "label": "Seven LLVM consumer checks with the original prepend patch",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42426347889/artifacts/13595098610"
+        },
+        {
+          "label": "Original native module-map output from the matching Linux executable",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41502500476/artifacts/13170230377"
+        },
+        {
+          "label": "Credited current-source prepend proposal",
+          "url": "https://tamird.github.io/gvisor/#branch:with-cfg-prepend-list-setting"
         }
       ],
       "followup": {
         "owner": "Agent",
         "sourceHead": "8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
-        "observedAt": "2026-11-07T23:34:36+00:00",
-        "disposition": "The keep_if_empty fork remains qualified research. The pending decision was removed while checking the existing prepend proposal.",
-        "nextAction": "Test #178 on the #908 Linux and custom-Windows configuration paths, then reconcile the supplier and consumer changes.",
+        "observedAt": "2026-11-07T23:53:42+00:00",
+        "disposition": "Superseded for #908 by the tested current-base successor to #178.",
+        "nextAction": "Follow the separate credited prepend proposal.",
         "evidence": [
           "https://github.com/fmeum/with_cfg.bzl/pull/178",
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472",
+          "https://github.com/tamird/hermetic-llvm/actions/runs/42426347889/artifacts/13595098610"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:17206",
@@ -61771,6 +61801,57 @@
         "title": "Run YAML checks with the declared validator",
         "summary": "Open this single-commit gVisor PR?",
         "body": "The YAML checks for the Buildkite pipelines, GitHub workflows, Nogo configuration and two website datasets generate Bash scripts just to start the Go validator. Without `/bin/bash`, the test executable fails before it reads a single YAML file.\n\nRun the existing target-platform validator as a Bazel `native_test`. A private input target supplies the resolved schema, filegroups and options as test arguments so callers can continue using `select()`.\n\nOn Linux/AMD64 with Bazel 9.3.1, all five original checks passed with Bash and failed to start when the test's namespace hid `/bin` and `/usr/bin`. The replacement checked the same 22 files there. It also retained strict decoding, the comment policy and schema diagnostics, and handled a multi-file input containing spaces and a literal dollar expression. Bazel's outer test setup ran on ordinary Ubuntu. [Original qualification](https://github.com/tamird/gvisor/actions/runs/42425854263/artifacts/13595004667)"
+      }
+    },
+    {
+      "id": "branch:with-cfg-prepend-list-setting",
+      "type": "branch",
+      "repo": "tamird/with_cfg.bzl",
+      "ref": "research/prepend-list-setting",
+      "head": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+      "title": "Prepend to list-valued settings",
+      "url": "https://github.com/tamird/with_cfg.bzl/commit/14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T23:53:42+00:00",
+      "summary": "The successor carries Nikolaus Wittenstein’s prepend implementation from #178 onto current with_cfg, shares the list-setting recorder, and adds the documentation and example requested by the maintainer. Repeated prefixes remain idempotent and an empty prefix preserves the caller’s list. The supplier tests passed on Bazel 7.7.1 and 9.2.0. With that same supplier tree and the LLVM consumer, the native static AMD64 helper wrote the expected module map for 20- and 24-byte headers. The custom Windows MSVC owner retained its original platform and a single generator .exe, and the real MSVC consumer passed analysis. No multiple-platform warnings were emitted.",
+      "evidence": [
+        {
+          "label": "Nikolaus Wittenstein’s original #178 and maintainer review",
+          "url": "https://github.com/fmeum/with_cfg.bzl/pull/178"
+        },
+        {
+          "label": "Current supplier tests, generated docs and formatting",
+          "url": "https://github.com/tamird/with_cfg.bzl/actions/runs/42426615376/artifacts/13595548731"
+        },
+        {
+          "label": "Current supplier plus LLVM consumer, native module map and MSVC analysis",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42427015026/artifacts/13595617323"
+        },
+        {
+          "label": "Seven integration cases with original #178 on with_cfg v0.12",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42426347889/artifacts/13595098610"
+        },
+        {
+          "label": "Tested one-transition LLVM consumer",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/c0768cac2"
+        },
+        {
+          "label": "David’s original #908 review",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+        "baseHead": "9b8b10962419346889e528cbe57a539754489d57",
+        "url": "https://github.com/tamird/with_cfg.bzl/commit/14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+        "title": "Prepend to list-valued settings",
+        "requestedAt": "2026-11-07T23:53:42+00:00",
+        "summary": "Open the credited successor to with_cfg.bzl #178 and reply to David on hermetic-llvm #908 with its link?\n\ngit -C ~/code/cedar-with_cfg.bzl range-diff --creation-factor=999 0b02ab402^! 14a10e44f^!",
+        "body": "A transition can supply -DFOO as a compiler default. extend() places\nit after a caller's --copt=-UFOO, so FOO stays defined. prepend()\nplaces the default before the caller's options. Reapplying an existing\nprefix leaves the list unchanged.\n\nBased on Nikolaus Wittenstein’s implementation in #178.\n\nFixes #151\n\nCo-authored-by: Nikolaus Wittenstein <nikolaus.wittenstein@gmail.com>",
+        "replyBody": "@dzbarsky, yes. <supplier PR> carries Nikolaus Wittenstein’s [prepend proposal](https://github.com/fmeum/with_cfg.bzl/pull/178) forward with the requested documentation and example. [The LLVM change](https://github.com/tamird/hermetic-llvm/commit/c0768cac2) prepends Linux musl on the existing binary rule and removes the separate `native/` and `musl/` targets. An empty prefix on Windows keeps the caller’s MSVC platform. I’ll update this PR once the supplier change is released.\n\nPosted by Codex on behalf of @tamird."
       }
     }
   ],
@@ -85431,5 +85512,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T23:39:37+00:00"
+  "updatedAt": "2026-11-07T23:53:42+00:00"
 }
