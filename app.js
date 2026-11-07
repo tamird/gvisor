@@ -284,7 +284,8 @@ const OTHER_ATTENTION_GROUPS = [
   { id: "resolved", owner: "other", title: "History · no current action" },
   { id: "other", owner: "other", title: "Other work" },
 ];
-const ATTENTION_OWNERS = { agent: "Agent work", user: "Needs your attention", maintainer: "Needs maintainer attention", other: "Other visible work" };
+const ATTENTION_OWNERS = { agent: "Agent work", user: "Needs your attention", maintainer: "Needs maintainer attention", other: "Other tracked work" };
+const QUEUE_FILTERS = Object.keys(ATTENTION_OWNERS).map(owner => "queue-" + owner);
 const LEGACY_HANDOFF_GROUPS = { "import-failed": "maintainer-import-failed", "import-checks": "maintainer-import-checks", "internal-status": "maintainer-unknown", review: "maintainer-review", import: "maintainer-import", merge: "maintainer-merge" };
 let handoffCopyVersion = 0;
 function handoffTimestamp(value) {
@@ -676,12 +677,18 @@ function attentionReasons(node, owner) {
   }
   return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
 }
+// A decision the contributor can make takes precedence over a simultaneous
+// code fix or maintainer request. Individual reason filters still match both.
+function primaryAttention(reasons) {
+  return reasons.find(reason => reason.owner === "user") || reasons.find(reason => reason.owner === "agent")
+    || reasons.find(reason => reason.owner === "maintainer") || reasons[0];
+}
 function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) {
   const entries = nodes.map(node => {
     const reasons = attentionReasons(node, owner);
     const selectedReason = reasons.find(reason => filters.has(reason.id));
-    const primary = selectedReason || reasons.find(reason => reason.owner !== "user") || reasons[0];
-    const linkReason = grouped ? primary : selectedReason;
+    const primary = selectedReason || primaryAttention(reasons);
+    const linkReason = grouped || filters.has("queue-user") ? primary : selectedReason;
     const copyURL = linkReason?.owner === "user" ? contributorDecisionURL(node, linkReason.id)
       : node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null;
     return { node, reasons, primary, copyURL };
@@ -976,8 +983,10 @@ function matchesBase(node) {
 }
 function states(node) { return node.workStates || {}; }
 function matches(node) {
-  return matchesBase(node) && (!model.statesAvailable || !stateFilters.size || [...stateFilters].some((state) => states(node)[state]))
-    && (!reasonFilters.size || attentionReasons(node, registry.meta.owner).some(reason => reasonFilters.has(reason.id)));
+  if (!matchesBase(node) || (model.statesAvailable && stateFilters.size && ![...stateFilters].some(state => states(node)[state]))) return false;
+  if (!reasonFilters.size) return true;
+  const reasons = attentionReasons(node, registry.meta.owner);
+  return reasonFilters.has("queue-" + (primaryAttention(reasons)?.owner || "other")) || reasons.some(reason => reasonFilters.has(reason.id));
 }
 function filtered() { return $("search").value.trim() || $("group-filter").value || (model.statesAvailable && stateFilters.size) || reasonFilters.size; }
 function age(record) {
@@ -1085,16 +1094,20 @@ function drawStateFilters() {
   // Initial snapshot loading precedes creation of the attention controls.
   if (initializing) return;
   const counts = new Map(ATTENTION_REASONS.map(reason => [reason.id, 0]));
+  const totals = Object.fromEntries(Object.keys(ATTENTION_OWNERS).map(owner => [owner, 0]));
   const candidates = model.nodes.filter(node => matchesBase(node) && visibleHistory(node));
-  for (const node of candidates) for (const reason of attentionReasons(node, registry.meta.owner)) counts.set(reason.id, counts.get(reason.id) + 1);
+  for (const node of candidates) {
+    const reasons = attentionReasons(node, registry.meta.owner);
+    totals[primaryAttention(reasons)?.owner || "other"]++;
+    for (const reason of reasons) counts.set(reason.id, counts.get(reason.id) + 1);
+  }
   for (const control of $("state-filters").querySelectorAll("input[data-reason]")) {
     control.checked = reasonFilters.has(control.dataset.reason);
     control.nextElementSibling.textContent = `${ATTENTION_REASONS.find(reason => reason.id === control.dataset.reason).title} ${counts.get(control.dataset.reason)}`;
   }
   $("all-reasons").textContent = `All ${candidates.length}`;
   $("all-reasons").setAttribute("aria-pressed", !reasonFilters.size && !stateFilters.size);
-  for (const owner of ["agent", "user", "maintainer"]) {
-    const count = candidates.filter(node => attentionReasons(node, registry.meta.owner).some(reason => reason.owner === owner)).length;
+  for (const [owner, count] of Object.entries(totals)) {
     $(`attention-${owner}-summary`).textContent = `${ATTENTION_OWNERS[owner]} · ${count}`;
   }
   $("legacy-state-filter").hidden = !stateFilters.size;
@@ -1119,6 +1132,7 @@ function currentViewURL(selection = selected) {
   } else {
     for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
     for (const reason of ATTENTION_REASONS) if (reasonFilters.has(reason.id)) url.searchParams.append("reason", reason.id);
+    for (const queue of QUEUE_FILTERS) if (reasonFilters.has(queue)) url.searchParams.append("reason", queue);
     if (view === "table") {
       if (tableGrouping) url.searchParams.set("group-by", "attention");
       if (sortKey !== "impact") url.searchParams.set("sort", sortKey);
@@ -1147,7 +1161,7 @@ function applyView(saved) {
   tableGrouping = saved.view === "handoff" || saved.tableGrouping === true;
   // Older links and saved views used one filter for all contributor decisions.
   const reasons = (Array.isArray(saved.reasonFilters) ? saved.reasonFilters : []).flatMap(id => id === "author-proposal" ? DECISION_REASONS.map(reason => reason.id) : [id]);
-  reasonFilters = new Set(reasons.filter(id => ATTENTION_REASONS.some(reason => reason.id === id)));
+  reasonFilters = new Set(reasons.filter(id => QUEUE_FILTERS.includes(id) || ATTENTION_REASONS.some(reason => reason.id === id)));
   sortKey = SORT_KEYS.includes(saved.sortKey) ? saved.sortKey : "impact"; sortDirection = saved.sortDirection === 1 ? 1 : -1;
   if (saved.selected?.startsWith("handoff-")) saved = { ...saved, selected: `attention-${LEGACY_HANDOFF_GROUPS[saved.selected.slice(8)] || saved.selected.slice(8)}` };
   const validID = id => typeof id === "string" && /^[^\s]{1,240}$/.test(id) ? id : null;
@@ -1437,7 +1451,7 @@ function drawTable(nodes) {
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
   visibleTableGroups = attentionGroups(nodes, registry.meta.owner, tableGrouping);
   $("handoff-copy-all").disabled = !model.checkedAt || !visibleTableGroups.some(group => group.entries.some(entry => entry.copyURL));
-  const copyingDecisions = ATTENTION_REASONS.some(reason => reason.owner === "user" && reasonFilters.has(reason.id));
+  const copyingDecisions = reasonFilters.has("queue-user") || ATTENTION_REASONS.some(reason => reason.owner === "user" && reasonFilters.has(reason.id));
   $("handoff-snapshot").textContent = `${copyingDecisions ? "Copy visible includes tracker links to the selected decisions." : "Copy visible exports the source PRs shown as plain text."} Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
   for (const group of visibleTableGroups) {
     if (tableGrouping) {
@@ -1483,23 +1497,29 @@ function drawTable(nodes) {
     }
   }
 }
+function rangeDiffCommand(repo, args) {
+  const git = ["google/gvisor", "tamird/gvisor"].includes(repo) ? "git -C ~/code/gvisor" : "git";
+  return `${git} range-diff ${args}`;
+}
 function refinementComparison(node, decision = contributorDecision(node)) {
   const amendment = decision?.kind === "amendment";
   let revision = node.refinement;
   if (amendment) {
-    if (node.github?.head !== decision.baseHead) return null;
-    if (revision?.before.head !== decision.baseHead || revision?.after.head !== decision.head) {
+    const recordedPair = revision?.before.head === decision.baseHead && revision?.after.head === decision.head;
+    const publishedHead = node.github?.head || node.head;
+    if (publishedHead ? publishedHead !== decision.baseHead : !recordedPair) return null;
+    if (!recordedPair) {
       revision = { before: { head: decision.baseHead }, after: { head: decision.head } };
     }
   } else if (!revision || revision.after.head !== node.head ||
       node.github && node.github.head !== revision.after.head) return null;
   const before = revision.before.head.slice(0, 9), after = revision.after.head.slice(0, 9);
   const range = ({ head, base }) => base ? `${base}..${head}` : `${head}^!`;
-  const options = !revision.before.base && !revision.after.base ? " --creation-factor=999" : "";
+  const options = !revision.before.base && !revision.after.base ? "--creation-factor=999 " : "";
   return {
-    command: `git range-diff${options} ${range(revision.before)} ${range(revision.after)}`,
+    command: rangeDiffCommand(node.repo, `${options}${range(revision.before)} ${range(revision.after)}`),
     label: `${amendment ? "Amendment" : "Revised proposal"} ${before} → ${after}`,
-    description: amendment ? `Published revision ${before} → proposed revision ${after}`
+    description: amendment ? `${node.github?.head ? "Published" : "Recorded PR"} revision ${before} → proposed revision ${after}`
                            : `Earlier revision ${before} → current revision ${after}`,
   };
 }
@@ -1529,7 +1549,7 @@ function appendRangeDiff(parent, edge, nodes) {
   const oldHead = pr?.head, newHead = proposal?.head;
   if (![oldHead, newHead].every(head => /^[a-f0-9]{40}$/.test(head)) || oldHead === newHead) return;
   appendRangeDiffCommand(parent, {
-    command: `git range-diff ${oldHead}...${newHead}`,
+    command: rangeDiffCommand(nodes.get(edge.to)?.repo || proposal.repo, `${oldHead}...${newHead}`),
     description: `Published ${oldHead.slice(0, 9)} → proposed ${newHead.slice(0, 9)} · snapshot ${date(pr.checkedAt)}`,
   });
 }
@@ -1563,6 +1583,7 @@ function drawDetails() {
     }
     details.append(section);
   }
+  let showedComparison = false;
   for (const decision of visibleDecisions(node)) {
     const changed = contributorDecisionNeedsRefresh(node, decision);
     if (!states(node)["contributor-review"] && !changed) continue;
@@ -1573,6 +1594,13 @@ function drawDetails() {
     if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
     if (changed)
       section.append(element("p", "", `The published head has changed from ${decision.baseHead || decision.head} to ${node.github.head}. Reconcile this recorded decision with the new source before acting.`));
+    if (!changed && decisionReason(decision) === "review-changes") {
+      const comparison = refinementComparison(node, decision);
+      if (comparison) {
+        appendRangeDiffCommand(section, comparison);
+        showedComparison = true;
+      }
+    }
     if (decision.body) {
       section.append(element("div", "decision-body", decision.body));
     }
@@ -1603,7 +1631,7 @@ function drawDetails() {
     details.append(section);
   }
   const refinement = refinementComparison(node);
-  if (refinement) appendRangeDiffCommand(details, refinement);
+  if (refinement && !showedComparison) appendRangeDiffCommand(details, refinement);
   const reach = impact(node.id);
   details.append(element("p", "detail-impact", `${reach.prs} downstream open PRs · ${reach.direct} direct`));
   if (node.summary) {
@@ -1616,7 +1644,7 @@ function drawDetails() {
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
   if (node.type === "issue" && node.unavailable)
     details.append(element("p", "detail-meta", `${node.unavailable} Last provider observation: ${node.checkedAt ? date(node.checkedAt) : "not recorded"}.`));
-  if (node.type === "issue" && node.githubState === "closed" && !decision && !action)
+  if (node.type === "issue" && node.githubState === "closed" && !contributorDecision(node) && !action)
     details.append(element("p", "detail-meta", "Closed upstream. No action is needed on this issue."));
   if (node.type === "issue" && node.comments?.length) {
     const latest = node.comments[0];
@@ -1685,7 +1713,9 @@ function render(reposition = false, navigation = "replace") {
   const nodes = investigations ? drawInvestigations() : dag ? graphNodes() : tableNodes();
   $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : `${nodes.length} items${dag ? " · prerequisite → dependent" : " · click a title for relationships"}`;
   const historyNote = $("show-resolved").checked ? "Including history" : "Inactive history hidden; direct links remain available";
-  $("filter-note").textContent = `${historyNote} · ${investigations ? "Research records" : reasonFilters.size ? "Matching any selected attention reason" : dag && filtered() ? "Matches with dependency context" : "Active work"}`;
+  const queue = Object.keys(ATTENTION_OWNERS).find(owner => reasonFilters.has("queue-" + owner));
+  const scope = investigations ? "Research records" : queue ? ATTENTION_OWNERS[queue] : reasonFilters.size ? "Matching any selected attention reason" : dag && filtered() ? "Matches with dependency context" : "Active work";
+  $("filter-note").textContent = `${scope} · ${historyNote}` + (!investigations && !model.statesAvailable ? " · PR attention counts incomplete until GitHub data refreshes" : "");
   $("empty").hidden = nodes.length !== 0; $("empty-title").textContent = investigations ? "No matching investigations" : "No matching work";
   drawDetails(); drawStateFilters();
   if (dag) { drawGraph(nodes); drawChainSelector(); } else if (view === "table") drawTable(nodes);
@@ -2273,13 +2303,26 @@ function resetFilters(redraw = true) {
 }
 function initialize() {
   const all = button("All", () => { stateFilters.clear(); reasonFilters.clear(); selected = null; render(true, "push"); }); all.id = "all-reasons"; $("state-filters").append(all);
-  for (const owner of ["agent", "user", "maintainer"]) {
+  for (const owner of Object.keys(ATTENTION_OWNERS)) {
     const chooser = element("details", "attention-selector"), summary = element("summary"); summary.id = `attention-${owner}-summary`; chooser.append(summary);
     const options = element("div", "attention-options"), reasons = ATTENTION_REASONS.filter(reason => reason.owner === owner);
-    options.append(button("Select all reasons", () => { stateFilters.clear(); for (const reason of reasons) reasonFilters.add(reason.id); selected = null; render(true, "push"); }));
+    options.append(button("Show this queue", () => {
+      stateFilters.clear();
+      reasonFilters = new Set(["queue-" + owner]);
+      chooser.open = false;
+      selected = null;
+      render(true, "push");
+    }));
     for (const reason of reasons) {
       const label = element("label"), input = element("input"); input.type = "checkbox"; input.dataset.reason = reason.id;
-      input.addEventListener("change", () => { stateFilters.clear(); if (input.checked) reasonFilters.add(reason.id); else reasonFilters.delete(reason.id); selected = null; render(true, "push"); });
+      input.addEventListener("change", () => {
+        stateFilters.clear();
+        for (const queue of QUEUE_FILTERS) reasonFilters.delete(queue);
+        if (input.checked) reasonFilters.add(reason.id);
+        else reasonFilters.delete(reason.id);
+        selected = null;
+        render(true, "push");
+      });
       label.append(input, element("span", "", reason.title)); options.append(label);
     }
     chooser.append(options); $("state-filters").append(chooser);

@@ -883,7 +883,7 @@ unchanged patch is displayed separately.
 
 ### Maintainer handoff
 
-The table can group rows by attention needed. Its selectors separate Agent work (conflicts, public source checks, unanswered feedback and public snapshot refreshes), Needs your attention (explicit contributor decisions and separate human-only submissions), and Needs maintainer attention (review or reply follow-up, imports, internal feedback, import checks and unclear internal status). Agent work can be queued; the reason does not imply that it has started. Multiple reasons can apply to a PR. Grouping and explicit reason filters are shareable in the URL; earlier `?view=handoff` links open the grouped table.
+The four queue totals partition the visible items. An outstanding contributor decision puts an item in Needs your attention. Otherwise, agent work takes priority over maintainer attention. Other tracked work includes drafts, investigations and branches waiting for prerequisites. “Show this queue” uses the same assignment as the counts and the grouped table. Individual reason filters still match secondary responsibilities. Queue and reason filters are shareable in the URL.
 An unpublished branch with `status: Agent work` routes to the agent when its existing `followup` names an owner, a nonempty next action and the exact current `sourceHead`. Remove an active `contributorReview` badge while implementation or validation remains with the agent, and retain the prior request in the follow-up description; this does not create a second contributor request. Stale-head assignments do not carry forward.
 
 

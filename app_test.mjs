@@ -422,7 +422,7 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
   context.navigator = { clipboard: { writeText: async value => { copied = value; } } };
   vm.runInContext('appendRangeDiffCommand(parentInput, refinementComparison(nodeInput))', context);
   const [description, input, copy, message] = context.parentInput.children[0].children;
-  const expected = `git range-diff --creation-factor=999 ${before}^! ${after}^!`;
+  const expected = `git -C ~/code/gvisor range-diff --creation-factor=999 ${before}^! ${after}^!`;
   assert.equal(vm.runInContext('refinementComparison(nodeInput).label', context),
     'Revised proposal 7e371d8ac → ca492fef9');
   assert.match(description.textContent, /Earlier revision 7e371d8ac → current revision ca492fef9/);
@@ -431,6 +431,13 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
   await copy.listeners.click();
   assert.equal(copied, expected);
   assert.equal(message.textContent, 'Copied.');
+  context.edgeNodes = new Map([
+    ['branch', { ...node, refinement: undefined }], ['pr', { repo: 'google/gvisor', github: { head: before } }],
+  ]);
+  vm.runInContext('appendRangeDiff(parentInput, {role: "proposed_update", from: "branch", to: "pr"}, edgeNodes)', context);
+  const edgeCopy = context.parentInput.children[1].children[2];
+  await edgeCopy.listeners.click();
+  assert.equal(copied, `git -C ~/code/gvisor range-diff ${before}...${after}`);
   context.navigator.clipboard.writeText = async () => { throw Error('Denied'); };
   await copy.listeners.click();
   assert.equal(input.focused, true);
@@ -438,6 +445,9 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
   assert.match(message.textContent, /Select and copy/);
   node.refinement.before.base = 'a'.repeat(40);
   node.refinement.after.base = 'b'.repeat(40);
+  assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
+    `git -C ~/code/gvisor range-diff ${'a'.repeat(40)}..${before} ${'b'.repeat(40)}..${after}`);
+  node.repo = 'tamird/rules_go';
   assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
     `git range-diff ${'a'.repeat(40)}..${before} ${'b'.repeat(40)}..${after}`);
   node.github = { head: 'c'.repeat(40) };
@@ -464,7 +474,7 @@ test('promotion uses an exact-head branch refinement when the PR comparison is s
     vm.runInContext('updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {}; applyLive(snapshotInput, registryInput)', context);
     assert.equal(vm.runInContext('model.nodes.length', context), 1);
     const command = vm.runInContext('refinementComparison(model.nodes[0])?.command ?? null', context);
-    assert.equal(command, expectedBefore ? `git range-diff --creation-factor=999 ${expectedBefore}^! ${after}^!` : null);
+    assert.equal(command, expectedBefore ? `git -C ~/code/gvisor range-diff --creation-factor=999 ${expectedBefore}^! ${after}^!` : null);
   }
 });
 
@@ -483,6 +493,38 @@ test('refinement metadata rejects malformed ranges but tolerates a newer node he
   context.nodeInput = node;
   vm.runInContext('validateRegistry(registryInput)', context);
   assert.equal(vm.runInContext('refinementComparison(nodeInput)', context), null);
+});
+
+test('offline amendment cards show their own recorded ranges above the proposed text', () => {
+  const context = client(), node = attentionNode(), before = node.github.head;
+  const after = 'b'.repeat(40), base = 'c'.repeat(40), alternate = 'd'.repeat(40);
+  delete node.github;
+  Object.assign(node, { repo: 'google/gvisor', head: before, workStates: { 'contributor-review': {} },
+    refinement: { before: { head: before }, after: { base, head: after } },
+    contributorReview: { status: 'pending', kind: 'reply', head: before, url: node.url, body: 'Reply text' },
+    additionalReviews: [after, alternate].map(head => ({ status: 'pending', kind: 'amendment', head, baseHead: before,
+      url: `https://github.com/tamird/gvisor/commit/${head}`, body: 'Proposed text' })) });
+  const createElement = () => ({ children: [], append(...items) { this.children.push(...items); },
+    replaceChildren() { this.children = []; }, setAttribute() {}, addEventListener() {} });
+  const details = createElement();
+  context.document = { createElement, getElementById: id => id === 'details' ? details : {} };
+  context.location = new URL('https://tamird.github.io/gvisor/');
+  context.nodeInput = node;
+  vm.runInContext('model={nodes:[nodeInput], edges:[]}; selected=nodeInput.id; drawDetails()', context);
+  const sections = details.children.filter(child => child.className === 'detail-section contributor-decision');
+  assert.equal(sections.length, 3);
+  assert.ok(!sections[0].children.some(child => child.className === 'range-diff'));
+  for (const [section, expected] of [[sections[1], `${before}^! ${base}..${after}`],
+    [sections[2], `--creation-factor=999 ${before}^! ${alternate}^!`]]) {
+    const group = section.children.find(child => child.className === 'range-diff');
+    const prose = section.children.find(child => child.className === 'decision-body');
+    assert.ok(section.children.indexOf(group) < section.children.indexOf(prose));
+    assert.match(group.children[0].textContent, /Recorded PR revision/);
+    assert.equal(group.children[1].value, `git -C ~/code/gvisor range-diff ${expected}`);
+  }
+  assert.ok(!details.children.some(child => child.className === 'range-diff'));
+  node.head = alternate;
+  assert.equal(vm.runInContext('refinementComparison(nodeInput, nodeInput.additionalReviews[0])', context), null);
 });
 
 test('new contributor observation survives an older full snapshot and controls age', () => {
@@ -815,12 +857,12 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
   assert.equal(reasonsFor(node).find(reason => reason.id === 'review-changes').owner, 'user');
   assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), false);
   assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
-    `git range-diff --creation-factor=999 ${node.github.head}^! ${head}^!`);
+    `git -C ~/code/gvisor range-diff --creation-factor=999 ${node.github.head}^! ${head}^!`);
   // An appended follow-up needs comparison against the whole proposed series.
   const seriesBase = '1'.repeat(40);
   node.refinement = { before: { head: node.github.head }, after: { base: seriesBase, head } };
   assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
-    `git range-diff ${node.github.head}^! ${seriesBase}..${head}`);
+    `git -C ~/code/gvisor range-diff ${node.github.head}^! ${seriesBase}..${head}`);
   const groups = vm.runInContext('attentionGroups([nodeInput], "tamird", false, new Set(["review-changes"]))', context);
   assert.equal(groups[0].entries[0].copyURL, `https://tamird.github.io/gvisor/?view=table&reason=review-changes#${encodeURIComponent(node.id)}`);
   node.github.head = 'd'.repeat(40);
@@ -1101,16 +1143,38 @@ test('retained triaged reasons consistently move to external follow-up without r
   assert.ok(!text.includes('Agent work'));
   assert.equal(text.split('https://').length - 1, 3);
   const elements = Object.fromEntries(['show-resolved', 'state-filters', 'all-reasons', 'legacy-state-filter',
-    'attention-agent-summary', 'attention-user-summary', 'attention-maintainer-summary'].map(id => [id, {
+    'attention-agent-summary', 'attention-user-summary', 'attention-maintainer-summary', 'attention-other-summary'].map(id => [id, {
       checked: false, querySelectorAll: () => [], setAttribute() {},
     }]));
   context.document = { getElementById: id => elements[id] };
   vm.runInContext('initializing = false; matchesBase = node => sourcesInput.includes(node); drawStateFilters()', context);
   assert.equal(elements['attention-agent-summary'].textContent, 'Agent work · 0');
   assert.equal(elements['attention-maintainer-summary'].textContent, 'Needs maintainer attention · 3');
+  assert.equal(elements['attention-other-summary'].textContent, 'Other tracked work · 0');
   context.nodeInput = sourceNodes[0];
   assert.equal(vm.runInContext('reasonFilters = new Set(["maintainer-triaged"]); matches(nodeInput)', context), true);
   assert.equal(vm.runInContext('reasonFilters = new Set(["maintainer-import-checks"]); matches(nodeInput)', context), false);
+});
+
+test('every visible item has one queue and secondary reasons remain individually filterable', () => {
+  const context = client(), run = code => vm.runInContext(code, context);
+  const reason = (owner, id) => ({owner, id});
+  const user = reason('user', 'review-changes'), agent = reason('agent', 'author-conflicts'), maintainer = reason('maintainer', 'maintainer-review');
+  context.rows = [[maintainer, agent, user], [maintainer, agent], [maintainer], []].map((reasons, i) => ({
+    id: 'branch:example' + i, type: 'branch', reasons,
+  }));
+  const elements = Object.fromEntries(['all-reasons','legacy-state-filter','state-filters','attention-user-summary','attention-agent-summary','attention-maintainer-summary','attention-other-summary'].map(id => [id, {querySelectorAll: () => [], setAttribute() {}}]));
+  context.document = {getElementById: id => elements[id]};
+  context.location = {href: 'https://example.test/'};
+  run('initializing = false; model = {nodes: rows}; matchesBase = visibleHistory = () => true; attentionReasons = node => node.reasons; drawStateFilters()');
+  assert.equal(elements['all-reasons'].textContent, 'All 4');
+  for (const [i, owner] of ['user', 'agent', 'maintainer', 'other'].entries()) {
+    assert.match(elements['attention-' + owner + '-summary'].textContent, / · 1$/);
+    context.owner = owner;
+    assert.deepEqual([...run('reasonFilters = new Set(["queue-" + owner]); rows.filter(matches).map(n => n.id)')], [context.rows[i].id]);
+  }
+  assert.deepEqual([...run('reasonFilters = new Set(["maintainer-review"]); rows.filter(matches).map(n => n.id)')], context.rows.slice(0,3).map(n => n.id));
+  assert.deepEqual([...run('reasonFilters.clear(); attentionGroups(rows, "tamird").map(g => g.owner).sort()')], ['agent','maintainer','other','user']);
 });
 
 test('new feedback, changed approval and explicit assignments invalidate the reviewed observation', () => {
