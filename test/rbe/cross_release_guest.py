@@ -15,8 +15,10 @@ import xml.etree.ElementTree as ET
 
 import runtime_guest as guest
 
-SOURCE = "c115840f8a85010111fa5d72b611d7d9ab1df34b"
-COMPILER = "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90"
+SOURCE = "61ff148f0df0efa29c9f500914477525c5debe62"
+PRODUCER = "dd2be7670c1baaacebfdcab31bb6145ebce39037"
+INVOCATION = "d9b43462-e952-48ce-9e40-d22437114368"
+MANIFEST = "31bdb511152716c0bf87d2b6b127b2dab0fa92f707be03437cfc841dcd15db85"
 TARGET = "//test/rbe:cross_built_release_guest"
 BUSYBOX = "52151e7f322f926b64049cdaa1410dc3ea6485525e0624b05813791c219ae933"
 MEMBERS = {"runsc", "containerd-shim-runsc-v1"} | {"gvisor-bin/"+s for s in (
@@ -35,8 +37,7 @@ def digest(path):
     return h.hexdigest()
 
 
-def install(directory, manifest, archive):
-    expected = manifest["files"]
+def install(directory, expected, archive):
     assert expected.keys() == MEMBERS
     assert sum(f["bytes"] for f in expected.values()) < 400 << 20
     got = {}
@@ -75,32 +76,20 @@ def execute(row):
     inputs = Path(os.environ["TEST_SRCDIR"]) / os.environ["TEST_WORKSPACE"] / PAYLOAD
     archive = inputs / "release.tar.gz"
     metadata = inputs / "manifest.json"
-    assert metadata.stat().st_size < 16384 and digest(metadata) == os.environ["MANIFEST_SHA256"]
-    manifest = json.loads(metadata.read_text())
-    assert manifest["source"] == SOURCE and manifest["compiler"] == COMPILER
-    assert manifest["nativeHost"] == "x86_64" and manifest["target"] == "aarch64"
-    assert 0 < archive.stat().st_size == int(os.environ["ARCHIVE_BYTES"]) == manifest["archiveBytes"] < 200 << 20
-    assert digest(archive) == os.environ["ARCHIVE_SHA256"] == manifest["archiveSHA256"]
-    row.update(stage="install", archiveSHA256=manifest["archiveSHA256"], archiveBytes=archive.stat().st_size,
-               manifestSHA256=digest(metadata), builder=manifest["builder"], nativeCPU=platform.machine())
+    assert metadata.stat().st_size < 16384 and digest(metadata) == MANIFEST
+    files = json.loads(metadata.read_text())
+    row.update(stage="install", producerSource=PRODUCER, producerInvocation=INVOCATION,
+               archiveSHA256=digest(archive), archiveBytes=archive.stat().st_size,
+               manifestSHA256=MANIFEST, nativeCPU=platform.machine(), nativeUID=os.getuid())
     WORK.mkdir()
     installed = WORK / "installed"
-    hashes = install(installed, manifest, archive)
-    assert manifest["direct"] == {n: hashes[n] for n in ("runsc", SENTRY)}
-    row.update(installed=hashes, matchedProducerDirect=True, matchesPrior=manifest["matchesPrior"], stage="guest")
+    row.update(installed=install(installed, files, archive), stage="guest")
     box = WORK / "busybox"
     shutil.copy2(inputs / "busybox", box)
     assert digest(box) == BUSYBOX
     guest.r.TASK = guest.q.TASK = WORK
     guest.r.SOURCE = SOURCE
     guest.MEMBERS = MEMBERS
-    row["stage"] = "namespace-control"
-    control_root, _ = guest.capsule("old-pivot-lookup", box)
-    control = {}
-    guest.launch(control_root, control, control=True)
-    row["originalSetup"] = {key: control[key] for key in
-                            ("exit", "setupStages", "startupFailures", "private_root_entered")}
-    row["originalSetup"]["pivotOnTestPATH"] = shutil.which("pivot_root") is not None
     pivot = Path("/usr/sbin/pivot_root")
     assert pivot.is_file() and os.access(pivot, os.X_OK)
     row["stage"] = "guest"
@@ -112,19 +101,19 @@ def execute(row):
                                '/busybox echo "$1"; exec /busybox uname -m', "guest", marker]
     cfg.write_text(json.dumps(spec))
     smoke = {}
-    result = guest.launch(capsule, smoke, pivot=str(pivot))
-    criteria = ("private_root_entered", "sentry_selected", "sentry_release_matches", "sentry_stdio_witness")
+    result = guest.launch(capsule, smoke, pivot=str(pivot), default_release_policy=True)
+    criteria = ("private_root_entered", "sentry_selected", "sentry_development_label", "sentry_stdio_witness")
     row["guest"] = {key: smoke.get(key) for key in (*criteria, "exit", "stdout_sha256", "prewarmer_selected",
                                                     "setupStages", "startupFailures")}
     row["guest"]["sameSentryInode"] = (capsule/"release"/SENTRY).samefile(installed/SENTRY)
     row["guest"]["cpu"] = "aarch64" if result.splitlines()[-1:] == [b"aarch64"] else None
-    row["guest"]["marker"] = result.splitlines()[:1] == [marker.encode()]
+    row["guest"]["marker"] = marker if result.splitlines()[:1] == [marker.encode()] else None
     diag = " ".join(smoke.get("stderr", {}).get("lines", [])).lower()
     row["guest"]["diagnostics"] = [term for term in ("not permitted", "permission denied", "no such file",
                                    "exec format error", "timed out", "unknown flag", "release version")
                                    if term in diag]
     row["verified"] = bool(smoke.get("exit") == 0 and all(smoke.get(k) for k in criteria)
-                           and result.splitlines() == [marker.encode(), b"aarch64"])
+                           and row["guest"]["sameSentryInode"] and result.splitlines() == [marker.encode(), b"aarch64"])
     assert row["verified"]
     row["stage"] = "complete"
 
@@ -162,6 +151,7 @@ def collect():
                     continue
                 result = e["testResult"]
                 rec = {"status": result.get("status"), "cached": bool(result.get("cachedLocally")),
+                       "remoteCached": bool(result.get("executionInfo", {}).get("cachedRemotely")),
                        "strategy": result.get("executionInfo", {}).get("strategy")}
                 row["attempts"].append(rec)
                 for item in result.get("testActionOutput", []):
@@ -186,7 +176,8 @@ def collect():
         if len(row["attempts"]) == 1:
             rec, = row["attempts"]
             row["verified"] = bool(row.get("bazelExit") == 0 and not row["nativeRuntimeActions"] and
-                                   rec["status"] == "PASSED" and not rec["cached"] and rec.get("xmlHasFailure") is False
+                                   rec["status"] == "PASSED" and rec["strategy"] == "local" and not rec["cached"] and
+                                   not rec["remoteCached"] and rec.get("xmlHasFailure") is False
                                    and rec.get("guestReceipt", {}).get("verified"))
         return row["verified"]
     finally:

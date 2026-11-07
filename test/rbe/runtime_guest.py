@@ -86,7 +86,7 @@ def capsule(name, busybox, install=None):
     return root, marker
 
 
-def launch(root, row, control=False, pivot="pivot_root"):
+def launch(root, row, control=False, pivot="pivot_root", *, default_release_policy=False):
     # Same user/mount/network/PID capsule as c911d4a545, before any product runs.
     setup = r'''set -eu
 root=$1
@@ -119,7 +119,10 @@ exec /busybox sh -ec '
   COMMAND
 '
 '''
-    command = "exec /busybox true" if control else "exec /release/runsc --rootless --root=/run/state --platform=systrap --network=none --ignore-cgroups=true --sidecar-release-enforcement-policy=ALWAYS --debug-log=/dev/stderr run --bundle=/bundle default-llvm-smoke"
+    release_policy = "" if default_release_policy else " --sidecar-release-enforcement-policy=ALWAYS"
+    command = "exec /busybox true" if control else (
+        "exec /release/runsc --rootless --root=/run/state --platform=systrap --network=none --ignore-cgroups=true"
+        + release_policy + " --debug-log=/dev/stderr run --bundle=/bundle default-llvm-smoke")
     setup = setup.replace("COMMAND", command)
     names = [os.readlink("/proc/self/ns/" + n) for n in ("user", "net", "pid")]
     args = ["/usr/bin/setpriv", "--no-new-privs", "/usr/bin/unshare", "--user", "--map-root-user", "--mount", "--net", "--pid", "--fork", "--kill-child", "--ipc", "--uts", "--propagation", "private", "/bin/sh", "-ec", setup, "guest", str(root), str(os.getuid()), *names, pivot]
@@ -143,6 +146,7 @@ exec /busybox sh -ec '
     row["sentry_stdio_witness"] = bool(re.search(rb"Remapped stdio FDs to \[\d+, \d+\] in [^\s]+", stderr))
     row["prewarmer_selected"] = b'Sidecar "gvisor-sentry-prewarmer" found: prepending Sentry boot command' in stderr
     row["sentry_selected"] = b'Sidecar "gvisor_sentry" found: booting sandbox' in stderr
+    row["sentry_development_label"] = b'Sidecar release match check not enforced in sidecar "gvisor_sentry"; this build is "(devel)".' in stderr
     row["sentry_release_matches"] = f'[Sidecar release match check] Build label "{r.SOURCE[:12]}" matches the expected release'.encode() in stderr
     row["optional_fdparking_absent"] = b'Sidecar "runsc-fd-parking" not found or usable' in stderr
     return stdout

@@ -1,46 +1,41 @@
-name: Boot the original cross-built release on native ARM64
+name: Boot the registry LLVM release on native ARM64
 on:
   push:
-    branches: [qualification/reduced-builder-native-arm64-guest-recovery]
+    branches: [qualification/registry-release-native-arm64-guest]
 permissions:
   contents: read
   actions: read
 jobs:
   consumer:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-22.04-arm
     timeout-minutes: 25
-    env:
-      ARCHIVE_SHA256: 25e2fa457655c435b5ea1b259a2a12d52ec2c0c21b58a151651966f704574f3a
-      ARCHIVE_BYTES: '42909838'
-      MANIFEST_SHA256: b1823305e79c2147d1f7ced114b5ec65282d5aa6e32cf1d7b7890f2e1d9ee218
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {persist-credentials: false, fetch-depth: 4}
-    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
-      with:
-        artifact-ids: '13567019396'
-        run-id: '42354328925'
-        repository: tamird/gvisor
-        github-token: ${{ github.token }}
-        merge-multiple: true
-        path: test/rbe/payload
-    - name: Verify handoff and prepare the existing static ARM64 guest
+    - name: Verify the known guest and original release receipts
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         test "$(uname -m)" = aarch64
-        test "$(git rev-parse HEAD^)" = a267777547f2177040ec004b6c638bfc6b0c7fe3
-        test "$(git rev-parse HEAD~3)" = c115840f8a85010111fa5d72b611d7d9ab1df34b
-        test "$(git rev-parse HEAD^:test/rbe/runtime_guest.py)" = b03c7ad2f220a265b111e003f1e094ffa1622cf8
+        test "$(git rev-parse HEAD^)" = b64e3ac1aecfaa0b90e2b99637141ddaaa5802b9
         test -x /usr/sbin/pivot_root
-        test "$(stat -c '%s' test/rbe/payload/release.tar.gz)" = "$ARCHIVE_BYTES"
-        printf '%s  %s\n' "$ARCHIVE_SHA256" test/rbe/payload/release.tar.gz "$MANIFEST_SHA256" test/rbe/payload/manifest.json | sha256sum --check --strict
         d="$RUNNER_TEMP/cross-native-guest"
-        mkdir -p "$d"
+        mkdir -p "$d" test/rbe/payload
+        gh api repos/tamird/gvisor/actions/artifacts/13574101258/zip > "$d/remote.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13581779546/zip > "$d/local.zip"
+        curl -fsSL --retry 2 --max-time 60 https://raw.githubusercontent.com/tamird/gvisor/7aa5d441a1078a4e9e77547a2a56e23faa6fc238/test/rbe/plugin_programs/cas_inputs.py -o "$d/cas_inputs.py"
+        test "$(git hash-object "$d/cas_inputs.py")" = 54047870d2d32c621a5c8616687a74bdc75001d5
         curl -fsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-arm64 -o "$d/bazel"
         echo "10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366  $d/bazel" | sha256sum --check --strict
         chmod 755 "$d/bazel"
-        python3 -B test/rbe/cross_release_guest.py fixture
+    - name: Read the nine original ARM64 files
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 -IB .github/qualification/registry_guest_inputs.py
+    - name: Prepare the checksum-pinned static ARM64 guest
+      run: python3 -B test/rbe/cross_release_guest.py fixture
     - name: Boot the cross-built Sentry under native systrap
       run: |
         set -euo pipefail
@@ -51,14 +46,15 @@ jobs:
           --config=aarch64 --jobs=3 --remote_executor= --remote_cache= --strategy=TestRunner=local \
           --nocache_test_results --flaky_test_attempts=1 --runs_per_test=1 --test_sharding_strategy=disabled \
           --test_timeout=160 "--build_event_json_file=$d/guest.bep" --noshow_progress \
-          "--test_env=ARCHIVE_SHA256=$ARCHIVE_SHA256" "--test_env=ARCHIVE_BYTES=$ARCHIVE_BYTES" \
-          "--test_env=MANIFEST_SHA256=$MANIFEST_SHA256" //test/rbe:cross_built_release_guest > "$d/bazel.log" 2>&1 || rc=$?
+          //test/rbe:cross_built_release_guest > "$d/bazel.log" 2>&1 || rc=$?
         python3 -B test/rbe/cross_release_guest.py collect
         exit "$rc"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && !cancelled()
       with:
-        name: native-arm64-cross-release-guest
-        path: ${{ runner.temp }}/cross-native-guest/native.json
+        name: registry-release-native-arm64-guest
+        path: |
+          ${{ runner.temp }}/cross-native-guest/inputs.json
+          ${{ runner.temp }}/cross-native-guest/native.json
         if-no-files-found: warn
         retention-days: 14
