@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T02:48:08+00:00",
+    "updatedAt": "2026-11-07T02:57:22+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57224,14 +57224,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/fuse-file-storage",
-      "head": "cf38192044626b448d1bac5ceaab8f1991ccbace",
+      "head": "d55b078cc22a1c9e62987a068e504c67c3aa0060",
       "title": "Remove unused mapping and data trees from FUSE file descriptions",
-      "url": "https://github.com/tamird/gvisor/commit/cf3819204",
+      "url": "https://github.com/tamird/gvisor/commit/d55b078cc",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-07T02:48:08+00:00",
-      "summary": "Regular FUSE file descriptions embed two range trees and their locks. Reads and writes use the server, and file mmap returns ENOSYS. The fork compares allocated bytes per descriptor and checks the saved file offset on both state engines.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T02:57:22+00:00",
+      "summary": "On native AMD64, a regular FUSE file description used 640 allocated bytes before the deletion and 160 afterward (8 samples each). The graph and wire codecs restored the file offset and handle on both revisions. All 21 existing FUSE package tests and the owning analyzer passed on the tested tree.",
       "evidence": [
+        {
+          "label": "Benchstat, both checkpoint formats and original FUSE test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42330901861/artifacts/13558110504"
+        },
         {
           "label": "Standalone source",
           "url": "https://github.com/tamird/gvisor/commit/cf3819204"
@@ -57240,7 +57244,18 @@
           "label": "Native Linux allocation comparison and FUSE package checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42330901861"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d55b078cc22a1c9e62987a068e504c67c3aa0060",
+        "baseHead": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+        "url": "https://github.com/tamird/gvisor/commit/d55b078cc",
+        "title": "Remove unused mapping and data trees from FUSE file descriptions",
+        "body": "Every open regular FUSE file embeds a mapping tree, a file extent tree\nand their locks. Reads and writes go through the FUSE server, and\nConfigureMMap returns ENOSYS. Neither tree is used.\n\nRemoving the two inline tree roots and their locks shrinks the file\ndescription from 592 to 160 bytes on AMD64. Allocating one description\nper operation gives the following allocation sizes.\n\n                  │ 70008149c  │             cf3819204             │\n                  │    B/op    │    B/op     vs base               │\nFUSERegularFile-4   640.0 ± 0%   160.0 ± 0%  -75.00% (p=0.000 n=8)",
+        "summary": "Open the standalone PR? Only the commit message changed after the recorded test run.",
+        "requestedAt": "2026-11-07T02:57:22+00:00"
+      }
     }
   ],
   "edges": [
