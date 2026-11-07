@@ -162,8 +162,9 @@ def _syscall_test(
     if requires_atime and (platform == "native" or not use_tmpfs):
         launch_args.append("--require-atime")
 
-    # The native harness creates UTS and network namespaces for the guest.
-    if platform == "native":
+    # The Linux control and the systrap sandbox both create namespaces.
+    native_worker = platform in ("native", "systrap")
+    if native_worker:
         kwargs.setdefault("exec_properties", namespace_test_exec_properties)
 
     kwargs.update(
@@ -173,7 +174,7 @@ def _syscall_test(
         tags = tags,
     )
     native_test(name = name, out = name, **kwargs)
-    if platform == "native":
+    if native_worker:
         test_architecture_variants(
             name,
             ["amd64", "arm64"],
