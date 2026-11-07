@@ -79,7 +79,7 @@ func testCapabilities(t *testing.T, directfs bool) {
 	stop := testutil.StartReaper()
 	defer stop()
 
-	spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+	spec := idleGuestSpec(t)
 	caps := []string{
 		"CAP_CHOWN",
 		"CAP_SYS_ADMIN",
