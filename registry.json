@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T22:15:59+00:00",
+    "updatedAt": "2026-11-07T22:28:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -61474,6 +61474,48 @@
         "summary": "Open this single-commit gVisor PR to adopt the released c-ares header fix?",
         "body": "The packetimpact POSIX server links gRPC. Its selected c-ares package\nstages two headers with shell copy actions. A worker without a shell\ncannot compile the server.\n\nRequire the registry release that symlinks the configured header and\nprovides ares_build.h as a source file. Set repo_name to None because\ngVisor does not use a c-ares repository name."
       }
+    },
+    {
+      "id": "branch:safecopy-protected-erms-clear",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/safecopy-protected-erms-clear",
+      "head": "d20802a06d38ffc13ffcc17bc175d047eee232d9",
+      "title": "Use REP STOSQ for protected amd64 clears",
+      "url": "https://github.com/tamird/gvisor/commit/d20802a06d38ffc13ffcc17bc175d047eee232d9",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T22:28:57+00:00",
+      "summary": "The four safecopy files in this standalone change are byte-identical to those already on #15181. On AMD64 CPUs with ERMS, large clears use REP STOSQ inside the existing fault handler. The standalone diff contains only safecopy code and tests. If it lands first, those files drop out on the next #15181 rebase. If #15181 lands first, it delivers the same files.\n\nOn one AMD EPYC 9V45 core, clearing a resident 64 MiB shared ext4 mapping took 1,826.2 µs ±4% on stock and 907.1 µs ±5% with ERMS (−50.33%, p=0.000, 12 samples per arm). Both arms passed 71 named fault-handling and unaligned-clear controls. The measured candidate used the same three runtime files and the same test file as this revision. After measurement, the job failed while building benchstat because a package-metadata dependency was missing. The official benchstat tool subsequently processed the 24 original sample rows without rebuilding the workload. No end-to-end overlay allocation timing was collected.",
+      "evidence": [
+        {
+          "label": "Standalone commit and benchstat table",
+          "url": "https://github.com/tamird/gvisor/commit/d20802a06d38ffc13ffcc17bc175d047eee232d9"
+        },
+        {
+          "label": "Existing allocator PR with the same four safecopy files",
+          "url": "https://github.com/google/gvisor/pull/15181"
+        },
+        {
+          "label": "Original 24 samples and per-arm fault-control logs and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42419490460/artifacts/13592623998"
+        },
+        {
+          "label": "Published fork branch",
+          "url": "https://github.com/tamird/gvisor/tree/research/safecopy-protected-erms-clear"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d20802a06d38ffc13ffcc17bc175d047eee232d9",
+        "baseHead": "ed70698a7419c55e9b9537d2fb737067b213bdf4",
+        "url": "https://github.com/tamird/gvisor/commit/d20802a06d38ffc13ffcc17bc175d047eee232d9",
+        "title": "Use REP STOSQ for protected amd64 clears",
+        "requestedAt": "2026-11-07T22:28:57+00:00",
+        "summary": "Open the standalone safecopy PR, or keep these four files in #15181?",
+        "body": "The memory allocator clears recycled disk-backed pages through safecopy\nso it can recover if a mapped write faults. The amd64 clearing loop\nissues sixteen vector stores for every 256 bytes.\n\nUse the Go runtime's 2 KiB threshold to amortize REP STOSQ startup on\nCPUs with ERMS. Keeping the stores inside memclr lets ZeroOut recover\nfrom a fault and report how many bytes it cleared.\n\nBenchmarkZeroDiskBacked64MiB times the protected clear of a resident\n64 MiB shared ext4 mapping. Each sample refills the mapping outside the\ntimer. Twelve alternating samples per build ran on one AMD EPYC 9V45\ncore [1].\n\n     │    stock     │                erms                 │\n     │    sec/op    │   sec/op     vs base                │\n       1826.2µ ± 4%   907.1µ ± 5%  -50.33% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42419490460"
+      }
     }
   ],
   "edges": [
@@ -85119,5 +85161,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T22:15:59+00:00"
+  "updatedAt": "2026-11-07T22:28:57+00:00"
 }
