@@ -61,6 +61,7 @@ def run_case(name, row):
            "HOOK_TASK": str(W), "HOOK_CASE": name, "BUILDKITE_AGENT_ENDPOINT": "http://127.0.0.1:1",
            "BUILDKITE_BUILD_CHECKOUT_PATH": str(SRC), "BUILDKITE_ORGANIZATION_SLUG": "offline",
            "BUILDKITE_PIPELINE_SLUG": "source", "BUILDKITE_PIPELINE_NAME": "Offline",
+           "BUILDKITE_REPO": str(SRC), "BUILDKITE_AGENT_NAME": "offline-agent", "BUILDKITE_PIPELINE_PROVIDER": "github",
            "BUILDKITE_BRANCH": "test/coordinator-qualification", "BUILDKITE_JOB_ID": uid,
            "BUILDKITE_BUILD_ID": uid, "BUILDKITE_LABEL": "Offline hook fixture",
            "BUILDKITE_AGENT_META_DATA_QUEUE": "offline", "BUILDKITE_BIN_PATH": str(allowed)}
@@ -101,6 +102,17 @@ def run_case(name, row):
     row["forbidden"] = sorted({(e["forbidden"], e["operation"]) for e in events if "forbidden" in e})
     row["apt_retries"] = sum(e.get("operation") == "apt update" for e in events)
     row["log_sha256"] = hashlib.sha256(log.encode()).hexdigest()
+    errors = []
+    for line in re.sub(r"\x1b\[[0-9;]*m", "", log).splitlines():
+        if not re.search(r"Missing |Error:|ERROR:|command not found|failed to|Permission denied|No such", line, re.I):
+            continue
+        if any(s in line.lower() for s in ("authorization:", "bearer ", "password=", "token=", "api-key=", "environment:")):
+            continue
+        s = re.sub(r"https?://\S+|/[A-Za-z0-9_./-]+", "<path>", line)
+        s = re.sub(r"[A-Za-z0-9_-]{36,}", "<value>", s)
+        if s[:300] not in errors:
+            errors.append(s[:300])
+    row["diagnostics"] = errors[:5]
     row["observations"] = [token for token in ("COORDINATOR_INTENTIONAL_TEST_FAILURE", "Bazel shutdown failed with status 27",
         "No such file", "command not found", "permission denied", "Permission denied", "must set either",
         "failed to verify", "not a git repository", "unknown flag", "Failed to start", "not found in") if token in log]

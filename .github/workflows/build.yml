@@ -1,7 +1,7 @@
 name: Exercise the remote source coordinator hooks offline
 on:
   push:
-    branches: [qualification/buildkite-remote-source-bootstrap]
+    branches: [qualification/buildkite-source-bootstrap-metadata]
 permissions: {contents: read}
 
 jobs:
@@ -11,16 +11,18 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 4}
+        with: {persist-credentials: false, fetch-depth: 5}
       - name: Bind both hook trees and the official command-line tools
         run: |
           set -euo pipefail
           w="$RUNNER_TEMP/buildkite-source-hooks"
           mkdir -p "$w/results" "$w/legacy-log"
-          test "$(git rev-parse HEAD^)" = 74eeb2c4eb4a456d1ed3db2a609d625df8de18cb
-          test "$(git rev-parse HEAD^^)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/source_hooks' ':!.github/workflows/build.yml'
-          git diff --exit-code HEAD^^ HEAD^ -- . ':!.buildkite/hooks/libhook' ':!.buildkite/hooks/pre-command' ':!.buildkite/hooks/post-command' ':!.buildkite/rbe-source.yaml' ':!.buildkite/scripts/rbe-source'
+          test "$(git rev-parse HEAD^)" = 8f2765e4afd129f0035d9c9820e7ec1f2041ea5e
+          test "$(git rev-parse HEAD^^)" = 74eeb2c4eb4a456d1ed3db2a609d625df8de18cb
+          test "$(git rev-parse HEAD^^^)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/source_hooks/driver.py' ':!.github/workflows/build.yml'
+          git diff --exit-code HEAD^^ HEAD^ -- . ':!.github/qualification/source_hooks' ':!.github/workflows/build.yml'
+          git diff --exit-code HEAD^^^ HEAD^^ -- . ':!.buildkite/hooks/libhook' ':!.buildkite/hooks/pre-command' ':!.buildkite/hooks/post-command' ':!.buildkite/rbe-source.yaml' ':!.buildkite/scripts/rbe-source'
           cp .github/qualification/source_hooks/* "$w/"
           chmod 755 "$w/dispatch.py"
           printf '%s\n' '--- FAIL: TestCoordinatorLegacy (0.01s)' >"$w/legacy-log/test.log"
