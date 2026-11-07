@@ -1907,6 +1907,7 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 
 // sendSegmentFromPacketBuffer sends a new segment containing the given payload,
 // flags and sequence number.
+//
 // +checklocks:s.ep.mu
 func (s *sender) sendSegmentFromPacketBuffer(pkt *stack.PacketBuffer, flags header.TCPFlags, seq seqnum.Value) tcpip.Error {
 	s.LastSendTime = s.ep.stack.Clock().NowMonotonic()
@@ -1916,20 +1917,20 @@ func (s *sender) sendSegmentFromPacketBuffer(pkt *stack.PacketBuffer, flags head
 
 	rcvNxt, rcvWnd := s.ep.rcv.getSendParams()
 
-	// Remember the max sent ack, no acknowledgment is pending.
-	s.MaxSentAck = rcvNxt
-	s.delayedACKTimer.disable()
-	s.gapFilled = false
-
 	// We need to clone the packet because sendRaw takes ownership of pkt,
 	// and pkt could be reprocessed later on (i.e retrasmission).
 	pkt = pkt.Clone()
 	defer pkt.DecRef()
 
-	return s.ep.sendRaw(pkt, flags, seq, rcvNxt, rcvWnd, s.ep.currentSACKBlocks(flags))
+	if err := s.ep.sendRaw(pkt, flags, seq, rcvNxt, rcvWnd, s.ep.currentSACKBlocks(flags)); err != nil {
+		return err
+	}
+	s.ackSent(rcvNxt)
+	return nil
 }
 
 // sendEmptyAck sends an ACK with the given sequence number and SACK blocks.
+//
 // +checklocks:s.ep.mu
 func (s *sender) sendEmptyAck(seq seqnum.Value, sackBlocks []header.SACKBlock) tcpip.Error {
 	s.LastSendTime = s.ep.stack.Clock().NowMonotonic()
@@ -1939,12 +1940,20 @@ func (s *sender) sendEmptyAck(seq seqnum.Value, sackBlocks []header.SACKBlock) t
 
 	rcvNxt, rcvWnd := s.ep.rcv.getSendParams()
 
-	// Remember the max sent ack, no acknowledgment is pending.
-	s.MaxSentAck = rcvNxt
+	if err := s.ep.sendEmptyRaw(header.TCPFlagAck, seq, rcvNxt, rcvWnd, sackBlocks); err != nil {
+		return err
+	}
+	s.ackSent(rcvNxt)
+	return nil
+}
+
+// ackSent records the cumulative ACK accepted by the outgoing route.
+//
+// +checklocks:s.ep.mu
+func (s *sender) ackSent(ack seqnum.Value) {
+	s.MaxSentAck = ack
 	s.delayedACKTimer.disable()
 	s.gapFilled = false
-
-	return s.ep.sendEmptyRaw(header.TCPFlagAck, seq, rcvNxt, rcvWnd, sackBlocks)
 }
 
 // maybeSendOutOfWindowAck sends an ACK if we are not being rate limited

@@ -18,6 +18,8 @@ package tcp_delayed_ack_test
 
 import (
 	"bytes"
+	"io"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -27,9 +29,11 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/test/e2e"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/testing/context"
+	"gvisor.dev/gvisor/pkg/waiter"
 )
 
 const (
@@ -56,15 +60,16 @@ func TestMain(m *testing.M) {
 
 // newConnected returns a connected endpoint, with delayed acknowledgments
 // enabled as requested, and the stack clock.
-func newConnected(t *testing.T, delayedACK bool) (*context.Context, *faketime.ManualClock) {
+func newConnected(t *testing.T, delayedACK bool, linkWriteError func(stack.PacketBufferList) tcpip.Error) (*context.Context, *faketime.ManualClock) {
 	t.Helper()
 
 	clock := faketime.NewManualClock()
 	c := context.NewWithOpts(t, context.Options{
-		EnableV4: true,
-		EnableV6: true,
-		MTU:      e2e.DefaultMTU,
-		Clock:    clock,
+		EnableV4:       true,
+		EnableV6:       true,
+		MTU:            e2e.DefaultMTU,
+		Clock:          clock,
+		LinkWriteError: linkWriteError,
 	})
 
 	opt := tcpip.TCPDelayedACKOption(delayedACK)
@@ -125,13 +130,17 @@ func respond(t *testing.T, c *context.Context, received int, sent int) {
 func newInteractive(t *testing.T) (*context.Context, *faketime.ManualClock) {
 	t.Helper()
 
-	c, clock := newConnected(t, true)
+	return newInteractiveWithLinkError(t, nil)
+}
+
+func newInteractiveWithLinkError(t *testing.T, linkWriteError func(stack.PacketBufferList) tcpip.Error) (*context.Context, *faketime.ManualClock) {
+	t.Helper()
+	c, clock := newConnected(t, true, linkWriteError)
 
 	// not interactive yet, the request is acknowledged immediately
 	sendData(c, 0, 0)
 	checkACK(t, c, payloadSize, 0, header.TCPFlagAck)
 	respond(t, c, payloadSize, 0)
-
 	return c, clock
 }
 
@@ -177,7 +186,7 @@ func TestDelayedACKDisabledByDefault(t *testing.T) {
 }
 
 func TestImmediateACKWhenDisabled(t *testing.T) {
-	c, _ := newConnected(t, false)
+	c, _ := newConnected(t, false, nil)
 	defer c.Cleanup()
 
 	sendData(c, 0, 0)
@@ -190,7 +199,7 @@ func TestImmediateACKWhenDisabled(t *testing.T) {
 }
 
 func TestImmediateACKWhenNotInteractive(t *testing.T) {
-	c, _ := newConnected(t, true)
+	c, _ := newConnected(t, true, nil)
 	defer c.Cleanup()
 
 	// no data sent, as by a bulk transfer receiver
@@ -215,6 +224,64 @@ func TestDelayedACKTimeout(t *testing.T) {
 	// interactive
 	sendData(c, 2*payloadSize, responseSize)
 	checkSegment(t, c, responseSize, 3*payloadSize, 0, header.TCPFlagAck)
+}
+
+func TestDelayedACKAfterRejectedResponse(t *testing.T) {
+	const wantAck = uint32(context.TestInitialSequenceNumber) + 1 + 2*payloadSize
+	var refused atomic.Bool
+	c, clock := newInteractiveWithLinkError(t, func(pkts stack.PacketBufferList) tcpip.Error {
+		for _, pkt := range pkts.AsSlice() {
+			if pkt.TransportProtocolNumber != header.TCPProtocolNumber || pkt.Data().Size() != responseSize {
+				continue
+			}
+			h := header.TCP(pkt.TransportHeader().Slice())
+			if h.AckNumber() == wantAck && h.Flags() == header.TCPFlagAck|header.TCPFlagPsh && refused.CompareAndSwap(false, true) {
+				return &tcpip.ErrNoBufferSpace{}
+			}
+		}
+		return nil
+	})
+	defer c.Cleanup()
+
+	entry, readable := waiter.NewChannelEntry(waiter.ReadableEvents)
+	c.WQ.EventRegister(&entry)
+	defer c.WQ.EventUnregister(&entry)
+	sendData(c, payloadSize, responseSize)
+	select {
+	case <-readable:
+	case <-time.After(time.Second):
+		t.Fatal("request never became readable")
+	}
+	if res, err := c.EP.Read(io.Discard, tcpip.ReadOptions{}); err != nil || res.Count != payloadSize {
+		t.Fatalf("Read = (%d, %v), want (%d, nil)", res.Count, err, payloadSize)
+	}
+
+	clock.Advance(delayedACKTimeout / 2)
+	errors := c.Stack().Stats().TCP.SegmentSendErrors
+	before := errors.Value()
+	if n, err := c.EP.Write(bytes.NewReader(make([]byte, responseSize)), tcpip.WriteOptions{}); err != nil || n != responseSize {
+		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, responseSize)
+	}
+	c.CheckNoPacketTimeout("peer received a packet despite the rejected response", noPacketWait)
+	if got := errors.Value() - before; !refused.Load() || got != 1 {
+		t.Fatalf("refused response = %t, segment send errors = %d, want true, 1", refused.Load(), got)
+	}
+	clock.Advance(delayedACKTimeout/2 - time.Nanosecond)
+	c.CheckNoPacketTimeout("peer received an ACK before the original deadline", noPacketWait)
+	clock.Advance(time.Nanosecond)
+	b := c.GetPacketWithTimeout(time.Second)
+	if b == nil {
+		t.Fatal("missing pure ACK at the original deadline after the rejected response")
+	}
+	defer b.Release()
+	checker.IPv4(t, b,
+		checker.PayloadLen(header.TCPMinimumSize),
+		checker.TCP(
+			checker.DstPort(context.TestPort),
+			checker.TCPFlags(header.TCPFlagAck),
+			checker.TCPAckNum(wantAck),
+		),
+	)
 }
 
 func TestDelayedACKSentWithData(t *testing.T) {

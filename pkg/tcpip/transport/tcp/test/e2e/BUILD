@@ -189,6 +189,7 @@ go_test(
         "//pkg/tcpip/stack",
         "//pkg/tcpip/transport/tcp",
         "//pkg/tcpip/transport/tcp/testing/context",
+        "//pkg/waiter",
     ],
 )
 
