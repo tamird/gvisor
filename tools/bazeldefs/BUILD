@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "string_flag")
+load(":defs.bzl", "bzl_library", "string_flag")
 load(":cc.bzl", "using_llvm")
 
 package(

@@ -5,7 +5,7 @@
 
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_binary")
+load("//tools/bazeldefs:cc.bzl", "cc_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
