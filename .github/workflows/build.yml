@@ -1,35 +1,44 @@
-name: CI
-
-"on":
+name: Check the occupied receive worker with two Ethernet frames
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-ethernet-peer-shutdown]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.event.created && github.run_attempt == 1 && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    container:
+      image: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Select the repository's Bazel
+        shell: bash
+        run: |
+          set -eu
+          mkdir "$RUNNER_TEMP/netgofer-peer-delivery"
+          if [[ $(bazel --version) != "bazel $(cat .bazelversion)" ]]; then
+            cd "$RUNNER_TEMP/netgofer-peer-delivery"
+            curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o bazel
+            echo 'e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel' | sha256sum -c -
+            chmod +x bazel
+            echo "$PWD" >> "$GITHUB_PATH"
+          fi
+      - name: Compare the original and corrected native TestRunners
+        shell: bash
+        run: |
+          set -eu
+          cp .github/qualification/netgofer_peer_delivery.py "$RUNNER_TEMP/netgofer-peer-delivery/check.py"
+          python3 "$RUNNER_TEMP/netgofer-peer-delivery/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: fdbased-ethernet-shutdown
+          path: ${{ runner.temp }}/netgofer-peer-delivery/result.json
+          if-no-files-found: warn
+          retention-days: 7
