@@ -146,11 +146,15 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
         head, old = pr["head"], patch["approvedHead"]
         exports = ", ".join(f"[#{item['number']}](https://github.com/google/gvisor/pull/{item['number']})"
                             for item in disposition["binding"]["imports"] if item["status"] in {"open", "draft"})
+        export_head = next(item["sourceHead"] for item in disposition["binding"]["imports"]
+                           if item["status"] in {"open", "draft"})
+        exported_revision = ("the earlier source revision" if export_head == old
+                             else f"{commit_link(export_head)} as its source")
         body = (f"🚨 {' '.join('@' + login for login in approvers)} please reapprove the current source head "
                 f"{commit_link(head)} so Copybara can regenerate its import. "
                 f"Your earlier approval covered {commit_link(old)} "
                 f"and was submitted {patch['submittedAt']}, before this head was published {pr['headIntroducedAt']}. "
-                f"The open Copybara PR {exports} still names the earlier source revision. "
+                f"The open Copybara PR {exports} still names {exported_revision}. "
                 "The source rebase preserves the reviewed patch, but that comparison and the older export "
                 "do not establish approval of the current head.\n\n"
                 f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} -->")

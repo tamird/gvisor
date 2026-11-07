@@ -213,6 +213,18 @@ class WorkStatesTest(unittest.TestCase):
             with self.subTest(change=change):
                 self.assertEqual(check_purpose({**check, **change}), "validation")
 
+    def test_canceled_check_run_preserves_incomplete_and_failed_results(self):
+        gazelle = {"kind": "check-run", "name": "gazelle", "state": "CANCELLED"}
+        pr = original(checks={"state": "FAILURE", "total": 1, "complete": True, "contexts": [gazelle]})
+        self.assertNotIn("failing", pr_states(pr))
+        self.assertEqual(check_qualifier(pr), "Checks canceled")
+        self.assertFalse(checks_passed(pr))
+        pr["checks"]["complete"] = False
+        self.assertIn("failing", pr_states(pr))
+        gazelle["state"] = "FAILURE"
+        pr["checks"]["complete"] = True
+        self.assertIn("failing", pr_states(pr))
+
     def test_canceled_buildkite_is_neither_failed_validation_nor_success(self):
         canceled = {"kind": "status", "name": "buildkite/pipeline", "state": "FAILURE",
                     "description": "Build #37 canceled by Ryan El Kochta",

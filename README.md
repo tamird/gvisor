@@ -154,8 +154,10 @@ again, up to three attempts. It never merges a snapshot collected against an
 older registry or forces a push. Continued site changes defer collection to
 the next scheduled refresh; authentication and unchanged-head push failures
 remain errors. Scheduled and manual runs share one concurrency group. During active
-owner monitoring, check snapshot age at the same ten-minute cadence; if stale
-and no refresh is active, dispatch this workflow once. This uses the existing
+owner monitoring, check `github-status.json.checkedAt` every ten minutes,
+including while builds run. If it is stale and no refresh is queued or running
+on the fork's default branch, dispatch this workflow once. A registry edit can
+advance `registryDate` between full GitHub observations. This uses the existing
 collector and does not create a second scheduled monitor. The token never reaches
 the browser. A visible tab checks the published data every five minutes; a
 hidden tab waits until it is visible again. A failed request leaves the last
@@ -872,6 +874,11 @@ dismissal, changes request, unresolved thread, incomplete feedback or new extern
 feedback after verification invalidates this path until reconciled. Author
 notices have no effect. Bot feedback also requires reconciliation. Existing
 holds and dependency relationships remain.
+If Copybara still names a revision from before a second rebase, record the
+import number, its source head, and its verified comparison with the approved
+head in `approvedPatch.earlierExport`. The two comparisons must agree on the
+patch ID at the approved head. An open export of the current head takes
+precedence.
 A ready-to-pull label alone supplies neither kind of approval.
 
 Contributor decisions remain separate from GitHub maintainer reviews.

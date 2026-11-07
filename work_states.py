@@ -81,7 +81,9 @@ def is_approval_gate(pr: dict, check: dict) -> bool:
                                      "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"})
 
 
-def is_canceled_buildkite_run(check: dict) -> bool:
+def is_canceled_validation_check(check: dict) -> bool:
+    if check.get("kind") == "check-run" and check.get("state") == "CANCELLED":
+        return True
     build = re.fullmatch(r"Build #(\d+) cancel(?:l)?ed by \S.*", check.get("description") or "")
     name = check.get("name", "")
     return bool(check.get("kind") == "status" and check.get("state") == "FAILURE" and build
@@ -103,11 +105,11 @@ def validation_checks(pr: dict) -> list[dict]:
 
 def check_states(pr: dict) -> set[str]:
     checks = pr.get("checks") or {}
-    states = {item["state"] for item in validation_checks(pr) if not is_canceled_buildkite_run(item)}
+    states = {item["state"] for item in validation_checks(pr) if not is_canceled_validation_check(item)}
     aggregate = checks.get("state")
     administrative = {item["state"] for item in checks.get("contexts", [])
                       if item.get("purpose") == "reviewer-assignment" or is_import_status(item)
-                      or is_approval_gate(pr, item) or is_canceled_buildkite_run(item)
+                      or is_approval_gate(pr, item) or is_canceled_validation_check(item)
                       or is_advisory_check(pr, item)}
     explained_states = administrative | {item["state"] for item in checks.get("supersededContexts", [])}
     explained = complete_checks(pr) and (
@@ -137,7 +139,7 @@ def checks_passed(pr: dict) -> bool:
 def check_qualifier(pr: dict) -> str:
     states = check_states(pr)
     advisory = any(is_advisory_check(pr, item) for item in (pr.get("checks") or {}).get("contexts", []))
-    canceled = any(is_canceled_buildkite_run(item) for item in validation_checks(pr))
+    canceled = any(is_canceled_validation_check(item) for item in validation_checks(pr))
     validation = ("Checks failing" if states & FAILURES else "Checks canceled" if canceled else "Checks pending" if states & PENDING
                   else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
                   and (not advisory or any(item["state"] == "SUCCESS" for item in validation_checks(pr)))
@@ -380,6 +382,25 @@ def amendment_approvers(pr: dict, proof: dict | None) -> list[str]:
                   if (item.get("commit") or {}).get("oid") == proof["approvedHead"]) if history else []
 
 
+def certified_earlier_export(patch: dict) -> dict | None:
+    """Bind an identified export to the current review through a second comparison."""
+    proof = patch.get("earlierExport")
+    if (not isinstance(proof, dict) or type(proof.get("number")) is not int or proof["number"] <= 0
+            or proof.get("comparedHead") != patch["approvedHead"] or proof.get("newPatchId") != patch["oldPatchId"]
+            or not all(isinstance(proof.get(key), str) and re.fullmatch(r"[a-f0-9]{40}", proof[key])
+                       for key in ("sourceHead", "oldPatchId"))
+            or proof["sourceHead"] in {patch["head"], patch["approvedHead"]}
+            or proof.get("method") not in {"stable-patch-id", "reviewed-context-only"}
+            or proof["method"] == "stable-patch-id" and proof["oldPatchId"] != proof["newPatchId"]):
+        return None
+    try:
+        checked = datetime.fromisoformat(proof["verifiedAt"].replace("Z", "+00:00"))
+        latest = datetime.fromisoformat(patch["verifiedAt"].replace("Z", "+00:00"))
+    except (AttributeError, KeyError, ValueError):
+        return None
+    return proof if checked.tzinfo is not None and latest.tzinfo is not None and checked <= latest else None
+
+
 def import_lineage(pr: dict, patch: dict | None = None, amendment: dict | None = None) -> list[dict]:
     """An exact-head successor supersedes attempts at a certified earlier patch."""
     current = [item for item in pr.get("imports", [])
@@ -393,7 +414,12 @@ def import_lineage(pr: dict, patch: dict | None = None, amendment: dict | None =
     earlier = [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
     if current:
         return [item for item in earlier if item["status"] == "merged"] or current
-    return earlier
+    if earlier or not pr.get("importsComplete"):
+        return earlier
+    proof = certified_earlier_export(patch)
+    return [item for item in pr.get("imports", [])
+            if proof and item.get("number") == proof["number"] and item.get("sourceHead") == proof["sourceHead"]
+            and (item["status"] == "closed" or item["status"] == "open" and item.get("mergeable") == "CONFLICTING")]
 
 
 def import_trigger(pr: dict) -> dict:

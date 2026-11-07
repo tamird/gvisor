@@ -13,7 +13,7 @@ from pathlib import Path
 
 from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
-from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, verified_landing, with_maintainer_reviewers
+from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, verified_landing, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -795,6 +795,12 @@ def collect_repository(repo: str, policy: str, previous: dict,
     }
 
 
+def failed_checks(pr: dict) -> list[dict]:
+    return [check for check in (pr.get("checks") or {}).get("contexts", [])
+            if check["state"] in FAILURES and not is_advisory_check(pr, check)
+            and not is_canceled_validation_check(check)]
+
+
 def check_report(prs: list[dict], previous: dict) -> dict:
     """Report service failures without conflating old imports with current source."""
     prior = {(pr.get("repo", REPO), pr["number"]): pr
@@ -814,11 +820,9 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             old = prior.get((repo, pr["number"]), {})
             is_source = pr is source
             checks = pr.get("checks") or {}
-            failed = [check for check in checks.get("contexts", [])
-                      if check["state"] in FAILURES and not is_advisory_check(pr, check)]
+            failed = failed_checks(pr)
             old_checks = old.get("checks") or {}
-            old_failed = [check for check in old_checks.get("contexts", [])
-                          if check["state"] in FAILURES and not is_advisory_check(old, check)]
+            old_failed = failed_checks(old)
             active = source["status"] in {"open", "draft"} and pr["status"] in {"open", "draft"}
             observation = {
                 "repo": repo, "source": source["number"], "sourceHead": source["head"],

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T04:18:10+00:00",
+    "updatedAt": "2026-11-07T04:36:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29948,7 +29948,16 @@
         "verifiedAt": "2026-11-07T04:18:10+00:00",
         "method": "reviewed-context-only",
         "oldPatchId": "9ae7ab1d41f0a6c0295720f441a5325cccdf2b59",
-        "newPatchId": "80c584dee017ead87eedec109c1d42364d601939"
+        "newPatchId": "80c584dee017ead87eedec109c1d42364d601939",
+        "earlierExport": {
+          "number": 16879,
+          "sourceHead": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
+          "comparedHead": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
+          "oldPatchId": "082c29a543fbee7818a03095132be05b251930f9",
+          "newPatchId": "9ae7ab1d41f0a6c0295720f441a5325cccdf2b59",
+          "method": "reviewed-context-only",
+          "verifiedAt": "2026-11-06T18:50:14.461Z"
+        }
       },
       "refinement": {
         "before": {
@@ -38107,13 +38116,29 @@
       "title": "Stage both release architectures with one Bazel target",
       "url": "https://github.com/tamird/gvisor/commit/1824f3ee0",
       "group": "release",
-      "status": "Agent work",
-      "updatedAt": "2026-11-07T04:09:41+00:00",
-      "summary": "One Bazel target stages a Debian package and two tarballs per architecture. The revised publisher enables output-path mapping in the stamped release profile. Ordinary developer builds retain the paths used to find generated source in a debugger.\n\nOn the LLVM integration source, the full bzip2 archive and all nine executables matched byte for byte between direct and transitioned native builds on each architecture. The stamped Debian and zstd packages have a separate qualification in progress.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T04:31:18+00:00",
+      "summary": "One Bazel target stages a Debian package and two tarballs for each architecture. The revision maps generated-source filenames in the stamped release profile so a direct build and the staging target embed the same names. Ordinary developer builds keep their configured source paths.\n\nOn compiler and packaging integration f462794c0, all six stamped packages matched byte for byte. All nine installed executables matched in each format on AMD64 and ARM64. Twelve fresh package actions ran on native workers for their target architecture. The AMD64 CLI printed release-20261106.0. ARM64 verification covered the executable bytes, architecture and embedded stamp.\n\nThe release line tables use bazel-out/cfg/bin for generated files. Reading those files required the matching configured output directory. Debugger source substitution has not been tested.",
       "evidence": [
         {
-          "label": "Stamped Debian, bzip2 and zstd packages through the real release target and direct producers",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42337163017"
+          "label": "Six byte-identical stamped packages, all nine executables per architecture and twelve native package actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42337163017/artifacts/13560294242"
+        },
+        {
+          "label": "Release-profile change since the previous publisher revision",
+          "url": "https://github.com/tamird/gvisor/compare/d58d385a8..1824f3ee0"
+        },
+        {
+          "label": "Compiler and packaging integration used to build the real staging target",
+          "url": "https://github.com/tamird/gvisor/commit/f462794c0"
+        },
+        {
+          "label": "Generated source filename and readability under default and mapped paths",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42311455322/artifacts/13548996933"
+        },
+        {
+          "label": "Generated filenames in the mapped ARM64 runsc line table",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42313400277/artifacts/13549692465"
         },
         {
           "label": "All nine executables and entire bzip2 archive matched between direct and transitioned native builds on each architecture",
@@ -38229,12 +38254,15 @@
         }
       },
       "followup": {
-        "owner": "Build and release",
-        "disposition": "Qualifying the revised stamped release profile",
-        "observedAt": "2026-11-07T04:09:41+00:00",
+        "owner": "Contributor",
+        "disposition": "Contributor review requested",
+        "observedAt": "2026-11-07T04:31:18+00:00",
         "sourceHead": "1824f3ee0a9e500491535331312ac08fe8da5004",
-        "nextAction": "Check the actual release-artifacts target against all three direct package producers on both native architectures, including version, contents and worker identity. Ask for review of the revised publisher when these results are available.",
+        "nextAction": "Review the release-only path mapping. Open the revised publisher after the source-export version change, the Buildkite Bazelisk hook in #16904 and the declared LLVM compiler land.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42337163017/artifacts/13560294242",
+          "https://github.com/tamird/gvisor/compare/d58d385a8..1824f3ee0",
+          "https://github.com/tamird/gvisor/commit/f462794c0",
           "https://github.com/tamird/gvisor/compare/a303ec933...d58d385a8",
           "https://github.com/tamird/gvisor/compare/2c0b9071a..d58d385a8",
           "https://github.com/tamird/gvisor/actions/runs/41192639560/artifacts/13039296853",
@@ -38256,7 +38284,18 @@
           "at": "2026-11-07T04:09:41+00:00",
           "outcome": "superseded"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "1824f3ee0a9e500491535331312ac08fe8da5004",
+        "baseHead": "a303ec9336e4844e589cd35c891301856369038a",
+        "url": "https://github.com/tamird/gvisor/commit/1824f3ee0",
+        "title": "Stage both release architectures with Bazel",
+        "body": "The release job builds each architecture separately, copies files into\na staging directory, then extracts the compressed tarballs to identify\nthe architecture again when signing them.\n\nBuild the two Debian packages and four tarballs with one command:\nbazel build //debian:release-artifacts. Keep each architecture's files\ntogether so the publisher can select the destination from the path.\nRequire all six files before signing. A caller with a prebuilt set\ncan sign it without starting Bazel.\n\nMap output paths in the release_version profile. Go records generated\nsource filenames in the executable, and the architecture transition\notherwise adds a configuration suffix that a direct build does not use.\nKeep physical generated-source paths available to ordinary debug builds.",
+        "summary": "Open the revised publisher after its version, Bazelisk and LLVM prerequisites land? The revision enables path mapping for stamped releases. All six direct and staged archives matched. Debugging generated files in a release build requires mapping the recorded path to its configured output directory.",
+        "requestedAt": "2026-11-07T04:31:18+00:00"
+      }
     },
     {
       "id": "branch:overlay-close-lifetime",
@@ -51961,6 +52000,62 @@
       }
     },
     {
+      "id": "pr:16957",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16957,
+      "ref": "proposal/veth-port-mtu",
+      "head": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+      "title": "Keep the MTU on each veth endpoint",
+      "url": "https://github.com/google/gvisor/pull/16957",
+      "group": "runtime",
+      "summary": "The amendment moves the peer MTU assertions from shell parsing into the existing VethAdd syscall test. It restores the original iproute2 smoke test and keeps the Go checkpoint test.",
+      "evidence": [
+        {
+          "label": "Proposed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/fea7e15b6"
+        },
+        {
+          "label": "Linux and Sentry netlink readbacks, Go checkpoint case and tuntap build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42336953125/artifacts/13560608253"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-11-07T04:35:44+00:00",
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+        "observedAt": "2026-11-07T04:35:44+00:00",
+        "disposition": "The netlink test passed on Linux and the revised Sentry. Both peer assertions failed on stock Sentry.",
+        "nextAction": "Review the test amendment before updating #16957.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fea7e15b6",
+          "https://github.com/tamird/gvisor/actions/runs/42336953125/artifacts/13560608253"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+          "base": "400bd2c81dcc0349033a8218bdf38e239d256678"
+        },
+        "after": {
+          "head": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
+          "base": "400bd2c81dcc0349033a8218bdf38e239d256678"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
+        "baseHead": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+        "url": "https://github.com/tamird/gvisor/commit/fea7e15b6",
+        "title": "Keep the MTU on each veth endpoint",
+        "requestedAt": "2026-11-07T04:35:44+00:00",
+        "summary": "Publish the netlink test amendment to #16957?\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 400bd2c81..dfbc2ca70 400bd2c81..fea7e15b6",
+        "body": "Linux keeps the MTU on each veth endpoint. NetlinkRouteTest.VethAdd sets each port in turn and reads both back with RTM_GETLINK. On stock Sentry, setting veth1 changed its peer from 1486 to 2986, then setting veth2 changed its peer from 2986 to 1446. Linux and the revised Sentry preserved the peer’s MTU after both writes. The test checks port independence across the two writes. The existing Go TestMTU separately verifies both values survive checkpoint and restore."
+      }
+    },
+    {
       "id": "branch:veth-port-mtu",
       "type": "branch",
       "repo": "tamird/gvisor",
@@ -55832,12 +55927,24 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T04:09:41+00:00",
-      "summary": "One Buildkite step calls the two ordinary Bazel profiles over the same package list. Each architecture selects 364 test owners and 374 shards. The dedicated statefile owner ran both permission checks on native AMD64 and ARM64 as UID 65534. The same checks passed under an ordinary Linux Bazel sandbox as UID 1001.\n\nThe separate single-invocation experiment at a39f38e89 executed 724 shards. AMD64 passed 373/373 and ARM64 passed 350/351. Linux 5.10 reported inconsistent synchronized-filter counts in five Sentry checks. On Linux 6.8 all ten Sentry and gofer posture checks passed in one replay, while the enclosing test failed. The mixed selection omitted 22 ARM64 shards and some ARM64 build products. Both permission assertions skipped on both CPUs.",
+      "updatedAt": "2026-11-07T04:36:17+00:00",
+      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.",
       "evidence": [
         {
-          "label": "Full rendered Buildkite step on the consolidated compiler, one fork job for both native profiles",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42337131999"
+          "label": "Complete native results, all 748 test shards and the named permission checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42337131999/artifacts/13560359842"
+        },
+        {
+          "label": "AMD64 BuildBuddy invocation including the netgofer timeout",
+          "url": "https://app.buildbuddy.io/invocation/e4a4dd1a-49f3-48dc-9f88-b73472a088fd"
+        },
+        {
+          "label": "ARM64 BuildBuddy invocation including the five Sentry posture failures",
+          "url": "https://app.buildbuddy.io/invocation/a85b5e95-1f11-4398-b60e-52856fda9ff7"
+        },
+        {
+          "label": "Linux 5.10 stable fix for synchronized filter accounting",
+          "url": "https://github.com/gregkh/linux/commit/561d13128"
         },
         {
           "label": "Downstream Gazelle query failed identically before and after the test setting",
@@ -56146,7 +56253,7 @@
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
         "observedAt": "2026-11-07T04:08:00+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Execute the rendered Buildkite command over both ordinary profiles on the consolidated compiler. Check each shard and the permission-test XML. Qualify the full ARM64 posture owner on a worker with the Linux synchronized-filter accounting fix.",
+        "nextAction": "Inspect the original AMD64 netgofer timeout and qualify the full ARM64 cmd owner. Keep both failing owners in the source presubmit.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
@@ -57740,6 +57847,40 @@
         {
           "label": "Per-MiB CPU profiles",
           "url": "https://github.com/tamird/gvisor/actions/runs/42331342422/artifacts/13557344826"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcp-receiver-sack-history-lock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-receiver-sack-history-lock",
+      "head": "6adb2b8822c12eef7653344809794a4d1e6f4000",
+      "title": "Check the endpoint lock on receive-side SACK blocks",
+      "url": "https://github.com/tamird/gvisor/commit/6adb2b882",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T04:31:18+00:00",
+      "summary": "The receiver updates its selective acknowledgment (SACK) blocks under the endpoint mutex. The ACK sender borrows the blocks and the TCP probe copies them under that same mutex. Annotating Endpoint.sack makes checklocks enforce the field access.\n\nA native AMD64 Linux job ran the TCP analyzer for AMD64 and ARM64. Both passed on the proposed source. Removing the lock precondition from currentSACKBlocks produced zero findings on its parent and two unlocked field reads per architecture with the annotation.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "6adb2b8822c12eef7653344809794a4d1e6f4000",
+        "baseHead": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
+        "url": "https://github.com/tamird/gvisor/commit/6adb2b882",
+        "title": "Check the endpoint lock on receive-side SACK blocks",
+        "body": "The receiver updates the SACK blocks under the endpoint mutex. The ACK\npath added in c451fa7d6 borrows those blocks and the TCP probe copies\nthem under the same lock. The receive-queue mutex protects buffer\naccounting and is released before the receiver updates the SACK list.\n\nAnnotate the field so checklocks can also verify the lock when a new\ncaller accesses the blocks directly.",
+        "summary": "Open the independent SACK field annotation? Removing the lock precondition exposed both unlocked reads in currentSACKBlocks on AMD64 and ARM64. The same control passed silently on the parent.",
+        "requestedAt": "2026-11-07T04:31:18+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Pristine source and both controls, with original TCP analyzer findings for AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42337896550/artifacts/13560273534"
+        },
+        {
+          "label": "ACK path that borrows the receiver’s SACK blocks",
+          "url": "https://github.com/google/gvisor/commit/c451fa7d6"
         }
       ]
     }

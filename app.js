@@ -187,18 +187,20 @@ function isApprovalGate(pr, check) {
     && check.description === "Check requires approving review"
     && ["https://app.buildbuddy.io", "https://app.buildbuddy.io/", "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"].includes(check.url);
 }
-function canceledBuildkiteRun(check) {
+function canceledValidationCheck(check) {
+  if (check.kind === "check-run" && check.state === "CANCELLED") return true;
   const build = /^Build #(\d+) cancel(?:l)?ed by \S.*$/.exec(check.description || "");
   return check.kind === "status" && check.state === "FAILURE" && build
     && check.name.startsWith("buildkite/")
     && check.url === `https://buildkite.com/gvisor/${check.name.slice("buildkite/".length)}/builds/${build[1]}`;
 }
 function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check) && !isApprovalGate(pr, check) && !isAdvisoryCheck(pr, check)); }
+function failedValidationChecks(pr) { return validationChecks(pr).filter(check => FAILURE_STATES.has(check.state) && !canceledValidationCheck(check)); }
 function codeCheckStates(pr) {
-  const result = new Set(validationChecks(pr).filter(check => !canceledBuildkiteRun(check)).map(check => check.state));
+  const result = new Set(validationChecks(pr).filter(check => !canceledValidationCheck(check)).map(check => check.state));
   const aggregate = pr?.checks?.state;
   const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check) || isApprovalGate(pr, check) || isAdvisoryCheck(pr, check));
-  const explainedChecks = [...administrative, ...validationChecks(pr).filter(canceledBuildkiteRun), ...(pr?.checks?.supersededContexts || [])];
+  const explainedChecks = [...administrative, ...validationChecks(pr).filter(canceledValidationCheck), ...(pr?.checks?.supersededContexts || [])];
   const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
   const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && explainedChecks.some(check => FAILURE_STATES.has(check.state))
     || pending.has(aggregate) && explainedChecks.some(check => pending.has(check.state)));
@@ -209,7 +211,7 @@ function checkInfo(pr) {
   const checks = pr?.checks;
   if (!checks || !checks.total) return { text: "Unavailable", tone: "unknown", glyph: "?", detail: "No visible check rollup for this head; no test result is implied." };
   const states = codeCheckStates(pr), substantive = validationChecks(pr);
-  const canceled = substantive.filter(canceledBuildkiteRun);
+  const canceled = substantive.filter(canceledValidationCheck);
   const advisory = checks.contexts.filter(check => isAdvisoryCheck(pr, check));
   const approvalGates = checks.contexts.filter(check => isApprovalGate(pr, check));
   const failed = [...states].some(state => FAILURE_STATES.has(state));
@@ -224,7 +226,7 @@ function checkInfo(pr) {
     : approvalGates.length ? { text: "Approval required", tone: "pending", glyph: "○" }
       : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
       : { text: advisory.length && !substantive.length ? "Advisory" : "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "Buildkite reports a canceled run; its raw FAILURE status does not establish a failing test or CI configuration problem. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}${advisory.length ? "First Pass is advisory; its result is not qualification evidence. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "A validation run was canceled. Its job details are available below. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}${advisory.length ? "First Pass is advisory; its result is not qualification evidence. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
 function checksPassed(pr) {
@@ -461,6 +463,17 @@ function amendmentApprovers(pr, proof) {
     && (item.state === "APPROVED" || item.state === "DISMISSED" && dismissed.get(item.id) === "APPROVED"))
     .map(item => item.author.login).sort();
 }
+function certifiedEarlierExport(patch) {
+  const proof = patch?.earlierExport;
+  return proof && Number.isSafeInteger(proof.number) && proof.number > 0
+    && proof.comparedHead === patch.approvedHead && proof.newPatchId === patch.oldPatchId
+    && [proof.sourceHead, proof.oldPatchId].every(value => typeof value === "string" && /^[a-f0-9]{40}$/.test(value))
+    && ![patch.head, patch.approvedHead].includes(proof.sourceHead)
+    && ["stable-patch-id", "reviewed-context-only"].includes(proof.method)
+    && (proof.method !== "stable-patch-id" || proof.oldPatchId === proof.newPatchId)
+    && typeof proof.verifiedAt === "string" && /(?:Z|[+-]\d{2}:\d{2})$/.test(proof.verifiedAt)
+    && Date.parse(proof.verifiedAt) <= Date.parse(patch.verifiedAt) ? proof : null;
+}
 function importLineage(node, includeAmendment = false) {
   const pr = node.github, current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
   const patch = approvedPatch(node);
@@ -468,9 +481,14 @@ function importLineage(node, includeAmendment = false) {
   if (amendment && !patch) return current.length ? current : pr.imports.filter(item => item.sourceHead === amendment.approvedHead);
   if (current.some(item => item.status !== "closed") || !patch) return current;
   const earlier = pr.imports.filter(item => item.sourceHead === patch.approvedHead);
-  if (!current.length) return earlier;
-  const merged = earlier.filter(item => item.status === "merged");
-  return merged.length ? merged : current;
+  if (current.length) {
+    const merged = earlier.filter(item => item.status === "merged");
+    return merged.length ? merged : current;
+  }
+  if (earlier.length || !pr.importsComplete) return earlier;
+  const proof = certifiedEarlierExport(patch);
+  return pr.imports.filter(item => proof && item.number === proof.number && item.sourceHead === proof.sourceHead
+    && (item.status === "closed" || item.status === "open" && item.mergeable === "CONFLICTING"));
 }
 function publicImportDisposition(node) {
   const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);
@@ -550,8 +568,8 @@ function attentionReasons(node, owner) {
   const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
   const sourceRecovery = sourceAuthenticationRecovery(node);
-  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state));
-  const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id) && !canceledBuildkiteRun(check));
+  const publicFailures = failedValidationChecks(pr);
+  const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id));
   if (!landed && authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
   if (!landed && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
@@ -602,17 +620,17 @@ function attentionReasons(node, owner) {
   retryDetails.push(...[...recoveries.values()].filter(Boolean).map(item => item.detail));
   const cancellationDetails = [];
   for (const item of [pr, ...active]) {
-    for (const check of validationChecks(item).filter(canceledBuildkiteRun)) {
-      cancellationDetails.push(`${item === pr ? "Source" : "Import"} #${item.number}: ${check.description}. Review the cancellation at ${check.url} before scheduling another run.`);
+    for (const check of validationChecks(item).filter(canceledValidationCheck)) {
+      const message = check.kind === "check-run" ? `${check.name} was canceled` : check.description;
+      cancellationDetails.push(`${item === pr ? "Source" : "Import"} #${item.number}: ${message}. Review the cancellation at ${check.url} before scheduling another run.`);
     }
   }
   if (retryDetails.length) add("maintainer-ci-retry", retryDetails.join(" "), sourceRecovery && retryDetails.length === 1 ? "Maintainer CI configuration" : undefined);
   if (cancellationDetails.length) add("maintainer-ci-canceled", cancellationDetails.join(" "));
-  const publicImportFailures = failed.flatMap(item => validationChecks(item)
-    .filter(check => FAILURE_STATES.has(check.state)
-      && !recoveries.get(item.number)?.ids.has(check.id) && !canceledBuildkiteRun(check))
+  const publicImportFailures = failed.flatMap(item => failedValidationChecks(item)
+    .filter(check => !recoveries.get(item.number)?.ids.has(check.id))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state} (${safeURL(check.url) || "direct link not recorded"})`));
-  for (const item of failed) if (!completeChecks(item) || !validationChecks(item).some(check => FAILURE_STATES.has(check.state)))
+  for (const item of failed) if (!completeChecks(item) || !failedValidationChecks(item).length)
     publicImportFailures.push(`Import #${item.number}: failure evidence is incomplete; refresh and investigate its public check records`);
   const internalImportFailures = active.flatMap(item => (item.checks?.contexts || [])
     .filter(check => isImportStatus(check) && FAILURE_STATES.has(check.state))
@@ -1083,7 +1101,7 @@ function appendStates(parent, node, detail = false) {
     if (detail) for (const source of failures) {
       const row = element("div", "state-failure-links");
       row.append(link(source.failureLabel, source.url), document.createTextNode(": "));
-      for (const check of validationChecks(source)) if (FAILURE_STATES.has(check.state)) {
+      for (const check of failedValidationChecks(source)) {
         row.append(check.url ? link(check.name, check.url) : element("span", "", `${check.name} (no public log URL)`), document.createTextNode("; "));
       }
       parent.append(row);
@@ -2002,6 +2020,7 @@ function validateRegistry(candidate) {
         || ![patch.head, patch.approvedHead, patch.oldPatchId, patch.newPatchId].every(value => typeof value === "string" && /^[a-f0-9]{40}$/.test(value))
         || patch.head === patch.approvedHead || !["stable-patch-id", "reviewed-context-only"].includes(patch.method)
         || patch.method === "stable-patch-id" && patch.oldPatchId !== patch.newPatchId
+        || patch.earlierExport !== undefined && !certifiedEarlierExport(patch)
         || ![patch.reviewId, patch.reviewer].every(value => typeof value === "string" && value.trim())
         || ![patch.submittedAt, patch.verifiedAt].every(value => typeof value === "string" && /(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value)))
         || Date.parse(patch.submittedAt) > Date.parse(patch.verifiedAt) || Date.parse(patch.verifiedAt) > Date.parse(candidate.meta.updatedAt)))

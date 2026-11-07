@@ -310,6 +310,28 @@ print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedP
   }
 });
 
+test('the older certified export and current review stay distinct after two rebases', () => {
+  const context = client();
+  const row = JSON.parse(readFileSync(new URL('./import-trigger-fixtures.json', import.meta.url))).twoRebaseExport;
+  const node = { ...row.node, github: row.pr };
+  context.nodeInput = node;
+  const classify = () => {
+    const script = `import json, sys
+from work_states import public_import_disposition
+row = json.load(sys.stdin)
+print(json.dumps(public_import_disposition(row["pr"], row["node"]["approvedPatch"])))`;
+    row.pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', script], {
+      cwd: new URL('.', import.meta.url), input: JSON.stringify(row), encoding: 'utf8',
+    }));
+    return JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+  };
+  const original = classify().find(reason => reason.id === 'maintainer-reapproval');
+  for (const value of ['f7b488717', '2595b7928', '#16879']) assert.ok(original.detail.includes(value));
+  assert.equal(vm.runInContext('publicImportDisposition(nodeInput).binding.approvedHead', context), row.node.approvedPatch.approvedHead);
+  row.node.approvedPatch.earlierExport.comparedHead = 'a'.repeat(40);
+  assert.ok(!classify().some(reason => reason.id === 'maintainer-reapproval'));
+});
+
 test('reviewed content amendments retain their older export without certifying equivalence', () => {
   const context = client();
   const fixture = JSON.parse(readFileSync(new URL('./import-trigger-fixtures.json', import.meta.url)));
@@ -1589,6 +1611,26 @@ test('canceled Buildkite runs remain distinct from CI configuration and failed t
   canceled.description = 'Build #50 failed (33 minutes, 41 seconds)';
   assert.ok(idsFor(node).includes('author-public-checks'));
   assert.ok(!idsFor(node).includes('maintainer-ci-canceled'));
+});
+
+test('a canceled Actions check names the job without reporting a source failure', () => {
+  const node = attentionNode(17050);
+  const canceled = { kind: 'check-run', name: 'gazelle', state: 'CANCELLED',
+    url: 'https://github.com/google/gvisor/actions/runs/42095485329/job/127484266262' };
+  node.github.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [canceled] };
+  const detail = reasonsFor(node).find(reason => reason.id === 'maintainer-ci-canceled').detail;
+  assert.ok(detail.includes('gazelle was canceled') && detail.includes(canceled.url));
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+  const context = client(); context.nodeInput = node;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Canceled');
+  assert.equal(vm.runInContext('checksPassed(nodeInput.github)', context), false);
+  canceled.state = 'TIMED_OUT';
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  canceled.state = 'CANCELLED';
+  node.github.checks.contexts.push({kind: 'check-run', name: 'lint', state: 'FAILURE'});
+  node.github.checks.total++;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Failure');
+  assert.equal(vm.runInContext('failedValidationChecks(nodeInput.github).map(check => check.name).join()', context), 'lint');
 });
 
 function deniedImportRetry() {

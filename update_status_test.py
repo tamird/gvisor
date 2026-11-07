@@ -1281,6 +1281,21 @@ class CheckReportTest(unittest.TestCase):
         source["repo"] = "other/gvisor"
         self.assertIn(first_pass, updater.check_report([source], {})["checkFailures"][0]["failedChecks"])
 
+    def test_canceled_job_is_excluded_from_the_failure_handoff(self) -> None:
+        source = retained(raw_pr(17050))
+        canceled = {"kind": "check-run", "name": "gazelle", "state": "CANCELLED"}
+        source["checks"] = {"state": "FAILURE", "total": 1, "complete": True, "contexts": [canceled]}
+        previous = {"prs": [copy.deepcopy(source)]}
+        source["head"] = "b" * 40
+        report = updater.check_report([source], previous)
+        self.assertEqual(report["checkFailures"], [])
+        self.assertEqual(report["changedChecks"], [])
+        failure = {"kind": "check-run", "name": "lint", "state": "FAILURE"}
+        source["checks"].update(total=2, contexts=[canceled, failure])
+        report = updater.check_report([source], previous)
+        self.assertEqual(report["checkFailures"][0]["failedChecks"], [failure])
+        self.assertEqual(report["changedChecks"][0]["failedChecks"], [failure])
+
     def test_terminal_source_keeps_failed_import_history_out_of_current_attention(self) -> None:
         source = retained(raw_pr(3))
         old_import = linked(imported(103, 3), 3)
@@ -1389,7 +1404,8 @@ class ProviderStatusTest(unittest.TestCase):
         self.assertEqual([check["id"] for check in result["checks"]["contexts"]],
                          ["old", "workflow", "app", "same-attempt"])
         self.assertEqual(result["checks"]["supersededContexts"], [])
-        self.assertIn("CANCELLED", updater.check_states(result))
+        self.assertEqual(result["checks"]["contexts"][0]["state"], "CANCELLED")
+        self.assertFalse(checks_passed(result))
 
     def test_missing_provider_identity_does_not_supersede_checks(self) -> None:
         for field in ("app", "workflowRun"):
@@ -1418,6 +1434,57 @@ class ProviderStatusTest(unittest.TestCase):
 
 
 class ReapprovalReminderTest(unittest.TestCase):
+
+    def test_twice_rebased_export_reminder(self):
+        row = json.loads(Path(__file__).with_name("import-trigger-fixtures.json").read_text())["twoRebaseExport"]
+        pr, node = row["pr"], row["node"]
+        patch = node["approvedPatch"]
+        export = pr["imports"][0]
+        monday = datetime.fromisoformat("2026-11-09T18:00:00+00:00")
+
+        def plan(at=monday):
+            return updater.reminder_plan(pr, node, at, "tamird", frozenset({"carzh", "zkoopmans"}))
+
+        active = plan()
+        self.assertEqual(active["status"], "due", active.get("reason"))
+        self.assertEqual((active["action"], active["approvers"]), ("reapprove-amendment", ["carzh"]))
+        self.assertEqual(active["approvedHead"], patch["approvedHead"])
+        self.assert_commit_links(active, pr["head"], patch["approvedHead"], export["sourceHead"])
+        self.assertIn("#16879", active["body"])
+        with mock.patch.dict(pr["reviewDismissals"], {"complete": False}):
+            self.assertEqual(plan()["reason"], "incomplete-review-or-comment-history")
+        weekend = plan(datetime.fromisoformat(row["checkedAt"]))
+        self.assertEqual((weekend["status"], weekend["reason"]), ("deferred", "outside-pacific-business-hours"))
+        for key, value in (("number", 16878), ("sourceHead", "a"*40), ("comparedHead", "b"*40),
+                           ("newPatchId", "c"*40), ("method", "stable-patch-id")):
+            with self.subTest(key=key), mock.patch.dict(patch["earlierExport"], {key: value}):
+                self.assertFalse(plan()["publicImportDisposition"]["binding"]["imports"])
+                self.assertNotEqual(plan()["status"], "due")
+        with mock.patch.dict(pr, {"mergeable": "CONFLICTING"}):
+            self.assertFalse(plan()["publicImportDisposition"]["binding"]["eligible"])
+            self.assertNotEqual(plan()["status"], "due")
+        with mock.patch.dict(export, {"mergeable": "MERGEABLE"}):
+            self.assertNotEqual(plan()["status"], "due")
+        fresh = dict(export, number=17000, matchesSourceHead=True, sourceHead=pr["head"], mergeable="MERGEABLE")
+        with mock.patch.dict(pr, {"imports": [export, fresh]}):
+            self.assertEqual(plan()["publicImportDisposition"]["scope"], "exact")
+            self.assertNotEqual(plan()["status"], "due")
+        approval = next(r for r in pr["feedback"]["items"] if r["id"] == patch["reviewId"])
+        fresh_review = dict(approval, id="fresh", commit={"oid": pr["head"]}, submittedAt=monday.isoformat(),
+                            updatedAt=monday.isoformat())
+        with mock.patch.dict(pr["feedback"], {"items": [*pr["feedback"]["items"], fresh_review]}):
+            self.assertTrue(plan()["publicImportDisposition"]["binding"]["currentApproval"])
+            self.assertNotEqual(plan()["status"], "due")
+        with mock.patch.dict(export, {"status": "closed"}):
+            self.assertEqual(plan()["reason"], "import-trigger-present-awaiting-replacement")
+            removal = {"__typename": "UnlabeledEvent", "id": "removed", "label": {"name": "ready to pull"},
+                       "actor": {"login": "EtiennePerot"}, "createdAt": "2026-11-07T04:22:00Z"}
+            history = [*pr["labelHistory"]["items"], removal]
+            with mock.patch.dict(pr, {"labels": [], "labelHistory": {"complete": True, "items": history}}):
+                closed = plan()
+                self.assertEqual((closed["status"], closed.get("action")), ("due", "restore-import-label"), closed.get("reason"))
+                self.assertIn("#16879", closed["body"])
+
     def setUp(self) -> None:
         self.maintainers = frozenset({"maintainer", "another-maintainer", "nybidari", "aaltinaydev"})
         self.now = datetime(2026, 10, 22, 16, 30, tzinfo=timezone.utc)
