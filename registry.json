@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T05:02:41+00:00",
+    "updatedAt": "2026-11-07T05:12:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55946,9 +55946,17 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T05:02:41+00:00",
-      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.\n\nBoth build targets omitted on ARM64 explicitly require x86_64. On a hosted ARM64 Linux 6.8 worker, the full cmd test failed during container startup in no_directfs with ECONNRESET. Neither of that mode's posture checks ran. The other four modes passed both checks; the record contains 167 passes, two failures including the parent, and two skips.\n\nThe original AMD64 log ends in TestRunProxyModeWithSeccomp. In five fresh AMD64 runs, four passed. One run hit the diagnostic Go timeout while the parent waited for its child after completing the echo and closing the link. The parent stack does not identify which operation kept the child alive.",
+      "updatedAt": "2026-11-07T05:12:09+00:00",
+      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.\n\nBoth build targets omitted on ARM64 explicitly require x86_64. On a hosted ARM64 Linux 6.8 worker, the full cmd test failed during container startup in no_directfs with ECONNRESET. Neither of that mode's posture checks ran. The other four modes passed both checks; the record contains 167 passes, two failures including the parent, and two skips.\n\nThe original AMD64 log ends in TestRunProxyModeWithSeccomp. In five fresh AMD64 runs, four passed. One run hit the diagnostic Go timeout while the parent waited for its child after completing the echo and closing the link. The parent stack does not identify which operation kept the child alive.\n\nWith the queue-drain fix on the same source, all 13 netgofer cases passed in five fresh native AMD64 runs. A separate one-worker control delivered the final frame behind 32 empty records in 16 repetitions. The socket queue and the receive workers have separate lifetimes: a worker can still have a callback pending when the NIC detaches.",
       "evidence": [
+        {
+          "label": "Five corrected AMD64 netgofer runs and 16 repetitions of the final-frame and ioctl controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42341484734/artifacts/13561494575"
+        },
+        {
+          "label": "Queue-drain fix applied to the full-presubmit source",
+          "url": "https://github.com/tamird/gvisor/commit/fbad38ea6"
+        },
         {
           "label": "Original named netgofer case and five fresh AMD64 runs, including the parent wait stack",
           "url": "https://github.com/tamird/gvisor/actions/runs/42340718132/artifacts/13560918444"
@@ -56284,7 +56292,7 @@
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
         "observedAt": "2026-11-07T04:08:00+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Compare the netgofer child wait with the prior queue-drain investigation on the current source. Diagnose the hosted ARM64 no_directfs startup reset separately from the Linux 5.10 filter-count mismatch.",
+        "nextAction": "Test final-frame delivery through multi-worker teardown and include the regression with the queue-drain fix. Diagnose the hosted ARM64 no_directfs startup reset separately from the older worker's filter-count mismatch.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
