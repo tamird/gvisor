@@ -102,6 +102,7 @@ go_test(
     srcs = [
         "bootposture_test.go",
         "capability_test.go",
+        "checkpoint_format_compat_test.go",
         "delete_test.go",
         "do_test.go",
         "exec_test.go",
