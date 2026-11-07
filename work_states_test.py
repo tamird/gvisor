@@ -23,6 +23,45 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_reassociated_review_and_current_open_export(self):
+        pr = original(number=15562, repo="google/gvisor", reviewDecision="APPROVED",
+                      githubReviewDecision="APPROVED", mergeable="MERGEABLE",
+                      headCommittedAt="2026-11-04T16:03:43Z", headIntroducedAt="2026-11-04T16:03:59Z",
+                      reviewDismissals={"complete": True, "items": []}, labels=["ready to pull"])
+        review = pr["feedback"]["items"][0]
+        review.update(id="review", submittedAt="2026-11-04T06:30:33Z")
+        pr["feedback"]["complete"] = True
+        current = {"number": 16971, "head": "b" * 40, "sourceHead": pr["head"], "matchesSourceHead": True,
+                   "status": "open", "mergeable": "MERGEABLE"}
+        older = {**current, "number": 15687, "head": "c" * 40, "sourceHead": "d" * 40,
+                 "matchesSourceHead": False, "mergeable": "CONFLICTING"}
+        pr["imports"] = [older, current]
+        proof = public_import_disposition(pr)
+        self.assertEqual(proof["reviewedExport"], {"number": 16971, "head": current["head"], "reviewId": "review"})
+        self.assertFalse(proof["binding"]["currentApproval"])
+        self.assertIsNone(proof["action"])
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        pr["publicImportDisposition"] = proof
+        self.assertIn("importing", pr_states(pr))
+        self.assertNotIn("maintainer-review", pr_states(pr))
+        for label, changes in {
+            "only older export": {"imports": [older]},
+            "amended source": {"head": "e" * 40},
+            "label missing": {"labels": []},
+            "draft export": {"imports": [{**current, "status": "draft"}]},
+            "different live ref": {"branchHead": "f" * 40},
+            "provider requests changes": {"githubReviewDecision": "CHANGES_REQUESTED"},
+            "dismissed review": {"feedback": {"complete": True, "items": [{**review, "state": "DISMISSED"}]}},
+            "recorded dismissal": {"reviewDismissals": {"complete": True, "items": [{"review": {"id": "review"}}]}},
+        }.items():
+            with self.subTest(label):
+                self.assertNotIn("reviewedExport", public_import_disposition({**pr, **changes}))
+        comparison = {"source": {"head": pr["head"]}, "export": {"head": current["head"]},
+                      "comparison": {"normalized_delta_identical": False, "modes_identical": True}}
+        self.assertNotIn("reviewedExport", public_import_disposition(pr, comparison=comparison))
+        comparison["export"]["head"] = older["head"]
+        self.assertIn("reviewedExport", public_import_disposition(pr, comparison=comparison))
+
     def test_branch_mismatch_cannot_inherit_pr_readiness(self):
         pr = original(reviewDecision="APPROVED", mergeable="MERGEABLE")
         self.assertIn("awaiting-import", pr_states(pr))

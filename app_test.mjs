@@ -162,6 +162,48 @@ test('a registry update keeps known merges and current decisions across visits',
   }
 });
 
+test('an open current-source export does not request a rebase of an older export', () => {
+  const context = client();
+  const head = 'a'.repeat(40), exported = 'b'.repeat(40);
+  const review = { kind: 'review', id: 'review', state: 'APPROVED', author: { login: 'kerumeto', __typename: 'User' },
+    commit: { oid: head }, submittedAt: '2026-11-04T06:30:33Z' };
+  const pr = { repo: 'google/gvisor', number: 15562, status: 'open', importPolicy: 'copybara',
+    head, branchHead: head, headOwner: 'tamird', headHistoryComplete: true,
+    headCommittedAt: '2026-11-04T16:03:43Z', headIntroducedAt: '2026-11-04T16:03:59Z',
+    reviewsComplete: true, reviewRequestsComplete: true, reviewRequests: [], feedback: { complete: true, items: [review] },
+    githubReviewDecision: 'APPROVED', reviewDecision: 'REVIEW_REQUIRED', approvedAt: null, approvedHead: null,
+    reviewDismissals: {complete: true, items: []}, labels: ['ready to pull'], labelsComplete: true,
+    mergeable: 'MERGEABLE', importsComplete: true, maintainerReviewers: ['kerumeto'],
+    imports: [{ number: 15687, head: 'c'.repeat(40), sourceHead: 'd'.repeat(40), status: 'open', mergeable: 'CONFLICTING' },
+      { number: 16971, head: exported, sourceHead: head, matchesSourceHead: true, status: 'open', mergeable: 'MERGEABLE' }] };
+  const source = "import json,sys; from work_states import public_import_disposition; print(json.dumps(public_import_disposition(json.load(sys.stdin))))";
+  pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', source],
+    { cwd: new URL('.', import.meta.url), encoding: 'utf8', input: JSON.stringify(pr) }));
+  const node = context.nodeInput = { type: 'pr', repo: pr.repo, number: pr.number, id: 'pr:15562', github: pr };
+  const run = code => vm.runInContext(code, context);
+  assert.equal(run('effectiveReviewDecision(nodeInput.github)'), 'REVIEW_REQUIRED'); // No fresh post-push review.
+  assert.equal(run('reviewInfo(nodeInput.github, nodeInput).text'), 'GitHub approved · current source exported');
+  assert.equal(run('rebaseNeedsComparison(nodeInput)'), false);
+  assert.equal(run('stateRecords({ workStates: {} }, nodeInput)["maintainer-review"]'), undefined);
+  node.importPatchComparison = { source: {head}, export: {head: exported}, comparison: {normalized_delta_identical: false, modes_identical: true} };
+  assert.equal(run('reviewedExport(nodeInput)'), false);
+  delete node.importPatchComparison;
+  pr.labels = [];
+  assert.equal(run('reviewedExport(nodeInput)'), false);
+  pr.labels = ['ready to pull'];
+  review.state = 'DISMISSED';
+  assert.equal(run('reviewedExport(nodeInput)'), false);
+  review.state = 'APPROVED';
+  pr.reviewRequests = [{ login: 'kerumeto' }];
+  assert.equal(run('reviewedExport(nodeInput)'), false);
+  pr.reviewRequests = [];
+  pr.feedback.items.push({ ...review, id: 'later', state: 'CHANGES_REQUESTED', submittedAt: '2026-11-05T06:30:33Z' });
+  assert.equal(run('reviewedExport(nodeInput)'), false);
+  pr.feedback.items.pop();
+  pr.imports.pop();
+  assert.equal(run('rebaseNeedsComparison(nodeInput)'), true);
+});
+
 test('every open snapshot PR shares its import decision with the periodic planner', () => {
   const context = client();
   const registry = JSON.parse(readFileSync(new URL('./registry.json', import.meta.url)));
@@ -176,7 +218,7 @@ rows = []
 for pr in snapshot['prs']:
     if pr['status'] != 'open': continue
     node = nodes.get((pr.get('repo'), pr['number']), {})
-    disposition = public_import_disposition(pr, node.get('approvedPatch'), node.get('landedPatch'), node.get('reapproval'))
+    disposition = public_import_disposition(pr, node.get('approvedPatch'), node.get('landedPatch'), node.get('reapproval'), node.get('importPatchComparison'))
     reviewers = frozenset(pr.get('maintainerReviewers', []))
     plan = reminder_plan(pr, node, datetime.fromisoformat(snapshot['checkedAt'].replace('Z', '+00:00')), snapshot['owner'], reviewers)
     assert plan['publicImportDisposition'] == disposition, pr['url']

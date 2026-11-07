@@ -167,8 +167,9 @@ def check_qualifier(pr: dict) -> str:
 
 
 def effective_approval(pr: dict, *, require_aggregate: bool = True,
-                       trusted_reviewers: frozenset[str] = frozenset()) -> dict | None:
-    """Return a current-head approval submitted after the head's time evidence."""
+                       trusted_reviewers: frozenset[str] = frozenset(),
+                       require_fresh: bool = True) -> dict | None:
+    """Return an approval associated with this head, normally submitted after its publication."""
     decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
     if require_aggregate and decision != "APPROVED":
         return None
@@ -209,7 +210,7 @@ def effective_approval(pr: dict, *, require_aggregate: bool = True,
             submitted = datetime.fromisoformat(item["submittedAt"].replace("Z", "+00:00"))
         except (AttributeError, ValueError):
             continue
-        if submitted.tzinfo is not None and submitted >= cutoff:
+        if submitted.tzinfo is not None and (not require_fresh or submitted >= cutoff):
             approvals.append(item)
     return max(approvals, key=lambda item: item["submittedAt"], default=None)
 
@@ -450,7 +451,7 @@ def with_maintainer_reviewers(pr: dict, maintainers: frozenset[str]) -> dict:
 
 
 def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict | None = None,
-                              amendment: dict | None = None) -> dict:
+                              amendment: dict | None = None, comparison: dict | None = None) -> dict:
     """Share public export progress separately from permission to post reminders."""
     amendment = amendment if reviewed_amendment(pr, amendment) and not approved_patch(pr, patch) else None
     imports = import_lineage(pr, patch, amendment)
@@ -538,8 +539,28 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     elif state == "closed" and trigger["state"] == "present":
         description = "The ready to pull label is present; wait for Copybara to create a replacement export."
         action = None
-    return {"binding": binding, "scope": scope, "state": state, "action": action,
-            "trigger": trigger, "description": description}
+    result = {"binding": binding, "scope": scope, "state": state, "action": action,
+              "trigger": trigger, "description": description}
+    # A reassociated review is not a fresh approval. Once Copybara has opened
+    # an export of this exact source, an older export is no reason to rebase.
+    if (pr.get("status") == "open" and pr.get("importPolicy", "copybara") == "copybara"
+            and pr.get("githubReviewDecision") == "APPROVED"
+            and scope == "exact" and state == "open" and trigger["state"] == "present"
+            and binding["complete"] and binding["labelsComplete"] and not approval and not effective_approval(pr)
+            and pr.get("repo", "google/gvisor") == "google/gvisor"
+            and not pr.get("revisionChanged") and pr.get("branchHead", pr["head"]) == pr["head"]
+            and pr.get("reviewDismissals", {}).get("complete") and pr.get("feedback", {}).get("complete")):
+        review = effective_approval(pr, require_fresh=False)
+        dismissed = {row.get("review", {}).get("id") for row in pr["reviewDismissals"].get("items", [])}
+        mismatch = (comparison and comparison.get("source", {}).get("head") == pr["head"]
+                    and any(comparison.get("export", {}).get("head") == item["head"] for item in active)
+                    and not (comparison.get("comparison", {}).get("normalized_delta_identical") is True
+                             and comparison.get("comparison", {}).get("modes_identical") is True))
+        if review and review.get("id") and review["id"] not in dismissed and not mismatch:
+            item = next(item for item in active if item["status"] == "open")
+            result["reviewedExport"] = {"number": item["number"], "head": item["head"], "reviewId": review["id"]}
+            result["description"] = "GitHub reports approval and Copybara has opened an export of this source. The review predates this source revision."
+    return result
 
 
 def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict[str, StateEvidence]:
@@ -570,7 +591,7 @@ def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) 
         states["draft"] = {"scope": head}
     elif decision == "CHANGES_REQUESTED":
         states["changes-requested"] = {"scope": head}
-    elif decision != "APPROVED" and not accepted_patch:
+    elif decision != "APPROVED" and not accepted_patch and not (pr.get("publicImportDisposition") or {}).get("reviewedExport"):
         states["maintainer-review"] = {"scope": head, "qualifier": "No effective approval for the current head" if pr.get("githubReviewDecision", pr.get("reviewDecision")) == "APPROVED" else None}
     if pr["status"] == "open" and any(is_approval_gate(pr, item) for item in (pr.get("checks") or {}).get("contexts", [])):
         states["maintainer-review"] = {"scope": head, "qualifier": "BuildBuddy requires approving review before these checks run"}

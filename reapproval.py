@@ -94,7 +94,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
     """Plan either an exact amendment review or a verified missing import trigger."""
     pr = with_maintainer_reviewers(pr, maintainers)
     result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head"),
-              "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"), node.get("reapproval"))}
+              "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"),
+                                                                  node.get("reapproval"), node.get("importPatchComparison"))}
 
     def skip(reason: str) -> dict:
         return {**result, "status": "skipped", "reason": reason}

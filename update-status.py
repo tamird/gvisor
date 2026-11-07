@@ -1193,7 +1193,8 @@ def main() -> None:
         if pr["status"] != "open":
             pr.pop("publicImportDisposition", None)
             continue
-        pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"), node.get("reapproval"))
+        pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"),
+                                                                 node.get("reapproval"), node.get("importPatchComparison"))
         if pr["publicImportDisposition"]["action"] == "maintainer-import-label":
             approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
             pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, approval)

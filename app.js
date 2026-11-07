@@ -159,7 +159,7 @@ function landedPatch(node) {
 function rebaseNeedsComparison(node) {
   const pr = node?.github;
   return pr?.status === "open" && pr.githubReviewDecision === "APPROVED"
-    && effectiveReviewDecision(pr) === "REVIEW_REQUIRED" && !approvedPatch(node) && !pr.revisionChanged
+    && effectiveReviewDecision(pr) === "REVIEW_REQUIRED" && !approvedPatch(node) && !reviewedExport(node) && !pr.revisionChanged
     && !(node.reapproval?.head === pr.head && node.reapproval.kind === "content-amendment")
     && pr.imports?.some(item => item.sourceHead !== pr.head)
     && pr.feedback?.items?.some(item => item.kind === "review" && item.state === "APPROVED"
@@ -167,6 +167,7 @@ function rebaseNeedsComparison(node) {
 }
 function reviewInfo(pr, node) {
   if (releaseWait(node)) return { text: pr.releaseVersion === node.releaseWait.checkedVersion ? "Waiting on upstream" : "Check upstream release", tone: "pending", glyph: "○" };
+  if (reviewedExport(node)) return { text: "GitHub approved · current source exported", tone: "good", glyph: "✓" };
   if (rebaseNeedsComparison(node)) return { text: "Check rebased patch", tone: "pending", glyph: "○" };
   if (effectiveReviewDecision(pr) !== "APPROVED" && approvedPatch(node))
     return { text: "Approved patch · rebased", tone: "good", glyph: "✓" };
@@ -510,6 +511,27 @@ function publicImportDisposition(node) {
   if (amendment) binding.amendment = amendment;
   return evidenceJSON(record.binding) === evidenceJSON(binding) ? record : null;
 }
+function reviewedExport(node) {
+  const pr = node?.github, receipt = pr?.publicImportDisposition?.reviewedExport;
+  if (!receipt || pr.status !== "open" || !usesImports(pr) || pr.githubReviewDecision !== "APPROVED" || pr.revisionChanged
+      || !pr.reviewsComplete || !pr.reviewRequestsComplete || !pr.headHistoryComplete
+      || pr.branchHead && pr.branchHead !== pr.head) return false;
+  const record = publicImportDisposition(node);
+  if (!record || record.scope !== "exact" || record.state !== "open" || record.trigger.state !== "present"
+      || !record.binding.complete || !record.binding.labelsComplete || !pr.feedback?.complete || !pr.reviewDismissals?.complete) return false;
+  const review = pr.feedback.items.find(item => item.id === receipt.reviewId);
+  const comparison = node.importPatchComparison;
+  if (comparison?.source?.head === pr.head && record.binding.imports.some(item =>
+      ["open", "draft"].includes(item.status) && item.head === comparison.export?.head)
+      && !(comparison.comparison?.normalized_delta_identical === true && comparison.comparison?.modes_identical === true)) return false;
+  return review?.kind === "review" && review.state === "APPROVED" && review.commit?.oid === pr.head
+    && !pr.reviewRequests?.some(item => item.login === review.author?.login)
+    && !pr.feedback.items.some(item => item.kind === "review" && item.author?.login === review.author?.login
+      && ["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(item.state) && item.submittedAt > review.submittedAt)
+    && !pr.reviewDismissals.items.some(item => item.review?.id === review.id)
+    && record.binding.imports.some(item => item.number === receipt.number && item.head === receipt.head
+      && item.sourceHead === pr.head && item.status === "open");
+}
 function unresolvedImportChecks(imports) {
   const active = imports.filter(item => ["open", "draft"].includes(item.status));
   // Closing the only export does not resolve a public CI failure. An active
@@ -574,6 +596,7 @@ function attentionReasons(node, owner) {
   if (!landed && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
+  const exported = reviewedExport(node);
   const comment = actionableComment(node), feedback = [];
   const newWaitComment = node.releaseWait?.head === pr.head && pr.feedback?.items?.findLast(item => (item.kind === "comment" || item.kind === "review" && item.state !== "APPROVED" && item.body?.trim())
     && item.author?.login !== owner && Date.parse(item.updatedAt || item.createdAt) > Date.parse(node.releaseWait.confirmedAt));
@@ -673,9 +696,9 @@ function attentionReasons(node, owner) {
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
   if (review.response && !newWaitComment && attentionDisposition(node, "author-feedback")?.action !== "batch-cleanup")
     add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
-  if (!approved && !restoreLabel && !followupBlocked && !review.response && !review.unknown)
+  if (!approved && !exported && !restoreLabel && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
-  if (approved && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport && !restoreLabel) {
+  if ((approved || exported) && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport && !restoreLabel) {
     const open = active.filter(item => item.status === "open");
     if (!usesImports(pr)) {
       if (pr.mergeable === "MERGEABLE" && checksPassed(pr))
@@ -1759,7 +1782,7 @@ function stateRecords(snapshot, node) {
   // Keep the published state enum compatible with already-open older clients.
   if (node.type === "branch" && node.status === "Prepared proposal") records["proposed-update"] = {
     scope: node.head, since: null, basis: "unknown", qualifier: "Unpublished revision; observation age is not recorded" };
-  if (node.type === "pr" && node.github && node.github.status === "open" && effectiveReviewDecision(node.github) === "REVIEW_REQUIRED" && !approvedPatch(node)) {
+  if (node.type === "pr" && node.github && node.github.status === "open" && effectiveReviewDecision(node.github) === "REVIEW_REQUIRED" && !approvedPatch(node) && !reviewedExport(node)) {
     records["maintainer-review"] ||= { scope: node.github.head, since: null, basis: "unknown", qualifier: "No effective approval recorded for this head" };
     delete records["awaiting-import"]; delete records["waiting-merge"];
   }
