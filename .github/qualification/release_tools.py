@@ -37,15 +37,29 @@ def executions(path: Path) -> dict:
     host: Counter[str] = Counter()
     other: Counter[str] = Counter()
     unparsed = 0
+    thread_replacements = 0
+    pending: dict[str, str] = {}
     with path.open(errors="replace") as stream:
         for line in stream:
             if "execve" not in line:
                 continue
-            match = EXEC.search(line)
-            if not match or not line.rstrip().endswith("= 0"):
+            if "+++ superseded by execve in pid" in line:
+                thread_replacements += 1
+                continue
+            pid = line.split(maxsplit=1)[0]
+            if match := EXEC.search(line):
+                executable = match[1]
+                if "<unfinished ...>" in line:
+                    pending[pid] = executable
+                    continue
+            elif "<... execve" in line and pid in pending:
+                executable = pending.pop(pid)
+            else:
                 unparsed += 1
                 continue
-            executable = match[1]
+            if not line.rstrip().endswith("= 0"):
+                unparsed += 1
+                continue
             if SYSTEM.fullmatch(executable):
                 host[executable] += 1
             elif executable.endswith("tools/workspace_status.sh"):
@@ -56,7 +70,8 @@ def executions(path: Path) -> dict:
                 other["Bazel build output"] += 1
             else:
                 other["other executable"] += 1
-    return {"systemExecutables": dict(host), "otherExecutions": dict(other), "unparsed": unparsed}
+    return {"systemExecutables": dict(host), "otherExecutions": dict(other),
+            "threadReplacements": thread_replacements, "unparsed": unparsed + len(pending)}
 
 
 def verify_files(directory: Path, arch: str) -> dict:
@@ -95,6 +110,8 @@ def main(directory: Path) -> bool:
                 receipt["gitDescribeOutput"] = stream.read(1600)
         if (bound := directory / "git-binding.sha256").exists():
             receipt["boundGitSHA256"] = bound.read_text().split()[0]
+        if (roots := directory / "public-roots.pem").exists():
+            receipt["httpsRootsSHA256"] = hashlib.sha256(roots.read_bytes()).hexdigest()
         receipt["traceProbeDiagnostics"] = diagnostics(directory / "probe.error")
         for arch in MANIFESTS:
             target = directory / arch

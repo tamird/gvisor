@@ -25,6 +25,8 @@ jobs:
           echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
           chmod 755 "$d/bazel"
           sha256sum /usr/bin/git > "$d/git-binding.sha256"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://curl.se/ca/cacert-2026-11-05.pem -o "$d/public-roots.pem"
+          echo "427c064216761a1e72a8b30f0d954d08cb6e4435a82091fb865afd20c8497285  $d/public-roots.pem" | sha256sum -c -
           pool=https://archive.ubuntu.com/ubuntu/pool/main
           curl -fsSL --retry 2 "$pool/s/strace/strace_5.16-0ubuntu3_amd64.deb" -o "$d/strace.deb"
           curl -fsSL --retry 2 "$pool/libu/libunwind/libunwind8_1.3.2-2build2_amd64.deb" -o "$d/unwind.deb"
@@ -46,6 +48,7 @@ jobs:
           docker run --rm --workdir /workspace --entrypoint /bin/bash \
             -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/workspace \
             -v "$GITHUB_WORKSPACE:/workspace" -v "$d:/audit" -v "$d/observer:/observer:ro" \
+            -v "$d/public-roots.pem:/etc/ssl/certs/ca-certificates.crt:ro" \
             -v "$d/bazel:/usr/local/bin/bazel:ro" -v /usr/bin/git:/usr/bin/git:ro "$base" /audit/release_tools.sh
       - name: Verify release files and report host executions outside the producer
         if: always() && !cancelled()
