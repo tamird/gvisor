@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T11:17:48+00:00",
+    "updatedAt": "2026-11-07T11:27:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2572,9 +2572,17 @@
       "url": "https://github.com/tamird/gvisor/tree/syscall-processes-memory",
       "group": "tests",
       "status": "Agent work",
-      "summary": "The ptrace and memory-accounting tests need workers that can create 1,000 threads or retain 512 MiB through restore. With only linux-sandbox enabled, the first trial stopped at a Nogo action requiring local execution. Allowing that action built all three targets. The subsequent remote test command failed in five Nogo standard-library analyses before starting a test. Worker sizing remains unverified.",
-      "updatedAt": "2026-11-07T11:12:45+00:00",
+      "summary": "On the declared LLVM integration, all nine named syscall cases passed in three uncached attempts on native root AMD64 workers. The ptrace suite ran all seven cases on a large worker, including the 1,000-thread test. The 512 MiB accounting test ran across both save and save/resume on enormous workers. Two earlier attempts on the standalone source stopped in Nogo before any test ran. The smaller default workers have not been compared in the same setup.",
+      "updatedAt": "2026-11-07T11:27:57+00:00",
       "evidence": [
+        {
+          "label": "Three actual TestRunner attempts, resource classes and all nine syscall results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367564451/artifacts/13572855935"
+        },
+        {
+          "label": "Three test owners with the declared LLVM toolchain",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367564451"
+        },
         {
           "label": "Original Nogo execution-strategy error",
           "url": "https://github.com/tamird/gvisor/actions/runs/42365023579/artifacts/13571104338"
@@ -52316,9 +52324,13 @@
       "url": "https://github.com/google/gvisor/pull/16834",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T08:03:48.838Z",
-      "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.",
+      "updatedAt": "2026-11-07T11:25:21+00:00",
+      "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.\n\nWith registry LLVM 0.8.24, Gazelle required a host env executable to configure either release. Applying #16834 let Bazel configure the optimized AMD64 and ARM64 releases and their x/sys/unix dependency. Both system binary directories stayed empty. These four configuration queries ran no build actions.",
       "evidence": [
+        {
+          "label": "Both target configurations with empty system binary directories",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367347403/artifacts/13572497175"
+        },
         {
           "label": "Gazelle upstream issue #2499",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/2499"
@@ -57293,9 +57305,13 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T11:17:48+00:00",
-      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment.",
+      "updatedAt": "2026-11-07T11:25:21+00:00",
+      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 run captured an intermittent FDs.Classes difference on default/sentry. Both subsequent default-case repeats passed.",
       "evidence": [
+        {
+          "label": "Hosted ARM64 diagnostic and two default-case repeats",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42366515114/artifacts/13572008419"
+        },
         {
           "label": "The five original diffs and ten leaf outcomes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42367351219/artifacts/13572591028"
@@ -76743,7 +76759,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T11:17:48+00:00",
+      "updatedAt": "2026-11-07T11:25:21+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -79272,10 +79288,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42364033903/artifacts/13571014685"
             }
           ]
+        },
+        {
+          "text": "With registry LLVM 0.8.24, Gazelle required a host env executable to configure either release. Applying #16834 let Bazel configure the optimized AMD64 and ARM64 releases and their x/sys/unix dependency. Both system binary directories stayed empty. These four configuration queries ran no build actions.",
+          "evidence": [
+            {
+              "label": "Both target configurations with empty system binary directories",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42367347403/artifacts/13572497175"
+            }
+          ]
         }
       ],
-      "nextStep": "Verify which client-side programs a clean source export needs with Bazel Central Registry LLVM. Trace the remaining host shell uses separately from compilation on the remote workers.",
+      "nextStep": "Execute the rules_go 0.65.0 SDK bootstrap on the existing tool-free Linux worker and inspect its declared interpreter. The native ARM64 and AMD64 builders are separate executor cases.",
       "evidence": [
+        {
+          "label": "Both target configurations with empty system binary directories",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367347403/artifacts/13572497175"
+        },
         {
           "label": "Empty PATH client comparison on registry LLVM 0.8.24",
           "url": "https://github.com/tamird/gvisor/actions/runs/42367347403"
@@ -82489,5 +82518,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T11:17:48+00:00"
+  "updatedAt": "2026-11-07T11:27:57+00:00"
 }
