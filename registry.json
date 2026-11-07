@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T22:28:57+00:00",
+    "updatedAt": "2026-11-07T22:56:18+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52626,8 +52626,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T22:15:59+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.",
+      "updatedAt": "2026-11-07T22:56:18+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. Updating the upstream LLVM PR awaits a supplier release.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52680,6 +52680,22 @@
         {
           "label": "Upstream review requests one platform transition",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
+        },
+        {
+          "label": "Stock Linux and Windows-platform controls",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42421069505/artifacts/13593630898"
+        },
+        {
+          "label": "Verified Linux runtime and MSVC analysis",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42421492776/artifacts/13593488151"
+        },
+        {
+          "label": "Fork-only LLVM consumer",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/51d740df1"
+        },
+        {
+          "label": "Supplier proposal and single contributor decision",
+          "url": "https://tamird.github.io/gvisor/#branch:with-cfg-conditional-list-setting"
         }
       ],
       "settledReviews": [
@@ -61515,6 +61531,56 @@
         "requestedAt": "2026-11-07T22:28:57+00:00",
         "summary": "Open the standalone safecopy PR, or keep these four files in #15181?",
         "body": "The memory allocator clears recycled disk-backed pages through safecopy\nso it can recover if a mapped write faults. The amd64 clearing loop\nissues sixteen vector stores for every 256 bytes.\n\nUse the Go runtime's 2 KiB threshold to amortize REP STOSQ startup on\nCPUs with ERMS. Keeping the stores inside memclr lets ZeroOut recover\nfrom a fault and report how many bytes it cleared.\n\nBenchmarkZeroDiskBacked64MiB times the protected clear of a resident\n64 MiB shared ext4 mapping. Each sample refills the mapping outside the\ntimer. Twelve alternating samples per build ran on one AMD EPYC 9V45\ncore [1].\n\n     │    stock     │                erms                 │\n     │    sec/op    │   sec/op     vs base                │\n       1826.2µ ± 4%   907.1µ ± 5%  -50.33% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42419490460"
+      }
+    },
+    {
+      "id": "branch:with-cfg-conditional-list-setting",
+      "type": "branch",
+      "repo": "tamird/with_cfg.bzl",
+      "ref": "research/conditional-list-setting",
+      "head": "8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
+      "title": "Preserve list settings on an empty selection",
+      "url": "https://github.com/tamird/with_cfg.bzl/commit/8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T22:56:18+00:00",
+      "summary": "The opt-in preserves the caller’s incoming list when a configurable value selects an empty list. An ordinary empty assignment still clears the setting. The corrected supplier tests passed on Bazel 7.7.1 and 9.2.0, alongside all 24 current tests and the formatter and documentation checks. David’s #908 review identified the LLVM consumer. The fork implementation selects musl on the existing binary rule and preserves the caller’s custom MSVC platform. Updating #908 depends on a supplier release.",
+      "evidence": [
+        {
+          "label": "Supplier source-only branch",
+          "url": "https://github.com/tamird/with_cfg.bzl/tree/research/conditional-list-setting"
+        },
+        {
+          "label": "Supplier tests, formatter and generated documentation",
+          "url": "https://github.com/tamird/with_cfg.bzl/actions/runs/42422622349/artifacts/13593354187"
+        },
+        {
+          "label": "David’s original upstream review",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
+        },
+        {
+          "label": "LLVM consumer on the fork",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/51d740df1"
+        },
+        {
+          "label": "Original Bazel 7.7.0 and 9.3.1 controls",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42421069505/artifacts/13593630898"
+        },
+        {
+          "label": "Patched platform tests and native Linux tool",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42421492776/artifacts/13593488151"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
+        "baseHead": "9b8b10962419346889e528cbe57a539754489d57",
+        "url": "https://github.com/tamird/with_cfg.bzl/commit/8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
+        "title": "Preserve list settings on an empty selection",
+        "requestedAt": "2026-11-07T22:56:18+00:00",
+        "summary": "Open the supplier PR and reply to David on #908 with its link?",
+        "body": "A configurable assignment can select a replacement platform on Linux\nbut should leave the caller's platform unchanged on other systems.\nSetting the value to an empty list clears the original platform, and\nextending the list leaves the original platform first.\n\nAllow set() to preserve a list-valued setting when its selected value\nis empty. Require an explicit keyword so existing empty assignments\nstill clear the setting.\n\nProposed reply on hermetic-llvm #908, with the new supplier PR URL filled in after publication\n\n@dzbarsky, yes. With the existing `set(\"platforms\", ...)`, selecting `[]` on Windows drops the caller’s MSVC platform. <supplier PR> adds an opt-in that keeps the incoming platform in that case. [The LLVM change](https://github.com/tamird/hermetic-llvm/commit/51d740df1) then selects Linux musl on the existing binary rule and removes the `native/` and `musl/` targets. I’ll update this PR once the supplier change is released.\n\nPosted by Codex on behalf of @tamird."
       }
     }
   ],
@@ -85161,5 +85227,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T22:28:57+00:00"
+  "updatedAt": "2026-11-07T22:56:18+00:00"
 }
