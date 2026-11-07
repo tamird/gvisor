@@ -268,6 +268,8 @@ def _nogo_aspect_impl(target, ctx):
     if analyze_sources:
         srcs = ctx.rule.files.srcs
         deps = ctx.rule.attr.deps
+    elif ctx.rule.kind == "go_cross_binary":
+        return [ctx.rule.attr.target[NogoInfo]]
     elif ctx.rule.kind in ("go_proto_library", "go_wrap_cc"):
         # N.B. go_proto_library is strange because transitive dependencies are
         # not also go_proto_library targets. We don't care about analysis of
@@ -376,6 +378,7 @@ nogo_aspect = go_rule(
         "deps",
         "library",
         "embed",
+        "target",
     ],
     attrs = {
         "_nogo": attr.label(
