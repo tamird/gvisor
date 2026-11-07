@@ -1,35 +1,67 @@
-name: CI
-
-"on":
+name: Build a stamped release from a Git-free export
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/git-free-client-release]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    env:
+      RELEASE_SOURCE: b95ea1cb6e56608b839272644bc5356a77dcf353
+      RELEASE_LABEL: release-20261106.0
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Export the pinned source and verify the Bazel client
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/direct-client"
+          mkdir -p "$d/arm64" "$d/amd64" "$d/observer"
+          cp .github/qualification/{release_tools.py,release_tools.sh} "$d/"
+          test "$(git rev-parse HEAD^)" = "$RELEASE_SOURCE"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/release_tools.py' ':!.github/qualification/release_tools.sh'
+          mkdir "$RUNNER_TEMP/exported-source"
+          git archive "$RELEASE_SOURCE" | tar -xC "$RUNNER_TEMP/exported-source"
+          test ! -e "$RUNNER_TEMP/exported-source/.git"
+          test "$(cat "$RUNNER_TEMP/exported-source/.bazelversion")" = 9.3.1
+          git rev-parse "$RELEASE_SOURCE^{tree}" > "$d/source.tree"
+          curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://curl.se/ca/cacert-2026-11-05.pem -o "$d/public-roots.pem"
+          echo "427c064216761a1e72a8b30f0d954d08cb6e4435a82091fb865afd20c8497285  $d/public-roots.pem" | sha256sum -c -
+          pool=https://archive.ubuntu.com/ubuntu/pool/main
+          curl -fsSL --retry 2 "$pool/s/strace/strace_5.16-0ubuntu3_amd64.deb" -o "$d/strace.deb"
+          curl -fsSL --retry 2 "$pool/libu/libunwind/libunwind8_1.3.2-2build2_amd64.deb" -o "$d/unwind.deb"
+          echo "847a3535be015325f127f121d2ea5ac042b32bd20a5861a94cb7782b09857b1f  $d/strace.deb" | sha256sum -c -
+          echo "475ae509da614dd5d7210f605fd5894a3c98b6fb8c18738b16d8d4b700553c30  $d/unwind.deb" | sha256sum -c -
+          dpkg-deb -x "$d/strace.deb" "$d/observer"
+          dpkg-deb -x "$d/unwind.deb" "$d/observer"
+      - name: Build both release targets without Git or APT
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/direct-client"
+          digest=sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f
+          base="mirror.gcr.io/library/ubuntu@$digest"
+          if ! docker pull --platform linux/amd64 "$base"; then
+            base="docker.io/library/ubuntu@$digest"
+            docker pull --platform linux/amd64 "$base"
+          fi
+          test "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "$base")" = linux/amd64
+          docker run --rm --workdir /workspace --entrypoint /bin/bash \
+            -e RELEASE_LABEL -v "$RUNNER_TEMP/exported-source:/workspace" \
+            -v "$d:/audit" -v "$d/observer:/observer:ro" \
+            -v "$d/public-roots.pem:/etc/ssl/certs/ca-certificates.crt:ro" \
+            -v "$d/bazel:/usr/local/bin/bazel:ro" "$base" /audit/release_tools.sh
+      - name: Verify release files and report host executions outside the producer
+        if: always() && !cancelled()
+        run: python3 -IB "$RUNNER_TEMP/direct-client/release_tools.py" "$RUNNER_TEMP/direct-client"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: git-free-client-release
+          path: ${{ runner.temp }}/direct-client/release-tools.json
+          if-no-files-found: error
+          retention-days: 7
