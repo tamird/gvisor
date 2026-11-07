@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T17:21:53+00:00",
+    "updatedAt": "2026-11-07T17:26:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60170,8 +60170,8 @@
       "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
       "url": "https://github.com/tamird/gvisor/commit/2d112a931",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T12:14:13+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T17:25:48+00:00",
       "summary": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings.\n\nThe nine files add 603 lines and remove 74. Of the additions, 255 are permanent tests and 29 are BUILD declarations. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context.",
       "evidence": [
         {
@@ -60187,16 +60187,30 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42365642428/artifacts/13572575742"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "2d112a9314987d6c2ad9317947a9908ce770dff9",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/2d112a931",
-        "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
-        "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed\nprotobuf. A generic statefile dump can skip later objects or print\nincorrect page boundaries while reporting success.\n\nAdd a -checkpoint mode for existing Sentry files. The historical\nenvelope has no payload tag, and ordinary state streams can contain\nthe same roots. Keep their default text and HTML rendering intact.\n\nUse the shared graph printer and pgalloc metadata reader to display\nthe application MemoryFile and its committed ranges. Read one private\nMemoryFile per saved owner and reject missing or trailing data. Retain\nthe earlier object-framed layout and the separate split-page layout.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")",
-        "requestedAt": "2026-11-07T12:14:13+00:00",
-        "summary": "Open this opt-in inspector for historical Sentry checkpoints? The default generic dump is preserved because the inputs have no unique format tag. On native ARM64 the new mode identified all 64 and 62 regions and both original checkpoints restored. The change adds 603 lines, including 255 test lines and 29 BUILD lines, and removes 74."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "2d112a9314987d6c2ad9317947a9908ce770dff9",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/2d112a931",
+          "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
+          "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed\nprotobuf. A generic statefile dump can skip later objects or print\nincorrect page boundaries while reporting success.\n\nAdd a -checkpoint mode for existing Sentry files. The historical\nenvelope has no payload tag, and ordinary state streams can contain\nthe same roots. Keep their default text and HTML rendering intact.\n\nUse the shared graph printer and pgalloc metadata reader to display\nthe application MemoryFile and its committed ranges. Read one private\nMemoryFile per saved owner and reject missing or trailing data. Retain\nthe earlier object-framed layout and the separate split-page layout.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")",
+          "requestedAt": "2026-11-07T12:14:13+00:00",
+          "summary": "Open this opt-in inspector for historical Sentry checkpoints? The default generic dump is preserved because the inputs have no unique format tag. On native ARM64 the new mode identified all 64 and 62 regions and both original checkpoints restored. The change adds 603 lines, including 255 test lines and 29 BUILD lines, and removes 74.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:25:48+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Checkpoint workstream owner",
+        "sourceHead": "2d112a9314987d6c2ad9317947a9908ce770dff9",
+        "observedAt": "2026-11-07T17:25:48+00:00",
+        "disposition": "The contributor approved the historical checkpoint inspector and requested a second look at its 255 lines of new tests.",
+        "nextAction": "Audit the fixture against existing coverage, retain cases that distinguish incorrect behavior, and verify the resulting tests before submission.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2d112a931",
+          "https://github.com/tamird/gvisor/actions/runs/42369973734/artifacts/13574155486"
+        ]
       }
     },
     {
@@ -60208,25 +60222,44 @@
       "title": "Hash TCP SYN cookies without shared state",
       "url": "https://github.com/tamird/gvisor/commit/e12c6d591",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T12:19:15+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T17:25:48+00:00",
       "summary": "The listener and child now calculate each SYN cookie hash locally. The qualified source has the same Git tree as the proposal. On both source versions the TCP package, two-architecture Nogo checks, handshake and close cases, and race and digest controls passed. In 16 alternating AMD64 pairs, creating and validating one cookie reduced serial time by 18.56% for IPv4 and 17.31% for IPv6. All four cases fell from 12 allocations to zero. The shared cases measure two goroutines using the same listener. The experiment measures cookie operations.",
       "evidence": [
         {
           "label": "TCP owners, race and digest checks, 16 pairs and four benchstat rows",
           "url": "https://github.com/tamird/gvisor/actions/runs/42370230508/artifacts/13574595198"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17195"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/e12c6d591",
-        "title": "Hash TCP SYN cookies without shared state",
-        "requestedAt": "2026-11-07T12:19:15+00:00",
-        "summary": "Open this one-commit SYN-cookie change? The two serial create-and-validate cases fell by 18.56% and 17.31%, and all four cases went from 12 allocations to zero. The shared case is a microbenchmark. Live connection throughput was outside its scope.",
-        "body": "A listener creating a SYN cookie and a child validating a late cookie\nboth use the listener's hash object. Each hash locks that object, resets\nit, and discards its state after computing the digest.\n\nUse a local hash for each calculation and supply storage for its result.\nRemove the listener's hasher, its mutex, and the lock exclusions that\ncallers had to propagate.\n\nEach benchmark operation creates and validates a cookie. The shared\ncases use one listener from two goroutines on AMD64. All four cases\nwent from 12 allocations (384 B) per operation to zero. Benchstat for\nSYNCookieRoundTrip, with the common benchmark prefix omitted [1]:\n\n               │   before   │             after\n               │   sec/op   │   sec/op     vs base\nIPv4/Serial-2    624.2n ± 1%   508.3n ± 3%  -18.56% (p=0.000 n=16)\nIPv4/Shared-2    731.2n ± 2%   296.6n ± 1%  -59.44% (p=0.000 n=16)\nIPv6/Serial-2    627.5n ± 2%   518.9n ± 1%  -17.31% (p=0.000 n=16)\nIPv6/Shared-2    740.4n ± 2%   304.9n ± 2%  -58.82% (p=0.000 n=16)\n\n[1] https://github.com/tamird/gvisor/actions/runs/42370230508"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/e12c6d591",
+          "title": "Hash TCP SYN cookies without shared state",
+          "requestedAt": "2026-11-07T12:19:15+00:00",
+          "summary": "Open this one-commit SYN-cookie change? The two serial create-and-validate cases fell by 18.56% and 17.31%, and all four cases went from 12 allocations to zero. The shared case is a microbenchmark. Live connection throughput was outside its scope.",
+          "body": "A listener creating a SYN cookie and a child validating a late cookie\nboth use the listener's hash object. Each hash locks that object, resets\nit, and discards its state after computing the digest.\n\nUse a local hash for each calculation and supply storage for its result.\nRemove the listener's hasher, its mutex, and the lock exclusions that\ncallers had to propagate.\n\nEach benchmark operation creates and validates a cookie. The shared\ncases use one listener from two goroutines on AMD64. All four cases\nwent from 12 allocations (384 B) per operation to zero. Benchstat for\nSYNCookieRoundTrip, with the common benchmark prefix omitted [1]:\n\n               │   before   │             after\n               │   sec/op   │   sec/op     vs base\nIPv4/Serial-2    624.2n ± 1%   508.3n ± 3%  -18.56% (p=0.000 n=16)\nIPv4/Shared-2    731.2n ± 2%   296.6n ± 1%  -59.44% (p=0.000 n=16)\nIPv6/Serial-2    627.5n ± 2%   518.9n ± 1%  -17.31% (p=0.000 n=16)\nIPv6/Shared-2    740.4n ± 2%   304.9n ± 2%  -58.82% (p=0.000 n=16)\n\n[1] https://github.com/tamird/gvisor/actions/runs/42370230508",
+          "outcome": "approved",
+          "at": "2026-11-07T17:25:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17195"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
+        "observedAt": "2026-11-07T17:25:48+00:00",
+        "disposition": "The approved change is on #17195 at e12c6d591.",
+        "nextAction": "Follow #17195 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17195",
+          "https://github.com/tamird/gvisor/commit/e12c6d591"
+        ]
       }
     },
     {
@@ -60497,12 +60530,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/native-release-archives",
-      "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
+      "head": "3841547872e7c7f0f665f4d8d08939e8fb3a80d0",
       "title": "Build release archives without a host shell",
-      "url": "https://github.com/tamird/gvisor/commit/657d01de1",
+      "url": "https://github.com/tamird/gvisor/commit/384154787",
       "group": "release",
       "status": "Delivered",
-      "updatedAt": "2026-11-07T17:19:24+00:00",
+      "updatedAt": "2026-11-07T17:26:09+00:00",
       "summary": "Use the registered BSD tar toolchain to write release archives without a host shell. On Ubuntu 22.04 with stock GCC 11.4.0, AMD64 built the ordinary bzip2 and zstd releases. Both target-named symlinks resolved, GNU tar extracted the publisher’s literal runsc member, and the nine staged ELFs and archive metadata matched. The canonical audit verified 224 dependencies and its test passed. The standalone ARM64 checks configured both archive writers. In a separate compiler integration, four fresh Tar actions on an empty AMD64 worker wrote both formats for AMD64 and ARM64. The eight flavor/format declarations were compared; archive builds covered the ordinary flavor. The commit applies directly to master 9ee2906f5.",
       "evidence": [
         {
@@ -60516,6 +60549,10 @@
         {
           "label": "Published single-commit pull request",
           "url": "https://github.com/google/gvisor/pull/17191"
+        },
+        {
+          "label": "Single blank line after the approved source",
+          "url": "https://github.com/tamird/gvisor/compare/657d01de1..384154787"
         }
       ],
       "settledReviews": [
@@ -60535,13 +60572,14 @@
       ],
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "657d01de1cf19183ea91976a7e19c7636cce0331",
-        "observedAt": "2026-11-07T17:19:24+00:00",
-        "disposition": "The approved change is on #17191 at 657d01de1.",
+        "sourceHead": "3841547872e7c7f0f665f4d8d08939e8fb3a80d0",
+        "observedAt": "2026-11-07T17:26:09+00:00",
+        "disposition": "The approved 657d01de1 was published as #17191. Buildifier requested one blank line in debian/release.bzl. The public PR is at 384154787 with that formatting correction.",
         "nextAction": "Follow #17191 for maintainer review and import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17191",
-          "https://github.com/tamird/gvisor/commit/657d01de1"
+          "https://github.com/tamird/gvisor/commit/657d01de1",
+          "https://github.com/google/gvisor/actions/runs/42395699832/job/128472486505"
         ]
       }
     },
@@ -60679,12 +60717,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "research/native-release-archives",
-      "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
+      "head": "3841547872e7c7f0f665f4d8d08939e8fb3a80d0",
       "title": "Build release archives without a host shell",
       "url": "https://github.com/google/gvisor/pull/17191",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-07T17:19:24+00:00",
+      "updatedAt": "2026-11-07T17:26:09+00:00",
       "summary": "Use the registered BSD tar toolchain to write release archives without a host shell. On Ubuntu 22.04 with stock GCC 11.4.0, AMD64 built the ordinary bzip2 and zstd releases. Both target-named symlinks resolved, GNU tar extracted the publisher’s literal runsc member, and the nine staged ELFs and archive metadata matched. The canonical audit verified 224 dependencies and its test passed. The standalone ARM64 checks configured both archive writers. In a separate compiler integration, four fresh Tar actions on an empty AMD64 worker wrote both formats for AMD64 and ARM64. The eight flavor/format declarations were compared; archive builds covered the ordinary flavor. The commit applies directly to master 9ee2906f5.",
       "evidence": [
         {
@@ -60698,6 +60736,10 @@
         {
           "label": "Published single-commit pull request",
           "url": "https://github.com/google/gvisor/pull/17191"
+        },
+        {
+          "label": "Single blank line after the approved source",
+          "url": "https://github.com/tamird/gvisor/compare/657d01de1..384154787"
         }
       ],
       "settledReviews": [
@@ -60717,13 +60759,14 @@
       ],
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "657d01de1cf19183ea91976a7e19c7636cce0331",
-        "observedAt": "2026-11-07T17:19:24+00:00",
-        "disposition": "The approved change is on #17191 at 657d01de1.",
+        "sourceHead": "3841547872e7c7f0f665f4d8d08939e8fb3a80d0",
+        "observedAt": "2026-11-07T17:26:09+00:00",
+        "disposition": "The approved 657d01de1 was published as #17191. Buildifier requested one blank line in debian/release.bzl. The public PR is at 384154787 with that formatting correction.",
         "nextAction": "Follow #17191 for maintainer review and import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17191",
-          "https://github.com/tamird/gvisor/commit/657d01de1"
+          "https://github.com/tamird/gvisor/commit/657d01de1",
+          "https://github.com/google/gvisor/actions/runs/42395699832/job/128472486505"
         ]
       },
       "number": 17191
@@ -60906,6 +60949,56 @@
         ]
       },
       "number": 17194
+    },
+    {
+      "id": "pr:17195",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/tcp-cookie-local-hash",
+      "head": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
+      "title": "Hash TCP SYN cookies without shared state",
+      "url": "https://github.com/google/gvisor/pull/17195",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-07T17:25:48+00:00",
+      "summary": "The listener and child now calculate each SYN cookie hash locally. The qualified source has the same Git tree as the proposal. On both source versions the TCP package, two-architecture Nogo checks, handshake and close cases, and race and digest controls passed. In 16 alternating AMD64 pairs, creating and validating one cookie reduced serial time by 18.56% for IPv4 and 17.31% for IPv6. All four cases fell from 12 allocations to zero. The shared cases measure two goroutines using the same listener. The experiment measures cookie operations.",
+      "evidence": [
+        {
+          "label": "TCP owners, race and digest checks, 16 pairs and four benchstat rows",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42370230508/artifacts/13574595198"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17195"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/e12c6d591",
+          "title": "Hash TCP SYN cookies without shared state",
+          "requestedAt": "2026-11-07T12:19:15+00:00",
+          "summary": "Open this one-commit SYN-cookie change? The two serial create-and-validate cases fell by 18.56% and 17.31%, and all four cases went from 12 allocations to zero. The shared case is a microbenchmark. Live connection throughput was outside its scope.",
+          "body": "A listener creating a SYN cookie and a child validating a late cookie\nboth use the listener's hash object. Each hash locks that object, resets\nit, and discards its state after computing the digest.\n\nUse a local hash for each calculation and supply storage for its result.\nRemove the listener's hasher, its mutex, and the lock exclusions that\ncallers had to propagate.\n\nEach benchmark operation creates and validates a cookie. The shared\ncases use one listener from two goroutines on AMD64. All four cases\nwent from 12 allocations (384 B) per operation to zero. Benchstat for\nSYNCookieRoundTrip, with the common benchmark prefix omitted [1]:\n\n               │   before   │             after\n               │   sec/op   │   sec/op     vs base\nIPv4/Serial-2    624.2n ± 1%   508.3n ± 3%  -18.56% (p=0.000 n=16)\nIPv4/Shared-2    731.2n ± 2%   296.6n ± 1%  -59.44% (p=0.000 n=16)\nIPv6/Serial-2    627.5n ± 2%   518.9n ± 1%  -17.31% (p=0.000 n=16)\nIPv6/Shared-2    740.4n ± 2%   304.9n ± 2%  -58.82% (p=0.000 n=16)\n\n[1] https://github.com/tamird/gvisor/actions/runs/42370230508",
+          "outcome": "approved",
+          "at": "2026-11-07T17:25:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17195"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
+        "observedAt": "2026-11-07T17:25:48+00:00",
+        "disposition": "The approved change is on #17195 at e12c6d591.",
+        "nextAction": "Follow #17195 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17195",
+          "https://github.com/tamird/gvisor/commit/e12c6d591"
+        ]
+      },
+      "number": 17195
     }
   ],
   "edges": [
@@ -78273,11 +78366,11 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T17:00:42+00:00",
+      "updatedAt": "2026-11-07T17:26:09+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
-          "text": "On integration 89dd704c2, seven fresh native remote actions produced eight release files. Four Tar actions and two MakeDeb actions wrote the bzip2 and zstd archives and the Debian package for each architecture. One AMD64 SandboxExecDist action wrote the Python wheel and source distribution. The offline publisher signed and verified the release and 20261106 APT suites and staged the raw downloads. Twine was intercepted before upload. The Buildkite host setup in #16904 remains a separate prerequisite.",
+          "text": "On integration 89dd704c2, seven fresh native remote actions produced eight release files. Four Tar actions and two MakeDeb actions wrote the bzip2 and zstd archives and the Debian package for each architecture. One AMD64 SandboxExecDist action wrote the Python wheel and source distribution. The offline publisher signed and verified the release and 20261106 APT suites and staged the raw downloads. Twine was intercepted before upload. The Buildkite host setup in #16904 remains a separate prerequisite. The stock local fixture also supplied a runsc.changes file for each architecture. rules_pkg exposes those optional files separately from the default .deb output. The published 20261102.0 pool contained only runsc.deb in each architecture directory. The eight-file test covers regular release outputs and signing. The release publisher design is being revised.",
           "evidence": [
             {
               "label": "Native writers, eight outputs and offline signing and publication",
@@ -78286,6 +78379,22 @@
             {
               "label": "Buildkite agent prerequisite",
               "url": "https://github.com/google/gvisor/pull/16904"
+            },
+            {
+              "label": "Stock local publication with explicitly supplied optional .changes files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42386105556/artifacts/13578969295"
+            },
+            {
+              "label": "rules_pkg 1.0.1 Debian package output groups",
+              "url": "https://github.com/bazelbuild/rules_pkg/blob/1.0.1/pkg/private/deb/deb.bzl"
+            },
+            {
+              "label": "Published 20261102.0 Debian pool inventory, amd64",
+              "url": "https://storage.googleapis.com/storage/v1/b/gvisor/o?prefix=releases%2Fpool%2F20261102.0%2Fbinary-amd64%2F&fields=items%28name%29%2CnextPageToken"
+            },
+            {
+              "label": "Published 20261102.0 Debian pool inventory, arm64",
+              "url": "https://storage.googleapis.com/storage/v1/b/gvisor/o?prefix=releases%2Fpool%2F20261102.0%2Fbinary-arm64%2F&fields=items%28name%29%2CnextPageToken"
             }
           ]
         },
@@ -84353,5 +84462,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T17:21:53+00:00"
+  "updatedAt": "2026-11-07T17:26:09+00:00"
 }
