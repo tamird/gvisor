@@ -8,7 +8,7 @@ load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", 
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
 load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test")
-load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants")
+load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "test_architecture_variants")
 
 gazelle = _gazelle
 
@@ -211,7 +211,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = [], **kwargs):
     """Build a go test.
 
     Args:
@@ -241,6 +241,7 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         name = name,
         **kwargs
     )
+    arm64_presubmit_test(name, go_arm64_test, kwargs)
     test_architecture_variants(
         name,
         architectures,

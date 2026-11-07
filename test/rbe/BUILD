@@ -9,6 +9,20 @@ config_setting(
     define_values = {"source_presubmit": "true"},
 )
 
+config_setting(
+    name = "mixed_native_tests",
+    define_values = {"mixed_native_tests": "true"},
+)
+
+test_suite(
+    name = "uname",
+    tags = ["manual"],
+    tests = [
+        "//test/syscalls:uname_test_native",
+        "//test/syscalls:uname_test_native_presubmit_arm64",
+    ],
+)
+
 _UBUNTU_WORKER = {
     "OSFamily": "linux",
     "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",

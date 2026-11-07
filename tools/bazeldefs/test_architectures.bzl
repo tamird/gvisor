@@ -23,6 +23,27 @@ def with_test_architecture(test_rule, architecture, extra_providers = [], implic
         [target.platform],
     )
 
+def _test_attributes(architecture, kwargs):
+    attributes = dict(kwargs)
+    # Only test execution requires the target CPU. Compilers and linkers may
+    # run in another execution group on a different architecture.
+    groups = dict(attributes.get("exec_group_compatible_with") or {})
+    groups["test"] = groups.get("test", []) + [
+        Label("@platforms//os:linux"),
+        _ARCHITECTURES[architecture].constraint,
+    ]
+    attributes["exec_group_compatible_with"] = groups
+    return attributes
+
+def arm64_presubmit_test(name, test_rule, kwargs):
+    """Adds an ARM64 test when the presubmit also runs the original on AMD64."""
+    attributes = _test_attributes("arm64", kwargs)
+    attributes["target_compatible_with"] = (attributes.get("target_compatible_with") or []) + select({
+        Label("//test/rbe:mixed_native_tests"): [],
+        "//conditions:default": [Label("@platforms//:incompatible")],
+    })
+    test_rule(name = name + "_presubmit_arm64", **attributes)
+
 def test_architecture_variants(name, architectures, test_rules, kwargs):
     """Adds explicit, manual variants from the original test's complete attributes.
 
@@ -37,15 +58,6 @@ def test_architecture_variants(name, architectures, test_rules, kwargs):
     for architecture in architectures:
         if architecture not in _ARCHITECTURES:
             fail("unsupported test architecture: %s" % architecture)
-        attributes = dict(kwargs)
-
-        # Bazel runs tests in the test execution group. Preserve the caller's
-        # other groups so that compiling and linking may use a different CPU.
-        groups = dict(attributes.get("exec_group_compatible_with") or {})
-        groups["test"] = groups.get("test", []) + [
-            Label("@platforms//os:linux"),
-            _ARCHITECTURES[architecture].constraint,
-        ]
-        attributes["exec_group_compatible_with"] = groups
+        attributes = _test_attributes(architecture, kwargs)
         attributes["tags"] = attributes.get("tags", []) + ["manual"]
         test_rules[architecture](name = name + "_" + architecture, **attributes)

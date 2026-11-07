@@ -2,9 +2,8 @@
 
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "platform_capabilities", "platforms", "save_restore_platforms")
-load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants", "with_test_architecture")
+load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "with_test_architecture")
 
-native_amd64_test, _native_amd64_transition = with_test_architecture(native_test, "amd64").build()
 native_arm64_test, _native_arm64_transition = with_test_architecture(native_test, "arm64").build()
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
@@ -174,12 +173,7 @@ def _syscall_test(
     )
     native_test(name = name, out = name, **kwargs)
     if platform == "native":
-        test_architecture_variants(
-            name,
-            ["amd64", "arm64"],
-            {"amd64": native_amd64_test, "arm64": native_arm64_test},
-            kwargs,
-        )
+        arm64_presubmit_test(name, native_arm64_test, kwargs)
 
 def all_platforms():
     """All platforms returns a list of all platforms."""

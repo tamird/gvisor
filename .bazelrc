@@ -94,4 +94,4 @@ build:source-presubmit-mixed --config=source-presubmit-common
 build:source-presubmit-mixed --config=x86_64
 build:source-presubmit-mixed --host_platform=//tools/bazeldefs:linux_amd64
 build:source-presubmit-mixed --extra_execution_platforms=//test/rbe:ubuntu_amd64,//test/rbe:ubuntu_arm64
-test:source-presubmit-mixed --target_pattern_file=test/rbe/mixed-native.targets
+build:source-presubmit-mixed --define=mixed_native_tests=true
