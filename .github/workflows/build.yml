@@ -1,35 +1,39 @@
-name: CI
-
-"on":
+name: Qualify the lazy Gazelle runner environment in both root models
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/gazelle-cache-env-roots]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  downstream:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Pin the compiler, upstream header policy and Linux client
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 059b8239f0605a8e0d37d0875946708a21cf4538
+          test "$(git rev-parse HEAD^^)" = 69e89d7a3dfc6b2b484f7dc01a68fad68741dd03
+          d="$RUNNER_TEMP/downstream-llvm"
+          mkdir -p "$d"
+          cp .github/qualification/{downstream_llvm,supplier_gazelle}.py "$d/"
+          cp .github/qualification/gazelle_runner_env.patch "$d/supplier.patch"
+          echo "fbf9fadc326d34e9f7a0c2860c05beaad93cd7c31ebef951c1241da8a390a191  $d/downstream_llvm.py" | sha256sum -c -
+          echo "44496c0571f5bd7c2418edb9d77d5fa407a60ced47a3dfa28f49ed6d727adc7a  $d/supplier.patch" | sha256sum -c -
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazel-contrib/bazel-gazelle/releases/download/v0.51.3/bazel-gazelle-v0.51.3.tar.gz -o "$d/supplier.tar.gz"
+          echo "49d9eba309b0b695824ff417d734242824ad9ab5edb56063b9d3400df1a61a56  $d/supplier.tar.gz" | sha256sum -c -
+          echo '{"passed":false,"phase":"bootstrap"}' > "$d/result.json"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazelisk" | sha256sum -c -
+          chmod 755 "$d/bazelisk"
+      - name: Build the external vDSO and compare real Gazelle runners
+        run: python3 -B "$RUNNER_TEMP/downstream-llvm/supplier_gazelle.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: downstream-llvm-vdso
+          path: ${{ runner.temp }}/downstream-llvm/result.json
+          if-no-files-found: error
