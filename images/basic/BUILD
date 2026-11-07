@@ -110,3 +110,18 @@ image_outputs(
     image = ":tmpfile",
     image_name = "basic/tmpfile",
 )
+
+# Fork qualification for the current Make-selected Dockerfile.
+genrule(
+    name = "official_dind_fixture",
+    srcs = ["docker/Dockerfile", "docker/start-dockerd.sh"],
+    outs = ["official-dind.id"],
+    cmd = """
+      set -euo pipefail
+      tar -chf - -C "$$(dirname $(location docker/Dockerfile))" Dockerfile start-dockerd.sh |
+        docker build --pull --no-cache -t gvisor.dev/images/basic/docker:latest -
+      docker image inspect --format '{{.Id}}' gvisor.dev/images/basic/docker:latest > "$@"
+    """,
+    local = True,
+    tags = ["manual", "no-cache"],
+)

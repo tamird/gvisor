@@ -1,35 +1,65 @@
-name: CI
-
-"on":
+name: Verify the released DinD image
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/official-dind-compose-native]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compose:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - arch: amd64
+          machine: x86_64
+          runner: ubuntu-24.04
+          bazel_sha: 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c
+        - arch: arm64
+          machine: aarch64
+          runner: ubuntu-24.04-arm
+          bazel_sha: 10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 65
+    env:
+      DIND_ARCH: ${{ matrix.arch }}
+      BAZEL_SHA: ${{ matrix.bazel_sha }}
+      MACHINE: ${{ matrix.machine }}
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Use the exact recipe on the native worker
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(uname -m)" = "$MACHINE"
+        test "$(git rev-parse HEAD^)" = 9a561395d24d90f0ec68758ffb8fc0c13d9af91c
+        test "$(git rev-parse --short=9 HEAD^^)" = 3847ed738
+        dir="$RUNNER_TEMP/official-dind"
+        mkdir "$dir"
+        cp .github/qualification/official_dind.py "$dir/verify.py"
+        git switch --detach HEAD^
+        git restore --source="$GITHUB_SHA" --worktree -- images/basic/BUILD
+        test "$(cat .bazelversion)" = 9.3.1
+        arch="$DIND_ARCH"
+        if [[ "$arch" == amd64 ]]; then arch=x86_64; fi
+        curl -fsSL --retry 3 "https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-$arch" -o "$dir/bazel"
+        printf '%s  %s\n' "$BAZEL_SHA" "$dir/bazel" | sha256sum --check --strict
+        chmod +x "$dir/bazel"
+        pkg=g++-aarch64-linux-gnu
+        if [[ "$DIND_ARCH" == arm64 ]]; then pkg=g++-x86-64-linux-gnu; fi
+        if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q 'install ok installed'; then
+          sudo apt-get -qq update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$pkg"
+        fi
+        python3 -B "$dir/verify.py"
+    - name: Retain the source, image and test evidence
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: released-dind-${{ matrix.arch }}
+        path: ${{ runner.temp }}/official-dind/result.json
+        retention-days: 14
+        if-no-files-found: warn
