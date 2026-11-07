@@ -72,6 +72,7 @@ type graphObjectDecodeState struct {
 
 // graphDecodeState is the state of Load.
 type graphDecodeState struct {
+	studyRoot string
 	ctx context.Context
 	in  decBuf
 
@@ -153,6 +154,7 @@ func (ds *graphDecodeState) release() {
 	clear(ds.cbs[:cap(ds.cbs)])
 	clear(ds.targets[:cap(ds.targets)])
 	*ds = graphDecodeState{
+		studyRoot: ds.studyRoot,
 		types:      ds.types[:0],
 		typeNames:  ds.typeNames[:0],
 		objs:       ds.objs[:0],

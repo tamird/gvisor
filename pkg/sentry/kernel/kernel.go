@@ -88,6 +88,13 @@ import (
 	"gvisor.dev/gvisor/pkg/timing"
 )
 
+func init() {
+	state.ObservePoolFrame = func(root, previous string, previousCallbacks, callbacks int, kept bool, live, capacity uintptr) {
+		log.Infof("STATE-POOL-FRAME root=%s previous=%q previousCallbacks=%d callbacks=%d kept=%t live=%d capacity=%d",
+			root, previous, previousCallbacks, callbacks, kept, live, capacity)
+	}
+}
+
 // UserCounters is a set of user counters.
 //
 // +stateify savable
