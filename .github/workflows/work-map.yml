@@ -1,0 +1,58 @@
+name: Verify complete empty check inventories
+on:
+  push:
+    branches: [qualification/work-map-observed-empty-checks]
+permissions: {contents: read}
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Replay the two returned rules_distroless commit rollups
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 2ec88784308a728ad36aa9d09f9cc4d58e05b1c7
+          git diff --exit-code HEAD^ HEAD -- registry.json github-status.json app.js app_test.mjs update-status.py update_status_test.py work_states.py
+          echo 'c6d605636e6f701f9c0096b250091e4cbf84a895b02817c2bc6395ba81c351d2  github-status.json' | sha256sum -c -
+          python3 -B - <<'PY'
+          import json, os
+          from pathlib import Path
+          from update_status_test import raw_pr, updater
+          from work_states import check_qualifier, checks_passed, complete_checks
+          observations = json.loads('{"p293":{"commits":{"nodes":[{"commit":{"committedDate":"2026-10-30T22:29:46Z","oid":"9de063f595a7f0a0140e845bb23c2a0900a64059","statusCheckRollup":null}}]},"headRefOid":"9de063f595a7f0a0140e845bb23c2a0900a64059","number":293,"reviewDecision":"REVIEW_REQUIRED"},"p294":{"commits":{"nodes":[{"commit":{"committedDate":"2026-11-02T16:22:59Z","oid":"af1089c91c36bfc78719b2836c73d374a66ef092","statusCheckRollup":null}}]},"headRefOid":"af1089c91c36bfc78719b2836c73d374a66ef092","number":294,"reviewDecision":"REVIEW_REQUIRED"}}')
+          snapshot = json.loads(Path("github-status.json").read_text())
+          output = []
+          for obs in observations.values():
+              p = next(pr for pr in snapshot["prs"] if pr.get("repo") == "bazel-contrib/rules_distroless" and pr["number"] == obs["number"])
+              assert p["head"] == p["branchHead"] == obs["headRefOid"] and p["githubReviewDecision"] == obs["reviewDecision"] == "REVIEW_REQUIRED"
+              assert p["checks"] is None and p["reviewsComplete"] and p["threads"]["complete"] and p["labelsComplete"] and p["importsComplete"]
+              raw = raw_pr(p["number"], head=int(p["head"],16))
+              raw.update(obs)
+              p["checks"] = updater.normalize(raw)["checks"]
+              assert complete_checks(p) and not checks_passed(p) and check_qualifier(p) == "No published checks"
+              output.append(p)
+          (Path(os.environ["RUNNER_TEMP"]) / "observed-checks.json").write_text(json.dumps(output))
+          PY
+          node <<'JS'
+          const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+          const context=vm.createContext({URL}), src=fs.readFileSync('app.js','utf8');
+          vm.runInContext(src.slice(0,-'start();\n'.length),context);
+          context.r=JSON.parse(fs.readFileSync('registry.json'));
+          for(const pr of JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'observed-checks.json')))) {
+            context.n={...context.r.nodes.find(n=>n.repo===pr.repo && n.number===pr.number),github:pr};
+            const reasons=vm.runInContext('registry=r; attentionReasons(n,"tamird").map(v=>v.id)',context);
+            if(!reasons.includes("maintainer-review") || reasons.includes("agent-refresh") || reasons.includes("maintainer-merge")) throw Error(reasons);
+            if(vm.runInContext('checksPassed(n.github) || checkInfo(n.github).text !== "No published checks"',context)) throw Error("incorrect zero-check result");
+            console.log(pr.repo,pr.number,pr.head,reasons);
+          }
+          JS
+      - name: Verify all browser and collector regressions
+        if: always() && !cancelled()
+        run: |
+          code=0
+          python3 -B -m unittest work_states_test update_status_test incoming_reviews_test || code=1
+          node --test app_test.mjs || code=1
+          exit "$code"
