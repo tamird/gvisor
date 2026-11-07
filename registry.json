@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T11:35:54+00:00",
+    "updatedAt": "2026-11-07T11:43:06+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2567,14 +2567,18 @@
       "id": "branch:syscall-processes-memory",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "syscall-processes-memory",
-      "title": "Size workers for process and memory-accounting syscall tests",
-      "url": "https://github.com/tamird/gvisor/tree/syscall-processes-memory",
+      "ref": "review/syscall-worker-sizes",
+      "title": "Size workers for the memory accounting and process syscall tests",
+      "url": "https://github.com/tamird/gvisor/commit/31d5b49f3",
       "group": "tests",
-      "status": "Agent work",
-      "summary": "On the declared LLVM integration, all nine named syscall cases passed in three uncached attempts on native root AMD64 workers. The ptrace suite ran all seven cases on a large worker, including the 1,000-thread test. The 512 MiB accounting test ran across both save and save/resume on enormous workers. Two earlier attempts on the standalone source stopped in Nogo before any test ran. The smaller default workers have not been compared in the same setup.",
-      "updatedAt": "2026-11-07T11:27:57+00:00",
+      "status": "Contributor review requested",
+      "summary": "The accounting test touches 524,288 KiB. A default large worker reported 475,728 KiB total and no swap. Both save and save/resume passed on enormous workers. The ptrace process suite ran all seven cases on a large worker, including the 1,000-thread case. A separate medium worker reported a system-wide cap of 1,821 threads. All nine cases ran uncached on the declared LLVM integration with the same size patch. The control measured default worker capacity without launching a workload too large for it.",
+      "updatedAt": "2026-11-07T11:40:35+00:00",
       "evidence": [
+        {
+          "label": "Default medium and large workers, including available RAM, swap and threads-max",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368827189/artifacts/13572951004"
+        },
         {
           "label": "Three actual TestRunner attempts, resource classes and all nine syscall results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42367564451/artifacts/13572855935"
@@ -2607,7 +2611,31 @@
           "label": "Previous configured properties and incomplete physical trials",
           "url": "https://github.com/tamird/gvisor/actions/runs/41786100190/artifacts/13305179066"
         }
-      ]
+      ],
+      "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/31d5b49f3",
+        "title": "Size workers for the memory accounting and process syscall tests",
+        "body": "The memory accounting test populates 512 MiB before it checkpoints.\nA large Firecracker worker reported 475,728 KiB of memory and no swap,\nless than the mapping alone. Request an enormous worker. Preserve this\nsize for save and save/resume tests, which otherwise request a large\nworker regardless of the suite's memory requirement.\n\nThe process suite keeps 1,000 guest threads alive at once. On a medium\nworker Linux reported a system-wide limit of 1,821 threads. Request a\nlarge worker to leave room for the ptrace tracers and the guest tasks.",
+        "summary": "Open the independent syscall-sizing change. Its code is identical to the qualified patch and its parent is current master.",
+        "requestedAt": "2026-11-07T11:40:35+00:00"
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+        "observedAt": "2026-11-07T11:40:35+00:00",
+        "disposition": "Contributor review requested for the standalone syscall size change",
+        "nextAction": "Open the independent PR after contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/31d5b49f3",
+          "https://github.com/tamird/gvisor/actions/runs/42367564451/artifacts/13572855935",
+          "https://github.com/tamird/gvisor/actions/runs/42368827189/artifacts/13572951004"
+        ]
+      }
     },
     {
       "id": "branch:syscall-socket-stress-resources",
@@ -76792,7 +76820,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T11:35:54+00:00",
+      "updatedAt": "2026-11-07T11:43:06+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -79339,10 +79367,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42368374290/artifacts/13573190060"
             }
           ]
+        },
+        {
+          "text": "With the shell declared, both native SDK bootstrap actions produced the builder, pack and covdata on their original tool-free workers. Each fresh remote action preserved all 5,947 SDK inputs, all 31 rules_go inputs, the wrapper bytes, the arguments passed to it, and its environment. The output builder was an ELF for the native executor on each worker. This experiment uses the unreleased rules_shell #64 API.",
+          "evidence": [
+            {
+              "label": "Matched native SDK actions with the shell declared as an input",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the same SDK bootstrap actions with their interpreter declared. Verify the builder, pack and covdata outputs on each native executor.",
+      "nextStep": "Carry the proven SDK bootstrap into the real release build and locate the next user of an undeclared tool. Track the rules_shell API separately until a released provider supplies it.",
       "evidence": [
+        {
+          "label": "Matched native SDK actions with the shell declared as an input",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
+        },
         {
           "label": "Uncached Go SDK bootstrap action on each native tool-free worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/42368374290/artifacts/13573190060"
@@ -82564,5 +82605,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T11:35:54+00:00"
+  "updatedAt": "2026-11-07T11:43:06+00:00"
 }
