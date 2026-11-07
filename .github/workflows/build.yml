@@ -1,35 +1,101 @@
-name: CI
-
-"on":
+name: Run the complete mixed AMD64 and ARM64 source presubmit
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/current-full-mixed-presubmit]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  submit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the original source and the Buildkite command
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = f6d6788e84731673a155c9fff6f28b8624e34c50
+          test "$(git rev-parse HEAD^^)" = 2e72c3051b3d7a13761f90961f4e94b8cccc8b11
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_presubmit_results.py' ':!.github/qualification/source_presubmit_memory.py' ':!.github/qualification/source_presubmit_selection.py' ':!.github/qualification/exec_cas.py' ':!.github/qualification/source_presubmit_workers.py'
+          test "$(git rev-parse 'HEAD^^{tree}')" = 4305e961c6389767efe5ca3295bc1be86c3183af
+          cp .github/qualification/{source_presubmit_results.py,source_presubmit_selection.py,source_presubmit_memory.py,source_presubmit_workers.py,exec_cas.py} "$RUNNER_TEMP/"
+          git checkout --quiet --detach HEAD^
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+          mkdir -p "$RUNNER_TEMP/source-presubmit-results"
+          printf '{"source":"f6d6788e84731673a155c9fff6f28b8624e34c50","stage":"preflight"}\n' > "$RUNNER_TEMP/source-presubmit-results/progress.json"
+          curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 https://github.com/buildkite/agent/releases/download/v4.10.1/buildkite-agent-linux-amd64-4.10.1.tar.gz -o "$RUNNER_TEMP/agent.tar.gz"
+          echo "f7ecf75a3be41a786f25e9cdbff332dc49b7f18ef63a1fd73bf77056fd4d7fe0  $RUNNER_TEMP/agent.tar.gz" | sha256sum -c -
+          python3 -IB - <<'PYTHON'
+          import os, pathlib, tarfile
+          root = pathlib.Path(os.environ["RUNNER_TEMP"])
+          with tarfile.open(root / "agent.tar.gz") as archive:
+              item, = [m for m in archive if m.isfile() and pathlib.PurePosixPath(m.name).name == "buildkite-agent"]
+              (root / "buildkite-agent").write_bytes(archive.extractfile(item).read())
+          PYTHON
+          chmod 755 "$RUNNER_TEMP/buildkite-agent"
+          BUILDKITE_AGENT_ENDPOINT=http://127.0.0.1:1 "$RUNNER_TEMP/buildkite-agent" pipeline upload --dry-run --format json --agent-access-token unused-token .buildkite/pipeline.yaml > "$RUNNER_TEMP/pipeline.json"
+      - name: Size and check the Bazel server heap on this coordinator
+        run: python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
+      - name: Bind the full package selection and both execution architectures
+        id: graph
+        timeout-minutes: 35
+        run: python3 -IB "$RUNNER_TEMP/source_presubmit_selection.py" analyze
+      - name: Submit the complete graph to the remote executor
+        id: submit
+        timeout-minutes: 95
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit-mixed --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit-mixed --remote_download_outputs=minimal
+          build:source-presubmit-mixed --remote_download_regex=.*testlogs/.*/test[.](xml|log)$
+          build:source-presubmit-mixed --jobs=64 --keep_going
+          build:source-presubmit-mixed --modify_execution_info=^TestRunner$=+no-remote-cache
+          test:source-presubmit-mixed --nocache_test_results --flaky_test_attempts=1
+          test:source-presubmit-mixed --test_env=GO_TEST_WRAP_TESTV=1
+          RC
+          printf 'build:source-presubmit-mixed --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:source-presubmit-mixed --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -IB "$RUNNER_TEMP/source_presubmit_selection.py" execute
+      - name: Collect typed target, shard and failure receipts
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep" "$RUNNER_TEMP/source-presubmit.bazelrc"' EXIT
+          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose || true
+          python3 -IB "$RUNNER_TEMP/source_presubmit_results.py"
+      - name: Check one original TestRunner action for each CPU and isolation mode
+        if: always() && steps.graph.outcome == 'success' && steps.submit.outcome == 'success' && steps.collect.outcome == 'success' && !cancelled()
+        timeout-minutes: 4
+        continue-on-error: true
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -EsB "$RUNNER_TEMP/source_presubmit_workers.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: current-full-mixed-presubmit-results
+          path: |
+            ${{ runner.temp }}/source-presubmit-results/receipt.json
+            ${{ runner.temp }}/source-presubmit-results/receipt.partial.json
+            ${{ runner.temp }}/source-presubmit-results/progress.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Check the full presubmit result
+        if: always() && steps.collect.outcome == 'success' && !cancelled()
+        run: |
+          python3 -c 'import json, os, pathlib; row=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"source-presubmit-results/receipt.json").read_text()); raise SystemExit(0 if row["complete_pass"] and row.get("worker_samples",{}).get("verified") else 1)'

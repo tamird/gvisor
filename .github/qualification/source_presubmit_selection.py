@@ -1,0 +1,182 @@
+"""Bind exact roots to the verified mixed graph and submit the rendered Buildkite step."""
+from collections import Counter
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import subprocess
+import sys
+import uuid
+
+SOURCE = "f6d6788e84731673a155c9fff6f28b8624e34c50"
+CONTROL = "//test/syscalls:uname_test_native"
+TMP = Path(os.environ["RUNNER_TEMP"])
+OUT = TMP / "llvm-source-selection.json"
+RESULTS = TMP / "source-presubmit-results"
+LABEL = re.compile(r"//[A-Za-z0-9_.+/-]*:[A-Za-z0-9_.+/-]+")
+# Immutable graph from 13571137111, whose source tree matches this checkout.
+ORACLE = "f1e20338b9009d0e3f98d54e84d5a86c9eece75c62002daa3aa271439362c047"
+SUFFIX = "_presubmit_arm64"
+MULTIPLE = {"//pkg/tcpip/stack:stack_x_test": 8, "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": 4}
+FIRECRACKER = {
+    "//examples/sandboxexec/go/docprocessor:docprocessor_test", "//runsc/cmd:cmd_test",
+    "//runsc/sandbox:sandbox_test", "//sandboxexec/sandbox/python:sandbox_py_test",
+    "//sandboxexec/sandbox:sandbox_test", CONTROL,
+}
+UNPRIVILEGED = "//runsc/cmd:statefile_output_permissions_test"
+PROBE = '''set -eu
+machine=$(/bin/uname -m)
+case "$TEST_TARGET" in
+    *'_presubmit_arm64') test "$machine" = aarch64; field='CPU implementer' ;;
+    *) test "$machine" = x86_64; field='vendor_id' ;;
+esac
+/bin/grep -Eq "^$field[[:space:]]*:" /proc/cpuinfo
+printf 'MIXED_NATIVE %s %s %s %s %s\\n' "$TEST_TARGET" "$machine" "$(/usr/bin/id -u)" "${TEST_SHARD_INDEX:-0}" "${TEST_TOTAL_SHARDS:-1}"
+exec "$@"'''
+RUN_UNDER = "--run_under=" + shlex.join(["/bin/sh", "-c", PROBE, "native-probe"])
+stage = {"source": SOURCE, "phases": {}}
+
+
+def save():
+    OUT.write_text(json.dumps(stage, sort_keys=True, separators=(",", ":")))
+
+
+def canonical_step():
+    steps = json.loads((TMP / "pipeline.json").read_text())["steps"]
+    step, = [s for s in steps if isinstance(s, dict) and s.get("key") == "rbe-source"]
+    assert step["command"] == '"${BUILDKITE_SOURCE_BAZEL}" test --config=source-presubmit-mixed'
+    assert step["if"] == 'build.env("STAGED_BINARIES") == null'
+    assert step["agents"] == {"arch": "amd64", "cgroup": "v2", "queue": "default"}
+    assert not os.environ.get("STAGED_BINARIES")
+    return step
+
+
+def select(name, opts, tests_only):
+    # Use the same source-controlled pattern file as the remote submission.
+    bep = TMP / ("selection-"+name+".bep")
+    log = TMP / ("selection-"+name+".log")
+    args = ["bazelisk", "test", *opts, "--jobs=4", "--nobuild", "--build_event_json_file="+str(bep)]
+    if tests_only: args.append("--build_tests_only")
+    with log.open("w") as f:
+        code = subprocess.run(args, stdout=f, stderr=subprocess.STDOUT).returncode
+    stage["phases"][name] = {"exit":code}
+    save()
+    rows = {}
+    suites = set()
+    finish = []
+    digest = hashlib.sha256()
+    with bep.open("rb") as events:
+        for line in events:
+            digest.update(line)
+            e = json.loads(line)
+            ident = e["id"]
+            assert "testResult" not in e and "testSummary" not in e and "action" not in e
+            if e.get("configured", {}).get("targetKind") == "test_suite rule":
+                suites.add(ident["targetConfigured"]["label"])
+            if "aborted" in e:
+                reason = e["aborted"]["reason"]
+                assert reason in ("NO_BUILD", "SKIPPED"), reason
+                target = ident.get("targetCompleted")
+                if reason == "NO_BUILD" and target and not target.get("aspect"):
+                    label = target["label"]
+                    config = target["configuration"]["id"]
+                    assert LABEL.fullmatch(label) and re.fullmatch(r"[0-9a-f]{64}", config)
+                    assert label not in rows or rows[label] == config
+                    rows[label] = config
+            if "finished" in e:
+                finish.append(e["finished"].get("exitCode"))
+    assert code == 1 and finish == [{"code": 1, "name": "BUILD_FAILURE"}] and CONTROL in rows
+    for suite in suites:
+        rows.pop(suite, None)
+    stage["suites"] = sorted(set(stage.get("suites", ())) | suites)
+    stage["phases"][name].update(count=len(rows),bep_sha256=digest.hexdigest())
+    stage[name]=rows
+    save()
+    return rows
+
+
+def owner_digest(labels):
+    return hashlib.sha256(("\n".join(sorted(labels)) + "\n").encode()).hexdigest()
+
+
+def analyze():
+    step = canonical_step()
+    patterns = Path("test/rbe/source-presubmit.targets").read_text().splitlines()
+    stage.update(command=step["command"], public_patterns=[p for p in patterns if p and not p.startswith("#")])
+    opts = ["--config=source-presubmit-mixed", "--spawn_strategy=local", "--strategy=TestRunner=local",
+            "--remote_executor=", "--remote_cache=", "--bes_backend=", "--modify_execution_info=^TestRunner$=+no-remote-cache",
+            "--test_env=GO_TEST_WRAP_TESTV=1", "--nocache_test_results", "--flaky_test_attempts=1", RUN_UNDER]
+    roots = select("all", opts, False)
+    tests = select("tests", opts, True)
+    assert tests.keys() <= roots.keys()
+    build_only = roots.keys() - tests.keys()
+    assert len(build_only) == 2887 and owner_digest(build_only) == "9e31ff09dacc4269ef991f6ef7267445134a77f0bc0cd196539f9f2fd1cd1ecd"
+    assert len(tests) == 728 and owner_digest(tests) == "121d63098403b87a32a48205a8d6150a493b2ad6e05df418cb26172197009b65"
+    workers, shards, rows, fc = {}, {}, [], []
+    for label in sorted(tests):
+        base = label.removesuffix(SUFFIX)
+        cpu = "arm64" if label.endswith(SUFFIX) else "amd64"
+        count = MULTIPLE.get(base, 1)
+        isolation = "firecracker" if base in FIRECRACKER else "oci"
+        user = "root" if base in FIRECRACKER else "65534:65534" if base == UNPRIVILEGED else ""
+        if base in FIRECRACKER:
+            fc.append(label)
+        workers[label], shards[label] = cpu, count
+        rows.extend((label, 1, i, cpu, isolation, user) for i in range(1, count + 1))
+    digest = hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest()
+    assert digest == ORACLE and len(rows) == 748
+    stage.update(shards=shards, test_workers=workers, firecracker_owners=fc, oracle_sha256=digest, eligible=True)
+    save()
+    print("Bound 728 test owners, 748 shards and 2,887 build-only roots", flush=True)
+
+
+def execute():
+    assert json.loads(OUT.read_text())["eligible"]
+    RESULTS.mkdir(exist_ok=True)
+    wrapper = TMP / "full-mixed-bazel"
+    argv = ["bazelisk", "--bazelrc=" + str(TMP / "source-presubmit.bazelrc")]
+    wrapper.write_text("#!/bin/sh\nset -eu\n" + shlex.join(["exec", *argv]) + ' "$@" ' + shlex.quote(RUN_UNDER) + "\n")
+    wrapper.chmod(0o700)
+    cmd = ["timeout", "--signal=INT", "--kill-after=60s", "90m", "/bin/bash", "-eu", "-c", canonical_step()["command"]]
+    edge = TMP / "source-presubmit.bep"
+    progress = {"source": SOURCE, "invocation": None, "terminal_targets": 0, "results": {}}
+    counts = Counter()
+    offset = 0
+    with (TMP / "source-presubmit.log").open("wb") as log:
+        process = subprocess.Popen(cmd, env=dict(os.environ, BUILDKITE_SOURCE_BAZEL=str(wrapper)), stdout=log, stderr=log)
+        while True:
+            try:
+                process.wait(timeout=45)
+            except subprocess.TimeoutExpired:
+                pass
+            if edge.is_file():
+                with edge.open("rb") as events:
+                    events.seek(offset)
+                    for raw in events:
+                        if not raw.endswith(b"\n"):
+                            break
+                        offset += len(raw)
+                        try:
+                            e = json.loads(raw)
+                        except ValueError:
+                            continue
+                        if start := e.get("started"):
+                            progress["invocation"] = str(uuid.UUID(start["uuid"]))
+                        if e.get("id", {}).get("targetCompleted"):
+                            progress["terminal_targets"] += 1
+                        if t := e.get("testResult"):
+                            status = t.get("status", "NO_STATUS")
+                            counts[status if re.fullmatch("[A-Z_]{1,32}", status) else "UNKNOWN"] += 1
+            progress["results"] = dict(counts)
+            (RESULTS / "progress.json").write_text(json.dumps(progress) + "\n")
+            print(json.dumps(progress), flush=True)
+            if process.returncode is not None:
+                (TMP / "source-presubmit-exit").write_text(str(process.returncode) + "\n")
+                return
+
+
+if __name__ == "__main__":
+    assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == SOURCE
+    {"analyze": analyze, "execute": execute}[sys.argv[1]]()
