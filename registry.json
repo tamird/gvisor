@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:29:13+00:00",
+    "updatedAt": "2026-11-07T01:37:38+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55673,9 +55673,13 @@
       "url": "https://github.com/tamird/gvisor/commit/4b87bd487",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T01:23:17+00:00",
+      "updatedAt": "2026-11-07T01:37:38+00:00",
       "summary": "One Bazel package list now serves single-CPU and mixed presubmits. Single-CPU analysis selected the original 363 tests and 373 shards on each architecture. Mixed analysis selected 724 shards: 373 on AMD64 and 351 on ARM64. The original test labels supply AMD64. All 340 Go tests and the native uname test gain ARM64 coverage. The other 22 tests still run on AMD64 only.\n\nIn execution checks, state, TCP and VFS passed 153 cases per CPU. Four uname cases passed on each CPU directly on Linux and again inside systrap. The separate vDSO clock checks also ran on matching native workers. The single-CPU AMD64 presubmit passed all 373 shards; the ARM64 presubmit passed 371. The 724-shard mixed selection has only been analyzed.",
       "evidence": [
+        {
+          "label": "Full mixed-architecture fork submission using the Buildkite command",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42324657295"
+        },
         {
           "label": "Normal and mixed package selection, original labels, worker bindings and shard counts",
           "url": "https://github.com/tamird/gvisor/actions/runs/42322549217/artifacts/13553917910"
@@ -55911,7 +55915,7 @@
         "sourceHead": "4b87bd4875ecde1ab6b994030d59871b59363ca1",
         "observedAt": "2026-11-07T01:23:17+00:00",
         "disposition": "The same package patterns select the mixed graph and preserve ordinary developer tests.",
-        "nextAction": "Qualify the hardware-dependent tests among the 22 AMD64-only owners, verify build-only targets, and retain the two full ARM64 failures for investigation before switching CI.",
+        "nextAction": "Collect the first full mixed Buildkite-command run. Inspect all build-only targets and shard outcomes, including the two previous ARM64 failures.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
@@ -57069,6 +57073,40 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/17155#pullrequestreview-5808929060"
         ]
+      }
+    },
+    {
+      "id": "branch:runsc-version-line",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "bazel",
+      "ref": "proposal/runsc-version-line",
+      "head": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
+      "title": "Check the runsc version independently of the OCI spec version",
+      "url": "https://github.com/tamird/gvisor/commit/d243ff20a",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T01:37:38+00:00",
+      "summary": "The runsc version test accepted a nonnumeric build stamp because it found a digit in the OCI spec version on the next line. The existing Bazel target now checks the stamped executable directly with a Go test. On native AMD64 and ARM64, the original passed the malformed binary and the correction rejected it. Both accepted the normal stamp. The final revision corrects one word in the license header.",
+      "evidence": [
+        {
+          "label": "Native AMD64 controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42324187283/artifacts/13554403101"
+        },
+        {
+          "label": "Native ARM64 controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42324187283/artifacts/13555225426"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
+        "baseHead": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+        "url": "https://github.com/tamird/gvisor/commit/d243ff20a",
+        "title": "Check the runsc version independently of the OCI spec version",
+        "requestedAt": "2026-11-07T01:37:38+00:00",
+        "summary": "Open a standalone PR fixing the runsc version check and removing its shell script?",
+        "body": "runsc --version prints two lines. The stamping test searches both for a\ndigit, so a runsc version such as development passes as long as the OCI\nspec version contains a digit.\n\nRun the stamped binary directly from a Go test. Check that the runsc\nline contains a digit and reject an unresolved VERSION placeholder."
       }
     }
   ],
