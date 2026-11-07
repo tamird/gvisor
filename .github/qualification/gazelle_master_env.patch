@@ -1,0 +1,181 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -104,11 +104,11 @@
+     srcs = ["def.bzl"],
+     visibility = ["//visibility:public"],
+     deps = [
++        "//internal:env",
+         "//internal:gazelle_binary",
+         "//internal:go_repository",
+         "//internal:overlay_repository",
+         "//internal/generationtest",
+-        "@bazel_gazelle_go_repository_config//:go_env.bzl",
+         "@bazel_gazelle_is_bazel_module//:defs",
+         "@bazel_skylib//lib:shell",
+         "@rules_shell//shell:rules_bzl",
+diff --git a/def.bzl b/def.bzl
+--- a/def.bzl
++++ b/def.bzl
+@@ -13,10 +13,6 @@
+ # limitations under the License.
+ 
+ load(
+-    "@bazel_gazelle_go_repository_config//:go_env.bzl",
+-    "GO_ENV",
+-)
+-load(
+     "@bazel_gazelle_is_bazel_module//:defs.bzl",
+     "GAZELLE_IS_BAZEL_MODULE",
+ )
+@@ -32,6 +28,7 @@
+     "@rules_shell//shell:sh_test.bzl",
+     "sh_test",
+ )
++load("//internal:env.bzl", "GoEnvInfo")
+ load(
+     "//internal:gazelle_binary.bzl",
+     _gazelle_binary = "gazelle_binary",
+@@ -84,6 +81,10 @@
+ 
+ def _gazelle_runner_attr_factory(test_runner = False):
+     attrs = {
++        "_go_env": attr.label(
++            default = "@bazel_gazelle_go_repository_config//:runner_env",
++            providers = [GoEnvInfo],
++        ),
+         "gazelle": attr.label(
+             allow_single_file = True,
+             default = "//cmd/gazelle",
+@@ -147,7 +148,7 @@
+     args.extend([ctx.expand_location(arg, ctx.attr.data) for arg in ctx.attr.extra_args])
+ 
+     combined_env = {}
+-    combined_env.update(GO_ENV)
++    combined_env.update(ctx.attr._go_env[GoEnvInfo].env)
+     combined_env.update(ctx.attr.env)
+     for key in combined_env:
+         if not _valid_env_variable_name(key):
+diff --git a/internal/env.bzl b/internal/env.bzl
+--- a/internal/env.bzl
++++ b/internal/env.bzl
+@@ -386,3 +386,27 @@
+         fail("Unsupported operating system: " + ctx.os.name)
+ 
+     return host
++
++GoEnvInfo = provider(fields = {"env": "Environment variables for Go tools."})
++
++def _runner_env_impl(ctx):
++    return [GoEnvInfo(env = ctx.attr.env)]
++
++runner_env = rule(
++    implementation = _runner_env_impl,
++    attrs = {"env": attr.string_dict()},
++)
++
++def runner_env_build(files):
++    """Returns the BUILD file exposing the generated environment to a runner."""
++    return """load("@@{repo}//internal:env.bzl", "runner_env")
++load(":go_env.bzl", "GO_ENV")
++
++exports_files({files})
++
++runner_env(
++    name = "runner_env",
++    env = GO_ENV,
++    visibility = ["//visibility:public"],
++)
++""".format(repo = Label("//internal:env.bzl").repo_name, files = repr(files))
+diff --git a/internal/bzlmod/go_repository_config.bzl b/internal/bzlmod/go_repository_config.bzl
+--- a/internal/bzlmod/go_repository_config.bzl
++++ b/internal/bzlmod/go_repository_config.bzl
+@@ -15,7 +15,7 @@
+ """go_repository_config internal repo rule, used by go_deps"""
+ 
+ load("//internal:common.bzl", "repository_config_input_path")
+-load("//internal:env.bzl", "write_go_env_file")
++load("//internal:env.bzl", "runner_env_build", "write_go_env_file")
+ 
+ def _import_path_prefixes(importpath):
+     """Returns importpath and its slash-delimited prefixes, shortest first."""
+@@ -135,7 +135,7 @@
+     for prefix, indices in repository_config_inputs(ctx.attr.repo_names).items():
+         ctx.file(repository_config_input_path(prefix), "\n".join([lines[i] for i in indices]))
+     write_go_env_file(ctx, ctx.attr.go_env)
+-    ctx.file("BUILD.bazel", "exports_files(['WORKSPACE', 'config.json', 'go.env', 'go_env.bzl', 'go_tools.bzl'])")
++    ctx.file("BUILD.bazel", runner_env_build(["WORKSPACE", "config.json", "go.env", "go_env.bzl", "go_tools.bzl"]))
+     ctx.file("go_env.bzl", content = "GO_ENV = " + repr(ctx.attr.go_env))
+     ctx.file("go_tools.bzl", content = "GO_TOOLS = {{k: Label(v) for k, v in {}.items()}}".format(
+         repr(ctx.attr.tool_targets),
+diff --git a/internal/workspace/go_repository_config.bzl b/internal/workspace/go_repository_config.bzl
+--- a/internal/workspace/go_repository_config.bzl
++++ b/internal/workspace/go_repository_config.bzl
+@@ -13,7 +13,7 @@
+ # limitations under the License.
+ 
+ load("//internal:common.bzl", "env_execute", "executable_extension", "watch")
+-load("//internal:env.bzl", "read_go_env_file", "resolve_env")
++load("//internal:env.bzl", "read_go_env_file", "resolve_env", "runner_env_build")
+ 
+ def _go_repository_config_impl(ctx):
+     go_env = resolve_env(
+@@ -79,7 +79,7 @@
+     # add an empty build file so Bazel recognizes the config
+     ctx.file(
+         "BUILD.bazel",
+-        "exports_files([\"go_env.bzl\", \"go_tools.bzl\", \"WORKSPACE\"])",
++        runner_env_build(["go_env.bzl", "go_tools.bzl", "WORKSPACE"]),
+         False,
+     )
+ 
+diff --git a/internal/bzlmod/BUILD.bazel b/internal/bzlmod/BUILD.bazel
+--- a/internal/bzlmod/BUILD.bazel
++++ b/internal/bzlmod/BUILD.bazel
+@@ -85,5 +85,6 @@
+     deps = [
+         ":utils",
+         "//internal:common",
++        "//internal:env",
+     ],
+ )
+diff --git a/internal/workspace/BUILD.bazel b/internal/workspace/BUILD.bazel
+--- a/internal/workspace/BUILD.bazel
++++ b/internal/workspace/BUILD.bazel
+@@ -16,6 +16,7 @@
+     visibility = ["//:__subpackages__"],
+     deps = [
+         "//internal:common",
++        "//internal:env",
+         "//internal:go_repository_cache",
+     ],
+ )
+diff --git a/internal/runner_test.go b/internal/runner_test.go
+--- a/internal/runner_test.go
++++ b/internal/runner_test.go
+@@ -17,11 +17,25 @@
+ 
+ import (
+ 	"os"
++	"path/filepath"
+ 	"strings"
+ 	"testing"
+ 
+ 	"github.com/bazelbuild/rules_go/go/tools/bazel_testing"
+ )
++
++func TestQueryWithoutGoEnv(t *testing.T) {
++	// Loading the package that declares the Gazelle runner must work even
++	// when an unrelated target cannot fetch the configured Go environment.
++	repo := t.TempDir()
++	if err := os.WriteFile(filepath.Join(repo, "WORKSPACE"), nil, 0o666); err != nil {
++		t.Fatal(err)
++	}
++	if err := bazel_testing.RunBazel("query", "--enable_workspace",
++		"--override_repository=bazel_gazelle_go_repository_config="+repo, "//:gazelle"); err != nil {
++		t.Fatal(err)
++	}
++}
+ 
+ func TestRunner(t *testing.T) {
+ 	origBuildData, err := os.ReadFile("BUILD.bazel")
