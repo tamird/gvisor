@@ -1,88 +1,37 @@
-name: Run the mixed AMD64 and ARM64 source presubmit with the declared LLVM compiler
+name: Verify the existing graph root zero-field results
 on:
   push:
-    branches: [qualification/llvm-complete-mixed-presubmit]
-permissions:
-  contents: read
+    branches: [qualification/state-original-root-zero-xml]
+permissions: {contents: read}
 jobs:
-  submit:
+  check:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 140
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 3
-          persist-credentials: false
-      - name: Verify the original source and the Buildkite command
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the existing test and checksum-qualified reader
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = a39f38e89dc7110a5bc35cd70821388d2d22f62a
-          test "$(git rev-parse HEAD^^)" = 4b87bd4875ecde1ab6b994030d59871b59363ca1
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_presubmit_results.py' ':!.github/qualification/source_presubmit_memory.py' ':!.github/qualification/source_presubmit_selection.py' ':!.github/qualification/exec_cas.py' ':!.github/qualification/source_presubmit_workers.py'
-          git diff --exit-code HEAD^^ HEAD^ -- . ':!.buildkite/rbe-source.yaml'
-          cp .github/qualification/{source_presubmit_results.py,source_presubmit_selection.py,source_presubmit_memory.py,source_presubmit_workers.py,exec_cas.py} "$RUNNER_TEMP/"
-          git checkout --quiet --detach HEAD^
-          test "$(bazelisk --version)" = "bazel 9.3.1"
-          ruby -ryaml -e 'a=YAML.load_file(".buildkite/rbe-source.yaml").fetch("steps"); abort unless a.size==1 && a.first.fetch("command")=="bazel test --config=source-presubmit-mixed"'
-      - name: Size and check the Bazel server heap on this coordinator
-        run: python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
-      - name: Bind the full package selection and both execution architectures
-        id: graph
-        timeout-minutes: 35
-        run: python3 -IB "$RUNNER_TEMP/source_presubmit_selection.py"
-      - name: Submit the complete graph to the remote executor
-        id: submit
-        timeout-minutes: 95
+          test "$(git rev-parse HEAD^)" = c0d2d63f5e97db7eb5357286e9831647eca2a991
+          test "$(git rev-parse HEAD:pkg/state/tests/graph_test.go)" = 5f9ebfae1eaeb2b6b8ea2b3d3a34438f33e4a1ca
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_root_zero_xml.py'
+          cp .github/qualification/state_root_zero_xml.py "$RUNNER_TEMP/"
+          echo "db4819808095e59fd57f6f736590a6c184a1efb68a5b0877d49b2c0ec2e8553a  $RUNNER_TEMP/state_root_zero_xml.py" | sha256sum -c -
+      - name: Read the two original native state-test XMLs
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
-          set -eu
           umask 077
-          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
-          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
-          trap 'rm -f "$rc"' EXIT
-          cat > "$rc" <<'RC'
-          build:source-presubmit-mixed --remote_executor=grpcs://remote.buildbuddy.io
-          build:source-presubmit-mixed --remote_cache=grpcs://remote.buildbuddy.io
-          build:source-presubmit-mixed --bes_backend=grpcs://remote.buildbuddy.io
-          build:source-presubmit-mixed --bes_results_url=https://app.buildbuddy.io/invocation/
-          build:source-presubmit-mixed --remote_download_outputs=minimal
-          build:source-presubmit-mixed --remote_download_regex=.*testlogs/(.*/test[.]xml|(pkg/sentry/devices/nvproxy/nvproxy_driver_(abi|checksums)_test|runsc/gofer/net/netgofer_test|runsc/cmd/cmd_test|examples/sandboxexec/go/docprocessor/docprocessor_test|sandboxexec/sandbox/python/sandbox_py_test)(_presubmit_arm64)?/test[.]log)
-          build:source-presubmit-mixed --jobs=64 --keep_going
-          build:source-presubmit-mixed --modify_execution_info=^TestRunner$=+no-remote-cache
-          test:source-presubmit-mixed --nocache_test_results --flaky_test_attempts=1
-          test:source-presubmit-mixed --test_env=GO_TEST_WRAP_TESTV=1
-          RC
-          printf 'build:source-presubmit-mixed --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
-          printf 'build:source-presubmit-mixed --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          code=0
-          timeout --signal=INT --kill-after=60s 90m bazelisk --bazelrc="$rc" test --config=source-presubmit-mixed > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
-          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
-      - name: Collect typed target, shard and failure receipts
-        id: collect
-        if: always() && !cancelled()
-        run: |
-          set -eu
-          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep" "$RUNNER_TEMP/source-presubmit.bazelrc"' EXIT
-          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose
-          python3 -IB "$RUNNER_TEMP/source_presubmit_results.py"
-      - name: Check one original TestRunner action for each CPU and isolation mode
-        if: always() && steps.graph.outcome == 'success' && steps.submit.outcome == 'success' && steps.collect.outcome == 'success' && !cancelled()
-        timeout-minutes: 4
-        continue-on-error: true
-        env:
-          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -EsB "$RUNNER_TEMP/source_presubmit_workers.py"
+          python3 -IB "$RUNNER_TEMP/state_root_zero_xml.py" retrieve
+      - name: Verify the named row on both CPUs
+        run: python3 -IB "$RUNNER_TEMP/state_root_zero_xml.py" check
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always() && steps.collect.outcome == 'success' && !cancelled()
         with:
-          name: llvm-mixed-source-presubmit-results
-          path: ${{ runner.temp }}/source-presubmit-results/receipt.json
+          name: original-state-root-zero
+          path: ${{ runner.temp }}/state-root-zero.json
           if-no-files-found: error
-          retention-days: 14
-      - name: Check the full presubmit result
-        if: always() && steps.collect.outcome == 'success' && !cancelled()
-        run: |
-          python3 -c 'import json, os, pathlib; row=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"source-presubmit-results/receipt.json").read_text()); raise SystemExit(0 if row["complete_pass"] and row.get("worker_samples",{}).get("verified") else 1)'
+          retention-days: 7
+      - name: Check both named outcomes
+        run: python3 -IB -c 'import json,os; r=json.load(open(os.environ["RUNNER_TEMP"]+"/state-root-zero.json")); assert all(v["passed"] and not v["skipped"] for v in r["outcomes"].values())'
