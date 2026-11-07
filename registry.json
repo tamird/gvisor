@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T00:41:21.523Z",
+    "updatedAt": "2026-11-07T00:41:44.087Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55603,9 +55603,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T00:32:32.030Z",
-      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. This Linux Bazel query checked target declarations. Runtime coverage is tracked separately.",
+      "updatedAt": "2026-11-07T00:41:44.087Z",
+      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. This Linux Bazel query checked target declarations. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.",
       "evidence": [
+        {
+          "label": "Six original tests on native AMD64 and ARM64 with matching case outcomes, worker records and ELF identities",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42319086567/artifacts/13552696141"
+        },
         {
           "label": "All 363 original owners and the native test labels Bazel loaded before and after the two default changes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42318590343/artifacts/13552335900"
