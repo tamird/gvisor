@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T20:59:10+00:00",
+    "updatedAt": "2026-11-07T21:17:40+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3454,23 +3454,25 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. The public PR still conflicts. At bf2f967e3, #17204 reserves space before clearing recycled disk-backed pages and falls back to protected writes if fallocate fails. Successful fallback writes leave #15181’s AllocateAndCommit reservation guarantee open. Fresh advised and shmem allocations also remain in #15181’s scope.",
+      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. At bf2f967e3, #17204 reserves space before clearing recycled disk-backed pages and falls back to protected writes if fallocate fails. Successful fallback writes leave #15181’s AllocateAndCommit reservation guarantee open. Fresh advised and shmem allocations also remain in #15181’s scope.\n\nOn native AMD64, #17204 alone returned [0, 12288) with no error for a strict recycled allocation through a read-only file descriptor and a writable mapping. The same fixture on the two-parent integration 5b93713ad returned an empty range and EBADF. With a writable descriptor, the integration returned all 12,288 bytes. The trace recorded one successful fallocate over that one-chunk range. All 84 pgalloc and 356 safecopy cases passed, along with the two selected tmpfs cases.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "61470ea4162137e6871edd94e369f1c03592c163",
-        "observedAt": "2026-11-07T20:59:10+00:00",
+        "observedAt": "2026-11-07T21:17:40+00:00",
         "disposition": "Published the disk-backed reservation amendment with the measured 4 KiB allocation costs.",
-        "nextAction": "Await upstream review of the allocation behavior and the reported timings. When either change lands, compare pgalloc.go and pgalloc_test.go. Carry a successful reservation through so the combined path calls fallocate once.",
+        "nextAction": "Await upstream review. When either PR lands, compare its landed source to the fork integration, which preserves strict reservation failures and carries a successful reservation through without repeating it.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17086",
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/google/gvisor/pull/17204",
-          "https://github.com/tamird/gvisor/commit/61470ea41"
+          "https://github.com/tamird/gvisor/commit/61470ea41",
+          "https://github.com/tamird/gvisor/commit/5b93713ad",
+          "https://github.com/tamird/gvisor/actions/runs/42414525094/artifacts/13590248941"
         ]
       },
-      "updatedAt": "2026-11-07T20:59:10+00:00",
+      "updatedAt": "2026-11-07T21:17:40+00:00",
       "head": "61470ea4162137e6871edd94e369f1c03592c163",
       "evidence": [
         {
@@ -3492,6 +3494,14 @@
         {
           "label": "Overlapping reservation before clearing recycled disk-backed pages",
           "url": "https://github.com/google/gvisor/pull/17204"
+        },
+        {
+          "label": "Fork-only integration of the two published source revisions",
+          "url": "https://github.com/tamird/gvisor/commit/5b93713ad"
+        },
+        {
+          "label": "Native AMD64 disk reservation comparison and original allocator, safecopy and tmpfs results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42414525094/artifacts/13590248941"
         }
       ],
       "refinement": {
@@ -44686,9 +44696,9 @@
       "title": "Run the stage-1 upb generators without Bash",
       "url": "https://github.com/protocolbuffers/protobuf/pull/31234",
       "group": "rbe",
-      "status": "open",
-      "summary": "The stage-0 plugins take their inputs as protoc arguments. Six calls that used to require Bash ran remotely with just the declared compiler and plugin. All nine C sources and headers were identical to the originals.",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "status": "closed",
+      "summary": "Delivered upstream in b1f8a6e38. Copybara closed #31234 on November 5 with that commit, which identifies the exact reviewed source a4504c546. The stage-0 plugins take their inputs as protoc arguments. Six calls that used to require Bash ran remotely with just the declared compiler and plugin. All nine C sources and headers were identical to the originals.",
+      "updatedAt": "2026-11-07T21:17:40+00:00",
       "evidence": [
         {
           "label": "Action logs and output hashes",
@@ -44701,6 +44711,14 @@
         {
           "label": "The earlier removal of coreutils kept the shell action",
           "url": "https://github.com/protocolbuffers/protobuf/commit/c64743979"
+        },
+        {
+          "label": "Upstream Copybara commit importing the reviewed source",
+          "url": "https://github.com/protocolbuffers/protobuf/commit/b1f8a6e38"
+        },
+        {
+          "label": "Copybara close event for #31234",
+          "url": "https://github.com/protocolbuffers/protobuf/pull/31234#event-35275724987"
         }
       ],
       "settledReviews": [
@@ -44711,7 +44729,18 @@
           "at": "2026-11-02T20:32:23Z"
         }
       ],
-      "number": 31234
+      "number": 31234,
+      "followup": {
+        "owner": "Upstream delivery complete",
+        "sourceHead": "a4504c5467dde4ef8ee4a075ee240c54a7da4883",
+        "observedAt": "2026-11-07T21:17:40+00:00",
+        "disposition": "Delivered upstream by Copybara in b1f8a6e38.",
+        "nextAction": "Track the BCR version adopted by gVisor in the scratch-build investigation.",
+        "evidence": [
+          "https://github.com/protocolbuffers/protobuf/commit/b1f8a6e38",
+          "https://github.com/protocolbuffers/protobuf/pull/31234#event-35275724987"
+        ]
+      }
     },
     {
       "id": "branch:staged-release-tag",
@@ -78786,9 +78815,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T20:05:52+00:00",
+      "updatedAt": "2026-11-07T21:17:40+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
+        {
+          "text": "Protobuf imported #31234 as b1f8a6e38, which runs the stage-1 upb generators directly. The latest BCR entry checked, 37.0-rc1, points to an unpatched archive whose _generate_stage1_proto still uses native.genrule. Check the selected archive for the direct action when adopting a newer Protobuf release in gVisor.",
+          "evidence": [
+            {
+              "label": "Upstream Copybara commit importing the reviewed source",
+              "url": "https://github.com/protocolbuffers/protobuf/commit/b1f8a6e38"
+            },
+            {
+              "label": "Bazel Central Registry source and archive integrity for Protobuf 37.0-rc1",
+              "url": "https://github.com/bazelbuild/bazel-central-registry/blob/main/modules/protobuf/37.0-rc1/source.json"
+            },
+            {
+              "label": "Stage-1 generator in the 37.0-rc1 source",
+              "url": "https://github.com/protocolbuffers/protobuf/blob/v37.0-rc1/upb_generator/bootstrap_compiler.bzl"
+            }
+          ]
+        },
         {
           "text": "On integration 61ff148f0, the candidate native Bazel POSIX test wrapper ran //:build_test on empty AMD64 and ARM64 workers. The compile-test fixture declared the 16 selected Go test executables as default outputs. Before #16592, the ordinary vDSO and ioctl hook linked on both architectures, then the run_sniffer_bin Genrule failed. With the exact sniffer staging change at 1b96205bd, all 16 executables were accounted for on each architecture. Only //:build_test executed, passing uncached on x86_64 and aarch64. The 16 configured outputs totaled 362,281,063 bytes on AMD64 and 339,445,946 bytes on ARM64. These totals describe logical file sizes. This establishes #16592 as a prerequisite for this compile-test target on the empty workers.",
           "evidence": [
@@ -84986,5 +85032,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T20:59:10+00:00"
+  "updatedAt": "2026-11-07T21:17:40+00:00"
 }
