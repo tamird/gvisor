@@ -272,10 +272,7 @@ func (n *Netgofer) runProxyMode(conf *config.Config) subcommands.ExitStatus {
 	})
 	st.SetTransportProtocolHandler(tcp.ProtocolNumber, forwarder.HandlePacket)
 
-	var (
-		closeErrMu sync.Mutex
-		closeErr   tcpip.Error
-	)
+	linkClosed := make(chan tcpip.Error, 1)
 	// fdbased.New must run before netgoferfilter.Install because it calls
 	// fstat on the UDS FD, which is disallowed by the seccomp filter.
 	var err error
@@ -291,9 +288,7 @@ func (n *Netgofer) runProxyMode(conf *config.Config) subcommands.ExitStatus {
 		RXChecksumOffload:  rxChecksumOffload,
 		GRO:                gvisorGRO,
 		ClosedFunc: func(err tcpip.Error) {
-			closeErrMu.Lock()
-			defer closeErrMu.Unlock()
-			closeErr = err
+			linkClosed <- err
 		},
 	})
 	if err != nil {
@@ -336,11 +331,9 @@ func (n *Netgofer) runProxyMode(conf *config.Config) subcommands.ExitStatus {
 		close(n.ready)
 	}
 
+	linkErr := <-linkClosed
 	linkEP.Wait()
 	linkEPDone = true
-	closeErrMu.Lock()
-	linkErr := closeErr
-	closeErrMu.Unlock()
 	if linkErr != nil {
 		switch linkErr.(type) {
 		case *tcpip.ErrConnectionReset, *tcpip.ErrClosedForReceive:

@@ -213,8 +213,10 @@ type Options struct {
 	// used for this endpoint.
 	PacketDispatchMode PacketDispatchMode
 
-	// DetectSeqpacketEOF lets an AF_UNIX SOCK_SEQPACKET link stop after peer
-	// shutdown once all queued packet data has been received.
+	// DetectSeqpacketEOF lets a RecvMMsg reader drain its AF_UNIX SOCK_SEQPACKET
+	// socket after peer shutdown. It must be the socket's only reader.
+	// While attached, ClosedFunc is called after that reader's packet
+	// processors finish and may run after Wait returns.
 	DetectSeqpacketEOF bool
 
 	// TXChecksumOffload if true, indicates that this endpoints capability
@@ -512,12 +514,9 @@ func (e *endpoint) Attach(dispatcher stack.NetworkDispatcher) {
 		// Link endpoints are not savable. When transportation endpoints are
 		// saved, they stop sending outgoing packets and all incoming packets
 		// are rejected.
-		for i := range e.inboundDispatchers {
+		for _, d := range e.inboundDispatchers {
 			e.wg.Add(1)
-			go func(i int) { // S/R-SAFE: See above.
-				e.dispatchLoop(e.inboundDispatchers[i])
-				e.wg.Done()
-			}(i)
+			go e.dispatchLoop(d) // S/R-SAFE: See above.
 		}
 	}
 }
@@ -893,15 +892,26 @@ func (e *endpoint) InjectOutbound(dest tcpip.Address, packet *buffer.View) tcpip
 
 // dispatchLoop reads packets from the file descriptor in a loop and dispatches
 // them to the network stack.
-func (e *endpoint) dispatchLoop(inboundDispatcher linkDispatcher) tcpip.Error {
+func (e *endpoint) dispatchLoop(inboundDispatcher linkDispatcher) {
 	for {
 		cont, err := inboundDispatcher.dispatch()
 		if err != nil || !cont {
 			if e.closed != nil {
-				e.closed(err)
+				if d, ok := inboundDispatcher.(*recvMMsgDispatcher); ok && d.detectEOF && len(d.mgr.processors) > 1 && e.IsAttached() {
+					// Detach can wait for the reader while holding the stack
+					// lock. Release the reader before joining callbacks that
+					// may need that lock.
+					defer func() {
+						d.mgr.wg.Wait()
+						e.closed(err)
+					}()
+				} else {
+					e.closed(err)
+				}
 			}
 			inboundDispatcher.release()
-			return err
+			e.wg.Done()
+			return
 		}
 	}
 }
