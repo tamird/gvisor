@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T17:00:42+00:00",
+    "updatedAt": "2026-11-07T17:21:53+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59839,20 +59839,9 @@
       "title": "Check the endpoint lock on receive-side SACK blocks",
       "url": "https://github.com/tamird/gvisor/commit/6adb2b882",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T04:31:18+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T17:20:44+00:00",
       "summary": "The receiver updates its selective acknowledgment (SACK) blocks under the endpoint mutex. The ACK sender borrows the blocks and the TCP probe copies them under that same mutex. Annotating Endpoint.sack makes checklocks enforce the field access.\n\nA native AMD64 Linux job ran the TCP analyzer for AMD64 and ARM64. Both passed on the proposed source. Removing the lock precondition from currentSACKBlocks produced zero findings on its parent and two unlocked field reads per architecture with the annotation.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "6adb2b8822c12eef7653344809794a4d1e6f4000",
-        "baseHead": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
-        "url": "https://github.com/tamird/gvisor/commit/6adb2b882",
-        "title": "Check the endpoint lock on receive-side SACK blocks",
-        "body": "The receiver updates the SACK blocks under the endpoint mutex. The ACK\npath added in c451fa7d6 borrows those blocks and the TCP probe copies\nthem under the same lock. The receive-queue mutex protects buffer\naccounting and is released before the receiver updates the SACK list.\n\nAnnotate the field so checklocks can also verify the lock when a new\ncaller accesses the blocks directly.",
-        "summary": "Open the independent SACK field annotation? Removing the lock precondition exposed both unlocked reads in currentSACKBlocks on AMD64 and ARM64. The same control passed silently on the parent.",
-        "requestedAt": "2026-11-07T04:31:18+00:00"
-      },
       "evidence": [
         {
           "label": "Pristine source and both controls, with original TCP analyzer findings for AMD64 and ARM64",
@@ -59861,8 +59850,40 @@
         {
           "label": "ACK path that borrows the receiver’s SACK blocks",
           "url": "https://github.com/google/gvisor/commit/c451fa7d6"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17193"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6adb2b8822c12eef7653344809794a4d1e6f4000",
+          "baseHead": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
+          "url": "https://github.com/tamird/gvisor/commit/6adb2b882",
+          "title": "Check the endpoint lock on receive-side SACK blocks",
+          "body": "The receiver updates the SACK blocks under the endpoint mutex. The ACK\npath added in c451fa7d6 borrows those blocks and the TCP probe copies\nthem under the same lock. The receive-queue mutex protects buffer\naccounting and is released before the receiver updates the SACK list.\n\nAnnotate the field so checklocks can also verify the lock when a new\ncaller accesses the blocks directly.",
+          "summary": "Open the independent SACK field annotation? Removing the lock precondition exposed both unlocked reads in currentSACKBlocks on AMD64 and ARM64. The same control passed silently on the parent.",
+          "requestedAt": "2026-11-07T04:31:18+00:00",
+          "outcome": "approved",
+          "at": "2026-11-07T17:18:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17193"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "6adb2b8822c12eef7653344809794a4d1e6f4000",
+        "observedAt": "2026-11-07T17:20:44+00:00",
+        "disposition": "#17193 publishes the approved 6adb2b882 patch at f1367bc99 after rebasing onto master.",
+        "nextAction": "Follow #17193 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17193",
+          "https://github.com/tamird/gvisor/commit/6adb2b882",
+          "https://github.com/tamird/gvisor/compare/6adb2b882..f1367bc99"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:state-clear-used-decode-storage",
@@ -60367,8 +60388,8 @@
       "title": "Run the TCP benchmark from Go",
       "url": "https://github.com/tamird/gvisor/commit/e20198216",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T13:07:28+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-11-07T17:15:36+00:00",
       "summary": "Six native AMD64 transfer modes passed on the tested tree, including IPv6, parallel streams, an installed binary found through PATH, and the default user namespace under UID 1001. The installed shell driver exited before iperf3 started when its directory contained a space. Six error and interruption controls passed. An interrupted proxy flushed a 1,475-byte CPU profile. The original workflow failed because its observer counted nested iperf3 interval objects. The corrected readback verifies the original logs. The positive IPv6 transfer’s profile digest was not recorded.",
       "evidence": [
         {
@@ -60384,16 +60405,30 @@
           "url": "https://github.com/google/gvisor/pull/17184"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e20198216672dfba7dd01052df660dcad47be013",
-        "baseHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
-        "url": "https://github.com/tamird/gvisor/commit/e20198216",
-        "title": "Run the TCP benchmark from Go",
-        "requestedAt": "2026-11-07T13:07:28+00:00",
-        "summary": "Open this one-commit Go replacement after #17184 lands? It preserves the Bazel target and passes six real transfer modes and six failure or interruption controls.",
-        "body": "When the installed TCP benchmark's directory contains a space, its\ngenerated Bash script splits the unquoted PATH assignment. Bash\nrejects the remainder as an invalid identifier before iperf starts.\n\nRun the benchmark directly from Go. Create private mount, network and\nPID namespaces, pass each helper argument separately, and reap the\niperf server and both proxies. Read iperf3's aggregate sender rate and\nsample the selected proxy's CPU before shutdown so writing a profile\ndoes not inflate the result. Keep the Bazel entry point and resolve\nsibling helpers when the installed binary is invoked through PATH.\n\nLet the kernel reclaim the veth pairs and bridges with the namespace.\nLinux 3.2 contains the bridge teardown fix [1]. gVisor requires Linux\n5.6 or newer.\n\n[1] https://github.com/torvalds/linux/commit/1ce5cce89"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e20198216672dfba7dd01052df660dcad47be013",
+          "baseHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
+          "url": "https://github.com/tamird/gvisor/commit/e20198216",
+          "title": "Run the TCP benchmark from Go",
+          "requestedAt": "2026-11-07T13:07:28+00:00",
+          "summary": "Open this one-commit Go replacement after #17184 lands? It preserves the Bazel target and passes six real transfer modes and six failure or interruption controls.",
+          "body": "When the installed TCP benchmark's directory contains a space, its\ngenerated Bash script splits the unquoted PATH assignment. Bash\nrejects the remainder as an invalid identifier before iperf starts.\n\nRun the benchmark directly from Go. Create private mount, network and\nPID namespaces, pass each helper argument separately, and reap the\niperf server and both proxies. Read iperf3's aggregate sender rate and\nsample the selected proxy's CPU before shutdown so writing a profile\ndoes not inflate the result. Keep the Bazel entry point and resolve\nsibling helpers when the installed binary is invoked through PATH.\n\nLet the kernel reclaim the veth pairs and bridges with the namespace.\nLinux 3.2 contains the bridge teardown fix [1]. gVisor requires Linux\n5.6 or newer.\n\n[1] https://github.com/torvalds/linux/commit/1ce5cce89",
+          "outcome": "approved",
+          "at": "2026-11-07T17:15:36+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Workstream owner",
+        "sourceHead": "e20198216672dfba7dd01052df660dcad47be013",
+        "observedAt": "2026-11-07T17:15:36+00:00",
+        "disposition": "The contributor approved e20198216 for submission after #17184 lands.",
+        "nextAction": "Open the one-commit Go benchmark replacement after #17184 merges.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17184",
+          "https://github.com/tamird/gvisor/commit/e20198216"
+        ]
       }
     },
     {
@@ -60405,8 +60440,8 @@
       "title": "Wait for the proc umounter through its Go handle",
       "url": "https://github.com/tamird/gvisor/commit/c218182e1",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T14:05:57+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T17:21:53+00:00",
       "summary": "A Sentry that applies capabilities without an exec can retain the proc umounter’s pidfd after the helper exits. The original hosted ARM64 test observed it on the fourth default Sentry repeat. Holding the helper’s Go process object reachable reproduced the extra pidfd on stock. The default Gofer passed. With cmd.Wait, both retained-object cases passed and the same child’s WithHandle returned os.ErrProcessDone after the wait. Without instrumentation, all ten Sentry and Gofer comparisons across five modes passed uncached on native ARM64 Linux 6.8.0-1070-azure with the private namespaces and seven runtime sidecars verified. The qualification put the runtime files from 5ca9588a6 on fixture e34a3859c. The proposal adds three ownership-comment lines to that tested source.",
       "evidence": [
         {
@@ -60424,18 +60459,37 @@
         {
           "label": "Qualification carrier and source bindings",
           "url": "https://github.com/tamird/gvisor/commit/bc1e4bbb8"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17194"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/c218182e1",
-        "title": "Wait for the proc umounter through its Go handle",
-        "requestedAt": "2026-11-07T14:05:57+00:00",
-        "summary": "Open this single-commit PR to wait through the proc umounter’s Go handle? The native ARM64 control reproduced the retained pidfd on stock. The corrected uninstrumented runtime passed all ten posture comparisons. The separate Linux 5.10 per-thread Seccomp_filters discrepancy is still open.",
-        "body": "Since f2f760bd4, the Sentry can apply capabilities without an exec.\nOn this path it starts the proc umounter with exec.Cmd and reaps it\nwith wait4. Go can keep the helper's pidfd open after the guest starts\nuntil garbage collection releases it. TestBootPosture then reports an\nunexpected pidfd.\n\nSignal the unmount through the pipe and wait on the Cmd that started\nthe helper. This checks the child's exit status and closes its pidfd.\nA Sentry that re-executes inherits only the pipe and uses wait4."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/c218182e1",
+          "title": "Wait for the proc umounter through its Go handle",
+          "requestedAt": "2026-11-07T14:05:57+00:00",
+          "summary": "Open this single-commit PR to wait through the proc umounter’s Go handle? The native ARM64 control reproduced the retained pidfd on stock. The corrected uninstrumented runtime passed all ten posture comparisons. The separate Linux 5.10 per-thread Seccomp_filters discrepancy is still open.",
+          "body": "Since f2f760bd4, the Sentry can apply capabilities without an exec.\nOn this path it starts the proc umounter with exec.Cmd and reaps it\nwith wait4. Go can keep the helper's pidfd open after the guest starts\nuntil garbage collection releases it. TestBootPosture then reports an\nunexpected pidfd.\n\nSignal the unmount through the pipe and wait on the Cmd that started\nthe helper. This checks the child's exit status and closes its pidfd.\nA Sentry that re-executes inherits only the pipe and uses wait4.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:21:53+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17194"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+        "observedAt": "2026-11-07T17:21:53+00:00",
+        "disposition": "The approved change is on #17194 at c218182e1.",
+        "nextAction": "Follow #17194 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17194",
+          "https://github.com/tamird/gvisor/commit/c218182e1"
+        ]
       }
     },
     {
@@ -60447,8 +60501,8 @@
       "title": "Build release archives without a host shell",
       "url": "https://github.com/tamird/gvisor/commit/657d01de1",
       "group": "release",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T14:56:09+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T17:19:24+00:00",
       "summary": "Use the registered BSD tar toolchain to write release archives without a host shell. On Ubuntu 22.04 with stock GCC 11.4.0, AMD64 built the ordinary bzip2 and zstd releases. Both target-named symlinks resolved, GNU tar extracted the publisher’s literal runsc member, and the nine staged ELFs and archive metadata matched. The canonical audit verified 224 dependencies and its test passed. The standalone ARM64 checks configured both archive writers. In a separate compiler integration, four fresh Tar actions on an empty AMD64 worker wrote both formats for AMD64 and ARM64. The eight flavor/format declarations were compared; archive builds covered the ordinary flavor. The commit applies directly to master 9ee2906f5.",
       "evidence": [
         {
@@ -60458,18 +60512,37 @@
         {
           "label": "Both target architectures on the empty AMD64 executor and the paired stock output/runfiles alias control",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation:scratch-build-actions"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17191"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/657d01de1",
-        "title": "Build release archives without a host shell",
-        "requestedAt": "2026-11-07T14:56:09+00:00",
-        "summary": "Open this single-commit release-archive PR? The ordinary AMD64 bzip2 and zstd downloads passed the stock publisher checks. The separate integration built the same two formats for both target architectures on the empty AMD64 worker.",
-        "body": "The rules_pkg archive writer launches through /usr/bin/env bash. Build\nthe release archives with the registered BSD tar toolchain so their\nwriter can start on workers that have no host executables.\n\nUse the existing binary selections for each flavor. Preserve the\ninstalled names, executable modes, portable timestamp, compression\nsettings and target-named links. The release publisher selects the\nliteral runsc member when it identifies each archive architecture."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/657d01de1",
+          "title": "Build release archives without a host shell",
+          "requestedAt": "2026-11-07T14:56:09+00:00",
+          "summary": "Open this single-commit release-archive PR? The ordinary AMD64 bzip2 and zstd downloads passed the stock publisher checks. The separate integration built the same two formats for both target architectures on the empty AMD64 worker.",
+          "body": "The rules_pkg archive writer launches through /usr/bin/env bash. Build\nthe release archives with the registered BSD tar toolchain so their\nwriter can start on workers that have no host executables.\n\nUse the existing binary selections for each flavor. Preserve the\ninstalled names, executable modes, portable timestamp, compression\nsettings and target-named links. The release publisher selects the\nliteral runsc member when it identifies each archive architecture.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:18:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17191"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "657d01de1cf19183ea91976a7e19c7636cce0331",
+        "observedAt": "2026-11-07T17:19:24+00:00",
+        "disposition": "The approved change is on #17191 at 657d01de1.",
+        "nextAction": "Follow #17191 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17191",
+          "https://github.com/tamird/gvisor/commit/657d01de1"
+        ]
       }
     },
     {
@@ -60481,8 +60554,8 @@
       "title": "Hold the endpoint lock in TestConnectICMPError",
       "url": "https://github.com/tamird/gvisor/commit/2d4356b74",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T15:21:36+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T17:19:24+00:00",
       "summary": "TestConnectICMPError now reads the soft error through the concrete TCP endpoint and holds its lock only for that read. The named test passed on native AMD64 in both the original Go output and XML. The test’s Nogo owner analyzed three callers on AMD64 and ARM64. The original interface and the corrected concrete call each produced zero findings on both architectures. Removing the lock from the concrete call produced two findings per architecture. All reported the missing e.mu precondition for LastErrorLocked at tcp_test.go:387. The original workflow expected exactly one finding, so its aggregate failed. The digest-verified readback accounts for every finding and preserves the original result. Production code and the hard connection error are untouched.",
       "evidence": [
         {
@@ -60500,18 +60573,37 @@
         {
           "label": "Soft-error accessor and the separate hard-error path",
           "url": "https://github.com/google/gvisor/blob/9ee2906f5/pkg/tcpip/transport/tcp/endpoint.go#L1403"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17192"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/2d4356b74",
-        "title": "Hold the endpoint lock in TestConnectICMPError",
-        "requestedAt": "2026-11-07T15:21:36+00:00",
-        "summary": "Open this single-commit test fix? The named ICMP test passed. On AMD64 and ARM64, checklocks caught the direct call missing the endpoint lock and accepted the corrected call. The old interface hid the missing precondition on both.",
-        "body": "TestConnectICMPError reads the soft error through a local interface\nthat hides LastErrorLocked's lock requirement from checklocks. Joining\nthe handshake and ICMP goroutines does not acquire the endpoint lock.\n\nUse the concrete TCP endpoint and hold its user lock while reading and\nclearing the soft error. The ordinary socket error accessor would\nconsume the hard connection error first."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/2d4356b74",
+          "title": "Hold the endpoint lock in TestConnectICMPError",
+          "requestedAt": "2026-11-07T15:21:36+00:00",
+          "summary": "Open this single-commit test fix? The named ICMP test passed. On AMD64 and ARM64, checklocks caught the direct call missing the endpoint lock and accepted the corrected call. The old interface hid the missing precondition on both.",
+          "body": "TestConnectICMPError reads the soft error through a local interface\nthat hides LastErrorLocked's lock requirement from checklocks. Joining\nthe handshake and ICMP goroutines does not acquire the endpoint lock.\n\nUse the concrete TCP endpoint and hold its user lock while reading and\nclearing the soft error. The ordinary socket error accessor would\nconsume the hard connection error first.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:18:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17192"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+        "observedAt": "2026-11-07T17:19:24+00:00",
+        "disposition": "The approved change is on #17192 at 2d4356b74.",
+        "nextAction": "Follow #17192 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17192",
+          "https://github.com/tamird/gvisor/commit/2d4356b74"
+        ]
       }
     },
     {
@@ -60523,8 +60615,8 @@
       "title": "Publish staged releases without the builder",
       "url": "https://github.com/tamird/gvisor/commit/a7e84cf82",
       "group": "release",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T16:35:38+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T17:19:43+00:00",
       "summary": "The revision accepts explicit staged package files and directories. It follows a symlink only when the caller names a package file directly. The combined offline publisher consumed the exact configured outputs, preserved a filename containing a newline and refused an explicit directory symlink. Both APT suites were signed and verified. The Make frontend retains its package and disposable-key prerequisites.\n\nBuildkite stages the release artifacts before signing. The proposed publisher consumes that directory directly. The Make frontend still builds its package prerequisites and generates the disposable presubmit key. Ordinary Make completed after six denied Docker calls, including two builder exec probes. Host-only Make and the direct publisher used no Docker; the publisher used no Bazel. A fresh native test verified the signed APT indexes and matched AMD64 and ARM64 package payloads, normalized metadata and optional .changes files. Signed .deb hashes differed. All four raw downloads and their SHA512 sidecars matched byte for byte. The test exercised head, nightly and tagged routing with a disposable key. It intercepted Twine offline and recorded zero cloud writes. Missing key, missing directory, empty directory and scan failure each stopped before repository output.",
       "evidence": [
         {
@@ -60544,17 +60636,6 @@
           "url": "https://github.com/tamird/gvisor/commit/c661271ae"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/a7e84cf82",
-        "title": "Publish staged releases without the builder",
-        "requestedAt": "2026-11-07T16:35:38+00:00",
-        "summary": "Open this revised standalone PR to publish explicitly staged release files without invoking the builder? The earlier proposal accepted one staging directory. The revised interface also accepts explicitly named package files and handles their symlinks.",
-        "body": "Buildkite stages the release files before it signs them. The Make\npublisher still probes the Docker builder and attempts an image build.\n\nPass staged input paths directly to the publisher. Read directory\nentries without splitting filenames, and follow only explicitly named\npackage files. Bazel can supply the same interface from its configured\noutputs. Local Make retains its package and signing-key prerequisites."
-      },
       "refinement": {
         "before": {
           "head": "c661271ae7b13f9e607958444e8cbf553c883720"
@@ -60562,7 +60643,269 @@
         "after": {
           "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/a7e84cf82",
+          "title": "Publish staged releases without the builder",
+          "requestedAt": "2026-11-07T16:35:38+00:00",
+          "summary": "Open this revised standalone PR to publish explicitly staged release files without invoking the builder? The earlier proposal accepted one staging directory. The revised interface also accepts explicitly named package files and handles their symlinks.",
+          "body": "Buildkite stages the release files before it signs them. The Make\npublisher still probes the Docker builder and attempts an image build.\n\nPass staged input paths directly to the publisher. Read directory\nentries without splitting filenames, and follow only explicitly named\npackage files. Bazel can supply the same interface from its configured\noutputs. Local Make retains its package and signing-key prerequisites.",
+          "outcome": "changes-requested",
+          "at": "2026-11-07T17:19:43+00:00"
+        }
+      ],
+      "contributorChangesRequested": {
+        "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
+        "url": "https://github.com/tamird/gvisor/commit/a7e84cf82"
+      },
+      "followup": {
+        "owner": "Release workstream owner",
+        "sourceHead": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
+        "observedAt": "2026-11-07T17:19:43+00:00",
+        "disposition": "The contributor rejected the staged publisher at a7e84cf82 as too narrow and requested a design that avoids adding shell logic. The earlier directory-only proposal c661271ae is superseded.",
+        "nextAction": "Revisit the release publishing design and use the existing signed APT, archive and routing checks to qualify it.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a7e84cf82",
+          "https://github.com/tamird/gvisor/actions/runs/42390561513/artifacts/13581566721"
+        ]
       }
+    },
+    {
+      "id": "pr:17191",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/native-release-archives",
+      "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
+      "title": "Build release archives without a host shell",
+      "url": "https://github.com/google/gvisor/pull/17191",
+      "group": "release",
+      "status": "open",
+      "updatedAt": "2026-11-07T17:19:24+00:00",
+      "summary": "Use the registered BSD tar toolchain to write release archives without a host shell. On Ubuntu 22.04 with stock GCC 11.4.0, AMD64 built the ordinary bzip2 and zstd releases. Both target-named symlinks resolved, GNU tar extracted the publisher’s literal runsc member, and the nine staged ELFs and archive metadata matched. The canonical audit verified 224 dependencies and its test passed. The standalone ARM64 checks configured both archive writers. In a separate compiler integration, four fresh Tar actions on an empty AMD64 worker wrote both formats for AMD64 and ARM64. The eight flavor/format declarations were compared; archive builds covered the ordinary flavor. The commit applies directly to master 9ee2906f5.",
+      "evidence": [
+        {
+          "label": "Standalone Ubuntu/GCC build, two working aliases, both GNU tar publisher reads, nine ELF hashes and license audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42382741313/artifacts/13578876228"
+        },
+        {
+          "label": "Both target architectures on the empty AMD64 executor and the paired stock output/runfiles alias control",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation:scratch-build-actions"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17191"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/657d01de1",
+          "title": "Build release archives without a host shell",
+          "requestedAt": "2026-11-07T14:56:09+00:00",
+          "summary": "Open this single-commit release-archive PR? The ordinary AMD64 bzip2 and zstd downloads passed the stock publisher checks. The separate integration built the same two formats for both target architectures on the empty AMD64 worker.",
+          "body": "The rules_pkg archive writer launches through /usr/bin/env bash. Build\nthe release archives with the registered BSD tar toolchain so their\nwriter can start on workers that have no host executables.\n\nUse the existing binary selections for each flavor. Preserve the\ninstalled names, executable modes, portable timestamp, compression\nsettings and target-named links. The release publisher selects the\nliteral runsc member when it identifies each archive architecture.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:18:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17191"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "657d01de1cf19183ea91976a7e19c7636cce0331",
+        "observedAt": "2026-11-07T17:19:24+00:00",
+        "disposition": "The approved change is on #17191 at 657d01de1.",
+        "nextAction": "Follow #17191 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17191",
+          "https://github.com/tamird/gvisor/commit/657d01de1"
+        ]
+      },
+      "number": 17191
+    },
+    {
+      "id": "pr:17192",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/tcp-soft-error-test-lock",
+      "head": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+      "title": "Hold the endpoint lock in TestConnectICMPError",
+      "url": "https://github.com/google/gvisor/pull/17192",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-07T17:19:24+00:00",
+      "summary": "TestConnectICMPError now reads the soft error through the concrete TCP endpoint and holds its lock only for that read. The named test passed on native AMD64 in both the original Go output and XML. The test’s Nogo owner analyzed three callers on AMD64 and ARM64. The original interface and the corrected concrete call each produced zero findings on both architectures. Removing the lock from the concrete call produced two findings per architecture. All reported the missing e.mu precondition for LastErrorLocked at tcp_test.go:387. The original workflow expected exactly one finding, so its aggregate failed. The digest-verified readback accounts for every finding and preserves the original result. Production code and the hard connection error are untouched.",
+      "evidence": [
+        {
+          "label": "Original native test, Go/XML and three Nogo caller shapes on both architecture configurations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42385235839/artifacts/13579008321"
+        },
+        {
+          "label": "Readback of all original findings and results, bound to the 57f39045a ZIP digest",
+          "url": "https://github.com/tamird/gvisor/blob/d48ac0178/.github/qualification/tcp_soft_error_result.json"
+        },
+        {
+          "label": "Original test call through its local interface",
+          "url": "https://github.com/google/gvisor/blob/9ee2906f5/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go#L386"
+        },
+        {
+          "label": "Soft-error accessor and the separate hard-error path",
+          "url": "https://github.com/google/gvisor/blob/9ee2906f5/pkg/tcpip/transport/tcp/endpoint.go#L1403"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17192"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/2d4356b74",
+          "title": "Hold the endpoint lock in TestConnectICMPError",
+          "requestedAt": "2026-11-07T15:21:36+00:00",
+          "summary": "Open this single-commit test fix? The named ICMP test passed. On AMD64 and ARM64, checklocks caught the direct call missing the endpoint lock and accepted the corrected call. The old interface hid the missing precondition on both.",
+          "body": "TestConnectICMPError reads the soft error through a local interface\nthat hides LastErrorLocked's lock requirement from checklocks. Joining\nthe handshake and ICMP goroutines does not acquire the endpoint lock.\n\nUse the concrete TCP endpoint and hold its user lock while reading and\nclearing the soft error. The ordinary socket error accessor would\nconsume the hard connection error first.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:18:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17192"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+        "observedAt": "2026-11-07T17:19:24+00:00",
+        "disposition": "The approved change is on #17192 at 2d4356b74.",
+        "nextAction": "Follow #17192 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17192",
+          "https://github.com/tamird/gvisor/commit/2d4356b74"
+        ]
+      },
+      "number": 17192
+    },
+    {
+      "id": "pr:17193",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/tcp-receiver-sack-history-lock",
+      "head": "f1367bc9995c12f3eafffdfb4145da2ad57c8268",
+      "title": "Check the endpoint lock on receive-side SACK blocks",
+      "url": "https://github.com/google/gvisor/pull/17193",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-07T17:20:44+00:00",
+      "summary": "The receiver updates its selective acknowledgment (SACK) blocks under the endpoint mutex. The ACK sender borrows the blocks and the TCP probe copies them under that same mutex. Annotating Endpoint.sack makes checklocks enforce the field access.\n\nA native AMD64 Linux job ran the TCP analyzer for AMD64 and ARM64. Both passed on the proposed source. Removing the lock precondition from currentSACKBlocks produced zero findings on its parent and two unlocked field reads per architecture with the annotation.",
+      "evidence": [
+        {
+          "label": "Pristine source and both controls, with original TCP analyzer findings for AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42337896550/artifacts/13560273534"
+        },
+        {
+          "label": "ACK path that borrows the receiver’s SACK blocks",
+          "url": "https://github.com/google/gvisor/commit/c451fa7d6"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17193"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6adb2b8822c12eef7653344809794a4d1e6f4000",
+          "baseHead": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
+          "url": "https://github.com/tamird/gvisor/commit/6adb2b882",
+          "title": "Check the endpoint lock on receive-side SACK blocks",
+          "body": "The receiver updates the SACK blocks under the endpoint mutex. The ACK\npath added in c451fa7d6 borrows those blocks and the TCP probe copies\nthem under the same lock. The receive-queue mutex protects buffer\naccounting and is released before the receiver updates the SACK list.\n\nAnnotate the field so checklocks can also verify the lock when a new\ncaller accesses the blocks directly.",
+          "summary": "Open the independent SACK field annotation? Removing the lock precondition exposed both unlocked reads in currentSACKBlocks on AMD64 and ARM64. The same control passed silently on the parent.",
+          "requestedAt": "2026-11-07T04:31:18+00:00",
+          "outcome": "approved",
+          "at": "2026-11-07T17:18:48+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17193"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "f1367bc9995c12f3eafffdfb4145da2ad57c8268",
+        "observedAt": "2026-11-07T17:20:44+00:00",
+        "disposition": "#17193 publishes the approved 6adb2b882 patch at f1367bc99 after rebasing onto master.",
+        "nextAction": "Follow #17193 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17193",
+          "https://github.com/tamird/gvisor/commit/6adb2b882",
+          "https://github.com/tamird/gvisor/compare/6adb2b882..f1367bc99"
+        ]
+      },
+      "number": 17193
+    },
+    {
+      "id": "pr:17194",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/proc-umounter-process-handle",
+      "head": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+      "title": "Wait for the proc umounter through its Go handle",
+      "url": "https://github.com/google/gvisor/pull/17194",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-07T17:21:53+00:00",
+      "summary": "A Sentry that applies capabilities without an exec can retain the proc umounter’s pidfd after the helper exits. The original hosted ARM64 test observed it on the fourth default Sentry repeat. Holding the helper’s Go process object reachable reproduced the extra pidfd on stock. The default Gofer passed. With cmd.Wait, both retained-object cases passed and the same child’s WithHandle returned os.ErrProcessDone after the wait. Without instrumentation, all ten Sentry and Gofer comparisons across five modes passed uncached on native ARM64 Linux 6.8.0-1070-azure with the private namespaces and seven runtime sidecars verified. The qualification put the runtime files from 5ca9588a6 on fixture e34a3859c. The proposal adds three ownership-comment lines to that tested source.",
+      "evidence": [
+        {
+          "label": "Native ARM64 6.8.0-1070-azure, retained helper on both arms and all ten original posture cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42378662487/artifacts/13577260754"
+        },
+        {
+          "label": "Spontaneous extra pidfd on the fourth default Sentry repeat, with no descriptor stat errors",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42376571453/artifacts/13576840093"
+        },
+        {
+          "label": "Tested standalone source on the same master parent",
+          "url": "https://github.com/tamird/gvisor/commit/5ca9588a6"
+        },
+        {
+          "label": "Qualification carrier and source bindings",
+          "url": "https://github.com/tamird/gvisor/commit/bc1e4bbb8"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17194"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/c218182e1",
+          "title": "Wait for the proc umounter through its Go handle",
+          "requestedAt": "2026-11-07T14:05:57+00:00",
+          "summary": "Open this single-commit PR to wait through the proc umounter’s Go handle? The native ARM64 control reproduced the retained pidfd on stock. The corrected uninstrumented runtime passed all ten posture comparisons. The separate Linux 5.10 per-thread Seccomp_filters discrepancy is still open.",
+          "body": "Since f2f760bd4, the Sentry can apply capabilities without an exec.\nOn this path it starts the proc umounter with exec.Cmd and reaps it\nwith wait4. Go can keep the helper's pidfd open after the guest starts\nuntil garbage collection releases it. TestBootPosture then reports an\nunexpected pidfd.\n\nSignal the unmount through the pipe and wait on the Cmd that started\nthe helper. This checks the child's exit status and closes its pidfd.\nA Sentry that re-executes inherits only the pipe and uses wait4.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:21:53+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17194"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+        "observedAt": "2026-11-07T17:21:53+00:00",
+        "disposition": "The approved change is on #17194 at c218182e1.",
+        "nextAction": "Follow #17194 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17194",
+          "https://github.com/tamird/gvisor/commit/c218182e1"
+        ]
+      },
+      "number": 17194
     }
   ],
   "edges": [
@@ -84010,5 +84353,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T17:00:42+00:00"
+  "updatedAt": "2026-11-07T17:21:53+00:00"
 }
