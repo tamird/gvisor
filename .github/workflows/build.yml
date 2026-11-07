@@ -1,35 +1,64 @@
-name: CI
-
+name: Compare native dual-netstack TCP benchmark runs
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-benchmark-listener-readiness]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  benchmark:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Build and run the original benchmark and its readiness correction
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/tcp-proxy"
+          mkdir -p "$work/helpers" "$work/public"
+          git init -q .
+          source=9c541c3ae1cd68df1741882480d5bf184396e695
+          pr=641a5c300750a72805d4cacbcd71c92f91f5d46f
+          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$pr"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$source"
+          test "$(git rev-parse "$source^")" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          test "$(git rev-parse "$pr^")" = d79912977b9227c8bb1fc99a34b8f6de98ac5a64
+          test "$(git diff --name-only "$source^" "$source")" = test/benchmarks/tcp/tcp_benchmark.sh
+          git diff --exit-code "$source" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/tcp_proxy.py'
+          git show "$GITHUB_SHA:.github/qualification/tcp_proxy.py" > "$work/compare.py"
+          sudo -n apt-get -qq update
+          sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -qq install -y --no-install-recommends bc ethtool iperf3 iproute2 kmod build-essential
+          sudo -n modprobe sch_netem || test -d /sys/module/sch_netem
+          curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazelisk" | sha256sum -c -
+          chmod +x "$work/bazelisk"
+          cat > "$work/test-iperf" <<'SH'
+          #!/bin/sh
+          set -eu
+          role=other
+          for arg do
+            case "$arg" in -c) role=client ;; -s) role=server ;; esac
+          done
+          case "${0##*/}:$role" in
+            server-exit:server) echo INTENTIONAL_SERVER_EXIT >&2; exit 11 ;;
+            server-exit:client) echo UNEXPECTED_CLIENT >&2; exit 12 ;;
+            client-error:client) echo INTENTIONAL_CLIENT_ERROR >&2; exit 7 ;;
+            no-sender:client) echo INTENTIONAL_MISSING_SENDER; exit 0 ;;
+            no-sum:client)
+              echo INTENTIONAL_MISSING_SUM
+              echo '[  5]   0.00-30.00  sec  60 MBytes  16.8 Mbits/sec  0  sender'
+              exit 0 ;;
+          esac
+          exec /usr/bin/iperf3 "$@"
+          SH
+          chmod +x "$work/test-iperf"
+          for mode in server-exit client-error no-sender no-sum; do ln -s test-iperf "$work/$mode"; done
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GIT_TERMINAL_PROMPT=0 python3 -B "$work/compare.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: paired-dual-netstack
+          path: ${{ runner.temp }}/tcp-proxy/public/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove benchmark coordinator files
+        if: always()
+        run: rm -rf -- "$RUNNER_TEMP/tcp-proxy"
