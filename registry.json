@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T04:53:42+00:00",
+    "updatedAt": "2026-11-07T05:02:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53117,9 +53117,13 @@
       "url": "https://github.com/google/gvisor/pull/17023",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T16:22:20Z",
-      "summary": "The partial-ACK regression now passes. We confirmed to Aditya that he can remove the additional ACK check once transmission resumes after a spurious timeout.",
+      "updatedAt": "2026-11-07T05:00:13+00:00",
+      "summary": "The partial-first-ACK case passed on this head. Aditya reports that #16081 blocks fast retransmit after step 8 when the PRs are applied together, and plans to update #17023.",
       "evidence": [
+        {
+          "label": "Author’s combined-stack result and planned follow-up",
+          "url": "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777"
+        },
         {
           "label": "Recovery decision after a spurious timeout",
           "url": "https://github.com/google/gvisor/blob/4cef60667/pkg/tcpip/transport/tcp/snd.go#L1275"
@@ -53170,7 +53174,18 @@
           "at": "2026-11-05T16:22:20Z",
           "postedURL": "https://github.com/google/gvisor/pull/17023#discussion_r4483001034"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "465bf4e9edc2095d5673177f3be3cac1544fd26e",
+        "observedAt": "2026-11-07T05:00:13+00:00",
+        "disposition": "The author will address the interaction with #16081 on this PR.",
+        "nextAction": "Recheck the full and partial first-ACK fast retransmits and the #17022 RACK case when the author pushes the update.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
+          "https://github.com/google/gvisor/pull/17023#discussion_r4483001034"
+        ]
+      }
     },
     {
       "id": "branch:tcp-timeout-option-locks",
@@ -53229,14 +53244,18 @@
       "repo": "google/gvisor",
       "number": 17022,
       "ref": "carry-14458-spurious-recovery",
-      "head": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
+      "head": "62277fb4a1eaaaf515d84d284ef080a71215f627",
       "title": "Review the slow-start threshold after a spurious timeout",
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T18:29:14.522Z",
-      "summary": "Aditya asked whether to fold the RACK loss case into this PR or apply it after #16081. With both patches, the threshold returned to unlimited at the end of recovery. Clearing the pending Eifel response when RACK finds a loss kept the threshold at 2 on this PR alone and with #16081. Tamir asked the author to include that change and check the final threshold.",
+      "updatedAt": "2026-11-07T05:00:13+00:00",
+      "summary": "The author folded in the tested RACK cancellation. The final slow-start threshold stayed at 2 with and without #16081. Both timestamp controls passed. Aditya plans to address the step-8 interaction on #17023.",
       "evidence": [
+        {
+          "label": "Author incorporated the tested RACK change",
+          "url": "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777"
+        },
         {
           "label": "Review asking the author to fold the RACK loss case into this PR",
           "url": "https://github.com/google/gvisor/pull/17022#pullrequestreview-5804986696"
@@ -53318,14 +53337,14 @@
         }
       ],
       "followup": {
-        "owner": "PR author",
-        "sourceHead": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
-        "providerHead": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
-        "observedAt": "2026-11-06T18:29:14.522Z",
-        "disposition": "Answered the author's ordering question in a review of the current head.",
-        "nextAction": "The author can fold in the tested loss handling and update the RACK case.",
+        "owner": "Agent",
+        "sourceHead": "62277fb4a1eaaaf515d84d284ef080a71215f627",
+        "providerHead": "62277fb4a1eaaaf515d84d284ef080a71215f627",
+        "observedAt": "2026-11-07T05:00:13+00:00",
+        "disposition": "The published RACK loss handling matches the tested correction.",
+        "nextAction": "Track the remaining combined-stack review on #17023.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17022#pullrequestreview-5804986696",
+          "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
           "https://github.com/tamird/gvisor/actions/runs/42269372740/artifacts/13528043589"
         ]
       }
@@ -55927,9 +55946,13 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T04:53:42+00:00",
-      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.\n\nBoth build targets omitted on ARM64 explicitly require x86_64. On a hosted ARM64 Linux 6.8 worker, the full cmd test failed during container startup in no_directfs with ECONNRESET. Neither of that mode's posture checks ran. The other four modes passed both checks; the record contains 167 passes, two failures including the parent, and two skips.",
+      "updatedAt": "2026-11-07T05:02:41+00:00",
+      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.\n\nBoth build targets omitted on ARM64 explicitly require x86_64. On a hosted ARM64 Linux 6.8 worker, the full cmd test failed during container startup in no_directfs with ECONNRESET. Neither of that mode's posture checks ran. The other four modes passed both checks; the record contains 167 passes, two failures including the parent, and two skips.\n\nThe original AMD64 log ends in TestRunProxyModeWithSeccomp. In five fresh AMD64 runs, four passed. One run hit the diagnostic Go timeout while the parent waited for its child after completing the echo and closing the link. The parent stack does not identify which operation kept the child alive.",
       "evidence": [
+        {
+          "label": "Original named netgofer case and five fresh AMD64 runs, including the parent wait stack",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42340718132/artifacts/13560918444"
+        },
         {
           "label": "Hosted ARM64 complete cmd owner: no_directfs startup reset before the two posture checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42340051680/artifacts/13561402312"
@@ -56261,7 +56284,7 @@
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
         "observedAt": "2026-11-07T04:08:00+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Identify which netgofer case timed out. Diagnose the no_directfs startup reset separately from the filter-count mismatch on Linux 5.10.",
+        "nextAction": "Compare the netgofer child wait with the prior queue-drain investigation on the current source. Diagnose the hosted ARM64 no_directfs startup reset separately from the Linux 5.10 filter-count mismatch.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
@@ -57672,7 +57695,7 @@
       "ref": "proposal/runsc-version-line",
       "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
       "summary": "The reviewer reports that Google's internal go_test rule rejects x_defs, preventing the runsc package from loading. The amendment finds the declared binary with testutil.FindFile and checks its first version line. It accepts a nonempty workspace tag or build number and rejects VERSION_MISSING.",
-      "updatedAt": "2026-11-07T04:53:42+00:00",
+      "updatedAt": "2026-11-07T05:00:13+00:00",
       "evidence": [
         {
           "label": "Proposed amendment",
@@ -57683,8 +57706,8 @@
           "url": "https://github.com/google/gvisor/pull/17169#discussion_r4500083462"
         },
         {
-          "label": "Public Linux tests for alphabetic, numeric, empty and missing stamps",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42340018896"
+          "label": "Public Linux version test accepted alphabetic and numeric stamps and rejected empty and missing stamps",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42340018896/artifacts/13561193512"
         },
         {
           "label": "Eleven native AMD64 version-stamp outcomes",
@@ -57729,13 +57752,13 @@
       "followup": {
         "owner": "Contributor",
         "sourceHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
-        "observedAt": "2026-11-07T04:53:42+00:00",
-        "disposition": "The fork revision addresses both review comments; the upstream head is unchanged.",
-        "nextAction": "Review the amendment. After qualification and approval, publish it and answer the reviewer on the existing thread.",
+        "observedAt": "2026-11-07T05:00:13+00:00",
+        "disposition": "The fork revision passed its public version-stamp controls. The internal importer remains a maintainer check.",
+        "nextAction": "Review the amendment. After approval, publish it and answer the reviewer on the existing thread.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3cc89424a",
           "https://github.com/google/gvisor/pull/17169#discussion_r4500083462",
-          "https://github.com/tamird/gvisor/actions/runs/42340018896"
+          "https://github.com/tamird/gvisor/actions/runs/42340018896/artifacts/13561193512"
         ]
       },
       "id": "pr:17169",
