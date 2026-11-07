@@ -1,10 +1,9 @@
 load("@bazel_skylib//rules:build_test.bzl", _stock = "build_test")
-load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//tools:defs.bzl", "go_binary")
 load(":controls.bzl", "barrier_test", "defaults_test", "dependency")
 
 package(default_visibility = ["//visibility:public"])
 
-cc_binary(name = "pass", srcs = ["pass.c"], linkopts = ["-static"], testonly = True)
 go_binary(name = "probe", srcs = ["probe.go"], pure = True, static = True, testonly = True)
 
 dependency(name = "valid", testonly = True)

@@ -10,9 +10,25 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"syscall"
 )
 
 func run(args []string) error {
+	if len(args) == 0 {
+		var u syscall.Utsname
+		if err := syscall.Uname(&u); err != nil {
+			return err
+		}
+		var name []byte
+		for _, char := range u.Machine {
+			if char == 0 {
+				break
+			}
+			name = append(name, byte(char))
+		}
+		fmt.Printf("build_test native machine=%s\n", name)
+		return nil
+	}
 	switch args[0] {
 	case "mark":
 		return os.WriteFile(args[1], []byte("built\n"), 0644)
@@ -29,6 +45,9 @@ func run(args []string) error {
 		info := map[string]any{"arch": runtime.GOARCH, "sha256": fmt.Sprintf("%x", sha256.Sum256(data)),
 			"bytes": len(data), "enoent": errors.Is(err, os.ErrNotExist), "exit": -1,
 			"skylib": strings.TrimSpace(string(data)) == "#!/usr/bin/env bash\nexit 0"}
+		if len(data) > 20 && string(data[:6]) == "\x7fELF\x02\x01" {
+			info["machine"] = int(data[18]) | int(data[19])<<8
+		}
 		if cmd.ProcessState != nil {
 			info["exit"] = cmd.ProcessState.ExitCode()
 		}

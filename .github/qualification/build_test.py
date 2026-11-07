@@ -49,7 +49,7 @@ def opts(arch, native, remote):
     p = "//test/rbe/release_prewarmer:" + arch
     flags = ["--jobs=32", "--lockfile_mode=off", "--config=" + ARCH[arch][0], "-c", "opt",
              "--color=no", "--curses=no", "--noshow_progress", "--workspace_status_command=",
-             "--features=fully_static_link", "--keep_going", "--nocache_test_results", "--nobuild_tests_only"]
+             "--keep_going", "--nocache_test_results", "--nobuild_tests_only"]
     if remote:
         flags += ["--host_platform=" + p, "--extra_execution_platforms=" + p,
                   "--extra_toolchains=//test/rbe/go_bootstrap:linux_" + arch + "_ash",
@@ -57,7 +57,7 @@ def opts(arch, native, remote):
                   "--spawn_strategy=remote", "--noremote_local_fallback", "--remote_timeout=900",
                   "--remote_download_outputs=minimal", "--noremote_upload_local_results",
                   "--modify_execution_info=^(TestRunner|InspectBuildTestLauncher|BuildTestBarrier|BuildTestFixture|Genrule)$=+no-remote-cache",
-                  "--remote_download_regex=.*(/qualification_build_test_launcher[.]json|/test[.](log|xml))$"]
+                  "--remote_download_regex=.*(/qualification_build_test_launcher[.]json|/test[.](log|xml)|/compiled_posix_test_wrapper)$"]
     else:
         flags += ["--spawn_strategy=linux-sandbox", "--remote_cache=", "--remote_executor=", "--bes_backend="]
     if native:
@@ -94,6 +94,26 @@ def diagnostics(data):
 
 def owner(label):
     return clean(label.removeprefix("@@") if label and label.startswith("@@//") else label)
+
+
+def link_lines(raw):
+    headers = []
+    current = None
+    for line in raw.decode("utf-8", "replace").splitlines():
+        if line.startswith("ERROR:"):
+            current = None
+            if "Linking " in line and " failed:" in line:
+                for owner in ("//vdso:vdso.so", "//tools/ioctl_sniffer:ioctl_hook"):
+                    if owner + ")" in line and len(headers) < 6:
+                        out = re.search(r"Linking ([^ ]+) failed:", line)
+                        current = {"owner": owner, "output": clean(out[1]) if out else None, "messages": []}
+                        headers.append(current)
+        elif current is not None and len(current["messages"]) < 6:
+            # Only linker diagnostics; command lines and action environments are excluded.
+            if re.match(r"^(?:ld[.]lld|clang(?:[+][+])?|ld): (?:fatal )?error:", line):
+                if not re.search(r"(?i)https?://|authorization|credential|api.?key|password|token|--.*header", line):
+                    current["messages"].append(line[:400])
+    return headers
 
 
 def local_detail(message):
@@ -143,7 +163,7 @@ def observe(bep, row, host=False):
             row["invocation"] = clean(event["started"].get("uuid"))
         if "namedSetOfFiles" in event:
             files[ident["namedSet"]["id"]] = event["namedSetOfFiles"]
-        if "targetCompleted" in ident:
+        if "targetCompleted" in ident and not ident["targetCompleted"].get("aspect"):
             tag = ident["targetCompleted"]
             label = owner(tag.get("label"))
             targets[label] = bool(event.get("completed", {}).get("success"))
@@ -154,10 +174,13 @@ def observe(bep, row, host=False):
         if "actionCompleted" in ident:
             tag, action = ident["actionCompleted"], event.get("action", {})
             label, kind = owner(tag.get("label")), clean(action.get("type"))
-            if (label in LABELS and kind in ("GoLink", "GoTestLink")) or label in MARKERS or label == LAUNCH or (label or "").startswith(PKG) or not action.get("success"):
-                if len(actions) < 140 or label in MARKERS or label == LAUNCH or (label or "").startswith(PKG):
+            if (label in LABELS and kind in ("GoLink", "GoTestLink")) or (kind == "CppLink" and label in ("//vdso:vdso.so", "//tools/ioctl_sniffer:ioctl_hook")) or label in MARKERS or label == LAUNCH or (label or "").startswith(PKG) or not action.get("success"):
+                if len(actions) < 140 or label in ("//vdso:vdso.so", "//tools/ioctl_sniffer:ioctl_hook") or label in MARKERS or label == LAUNCH or (label or "").startswith(PKG):
                     actions.append({"owner": label, "kind": kind, "success": bool(action.get("success")),
                                     "exit": int(action.get("exitCode", 0)), "failure": clean(action.get("failureDetail", {}).get("spawn", {}).get("code"))})
+            if kind == "CppLink" and label in ("//vdso:vdso.so", "//tools/ioctl_sniffer:ioctl_hook") and actions and actions[-1]["owner"] == label:
+                actions[-1].update(config=clean(tag.get("configuration", {}).get("id")), output=clean(tag.get("primaryOutput")),
+                                   stderr_sha=clean(action.get("stderr", {}).get("digest")))
             if label in MARKERS and actions and actions[-1]["owner"] == label:
                 item = action.get("stderr", {})
                 data = file_data(item)
@@ -173,10 +196,11 @@ def observe(bep, row, host=False):
                 if item["name"] in ("test.log", "test.xml"):
                     data = file_data(item)
                     direct = False
-                    if host and data is None and not item.get("digest") and entry["owner"].startswith(PKG):
+                    if data is None and not item.get("digest") and (entry["owner"] == ROOT or entry["owner"].startswith(PKG)):
                         uri = urllib.parse.urlsplit(item.get("uri", ""))
                         path = Path(urllib.parse.unquote(uri.path))
-                        suffix = "/testlogs/test/rbe/source_build_test/" + entry["owner"].removeprefix(PKG) + "/" + item["name"]
+                        package, name = entry["owner"][2:].split(":")
+                        suffix = "/testlogs/" + (package + "/" if package else "") + name + "/" + item["name"]
                         if uri.scheme == "file" and path.as_posix().endswith(suffix) and path.is_file() and 0 < path.stat().st_size < 2000000:
                             observed = path.read_bytes()
                             if "length" not in item or len(observed) == int(item["length"]):
@@ -203,20 +227,30 @@ def observe(bep, row, host=False):
                             "/bin/sh_absent", "/bin/bash_absent", "/usr/bin/touch_absent", "/bin/touch_absent")
                     row["launcher"] = {k: observation[k] for k in keys}
                     row["launcher"]["output_sha256"] = sha(data)
+                    row["launcher"]["machine"] = observation.get("machine")
     row.update(actions=actions, tests=tests, targets=targets)
 
 
 def spawns(path, row, arch):
     if not path.exists():
         return
-    expr = '''select(has("spawn")) | .spawn | select(.mnemonic == "TestRunner" or .mnemonic == "BuildTestFixture" or .mnemonic == "BuildTestBarrier" or .mnemonic == "InspectBuildTestLauncher" or (.mnemonic == "Genrule" and (.targetLabel | contains("__deps"))) or .mnemonic == "GoLink") | {kind:.mnemonic,owner:.targetLabel,exe:.args[0],touch:(if .mnemonic == "Genrule" then any(.args[]; test("(?<![A-Za-z0-9_])touch +")) else false end),runner:.runner,cache:.cacheHit,exit:.exitCode,status:.status,digest:.digest.hash,properties:(.platform.properties // [])}'''
+    expr = '''select(has("spawn")) | .spawn | select(.mnemonic == "TestRunner" or .mnemonic == "BuildTestFixture" or .mnemonic == "BuildTestBarrier" or .mnemonic == "InspectBuildTestLauncher" or (.mnemonic == "Genrule" and (.targetLabel | contains("__deps"))) or .mnemonic == "GoLink" or (.mnemonic == "CppLink" and (.targetLabel | test("//(vdso:vdso[.]so|tools/ioctl_sniffer:ioctl_hook|tools/test:compiled_posix_test_wrapper)$")))) | {kind:.mnemonic,owner:.targetLabel,exe:.args[0],test_program:(if .mnemonic == "TestRunner" then .args[1] else null end),touch:(if .mnemonic == "Genrule" then any(.args[]; test("(?<![A-Za-z0-9_])touch +")) else false end),runner:.runner,cache:.cacheHit,exit:.exitCode,status:.status,digest:.digest.hash,properties:(.platform.properties // [])}'''
+    # These files are already recorded in the original compact log. Restrict
+    # the projection to this configured architecture's 16 named root inputs.
+    configured = report["cells"].get("graph-" + arch, {}).get("labels", {})
+    wanted = {path: label for label in LABELS for path in configured.get(label, []) if path}
+    expr = 'if has("file") then (.file | select($wanted[.path] != null and .digest.hash) | {output_path:.path, hash:.digest.hash, bytes:.digest.sizeBytes}) else (' + expr + ') end'
+    metadata = {}
     result = []
     with subprocess.Popen([WORK / "bb", "print", "--raw", "--compact_execution_log=" + str(path)],
                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as decoder:
-        with subprocess.Popen(["jq", "-c", expr], stdin=decoder.stdout, stdout=subprocess.PIPE, text=True) as project:
+        with subprocess.Popen(["jq", "-c", "--argjson", "wanted", json.dumps(wanted), expr], stdin=decoder.stdout, stdout=subprocess.PIPE, text=True) as project:
             decoder.stdout.close()
             for line in project.stdout:
                 item = json.loads(line)
+                if "output_path" in item:
+                    metadata[item["output_path"]] = {"owner": wanted[item["output_path"]], "sha256": clean(item["hash"]), "bytes": int(item["bytes"] or 0)}
+                    continue
                 item["owner"] = owner(item["owner"])
                 if item["kind"] == "GoLink" and item["owner"] not in LABELS:
                     continue
@@ -225,13 +259,17 @@ def spawns(path, row, arch):
                 item["cpu"] = clean(props.get("Arch"))
                 item["exit"] = int(item["exit"] or 0)
                 item["cache"] = bool(item["cache"])
-                for key in ("kind", "owner", "exe", "runner", "status", "digest"):
+                for key in ("kind", "owner", "exe", "test_program", "runner", "status", "digest"):
                     if key != "runner" or item[key] != "remote cache hit":
                         item[key] = clean(item[key])
                 result.append(item)
             row["projection_exit"] = project.wait()
         row["decode_exit"] = decoder.wait()
     row["spawns"] = result
+    if wanted:
+        row["configured_input_files"] = metadata
+        row["input_bytes_observed"] = sum(f["bytes"] for f in metadata.values())
+        row["input_paths_complete"] = set(metadata) == set(wanted)
 
 
 def run(name, arch, native, remote, command, labels, host_strategy=None):
@@ -252,6 +290,7 @@ def run(name, arch, native, remote, command, labels, host_strategy=None):
                         "Unrecognized option", "no matching toolchains", "No matching execution platform",
                         "No such target", "no space left", "OutOfMemoryError", "No registered executors",
                         "Permission denied", "is not allowed to depend", "error loading package") if s.lower().encode() in raw.lower()]}
+    row["link_diagnostics"] = link_lines(raw)
     row["missing_tool"] = missing_tool(raw)
     row["diagnostics"] = diagnostics(raw)
     report["cells"][name] = row
@@ -319,6 +358,7 @@ def graph(arch):
     cp = subprocess.run(args, capture_output=True)
     row = {"exit": cp.returncode, "stderr_sha256": sha(cp.stderr), "labels": {}, "runfiles": []}
     row["diagnostics"] = diagnostics(cp.stderr)
+    row["client_diagnosis"] = local_detail(cp.stderr.decode("utf-8", "replace"))
     if not cp.returncode:
         import ast
         for line in cp.stdout.decode().splitlines():

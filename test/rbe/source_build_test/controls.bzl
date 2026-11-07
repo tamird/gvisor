@@ -29,7 +29,7 @@ _build_test = rule(
     attrs = {
         "targets": attr.label_list(mandatory = True),
         "barrier": attr.bool(),
-        "_runner": attr.label(default = "//test/rbe/source_build_test:pass", cfg = "target", executable = True),
+        "_runner": attr.label(default = "//test/rbe/source_build_test:probe", cfg = "target", executable = True),
     },
 )
 
