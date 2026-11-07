@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T11:27:57+00:00",
+    "updatedAt": "2026-11-07T11:35:54+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57305,9 +57305,13 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T11:25:21+00:00",
-      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 run captured an intermittent FDs.Classes difference on default/sentry. Both subsequent default-case repeats passed.",
+      "updatedAt": "2026-11-07T11:35:54+00:00",
+      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 run captured an intermittent FDs.Classes difference on default/sentry. Both subsequent default-case repeats passed. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60.",
       "evidence": [
+        {
+          "label": "Matched two-thread control and actual Sentry samples on both native workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404"
+        },
         {
           "label": "Hosted ARM64 diagnostic and two default-case repeats",
           "url": "https://github.com/tamird/gvisor/actions/runs/42366515114/artifacts/13572008419"
@@ -57777,10 +57781,12 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T11:17:48+00:00",
+        "observedAt": "2026-11-07T11:35:54+00:00",
         "disposition": "Full mixed presubmit completed with one failing ARM64 shard",
-        "nextAction": "Use an independent two-thread control on the same worker to distinguish filter enforcement from the number reported by procfs.",
+        "nextAction": "Check BuildBuddy #11090’s proposed ARM64 kernel with the same control and rerun the original owner when a corrected guest is available.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404",
+          "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
           "https://github.com/tamird/gvisor/actions/runs/42367351219/artifacts/13572591028",
           "https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525",
           "https://app.buildbuddy.io/invocation/b1d7f5c9-8917-421d-b273-c1ac8e4ef288",
@@ -59533,19 +59539,46 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/tcp-atomic-queue-membership",
-      "head": "01da93c33151cf9fa7daa6919bd6337f975afa14",
-      "url": "https://github.com/tamird/gvisor/commit/01da93c33",
-      "title": "Remove the TCP endpoint mutex used only for queue membership",
+      "head": "1eae09b6e23cfa3e4f433cdd5ea30478317a7817",
+      "url": "https://github.com/tamird/gvisor/commit/1eae09b6e",
+      "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-07T11:14:14+00:00",
-      "summary": "Two processors can try to queue the same listener. The candidate atomically claims membership before linking the endpoint, and releases it after unlinking. The queue keeps its existing mutex. A native Linux comparison exercises simultaneous claims, dispatcher handoff and the fairness tests.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T11:35:54+00:00",
+      "summary": "Two peer queues can contend for the same TCP listener. Replacing the membership mutex with one atomic claim removed 63 net lines. On two AMD64 CPUs, rejected duplicate queue operations fell from 20.24 to 12.01 ns and a successful dequeue/requeue from 25.20 to 17.24 ns. The 16-pair benchmark measures queue operations. The ordinary and race TCP suites, both architecture analyzers and both single-processor scheduling controls passed.",
       "evidence": [
+        {
+          "label": "Original benchstat, sixteen paired samples, race and Nogo results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42366670610/artifacts/13573320005"
+        },
         {
           "label": "Queue handoff, race checks and paired benchmarks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42366670610"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "1eae09b6e23cfa3e4f433cdd5ea30478317a7817",
+        "baseHead": "77f1abcbe2ea642642a13317b2fd8c37cbb7ad08",
+        "url": "https://github.com/tamird/gvisor/commit/1eae09b6e",
+        "title": "Claim TCP processor queue membership atomically",
+        "body": "Peers of a listening socket can hash to different TCP processors. An\nendpoint has only one pair of queue links. Each processor takes a\nsecond mutex on the endpoint to test or clear its queue membership\nwhile holding its own queue mutex.\n\nClaim membership before inserting the endpoint and release it after\nunlinking it. Each processor still protects its own list. Removing the\nmembership mutex also removes its lock-order annotations.\n\nBenchstat for ProcessorQueueMembership on two AMD64 CPUs [1].\n\n                   │ 77f1abcbe.txt │            01da93c33.txt          │\n                   │    sec/op     │   sec/op     vs base              │\nDuplicateEnqueue-2     20.24n ± 0%   12.01n ± 0%  -40.66% (p=0.000 n=16)\nDequeueRequeue-2       25.20n ± 0%   17.24n ± 0%  -31.60% (p=0.000 n=16)\n\nDuplicateEnqueue times two queues concurrently trying to enqueue the\nsame already queued endpoint. DequeueRequeue moves the endpoint from\none queue to the other.\n\n[1] https://github.com/tamird/gvisor/actions/runs/42366670610",
+        "summary": "Open the single-commit TCP PR after #17045 lands. The existing fairness behavior and the two-queue handoff passed on both implementations.",
+        "requestedAt": "2026-11-07T11:35:54+00:00"
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1eae09b6e23cfa3e4f433cdd5ea30478317a7817",
+        "observedAt": "2026-11-07T11:35:54+00:00",
+        "disposition": "Contributor review requested for a tested standalone change",
+        "nextAction": "After contributor approval and #17045 landing, submit the change with the queue-operation benchstat.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1eae09b6e",
+          "https://github.com/tamird/gvisor/actions/runs/42366670610/artifacts/13573320005",
+          "https://github.com/google/gvisor/pull/17045"
+        ]
+      }
     }
   ],
   "edges": [
@@ -76759,7 +76792,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T11:25:21+00:00",
+      "updatedAt": "2026-11-07T11:35:54+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -79297,10 +79330,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42367347403/artifacts/13572497175"
             }
           ]
+        },
+        {
+          "text": "The rules_go 0.65.0 bootstrap action failed before producing any of its three outputs on both native executors. Each original uncached action used the supplied shell script as its executable on an image with no executables. The next comparison supplies only its interpreter and keeps the script and Go inputs identical. An AMD64 executor can cross-compile ARM64 using its AMD64 builder.",
+          "evidence": [
+            {
+              "label": "Uncached Go SDK bootstrap action on each native tool-free worker",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42368374290/artifacts/13573190060"
+            }
+          ]
         }
       ],
-      "nextStep": "Execute the rules_go 0.65.0 SDK bootstrap on the existing tool-free Linux worker and inspect its declared interpreter. The native ARM64 and AMD64 builders are separate executor cases.",
+      "nextStep": "Compare the same SDK bootstrap actions with their interpreter declared. Verify the builder, pack and covdata outputs on each native executor.",
       "evidence": [
+        {
+          "label": "Uncached Go SDK bootstrap action on each native tool-free worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368374290/artifacts/13573190060"
+        },
         {
           "label": "Both target configurations with empty system binary directories",
           "url": "https://github.com/tamird/gvisor/actions/runs/42367347403/artifacts/13572497175"
@@ -82518,5 +82564,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T11:27:57+00:00"
+  "updatedAt": "2026-11-07T11:35:54+00:00"
 }
