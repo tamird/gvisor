@@ -15,6 +15,7 @@
 package forwardcmd
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -23,6 +24,7 @@ import (
 	"html"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/google/subcommands"
@@ -493,7 +495,7 @@ func (s *Statefile) writeTo(output io.Writer, input *os.File) error {
 
 	// Dump the full file?
 	if !s.list && s.get == "" {
-		rc, _, err := statefile.NewReader(input, key)
+		rc, md, err := statefile.NewReader(input, key)
 		if err != nil {
 			return fmt.Errorf("error parsing statefile: %w", err)
 		}
@@ -502,21 +504,26 @@ func (s *Statefile) writeTo(output io.Writer, input *os.File) error {
 			if _, err := fmt.Fprintf(output, "<html><body>\n"); err != nil {
 				return fmt.Errorf("error writing output: %w", err)
 			}
-			if err := pretty.PrintHTML(output, rc); err != nil {
-				return fmt.Errorf("error printing state: %w", err)
-			}
-			if err := rc.Verify(); err != nil {
-				return fmt.Errorf("error verifying statefile: %w", err)
-			}
+		}
+		_, savedVersion := md[sentryapi.VersionKey]
+		count, countErr := strconv.Atoi(md[sentryapi.ContainerCountKey])
+		if savedVersion && countErr == nil && count > 0 {
+			frames := checkpointFrames{r: bufio.NewReader(rc), objects: 2}
+			err = pretty.PrintFrames(output, s.html, frames.next)
+		} else if s.html {
+			err = pretty.PrintHTML(output, rc)
+		} else {
+			err = pretty.PrintText(output, rc)
+		}
+		if err != nil {
+			return fmt.Errorf("error printing state: %w", err)
+		}
+		if err := rc.Verify(); err != nil {
+			return fmt.Errorf("error verifying statefile: %w", err)
+		}
+		if s.html {
 			if _, err := fmt.Fprintf(output, "</body></html>\n"); err != nil {
 				return fmt.Errorf("error writing output: %w", err)
-			}
-		} else {
-			if err := pretty.PrintText(output, rc); err != nil {
-				return fmt.Errorf("error printing state: %w", err)
-			}
-			if err := rc.Verify(); err != nil {
-				return fmt.Errorf("error verifying statefile: %w", err)
 			}
 		}
 		return nil

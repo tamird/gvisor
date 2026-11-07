@@ -8,6 +8,7 @@ package(
 go_library(
     name = "forwardcmd",
     srcs = [
+        "checkpoint_frames.go",
         "forwardcmd.go",
         "metric_metadata.go",
         "statefile.go",
@@ -19,8 +20,11 @@ go_library(
         "//pkg/coverage",
         "//pkg/cpuid",
         "//pkg/metric",
+        "//pkg/sentry/pgalloc/metadata",
+        "//pkg/state",
         "//pkg/state/pretty",
         "//pkg/state/statefile",
+        "//pkg/state/wire",
         "//runsc/boot/sentryapi",
         "//runsc/cmd/util",
         "//runsc/config",
@@ -38,9 +42,14 @@ go_test(
     srcs = ["statefile_test.go"],
     embed = [":forwardcmd"],
     deps = [
+        "//pkg/sentry/pgalloc:pgalloc_metadata_go_proto",
+        "//pkg/state",
         "//pkg/state/statefile",
+        "//pkg/state/wire",
+        "//runsc/boot/sentryapi",
         "//runsc/flag",
         "@com_github_google_subcommands//:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )

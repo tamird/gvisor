@@ -202,10 +202,11 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Object) (string, 
 	}
 }
 
-// printStream is the basic print implementation.
-func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
-	wr := wire.Reader{Reader: r}
-
+// PrintFrames prints successive frames as text or HTML. next returns the
+// header and payload reader for each frame, or io.EOF at the end of the
+// stream. The printer consumes each payload before calling next again.
+func PrintFrames(w io.Writer, asHTML bool, next func() (state.Header, io.Reader, error)) (err error) {
+	p := &printer{html: asHTML, typeSpecs: make(map[string]*wire.Type)}
 	// current graph ID.
 	var graph uint64
 
@@ -224,11 +225,8 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 		}
 	}()
 
-	p.typeSpecs = make(map[string]*wire.Type)
-
 	for {
-		// Find the first object to begin generation.
-		hdr, err := state.ReadHeaderMode(&wr)
+		hdr, r, err := next()
 		if err == io.EOF {
 			// Nothing else to do.
 			break
@@ -245,10 +243,9 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 				if hdr.Length < math.MaxInt64 {
 					limit = int64(hdr.Length)
 				}
-				if _, err := io.Copy(io.Discard, &io.LimitedReader{
-					R: r,
-					N: limit,
-				}); err != nil {
+				if _, err := io.CopyN(io.Discard, r, limit); err == io.EOF {
+					return io.ErrUnexpectedEOF
+				} else if err != nil {
 					return err
 				}
 			}
@@ -282,6 +279,7 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 			tid     uint64 = 1
 			objects []objectAndID
 		)
+		wr := wire.Reader{Reader: r}
 		for i := uint64(0); i < hdr.Length; {
 			// Unmarshal either a type object or object ID.
 			encoded := wire.Load(&wr)
@@ -327,12 +325,20 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 	return nil
 }
 
+func printStream(w io.Writer, r io.Reader, asHTML bool) error {
+	wr := wire.Reader{Reader: r}
+	return PrintFrames(w, asHTML, func() (state.Header, io.Reader, error) {
+		h, err := state.ReadHeaderMode(&wr)
+		return h, r, err
+	})
+}
+
 // PrintText reads the stream from r and prints text to w.
 func PrintText(w io.Writer, r io.Reader) error {
-	return (&printer{}).printStream(w, r)
+	return printStream(w, r, false)
 }
 
 // PrintHTML reads the stream from r and prints html to w.
 func PrintHTML(w io.Writer, r io.Reader) error {
-	return (&printer{html: true}).printStream(w, r)
+	return printStream(w, r, true)
 }

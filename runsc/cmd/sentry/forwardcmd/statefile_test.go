@@ -15,17 +15,142 @@
 package forwardcmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/google/subcommands"
 	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/proto"
+	pgallocpb "gvisor.dev/gvisor/pkg/sentry/pgalloc/pgalloc_metadata_go_proto"
+	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
+	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/flag"
 )
+
+func TestStatefileDumpMemoryFiles(t *testing.T) {
+	for _, layout := range []string{"inline", "split", "legacy", "generic", "missing-kernel"} {
+		t.Run(layout, func(t *testing.T) {
+			// Both keys were present when MemoryFile metadata first changed
+			// to protobuf. Older Sentry checkpoints do not store CPU features.
+			md := map[string]string{sentryapi.VersionKey: "test", sentryapi.ContainerCountKey: "1"}
+			if layout == "generic" {
+				md = map[string]string{}
+			}
+			path := filepath.Join(t.TempDir(), "checkpoint")
+			f, err := os.Create(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w, err := statefile.NewWriter(f, nil, md)
+			if err != nil {
+				f.Close()
+				t.Fatal(err)
+			}
+			ww := wire.Writer{Writer: w}
+			object := func(tag wire.String) {
+				t.Helper()
+				if err := state.WriteHeader(&ww, 1, true); err != nil {
+					t.Fatal(err)
+				}
+				wire.Save(&ww, wire.Uint(1))
+				wire.Save(&ww, &tag)
+			}
+			var wantRaw []int
+			memoryFile := func(pages int) {
+				t.Helper()
+				meta := pgallocpb.MemoryFileMetadataProto{Version: 1}
+				if pages != 0 {
+					meta.MemAcct = []*pgallocpb.MemAcctRangeProto{{End: uint64(pages), KnownCommitted: true}}
+				}
+				data, err := proto.Marshal(&meta)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := binary.Write(w, binary.LittleEndian, uint64(len(data))); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := w.Write(data); err != nil {
+					t.Fatal(err)
+				}
+				wantRaw = append(wantRaw, len(data))
+				if pages != 0 {
+					if err := state.WriteHeader(&ww, uint64(pages), false); err != nil {
+						t.Fatal(err)
+					}
+					if _, err := w.Write(make([]byte, pages)); err != nil {
+						t.Fatal(err)
+					}
+					wantRaw = append(wantRaw, pages)
+				}
+			}
+			object("cpu")
+			if layout != "missing-kernel" {
+				object("kernel")
+			}
+			switch layout {
+			case "inline":
+				memoryFile(4096)
+				object("private owners")
+				memoryFile(0)
+				memoryFile(8192)
+			case "legacy", "generic":
+				object("saved memoryFile")
+				object("private owners")
+			}
+			if err := w.Close(); err != nil {
+				t.Fatal(err)
+			}
+			for _, html := range []bool{false, true} {
+				reader, err := os.Open(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var out bytes.Buffer
+				err = (&Statefile{html: html}).writeTo(&out, reader)
+				reader.Close()
+				if layout == "missing-kernel" {
+					if !errors.Is(err, io.ErrUnexpectedEOF) {
+						t.Errorf("dump with missing kernel graph: %v", err)
+					}
+					continue
+				}
+				if err != nil {
+					t.Fatalf("dump html=%t: %v", html, err)
+				}
+				text := out.String()
+				if !strings.Contains(text, "cpu") || !strings.Contains(text, "kernel") ||
+					(strings.Contains(text, "private owners") != (layout != "split")) {
+					t.Fatalf("missing or unexpected graph, html=%t: %s", html, text)
+				}
+				var raw []int
+				for _, line := range strings.Split(text, "\n") {
+					line = strings.TrimPrefix(line, "<pre>")
+					if strings.Contains(line, " bytes non-object data)") {
+						var size int
+						if _, err := fmt.Sscanf(line, "(%d bytes non-object data)", &size); err != nil {
+							t.Fatal(err)
+						}
+						raw = append(raw, size)
+					}
+				}
+				if !slices.Equal(raw, wantRaw) {
+					t.Errorf("raw regions = %v, want %v", raw, wantRaw)
+				}
+			}
+		})
+	}
+}
 
 func TestCheckStickyDirOwnership(t *testing.T) {
 	stickyWorld := &unix.Stat_t{Mode: unix.S_IFDIR | unix.S_ISVTX | 0777, Uid: 0}
