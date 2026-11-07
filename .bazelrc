@@ -80,18 +80,18 @@ test:source-presubmit-common --target_pattern_file=test/rbe/source-presubmit.tar
 # for one set of object paths.
 build:source-presubmit --config=source-presubmit-common
 build:source-presubmit --config=x86_64
-build:source-presubmit --extra_execution_platforms=//tools/bazeldefs:linux_amd64
+build:source-presubmit --extra_execution_platforms=//test/rbe:ubuntu_amd64
 
 build:source-presubmit-arm64 --config=source-presubmit-common
 build:source-presubmit-arm64 --config=aarch64
 # Bazel can select its host platform for the seccomp generator. Build the
 # generator for the ARM worker even when the Bazel client runs on x86_64.
 build:source-presubmit-arm64 --host_platform=//tools/bazeldefs:linux_arm64
-build:source-presubmit-arm64 --extra_execution_platforms=//tools/bazeldefs:linux_arm64
+build:source-presubmit-arm64 --extra_execution_platforms=//test/rbe:ubuntu_arm64
 
-# Use the same two labels for target transitions and for their execution pools.
+# Run each architecture's tests on a worker that matches its test executable.
 build:source-presubmit-mixed --config=source-presubmit-common
 build:source-presubmit-mixed --config=x86_64
 build:source-presubmit-mixed --host_platform=//tools/bazeldefs:linux_amd64
-build:source-presubmit-mixed --extra_execution_platforms=//tools/bazeldefs:linux_amd64,//tools/bazeldefs:linux_arm64
+build:source-presubmit-mixed --extra_execution_platforms=//test/rbe:ubuntu_amd64,//test/rbe:ubuntu_arm64
 test:source-presubmit-mixed --target_pattern_file=test/rbe/mixed-native.targets
