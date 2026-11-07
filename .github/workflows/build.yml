@@ -1,35 +1,92 @@
-name: CI
-
-"on":
+name: Boot the default LLVM release on both native architectures
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [qualification/default-llvm-native-release-guest]
+permissions: {contents: read}
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  boot:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the compiler source and the original SDK target
+        run: |
+          set -eu
+          umask 077
+          src=4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
+          test "$(git rev-parse HEAD^)" = "$src"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/llvm_release_guest' ':!.github/workflows/build.yml'
+          d="$RUNNER_TEMP/llvm-release-guest"
+          mkdir -p "$d/results"
+          cp .github/qualification/llvm_release_guest/{check.py,exec_cas.py} "$d/"
+          git checkout -q --detach "$src"
+          test "$(git rev-parse HEAD^{tree})" = d158661d088405f37465bd07d6dc03dbd3f59e9d
+          test "$(cat .bazelversion)" = 9.3.1
+          grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+          # This owner needs namespace creation. Only its TestRunner selects the VM.
+          # These three scheduling properties are the original per-test source-CI values.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("examples/sandboxexec/go/docprocessor/BUILD")
+          s = p.read_text()
+          needle = '    data = ["//:release"],\n'
+          assert s.count(needle) == 1
+          p.write_text(s.replace(needle, needle + '''    exec_properties = {
+                  "test.dockerUser": "root",
+                  "test.network-enable-ipv6": "true",
+                  "test.workload-isolation-type": "firecracker",
+              },
+          '''))
+          PY
+          test "$(git diff --name-only)" = examples/sandboxexec/go/docprocessor/BUILD
+          curl --retry 2 -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Run the one original document transformation on each platform
+        id: execute
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          d="$RUNNER_TEMP/llvm-release-guest"
+          trap 'rm -f "$d/remote.rc"' EXIT
+          cat > "$d/remote.rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io
+          build --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io
+          build --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$d/remote.rc"
+          unset BUILDBUDDY_API_KEY
+          rc=0
+          python3 -IB "$d/check.py" actual amd64 || rc=1
+          python3 -IB "$d/check.py" actual arm64 || rc=1
+          exit "$rc"
+      - name: Verify the original native TestRunner actions
+        if: always() && (steps.execute.outcome == 'success' || steps.execute.outcome == 'failure')
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/llvm-release-guest"
+          rc=0
+          python3 -IB "$d/check.py" worker amd64 || rc=1
+          python3 -IB "$d/check.py" worker arm64 || rc=1
+          exit "$rc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: default-llvm-native-release-guests
+          path: |
+            ${{ runner.temp }}/llvm-release-guest/results/actual-amd64.json
+            ${{ runner.temp }}/llvm-release-guest/results/actual-arm64.json
+            ${{ runner.temp }}/llvm-release-guest/results/worker-amd64.json
+            ${{ runner.temp }}/llvm-release-guest/results/worker-arm64.json
+          if-no-files-found: error
+          retention-days: 14
