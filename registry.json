@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T00:10:56.960Z",
+    "updatedAt": "2026-11-07T00:14:02.706Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4857,10 +4857,26 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments. On 127967d31, ARM64 analysis selected 2,880 build-only targets and 373 test shards (367 OCI and six Firecracker). The first attempt ran an AMD64 seccomp generator on an ARM64 worker. Setting the ARM64 host platform selected the ARM64 generator. All four uname cases then passed in one fresh remote test, including UnshareUTS. With that platform setting, the full source presubmit on 353c484b4 built all 3,243 selected ARM64 targets. All 373 test shards ran remotely with fresh results: 371 passed, runsc/cmd:cmd_test failed its Sentry boot-posture checks, and runsc/gofer/net:netgofer_test timed out. The 363 test owners and their shard counts match the earlier selection. Exact worker-property verification for that full run is in progress.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.",
-      "updatedAt": "2026-11-07T00:00:33.281Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments. On 127967d31, ARM64 analysis selected 2,880 build-only targets and 373 test shards (367 OCI and six Firecracker). The first attempt ran an AMD64 seccomp generator on an ARM64 worker. Setting the ARM64 host platform selected the ARM64 generator. All four uname cases then passed in one fresh remote test, including UnshareUTS. With that platform setting, the full source presubmit on 353c484b4 built all 3,243 selected ARM64 targets. All 373 test shards ran remotely with fresh results: 371 passed, runsc/cmd:cmd_test failed its Sentry boot-posture checks, and runsc/gofer/net:netgofer_test timed out. The 363 test owners and their shard counts match the earlier selection. The six expected Firecracker owners matched native ARM64 execution records. A separate comparison did not verify the individual log digests.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects.",
+      "updatedAt": "2026-11-07T00:14:02.706Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "label": "Four native AMD64/ARM64 OCI and Firecracker tests in one Bazel command",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42315225533/artifacts/13551051033"
+        },
+        {
+          "label": "Original full ARM64 worker records and 373 configured shard matches",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42315567848/artifacts/13550358254"
+        },
+        {
+          "label": "Distinct RBE platforms: configured LLVM action counts and output paths",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42316434650/artifacts/13550498564"
+        },
+        {
+          "label": "ARM64 netgofer timeout reproduced with the production filter",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42315736706/artifacts/13549524843"
+        },
         {
           "label": "Full ARM64 source presubmit: 3,243 targets built, 373 fresh test shards and two nonpasses",
           "url": "https://github.com/tamird/gvisor/actions/runs/42310008455/artifacts/13550377161"
@@ -56874,7 +56890,7 @@
       "url": "https://github.com/google/gvisor/pull/17155",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T00:10:56.960Z",
+      "updatedAt": "2026-11-07T00:14:02.706Z",
       "summary": "Konstantin requested review of the Buildkite results CLI. Tamir separately asked whether Go would fit the repository’s tooling better.",
       "contributorReview": {
         "kind": "review",
@@ -56882,10 +56898,14 @@
         "head": "30143217adf5ade390febe1a48447b334c874c2e",
         "url": "https://github.com/google/gvisor/pull/17155",
         "title": "Review the Buildkite command and its failure attribution",
-        "body": "AGENTS.md, line 209\nThe checkout gives buildkite.py mode 100644, so this command exits with permission denied before it can print help. Could you mark the script executable or use python3 in the examples?\n\ntools/buildkite/buildkite.py, line 469\nIf attempt 1 failed and its retry is still running, retried is already true. With --logs this skips the only completed failure, and the documented rule would call the retry a pass. Could we show the retry as pending and keep that failed log available until we actually observe a passing attempt?\n\ntools/buildkite/buildkite.py, line 416\nmake testlogs includes FLAKY as well as FAILED and TIMEOUT (tools/bazel.mk:408). If one target passes on a Bazel retry and a different target fails the job, the hook annotates both and this lists both as failed_targets. Could we separate final failures from failed attempts, or call these annotated targets when their final status is unknown?\n\ntools/buildkite/buildkite.py, line 318\nA passing Go test can log a line like client_test.go:17: expected connection reset before a different test panics. This puts the passing test’s message in failure_lines without its PASS context. Could ordinary test messages stay in the excerpt unless they can be associated with a failing test?",
+        "body": "AGENTS.md, line 209\nThe documented command exits 126 on a fresh checkout because buildkite.py is mode 100644. The BUILD file currently exposes only the test. Once the entry point is settled, could the smoke test run that exact command with --help?\n\ntools/buildkite/buildkite.py, line 469\nIf attempt 1 failed and its retry is still running, retried is already true. With --logs this skips the only completed failure, and the documented rule would call the retry a pass. Could we show the retry as pending and keep that failed log available until we actually observe a passing attempt?\n\ntools/buildkite/buildkite.py, line 416\nmake testlogs includes FLAKY as well as FAILED and TIMEOUT (tools/bazel.mk:408). If one target passes on a Bazel retry and a different target fails the job, the hook annotates both and this lists both as failed_targets. Could we separate final failures from failed attempts, or call these annotated targets when their final status is unknown?\n\ntools/buildkite/buildkite.py, line 318\nA passing Go test can log a line like client_test.go:17: expected connection reset before a different test panics. This puts the passing test’s message in failure_lines without its PASS context. Could ordinary test messages stay in the excerpt unless they can be associated with a failing test?",
         "requestedAt": "2026-11-07T00:10:56.960Z"
       },
       "evidence": [
+        {
+          "label": "Linux: 25 author tests, three offline controls and the direct entry point",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42316682619/artifacts/13550853026"
+        },
         {
           "label": "Tamir’s language and tooling comment",
           "url": "https://github.com/google/gvisor/pull/17155#issuecomment-6699281133"
