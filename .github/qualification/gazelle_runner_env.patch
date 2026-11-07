@@ -1,0 +1,219 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -108,7 +108,7 @@
+         "//internal:go_repository",
+         "//internal:overlay_repository",
+         "//internal/generationtest",
+-        "@bazel_gazelle_go_repository_config//:go_env.bzl",
++        "//internal:runner_env",
+         "@bazel_gazelle_is_bazel_module//:defs",
+         "@bazel_skylib//lib:shell",
+         "@rules_shell//shell:rules_bzl",
+diff --git a/def.bzl b/def.bzl
+--- a/def.bzl
++++ b/def.bzl
+@@ -13,10 +13,6 @@
+ # limitations under the License.
+ 
+ load(
+-    "@bazel_gazelle_go_repository_config//:go_env.bzl",
+-    "GO_ENV",
+-)
+-load(
+     "@bazel_gazelle_is_bazel_module//:defs.bzl",
+     "GAZELLE_IS_BAZEL_MODULE",
+ )
+@@ -45,6 +41,7 @@
+     _git_repository = "git_repository",
+     _http_archive = "http_archive",
+ )
++load("//internal:runner_env.bzl", "RunnerEnvInfo")
+ load(
+     "//internal/generationtest:generationtest.bzl",
+     _gazelle_generation_test = "gazelle_generation_test",
+@@ -84,6 +81,10 @@
+ 
+ def _gazelle_runner_attr_factory(test_runner = False):
+     attrs = {
++        "_go_env": attr.label(
++            default = "@bazel_gazelle_go_repository_config//:runner_env",
++            providers = [RunnerEnvInfo],
++        ),
+         "gazelle": attr.label(
+             allow_single_file = True,
+             default = "//cmd/gazelle",
+@@ -147,7 +148,7 @@
+     args.extend([ctx.expand_location(arg, ctx.attr.data) for arg in ctx.attr.extra_args])
+ 
+     combined_env = {}
+-    combined_env.update(GO_ENV)
++    combined_env.update(ctx.attr._go_env[RunnerEnvInfo].values)
+     combined_env.update(ctx.attr.env)
+     for key in combined_env:
+         if not _valid_env_variable_name(key):
+diff --git a/internal/BUILD.bazel b/internal/BUILD.bazel
+--- a/internal/BUILD.bazel
++++ b/internal/BUILD.bazel
+@@ -83,11 +83,18 @@
+ )
+ 
+ bzl_library(
++    name = "runner_env",
++    srcs = ["runner_env.bzl"],
++    visibility = ["//:__subpackages__"],
++)
++
++bzl_library(
+     name = "go_repository_config",
+     srcs = ["go_repository_config.bzl"],
+     visibility = ["//:__subpackages__"],
+     deps = [
+         ":common",
++        ":runner_env",
+         "//internal:go_repository_cache",
+     ],
+ )
+diff --git a/internal/bzlmod/BUILD.bazel b/internal/bzlmod/BUILD.bazel
+--- a/internal/bzlmod/BUILD.bazel
++++ b/internal/bzlmod/BUILD.bazel
+@@ -26,6 +26,7 @@
+         ":semver",
+         ":utils",
+         "//internal:go_repository",
++        "//internal:runner_env",
+     ],
+ )
+ 
+diff --git a/internal/bzlmod/go_deps.bzl b/internal/bzlmod/go_deps.bzl
+--- a/internal/bzlmod/go_deps.bzl
++++ b/internal/bzlmod/go_deps.bzl
+@@ -20,6 +20,7 @@
+     "DEFAULT_BUILD_FILE_GENERATION_BY_PATH",
+     "DEFAULT_DIRECTIVES_BY_PATH",
+ )
++load("//internal:runner_env.bzl", "runner_env_build")
+ load(":go_mod.bzl", "deps_from_go_mod", "go_work_from_label", "sums_from_go_mod", "sums_from_go_work")
+ load(":semver.bzl", "COMPARES_HIGHEST_SENTINEL", "semver")
+ load(
+@@ -270,7 +271,7 @@
+         ))
+ 
+     ctx.file("WORKSPACE", "\n".join(repos))
+-    ctx.file("BUILD.bazel", "exports_files(['WORKSPACE', 'config.json', 'go_env.bzl', 'go_tools.bzl'])")
++    ctx.file("BUILD.bazel", runner_env_build(["WORKSPACE", "config.json", "go_env.bzl", "go_tools.bzl"]))
+     ctx.file("go_env.bzl", content = "GO_ENV = " + repr(go_env))
+     ctx.file("go_tools.bzl", content = "GO_TOOLS = {{k: Label(v) for k, v in {}.items()}}".format(
+         repr(ctx.attr.tool_targets),
+diff --git a/internal/go_repository_config.bzl b/internal/go_repository_config.bzl
+--- a/internal/go_repository_config.bzl
++++ b/internal/go_repository_config.bzl
+@@ -14,6 +14,7 @@
+ 
+ load("//internal:common.bzl", "env_execute", "executable_extension", "resolve_env", "watch")
+ load("//internal:go_repository_cache.bzl", "read_cache_env")
++load("//internal:runner_env.bzl", "runner_env_build")
+ 
+ def _go_repository_config_impl(ctx):
+     go_env = resolve_env(
+@@ -79,7 +80,7 @@
+     # add an empty build file so Bazel recognizes the config
+     ctx.file(
+         "BUILD.bazel",
+-        "exports_files([\"go_env.bzl\", \"go_tools.bzl\", \"WORKSPACE\"])",
++        runner_env_build(["go_env.bzl", "go_tools.bzl", "WORKSPACE"]),
+         False,
+     )
+ 
+diff --git a/internal/runner_env.bzl b/internal/runner_env.bzl
+new file mode 100644
+--- /dev/null
++++ b/internal/runner_env.bzl
+@@ -0,0 +1,39 @@
++# Copyright 2026 The Bazel Authors. All rights reserved.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#    http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++"""Go environment resolved for Gazelle runners."""
++
++RunnerEnvInfo = provider(fields = {"values": "A dict of environment variable names to values."})
++
++def _runner_env_impl(ctx):
++    return [RunnerEnvInfo(values = ctx.attr.env)]
++
++runner_env = rule(
++    implementation = _runner_env_impl,
++    attrs = {"env": attr.string_dict()},
++)
++
++def runner_env_build(files):
++    """Returns the BUILD file for the Go repository configuration."""
++    return """load("@@{repo}//internal:runner_env.bzl", "runner_env")
++load(":go_env.bzl", "GO_ENV")
++
++exports_files({exports})
++
++runner_env(
++    name = "runner_env",
++    env = GO_ENV,
++    visibility = ["//visibility:public"],
++)
++""".format(repo = Label("//:BUILD.bazel").workspace_name, exports = repr(files))
+diff --git a/internal/bzlmod/non_module_deps.bzl b/internal/bzlmod/non_module_deps.bzl
+--- a/internal/bzlmod/non_module_deps.bzl
++++ b/internal/bzlmod/non_module_deps.bzl
+@@ -12,10 +12,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-load(
+-    "@bazel_gazelle_go_repository_config//:go_env.bzl",
+-    "GO_ENV",
+-)
+ load(
+     "@go_host_compatible_sdk_label//:defs.bzl",
+     "HOST_COMPATIBLE_SDK",
+@@ -50,7 +46,7 @@
+         name = "bazel_gazelle_go_repository_cache",
+         # Label.repo_name is always a canonical name, so use a canonical label.
+         go_sdk_name = "@" + HOST_COMPATIBLE_SDK.repo_name,
+-        go_env = GO_ENV,
++        go_env_config = Label("@bazel_gazelle_go_repository_config//:config.json"),
+     )
+     go_repository_tools(
+         name = "bazel_gazelle_go_repository_tools",
+diff --git a/internal/go_repository_cache.bzl b/internal/go_repository_cache.bzl
+--- a/internal/go_repository_cache.bzl
++++ b/internal/go_repository_cache.bzl
+@@ -75,9 +75,12 @@
+     if go_mod_cache:
+         cache_env["GOMODCACHE"] = go_mod_cache
+ 
++    go_env = ctx.attr.go_env
++    if ctx.attr.go_env_config:
++        go_env = json.decode(ctx.read(ctx.attr.go_env_config))["go_env"]
+     cache_env.update(resolve_env(
+         ctx,
+-        direct = ctx.attr.go_env,
++        direct = go_env,
+         inherit = ctx.attr.go_env_inherit,
+         reserved = cache_env.keys(),
+     ))
+@@ -92,6 +95,7 @@
+         "go_sdk_name": attr.string(),
+         "go_sdk_info": attr.string_dict(),
+         "go_env": attr.string_dict(),
++        "go_env_config": attr.label(),
+         "go_env_inherit": attr.string_list(),
+     },
+ )
