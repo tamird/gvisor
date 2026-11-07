@@ -713,7 +713,10 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   Each revision denotes one commit
   (`head^!`) unless an explicit `base` defines its complete `base..head` range.
   These ranges compare the previously reviewed proposal with its replacement,
-  independently of intervening base changes. A PR node suppresses its own
+  independently of intervening base changes. Publication fails if a pending
+  branch proposal has a recorded comparison or an earlier contributor decision
+  but the current revision would display no range-diff.
+  A PR node suppresses its own
   retained comparison when the observed head differs. A branch proposal keeps
   its earlier-proposal comparison even when the destination PR advances.
   They do not contribute to dependency chains or blocker counts. The proposal

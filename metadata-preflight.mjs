@@ -14,9 +14,16 @@ context.candidateRegistry = JSON.parse(bytes['registry.json']);
 context.candidateSnapshot = JSON.parse(bytes['github-status.json']);
 vm.runInContext('validateRegistry(candidateRegistry); validateSnapshot(candidateSnapshot, candidateRegistry);', context);
 for (const node of context.candidateRegistry.nodes) {
+  const decision = node.contributorReview;
+  if (decision?.status !== 'pending') continue;
   context.node = node;
-  if (node.contributorReview?.status === 'pending' && vm.runInContext('alreadyReviewed(node, node.contributorReview)', context)) {
-    throw new Error(`Already reviewed: ${node.id} at ${node.contributorReview.head || node.contributorReview.url}`);
+  if (vm.runInContext('alreadyReviewed(node, node.contributorReview)', context)) {
+    throw new Error(`Already reviewed: ${node.id} at ${decision.head || decision.url}`);
+  }
+  if (node.type === 'branch' && decision.kind === 'proposal' &&
+      (node.refinement || node.settledReviews?.some(review => review.kind === 'proposal' && review.head !== decision.head)) &&
+      !vm.runInContext('refinementComparison(node, node.contributorReview)', context)) {
+    throw new Error(`Missing range-diff for revised proposal: ${node.id} at ${decision.head}`);
   }
 }
 console.log(JSON.stringify({
