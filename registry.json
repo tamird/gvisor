@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T03:03:10+00:00",
+    "updatedAt": "2026-11-07T03:08:22+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3279,18 +3279,18 @@
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
-        "observedAt": "2026-11-07T01:10:35+00:00",
-        "disposition": "Rebased allocator and both controls verified on native Linux.",
-        "nextAction": "Publish the amendment and its measured description after contributor review.",
+        "owner": "Upstream review",
+        "sourceHead": "61470ea4162137e6871edd94e369f1c03592c163",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "Published the disk-backed reservation amendment with the measured 4 KiB allocation costs.",
+        "nextAction": "Await upstream review of the allocation behavior and the reported timings.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17086",
           "https://github.com/google/gvisor/pull/15181"
         ]
       },
-      "updatedAt": "2026-11-07T01:10:35+00:00",
-      "head": "36900f03504f22a8a89271d95f9beaa172f9d233",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
+      "head": "61470ea4162137e6871edd94e369f1c03592c163",
       "evidence": [
         {
           "label": "Allocator conflict repair",
@@ -3303,19 +3303,12 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/3255a52b212edcd2f526d3fb1afaa6d1523f7520"
+        },
+        {
+          "label": "Published 61470ea41",
+          "url": "https://github.com/google/gvisor/pull/15181"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "61470ea4162137e6871edd94e369f1c03592c163",
-        "baseHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
-        "url": "https://github.com/tamird/gvisor/commit/61470ea41",
-        "title": "Preserve disk-backed reservations across the allocator rebase",
-        "requestedAt": "2026-11-07T01:10:35+00:00",
-        "summary": "Publish the rebased allocator and update its description? The one-page and recycled-disk controls failed on master. The fix passed 441 package test records. The new benchstat rows report the remaining 4 KiB cost.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 36900f035^! 61470ea41^!",
-        "body": "tmpfs uses AllocateAndCommit to reserve space for disk-backed files.\nA one-page allocation can pass through the population hint without\nbacking that page. Clearing a recycled disk-backed page can also\nsucceed without reserving its storage. In both cases Allocate can\nreport success before it has fulfilled the caller's request.\n\nTouch the advised mapping to establish its huge-page policy, then\nreserve the requested range with fallocate before calling ReaderFunc.\nKeep the disk-backed zero check for pages that cannot be written.\nClearing recycled shmem pages already commits them. Use fault-protected\nstores so Allocate can release the range and return ENOMEM if a page\ncannot be backed.\n\nUse REP STOSQ on amd64 CPUs with ERMS for clears of at least 2 KiB.\nThis keeps bulk zeroing inside safecopy's fault handler.\n\nBenchmarkAllocateRecycled [1] measures the allocation path for private\nanonymous faults and copy-on-write. Hot samples reuse one range. Cold\nsamples rotate through 256 MiB. On one pinned AMD EPYC 9V74 core, 16\nalternating samples per revision gave these changes in time [2].\n\n                              │  70008149c  │             61470ea41              │\n                              │   sec/op    │   sec/op     vs base               │\n    AllocateRecycled/4K/hot     240.7n ± 1%   250.0n ± 1%  +3.86% (p=0.000 n=16)\n    AllocateRecycled/64K/hot    4.032µ ± 0%   4.041µ ± 0%  +0.22% (p=0.004 n=16)\n    AllocateRecycled/4K/cold    517.4n ± 1%   534.2n ± 1%  +3.23% (p=0.000 n=16)\n\n[1]: https://github.com/google/gvisor/pull/15181#discussion_r4362212232\n[2]: https://github.com/tamird/gvisor/actions/runs/42321163931/artifacts/13553757485"
-      },
       "refinement": {
         "before": {
           "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
@@ -3325,7 +3318,22 @@
           "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
           "head": "61470ea4162137e6871edd94e369f1c03592c163"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "61470ea4162137e6871edd94e369f1c03592c163",
+          "baseHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
+          "url": "https://github.com/tamird/gvisor/commit/61470ea41",
+          "title": "Preserve disk-backed reservations across the allocator rebase",
+          "requestedAt": "2026-11-07T01:10:35+00:00",
+          "summary": "Publish the rebased allocator and update its description? The one-page and recycled-disk controls failed on master. The fix passed 441 package test records. The new benchstat rows report the remaining 4 KiB cost.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 36900f035^! 61470ea41^!",
+          "body": "tmpfs uses AllocateAndCommit to reserve space for disk-backed files.\nA one-page allocation can pass through the population hint without\nbacking that page. Clearing a recycled disk-backed page can also\nsucceed without reserving its storage. In both cases Allocate can\nreport success before it has fulfilled the caller's request.\n\nTouch the advised mapping to establish its huge-page policy, then\nreserve the requested range with fallocate before calling ReaderFunc.\nKeep the disk-backed zero check for pages that cannot be written.\nClearing recycled shmem pages already commits them. Use fault-protected\nstores so Allocate can release the range and return ENOMEM if a page\ncannot be backed.\n\nUse REP STOSQ on amd64 CPUs with ERMS for clears of at least 2 KiB.\nThis keeps bulk zeroing inside safecopy's fault handler.\n\nBenchmarkAllocateRecycled [1] measures the allocation path for private\nanonymous faults and copy-on-write. Hot samples reuse one range. Cold\nsamples rotate through 256 MiB. On one pinned AMD EPYC 9V74 core, 16\nalternating samples per revision gave these changes in time [2].\n\n                              │  70008149c  │             61470ea41              │\n                              │   sec/op    │   sec/op     vs base               │\n    AllocateRecycled/4K/hot     240.7n ± 1%   250.0n ± 1%  +3.86% (p=0.000 n=16)\n    AllocateRecycled/64K/hot    4.032µ ± 0%   4.041µ ± 0%  +0.22% (p=0.004 n=16)\n    AllocateRecycled/4K/cold    517.4n ± 1%   534.2n ± 1%  +3.23% (p=0.000 n=16)\n\n[1]: https://github.com/google/gvisor/pull/15181#discussion_r4362212232\n[2]: https://github.com/tamird/gvisor/actions/runs/42321163931/artifacts/13553757485",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/15181"
+        }
+      ]
     },
     {
       "id": "pr:15183",
@@ -24234,13 +24242,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "group": "bazel",
-      "head": "5967bbde193112cce575c5443c6b241d99589f59",
+      "head": "76747cfd5daf8bc061c2fb5f0af3019805d8e387",
       "ref": "proposal/nvidia-parser-resources-master",
       "title": "Package Clang headers with the NVIDIA parser",
       "url": "https://github.com/google/gvisor/pull/17112",
       "status": "open",
       "summary": "Gazelle scans the source tree before Bazel creates builtin_headers.zip. Declaring the filename on pkg_zip lets Gazelle resolve the existing Go embed. The upstream Gazelle command passed in a clean checkout; the original parser test ran uncached and the CLI still contains the complete archive.",
-      "updatedAt": "2026-11-06T22:48:49.450Z",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
       "evidence": [
         {
           "label": "Master configures the existing LLVM source",
@@ -24273,6 +24281,14 @@
         {
           "label": "Clean Gazelle, uncached TestParser and the embedded archive",
           "url": "https://github.com/tamird/gvisor/actions/runs/42306698223/artifacts/13546574154"
+        },
+        {
+          "label": "Published 76747cfd5",
+          "url": "https://github.com/google/gvisor/pull/17112"
+        },
+        {
+          "label": "Upstream Gazelle passed on the amended PR",
+          "url": "https://github.com/google/gvisor/actions/runs/42332310369/job/128281368072"
         }
       ],
       "settledReviews": [
@@ -24291,6 +24307,19 @@
           "outcome": "approved",
           "at": "2026-11-06T15:17:14.247Z",
           "note": "Published on #17112. The rebase preserves every added and removed line from approved 52feb7b78."
+        },
+        {
+          "kind": "amendment",
+          "head": "76747cfd5daf8bc061c2fb5f0af3019805d8e387",
+          "baseHead": "5967bbde193112cce575c5443c6b241d99589f59",
+          "url": "https://github.com/tamird/gvisor/commit/76747cfd5",
+          "title": "Package Clang headers with the NVIDIA parser",
+          "body": "The NVIDIA driver differ writes driver_ast_parser to a temporary\ndirectory before parsing driver headers. That detached executable can\nfail to find Clang's builtin stddef.h and stdint.h because those files\nare not beside it. Package the headers from the parser's LLVM source\nwith the Go wrapper and pass their resource directory explicitly.\nDisable host standard-header lookup so worker-installed headers cannot\nsilently supply the parser's inputs.\n\nKeep the Clang license text and inline notices with the header archive.\nGive the direct parser test the same declared resource archive and\nexercise stddef.h and stdint.h in its existing fixture. Clean up the\nwrapper's resource directory after each driver parity subtest.\n\nDeclare the ZIP output explicitly so Gazelle can resolve the Go embed\nbefore Bazel builds the archive.",
+          "summary": "Gazelle scans the source tree before Bazel creates builtin_headers.zip. Declaring the filename on pkg_zip lets Gazelle resolve the existing Go embed. The upstream Gazelle command passed in a clean checkout; the original parser test ran uncached and the CLI still contains the complete archive.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 5967bbde1^! 76747cfd5^!",
+          "requestedAt": "2026-11-06T22:48:49.450Z",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17112"
         }
       ],
       "refinement": {
@@ -24302,23 +24331,12 @@
         }
       },
       "number": 17112,
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "76747cfd5daf8bc061c2fb5f0af3019805d8e387",
-        "baseHead": "5967bbde193112cce575c5443c6b241d99589f59",
-        "url": "https://github.com/tamird/gvisor/commit/76747cfd5",
-        "title": "Package Clang headers with the NVIDIA parser",
-        "body": "The NVIDIA driver differ writes driver_ast_parser to a temporary\ndirectory before parsing driver headers. That detached executable can\nfail to find Clang's builtin stddef.h and stdint.h because those files\nare not beside it. Package the headers from the parser's LLVM source\nwith the Go wrapper and pass their resource directory explicitly.\nDisable host standard-header lookup so worker-installed headers cannot\nsilently supply the parser's inputs.\n\nKeep the Clang license text and inline notices with the header archive.\nGive the direct parser test the same declared resource archive and\nexercise stddef.h and stdint.h in its existing fixture. Clean up the\nwrapper's resource directory after each driver parity subtest.\n\nDeclare the ZIP output explicitly so Gazelle can resolve the Go embed\nbefore Bazel builds the archive.",
-        "summary": "Gazelle scans the source tree before Bazel creates builtin_headers.zip. Declaring the filename on pkg_zip lets Gazelle resolve the existing Go embed. The upstream Gazelle command passed in a clean checkout; the original parser test ran uncached and the CLI still contains the complete archive.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 5967bbde1^! 76747cfd5^!",
-        "requestedAt": "2026-11-06T22:48:49.450Z"
-      },
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "5967bbde193112cce575c5443c6b241d99589f59",
-        "observedAt": "2026-11-06T22:48:49.450Z",
-        "disposition": "The source change fixes the failing upstream Gazelle check.",
-        "nextAction": "Review the proposed amendment to #17112.",
+        "owner": "Upstream review",
+        "sourceHead": "76747cfd5daf8bc061c2fb5f0af3019805d8e387",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "The amended target passed upstream Gazelle.",
+        "nextAction": "Await upstream review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/76747cfd5",
           "https://github.com/google/gvisor/actions/runs/42241581885/job/127972940686",
@@ -30427,8 +30445,8 @@
       "url": "https://github.com/google/gvisor/issues/16393",
       "group": "runtime",
       "status": "Agent investigation",
-      "summary": "On master at 597f36270, all five M003 Reno loss runs stopped at byte 134,684 of 524,288 through the 35 s deadline. With #16495 all five finished with the expected payload in 0.293–2.015 s. Both no-loss controls passed. Four stock runs sent only 122 distinct packets, so the reporter dropped 22 of the scheduled 24; all twelve original packet traces were checked.\n\nEarlier Reno/CUBIC comparison: With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
-      "updatedAt": "2026-11-07T00:00:33.281Z",
+      "summary": "On 14e1d0324, three of five Reno M003 transfers stalled at byte 134,684 of 524,288 through the 35 s deadline. Two finished. With #16495, all five finished in 0.648–1.211 s and preserved the payload hash. Both no-loss controls passed. The stock result on 597f36270 was five stalls in five runs. The reporter confirmed that their separate FreeBSD connection used Tailscale 1.80.0 without TCP timestamps. Its internal recovery sequence remains unknown.\n\nEarlier Reno/CUBIC comparison: With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
       "followup": {
         "owner": "root",
         "observedAt": "2026-10-31T13:27:19.063035+00:00",
@@ -30518,6 +30536,10 @@
         {
           "label": "Same-worker replay: all 18 trial reports",
           "url": "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335"
+        },
+        {
+          "label": "Twelve original Linux M003 transfer traces on 14e1d0324 and with #16495",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42331567852/artifacts/13558241626"
         }
       ]
     },
@@ -31267,19 +31289,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/declared-go-coverage",
-      "head": "7f56b080d9f7485957f3514133ffa5f5490a6185",
+      "head": "c2a9426436643ee79e60d34a4e3b6bf4a88decce",
       "title": "Build runsc and Sentry coverage binaries with rules_go",
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
       "summary": "Upgrade with_cfg to 1.0.2 and refresh its license catalog entry. On AMD64 and ARM64, the coverage CLI and Sentry built both with and without the race detector. All four pairs ran the KCOV syscall test under systrap. The optional host-kernel control skipped on both workers.",
-      "updatedAt": "2026-11-06T22:51:21.450Z",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
-        "observedAt": "2026-11-06T22:48:16.956Z",
-        "disposition": "The proposed with_cfg 1.0.2 amendment passed native coverage and race+coverage KCOV on both architectures.",
-        "nextAction": "Review the two-file dependency update for publication on #16507. If #15370 lands first, rebase the go_bzl dependency list against it. The combined list is recorded on the coverage and native-test integration.",
+        "owner": "Upstream review",
+        "sourceHead": "c2a9426436643ee79e60d34a4e3b6bf4a88decce",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "Published the with_cfg 1.0.2 update with its license entry. The four coverage and race+coverage pairs exercised KCOV on native AMD64 and ARM64.",
+        "nextAction": "Watch upstream review and the shared dependency declaration if #15370 lands first.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2a942643",
           "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13547220519",
@@ -31327,6 +31349,10 @@
         {
           "label": "Native ARM64 coverage and race+coverage KCOV results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13546536906"
+        },
+        {
+          "label": "Published c2a942643",
+          "url": "https://github.com/google/gvisor/pull/16507"
         }
       ],
       "number": 16507,
@@ -31338,17 +31364,21 @@
           "head": "c2a9426436643ee79e60d34a4e3b6bf4a88decce"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "c2a9426436643ee79e60d34a4e3b6bf4a88decce",
-        "baseHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
-        "url": "https://github.com/tamird/gvisor/commit/c2a942643",
-        "title": "Build runsc and Sentry coverage binaries with rules_go",
-        "body": "The coverage genrules fetch two Go distributions, rebuild the toolchain\nto disable cmd/go's internal-import check, and fetch modules during the\nbuild. None of those downloads are inputs to the action. A change to a\nGo package also makes the coverage target rebuild the entire SDK.\n\nKCOV reads Go's internal coverage data because the Sentry must decode\nit in process [1]. Build the coverage variants with the same declared\nSDK and dependencies as runsc and Sentry. rules_go invokes the compiler\ndirectly and uses atomic counters, so KCOV needs no modified SDK.\nAll four binaries built from runsc/main.go share its direct imports.\n\nKeep the existing package exclusions. Disable cgo in ordinary coverage\nbinaries so they run in a minimal mount namespace, and retain race\ndetection and lock checking in the race variants.\n\n[1]: https://github.com/golang/go/issues/76098",
-        "summary": "Upgrade with_cfg to 1.0.2 and refresh its license catalog entry. On AMD64 and ARM64, the coverage CLI and Sentry built both with and without the race detector. All four pairs ran the KCOV syscall test under systrap. The optional host-kernel control skipped on both workers.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 7f56b080d^! c2a942643^!\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 5dbef4de9^! c2a942643^!",
-        "requestedAt": "2026-11-06T22:48:16.956Z"
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "c2a9426436643ee79e60d34a4e3b6bf4a88decce",
+          "baseHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
+          "url": "https://github.com/tamird/gvisor/commit/c2a942643",
+          "title": "Build runsc and Sentry coverage binaries with rules_go",
+          "body": "The coverage genrules fetch two Go distributions, rebuild the toolchain\nto disable cmd/go's internal-import check, and fetch modules during the\nbuild. None of those downloads are inputs to the action. A change to a\nGo package also makes the coverage target rebuild the entire SDK.\n\nKCOV reads Go's internal coverage data because the Sentry must decode\nit in process [1]. Build the coverage variants with the same declared\nSDK and dependencies as runsc and Sentry. rules_go invokes the compiler\ndirectly and uses atomic counters, so KCOV needs no modified SDK.\nAll four binaries built from runsc/main.go share its direct imports.\n\nKeep the existing package exclusions. Disable cgo in ordinary coverage\nbinaries so they run in a minimal mount namespace, and retain race\ndetection and lock checking in the race variants.\n\n[1]: https://github.com/golang/go/issues/76098",
+          "summary": "Upgrade with_cfg to 1.0.2 and refresh its license catalog entry. On AMD64 and ARM64, the coverage CLI and Sentry built both with and without the race detector. All four pairs ran the KCOV syscall test under systrap. The optional host-kernel control skipped on both workers.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 7f56b080d^! c2a942643^!\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 5dbef4de9^! c2a942643^!",
+          "requestedAt": "2026-11-06T22:48:16.956Z",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16507"
+        }
+      ]
     },
     {
       "id": "branch:reproducible-debian-changelog",
@@ -33150,7 +33180,7 @@
       "number": 16588,
       "group": "runtime",
       "ref": "review/fifo-reader-hangup",
-      "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
+      "head": "d6786915fa60f2dc04fc6969fc8ebf3274b39328",
       "title": "Report FIFO hangups per open reader",
       "url": "https://github.com/google/gvisor/pull/16588",
       "evidence": [
@@ -33221,9 +33251,13 @@
         {
           "label": "Comment-only follow-up held for the next revision or post-merge cleanup",
           "url": "https://github.com/tamird/gvisor/commit/c16a4922a"
+        },
+        {
+          "label": "Published d6786915f",
+          "url": "https://github.com/google/gvisor/pull/16588"
         }
       ],
-      "updatedAt": "2026-11-07T01:23:17+00:00",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
       "status": "open",
       "summary": "Master moved pipe initialization into a shared constructor. The rebased change initializes the FIFO writer generation there and retains the ring lock annotations. Seven syscall cases passed on Linux and both gVisor filesystem modes. All four pipe unit tests passed, and both Nogo targets passed for AMD64 and ARM64.",
       "refinement": {
@@ -33237,17 +33271,18 @@
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-        "observedAt": "2026-11-07T01:23:17+00:00",
-        "disposition": "The approved upstream head conflicts; its rebased replacement passed qualification.",
-        "nextAction": "Publish the contributor-reviewed conflict repair and request fresh maintainer review.",
+        "owner": "Upstream review",
+        "sourceHead": "d6786915fa60f2dc04fc6969fc8ebf3274b39328",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "Resolved the conflict in the shared FIFO constructor. Requested a fresh approval from Lucas.",
+        "nextAction": "Await Lucas’s approval of the new head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16588",
           "https://github.com/tamird/gvisor/commit/1dbbcd676",
           "https://github.com/google/gvisor/pull/16588#discussion_r4456246811",
           "https://github.com/google/gvisor/pull/16588#discussion_r4456247398",
-          "https://github.com/google/gvisor/pull/16588#discussion_r4456247839"
+          "https://github.com/google/gvisor/pull/16588#discussion_r4456247839",
+          "https://github.com/google/gvisor/pull/16588#issuecomment-6701430797"
         ]
       },
       "settledReviews": [
@@ -33265,19 +33300,21 @@
           "at": "2026-11-03T14:48:57.209577+00:00",
           "outcome": "approved",
           "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456246811"
+        },
+        {
+          "kind": "amendment",
+          "head": "d6786915fa60f2dc04fc6969fc8ebf3274b39328",
+          "baseHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
+          "url": "https://github.com/tamird/gvisor/commit/d6786915f",
+          "title": "Initialize the FIFO writer generation in the shared pipe constructor",
+          "requestedAt": "2026-11-07T01:23:17+00:00",
+          "summary": "Publish the conflict repair and request fresh review from Lucas? The seven original FIFO cases passed on Linux and both gVisor filesystem modes. Four pipe tests and the production and test analyzers also passed.\n\ngit -C ~/code/gvisor range-diff 1dbbcd676^! d6786915f^!",
+          "body": "A writer opens and closes a FIFO while one reader holds it open. A\nsecond nonblocking reader then opens the same FIFO. Linux reports\nPOLLHUP to the first reader only; gVisor remembers that the pipe once\nhad a writer and reports POLLHUP to both.\n\nRecord the writer generation when a nonblocking reader opens a FIFO\nwithout a writer. If the last writer has closed, report POLLHUP only\nwhen that generation has changed, as Linux does [1][2]. Once another\nwriter opens and closes, both readers see the hangup.\n\nA nonblocking writer that finds no readers returns ENXIO without\nadvancing the generation [3]. Otherwise a writer that never opened\ncould cause a concurrent reader to report a hangup.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1156-L1164\n[2]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L686-L691\n[3]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1172-L1181\n",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16588"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "d6786915fa60f2dc04fc6969fc8ebf3274b39328",
-        "baseHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-        "url": "https://github.com/tamird/gvisor/commit/d6786915f",
-        "title": "Initialize the FIFO writer generation in the shared pipe constructor",
-        "requestedAt": "2026-11-07T01:23:17+00:00",
-        "summary": "Publish the conflict repair and request fresh review from Lucas? The seven original FIFO cases passed on Linux and both gVisor filesystem modes. Four pipe tests and the production and test analyzers also passed.\n\ngit -C ~/code/gvisor range-diff 1dbbcd676^! d6786915f^!",
-        "body": "A writer opens and closes a FIFO while one reader holds it open. A\nsecond nonblocking reader then opens the same FIFO. Linux reports\nPOLLHUP to the first reader only; gVisor remembers that the pipe once\nhad a writer and reports POLLHUP to both.\n\nRecord the writer generation when a nonblocking reader opens a FIFO\nwithout a writer. If the last writer has closed, report POLLHUP only\nwhen that generation has changed, as Linux does [1][2]. Once another\nwriter opens and closes, both readers see the hangup.\n\nA nonblocking writer that finds no readers returns ENXIO without\nadvancing the generation [3]. Otherwise a writer that never opened\ncould cause a concurrent reader to report a hangup.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1156-L1164\n[2]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L686-L691\n[3]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1172-L1181\n"
-      }
+      ]
     },
     {
       "id": "pr:16593",
@@ -56892,31 +56929,20 @@
       "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
       "title": "Support reading PACKET_RESERVE on packet sockets",
       "group": "runtime",
-      "status": "Awaiting contributor review",
+      "status": "Delivered",
       "url": "https://github.com/tamird/gvisor/commit/5de0b08c4",
-      "updatedAt": "2026-11-06T22:38:16.247Z",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
       "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary.",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
-        "observedAt": "2026-11-06T22:38:16.247Z",
-        "disposition": "Standalone socket-option correction with an existing Linux syscall test.",
-        "nextAction": "Review the commit for an independent upstream PR.",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "The packet-socket readback fix is open upstream.",
+        "nextAction": "Follow #17168 for review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5de0b08c4",
           "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
         ]
-      },
-      "contributorReview": {
-        "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "title": "Support reading PACKET_RESERVE on packet sockets",
-        "body": "tcpdump cannot capture on \"any\" when libpcap checks whether a packet\nsocket supports the Linux cooked v2 capture format. libpcap queries\nPACKET_RESERVE before offering that format [1]. gVisor accepts writes\nto the option but returns ENOPROTOOPT on reads.\n\nReturn the reserve that the socket uses to place the packet payload in\nthe mmap ring. Extend the existing ring test to read the default and\nthe configured value before checking the payload offset.\n\n[1] https://github.com/the-tcpdump-group/libpcap/blob/c7642e2cc/pcap-linux.c#L2238-L2260",
-        "url": "https://github.com/tamird/gvisor/commit/5de0b08c4",
-        "kind": "proposal",
-        "status": "pending",
-        "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary. The result collector expected the symbolic option name, but GTest printed its numeric value (12). The retained XML includes both expected stock failures.",
-        "requestedAt": "2026-11-06T22:38:16.247Z"
       },
       "evidence": [
         {
@@ -56938,6 +56964,25 @@
         {
           "label": "Native ARM64 packet captures on both interfaces and runtimes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539991997"
+        },
+        {
+          "label": "Published 5de0b08c4",
+          "url": "https://github.com/google/gvisor/pull/17168"
+        }
+      ],
+      "settledReviews": [
+        {
+          "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "title": "Support reading PACKET_RESERVE on packet sockets",
+          "body": "tcpdump cannot capture on \"any\" when libpcap checks whether a packet\nsocket supports the Linux cooked v2 capture format. libpcap queries\nPACKET_RESERVE before offering that format [1]. gVisor accepts writes\nto the option but returns ENOPROTOOPT on reads.\n\nReturn the reserve that the socket uses to place the packet payload in\nthe mmap ring. Extend the existing ring test to read the default and\nthe configured value before checking the payload offset.\n\n[1] https://github.com/the-tcpdump-group/libpcap/blob/c7642e2cc/pcap-linux.c#L2238-L2260",
+          "url": "https://github.com/tamird/gvisor/commit/5de0b08c4",
+          "kind": "proposal",
+          "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary. The result collector expected the symbolic option name, but GTest printed its numeric value (12). The retained XML includes both expected stock failures.",
+          "requestedAt": "2026-11-06T22:38:16.247Z",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17168"
         }
       ]
     },
@@ -57168,8 +57213,8 @@
       "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
       "title": "Verify that runsc prints the version supplied by Bazel",
       "url": "https://github.com/tamird/gvisor/commit/d81096ecc",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T01:54:07+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
       "summary": "The test now compares the version printed by the built runsc with Bazel’s STABLE_VERSION. It accepts Buildkite’s alphabetic tag, its dirty form and a downstream stamp. It rejects the same executable when that stamp belongs to a different build. All eleven controls behaved as expected on both architectures.",
       "evidence": [
         {
@@ -57191,14 +57236,18 @@
         {
           "label": "Native ARM64 controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42324187283/artifacts/13555225426"
+        },
+        {
+          "label": "Published d81096ecc",
+          "url": "https://github.com/google/gvisor/pull/17169"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
-        "observedAt": "2026-11-07T01:54:07+00:00",
-        "disposition": "Exact-source native checks passed on AMD64 and ARM64, including the Buildkite branch stamp.",
-        "nextAction": "Publish after contributor review.",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "The runsc version stamp regression test is open upstream.",
+        "nextAction": "Follow #17169 for review.",
         "evidence": [
           "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
         ]
@@ -57213,17 +57262,21 @@
           "base": "70008149cff7b8d3b858877ae9c359b9046d19c5"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
-        "baseHead": "70008149cff7b8d3b858877ae9c359b9046d19c5",
-        "url": "https://github.com/tamird/gvisor/commit/d81096ecc",
-        "title": "Verify that runsc prints the version supplied by Bazel",
-        "requestedAt": "2026-11-07T01:54:07+00:00",
-        "summary": "Open the revised single-commit PR? A valid alphabetic tag passes when it is the actual stamp.\n\ngit -C ~/code/gvisor range-diff d243ff20a^! d81096ecc^!",
-        "body": "The version test searches all of runsc --version for a digit. The OCI\nspec version on the second line satisfies that check even when runsc\nreports a different build. Buildkite also deliberately stamps test\nbranches with an alphabetic tag.\n\nPass STABLE_VERSION to the Go test at link time and compare it with\nthe first line from the built runsc. An unstamped test has no expected\nversion and fails."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
+          "baseHead": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+          "url": "https://github.com/tamird/gvisor/commit/d81096ecc",
+          "title": "Verify that runsc prints the version supplied by Bazel",
+          "requestedAt": "2026-11-07T01:54:07+00:00",
+          "summary": "Open the revised single-commit PR? A valid alphabetic tag passes when it is the actual stamp.\n\ngit -C ~/code/gvisor range-diff d243ff20a^! d81096ecc^!",
+          "body": "The version test searches all of runsc --version for a digit. The OCI\nspec version on the second line satisfies that check even when runsc\nreports a different build. Buildkite also deliberately stamps test\nbranches with an alphabetic tag.\n\nPass STABLE_VERSION to the Go test at link time and compare it with\nthe first line from the built runsc. An unstamped test has no expected\nversion and fails.",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17169"
+        }
+      ]
     },
     {
       "id": "branch:fuse-file-storage",
@@ -57316,6 +57369,137 @@
       "repo": "google/gvisor",
       "number": 17167,
       "url": "https://github.com/google/gvisor/pull/17167",
+      "status": "open"
+    },
+    {
+      "title": "Support reading PACKET_RESERVE on packet sockets",
+      "group": "runtime",
+      "ref": "proposal/packet-socket-reserve-readback",
+      "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+      "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary.",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
+      "evidence": [
+        {
+          "label": "The three original syscall XML files, test binary and Sentry hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
+        },
+        {
+          "label": "Stock tcpdump reported the missing cooked v2 capture format",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42080245869/job/127431087419"
+        },
+        {
+          "label": "tcpdump 4.99.1 selects SLL2 by default on any",
+          "url": "https://github.com/the-tcpdump-group/tcpdump/blob/5f552b5e6/tcpdump.c#L1954-L1960"
+        },
+        {
+          "label": "Native AMD64 packet captures on both interfaces and runtimes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539577968"
+        },
+        {
+          "label": "Native ARM64 packet captures on both interfaces and runtimes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539991997"
+        },
+        {
+          "label": "Published 5de0b08c4",
+          "url": "https://github.com/google/gvisor/pull/17168"
+        }
+      ],
+      "settledReviews": [
+        {
+          "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "title": "Support reading PACKET_RESERVE on packet sockets",
+          "body": "tcpdump cannot capture on \"any\" when libpcap checks whether a packet\nsocket supports the Linux cooked v2 capture format. libpcap queries\nPACKET_RESERVE before offering that format [1]. gVisor accepts writes\nto the option but returns ENOPROTOOPT on reads.\n\nReturn the reserve that the socket uses to place the packet payload in\nthe mmap ring. Extend the existing ring test to read the default and\nthe configured value before checking the payload offset.\n\n[1] https://github.com/the-tcpdump-group/libpcap/blob/c7642e2cc/pcap-linux.c#L2238-L2260",
+          "url": "https://github.com/tamird/gvisor/commit/5de0b08c4",
+          "kind": "proposal",
+          "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary. The result collector expected the symbolic option name, but GTest printed its numeric value (12). The retained XML includes both expected stock failures.",
+          "requestedAt": "2026-11-06T22:38:16.247Z",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17168"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "The packet-socket readback fix is open upstream.",
+        "nextAction": "Follow #17168 for review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/5de0b08c4",
+          "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
+        ]
+      },
+      "id": "pr:17168",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17168,
+      "url": "https://github.com/google/gvisor/pull/17168",
+      "status": "open"
+    },
+    {
+      "title": "Verify that runsc prints the version supplied by Bazel",
+      "group": "bazel",
+      "ref": "proposal/runsc-version-line",
+      "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
+      "summary": "The test now compares the version printed by the built runsc with Bazel’s STABLE_VERSION. It accepts Buildkite’s alphabetic tag, its dirty form and a downstream stamp. It rejects the same executable when that stamp belongs to a different build. All eleven controls behaved as expected on both architectures.",
+      "updatedAt": "2026-11-07T03:08:22+00:00",
+      "evidence": [
+        {
+          "label": "Eleven native AMD64 version-stamp outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42325801260/artifacts/13555253040"
+        },
+        {
+          "label": "Eleven native ARM64 version-stamp outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42325801260/artifacts/13555840628"
+        },
+        {
+          "label": "Buildkite assigns an alphabetic tag to test branches",
+          "url": "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
+        },
+        {
+          "label": "Native AMD64 controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42324187283/artifacts/13554403101"
+        },
+        {
+          "label": "Native ARM64 controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42324187283/artifacts/13555225426"
+        },
+        {
+          "label": "Published d81096ecc",
+          "url": "https://github.com/google/gvisor/pull/17169"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
+          "baseHead": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+          "url": "https://github.com/tamird/gvisor/commit/d81096ecc",
+          "title": "Verify that runsc prints the version supplied by Bazel",
+          "requestedAt": "2026-11-07T01:54:07+00:00",
+          "summary": "Open the revised single-commit PR? A valid alphabetic tag passes when it is the actual stamp.\n\ngit -C ~/code/gvisor range-diff d243ff20a^! d81096ecc^!",
+          "body": "The version test searches all of runsc --version for a digit. The OCI\nspec version on the second line satisfies that check even when runsc\nreports a different build. Buildkite also deliberately stamps test\nbranches with an alphabetic tag.\n\nPass STABLE_VERSION to the Go test at link time and compare it with\nthe first line from the built runsc. An unstamped test has no expected\nversion and fails.",
+          "outcome": "approved",
+          "at": "2026-11-07T03:08:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17169"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
+        "observedAt": "2026-11-07T03:08:22+00:00",
+        "disposition": "The runsc version stamp regression test is open upstream.",
+        "nextAction": "Follow #17169 for review.",
+        "evidence": [
+          "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
+        ]
+      },
+      "id": "pr:17169",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17169,
+      "url": "https://github.com/google/gvisor/pull/17169",
       "status": "open"
     }
   ],
@@ -61074,13 +61258,14 @@
       ]
     },
     {
-      "from": "branch:packet-socket-reserve-readback",
+      "from": "pr:17168",
       "to": "branch:rules-img-tcpdump",
       "type": "depends_on",
       "reason": "Ubuntu tcpdump reads PACKET_RESERVE when capturing on all interfaces. The stock guest failed this capture; the corrected guest passed.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/5de0b08c4",
-        "https://github.com/tamird/gvisor/commit/768579797"
+        "https://github.com/tamird/gvisor/commit/768579797",
+        "https://github.com/google/gvisor/pull/17168"
       ]
     },
     {
