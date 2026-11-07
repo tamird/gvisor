@@ -24,6 +24,7 @@ import (
 	"os"
 
 	"gvisor.dev/gvisor/runsc/flag"
+	"gvisor.dev/gvisor/runsc/version"
 	bq "gvisor.dev/gvisor/tools/bigquery"
 	"gvisor.dev/gvisor/tools/parsers"
 )
@@ -88,7 +89,7 @@ func parseBenchmarks(ctx context.Context) error {
 		},
 		{
 			Name:  "version",
-			Value: version,
+			Value: version.Version(),
 		},
 	}
 
