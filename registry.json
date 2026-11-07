@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T03:10:46+00:00",
+    "updatedAt": "2026-11-07T03:31:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42129,8 +42129,8 @@
       "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
       "title": "Watch bound Unix sockets only when they listen",
       "url": "https://github.com/tamird/gvisor/commit/a2d366673",
-      "status": "Contributor approved; waiting for #16739",
-      "updatedAt": "2026-10-30T22:37:30.356196+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T03:31:55+00:00",
       "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets. Approved for submission after #16739 lands.",
       "evidence": [
         {
@@ -42168,6 +42168,10 @@
         {
           "label": "Linux restored EINVAL for listen on an already-connected socket",
           "url": "https://github.com/torvalds/linux/commit/f0d9c3ffc"
+        },
+        {
+          "label": "Upstream PR #17170",
+          "url": "https://github.com/google/gvisor/pull/17170"
         }
       ],
       "settledReviews": [
@@ -42175,15 +42179,16 @@
           "kind": "proposal",
           "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
           "outcome": "approved",
-          "at": "2026-10-30T22:37:30.356196+00:00"
+          "at": "2026-10-30T22:37:30.356196+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17170"
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "Upstream review",
         "sourceHead": "a2d36667326189d023f1a2746121dec505a2ef2f",
-        "observedAt": "2026-10-30T22:37:30.356196+00:00",
-        "disposition": "Approved for upstream submission after #16739",
-        "nextAction": "Once #16739 lands, verify the prerequisite and submit the approved change.",
+        "observedAt": "2026-11-07T03:31:55+00:00",
+        "disposition": "Opened the approved single commit after #16739 merged.",
+        "nextAction": "Follow upstream review on #17170.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16739",
           "https://github.com/tamird/gvisor/commit/a2d366673"
@@ -57390,9 +57395,9 @@
       "title": "Support reading PACKET_RESERVE on packet sockets",
       "group": "runtime",
       "ref": "proposal/packet-socket-reserve-readback",
-      "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+      "head": "54a5bc3ea49374472e6f9c0fea69ab409ca184d7",
       "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary.",
-      "updatedAt": "2026-11-07T03:08:22+00:00",
+      "updatedAt": "2026-11-07T03:31:55+00:00",
       "evidence": [
         {
           "label": "The three original syscall XML files, test binary and Sentry hashes",
@@ -57417,6 +57422,10 @@
         {
           "label": "Published 5de0b08c4",
           "url": "https://github.com/google/gvisor/pull/17168"
+        },
+        {
+          "label": "Pinned clang-format output matches the published revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42334190456/artifacts/13558123966"
         }
       ],
       "settledReviews": [
@@ -57436,10 +57445,10 @@
       ],
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
-        "observedAt": "2026-11-07T03:08:22+00:00",
-        "disposition": "The packet-socket readback fix is open upstream.",
-        "nextAction": "Follow #17168 for review.",
+        "sourceHead": "54a5bc3ea49374472e6f9c0fea69ab409ca184d7",
+        "observedAt": "2026-11-07T03:31:55+00:00",
+        "disposition": "Applied the canonical clang-format output to the syscall assertions.",
+        "nextAction": "Follow the corrected head through upstream checks and review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5de0b08c4",
           "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
@@ -57516,6 +57525,133 @@
       "number": 17169,
       "url": "https://github.com/google/gvisor/pull/17169",
       "status": "open"
+    },
+    {
+      "title": "Watch bound Unix sockets only when they listen",
+      "group": "runtime",
+      "ref": "research/unix-listener-readiness-current",
+      "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
+      "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets. Approved for submission after #16739 lands.",
+      "updatedAt": "2026-11-07T03:31:55+00:00",
+      "evidence": [
+        {
+          "label": "Approved upstream PR description",
+          "url": "https://tamird.github.io/gvisor/unix-listener-readiness-pr-body.md"
+        },
+        {
+          "label": "Review branch on top of #16739",
+          "url": "https://github.com/tamird/gvisor/tree/research/unix-listener-readiness-current"
+        },
+        {
+          "label": "One-commit source difference",
+          "url": "https://github.com/tamird/gvisor/compare/ed3929b26...a2d366673"
+        },
+        {
+          "label": "Prerequisite #16739 removes a waiter after failed host registration",
+          "url": "https://github.com/google/gvisor/pull/16739"
+        },
+        {
+          "label": "Linux passed BindConnectedSocket and EpollBindListenWaitAccept for both socket types",
+          "url": "https://app.buildbuddy.io/invocation/3256a304-a0f0-4473-8cd4-1337ba2c486f"
+        },
+        {
+          "label": "Stock gVisor repeated the unread edge and set SO_ACCEPTCONN to 1 for both types",
+          "url": "https://app.buildbuddy.io/invocation/2a66c070-0940-4129-a984-3ce7ac7b0430"
+        },
+        {
+          "label": "Corrected gVisor passed both socket cases and both listener controls",
+          "url": "https://app.buildbuddy.io/invocation/718d047e-f898-4ee9-b221-866f3422bc3b"
+        },
+        {
+          "label": "Three-lane receipt, exact sources, test XML and owner checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41130369584/artifacts/13013172048"
+        },
+        {
+          "label": "Linux restored EINVAL for listen on an already-connected socket",
+          "url": "https://github.com/torvalds/linux/commit/f0d9c3ffc"
+        },
+        {
+          "label": "Upstream PR #17170",
+          "url": "https://github.com/google/gvisor/pull/17170"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
+          "outcome": "approved",
+          "at": "2026-10-30T22:37:30.356196+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17170"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "a2d36667326189d023f1a2746121dec505a2ef2f",
+        "observedAt": "2026-11-07T03:31:55+00:00",
+        "disposition": "Opened the approved single commit after #16739 merged.",
+        "nextAction": "Follow upstream review on #17170.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16739",
+          "https://github.com/tamird/gvisor/commit/a2d366673"
+        ]
+      },
+      "id": "pr:17170",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17170,
+      "status": "open",
+      "url": "https://github.com/google/gvisor/pull/17170"
+    },
+    {
+      "id": "pr:16886",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16886,
+      "ref": "botir/preserve-packet-buffer-ranges",
+      "head": "e9abe5401c9fa5bc3c96738e52d406b0b1fbc15b",
+      "title": "Preserve packet headers when consuming payloads",
+      "url": "https://github.com/google/gvisor/pull/16886",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-07T03:31:55+00:00"
+    },
+    {
+      "id": "branch:packet-buffer-remove-range",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/packet-buffer-remove-range",
+      "head": "664d9fdb50b6bf530aa98ae738cce3c3cf68b8b1",
+      "title": "Keep packet header views across short reads",
+      "url": "https://github.com/tamird/gvisor/commit/664d9fdb5",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T03:31:55+00:00",
+      "summary": "Each partial read on #16886 clones the header prefix to remove consumed payload. Removing the range in place preserves preceding views and their contents. Two connected sockets transferring 4 MiB in 64-byte reads improved from 56.72 to 69.02 MiB/s on AMD64 (16 pairs, p=0.010).",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "664d9fdb50b6bf530aa98ae738cce3c3cf68b8b1",
+        "baseHead": "e9abe5401c9fa5bc3c96738e52d406b0b1fbc15b",
+        "url": "https://github.com/tamird/gvisor/commit/664d9fdb5",
+        "title": "Keep packet header views across short reads",
+        "body": "A partial packet read rebuilds the header prefix each time it removes\nbytes from the payload. On connected TCP sockets with 64-byte reads,\ntrimming takes 2.50 ms of CPU per MiB at e9abe5401. Walking and cloning\nthe header prefix accounts for 1.30 ms of that time.\n\nRemove the consumed range directly from the buffer. Keep preceding views\nin place and split a view only when it contains bytes on both sides of\nthe removed range. Clones retain their original contents.\n\nTwo connected netstack sockets transferred 4 MiB on two pinned AMD EPYC\n7763 CPUs with MTU 1500 and GRO and GSO disabled. Each transfer checked\nthe received bytes and EOF. Benchstat compared 16 alternating pairs.\n\n                                  │   e9abe5401   │               279ee9ded               │\n                                  │      B/s      │      B/s       vs base                │\n    ConnectedTCPRead/read=64-2      56.72Mi ± 14%   69.02Mi ± 14%  +21.68% (p=0.010 n=16)\n\nBenchmarkPacketDataReadTo drained a 1536-byte packet with a four-byte\nheader in 64-byte reads.\n\n                                              │ drain-e9abe5401 │           drain-279ee9ded           │\n                                              │     sec/op      │   sec/op     vs base                │\n    PacketDataReadTo/headers=4/fragments=1-2        3.449µ ± 1%   1.737µ ± 0%  -49.63% (p=0.000 n=16)\n    PacketDataReadTo/headers=4/fragments=16-2       9.322µ ± 1%   7.383µ ± 1%  -20.81% (p=0.000 n=16)",
+        "summary": "Open after #16886 lands? Across 16 alternating pairs, 64-byte connected TCP reads improved 21.68% with unchanged data and EOF. The 64 KiB control showed no significant change. The ordinary owners and focused race runs passed.",
+        "requestedAt": "2026-11-07T03:31:55+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Connected transfers and packet-drain benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42332688869/artifacts/13558536921"
+        },
+        {
+          "label": "Original focused race cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42332688869/artifacts/13558955852"
+        },
+        {
+          "label": "Per-MiB CPU profiles",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42331342422/artifacts/13557344826"
+        }
+      ]
     }
   ],
   "edges": [
@@ -61303,6 +61439,20 @@
         "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
         "https://github.com/tamird/gvisor/actions/runs/41368654125/artifacts/13108397749"
       ]
+    },
+    {
+      "from": "pr:16739",
+      "to": "pr:17170",
+      "type": "depends_on",
+      "reason": "The listener change builds on the merged Unix host waiter rollback.",
+      "evidence": "https://github.com/google/gvisor/pull/16739"
+    },
+    {
+      "from": "pr:16886",
+      "to": "branch:packet-buffer-remove-range",
+      "type": "depends_on",
+      "reason": "Preserve the packet headers retained by the parent while reducing short-read CPU time.",
+      "evidence": "https://github.com/google/gvisor/pull/16886"
     }
   ],
   "investigations": [
@@ -78523,7 +78673,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-07T02:48:08+00:00",
+      "updatedAt": "2026-11-07T03:31:55+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -79336,6 +79486,27 @@
             {
               "label": "Original sixteen pairs, benchmark workloads and packet-shape controls",
               "url": "https://github.com/tamird/gvisor/actions/runs/42318108981/artifacts/13551144044"
+            }
+          ]
+        },
+        {
+          "text": "Each partial read on #16886 clones the header prefix to remove consumed payload. Removing the range in place preserves preceding views and their contents. Two connected sockets transferring 4 MiB in 64-byte reads improved from 56.72 to 69.02 MiB/s on AMD64 (16 pairs, p=0.010). No significant change was measured for 64 KiB reads. All eight ordinary test targets passed, and the two fresh race owners passed every focused case.",
+          "evidence": [
+            {
+              "label": "Connected transfers and packet-drain benchstat",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42332688869/artifacts/13558536921"
+            },
+            {
+              "label": "Original focused race cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42332688869/artifacts/13558955852"
+            },
+            {
+              "label": "Per-MiB CPU profiles",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42331342422/artifacts/13557344826"
+            },
+            {
+              "label": "Reviewable single commit",
+              "url": "https://github.com/tamird/gvisor/commit/664d9fdb5"
             }
           ]
         }
