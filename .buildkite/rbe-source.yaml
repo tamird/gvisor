@@ -1,3 +1,7 @@
 steps:
   - label: "Remote source presubmit"
-    command: bazel test --config=source-presubmit
+    command: |
+      failed=0
+      bazel test --config=source-presubmit || failed=1
+      bazel test --config=source-presubmit-arm64 || failed=1
+      exit "$$failed"
