@@ -1,35 +1,78 @@
-name: CI
-
-"on":
+name: Verify ordinary and presubmit statefile permission tests
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/profile-statefile-permissions]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the source, original owners and client
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
+          test "$(git rev-parse HEAD^^)" = d78fe07a0a829205c5e26b864c648efdcb4d098d
+          test "$(git diff --name-only HEAD^^ HEAD^)" = runsc/cmd/BUILD
+          test "$(git rev-parse HEAD^^:runsc/cmd/BUILD)" = 82474e44fab40f52074dafdb6e8dc57c9dd646f9
+          test "$(git rev-parse HEAD^:runsc/cmd/BUILD)" = 722bb0e4c0966ae9bb0388ed5460219e63d17f80
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/permission_owner' ':!.github/qualification/exec_cas.py' ':!.github/qualification/source_presubmit_workers.py'
+          d="$RUNNER_TEMP/permission-owner"
+          mkdir -p "$d/results"
+          cp .github/qualification/permission_owner/check.py .github/qualification/{exec_cas.py,source_presubmit_workers.py} "$d/"
+          git checkout -q --detach 4eb27c4081e535d69c1257998a6c94256d9812e2
+          test "$(git rev-parse HEAD^{tree})" = b565766c205b9f402a03c0cd5df0f41de9c7d83f
+          echo '//runsc/cmd:statefile_output_permissions_test' > "$d/owner.targets"
+          curl --retry 2 -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          cd "$d"
+          sha256sum --check <<'SUMS'
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          SUMS
+          chmod 755 bazel
+      - name: Run the original tests in each non-root native profile
+        id: execute
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          d="$RUNNER_TEMP/permission-owner"
+          trap 'rm -f "$d/remote.rc"' EXIT
+          cat > "$d/remote.rc" <<'RC'
+          build:source-presubmit-common --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:source-presubmit-common --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$d/remote.rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -IB "$d/check.py" actual
+      - name: Verify the original TestRunner worker assignments
+        if: always() && (steps.execute.outcome == 'success' || steps.execute.outcome == 'failure')
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -IB "$RUNNER_TEMP/permission-owner/check.py" workers
+      - name: Check normal module and package resolution
+        if: always() && !cancelled()
+        run: |
+          test ! -e "$RUNNER_TEMP/permission-owner/remote.rc"
+          python3 -IB "$RUNNER_TEMP/permission-owner/check.py" clients
+      - name: Run the unchanged local test as the invoking user
+        if: always() && !cancelled()
+        timeout-minutes: 56
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/permission-owner/remote.rc"
+          unshare --user --map-root-user true
+          python3 -IB "$RUNNER_TEMP/permission-owner/check.py" ordinary
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: profile-statefile-permissions-results
+          path: ${{ runner.temp }}/permission-owner/results/*.json
+          if-no-files-found: warn
+          retention-days: 14
