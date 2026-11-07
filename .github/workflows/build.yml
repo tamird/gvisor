@@ -1,35 +1,34 @@
-name: CI
-
-"on":
+name: Run the original dependency policies on their custom platform
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/mixed-deps-custom-platform]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the two source revisions, fixture and pinned Bazel client
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/deps-policy"
+          mkdir -p "$work"
+          test "$(git rev-parse HEAD^)" = dbb62f477d7abed652ae5505ea714436e0c138d5
+          test "$(git rev-parse HEAD^^)" = a39f38e89dc7110a5bc35cd70821388d2d22f62a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/deps_policy/check.py' ':!.github/qualification/deps_policy/nodes.bzl' ':!.github/qualification/deps_policy/fixture.BUILD'
+          cp .github/qualification/deps_policy/{check.py,nodes.bzl,fixture.BUILD} "$work/"
+          curl -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazel" | sha256sum -c -
+          chmod 755 "$work/bazel"
+      - name: Run only the three custom/race fixtures on parent and candidate
+        run: python3 -IB "$RUNNER_TEMP/deps-policy/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: configured-dependency-custom-platform
+          path: ${{ runner.temp }}/deps-policy/result.json
+          retention-days: 14
+          if-no-files-found: warn
