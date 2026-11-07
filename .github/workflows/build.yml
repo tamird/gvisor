@@ -1,35 +1,44 @@
-name: CI
-
-"on":
+name: Qualify the Buildkite CLI without third-party logs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-review-followup]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  offline:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Check the unchanged source, executable and documented help commands
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 98d7263c5cc3c7983a2a5533e5d1b8bf4505f5a6
+          git diff --exit-code HEAD^ HEAD -- . ':!tools/buildkite/BUILD' ':!tools/buildkite/offline_observation_test.py' ':!.github/qualification/buildkite_offline.py' ':!.github/workflows/build.yml'
+          test "$(git ls-tree HEAD tools/buildkite/buildkite.py)" = "$(git ls-tree HEAD^ tools/buildkite/buildkite.py)"
+          d="$RUNNER_TEMP/buildkite-offline"
+          mkdir -m 700 "$d"
+          direct=0
+          tools/buildkite/buildkite.py --help >"$d/direct.out" 2>"$d/direct.err" || direct=$?
+          interpreter=0
+          python3 -IB tools/buildkite/buildkite.py --help >"$d/python.out" 2>"$d/python.err" || interpreter=$?
+          jq -n --arg mode "$(stat -c '%a' tools/buildkite/buildkite.py)" --argjson direct "$direct" --argjson python "$interpreter" '{mode:$mode,direct_help_exit:$direct,python_help_exit:$python}' >"$d/help.json"
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Run the original and synthetic tests with their offline inputs
+        run: |
+          d="$RUNNER_TEMP/buildkite-offline"
+          code=0
+          bazelisk test --strategy=TestRunner=processwrapper-sandbox --nocache_test_results \
+            --build_event_json_file="$d/bep" --test_output=errors --jobs=4 \
+            //tools/buildkite:buildkite_test //tools/buildkite:offline_observation_test || code=$?
+          echo "$code" >"$d/exit"
+      - name: Read the actual test results
+        if: always() && !cancelled()
+        run: python3 -IB .github/qualification/buildkite_offline.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled()
+        with:
+          name: buildkite-offline
+          path: ${{ runner.temp }}/buildkite-offline/result.json
+          if-no-files-found: warn

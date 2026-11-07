@@ -13,3 +13,9 @@ py_test(
     ],
     imports = ["."],
 )
+
+py_test(
+    name = "offline_observation_test",
+    srcs = ["buildkite.py", "offline_observation_test.py"],
+    imports = ["."],
+)
