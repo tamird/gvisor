@@ -1,35 +1,38 @@
-name: CI
-
-"on":
+name: Check four rebased image contexts alongside the resolver
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/basic-image-contexts-after-resolver]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.event.created && github.run_attempt == 1 && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Prepare the workspace-selected Linux Bazel
+        shell: bash
+        run: |
+          set -eu
+          area="$RUNNER_TEMP/image-contexts-after-resolver"
+          mkdir -p "$area/tmp"
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$area/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $area/bazel" | sha256sum -c -
+          chmod +x "$area/bazel"
+          echo "$area" >> "$GITHUB_PATH"
+          echo "TMPDIR=$area/tmp" >> "$GITHUB_ENV"
+          cp .github/qualification/basic_image_contexts.py "$area/check.py"
+      - name: Build native image contexts and follow their Make handoff
+        run: python3 "$RUNNER_TEMP/image-contexts-after-resolver/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: basic-image-contexts-after-resolver
+          path: ${{ runner.temp }}/image-contexts-after-resolver/result.json
+          if-no-files-found: warn
+          retention-days: 7
