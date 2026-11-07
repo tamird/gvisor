@@ -663,6 +663,7 @@ test('offline amendment cards show their own recorded ranges above the proposed 
     contributorReview: { status: 'pending', kind: 'reply', head: before, url: node.url, body: 'Reply text' },
     additionalReviews: [after, alternate].map(head => ({ status: 'pending', kind: 'amendment', head, baseHead: before,
       url: `https://github.com/tamird/gvisor/commit/${head}`, body: 'Proposed text' })) });
+  node.additionalReviews[0].replyBody = 'Reply about this amendment';
   const createElement = () => ({ children: [], append(...items) { this.children.push(...items); },
     replaceChildren() { this.children = []; }, setAttribute() {}, addEventListener() {} });
   const details = createElement();
@@ -673,6 +674,13 @@ test('offline amendment cards show their own recorded ranges above the proposed 
   const sections = details.children.filter(child => child.className === 'detail-section contributor-decision');
   assert.equal(sections.length, 3);
   assert.ok(!sections[0].children.some(child => child.className === 'range-diff'));
+  const textBlocks = section => section.children.filter(child => child.className === 'decision-body').map(child => child.textContent);
+  assert.deepEqual(textBlocks(sections[1]), ['Proposed text', 'Reply about this amendment']);
+  assert.deepEqual(textBlocks(sections[2]), ['Proposed text']);
+  const replyLabel = sections[1].children.findIndex(child => child.textContent === 'Reply to reviewer');
+  assert.ok(replyLabel > 0);
+  assert.equal(sections[1].children[replyLabel - 1].textContent, 'Proposed text');
+  assert.equal(sections[1].children[replyLabel + 1].textContent, 'Reply about this amendment');
   for (const [section, expected] of [[sections[1], `${before}^! ${base}..${after}`],
     [sections[2], `--creation-factor=999 ${before}^! ${alternate}^!`]]) {
     const group = section.children.find(child => child.className === 'range-diff');
@@ -684,6 +692,25 @@ test('offline amendment cards show their own recorded ranges above the proposed 
   assert.ok(!details.children.some(child => child.className === 'range-diff'));
   node.head = alternate;
   assert.equal(vm.runInContext('refinementComparison(nodeInput, nodeInput.additionalReviews[0])', context), null);
+});
+
+test('companion reviewer replies require nonempty text on a proposal or amendment', () => {
+  const context = client(), head = 'a'.repeat(40);
+  const decision = { status: 'pending', kind: 'proposal', head, body: 'Open this change',
+    url: `https://github.com/tamird/gvisor/commit/${head}` };
+  context.registryInput = { ...context.registryInput, groups: [], edges: [], nodes: [
+    { id: 'branch:test', type: 'branch', repo: 'tamird/gvisor', head, contributorReview: decision },
+  ] };
+  const validate = () => vm.runInContext('validateRegistry(registryInput)', context);
+  validate();
+  for (const reply of [null, '  ', 1]) {
+    decision.replyBody = reply;
+    assert.throws(validate, /Invalid contributor decision/);
+  }
+  decision.replyBody = 'Thank you for the review.';
+  validate();
+  decision.kind = 'reply';
+  assert.throws(validate, /Invalid contributor decision/);
 });
 
 test('new contributor observation survives an older full snapshot and controls age', () => {

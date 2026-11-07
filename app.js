@@ -1652,6 +1652,9 @@ function drawDetails() {
     if (decision.body) {
       section.append(element("div", "decision-body", decision.body));
     }
+    if (decision.replyBody) {
+      section.append(element("h4", "", "Reply to reviewer"), element("div", "decision-body", decision.replyBody));
+    }
     if (decision.kind === "issue") {
       const form = decision.url + "?title=" + encodeURIComponent(decision.title) + "&body=" + encodeURIComponent(decision.body);
       section.append(link("Open prefilled issue ↗", form));
@@ -2038,6 +2041,8 @@ function validateRegistry(candidate) {
         && typeof decision.body === "string" && decision.body.trim();
       if (!decision || decision.status !== "pending" || !proposal && !amendment && !outgoing
           || decision.body !== undefined && typeof decision.body !== "string"
+          || decision.replyBody !== undefined && (!["proposal", "amendment"].includes(decision.kind)
+            || typeof decision.replyBody !== "string" || !decision.replyBody.trim())
           || decision.summary !== undefined && typeof decision.summary !== "string"
           || decision.title !== undefined && typeof decision.title !== "string") throw new Error(`Invalid contributor decision for ${node.id}`);
     }
