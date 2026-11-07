@@ -1,35 +1,70 @@
-name: CI
-
-"on":
+name: Compare a process-local counter on two native kernels
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/native-filter-counter-accounting]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 42
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the original dual-native platform and the two probe labels
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/counter"
+          mkdir -p "$work"
+          test "$(git rev-parse HEAD^)" = 0f4de90fe214ba57ecba069aef0736d6ef732ba4
+          test "$(git rev-parse HEAD^^)" = d41933c9999f4b63085b0cb5211d64dda74bcdc4
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/proc_counter_report.py'
+          git diff --exit-code HEAD^^ HEAD^ -- . ':!test/rbe/proc_counter'
+          cp .github/qualification/proc_counter_report.py "$work/report.py"
+          echo "c17e971d2bf606635115815580bf8067fdcbb4fddfbef283b51b76a5e98d2306  $work/report.py" | sha256sum -c -
+          git checkout -q --detach HEAD^
+          test "$(uname -m)" = x86_64
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazel" | sha256sum -c -
+          chmod 755 "$work/bazel"
+      - name: Run only the AMD64 and ARM64 synthetic controls
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork key}"
+          work="$RUNNER_TEMP/counter"
+          rc="$work/remote.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit-mixed --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:source-presubmit-mixed --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout -k 20 33m "$work/bazel" --bazelrc="$rc" test --config=source-presubmit-mixed \
+            --target_pattern_file=test/rbe/proc_counter/targets --nocache_test_results --flaky_test_attempts=1 \
+            --keep_going --jobs=24 --spawn_strategy=remote --strategy=TestRunner=remote --noremote_local_fallback \
+            --remote_download_outputs=toplevel --build_event_publish_all_actions --build_event_json_file="$work/probe.bep" \
+            > "$work/bazel.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$work/exit"
+      - name: Extract categorical evidence from the original TestRunner logs
+        id: receipt
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/counter/remote.rc"
+          python3 -IB "$RUNNER_TEMP/counter/report.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: steps.receipt.outcome == 'success'
+        with:
+          name: native-proc-counter-accounting
+          path: ${{ runner.temp }}/counter/receipt.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Require both fresh native effects
+        run: jq -e '.verified == true' "$RUNNER_TEMP/counter/receipt.json" >/dev/null
