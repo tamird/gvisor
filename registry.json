@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T12:42:32+00:00",
+    "updatedAt": "2026-11-07T13:07:28+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27612,15 +27612,15 @@
       "url": "https://github.com/google/gvisor/pull/16345",
       "group": "analysis",
       "status": "Open; reviewer feedback applied",
-      "summary": "Both the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR’s port validation. The original reviewer received the results. The standalone script correction is #17184. Work on a Go replacement continues separately.\n\nEarlier record:\n\nThe approved amendment is published at 641a5c300. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nThe amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged.\n\nEarlier source-specific history:\n\nCurrent public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL. The description now makes clear that the client dials and the server listens.",
-      "updatedAt": "2026-11-07T12:42:32+00:00",
+      "summary": "Both the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR’s port validation. The original reviewer received the results. The standalone script correction is #17184. The separate Go replacement is under contributor review.\n\nEarlier record:\n\nThe approved amendment is published at 641a5c300. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nThe amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged.\n\nEarlier source-specific history:\n\nCurrent public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL. The description now makes clear that the client dials and the server listens.",
+      "updatedAt": "2026-11-07T13:07:28+00:00",
       "number": 16345,
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "641a5c300750a72805d4cacbcd71c92f91f5d46f",
-        "observedAt": "2026-11-07T12:36:39+00:00",
+        "observedAt": "2026-11-07T13:07:28+00:00",
         "disposition": "The requested dual-netstack comparison is complete and the original reviewer has the result.",
-        "nextAction": "Follow the original port-validation PR and #17184 separately. The Go replacement is agent work.",
+        "nextAction": "Follow the original port-validation PR and #17184 separately. The Go replacement has a separate review card.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16345#issuecomment-6707013553",
           "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943",
@@ -28402,15 +28402,16 @@
       "url": "https://github.com/google/gvisor/pull/16403",
       "group": "runtime",
       "status": "merged",
-      "updatedAt": "2026-11-07T12:42:32+00:00",
+      "updatedAt": "2026-11-07T12:57:14+00:00",
       "summary": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.\n\nEarlier source record:\n\nThe contributor-approved amendment is published on #16403 at c451fa7d6. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot.\n\nInclude a duplicate FIN sequence number and retain the duplicate report when filling a gap drains a queued FIN; simplify the SACK helper interface and comments.\n\nThe extended receiver fixture covers the queued-FIN ACK and retransmitted data/FIN in CLOSE-WAIT, with focused remote qualification passing. Duplicates wholly above the cumulative ACK remain outside this change. No production throughput or customer-outage claim follows.\n\nEarlier source-specific record:\n\nWith SACK negotiated, the receiver reports already acknowledged non-FIN data in its first SACK block. A wholly duplicate segment leaves the cumulative ACK and queued SACK ranges intact; a segment crossing the old ACK reports only the duplicate prefix. Both AMD64 and ARM64 controls failed as expected; the corrected SACK suites and analyzers passed on both CPUs.",
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
-        "observedAt": "2026-11-07T12:42:32+00:00",
-        "disposition": "The packet comparison requested on #16403 passed on both receivers.",
-        "nextAction": "The verified below-ACK test is on the fork. The above-gap implementation is #16999.",
+        "observedAt": "2026-11-07T12:57:14+00:00",
+        "disposition": "The requested Linux and gVisor packet comparison passed. The results were posted on the merged PR.",
+        "nextAction": "The standalone PacketImpact test is on review/tcp-dsack-below-ack-parity. The above-gap implementation is tracked on #16999.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16403#issuecomment-6707089163",
           "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207",
           "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
           "https://github.com/google/gvisor/pull/16999",
@@ -28421,6 +28422,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Published results for the original reviewer",
+          "url": "https://github.com/google/gvisor/pull/16403#issuecomment-6707089163"
+        },
         {
           "label": "Native Linux and gVisor results, including original PCAPs",
           "url": "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207"
@@ -60182,7 +60187,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The approved fix waits for the benchmark listener, propagates iperf3 errors and validates the sender rate. The Go replacement is separate agent work.",
+      "summary": "The approved fix waits for the benchmark listener, propagates iperf3 errors and validates the sender rate. The separate Go rewrite passed native qualification and is awaiting contributor review for submission after this PR lands.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -60191,9 +60196,89 @@
         {
           "label": "30-second transfer and matching original controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943"
+        },
+        {
+          "label": "Separate Go rewrite and its original native readback",
+          "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-07T12:42:32+00:00"
+      "updatedAt": "2026-11-07T13:07:28+00:00"
+    },
+    {
+      "id": "branch:tcp-dsack-below-ack-parity",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-dsack-below-ack-parity",
+      "head": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
+      "title": "Check D-SACK blocks below the cumulative ACK",
+      "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T12:57:14+00:00",
+      "summary": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.",
+      "evidence": [
+        {
+          "label": "Native Linux and gVisor test results with packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207"
+        },
+        {
+          "label": "Published results for the original reviewer",
+          "url": "https://github.com/google/gvisor/pull/16403#issuecomment-6707089163"
+        },
+        {
+          "label": "Separate above-gap behavior",
+          "url": "https://github.com/google/gvisor/pull/16999"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
+        "title": "Check D-SACK blocks below the cumulative ACK",
+        "requestedAt": "2026-11-07T12:57:14+00:00",
+        "summary": "Open this standalone PacketImpact test? The native Linux and gVisor receivers reported the same cumulative ACK and D-SACK range for both retransmissions.",
+        "body": "Exercise the receiver with a retransmission inside acknowledged data\nand a second retransmission that extends into new data. Check the\nfirst SACK block against the duplicate bytes and the cumulative ACK\nagainst the newly received suffix."
+      }
+    },
+    {
+      "id": "branch:tcp-benchmark-go",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-benchmark-go",
+      "head": "e20198216672dfba7dd01052df660dcad47be013",
+      "title": "Run the TCP benchmark from Go",
+      "url": "https://github.com/tamird/gvisor/commit/e20198216",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T13:07:28+00:00",
+      "summary": "Six native AMD64 transfer modes passed on the tested tree, including IPv6, parallel streams, an installed binary found through PATH, and the default user namespace under UID 1001. The installed shell driver exited before iperf3 started when its directory contained a space. Six error and interruption controls passed. An interrupted proxy flushed a 1,475-byte CPU profile. The original workflow failed because its observer counted nested iperf3 interval objects. The corrected readback verifies the original logs. The positive IPv6 transfer’s profile digest was not recorded.",
+      "evidence": [
+        {
+          "label": "Original native benchmark logs and per-case evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42374729637/artifacts/13574933620"
+        },
+        {
+          "label": "Corrected readback of those same logs",
+          "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
+        },
+        {
+          "label": "Parent shell-driver correction",
+          "url": "https://github.com/google/gvisor/pull/17184"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e20198216672dfba7dd01052df660dcad47be013",
+        "baseHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
+        "url": "https://github.com/tamird/gvisor/commit/e20198216",
+        "title": "Run the TCP benchmark from Go",
+        "requestedAt": "2026-11-07T13:07:28+00:00",
+        "summary": "Open this one-commit Go replacement after #17184 lands? It preserves the Bazel target and passes six real transfer modes and six failure or interruption controls.",
+        "body": "When the installed TCP benchmark's directory contains a space, its\ngenerated Bash script splits the unquoted PATH assignment. Bash\nrejects the remainder as an invalid identifier before iperf starts.\n\nRun the benchmark directly from Go. Create private mount, network and\nPID namespaces, pass each helper argument separately, and reap the\niperf server and both proxies. Read iperf3's aggregate sender rate and\nsample the selected proxy's CPU before shutdown so writing a profile\ndoes not inflate the result. Keep the Bazel entry point and resolve\nsibling helpers when the installed binary is invoked through PATH.\n\nLet the kernel reclaim the veth pairs and bridges with the namespace.\nLinux 3.2 contains the bridge teardown fix [1]. gVisor requires Linux\n5.6 or newer.\n\n[1] https://github.com/torvalds/linux/commit/1ce5cce89"
+      }
     }
   ],
   "edges": [
@@ -63981,6 +64066,13 @@
       "type": "depends_on",
       "reason": "Exercise the same enqueue and retry behavior as the pending TCP fairness fix.",
       "evidence": "https://github.com/google/gvisor/pull/17045"
+    },
+    {
+      "from": "pr:17184",
+      "to": "branch:tcp-benchmark-go",
+      "type": "depends_on",
+      "reason": "Open the Go replacement after the shell-driver correction lands. The proposed commit is based on #17184.",
+      "evidence": "https://github.com/tamird/gvisor/commit/e20198216"
     }
   ],
   "investigations": [
@@ -80871,7 +80963,7 @@
       "status": "active",
       "group": "tests",
       "owner": "Source PR owners",
-      "updatedAt": "2026-11-07T12:42:32+00:00",
+      "updatedAt": "2026-11-07T13:07:28+00:00",
       "summary": "Reviewed 654 source PRs, including 922 reviews, 195 inline threads and 752 top-level comments. The findings trace substantive requests to the source, public reply and landing status. An approving review can contain a request without opening an inline thread.",
       "findings": [
         {
@@ -80935,6 +81027,10 @@
             {
               "label": "Separate above-gap behavior",
               "url": "https://github.com/google/gvisor/pull/16999"
+            },
+            {
+              "label": "Published results for the original reviewer",
+              "url": "https://github.com/google/gvisor/pull/16403#issuecomment-6707089163"
             }
           ]
         },
@@ -80982,7 +81078,7 @@
           ]
         },
         {
-          "text": "The #16345 flag descriptions reached the import. Both the unmodified parent and PR exited zero without transferring data. With the independent script correction, the PR sent 38.8 MiB and received 32.2 MiB over 30 seconds. The original reviewer now has the results. The #17067 internal toolchain adjustment remains prepared for its open prerequisite #16522. The script correction is now #17184. A Go replacement remains separate agent work.",
+          "text": "The #16345 flag descriptions reached the import. Both the unmodified parent and PR exited zero without transferring data. With the independent script correction, the PR sent 38.8 MiB and received 32.2 MiB over 30 seconds. The original reviewer now has the results. The #17067 internal toolchain adjustment remains prepared for its open prerequisite #16522. The script correction is now #17184. The independent Go replacement is under contributor review.",
           "evidence": [
             {
               "label": "Published standalone benchmark correction",
@@ -81023,6 +81119,10 @@
             {
               "label": "Prepared toolchain fix",
               "url": "https://github.com/tamird/gvisor/commit/7f6ecfff6"
+            },
+            {
+              "label": "Go rewrite and corrected native evidence",
+              "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
             }
           ]
         },
@@ -83394,5 +83494,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T12:42:32+00:00"
+  "updatedAt": "2026-11-07T13:07:28+00:00"
 }
