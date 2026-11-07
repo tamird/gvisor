@@ -51,7 +51,10 @@ bzl_library(
 bzl_library(
     name = "test_architectures_bzl",
     srcs = ["test_architectures.bzl"],
-    visibility = ["//visibility:private"],
+    visibility = [
+        "//tools:__pkg__",
+        "//tools/go_generics/tests:__pkg__",
+    ],
     deps = ["@with_cfg.bzl//:with_cfg"],
 )
 

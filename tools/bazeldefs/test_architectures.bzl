@@ -25,6 +25,7 @@ def with_test_architecture(test_rule, architecture, extra_providers = [], implic
 
 def _test_attributes(architecture, kwargs):
     attributes = dict(kwargs)
+
     # Only test execution requires the target CPU. Compilers and linkers may
     # run in another execution group on a different architecture.
     groups = dict(attributes.get("exec_group_compatible_with") or {})
@@ -43,6 +44,25 @@ def arm64_presubmit_test(name, test_rule, kwargs):
         "//conditions:default": [Label("@platforms//:incompatible")],
     })
     test_rule(name = name + "_presubmit_arm64", **attributes)
+
+def _declared_test(name, declaration, **kwargs):
+    declaration(name = name, **kwargs)
+
+# Use with_cfg's test frontend for legacy macros as well as rules. It
+# forwards runfiles, test arguments and environment across the transition.
+_arm64_declared_test, _arm64_declared_transition = with_test_architecture(_declared_test, "arm64").build()
+
+def arm64_presubmit_declaration(name, declaration, **kwargs):
+    """Adds an ARM64 companion using the original test declaration."""
+    arm64_presubmit_test(name, _arm64_declared_test, dict(kwargs, declaration = declaration))
+
+def _declare_both(name, declaration, kwargs):
+    declaration(name = name, **kwargs)
+    arm64_presubmit_declaration(name, declaration, **kwargs)
+
+def with_presubmit_variant(declaration):
+    """Returns a macro declaring the original test and its mixed ARM64 companion."""
+    return lambda name, **kwargs: _declare_both(name, declaration, kwargs)
 
 def test_architecture_variants(name, architectures, test_rules, kwargs):
     """Adds explicit, manual variants from the original test's complete attributes.

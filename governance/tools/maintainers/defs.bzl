@@ -15,6 +15,30 @@
 """Generate the governance artifacts from their declared inputs."""
 
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
+load("@bazel_lib//lib:write_source_files.bzl", "write_source_file", "write_source_files")
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_declaration")
+
+def governance_source_files(name, files):
+    """Declares the workspace updater and checks its generated files on both CPUs."""
+    updates = []
+    tests = []
+    for index, (out_file, in_file) in enumerate(files.items()):
+        update = "%s_%d" % (name, index)
+        test = write_source_file(
+            name = update,
+            in_file = in_file,
+            out_file = out_file,
+            suggested_update_target = name,
+        )
+        updates.append(update)
+        tests.append(test)
+
+        # Run bazel-lib's generated test with its original check, message
+        # and runfiles, all configured for the ARM64 target.
+        arm64_presubmit_declaration(test, native_test, src = ":" + test, size = "small")
+    write_source_files(name = name, additional_update_targets = updates)
+    native.test_suite(name = name + "_tests", tests = tests)
 
 def governance_files(name):
     """Generate CODEOWNERS and MAINTAINERS.md under name."""

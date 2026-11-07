@@ -1,5 +1,7 @@
 """Rules for dependency checking."""
 
+load("//tools/bazeldefs:test_architectures.bzl", "with_presubmit_variant")
+
 # DepsInfo provides a list of dependencies found when building a target.
 DepsInfo = provider(
     "lists dependencies encountered while building",
@@ -187,3 +189,5 @@ deps_test = rule(
     },
     test = True,
 )
+
+presubmit_deps_test = with_presubmit_variant(deps_test)

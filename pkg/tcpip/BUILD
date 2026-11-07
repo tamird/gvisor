@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools:deps.bzl", "deps_test")
+load("//tools:deps.bzl", deps_test = "presubmit_deps_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(

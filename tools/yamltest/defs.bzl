@@ -1,5 +1,7 @@
 """Tools for testing yaml files against schemas."""
 
+load("//tools/bazeldefs:test_architectures.bzl", "with_presubmit_variant")
+
 def _yaml_test_impl(ctx):
     """Implementation for yaml_test."""
     runner = ctx.actions.declare_file(ctx.label.name)
@@ -51,3 +53,5 @@ yaml_test = rule(
     },
     test = True,
 )
+
+presubmit_yaml_test = with_presubmit_variant(yaml_test)
