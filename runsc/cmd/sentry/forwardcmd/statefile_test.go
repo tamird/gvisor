@@ -15,17 +15,272 @@
 package forwardcmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/google/subcommands"
 	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/proto"
+	pgallocpb "gvisor.dev/gvisor/pkg/sentry/pgalloc/pgalloc_metadata_go_proto"
+	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/runsc/flag"
 )
+
+func TestStatefileDumpMemoryFiles(t *testing.T) {
+	for _, layout := range []string{"inline", "split", "legacy", "generic", "same-metadata", "one-object", "missing-owners", "wrong-owners", "foreign-types", "truncated-metadata", "truncated-page", "raw-first", "generic-coincident-roots", "zero-owners", "missing-private", "extra-private", "invalid-owner-field"} {
+		t.Run(layout, func(t *testing.T) {
+			// Both keys were present when MemoryFile metadata first changed
+			// to protobuf. Older Sentry checkpoints do not store CPU features.
+			md := map[string]string{"runsc_version": "test", "container_count": "1"}
+			if layout == "generic" {
+				md = map[string]string{}
+			}
+			path := filepath.Join(t.TempDir(), "checkpoint")
+			f, err := os.Create(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w, err := statefile.NewWriter(f, nil, md)
+			if err != nil {
+				f.Close()
+				t.Fatal(err)
+			}
+			ww := wire.Writer{Writer: w}
+			object := func(tag wire.String, typeName string) {
+				t.Helper()
+				if err := state.WriteHeader(&ww, 1, true); err != nil {
+					t.Fatal(err)
+				}
+				if typeName == "" {
+					wire.Save(&ww, wire.Uint(1))
+					wire.Save(&ww, &tag)
+					return
+				}
+				wire.Save(&ww, &wire.Type{Name: typeName, Fields: []string{"marker"}})
+				value := wire.Struct{TypeID: 1}
+				value.Alloc(1)
+				*value.Field(0) = &tag
+				wire.Save(&ww, wire.Uint(1))
+				wire.Save(&ww, &value)
+			}
+			owners := func(count int) {
+				t.Helper()
+				n := uint64(1)
+				if count > 0 {
+					n++
+				}
+				if err := state.WriteHeader(&ww, n, true); err != nil {
+					t.Fatal(err)
+				}
+				wire.Save(&ww, &wire.Type{Name: "pkg/sentry/kernel.privateMemoryFileMetadata", Fields: []string{"owners"}})
+				st := wire.Struct{TypeID: 1}
+				st.Alloc(1)
+				*st.Field(0) = wire.Nil{}
+				if count > 0 {
+					*st.Field(0) = &wire.Slice{Length: wire.Uint(count), Capacity: wire.Uint(count + 1), Ref: wire.Ref{Root: 2}}
+				}
+				wire.Save(&ww, wire.Uint(1))
+				wire.Save(&ww, &st)
+				if count > 0 {
+					backing := wire.Array{}
+					for i := 0; i <= count; i++ {
+						backing.Contents = append(backing.Contents, wire.Nil{})
+					}
+					wire.Save(&ww, wire.Uint(2))
+					wire.Save(&ww, &backing)
+				}
+			}
+			var wantRaw []int
+			memoryFile := func(pages int) {
+				t.Helper()
+				meta := pgallocpb.MemoryFileMetadataProto{Version: 1}
+				if pages != 0 {
+					meta.MemAcct = []*pgallocpb.MemAcctRangeProto{{End: uint64(pages), KnownCommitted: true}}
+				}
+				data, err := proto.Marshal(&meta)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := binary.Write(w, binary.LittleEndian, uint64(len(data))); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := w.Write(data); err != nil {
+					t.Fatal(err)
+				}
+				wantRaw = append(wantRaw, len(data))
+				if pages != 0 {
+					if err := state.WriteHeader(&ww, uint64(pages), false); err != nil {
+						t.Fatal(err)
+					}
+					if _, err := w.Write(make([]byte, pages)); err != nil {
+						t.Fatal(err)
+					}
+					wantRaw = append(wantRaw, pages)
+				}
+			}
+			if layout == "raw-first" {
+				if err := state.WriteHeader(&ww, 0, false); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if layout == "foreign-types" {
+				object("cpu", "example.org/pkg/cpuid.FeatureSet")
+				object("kernel", "example.org/pkg/sentry/kernel.Kernel")
+			} else if layout == "generic" || layout == "same-metadata" {
+				object("cpu", "")
+				object("kernel", "")
+			} else {
+				object("cpu", "pkg/cpuid.FeatureSet")
+				if layout != "one-object" {
+					object("kernel", "pkg/sentry/kernel.Kernel")
+				}
+			}
+			switch layout {
+			case "inline":
+				memoryFile(4096)
+				owners(2)
+				memoryFile(0)
+				memoryFile(8192)
+			case "legacy", "generic", "same-metadata", "foreign-types", "raw-first":
+				if layout == "same-metadata" || layout == "foreign-types" || layout == "raw-first" {
+					// This is an ordinary raw state region.
+					if err := state.WriteHeader(&ww, 2, false); err != nil {
+						t.Fatal(err)
+					}
+					if _, err := w.Write([]byte("ok")); err != nil {
+						t.Fatal(err)
+					}
+					wantRaw = append(wantRaw, 2)
+				}
+				object("saved memoryFile", "")
+				object("private owners", "")
+			case "generic-coincident-roots":
+				for range 8 {
+					if err := state.WriteHeader(&ww, 0, false); err != nil {
+						t.Fatal(err)
+					}
+				}
+				object("private owners", "") // An ordinary graph must still be reached.
+			case "zero-owners":
+				memoryFile(0)
+				owners(0)
+			case "missing-private":
+				memoryFile(0)
+				owners(2)
+				memoryFile(0)
+			case "extra-private":
+				memoryFile(0)
+				owners(1)
+				memoryFile(0)
+				memoryFile(0)
+			case "invalid-owner-field":
+				memoryFile(0)
+				object("private owners", "pkg/sentry/kernel.privateMemoryFileMetadata")
+			case "missing-owners":
+				memoryFile(0)
+			case "wrong-owners":
+				memoryFile(0)
+				object("private owners", "user.privateMemoryFileMetadata")
+			case "truncated-metadata":
+				if err := binary.Write(w, binary.LittleEndian, uint64(1)<<40); err != nil {
+					t.Fatal(err)
+				}
+			case "truncated-page":
+				data, err := proto.Marshal(&pgallocpb.MemoryFileMetadataProto{Version: 1, MemAcct: []*pgallocpb.MemAcctRangeProto{{End: 4096, KnownCommitted: true}}})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := binary.Write(w, binary.LittleEndian, uint64(len(data))); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := w.Write(data); err != nil {
+					t.Fatal(err)
+				}
+				if err := state.WriteHeader(&ww, 4096, false); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := w.Write([]byte("short")); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := w.Close(); err != nil {
+				t.Fatal(err)
+			}
+			for _, html := range []bool{false, true} {
+				reader, err := os.Open(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var out bytes.Buffer
+				checkpoint := true
+				switch layout {
+				case "generic", "same-metadata", "one-object", "foreign-types", "raw-first", "generic-coincident-roots":
+					checkpoint = false
+				}
+				err = (&Statefile{html: html, checkpoint: checkpoint}).writeTo(&out, reader)
+				reader.Close()
+				wantErr := map[string]string{
+					"wrong-owners":        "unexpected checkpoint root",
+					"invalid-owner-field": "invalid private MemoryFile owners slice",
+					"missing-private":     "private MemoryFile 2 of 2:",
+					"extra-private":       "unexpected data after the private MemoryFiles",
+				}[layout]
+				if wantErr != "" {
+					if err == nil || !strings.Contains(err.Error(), wantErr) {
+						t.Fatalf("got %v, want %q", err, wantErr)
+					}
+					continue
+				}
+				if layout == "truncated-page" {
+					if !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
+						t.Fatalf("truncated page: %v", err)
+					}
+					continue
+				}
+				if layout == "missing-owners" || layout == "truncated-metadata" {
+					if !errors.Is(err, io.ErrUnexpectedEOF) {
+						t.Errorf("dump with missing private owners graph: %v", err)
+					}
+					continue
+				}
+				if err != nil {
+					t.Fatalf("dump html=%t: %v", html, err)
+				}
+				text := out.String()
+				hasOwners := strings.Contains(text, "private owners") || strings.Contains(text, "privateMemoryFileMetadata")
+				if !strings.Contains(text, "cpu") || strings.Contains(text, "kernel") != (layout != "one-object") ||
+					(hasOwners != (layout != "split" && layout != "one-object")) {
+					t.Fatalf("missing or unexpected graph, html=%t: %s", html, text)
+				}
+				var raw []int
+				for _, line := range strings.Split(text, "\n") {
+					line = strings.TrimPrefix(line, "<pre>")
+					if strings.Contains(line, " bytes non-object data)") {
+						var size int
+						if _, err := fmt.Sscanf(line, "(%d bytes non-object data)", &size); err != nil {
+							t.Fatal(err)
+						}
+						raw = append(raw, size)
+					}
+				}
+				if !slices.Equal(raw, wantRaw) {
+					t.Errorf("raw regions = %v, want %v", raw, wantRaw)
+				}
+			}
+		})
+	}
+}
 
 func TestCheckStickyDirOwnership(t *testing.T) {
 	stickyWorld := &unix.Stat_t{Mode: unix.S_IFDIR | unix.S_ISVTX | 0777, Uid: 0}

@@ -15,6 +15,7 @@
 package forwardcmd
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -29,6 +30,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/cpuid"
+	"gvisor.dev/gvisor/pkg/sentry/pgalloc/metadata"
 	"gvisor.dev/gvisor/pkg/state/pretty"
 	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
@@ -39,12 +41,13 @@ import (
 
 // Statefile implements subcommands.Command for the "statefile" command.
 type Statefile struct {
-	list    bool
-	get     string
-	bitmask bool
-	key     string
-	output  string
-	html    bool
+	checkpoint bool
+	list       bool
+	get        string
+	bitmask    bool
+	key        string
+	output     string
+	html       bool
 }
 
 // Name implements subcommands.Command.
@@ -64,6 +67,7 @@ func (*Statefile) Usage() string {
 
 // SetFlags implements subcommands.Command.
 func (s *Statefile) SetFlags(f *flag.FlagSet) {
+	f.BoolVar(&s.checkpoint, "checkpoint", false, "interprets the payload as a Sentry checkpoint, including its inline MemoryFiles.")
 	f.BoolVar(&s.list, "list", false, "lists the metadata in the statefile.")
 	f.StringVar(&s.get, "get", "", "extracts the given metadata key.")
 	f.BoolVar(&s.bitmask, "bitmask", false, fmt.Sprintf("when used with -get %s, outputs CPU features as comma-separated hex uint32 block bitmasks.", sentryapi.CPUFeaturesKey))
@@ -485,6 +489,75 @@ func writeStagedExistingFile(dirFD int, base, outPath string, inStat, origStat *
 	return nil
 }
 
+// dumpCheckpoint follows the inline layout written by kernel.Kernel.SaveTo.
+// The historical envelope has no payload type, so only use this layout when
+// the caller explicitly requested it.
+func dumpCheckpoint(w io.Writer, input io.Reader, asHTML bool) error {
+	r := bufio.NewReader(input)
+	const ownersRoot = "pkg/sentry/kernel.privateMemoryFileMetadata"
+	roots := []string{(*cpuid.FeatureSet)(nil).StateTypeName(), "pkg/sentry/kernel.Kernel", ownersRoot}
+	seen := 0
+	legacy := false
+	needOwners := false
+	after := func(frame int, root string, length int64, report func(int64) error) error {
+		if legacy {
+			return nil
+		}
+		if frame != seen || frame >= len(roots) || root != roots[frame] {
+			return fmt.Errorf("unexpected checkpoint root %q in frame %d", root, frame)
+		}
+		seen++
+		switch frame {
+		case 1:
+			prefix, err := r.Peek(8)
+			if err == io.EOF && len(prefix) == 0 {
+				return nil // The split checkpoint ends after the kernel graph.
+			}
+			if err != nil {
+				return io.ErrUnexpectedEOF
+			}
+			// Before the protobuf conversion the next ordinary object header
+			// used a 10-byte varint. A nonnegative LE64 length cannot have
+			// all eight of these continuation bits set.
+			if prefix[7]&0x80 != 0 {
+				for _, b := range prefix {
+					if b&0x80 == 0 {
+						return fmt.Errorf("invalid MemoryFile metadata length")
+					}
+				}
+				legacy = true
+				return nil
+			}
+			needOwners = true
+			return metadata.InspectInline(r, report)
+		case 2:
+			if length < 0 {
+				return fmt.Errorf("missing or invalid private MemoryFile owners slice")
+			}
+			for i := int64(0); i < length; i++ {
+				if err := metadata.InspectInline(r, report); err != nil {
+					return fmt.Errorf("private MemoryFile %d of %d: %w", i+1, length, err)
+				}
+			}
+			if _, err := r.Peek(1); err != io.EOF {
+				if err != nil {
+					return err
+				}
+				return fmt.Errorf("unexpected data after the private MemoryFiles")
+			}
+			needOwners = false
+		}
+		return nil
+	}
+	if err := pretty.PrintWithAfterGraph(w, r, asHTML, ownersRoot, "owners", after); err != nil {
+		return err
+	}
+	if seen < 2 || needOwners {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
 func (s *Statefile) writeTo(output io.Writer, input *os.File) error {
 	var key []byte
 	if s.key != "" {
@@ -502,21 +575,23 @@ func (s *Statefile) writeTo(output io.Writer, input *os.File) error {
 			if _, err := fmt.Fprintf(output, "<html><body>\n"); err != nil {
 				return fmt.Errorf("error writing output: %w", err)
 			}
-			if err := pretty.PrintHTML(output, rc); err != nil {
-				return fmt.Errorf("error printing state: %w", err)
-			}
-			if err := rc.Verify(); err != nil {
-				return fmt.Errorf("error verifying statefile: %w", err)
-			}
+		}
+		if s.checkpoint {
+			err = dumpCheckpoint(output, rc, s.html)
+		} else if s.html {
+			err = pretty.PrintHTML(output, rc)
+		} else {
+			err = pretty.PrintText(output, rc)
+		}
+		if err != nil {
+			return fmt.Errorf("error printing state: %w", err)
+		}
+		if err := rc.Verify(); err != nil {
+			return fmt.Errorf("error verifying statefile: %w", err)
+		}
+		if s.html {
 			if _, err := fmt.Fprintf(output, "</body></html>\n"); err != nil {
 				return fmt.Errorf("error writing output: %w", err)
-			}
-		} else {
-			if err := pretty.PrintText(output, rc); err != nil {
-				return fmt.Errorf("error printing state: %w", err)
-			}
-			if err := rc.Verify(); err != nil {
-				return fmt.Errorf("error verifying statefile: %w", err)
 			}
 		}
 		return nil
