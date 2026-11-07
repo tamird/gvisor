@@ -42,6 +42,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateipc"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
 	"gvisor.dev/gvisor/pkg/unet"
 	"gvisor.dev/gvisor/pkg/urpc"
@@ -423,6 +424,17 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 		timer:      timer,
 	}
 
+	// Select the MemoryFile format before starting either page loader.
+	cm.restorer.stateFile, cm.restorer.metadata, err = state.NewStatefileReader(stateFile /* transfers ownership on success */, nil)
+	if err != nil {
+		return fmt.Errorf("creating statefile reader: %w", err)
+	}
+	stateFile = cm.restorer.stateFile // closed by the defer above on error
+	timer.Reached("created statefile reader")
+	if format, ok := cm.restorer.metadata[statefile.PayloadFormatKey]; ok && (format != state.InlineMemoryFileFormat || o.HavePagesFile) {
+		return fmt.Errorf("unsupported checkpoint payload format %q", format)
+	}
+
 	// Create the main MemoryFile.
 	cm.restorer.mainMF, err = createMemoryFile(cm.l.root.conf.AppHugePages, cm.l.hostTHP)
 	if err != nil {
@@ -440,12 +452,7 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 		timer.Reached("created async MF loader")
 	}
 
-	cm.restorer.stateFile, cm.restorer.metadata, err = state.NewStatefileReader(stateFile /* transfers ownership on success */, nil)
-	if err != nil {
-		return fmt.Errorf("creating statefile reader: %w", err)
-	}
-	stateFile = nil
-	timer.Reached("created statefile reader")
+	stateFile = nil // owned by cm.restorer
 
 	cm.l.state = restoringUnstarted
 

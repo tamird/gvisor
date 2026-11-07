@@ -164,6 +164,10 @@ func (f *MemoryFile) importMetadataProto(pb *pgallocpb.MemoryFileMetadataProto) 
 
 // SaveOpts provides options to MemoryFile.SaveTo().
 type SaveOpts struct {
+	// FramedMetadata prefixes the protobuf with a raw state frame in an
+	// inline checkpoint. Separate pages metadata retains its fixed length.
+	FramedMetadata bool
+
 	// If PagesFile is not nil, then page contents will be written to PagesFile
 	// rather than to w.
 	PagesFile *AsyncPagesFileSave
@@ -537,10 +541,16 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 	if err != nil {
 		return fmt.Errorf("failed to marshal metadata: %w", err)
 	}
-	var lengthBuf [8]byte
-	binary.LittleEndian.PutUint64(lengthBuf[:], uint64(len(data)))
-	if _, err := w.Write(lengthBuf[:]); err != nil {
-		return fmt.Errorf("failed to write metadata length: %w", err)
+	if opts.FramedMetadata {
+		if err := state.WriteHeader(&wire.Writer{Writer: w}, uint64(len(data)), false); err != nil {
+			return fmt.Errorf("failed to write metadata frame: %w", err)
+		}
+	} else {
+		var lengthBuf [8]byte
+		binary.LittleEndian.PutUint64(lengthBuf[:], uint64(len(data)))
+		if _, err := w.Write(lengthBuf[:]); err != nil {
+			return fmt.Errorf("failed to write metadata length: %w", err)
+		}
 	}
 	if _, err := w.Write(data); err != nil {
 		return fmt.Errorf("failed to write metadata: %w", err)
@@ -1113,6 +1123,10 @@ func (apfs *AsyncPagesFileSave) main() {
 
 // LoadOpts provides options to MemoryFile.LoadFrom().
 type LoadOpts struct {
+	// FramedMetadata selects the length encoding recorded by the Sentry
+	// checkpoint envelope. Its zero value reads the fixed-width length.
+	FramedMetadata bool
+
 	// If PagesFile is not nil, then page contents will be read from PagesFile,
 	// starting at offset PagesFileOffset, rather than from r. After LoadFrom
 	// returns, PagesFileOffset will be updated to the offset of the first byte
@@ -1148,11 +1162,23 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 
 	// Load metadata.
 	timeMetadataStart := gohacks.Nanotime()
-	var lengthBuf [8]byte
-	if _, err := io.ReadFull(r, lengthBuf[:]); err != nil {
-		return fmt.Errorf("failed to read metadata length: %w", err)
+	var length uint64
+	if opts.FramedMetadata {
+		h, err := state.ReadHeaderMode(&wire.Reader{Reader: r})
+		if err != nil {
+			return fmt.Errorf("failed to read metadata frame: %w", err)
+		}
+		if h.Object || h.Graph {
+			return fmt.Errorf("expected a raw MemoryFile metadata frame")
+		}
+		length = h.Length
+	} else {
+		var lengthBuf [8]byte
+		if _, err := io.ReadFull(r, lengthBuf[:]); err != nil {
+			return fmt.Errorf("failed to read metadata length: %w", err)
+		}
+		length = binary.LittleEndian.Uint64(lengthBuf[:])
 	}
-	length := binary.LittleEndian.Uint64(lengthBuf[:])
 	data := make([]byte, length)
 	if _, err := io.ReadFull(r, data); err != nil {
 		return fmt.Errorf("failed to read metadata: %w", err)

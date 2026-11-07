@@ -19,6 +19,7 @@ package pgalloc
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -29,6 +30,9 @@ import (
 	"gvisor.dev/gvisor/pkg/memutil"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
+	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/pretty"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 // openSaveTestFile returns a file in dir, or a memfd if dir is empty.
@@ -138,6 +142,64 @@ func TestHostFileDataSeeker(t *testing.T) {
 	r.Close()
 	if d := pipeMemFile.newHostFileDataSeeker(); d != nil {
 		t.Errorf("newHostFileDataSeeker returned %v for a closed file, want nil", d)
+	}
+}
+
+func TestInlineMetadataFrame(t *testing.T) {
+	f := newSaveTestMemoryFile(t, "", false)
+	fr := allocateSaveTestPages(t, f)
+	writeMappedPage(f, fr, 5, 3)
+	var fixed, framed bytes.Buffer
+	for _, tc := range []struct {
+		w      *bytes.Buffer
+		framed bool
+	}{{&fixed, false}, {&framed, true}} {
+		if err := f.SaveTo(context.Background(), tc.w, &SaveOpts{FramedMetadata: tc.framed}); err != nil {
+			t.Fatal(err)
+		}
+		reader := bytes.NewReader(tc.w.Bytes())
+		restored := newSaveTestMemoryFile(t, "", false)
+		if err := restored.LoadFrom(context.Background(), reader, &LoadOpts{FramedMetadata: tc.framed}); err != nil {
+			t.Fatal(err)
+		}
+		defer restored.DecRef(fr)
+		want := make([]byte, fr.Length())
+		want[5*hostarch.PageSize+17] = 3
+		restored.forEachMappingSlice(fr, func(s []byte) {
+			if len(s) > len(want) || !bytes.Equal(s, want[:len(s)]) {
+				t.Fatal("restored memory differs from the saved pages")
+			}
+			want = want[len(s):]
+		})
+		if len(want) != 0 || reader.Len() != 0 {
+			t.Fatal("incomplete MemoryFile round trip")
+		}
+	}
+	payload := bytes.NewReader(framed.Bytes())
+	h, err := state.ReadHeaderMode(&wire.Reader{Reader: payload})
+	if err != nil || h.Object || h.Graph || h.Length != binary.LittleEndian.Uint64(fixed.Bytes()[:8]) {
+		t.Fatalf("invalid metadata frame %+v: %v", h, err)
+	}
+	offset := framed.Len() - payload.Len()
+	if !bytes.Equal(fixed.Bytes()[8:], framed.Bytes()[offset:]) {
+		t.Fatal("changing the metadata length encoding changed the protobuf or page stream")
+	}
+
+	// A following object must remain printable after all of the raw regions.
+	ww := wire.Writer{Writer: &framed}
+	if err := state.WriteHeader(&ww, 1, true); err != nil {
+		t.Fatal(err)
+	}
+	marker := wire.String("private owners")
+	wire.Save(&ww, wire.Uint(1))
+	wire.Save(&ww, &marker)
+	var printed bytes.Buffer
+	if err := pretty.PrintText(&printed, &framed); err != nil {
+		t.Fatal(err)
+	}
+	want := fmt.Sprintf("(%d bytes non-object data)\n(%d bytes non-object data)\ng2r1 = %q\n", h.Length, hostarch.PageSize, marker)
+	if printed.String() != want {
+		t.Errorf("state dump = %q, want %q", printed.String(), want)
 	}
 }
 

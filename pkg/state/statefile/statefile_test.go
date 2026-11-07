@@ -43,6 +43,35 @@ type testCase struct {
 	metadata map[string]string
 }
 
+func TestPayloadFormat(t *testing.T) {
+	const format = "frame-test"
+	if _, err := NewWriter(io.Discard, nil, map[string]string{PayloadFormatKey: format}); !errors.Is(err, ErrMetadataInvalid) {
+		t.Fatalf("user-supplied payload format: %v", err)
+	}
+	for _, want := range []string{"", format} {
+		var out bytes.Buffer
+		md := map[string]string{}
+		w, err := NewWriterWithFormat(&out, nil, md, want)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := md[PayloadFormatKey]; ok {
+			t.Fatal("writer-owned format remained in caller metadata")
+		}
+		if err := w.Close(); err != nil {
+			t.Fatal(err)
+		}
+		r, got, err := NewReader(io.NopCloser(&out), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer r.Close()
+		if v, ok := got[PayloadFormatKey]; v != want || ok != (want != "") {
+			t.Errorf("format = %q (present=%t), want %q", v, ok, want)
+		}
+	}
+}
+
 func TestStatefile(t *testing.T) {
 	compression := map[string]CompressionLevel{
 		"none":       CompressionLevelNone,

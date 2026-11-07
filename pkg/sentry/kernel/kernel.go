@@ -998,6 +998,7 @@ func (k *Kernel) saveMemoryFiles(ctx context.Context, w io.Writer, pagesMetadata
 	defer pmwCleanup.Clean()
 
 	mfOpts := pgalloc.SaveOpts{
+		FramedMetadata:            w != nil,
 		ExcludeCommittedZeroPages: appMFExcludeCommittedZeroPages,
 		ExitAfterSaving:           !resume,
 	}
@@ -1100,7 +1101,7 @@ func (k *Kernel) invalidateUnsavableMappings(ctx context.Context) error {
 // LoadFrom restores k from r.
 //
 // Preconditions: k is not in use.
-func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *AsyncMFLoader, timeReady chan struct{}, networkArgs inet.NetworkArgs, clocks sentrytime.Clocks, vfsOpts *vfs.CompleteRestoreOptions, timeline *timing.Timeline) error {
+func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *AsyncMFLoader, framedMetadata bool, timeReady chan struct{}, networkArgs inet.NetworkArgs, clocks sentrytime.Clocks, vfsOpts *vfs.CompleteRestoreOptions, timeline *timing.Timeline) error {
 	defer timeline.End()
 	loadStart := time.Now()
 
@@ -1147,7 +1148,7 @@ func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *Async
 
 	if asyncMFLoader == nil {
 		mfStart := time.Now()
-		if err := k.loadMemoryFiles(ctx, r); err != nil {
+		if err := k.loadMemoryFiles(ctx, r, framedMetadata); err != nil {
 			return fmt.Errorf("failed to load memory files: %w", err)
 		}
 		log.Infof("Memory files load took [%s].", time.Since(mfStart))
@@ -1205,7 +1206,7 @@ func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *Async
 // rootfs upper layer to the provided file.
 //
 // Preconditions: k is not in use.
-func (k *Kernel) ExtractRootfsUpperLayer(ctx context.Context, r io.Reader, asyncMFLoader *AsyncMFLoader, timeReady chan struct{}, clocks sentrytime.Clocks, outFD *os.File) error {
+func (k *Kernel) ExtractRootfsUpperLayer(ctx context.Context, r io.Reader, asyncMFLoader *AsyncMFLoader, framedMetadata bool, timeReady chan struct{}, clocks sentrytime.Clocks, outFD *os.File) error {
 	loadStart := time.Now()
 
 	k.runningTasksCond.L = &k.runningTasksMu
@@ -1233,7 +1234,7 @@ func (k *Kernel) ExtractRootfsUpperLayer(ctx context.Context, r io.Reader, async
 
 	if asyncMFLoader == nil {
 		mfStart := time.Now()
-		if err := k.loadMemoryFiles(ctx, r); err != nil {
+		if err := k.loadMemoryFiles(ctx, r, framedMetadata); err != nil {
 			return fmt.Errorf("failed to load memory files: %w", err)
 		}
 		log.Infof("Memory files load took [%s].", time.Since(mfStart))

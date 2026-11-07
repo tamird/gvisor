@@ -217,6 +217,9 @@ go_test(
         "//pkg/memutil",
         "//pkg/sentry/memmap",
         "//pkg/sentry/state/stateio",
+        "//pkg/state",
+        "//pkg/state/pretty",
+        "//pkg/state/wire",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
