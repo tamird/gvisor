@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T10:25:32+00:00",
+    "updatedAt": "2026-11-07T10:40:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2572,9 +2572,13 @@
       "url": "https://github.com/tamird/gvisor/tree/syscall-processes-memory",
       "group": "tests",
       "status": "Agent work",
-      "summary": "The ptrace process test starts 1,000 guest threads. The memory-accounting test touches 512 MiB and checks the mapping across restore. The candidate uses standard Bazel test sizes and preserves an explicit enormous size when creating checkpoint variants. A single native AMD64 job runs the original process suite and both memory-accounting checkpoint suites. The earlier property-based run verified the configuration but retained no complete execution result.",
-      "updatedAt": "2026-11-07T10:25:32+00:00",
+      "summary": "The candidate requests standard Bazel test sizes for the ptrace process suite and the test that keeps 512 MiB resident across restore. The native job finished before any of its three tests executed. The receipt has no test attempts or named results. A credential-free build of the same targets on Ubuntu 22.04 is being used to locate the first failure; physical memory sizing is still unverified.",
+      "updatedAt": "2026-11-07T10:40:41+00:00",
       "evidence": [
+        {
+          "label": "Original no-attempt result for the three syscall targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42363758011/artifacts/13570706983"
+        },
         {
           "label": "Current Bazel-size candidate",
           "url": "https://github.com/tamird/gvisor/commit/e988ba7ba"
@@ -57273,9 +57277,21 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T10:25:32+00:00",
-      "summary": "All 748 expected AMD64 and ARM64 shards appeared in the configured graph. On the first physical run, three newly covered ARM64 Python tests and one AMD64 control ran and passed. The other 18 ARM64 test owners failed before execution. Bazel could not select a test toolchain because their public TestRunner still targeted AMD64. The revised companion rules select the public test target as well as its worker. The native rerun collects each owner’s actual test result.",
+      "updatedAt": "2026-11-07T10:40:41+00:00",
+      "summary": "The mixed Bazel invocation selects 374 shards on each architecture. Every public TestRunner has the same target OS, CPU, test size and worker class as its native counterpart. All 21 previously missing ARM64 test targets and the AMD64 control passed uncached on native workers in one invocation. The three extra build-only labels are ARM64 forms of existing KVM tests that each native invocation also builds. No KVM test execution was added. The complete 748-shard suite has not yet run in a single mixed invocation.",
       "evidence": [
+        {
+          "label": "All 748 configured shards and 22 uncached native TestRunner results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42363113678/artifacts/13571137111"
+        },
+        {
+          "label": "Single-commit target transition on the qualified baseline",
+          "url": "https://github.com/tamird/gvisor/commit/f6d6788e8"
+        },
+        {
+          "label": "Original mixed-worker execution",
+          "url": "https://app.buildbuddy.io/invocation/96cf642f-df9f-4ca9-82a5-5dd3717edf45"
+        },
         {
           "label": "Native run after correcting the public test targets",
           "url": "https://github.com/tamird/gvisor/actions/runs/42363113678"
@@ -57717,10 +57733,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T10:25:32+00:00",
-        "disposition": "The mixed command ran both test owners on each architecture. The full 748-shard inventory was exercised in two earlier invocations. Coverage of that inventory in one invocation remains open.",
-        "nextAction": "Verify both target configurations and read uncached TestRunner results for all 21 affected ARM64 owners and the AMD64 control.",
+        "observedAt": "2026-11-07T10:40:41+00:00",
+        "disposition": "All 748 selected test shards match the two native configurations. The 21 restored ARM64 owners and the single AMD64 control ran uncached.",
+        "nextAction": "Compare the two original native runs with the corrected source and determine which results can be reused when the complete suite runs in one mixed invocation.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42363113678/artifacts/13571137111",
+          "https://github.com/tamird/gvisor/commit/f6d6788e8",
+          "https://app.buildbuddy.io/invocation/96cf642f-df9f-4ca9-82a5-5dd3717edf45",
           "https://github.com/tamird/gvisor/actions/runs/42363113678",
           "https://github.com/tamird/gvisor/commit/1dfd7e45f",
           "https://github.com/tamird/gvisor/actions/runs/42362442655/artifacts/13570018654",
@@ -82282,7 +82301,7 @@
       "title": "Printing inline checkpoint memory",
       "status": "active",
       "owner": "Agent",
-      "updatedAt": "2026-11-07T10:25:32+00:00",
+      "updatedAt": "2026-11-07T10:40:41+00:00",
       "summary": "The checkpoint printer treated an eight-byte length as a one-byte state header. It returned success with the wrong boundaries for the following records. The loader restored all 16 pages from the same file byte for byte.",
       "findings": [
         {
@@ -82323,10 +82342,31 @@
               "url": "https://github.com/google/gvisor/pull/14279"
             }
           ]
+        },
+        {
+          "text": "The uninstrumented writer restored all four ARM64 guest cases. In a separate control the former reader started a split page loader before rejecting an incompatible envelope. The revised reader rejected the same bytes before startup. This writer experiment helps newly saved images. A reader-side repair is needed for historical checkpoints, and avoids changing the format on disk.",
+          "evidence": [
+            {
+              "label": "Four restored guest checkpoints and rejection before loading split pages",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42363644244/artifacts/13570642868"
+            },
+            {
+              "label": "Writer-side framing experiment",
+              "url": "https://github.com/tamird/gvisor/commit/36c45f974"
+            }
+          ]
         }
       ],
-      "nextStep": "Verify the revised source on the same four guest restore paths, and check that an inconsistent split envelope is rejected before a page loader starts. Coordinate the shared reader-opening change with #14279.",
+      "nextStep": "Test a reader that uses the existing graph traversal for both output formats and lets pgalloc consume its own metadata and page ranges. Verify text, HTML and restore on identical existing checkpoints without changing any writer.",
       "evidence": [
+        {
+          "label": "Four restored guest checkpoints and rejection before loading split pages",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42363644244/artifacts/13570642868"
+        },
+        {
+          "label": "Writer-side framing experiment",
+          "url": "https://github.com/tamird/gvisor/commit/36c45f974"
+        },
         {
           "label": "Four native ARM64 restore paths and same-file dumps",
           "url": "https://github.com/tamird/gvisor/actions/runs/42361720833/artifacts/13569799957"
@@ -82334,10 +82374,6 @@
         {
           "label": "Earlier envelope validation and actual split-page control",
           "url": "https://github.com/tamird/gvisor/actions/runs/42363644244"
-        },
-        {
-          "label": "Revised producer and reader",
-          "url": "https://github.com/tamird/gvisor/commit/36c45f974"
         },
         {
           "label": "Open change that moves the version check at the same entry point",
@@ -82358,5 +82394,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T10:25:32+00:00"
+  "updatedAt": "2026-11-07T10:40:41+00:00"
 }
