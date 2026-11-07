@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T20:13:27+00:00",
+    "updatedAt": "2026-11-07T20:20:11+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -61304,6 +61304,48 @@
         ]
       },
       "number": 17202
+    },
+    {
+      "id": "branch:build-test-default-outputs",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/build-test-default-outputs",
+      "head": "e96adab0a6448c8e257b092a263f931f8e439193",
+      "title": "Avoid shell actions in build_test",
+      "url": "https://github.com/tamird/gvisor/commit/e96adab0a",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T20:20:11+00:00",
+      "summary": "On master 9ee2906f5, stock Bazel 9.3.1 configured //:build_test with all 16 Go test binaries plus its executable as default outputs on AMD64 and ARM64. Only the test executable and its private runner appeared in runfiles. On hosted AMD64, the exact static runner passed the direct and suite checks and the direct check under --config=race. Both deliberately broken input actions exited 41 before their tests ran. Buildifier 8.5.1 and goimports passed. A separate integration at 61ff148f0 used the default-output fixture, native Bazel POSIX wrapper candidate and exact #16592. There, both empty native workers completed the 16 executables and ran only //:build_test.",
+      "evidence": [
+        {
+          "label": "Standalone commit on gVisor master",
+          "url": "https://github.com/tamird/gvisor/commit/e96adab0a"
+        },
+        {
+          "label": "Exact adapter on stock Bazel: configured roots, hosted direct/suite/race checks and formatting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42410160092/artifacts/13589356570"
+        },
+        {
+          "label": "Separate two-worker integration: 16 configured binaries and fresh root test on each native architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42408832999/artifacts/13587949277"
+        },
+        {
+          "label": "Original direct and suite controls and the pre-#16592 sniffer staging failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42407287842/artifacts/13588675951"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e96adab0a6448c8e257b092a263f931f8e439193",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/e96adab0a",
+        "title": "Avoid shell actions in build_test",
+        "requestedAt": "2026-11-07T20:20:11+00:00",
+        "summary": "Open this single-commit PR to build the test binaries as default outputs and run a private native helper?",
+        "body": "The root build_test uses sixteen shell actions to mark its Go test\nbinaries as built, then starts an empty Bash script. Workers without\nbash or env cannot run those actions or the test.\n\nBazel finishes building a test target’s default outputs before it\nexecutes the test. Expose the requested binaries as default outputs\nand use a small test-only Go executable. This keeps the binaries out\nof the test runfiles."
+      }
     }
   ],
   "edges": [
@@ -84932,5 +84974,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T20:13:27+00:00"
+  "updatedAt": "2026-11-07T20:20:11+00:00"
 }
