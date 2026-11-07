@@ -966,7 +966,9 @@ syzkaller-smoke-test: $(SYZKALLER_TARBALL)
 ##
 RELEASE_ROOT      := repo
 RELEASE_KEY       := repo.key
-RELEASE_ARTIFACTS := artifacts
+RELEASE_ARTIFACTS ?= artifacts
+release_native_files := $(foreach arch,x86_64 aarch64, \
+    $(addprefix $(arch)/,runsc.deb gvisor.tar.bz2 gvisor.tar.zstd))
 RELEASE_NIGHTLY   := false
 RELEASE_COMMIT    :=
 RELEASE_NAME      :=
@@ -1004,9 +1006,12 @@ artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions
 	$(call build_paths,--//sandboxexec/sandbox/python:dist_version="$$python_release_version" //sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/")
 .PHONY: artifacts-python
 
-release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
-	@mkdir -p $(RELEASE_ROOT)
-	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh $(RELEASE_KEY) $(RELEASE_ROOT) $$(find $(RELEASE_ARTIFACTS) -type f)
+ifeq ($(origin RELEASE_ARTIFACTS),file)
+release: artifacts-all
+endif
+release: $(RELEASE_KEY)
+	@NIGHTLY="$(RELEASE_NIGHTLY)" tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" \
+		"$(RELEASE_ARTIFACTS)" "$(PYTHON_RELEASE_DEST)" $(release_native_files)
 .PHONY: release
 
 release-tarball: DESTINATION ?= .

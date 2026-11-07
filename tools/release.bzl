@@ -82,16 +82,20 @@ def _single_file(target):
         fail("expected exactly one file in %s, got %d" % (target.label, len(files)))
     return files[0]
 
-def _release_archives_impl(ctx):
-    outputs = []
+def _stage_archives(ctx):
+    """Returns the source and staged file for each architecture-relative path."""
+    staged = {}
     for arch, packages in ctx.split_attr.packages.items():
-        # Match the architecture directories used by the Make release targets.
         directory = {"amd64": "x86_64", "arm64": "aarch64"}[arch]
         for src in packages[DefaultInfo].files.to_list():
-            out = ctx.actions.declare_file("%s/%s/%s" % (ctx.label.name, directory, src.basename))
+            path = directory + "/" + src.basename
+            out = ctx.actions.declare_file(ctx.label.name + "/" + path)
             ctx.actions.symlink(output = out, target_file = src)
-            outputs.append(out)
-    return [DefaultInfo(files = depset(outputs))]
+            staged[path] = (src, out)
+    return staged
+
+def _release_archives_impl(ctx):
+    return [DefaultInfo(files = depset([out for _, out in _stage_archives(ctx).values()]))]
 
 release_archives = rule(
     implementation = _release_archives_impl,
@@ -99,6 +103,48 @@ release_archives = rule(
         "packages": attr.label(cfg = arch_transition, mandatory = True),
     },
     doc = "Builds release packages for both architectures, keeping their identical filenames in separate directories.",
+)
+
+def _release_inputs_impl(ctx):
+    native = _stage_archives(ctx)
+    outputs = []
+    for path, (src, staged) in native.items():
+        # Materialize the target of each staged symlink with top-level downloads.
+        outputs.extend([src, staged])
+        if src.extension != "deb":
+            checkfile = ctx.actions.declare_file(ctx.label.name + "/" + path + ".sha512")
+            ctx.actions.run(
+                executable = ctx.executable._stager,
+                arguments = ["checksum", src.path, checkfile.path],
+                inputs = [src],
+                outputs = [checkfile],
+                mnemonic = "ReleaseSHA512",
+                toolchain = None,
+            )
+            outputs.append(checkfile)
+
+    python = ctx.actions.declare_directory(ctx.label.name + "/python")
+    dist = ctx.file.python_dist
+    ctx.actions.run(
+        executable = ctx.executable._stager,
+        arguments = ["python", dist.path, python.path] if dist else ["empty", python.path],
+        inputs = [dist] if dist else [],
+        outputs = [python],
+        mnemonic = "StageReleaseDist" if dist else "EmptyReleaseDist",
+        toolchain = None,
+    )
+    manifest = ctx.actions.declare_file(ctx.label.name + "/inputs")
+    ctx.actions.write(manifest, "\000".join(native.keys()) + "\000")
+    return [DefaultInfo(files = depset(outputs + [manifest, python]))]
+
+release_inputs = rule(
+    implementation = _release_inputs_impl,
+    attrs = {
+        "packages": attr.label(cfg = arch_transition, mandatory = True),
+        "python_dist": attr.label(allow_single_file = True),
+        "_stager": attr.label(default = "//tools/release:stage", cfg = "exec", executable = True),
+    },
+    doc = "Stage the unsigned native packages, optional Python distributions, and their download checksums.",
 )
 
 def _release_files_impl(ctx):

@@ -1,6 +1,6 @@
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "pkg_deb", "pkg_tar", "version")
-load("//tools:release.bzl", "SIDECARS", "instrumented_release_tars", "release_archives")
+load("//tools:release.bzl", "SIDECARS", "instrumented_release_tars", "release_archives", "release_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -132,6 +132,17 @@ release_archives(
     name = "release-archives",
     packages = ":release-packages",
     tags = ["manual"],
+)
+
+release_inputs(
+    name = "release-inputs",
+    packages = ":release-packages",
+    python_dist = select({
+        "//sandboxexec/sandbox/python:no_dist_version": None,
+        "//conditions:default": "//sandboxexec/sandbox/python:dist",
+    }),
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
 )
 
 # Release tarballs of instrumented gVisor builds, for fuzzing and testing.

@@ -103,6 +103,12 @@ After setting up dependencies, using Bazel is similar to the Makefile:
 bazel build -c opt //debian:gvisor-release-tar-bz2
 ```
 
+Build `//debian:release-inputs` to stage the unsigned release for both
+architectures under `bazel-bin/debian/release-inputs/{x86_64,aarch64}`.
+Each directory contains the Debian package, both download archives and their
+SHA512 checkfiles. Set `--//sandboxexec/sandbox/python:dist_version=<version>`
+to stage the wheel and source distribution under `python/` in the same build.
+
 ### Testing
 
 To run standard test suites, you can use:
