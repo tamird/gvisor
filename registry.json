@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:40:36+00:00",
+    "updatedAt": "2026-11-07T01:54:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39641,9 +39641,13 @@
       "url": "https://github.com/bazel-contrib/rules_python/pull/4385",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-10-30T14:50:08.677188+00:00",
-      "summary": "Merged upstream in rules_python #4385. Use the first release containing 94858322d; 2.4.6 predates the change.",
+      "updatedAt": "2026-11-07T01:54:07+00:00",
+      "summary": "The shell-free wheel namespace initializer merged as 94858322d. BCR 2.5.0-rc0 contains the exact merged implementation; 2.4.5 and 2.4.6 use the old copy rule. The recorded downstream use is the experimental Python release frontend.",
       "evidence": [
+        {
+          "label": "First BCR release candidate containing the template action",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/commit/fc122dd1c"
+        },
         {
           "label": "Upstream pull request",
           "url": "https://github.com/bazel-contrib/rules_python/pull/4385"
@@ -40627,15 +40631,19 @@
       "title": "Generate wheel namespace initializers without a shell",
       "url": "https://github.com/bazel-contrib/rules_python/pull/4385",
       "group": "bazel",
-      "summary": "Merged upstream as 94858322d. The generated namespace files now use a Bazel template action. Release 2.4.6 does not include the merge.",
+      "summary": "The shell-free wheel namespace initializer merged as 94858322d. BCR 2.5.0-rc0 contains the exact merged implementation; 2.4.5 and 2.4.6 use the old copy rule. The recorded downstream use is the experimental Python release frontend.",
       "evidence": [
+        {
+          "label": "First BCR release candidate containing the template action",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/commit/fc122dd1c"
+        },
         {
           "label": "11 upstream cases, two generated outputs and five wheel initializers on both execution configurations",
           "url": "https://github.com/tamird/gvisor/actions/runs/41074237338/artifacts/12985708419"
         }
       ],
       "ref": "pypi-namespace-template",
-      "updatedAt": "2026-10-31T01:07:48Z",
+      "updatedAt": "2026-11-07T01:54:07+00:00",
       "status": "merged"
     },
     {
@@ -57081,13 +57089,21 @@
       "repo": "tamird/gvisor",
       "group": "bazel",
       "ref": "proposal/runsc-version-line",
-      "head": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
-      "title": "Check the runsc version independently of the OCI spec version",
-      "url": "https://github.com/tamird/gvisor/commit/d243ff20a",
-      "status": "Agent work",
-      "updatedAt": "2026-11-07T01:40:36+00:00",
-      "summary": "The existing stamp test reads both version lines. Checking only the first line exposed a second issue: Buildkite assigns the valid alphabetic tag buildkite-test-branch to test/* branches. The digit-based proposal would reject that tag. The replacement needs to check the stamp the build supplied.",
+      "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
+      "title": "Verify that runsc prints the version supplied by Bazel",
+      "url": "https://github.com/tamird/gvisor/commit/d81096ecc",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T01:54:07+00:00",
+      "summary": "The test now compares the version printed by the built runsc with Bazel’s STABLE_VERSION. It accepts Buildkite’s alphabetic tag, its dirty form and a downstream stamp. It rejects the same executable when that stamp belongs to a different build. All eleven controls behaved as expected on both architectures.",
       "evidence": [
+        {
+          "label": "Eleven native AMD64 version-stamp outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42325801260/artifacts/13555253040"
+        },
+        {
+          "label": "Eleven native ARM64 version-stamp outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42325801260/artifacts/13555840628"
+        },
         {
           "label": "Buildkite assigns an alphabetic tag to test branches",
           "url": "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
@@ -57102,14 +57118,35 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
-        "observedAt": "2026-11-07T01:40:36+00:00",
-        "disposition": "The digit check rejects a legitimate Buildkite stamp.",
-        "nextAction": "Qualify the intended stamp against ordinary Git IDs, alphabetic tags, Buildkite test branches and the unstamped binary.",
+        "owner": "Contributor",
+        "sourceHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
+        "observedAt": "2026-11-07T01:54:07+00:00",
+        "disposition": "Exact-source native checks passed on AMD64 and ARM64, including the Buildkite branch stamp.",
+        "nextAction": "Publish after contributor review.",
         "evidence": [
           "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
+          "base": "70008149cff7b8d3b858877ae9c359b9046d19c5"
+        },
+        "after": {
+          "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
+          "base": "70008149cff7b8d3b858877ae9c359b9046d19c5"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
+        "baseHead": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+        "url": "https://github.com/tamird/gvisor/commit/d81096ecc",
+        "title": "Verify that runsc prints the version supplied by Bazel",
+        "requestedAt": "2026-11-07T01:54:07+00:00",
+        "summary": "Open the revised single-commit PR? A valid alphabetic tag passes when it is the actual stamp.\n\ngit -C ~/code/gvisor range-diff d243ff20a^! d81096ecc^!",
+        "body": "The version test searches all of runsc --version for a digit. The OCI\nspec version on the second line satisfies that check even when runsc\nreports a different build. Buildkite also deliberately stamps test\nbranches with an alphabetic tag.\n\nPass STABLE_VERSION to the Go test at link time and compare it with\nthe first line from the built runsc. An unstamped test has no expected\nversion and fails."
       }
     }
   ],
