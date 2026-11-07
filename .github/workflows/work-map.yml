@@ -1,0 +1,59 @@
+name: Verify checks for the reviewed export revision
+on:
+  push:
+    branches: [qualification/work-map-predecessor-checks]
+permissions: {contents: read}
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify both original import histories
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 663b9be2b74194b23581f254581c01cade400000
+          git diff --exit-code HEAD^ HEAD -- registry.json github-status.json app.js app_test.mjs
+          echo '20bdfbf4a811162c190fac18875378219963f13a3e8b018e8dab18cda0dbfdfb  github-status.json' | sha256sum -c -
+          node <<'JS'
+          const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+          const ctx=vm.createContext({URL}), code=fs.readFileSync('app.js','utf8');
+          vm.runInContext(code.slice(0,-'start();\n'.length),ctx);
+          const registry=JSON.parse(fs.readFileSync('registry.json')), snap=JSON.parse(fs.readFileSync('github-status.json'));
+          ctx.r=registry;
+          for(const number of [16594,16665]) {
+            const raw=snap.prs.find(p=>p.repo==='google/gvisor' && p.number===number);
+            const node={...registry.nodes.find(n=>n.id==='pr:'+number),github:raw};
+            ctx.n=node;
+            const reasons=()=>vm.runInContext('registry=r; JSON.stringify(attentionReasons(n,"tamird"))',ctx);
+            const listed=JSON.parse(reasons());
+            if(number===16594) {
+              assert.equal(raw.head,'b2cbea854fc9094a9b295a6226a90bccc4dad2ca');
+              assert.equal(raw.publicImportDisposition.scope,'amended');
+              assert.equal(raw.publicImportDisposition.binding.currentApproval,true);
+              assert.equal(raw.publicImportDisposition.trigger.state,'present');
+              assert.deepEqual(raw.imports.map(i=>i.number),[16647]);
+              assert.equal(raw.imports[0].sourceHead,'6fe5701556558d631f24919814f014172204208d');
+              assert(raw.imports[0].checks.contexts.some(c=>c.state==='FAILURE' && c.url==='https://buildkite.com/gvisor/pipeline/builds/53548'));
+              assert(listed.some(i=>i.title==='Reapproved; waiting for Copybara'));
+              assert(!listed.some(i=>i.id==='maintainer-import-checks'));
+            } else {
+              assert.equal(raw.publicImportDisposition.scope,'exact');
+              assert(raw.imports.every(i=>i.sourceHead===raw.head && i.matchesSourceHead));
+              assert.deepEqual(raw.imports.map(i=>[i.number,i.checks.state]),[[17008,'FAILURE'],[17157,'SUCCESS']]);
+              assert(listed.some(i=>i.id==='maintainer-triaged'));
+              ctx.n={...node,followup:{...node.followup,attentionDispositions:[]}};
+              assert(JSON.parse(reasons()).some(i=>i.id==='maintainer-import-checks' && i.detail.includes('#17008')));
+            }
+            console.log(number,raw.head,listed.map(i=>i.id),raw.imports.map(i=>[i.number,i.checks.state]));
+          }
+          JS
+      - name: Verify browser and collector regressions
+        if: always() && !cancelled()
+        run: |
+          code=0
+          python3 -B -m unittest work_states_test update_status_test incoming_reviews_test || code=1
+          node --test app_test.mjs || code=1
+          exit "$code"
