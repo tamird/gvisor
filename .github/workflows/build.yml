@@ -1,35 +1,50 @@
-name: CI
-
-"on":
+name: Restore a release built from the current source export
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/current-export-sidecar-cleanup]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  export:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Export the exact product tree without Git metadata
+        run: |
+          set -euo pipefail
+          source=111c72d26660563b1cf23993293c4aa6fbdec851
+          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse HEAD^^)" = 1560a5df4920e054dfe7ae88655f835eab1b782c
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_version_build.py' ':!.github/qualification/source_version_guest.py'
+          d="$RUNNER_TEMP/source-version"
+          mkdir -p "$d/source"
+          git archive "$source" | tar -xf - -C "$d/source"
+          cp .github/qualification/source_version_guest.py "$d/guest.py"
+          cp .github/qualification/source_version_build.py "$d/build.py"
+          curl --fail --silent --show-error --location --retry 2 --proto '=https' --proto-redir '=https' https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+      - name: Prepare the native GNU and guest fixtures
+        run: |
+          set -euo pipefail
+          sudo -n apt-get update -qq
+          sudo -n apt-get install -y --no-install-recommends crossbuild-essential-arm64 libnuma-dev
+          cd "$RUNNER_TEMP/source-version"
+          package=pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_amd64.deb
+          curl --retry 2 --proto '=https' --proto-redir '=https' --max-time 45 -fsSL "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/$package" -o busybox.deb || curl --retry 2 --proto '=https' --proto-redir '=https' --max-time 45 -fsSL "https://archive.ubuntu.com/ubuntu/$package" -o busybox.deb
+          echo "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed  busybox.deb" | sha256sum -c -
+          dpkg-deb --fsys-tarfile busybox.deb | tar -xOf - ./usr/bin/busybox > guest-busybox
+          chmod 755 guest-busybox
+      - name: Build the development and tagged installations and restore their guests
+        run: python3 -IB "$RUNNER_TEMP/source-version/build.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: current-export-sidecar-identity
+          path: |
+            ${{ runner.temp }}/source-version/*/result.json
+            ${{ runner.temp }}/source-version/*/runtime.json
+          if-no-files-found: error
+          retention-days: 14
