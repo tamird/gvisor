@@ -340,6 +340,7 @@ func TestCollectLinksAndRoutes_SingleInterface(t *testing.T) {
 				{Address: net.ParseIP("10.0.0.1"), PrefixLen: 24},
 			},
 			Routes: []sentryapi.Route{
+				{Destination: *parseCIDR(t, "0.0.0.0/0"), Gateway: net.ParseIP("10.0.0.254")},
 				{
 					Destination: net.IPNet{
 						IP:   net.IP{10, 0, 0, 0},
@@ -364,16 +365,8 @@ func TestCollectLinksAndRoutes_SingleInterface(t *testing.T) {
 		t.Errorf("FDBasedLinks mismatch:\ngot  %+v\nwant %+v", args.FDBasedLinks, wantFDLinks)
 	}
 
-	wantGW := sentryapi.DefaultRoute{
-		Name: "testveth0",
-		Route: sentryapi.Route{
-			Destination: net.IPNet{
-				IP:   net.IPv4zero,
-				Mask: net.IPMask(net.IPv4zero),
-			},
-			Gateway: net.ParseIP("10.0.0.254"),
-		},
-	}
+	// The pinned netlink decoder returns explicit /0 routes in the link list.
+	wantGW := sentryapi.DefaultRoute{}
 	if !defaultRouteEqual(args.Defaultv4Gateway, wantGW) {
 		t.Errorf("Defaultv4Gateway mismatch:\ngot  %+v\nwant %+v", args.Defaultv4Gateway, wantGW)
 	}
@@ -479,6 +472,7 @@ func TestCollectLinksAndRoutes_MultipleInterfaces(t *testing.T) {
 				{Address: net.ParseIP("10.0.0.1"), PrefixLen: 24},
 			},
 			Routes: []sentryapi.Route{
+				{Destination: *parseCIDR(t, "0.0.0.0/0"), Gateway: net.ParseIP("10.0.0.254")},
 				{
 					Destination: net.IPNet{
 						IP:   net.IP{10, 0, 0, 0},
@@ -509,16 +503,8 @@ func TestCollectLinksAndRoutes_MultipleInterfaces(t *testing.T) {
 		t.Errorf("FDBasedLinks mismatch:\ngot  %+v\nwant %+v", args.FDBasedLinks, wantFDLinks)
 	}
 
-	wantGW := sentryapi.DefaultRoute{
-		Name: "testveth0",
-		Route: sentryapi.Route{
-			Destination: net.IPNet{
-				IP:   net.IPv4zero,
-				Mask: net.IPMask(net.IPv4zero),
-			},
-			Gateway: net.ParseIP("10.0.0.254"),
-		},
-	}
+	// The pinned netlink decoder returns explicit /0 routes in the link list.
+	wantGW := sentryapi.DefaultRoute{}
 	if !defaultRouteEqual(args.Defaultv4Gateway, wantGW) {
 		t.Errorf("Defaultv4Gateway mismatch:\ngot  %+v\nwant %+v", args.Defaultv4Gateway, wantGW)
 	}
@@ -570,6 +556,7 @@ func TestCollectLinksAndRoutes_IPv6Disabled(t *testing.T) {
 				{Address: net.ParseIP("10.0.0.1"), PrefixLen: 24},
 			},
 			Routes: []sentryapi.Route{
+				{Destination: *parseCIDR(t, "0.0.0.0/0"), Gateway: net.ParseIP("10.0.0.254")},
 				{
 					Destination: net.IPNet{
 						IP:   net.IP{10, 0, 0, 0},

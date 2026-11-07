@@ -32,7 +32,6 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy/nvconf"
 	"gvisor.dev/gvisor/pkg/test/testutil"
-	"gvisor.dev/gvisor/tools/gpu/drivers"
 	"gvisor.dev/gvisor/tools/nvidia_driver_differ/parser"
 )
 
@@ -49,6 +48,11 @@ func createParserRunner(t *testing.T) *parser.Runner {
 	if err != nil {
 		t.Fatalf("Failed to create parser runner: %v", err)
 	}
+	t.Cleanup(func() {
+		if err := runner.Cleanup(); err != nil {
+			t.Errorf("Failed to clean up parser runner: %v", err)
+		}
+	})
 
 	return runner
 }
@@ -436,20 +440,4 @@ func compareTypes(t *testing.T, nvproxyType reflect.Type, driverTypeName string,
 
 	t.Fatalf("unknown driver type %q", driverTypeName)
 	return nil
-}
-
-// TestDriverChecksums tests that the checksums of all drivers are correct.
-func TestDriverChecksums(t *testing.T) {
-	ctx := t.Context()
-	var downloader drivers.Downloader
-	nvproxy.Init()
-	nvproxy.ForEachSupportDriver(func(version nvconf.DriverVersion, checksums nvproxy.Checksums) {
-		t.Run(version.String(), func(t *testing.T) {
-			t.Parallel()
-			if err := downloader.ValidateChecksum(ctx, version, checksums); err != nil {
-				t.Errorf("checksum mismatch for driver %q: %v", version.String(), err)
-			}
-		})
-	})
-
 }

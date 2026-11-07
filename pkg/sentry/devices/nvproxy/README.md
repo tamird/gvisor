@@ -85,7 +85,9 @@ between the parent and the new version. The tool analyzes the NVIDIA kernel
 driver source code and outputs the impacted structs.
 
 ```bash
-bazel run tools/nvidia_driver_differ:run_differ -- --base <PARENT_VERSION> --next <NEW_VERSION>
+bazel run //tools/nvidia_driver_differ/sources:update -- <NEW_VERSION>
+bazel mod tidy
+bazel run //tools/nvidia_driver_differ:run_differ -- --base <PARENT_VERSION> --next <NEW_VERSION>
 ```
 
 -   `<PARENT_VERSION>` is the version of the parent node in nvproxy's version
@@ -102,6 +104,11 @@ which compares `nvproxy`'s struct definitions with driver struct definitions:
 ```bash
 bazel test pkg/sentry/devices/nvproxy:nvproxy_driver_parity_test
 ```
+
+This suite includes the ABI comparison and `nvproxy_driver_checksums_test`,
+which downloads the current NVIDIA installers and verifies their checksums.
+The checksum test requires network access and always runs, even when a previous
+result is cached. Use `nvproxy_driver_abi_test` to select only the ABI comparison.
 
 #### Handling Intermediate Versions
 

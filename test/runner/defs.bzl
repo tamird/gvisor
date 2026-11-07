@@ -1,6 +1,6 @@
 """Defines a rule for syscall test targets."""
 
-load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms")
+load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "platform_capabilities", "platforms", "save_restore_platforms")
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {
@@ -210,6 +210,10 @@ def _syscall_test(
     # Trace points are platform agnostic, so enable them for ptrace only.
     if platform == "ptrace":
         runner_args.append("--trace")
+
+    # The native harness creates UTS and network namespaces for the guest.
+    if platform == "native":
+        kwargs.setdefault("exec_properties", namespace_test_exec_properties)
 
     # Call the rule above.
     _runner_test(
