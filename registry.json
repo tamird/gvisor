@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T09:35:47+00:00",
+    "updatedAt": "2026-11-07T09:50:14+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2104,7 +2104,7 @@
       "summary": "On source c115840f8, one AMD64 Bazel client built all nine release executables for AMD64 and all nine for ARM64. The client used stock Ubuntu 22.04 with a pinned Bazel, Git and public CA bundle. It installed no packages. Both sets of file hashes matched a build without system compilers, binutils, Make or Docker.\n\nA native ARM64 worker verified the nine transferred files and booted the Sentry under rootless systrap. The guest reported aarch64 and exited 0. The build trace still saw host shell utilities and Git. Other builder jobs need separate qualification.",
       "evidence": [
         {
-          "label": "Stock Jammy client with no APT installs: 18 release ELF hashes, Git version, and system executables observed by strace",
+          "label": "Release file hashes and observed host tools for both architectures on stock Jammy without APT installs",
           "url": "https://github.com/tamird/gvisor/actions/runs/42358228468/artifacts/13569595351"
         },
         {
@@ -4965,7 +4965,7 @@
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
         {
-          "label": "Stock Jammy client with no APT installs: 18 release ELF hashes, Git version, and system executables observed by strace",
+          "label": "Release file hashes and observed host tools for both architectures on stock Jammy without APT installs",
           "url": "https://github.com/tamird/gvisor/actions/runs/42358228468/artifacts/13569595351"
         },
         {
@@ -44378,16 +44378,20 @@
       "url": "https://github.com/tamird/gvisor/commit/111c72d26",
       "group": "rbe",
       "status": "Contributor review requested",
-      "summary": "A Git-free source build uses the linked Sentry’s Go build ID to check development checkpoints. A named release uses its explicit label. Ordinary builds display (devel) and produce Debian version 0~devel. An old unnamed checkpoint recorded only 0.0.0, so its originating build cannot be identified.\n\nThe earlier proposal gave runsc the release label but left the shipped netgofer at (devel). It rejected a matching GVISOR_ENFORCE_RELEASE at startup. With both binaries using the same version definitions, the installed pair accepts its own release and rejects another on AMD64 and ARM64.",
-      "updatedAt": "2026-11-07T09:26:58+00:00",
+      "summary": "Two different development Sentries reported 0.0.0, so one accepted the other’s checkpoint. A source export now records the linked Sentry’s Go build ID unless the publisher supplies a release label. Old unnamed checkpoints contain only 0.0.0.\n\nThe version definitions also give the shipped netgofer the same label as runsc. Previously netgofer rejected its own named release on startup. On the current standalone change, both development and release builds produced all nine files on native AMD64 and executed a guest after restoring it. The Debian versions were 0~devel and 20261106.0. A separate native comparison verified netgofer enforcement on AMD64 and ARM64.",
+      "updatedAt": "2026-11-07T09:50:14+00:00",
       "evidence": [
+        {
+          "label": "Current standalone source, nine installed files per build, parser, Debian versions and both restored guests on native AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42360655295/artifacts/13569951004"
+        },
+        {
+          "label": "Both first-run guests restored before the temporary runtime root cleanup failed and the parser build was skipped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42359633173/artifacts/13568979452"
+        },
         {
           "label": "Four uncached native AMD64 and ARM64 tests of the installed CLI and netgofer before and after the correction",
           "url": "https://github.com/tamird/gvisor/actions/runs/42358737265/artifacts/13568588029"
-        },
-        {
-          "label": "Current standalone source export, development and release checkpoint checks (see run status)",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42359633173"
         },
         {
           "label": "The same version writer produced 20261106.42209485090 for both public Debian packages. The installed AMD64 runsc reported the release tag.",
@@ -44471,13 +44475,14 @@
       "followup": {
         "owner": "Build and release",
         "sourceHead": "111c72d26660563b1cf23993293c4aa6fbdec851",
-        "observedAt": "2026-11-07T09:26:58+00:00",
+        "observedAt": "2026-11-07T09:50:14+00:00",
         "disposition": "Contributor review of the explicit release-label and linked-ID policy",
-        "nextAction": "Verify both installed version modes on the current standalone source. Submit after contributor review and #16593.",
+        "nextAction": "Open the single source-export change after contributor review and #16593. The corrected standalone check passed for both named and development builds.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42360655295/artifacts/13569951004",
+          "https://github.com/tamird/gvisor/actions/runs/42359633173/artifacts/13568979452",
           "https://github.com/tamird/gvisor/commit/111c72d26",
           "https://github.com/tamird/gvisor/actions/runs/42358737265/artifacts/13568588029",
-          "https://github.com/tamird/gvisor/actions/runs/42359633173",
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/tamird/gvisor/commit/a303ec933",
           "https://github.com/tamird/gvisor/actions/runs/41177018262/artifacts/13034556253",
@@ -44491,8 +44496,10 @@
         "status": "pending",
         "head": "111c72d26660563b1cf23993293c4aa6fbdec851",
         "url": "https://github.com/tamird/gvisor/commit/111c72d26",
-        "title": "Open the source-export version and checkpoint change after #16593",
-        "summary": "A Git-free source build uses the linked Sentry’s Go build ID to check development checkpoints. A named release uses its explicit label. Ordinary builds display (devel) and produce Debian version 0~devel. An old unnamed checkpoint recorded only 0.0.0, so its originating build cannot be identified.\n\nThe earlier proposal gave runsc the release label but left the shipped netgofer at (devel). It rejected a matching GVISOR_ENFORCE_RELEASE at startup. With both binaries using the same version definitions, the installed pair accepts its own release and rejects another on AMD64 and ARM64."
+        "title": "Build source exports without a Git version stamp",
+        "summary": "Review the source-export change for submission after #16593. The current revision also labels netgofer, which otherwise rejects its own packaged release.",
+        "baseHead": "1560a5df4920e054dfe7ae88655f835eab1b782c",
+        "body": "The default workspace status command runs Git even for a development\nbuild. Without a repository it reports 0.0.0, and presubmit jobs give\nunrelated commits the same tag. Neither string identifies the binary\nthat wrote a checkpoint.\n\nPass the release label from the publisher to Bazel with --embed_label.\nUse the same label for runsc, its Go sidecars and checkpoint restores.\nWithout a release label, record the linked sentry's Go build ID and\nreject restores from a different binary before loading the kernel.\nA custom STABLE_VERSION can still name the CLI and Debian package\nwithout asserting checkpoint compatibility.\n\nUnstamped builds report (devel) and produce Debian version 0~devel.\nThe release job passes the same version to both architecture builds."
       }
     },
     {
@@ -57235,7 +57242,7 @@
       "summary": "The mixed source presubmit selects 727 of the 748 native test shards on source 2e72c3051. All 374 AMD64 shards are present. ARM64 has 353 of 374, with omissions in the vDSO, sandbox Python, Go generator and other test rules. All 2,884 build-only root labels and both nine-file release layouts are present. This comparison measures Bazel selection.\n\nOn source 2e72c3051, one invocation of the rendered Buildkite command ran the runsc version and statefile output-permission tests on native AMD64 and ARM64 Ubuntu workers. All four test actions executed uncached. Each version test ran its architecture’s runsc as UID/GID 0:0. Both statefile subtests passed as UID/GID 65534:65534 on each architecture, including rejection of a read-only file and successful writes through directories without read permission. The uname targets were checked during selection only.\n\nThe earlier two-invocation Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nWith #17131 and the socket drain, peer EOF still discarded the second queued packet. Having the last receive worker signal EOF after delivery preserved both packets. An explicit detach could still discard queued packets while a callback was blocked. On each native Ubuntu OCI worker, the corrected code passed all 86 fdbased and 13 netgofer test records, with zero skips. The first combined run exposed a constructor mismatch in the existing fdbased test table. Its correction left the netgofer production code byte-identical.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).\n\nThe 748-shard run executed the rendered Buildkite command. A separate offline Linux check ran the real Buildkite agent 4.10.1 pre-command and post-command hooks. The original source called docker ps and retried sudo apt-get update 30 times in eight seconds before reaching Bazel. With the coordinator change, each profile ran the same local Bazel sentinel. A deliberate failure in either profile still allowed the other to run and returned exit 1. The hooks kept the test-branch stamp and completion and failure tracking. The specialized-job control kept its Make log discovery, artifact and annotation calls, and cleanup. Service writes were recorded offline.\n\nThe ordinary pipeline runs make unit-tests on the default AMD64 cgroupv2 queue and on the ARM64 queue, whose cgroup version is unspecified. The selected coordinator needs Bazel or Bazelisk and a site-configured remote executor with any required access. The repository declares worker constraints but no upstream executor address.",
       "evidence": [
         {
-          "label": "All three configured selections on identical source: 727 of 748 test shards and 2,884 native build-only root labels",
+          "label": "Selection of all 2,884 build-only root labels and 727 of 748 native test shards on the same source",
           "url": "https://github.com/tamird/gvisor/actions/runs/42358509350/artifacts/13568767915"
         },
         {
@@ -82220,7 +82227,7 @@
       "title": "Printing inline checkpoint memory",
       "status": "active",
       "owner": "Agent",
-      "updatedAt": "2026-11-07T09:35:47+00:00",
+      "updatedAt": "2026-11-07T09:50:14+00:00",
       "summary": "The checkpoint printer treated an eight-byte length as a one-byte state header. It returned success with the wrong boundaries for the following records. The loader restored all 16 pages from the same file byte for byte.",
       "findings": [
         {
@@ -82229,6 +82236,15 @@
             {
               "label": "Original allocator control and five same-image guest restores",
               "url": "https://github.com/tamird/gvisor/actions/runs/42358887259/artifacts/13569127013"
+            }
+          ]
+        },
+        {
+          "text": "A diagnostic reader printed two actual inline checkpoint images on native ARM64. Both restored to PID 1 from the same bytes. An independent default Sentry posture assertion failed in the encompassing job, so its AMD64 leg did not run.",
+          "evidence": [
+            {
+              "label": "Separate checkpoint and posture results on Linux 6.8 ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42360116964/artifacts/13570325189"
             }
           ]
         }
