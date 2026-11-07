@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T14:56:09+00:00",
+    "updatedAt": "2026-11-07T15:21:36+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60448,6 +60448,48 @@
         "summary": "Open this single-commit release-archive PR? The ordinary AMD64 bzip2 and zstd downloads passed the stock publisher checks. The separate integration built the same two formats for both target architectures on the empty AMD64 worker.",
         "body": "The rules_pkg archive writer launches through /usr/bin/env bash. Build\nthe release archives with the registered BSD tar toolchain so their\nwriter can start on workers that have no host executables.\n\nUse the existing binary selections for each flavor. Preserve the\ninstalled names, executable modes, portable timestamp, compression\nsettings and target-named links. The release publisher selects the\nliteral runsc member when it identifies each archive architecture."
       }
+    },
+    {
+      "id": "branch:tcp-soft-error-test-lock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-soft-error-test-lock",
+      "head": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+      "title": "Hold the endpoint lock in TestConnectICMPError",
+      "url": "https://github.com/tamird/gvisor/commit/2d4356b74",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T15:21:36+00:00",
+      "summary": "TestConnectICMPError now reads the soft error through the concrete TCP endpoint and holds its lock only for that read. The named test passed on native AMD64 in both the original Go output and XML. The test’s Nogo owner analyzed three callers on AMD64 and ARM64. The original interface and the corrected concrete call each produced zero findings on both architectures. Removing the lock from the concrete call produced two findings per architecture. All reported the missing e.mu precondition for LastErrorLocked at tcp_test.go:387. The original workflow expected exactly one finding, so its aggregate failed. The digest-verified readback accounts for every finding and preserves the original result. Production code and the hard connection error are untouched.",
+      "evidence": [
+        {
+          "label": "Original native test, Go/XML and three Nogo caller shapes on both architecture configurations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42385235839/artifacts/13579008321"
+        },
+        {
+          "label": "Readback of all original findings and results, bound to the 57f39045a ZIP digest",
+          "url": "https://github.com/tamird/gvisor/blob/d48ac0178/.github/qualification/tcp_soft_error_result.json"
+        },
+        {
+          "label": "Original test call through its local interface",
+          "url": "https://github.com/google/gvisor/blob/9ee2906f5/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go#L386"
+        },
+        {
+          "label": "Soft-error accessor and the separate hard-error path",
+          "url": "https://github.com/google/gvisor/blob/9ee2906f5/pkg/tcpip/transport/tcp/endpoint.go#L1403"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/2d4356b74",
+        "title": "Hold the endpoint lock in TestConnectICMPError",
+        "requestedAt": "2026-11-07T15:21:36+00:00",
+        "summary": "Open this single-commit test fix? The named ICMP test passed. On AMD64 and ARM64, checklocks caught the direct call missing the endpoint lock and accepted the corrected call. The old interface hid the missing precondition on both.",
+        "body": "TestConnectICMPError reads the soft error through a local interface\nthat hides LastErrorLocked's lock requirement from checklocks. Joining\nthe handshake and ICMP goroutines does not acquire the endpoint lock.\n\nUse the concrete TCP endpoint and hold its user lock while reading and\nclearing the soft error. The ordinary socket error accessor would\nconsume the hard connection error first."
+      }
     }
   ],
   "edges": [
@@ -80755,7 +80797,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-06T04:09:01.919534Z",
+      "updatedAt": "2026-11-07T15:21:36+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -81015,6 +81057,15 @@
             {
               "label": "Guarded and unguarded runs, including the collector mismatch",
               "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/artifacts/13397499747"
+            }
+          ]
+        },
+        {
+          "text": "A local interface let TestConnectICMPError call the soft-error accessor without its required endpoint mutex. The concrete call made the missing lock visible to checklocks on both architecture configurations. The focused test-only fix and original results are on the fork proposal.",
+          "evidence": [
+            {
+              "label": "Lock the concrete soft-error read in TestConnectICMPError",
+              "url": "https://tamird.github.io/gvisor/#branch:tcp-soft-error-test-lock"
             }
           ]
         }
@@ -83680,5 +83731,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T14:56:09+00:00"
+  "updatedAt": "2026-11-07T15:21:36+00:00"
 }
