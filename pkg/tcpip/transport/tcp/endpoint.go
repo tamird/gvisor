@@ -379,12 +379,14 @@ type Endpoint struct {
 	// hardError is meaningful only when state is stateError. It stores the
 	// error to be returned when read/write syscalls are called and the
 	// endpoint is in this state.
+	//
 	// +checklocks:mu
 	hardError tcpip.Error
 
 	lastErrorMu lastErrorMutex `state:"nosave"`
 
 	// lastError is the last error reported by the endpoint.
+	//
 	// +checklocks:lastErrorMu
 	lastError tcpip.Error
 
