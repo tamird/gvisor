@@ -1,35 +1,53 @@
-name: CI
-
-"on":
+name: Compare top-level source build defaults
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-wildcard-defaults]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the original source, coordinator control and previous mixed projection
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/wildcard-products"
+          mkdir -p "$w"/{src,out}
+          cd "$w/src"
+          git init -q
+          git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          source=f6d6788e84731673a155c9fff6f28b8624e34c50
+          control=0efcceabf5957267b1f9d812ad5e17de4bd83e15
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$control"
+          test "$(git rev-parse "$control^")" = "$source"
+          git diff --exit-code "$source" "$control" -- . ':!.buildkite/pipeline.yaml'
+          git diff --exit-code "$control" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/wildcard_products'
+          for f in compare.py products.star mixed-products.jsonl.gz; do
+            git show "$GITHUB_SHA:.github/qualification/wildcard_products/$f" > "$w/$f"
+          done
+          git checkout -q --detach "$source"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = x86_64
+          cd "$w"
+          curl -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o bazel
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          9bceba8959a2a79af1a4fba2a2173f9946f91876c4748bc2c3eeace8f01a49da  mixed-products.jsonl.gz
+          SUMS
+          chmod 755 bazel
+      - name: Materialize the ARM64 archive and compare the three source selections
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/wildcard-products"
+          cd "$w/src"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/compare.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: native-and-mixed-defaults
+          path: |
+            ${{ runner.temp }}/wildcard-products/out/wildcard.json
+            ${{ runner.temp }}/wildcard-products/out/*.json.gz
+          if-no-files-found: error
+          retention-days: 14
