@@ -53,6 +53,7 @@ func observeStart(t0 time.Time, server, client *gvisorHost) {
 	}
 	currentObservation.Store(&observation{t0: t0, base: uint32(serverState["nxt"]), beforeS: serverState, beforeC: clientState,
 		lastACK: -1, maxACK: -1, lastWindow: -1, firstDropMS: -1, lastDropMS: -1})
+	fmt.Println("TCP_MEASURE_START")
 }
 
 func recordObservation(kind string, now time.Time, p *packetInfo) {
