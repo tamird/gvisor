@@ -61,6 +61,10 @@ def check(name, owner, cases):
     statuses = {name: status for status, name in re.findall(r'^\s*--- (PASS|FAIL|SKIP): ([A-Za-z0-9_/]+) \(', joined, re.MULTILINE)}
     threshold = re.findall(r'ssthresh after [^\n=]+ = ([0-9]+), want ([0-9]+)', joined)
     detail = {"xml": xml_cases, "exit": code, "records": records, "cases": statuses, "threshold_mismatch": threshold}
+    if not records:
+        diagnostics = (root / (name + ".console")).read_text(errors="replace").splitlines()
+        detail["build_diagnostics"] = [line.strip()[:500] for line in diagnostics
+                                       if re.search(r"(?i)\b(error|cannot|overflows|undefined|missing)\b", line)][:8]
     detail["test_diagnostics"] = [line.strip()[:400] for line in joined.splitlines()
                                   if re.search(r"tcp_(sack|rto_recovery)_test[.]go:[0-9]+:", line)][:16]
     detail["two_timeouts"] = re.findall(r"two RTOs before detection, original=(true|false): ssthresh=(\d+)", joined)

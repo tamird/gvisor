@@ -81,7 +81,8 @@ func TestEifelResponseAfterReorderedACK(t *testing.T) {
 			wantState(tcpip.Open)
 			got := info().SndSsthresh
 			t.Logf("threshold after cumulative ACK = %d", got)
-			if want := uint32(tcp.InitialSsthresh); got != want {
+			initialThreshold := tcp.InitialSsthresh
+			if want := uint32(initialThreshold); got != want {
 				t.Errorf("threshold after spurious timeout = %d, want %d", got, want)
 			}
 			if n := c.Stack().Stats().TCP.FastRetransmit.Value(); n != 0 {
