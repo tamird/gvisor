@@ -1,5 +1,7 @@
 """Rules for dependency checking."""
 
+load("//tools/bazeldefs:test_architectures.bzl", "with_presubmit_variant", "with_test_architecture")
+
 # DepsInfo provides a list of dependencies found when building a target.
 DepsInfo = provider(
     "lists dependencies encountered while building",
@@ -187,3 +189,6 @@ deps_test = rule(
     },
     test = True,
 )
+
+_arm64_deps_test, _arm64_transition = with_test_architecture(deps_test, "arm64").build()
+presubmit_deps_test = with_presubmit_variant(deps_test, _arm64_deps_test)

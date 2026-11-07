@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "go_binary", "go_cov", "go_test")
-load("//tools:deps.bzl", "deps_test")
+load("//tools:deps.bzl", deps_test = "presubmit_deps_test")
 
 package(
     default_applicable_licenses = ["//:license"],

@@ -25,6 +25,7 @@ def with_test_architecture(test_rule, architecture, extra_providers = [], implic
 
 def _test_attributes(architecture, kwargs):
     attributes = dict(kwargs)
+
     # Only test execution requires the target CPU. Compilers and linkers may
     # run in another execution group on a different architecture.
     groups = dict(attributes.get("exec_group_compatible_with") or {})
@@ -43,6 +44,14 @@ def arm64_presubmit_test(name, test_rule, kwargs):
         "//conditions:default": [Label("@platforms//:incompatible")],
     })
     test_rule(name = name + "_presubmit_arm64", **attributes)
+
+def _declare_both(name, declaration, arm64_rule, kwargs):
+    declaration(name = name, **kwargs)
+    arm64_presubmit_test(name, arm64_rule, kwargs)
+
+def with_presubmit_variant(declaration, arm64_rule):
+    """Pairs a test declaration with its incoming-transition ARM64 test rule."""
+    return lambda name, **kwargs: _declare_both(name, declaration, arm64_rule, kwargs)
 
 def test_architecture_variants(name, architectures, test_rules, kwargs):
     """Adds explicit, manual variants from the original test's complete attributes.
