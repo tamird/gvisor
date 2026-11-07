@@ -1,35 +1,109 @@
-name: CI
-
-"on":
+name: Run one ARM64 runtime in both existing TCG page-size guests
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/arm64-runtime-stub-paired-guests]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  pair:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 115
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the candidate, the unchanged guest harness and both stock clients
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = c157b4d8f448ac3796fd113ad85139623ae461cb
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/paired_stub_guest.py' ':!test/rbe/paired_stub_guest'
+          test "$(cat .bazelversion)" = 9.3.1
+          w="$RUNNER_TEMP/paired-stub-guest"
+          mkdir -m 700 "$w" "$w/harness"
+          git -C "$w/harness" init -q
+          git -C "$w/harness" fetch -q --depth=1 https://github.com/tamird/gvisor.git ec4ced798422d27e533369b02d41b06f21b798c1
+          git -C "$w/harness" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$w/harness" rev-parse HEAD)" = ec4ced798422d27e533369b02d41b06f21b798c1
+          test "$(cat "$w/harness/.bazelversion")" = 8.8.1
+          cp .github/qualification/paired_stub_guest.py "$w/"
+          cd "$w"
+          for v in 9.3.1 8.8.1; do
+            curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 "https://releases.bazel.build/$v/release/bazel-$v-linux-x86_64" -o "bazel${v%%.*}"
+          done
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel9
+          5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  bazel8
+          SUMS
+          chmod 700 bazel8 bazel9
+          if ! test -x /usr/bin/aarch64-linux-gnu-g++; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+            done > jammy.list
+            opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+          test "$(/usr/bin/aarch64-linux-gnu-g++ -dumpmachine)" = aarch64-linux-gnu
+      - name: Build one ARM64 release and bind its actual embedded stub
+        timeout-minutes: 48
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/paired-stub-guest"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/paired_stub_guest.py" release
+          dst="$w/harness/test/rbe/paired_stub_guest"
+          mkdir "$dst"
+          cp test/rbe/paired_stub_guest/harness.BUILD "$dst/BUILD"
+          cp test/rbe/paired_stub_guest/guest.sh "$dst/guest.sh"
+          chmod 755 "$dst/guest.sh"
+          mv "$w/inputs" "$dst/inputs"
+          git -C "$w/harness" diff --exit-code
+          "$w/bazel9" --nosystem_rc --nohome_rc shutdown
+      - name: Run only the two declared TCG guests through the original fork executor
+        id: guests
+        timeout-minutes: 60
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?existing BuildBuddy key is required}"
+          w="$RUNNER_TEMP/paired-stub-guest"
+          cd "$w/harness"
+          rc="$w/executor.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          outcome=0
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 \
+            "$w/bazel8" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx5g --bazelrc=test/rbe/qualification.bazelrc --bazelrc="$rc" \
+            test --config=rbe --config=x86_64 --jobs=40 --lockfile_mode=off --keep_going \
+            --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 --test_sharding_strategy=disabled \
+            --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=minimal \
+            '--remote_download_regex=.*[/]test[.](log|xml)$' --test_timeout=300 \
+            --build_event_json_file="$w/guests.bep" --build_event_publish_all_actions \
+            //test/rbe/paired_stub_guest:page4k //test/rbe/paired_stub_guest:page64k > "$w/remote.log" 2>&1 || outcome=$?
+          printf '%s\n' "$outcome" > "$w/remote.exit"
+          exit "$outcome"
+      - name: Verify both original TestResults and the guest workload
+        if: always() && !cancelled() && steps.guests.outcome != 'skipped'
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/paired-stub-guest"
+          test ! -e "$w/executor.rc"
+          cd "$w/harness"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/paired_stub_guest.py" collect
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: same-arm64-runtime-two-page-sizes
+          path: |
+            ${{ runner.temp }}/paired-stub-guest/release.json
+            ${{ runner.temp }}/paired-stub-guest/guests.json
+          if-no-files-found: error
+          retention-days: 14
