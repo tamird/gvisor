@@ -1,0 +1,84 @@
+name: Check corrected native AMD64 netgofer shutdown and final-frame delivery
+on:
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  diagnose:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/amd64-netgofer-drain-fixed' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Pin the target, source profile, Bazel client and receipt decoder
+        run: |
+          set -euo pipefail
+          source=fbad38ea661236e230a355fde5d0f87d9cac44bb
+          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse HEAD^^)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
+          test "$(git diff HEAD^^ HEAD^ | git patch-id --stable | cut -d' ' -f1)" = 4018906c378bfcf9daf97832e6e6fa738f5966e9
+          test "$(git diff HEAD^ HEAD -- runsc/gofer/net/BUILD runsc/gofer/net/netgofer_test.go | git patch-id --stable | cut -d' ' -f1)" = f65ce5babbff6d70a2bab788848bbba11302d87e
+          test "$(git rev-parse HEAD:runsc/gofer/net/BUILD)" = 52b38bc7117674a16ce2cc79439b55aae91bb8d2
+          test "$(git rev-parse HEAD:runsc/gofer/net/netgofer_test.go)" = e8424a3e67930a5583adaf5613798b5d3228c560
+          git diff --exit-code HEAD^ HEAD -- . ':!runsc/gofer/net/BUILD' ':!runsc/gofer/net/netgofer_test.go'  ':!.github/workflows/work-map.yml' ':!.github/qualification/netgofer_replay.py'
+          d="$RUNNER_TEMP/netgofer-replay"
+          mkdir -m 700 "$d" "$d/control-inputs"
+          cp runsc/gofer/net/{BUILD,netgofer_test.go} "$d/control-inputs/"
+          cp .github/qualification/netgofer_replay.py "$d/"
+          git checkout -q --detach "$source"
+          test "$(git rev-parse HEAD:.bazelrc)" = 7426b4330efd84ae975c801559b3e61ff84ce780
+          test "$(git rev-parse HEAD:MODULE.bazel)" = f8a49d1392721f8a81bc3a8db03f03d1a2388437
+          test "$(git rev-parse HEAD:runsc/gofer/net/BUILD)" = b9ca13f24a870bef1041996e796ffbea8556ce07
+          test "$(git rev-parse HEAD:runsc/gofer/net/netgofer_test.go)" = 1b0f0fdacf9198ef8863117080b59801519ddc64
+          curl -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          curl -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          cd "$d"
+          sha256sum --check <<'PINS'
+          e1508323f347ad1465a887bc5d2fb91cffc232d11e8e997b623227c6b32fb76  bazel
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          f8a034a04e02f6d967d5649f9503cb76fc98b1cd31f5481512ad6280e8fd2622  netgofer_replay.py
+          PINS
+          chmod 755 bazel bb
+          cd "$GITHUB_WORKSPACE"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Run five original suites and sixteen final-frame and restricted-ioctl controls
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/netgofer-replay"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat >"$rc" <<'RC'
+          build:source-presubmit-common --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit-common --jobs=32 --remote_download_outputs=minimal
+          build:source-presubmit-common --remote_download_regex=.*testlogs/runsc/gofer/net/netgofer_test/test[.](log|xml)
+          RC
+          printf 'build:source-presubmit-common --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >>"$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -IB "$d/netgofer_replay.py" run
+      - name: Bind each native TestRunner and its package or control outcomes
+        id: summarize
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/netgofer-replay"
+          test ! -e "$d/private.bazelrc"
+          python3 -IB "$d/netgofer_replay.py" report
+          test -s "$d/receipt.json"
+          test ! -L "$d/receipt.json"
+          test "$(wc -c < "$d/receipt.json")" -lt 250001
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$d/receipt.json"; then exit 1; fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: steps.summarize.outcome == 'success'
+        with:
+          name: native-amd64-netgofer-queue-drain
+          path: ${{ runner.temp }}/netgofer-replay/receipt.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Require all five observed native executions to pass
+        run: jq -e '.complete and .all_passed and .controls_passed' "$RUNNER_TEMP/netgofer-replay/receipt.json"
