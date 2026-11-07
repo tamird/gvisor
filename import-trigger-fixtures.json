@@ -6543,5 +6543,379 @@
       "expectedNextEligibleAt": "2026-11-04T20:38:44+00:00",
       "projection": "Relevant published source/export identities, latest formal approval, last thread reply, label events and last alarm marker. Unrelated checks, cross-references, superseded feedback and message bodies are omitted; completeness flags describe the original provider histories."
     }
-  ]
+  ],
+  "twoRebaseExport": {
+    "checkedAt": "2026-11-07T04:20:37.633972+00:00",
+    "node": {
+      "id": "pr:16466",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16466,
+      "title": "Pin upstream Apache test images",
+      "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
+      "ref": "rules-img-httpd-upstream-current",
+      "url": "https://github.com/google/gvisor/pull/16466",
+      "approvedPatch": {
+        "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
+        "approvedHead": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABWg4QIQ",
+        "reviewer": "carzh",
+        "submittedAt": "2026-11-06T19:29:35Z",
+        "verifiedAt": "2026-11-07T04:18:10+00:00",
+        "method": "reviewed-context-only",
+        "oldPatchId": "9ae7ab1d41f0a6c0295720f441a5325cccdf2b59",
+        "newPatchId": "80c584dee017ead87eedec109c1d42364d601939",
+        "earlierExport": {
+          "number": 16879,
+          "sourceHead": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
+          "comparedHead": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
+          "oldPatchId": "082c29a543fbee7818a03095132be05b251930f9",
+          "newPatchId": "9ae7ab1d41f0a6c0295720f441a5325cccdf2b59",
+          "method": "reviewed-context-only",
+          "verifiedAt": "2026-11-06T18:50:14.461Z"
+        }
+      }
+    },
+    "pr": {
+      "number": 16466,
+      "repo": "google/gvisor",
+      "title": "Pin upstream Apache test images",
+      "url": "https://github.com/google/gvisor/pull/16466",
+      "status": "open",
+      "ref": "rules-img-httpd-upstream-current",
+      "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
+      "branchHead": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
+      "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
+      "headCommittedAt": "2026-11-07T04:15:29Z",
+      "headHistoryComplete": true,
+      "headIntroducedAt": "2026-11-07T04:16:42Z",
+      "headOwner": "tamird",
+      "authorLogin": "tamird",
+      "githubReviewDecision": "APPROVED",
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewRequests": [
+        {
+          "__typename": "User",
+          "login": "zkoopmans"
+        }
+      ],
+      "reviewRequestsComplete": true,
+      "mergeable": "MERGEABLE",
+      "labels": [
+        "ready to pull"
+      ],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": [
+          {
+            "__typename": "LabeledEvent",
+            "id": "LE_lADOB9IlXs8AAAABaJ8gG88AAAAID0f7_A",
+            "createdAt": "2026-10-29T17:48:06Z",
+            "actor": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "ready to pull"
+            }
+          },
+          {
+            "__typename": "UnlabeledEvent",
+            "id": "UNLE_lADOB9IlXs8AAAABaJ8gG88AAAAIFvFOew",
+            "createdAt": "2026-10-31T00:47:24Z",
+            "actor": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "ready to pull"
+            }
+          },
+          {
+            "__typename": "LabeledEvent",
+            "id": "LE_lADOB9IlXs8AAAABaJ8gG88AAAAII7BMfg",
+            "createdAt": "2026-11-02T21:44:19Z",
+            "actor": {
+              "login": "carzh",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "ready to pull"
+            }
+          },
+          {
+            "__typename": "UnlabeledEvent",
+            "id": "UNLE_lADOB9IlXs8AAAABaJ8gG88AAAAIPPzTfg",
+            "createdAt": "2026-11-06T19:29:43Z",
+            "actor": {
+              "login": "carzh",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "ready to pull"
+            }
+          },
+          {
+            "__typename": "LabeledEvent",
+            "id": "LE_lADOB9IlXs8AAAABaJ8gG88AAAAIPPzyVA",
+            "createdAt": "2026-11-06T19:29:49Z",
+            "actor": {
+              "login": "carzh",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "ready to pull"
+            }
+          }
+        ]
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABhZ6BIg",
+            "url": "https://github.com/google/gvisor/pull/16466#issuecomment-6536724770",
+            "body": "[🤖] Invalidating approval due to rebase as a means to notify @zkoopmans to re-review. Current diff looks different from pre-rebase diff.",
+            "createdAt": "2026-10-31T00:47:26Z",
+            "updatedAt": "2026-10-31T00:47:26Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABU-LOzw",
+            "url": "https://github.com/google/gvisor/pull/16466#pullrequestreview-5702340303",
+            "body": "LGTM",
+            "state": "DISMISSED",
+            "submittedAt": "2026-10-29T17:43:11Z",
+            "updatedAt": "2026-10-31T00:47:22Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "8261363a8a7e7051342ffcd7f98e8d41c47ceff4"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVlnY1A",
+            "url": "https://github.com/google/gvisor/pull/16466#pullrequestreview-5743696084",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-11-02T21:35:41Z",
+            "updatedAt": "2026-11-02T21:35:41Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "carzh",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "2595b792845f88b24f0ff1d2b1a5c749bead8807"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABWg4QIQ",
+            "url": "https://github.com/google/gvisor/pull/16466#pullrequestreview-5805838369",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-11-06T19:29:35Z",
+            "updatedAt": "2026-11-06T19:29:35Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "carzh",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "c1511cf4b2c77691c04dfa148c48313bca09b23a"
+            }
+          }
+        ]
+      },
+      "reviewDecision": "REVIEW_REQUIRED",
+      "approvedHead": null,
+      "approvedAt": null,
+      "importsComplete": true,
+      "importPolicy": "copybara",
+      "imports": [
+        {
+          "number": 16879,
+          "repo": "google/gvisor",
+          "url": "https://github.com/google/gvisor/pull/16879",
+          "head": "9ada542b61c2054c7ec10a35e11620c24d03b996",
+          "branchHead": "9ada542b61c2054c7ec10a35e11620c24d03b996",
+          "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
+          "sourceHead": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
+          "status": "open",
+          "mergeable": "CONFLICTING",
+          "mergeState": "DIRTY",
+          "matchesSourceHead": false,
+          "mergeabilityCheckedAt": "2026-11-07T04:20:05.740745+00:00",
+          "checks": {
+            "state": "SUCCESS",
+            "total": 17,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "assign",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "close",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "gazelle",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "check-changes",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "scan-pr",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "label",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "fileheader",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "lint",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "zizmor-config",
+                "state": "SKIPPED"
+              },
+              {
+                "name": "zizmor-scan",
+                "state": "SKIPPED"
+              },
+              {
+                "name": "zizmor-upload",
+                "state": "SKIPPED"
+              },
+              {
+                "name": "zizmor-output",
+                "state": "SKIPPED"
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS"
+              }
+            ]
+          }
+        }
+      ],
+      "checks": {
+        "state": "FAILURE",
+        "total": 13,
+        "complete": true,
+        "contexts": [
+          {
+            "name": "gazelle",
+            "state": "IN_PROGRESS"
+          },
+          {
+            "name": "generate",
+            "state": "IN_PROGRESS"
+          },
+          {
+            "name": "lint",
+            "state": "IN_PROGRESS"
+          },
+          {
+            "name": "check-changes",
+            "state": "SUCCESS"
+          },
+          {
+            "name": "scan-pr",
+            "state": "SUCCESS"
+          },
+          {
+            "name": "label",
+            "state": "SUCCESS"
+          },
+          {
+            "name": "fileheader",
+            "state": "SUCCESS"
+          },
+          {
+            "name": "zizmor-config",
+            "state": "SKIPPED"
+          },
+          {
+            "name": "zizmor-scan",
+            "state": "SKIPPED"
+          },
+          {
+            "name": "zizmor-upload",
+            "state": "SKIPPED"
+          },
+          {
+            "name": "zizmor-output",
+            "state": "SKIPPED"
+          },
+          {
+            "name": "buildkite/first-pass",
+            "state": "FAILURE"
+          },
+          {
+            "name": "cla/google",
+            "state": "SUCCESS"
+          }
+        ]
+      },
+      "reviewDismissals": {
+        "complete": true,
+        "items": [
+          {
+            "id": "RDE_lADOB9IlXs8AAAABaJ8gG88AAAAIFvFH5w",
+            "createdAt": "2026-10-31T00:47:22Z",
+            "previousReviewState": "APPROVED",
+            "review": {
+              "id": "PRR_kwDOB9IlXs8AAAABU-LOzw"
+            }
+          }
+        ]
+      },
+      "maintainerReviewers": [
+        "carzh",
+        "zkoopmans"
+      ]
+    }
+  }
 }

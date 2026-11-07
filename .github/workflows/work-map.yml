@@ -1,0 +1,53 @@
+name: Verify canceled checks and an older Copybara export
+on:
+  push:
+    branches: [qualification/work-map-canceled-and-rebased]
+permissions: {contents: read}
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify the actual provider and source records
+        run: |
+          test "$(git rev-parse HEAD^)" = e73f51e4d499e1cfab759e0d95c3fcf84f717ae0
+          git diff --exit-code HEAD^ HEAD -- registry.json github-status.json
+          python3 -B - <<'PY'
+          from datetime import datetime, timezone
+          import json
+          import runpy
+          from pathlib import Path
+          from reapproval import reminder_plan
+          from work_states import check_qualifier, checks_passed, pr_states
+          def load(name):
+              return json.loads(Path(name).read_text())
+          prs = {p["number"]:p for p in load("github-status.json")["prs"] if p.get("repo")=="google/gvisor"}
+          gazelle = prs[17050]
+          assert any(c["name"]=="gazelle" and c["state"]=="CANCELLED" for c in gazelle["checks"]["contexts"])
+          assert "failing" not in pr_states(gazelle) and not checks_passed(gazelle)
+          assert "checks canceled" in check_qualifier(gazelle).lower()
+          assert not runpy.run_path("update-status.py")["check_report"]([gazelle], {})["checkFailures"]
+          pr = prs[16466]
+          node = next(n for n in load("registry.json")["nodes"] if n["id"]=="pr:16466")
+          proof = load("import-trigger-fixtures.json")["twoRebaseExport"]["node"]["approvedPatch"]
+          assert node["approvedPatch"] == {k:v for k,v in proof.items() if k!="earlierExport"}
+          node["approvedPatch"] = proof
+          def plan(when):
+              return reminder_plan(pr,node,when,"tamird",frozenset(pr["maintainerReviewers"]))
+          monday = plan(datetime(2026,11,9,18,tzinfo=timezone.utc))
+          assert monday["status"]=="due" and monday["action"]=="reapprove-amendment", (monday["status"],monday.get("reason"))
+          assert monday["approvers"]==["carzh"] and "#16879" in monday["body"]
+          evening = plan(datetime(2026,11,7,4,tzinfo=timezone.utc))
+          assert evening["status"]=="deferred" and evening["reason"]=="outside-pacific-business-hours"
+          print("#17050 canceled; #16466 selects Carzh and #16879 during Pacific business hours")
+          PY
+      - name: Run the collector, reminder and browser suites
+        if: success() || failure()
+        run: |
+          code=0
+          python3 -B -m unittest work_states_test update_status_test || code=1
+          node --test app_test.mjs || code=1
+          exit "$code"
