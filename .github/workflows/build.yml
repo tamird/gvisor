@@ -1,35 +1,56 @@
-name: CI
-
-"on":
+name: Check the canonical PacketReserve formatting
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/packet-reserve-format]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  format:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Check the approved source and the formatter's edit
+        shell: bash
+        run: |
+          set -euo pipefail
+          source=5de0b08c436460cd3f68cf9a3dfc0bef8f891407
+          file=test/syscalls/linux/packet_mmap.cc
+          result="$RUNNER_TEMP/packet-reserve-format"
+          mkdir -p "$result/results"
+          export LINT_CACHE_DIR="$result/lint-cache"
+          test "$(git rev-parse HEAD^)" = "$source"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git checkout --quiet --detach "$source"
+          if tools/lint.sh clang-format > "$result/original.log" 2>&1; then
+            echo "Original formatting unexpectedly passed"
+            exit 1
+          fi
+          grep -F "$file:631:" "$result/original.log"
+          tools/lint.sh --fix clang-format
+          test "$(git diff --name-only)" = "$file"
+          tools/lint.sh clang-format
+          git diff --check
+          git diff --binary -- "$file" > "$result/results/format.patch"
+          python3 - "$file" "$result/results/receipt.json" <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          import subprocess
+          import sys
+          path = Path(sys.argv[1])
+          before = subprocess.check_output(["git", "show", "HEAD:" + str(path)])
+          after = path.read_bytes()
+          assert before != after and b"".join(before.split()) == b"".join(after.split())
+          result = {"source": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+                    "path": str(path), "clang_format": "23.1.1", "original_failed": True, "formatted_passed": True,
+                    "before_sha256": hashlib.sha256(before).hexdigest(), "after_sha256": hashlib.sha256(after).hexdigest()}
+          Path(sys.argv[2]).write_text(json.dumps(result, indent=2) + "\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: packet-reserve-format
+          path: ${{ runner.temp }}/packet-reserve-format/results/
+          if-no-files-found: error
+          retention-days: 14
