@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T16:50:10+00:00",
+    "updatedAt": "2026-11-07T17:00:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -77930,7 +77930,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T16:50:10+00:00",
+      "updatedAt": "2026-11-07T17:00:42+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -77947,7 +77947,7 @@
           ]
         },
         {
-          "text": "Without remote execution, dd2be7670 reached Nogo’s standard-library analysis on both targets in an AMD64 client with empty /bin and /usr/bin. Both builds stopped because compiled archives lacked matching declared source. The original stderr digests identify reflect/internal/example2 on AMD64 and reflect/internal/example1 on ARM64. The focused owner also failed on both targets with ordinary Ubuntu tools. rules_go 0.65.0 excludes these test packages from SDK inputs, while its local builder copies the physical SDK source directory. The earlier remote release receipt records the release products but omits the individual Nogo action. Applying the existing rules_go #4774 patch on 61ff148f0d let both complete releases build locally in the same empty client. All nine ELF digests per target matched the remote reference. The local GoStdlib producer supplied 366 AMD64 and 364 ARM64 archive packages, every one with source. The unchanged Nogo analyzer ran locally and wrote its facts for both targets. The installed AMD64 runsc and netgofer both reported (devel). The ARM64 check inspected the cross-built ELFs. Neither release invoked GoStdlibList.",
+          "text": "Without remote execution, dd2be7670 reached Nogo’s standard-library analysis on both targets in an AMD64 client with empty /bin and /usr/bin. Both builds stopped because compiled archives lacked matching declared source. The original stderr digests identify reflect/internal/example2 on AMD64 and reflect/internal/example1 on ARM64. The focused owner also failed on both targets with ordinary Ubuntu tools. rules_go 0.65.0 excludes these test packages from SDK inputs, while its local builder copies the physical SDK source directory. The earlier remote release receipt records the release products but omits the individual Nogo action. Applying the existing rules_go #4774 patch on 61ff148f0d let both complete releases build locally in the same empty client. All nine ELF digests per target matched the remote reference. The local GoStdlib producer supplied 366 AMD64 and 364 ARM64 archive packages, every one with source. The unchanged Nogo analyzer ran locally and wrote its facts for both targets. The installed AMD64 runsc and netgofer both reported (devel). Neither release invoked GoStdlibList. Separate native AMD64 and ARM64 tests then booted a rootless systrap guest using the nine release files for each architecture from the remote build cache. All nine matched the local build by SHA-256 and size. Each uncached test ran as UID 1001, entered its private root, selected the Sentry from the release by inode, verified its development label and remapped guest stdio, and exited 0. The guests printed default-llvm-sentry-running-under-systrap and their respective architectures, x86_64 and aarch64.",
           "evidence": [
             {
               "label": "Original local release failures, configured owners and stderr digests",
@@ -77964,6 +77964,14 @@
             {
               "label": "Both successful local releases, nine ELF hashes per target, local archive-to-Nogo joins and native CLI versions",
               "url": "https://github.com/tamird/gvisor/actions/runs/42391653387/artifacts/13581779546"
+            },
+            {
+              "label": "Native AMD64 guest using the original nine AMD64 release files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42393974906/artifacts/13582522671"
+            },
+            {
+              "label": "Native ARM64 guest using the original nine ARM64 release files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42393769411/artifacts/13581948915"
             }
           ]
         },
@@ -84002,5 +84010,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T16:50:10+00:00"
+  "updatedAt": "2026-11-07T17:00:42+00:00"
 }
