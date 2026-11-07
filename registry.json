@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T17:36:27+00:00",
+    "updatedAt": "2026-11-07T17:47:20+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57134,9 +57134,21 @@
       "url": "https://github.com/bazel-contrib/rules_python/issues/2500",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T17:57:27.739Z",
-      "summary": "The proposal to check for a child’s required runfile before inheriting the parent’s runfiles is now with the hermetic-launcher maintainers in #95.",
+      "updatedAt": "2026-11-07T17:47:20+00:00",
+      "summary": "The launcher change for independently packaged Python children is under upstream review in hermetic-launcher #96. On native AMD64, all 22 launcher integration cases passed. Both the stock launcher and the new launcher without the option failed to start the independently packaged child. When rules_python named its stage-two bootstrap as a required runfile, the launcher selected the child’s own tree and started it. Direct launches and launches from a parent that declared the child still worked. Downstream use with the default toolchains requires the supplier to merge #96, release new template and finalizer binaries, and update its prebuilt toolchain pins.",
       "evidence": [
+        {
+          "label": "Upstream launcher implementation at cb36641e5",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/pull/96"
+        },
+        {
+          "label": "Native AMD64 supplier suite and packaged-child comparisons",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42397328659/artifacts/13583808395"
+        },
+        {
+          "label": "Supplier workflow for releasing and pinning prebuilt binaries",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/blob/b0d103f65/README.md#updating-the-prebuilt-binaries"
+        },
         {
           "label": "Approved issue filed with hermetic-launcher",
           "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95"
@@ -84588,5 +84600,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T17:36:27+00:00"
+  "updatedAt": "2026-11-07T17:47:20+00:00"
 }
