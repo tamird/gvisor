@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T02:36:21+00:00",
+    "updatedAt": "2026-11-07T02:48:08+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57218,6 +57218,29 @@
         "summary": "Open the revised single-commit PR? A valid alphabetic tag passes when it is the actual stamp.\n\ngit -C ~/code/gvisor range-diff d243ff20a^! d81096ecc^!",
         "body": "The version test searches all of runsc --version for a digit. The OCI\nspec version on the second line satisfies that check even when runsc\nreports a different build. Buildkite also deliberately stamps test\nbranches with an alphabetic tag.\n\nPass STABLE_VERSION to the Go test at link time and compare it with\nthe first line from the built runsc. An unstamped test has no expected\nversion and fails."
       }
+    },
+    {
+      "id": "branch:fuse-file-storage",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/fuse-file-storage",
+      "head": "cf38192044626b448d1bac5ceaab8f1991ccbace",
+      "title": "Remove unused mapping and data trees from FUSE file descriptions",
+      "url": "https://github.com/tamird/gvisor/commit/cf3819204",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T02:48:08+00:00",
+      "summary": "Regular FUSE file descriptions embed two range trees and their locks. Reads and writes use the server, and file mmap returns ENOSYS. The fork compares allocated bytes per descriptor and checks the saved file offset on both state engines.",
+      "evidence": [
+        {
+          "label": "Standalone source",
+          "url": "https://github.com/tamird/gvisor/commit/cf3819204"
+        },
+        {
+          "label": "Native Linux allocation comparison and FUSE package checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42330901861"
+        }
+      ]
     }
   ],
   "edges": [
@@ -64135,7 +64158,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-06T23:30:58.981Z",
+      "updatedAt": "2026-11-07T02:48:08+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -66665,8 +66688,16 @@
           ]
         },
         {
-          "text": "The initialized-array decoder repair has a measured cost: sixteen balanced pairs, two excluded warmups and 96 measured rows on one worker show the arrays fixture slowing by 38.79% (p<.001), with 8,192 additional bytes and one extra allocation per operation. Fields and byte-slice timings are not statistically significant. All 34 native children passed; independent review authenticated source, binary, raw rows and native benchstat. The original repair and measurement remain retained while Node validates a narrower streaming-prefix decoder that removes the eager integer-array temporary. Correctness success does not establish acceptable performance.",
+          "text": "The graph engine on master preserves an initialized root byte of 7 when the saved field is zero and changes it to 9 when the saved field is 9. TestRootZeroFields passed on native AMD64 and ARM64. The separate prototype repair f71005c32 was 38.79% slower on its arrays fixture (p<.001, 16 pairs) and added 8,192 bytes and one allocation per operation. That cost was measured on the prototype, not on the landed implementation.",
           "evidence": [
+            {
+              "label": "Landed regression for initialized root fields",
+              "url": "https://github.com/google/gvisor/blob/70008149c/pkg/state/tests/graph_test.go#L459"
+            },
+            {
+              "label": "Exact unskipped testcase from both native runs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42330588128/artifacts/13557108553"
+            },
             {
               "label": "Matched decoder cohort and original benchmark rows",
               "url": "https://app.buildbuddy.io/invocation/ca96dbd3-befc-4ca1-a70d-b55fa96950ad"
@@ -78205,10 +78236,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-07T00:32:32.030Z",
+      "updatedAt": "2026-11-07T02:48:08+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
+        {
+          "text": "On #16886, borrowing views and stopping the read walk at the first short write did not produce a detectable throughput change relative to the approved PR (64 B p=.402, 64 KiB p=.323, 16 alternating pairs). Both arms verified the same 4 MiB transfer and EOF. The stock comparison is separate: the approved PR was 13.86% slower than its parent on 64 B reads.",
+          "evidence": [
+            {
+              "label": "Approved PR versus early-stop experiment, original benchstat",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42330307273/artifacts/13556909219"
+            },
+            {
+              "label": "Approved PR versus stock, original benchstat",
+              "url": "https://github.com/tamird/gvisor/blob/deb369570/connected-tcp-read-pr16886-parent-benchstat.txt"
+            }
+          ]
+        },
         {
           "text": "After the 16 quick ACKs, a segment filling the receive gap waited 40 ms for a cumulative ACK. In a separate trace, the link rejected the reply that would have carried the ACK and the timer expired in silence. Accepted replies still carried the ACK. The living TCP issue tracks the author’s policy and checkpoint questions.",
           "evidence": [
