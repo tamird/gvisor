@@ -1,35 +1,119 @@
-name: CI
-
-"on":
+name: Check the runsc version line across stamps
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/runsc-version-importers]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.event.created && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    container:
+      image: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 3cc89424abd7e0784c8196b175217aae6e47f919
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select the repository's Bazel
+        shell: bash
+        run: |
+          set -eu
+          mkdir "$RUNNER_TEMP/runsc-version"
+          if [[ $(bazel --version) != "bazel $(cat .bazelversion)" ]]; then
+            cd "$RUNNER_TEMP/runsc-version"
+            curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o bazel
+            echo 'e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel' | sha256sum -c -
+            chmod +x bazel
+            echo "$PWD" >> "$GITHUB_PATH"
+          fi
+      - name: Exercise the actual version test on two tags and two invalid builds
+        shell: python3 {0}
+        run: |
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import platform
+          import subprocess
+          import xml.etree.ElementTree as ET
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          os.environ.update(GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0="safe.directory",
+                            GIT_CONFIG_VALUE_0=os.environ["GITHUB_WORKSPACE"])
+          root = Path(os.environ["RUNNER_TEMP"]) / "runsc-version"
+          build = Path("runsc/BUILD")
+          original = "70008149cff7b8d3b858877ae9c359b9046d19c5"
+          candidate = "3cc89424abd7e0784c8196b175217aae6e47f919"
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+          assert git("rev-parse", "HEAD") == candidate
+          assert git("rev-parse", "HEAD^") == original
+          expected = Path(".bazelversion").read_text().strip()
+          assert subprocess.check_output(["bazel", "--version"], text=True).strip() == "bazel " + expected
+          assert platform.machine() == "x86_64"
+          results = {"candidate": candidate, "parent": original, "bazel": expected, "host": platform.machine(), "cases": {}}
+          client = ["bazel", "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Xmx3g"]
+          config = ["--config=x86_64", "--lockfile_mode=off", "--jobs=4", "--local_resources=memory=8192",
+                    "--spawn_strategy=processwrapper-sandbox,local", "--remote_executor=", "--remote_cache=", "--bes_backend="]
+          args = [*client, "test", *config, "--strategy=TestRunner=local", "--test_env=GO_TEST_WRAP_TESTV=1",
+                  "--nocache_test_results", "--test_output=all", "--test_arg=-test.v"]
+          label = "//runsc:version_test"
+          def run(name, version, valid):
+              log = root / (name + ".log")
+              bep = root / (name + ".bep")
+              with log.open("w") as f:
+                  proc = subprocess.run([*args, "--build_event_json_file=" + str(bep), label], stdout=f, stderr=subprocess.STDOUT)
+              output = log.read_text(errors="replace")
+              row = results["cases"][name] = {"exit": proc.returncode}
+              if proc.returncode != (0 if valid else 3):
+                  print(output[-6000:])
+                  raise SystemExit(1)
+              events = [json.loads(line) for line in bep.read_text().splitlines()]
+              result, = [x["testResult"] for x in events if x.get("id", {}).get("testResult", {}).get("label") == label]
+              row["status"] = result["status"]
+              row["strategy"] = result.get("executionInfo", {}).get("strategy")
+              assert row["strategy"] == "local" and not result.get("cachedLocally")
+              assert row["status"] == ("PASSED" if valid else "FAILED")
+              testlogs = Path("bazel-testlogs/runsc/version_test")
+              case, = [c for c in ET.parse(testlogs / "test.xml").iter("testcase")
+                       if c.get("name", "").rsplit(".", 1)[-1] == "TestVersion"]
+              failed = case.find("failure") is not None or case.find("error") is not None
+              assert case.find("skipped") is None and failed == (not valid)
+              raw = (testlogs / "test.log").read_bytes()
+              assert ("--- PASS: TestVersion" if valid else "--- FAIL: TestVersion") in raw.decode()
+              want = "runsc version " + version
+              if not valid:
+                  assert ('first line of runsc --version = "' + want + '", want a stamped runsc version') in raw.decode()
+              paths = subprocess.check_output([*client, "cquery", *config, "--output=files", "//runsc:runsc"], text=True).splitlines()
+              binary, = [Path(s) for s in paths if s.startswith("bazel-out/")]
+              elf = binary.read_bytes()
+              assert elf[:6] == b"\x7fELF\x02\x01" and int.from_bytes(elf[18:20], "little") == 62
+              lines = subprocess.check_output([str(binary), "--version"], text=True).splitlines()
+              assert lines[0] == want and lines[1].startswith("spec: ") and any(c.isdigit() for c in lines[1])
+              row.update(case=case.get("name"), sha256=hashlib.sha256(elf).hexdigest(), version=lines[0],
+                         spec=lines[1], log_sha256=hashlib.sha256(raw).hexdigest())
+              print(name, row, flush=True)
+          source = build.read_text()
+          stamp = '    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},\n'
+          assert source.index(stamp) < source.index('name = "runsc-plugin-stack"')
+          try:
+              for tag in ("buildkite-test-branch", "20261106.1"):
+                  git("tag", tag)
+                  assert subprocess.check_output(["tools/workspace_status.sh"], text=True).splitlines() == ["STABLE_VERSION " + tag]
+                  run(tag, tag, True)
+                  git("tag", "-d", tag)
+              build.write_text(source.replace(stamp, stamp.replace("{STABLE_VERSION}", ""), 1))
+              run("empty", "", False)
+              build.write_text(source.replace(stamp, "", 1))
+              run("unstamped", "VERSION_MISSING", False)
+          finally:
+              (root / "results.json").write_text(json.dumps(results, indent=2) + "\n")
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: runsc-version-comparison
+          path: ${{ runner.temp }}/runsc-version/results.json
+          if-no-files-found: ignore
+          retention-days: 1
