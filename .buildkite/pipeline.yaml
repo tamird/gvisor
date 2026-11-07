@@ -11,8 +11,6 @@ _templates:
       <<: *retry_settings
   source_test: &source_test
     if: build.env("STAGED_BINARIES") == null
-  source_test_presubmit: &source_test_presubmit
-    if: build.env("STAGED_BINARIES") == null && build.branch != "master"
   source_test_continuous: &source_test_continuous
     if: build.env("STAGED_BINARIES") == null && build.branch == "master"
   gpu_test: &gpu_test
@@ -122,27 +120,6 @@ steps:
     agents:
       arch: "amd64"
       queue: "default"
-
-  # Build runsc and pkg (presubmits only).
-  - <<: *common
-    <<: *source_test_presubmit
-    label: ":world_map: Build runsc and pkg (AMD64)"
-    commands:
-      - "make build TARGETS=//pkg/..."
-      - "make build OPTIONS='--build_tag_filters=-network_plugins' TARGETS='//runsc/...'"
-    agents:
-      arch: "amd64"
-      queue: "default"
-
-  - <<: *common
-    <<: *source_test_presubmit
-    label: ":world_map: Build runsc and pkg (ARM64)"
-    commands:
-      - "make build TARGETS=//pkg/..."
-      - "make build OPTIONS='--build_tag_filters=-network_plugins' TARGETS='//runsc/...'"
-    agents:
-      arch: "arm64"
-      queue: "arm64"
 
   # Build everything (continuous only).
   - <<: *common
@@ -386,9 +363,28 @@ steps:
       queue: "cgroupv1"
   - <<: *common
     <<: *source_test
-    label: ":test_tube: Remote source unit tests (AMD64 and ARM64)"
+    label: ":test_tube: Remote source builds and unit tests (AMD64 and ARM64)"
     key: rbe-source
-    command: '"$${BUILDKITE_SOURCE_BAZEL}" test --config=source-presubmit-mixed'
+    # The two native build jobs and the mixed tests previously had 55 minutes each.
+    timeout_in_minutes: 165
+    command: |
+      failed=()
+      echo "--- Mixed AMD64 and ARM64 unit tests"
+      "$${BUILDKITE_SOURCE_BAZEL}" test --config=source-presubmit-mixed || failed+=("mixed unit tests")
+
+      if [[ "$${BUILDKITE_BRANCH}" != master ]]; then
+        for profile in source-presubmit source-presubmit-arm64; do
+          echo "--- $$profile //pkg/..."
+          "$${BUILDKITE_SOURCE_BAZEL}" build --config="$$profile" //pkg/... || failed+=("$$profile //pkg/...")
+          echo "--- $$profile //runsc/..."
+          "$${BUILDKITE_SOURCE_BAZEL}" build --config="$$profile" --build_tag_filters=-network_plugins //runsc/... || failed+=("$$profile //runsc/...")
+        done
+      fi
+
+      if (( $${#failed[@]} )); then
+        printf 'Failed: %s\n' "$${failed[@]}" >&2
+        exit 1
+      fi
     agents:
       cgroup: "v2"
       arch: "amd64"
