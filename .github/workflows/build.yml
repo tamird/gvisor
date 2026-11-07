@@ -1,35 +1,160 @@
-name: CI
-
+name: Compare the original and native shipping archives on a clean coordinator
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/registry-llvm-native-shipping-comparison]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  shipping:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 145
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the original, diagnostic launcher and native tar sources
+        run: |
+          set -eu
+          umask 077
+          w="$RUNNER_TEMP/registry-shipping"
+          base=dd2be7670c1baaacebfdcab31bb6145ebce39037
+          trial=15a0b6098b03c050baeb404cac40c820d9a19a97
+          candidate=0a0fa1efbacbe9f18b377a954f3f249001c32e21
+          mkdir -p "$w/public" "$w/data" "$w/base" "$w/trial" "$w/candidate"
+          git init -q .
+          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$trial"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$candidate"
+          test "$(git rev-parse "$candidate^")" = "$base"
+          test "$(git rev-parse "$trial^")" = "$base"
+          test "$(git rev-parse "$trial:tools/rules_python_native_launcher.patch")" = fcc585b97c33c4afe7281d3bb32b7e5731da0894
+          git diff --exit-code "$candidate" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/registry_shipping.py' ':!.github/qualification/native_archive.py' ':!.github/qualification/cold_repository.py'
+          for file in registry_shipping.py native_archive.py cold_repository.py; do
+            git show "$GITHUB_SHA:.github/qualification/$file" > "$w/$file"
+          done
+          git archive "$base" | tar -x -C "$w/base"
+          git archive "$trial" | tar -x -C "$w/trial"
+          git archive "$candidate" | tar -x -C "$w/candidate"
+          test ! -e "$w/candidate/tools/rules_python_native_launcher.patch"
+          test ! -d "$w/candidate/test/rbe/release_python"
+          cd "$w"
+          fetch() { curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 --max-time 120 "$1" -o "$2"; }
+          fetch https://raw.githubusercontent.com/tamird/gvisor/e89646dda45516a7fe54427a0586a39dc20a7db3/test/rbe/release_prewarmer/BUILD worker.BUILD
+          fetch https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 bb
+          sha256sum -c <<'SUMS'
+          ae1f23a11f3cb747fbec49a34c510c5ab9dcb75d06d94bfd4d9a49d50c629271  worker.BUILD
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          SUMS
+          chmod 700 bb
+          for src in base trial candidate; do
+            test ! -e "$src/.git"
+            test ! -e "$src/test/rbe/release_prewarmer"
+            mkdir "$src/test/rbe/release_prewarmer"
+            cp worker.BUILD "$src/test/rbe/release_prewarmer/BUILD"
+          done
+          cat > observe <<'BASH'
+          #!/bin/bash
+          set -eu
+          case "$1" in
+            legacy) prog=registry_shipping.py;;
+            tar) prog=native_archive.py;;
+            *) exit 2;;
+          esac
+          shift
+          exec env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" python3 -BEs "$RUNNER_TEMP/registry-shipping/$prog" "$@"
+          BASH
+          cat > submit <<'BASH'
+          #!/bin/bash
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork key}"
+          w="$RUNNER_TEMP/registry-shipping"
+          trap 'rm -f "$w/remote.bazelrc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$w/remote.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          "$w/observe" "$@"
+          BASH
+          chmod 700 observe submit
+      - name: Prepare the standalone Bazel client without credentials
+        id: client
+        run: '"$RUNNER_TEMP/registry-shipping/observe" legacy setup'
+      - name: Verify the legacy archive actions and ordinary writable tmpfs
+        id: legacy
+        run: '"$RUNNER_TEMP/registry-shipping/observe" legacy graphs'
+      - name: Verify both native archiver graphs without credentials
+        id: native
+        if: always() && !cancelled() && steps.client.outcome == 'success'
+        run: '"$RUNNER_TEMP/registry-shipping/observe" tar graphs'
+      - name: Compare the regular and instrumented source memberships
+        if: always() && !cancelled() && steps.native.outcome == 'success'
+        run: '"$RUNNER_TEMP/registry-shipping/observe" tar variants'
+      - name: Execute the original script-bootstrap negative control
+        id: stock
+        if: always() && !cancelled() && steps.legacy.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: '"$RUNNER_TEMP/registry-shipping/submit" legacy build amd64 script'
+      - name: Verify the specific failed writer without credentials
+        if: always() && !cancelled() && steps.stock.outcome == 'success'
+        run: '"$RUNNER_TEMP/registry-shipping/observe" legacy collect amd64 script'
+      - name: Execute the two legacy amd64 archive actions
+        id: legacy_amd64
+        if: always() && !cancelled() && steps.legacy.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: '"$RUNNER_TEMP/registry-shipping/submit" legacy build amd64 native'
+      - name: Record the original amd64 bytes and publisher result
+        if: always() && !cancelled() && steps.legacy_amd64.outcome == 'success'
+        run: |
+          w="$RUNNER_TEMP/registry-shipping"
+          rc=0
+          "$w/observe" legacy collect amd64 native || rc=1
+          "$w/observe" tar original amd64 || rc=1
+          exit "$rc"
+      - name: Execute the native amd64 bzip2 and zstd shipping targets
+        id: native_amd64
+        if: always() && !cancelled() && steps.native.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: '"$RUNNER_TEMP/registry-shipping/submit" tar build amd64'
+      - name: Compare amd64 archive headers, literal runsc readbacks and fresh writer actions
+        if: always() && !cancelled() && steps.native_amd64.outcome == 'success'
+        run: '"$RUNNER_TEMP/registry-shipping/observe" tar collect amd64'
+      - name: Execute the two legacy arm64 archive actions
+        id: legacy_arm64
+        if: always() && !cancelled() && steps.legacy.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: '"$RUNNER_TEMP/registry-shipping/submit" legacy build arm64 native'
+      - name: Record the original arm64 bytes and publisher result
+        if: always() && !cancelled() && steps.legacy_arm64.outcome == 'success'
+        run: |
+          w="$RUNNER_TEMP/registry-shipping"
+          rc=0
+          "$w/observe" legacy collect arm64 native || rc=1
+          "$w/observe" tar original arm64 || rc=1
+          exit "$rc"
+      - name: Execute the native arm64 bzip2 and zstd shipping targets
+        id: native_arm64
+        if: always() && !cancelled() && steps.native.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: '"$RUNNER_TEMP/registry-shipping/submit" tar build arm64'
+      - name: Compare arm64 archive headers, literal runsc readbacks and fresh writer actions
+        if: always() && !cancelled() && steps.native_arm64.outcome == 'success'
+        run: '"$RUNNER_TEMP/registry-shipping/observe" tar collect arm64'
+      - name: Check the generic launcher experiment separately from the native shipping rule
+        if: always() && !cancelled() && steps.legacy.outcome == 'success'
+        run: '"$RUNNER_TEMP/registry-shipping/observe" legacy pair'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: registry-llvm-native-shipping-comparison
+          path: ${{ runner.temp }}/registry-shipping/public/*.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove the private coordinator sources and outputs
+        if: always()
+        run: |
+          docker image rm "empty-shipping:$GITHUB_RUN_ID" >/dev/null 2>&1 || true
+          rm -rf -- "$RUNNER_TEMP/registry-shipping"
