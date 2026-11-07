@@ -1,35 +1,35 @@
-name: CI
-
-"on":
+name: Build the downstream vDSO and exercise the root Gazelle commands
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-downstream-vdso-root]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  downstream:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Pin the compiler, upstream header policy and Linux client
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = b8e467cbdab3db4a9e9c22442f98e4bee0fdcbdd
+          test "$(git rev-parse HEAD^^)" = 42ac721046639db7753e69f9794b296390ef4bb4
+          d="$RUNNER_TEMP/downstream-llvm"
+          mkdir -p "$d"
+          cp .github/qualification/{downstream_llvm,downstream_root}.py "$d/"
+          echo "fbf9fadc326d34e9f7a0c2860c05beaad93cd7c31ebef951c1241da8a390a191  $d/downstream_llvm.py" | sha256sum -c -
+          echo '{"passed":false,"phase":"bootstrap"}' > "$d/result.json"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazelisk" | sha256sum -c -
+          chmod 755 "$d/bazelisk"
+      - name: Link the foreign ARM64 vDSO and exercise the three real root tools
+        run: python3 -B "$RUNNER_TEMP/downstream-llvm/downstream_root.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: downstream-llvm-vdso
+          path: ${{ runner.temp }}/downstream-llvm/result.json
+          if-no-files-found: error
