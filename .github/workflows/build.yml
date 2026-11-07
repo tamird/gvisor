@@ -1,35 +1,85 @@
-name: CI
-
-"on":
+name: Exercise the original mixed vDSO on native ARM64
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/original-mixed-arm-vdso]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  original:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 31
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the original test source and linker output recovery
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/original-arm-vdso"
+          mkdir -m 700 "$w"
+          test "$(uname -m)" = aarch64
+          test "$(git rev-parse HEAD^)" = 097b8d31f4586709d20cf00abb75e8afabb07708
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/original_arm_vdso/recover.py' ':!.github/qualification/original_arm_vdso/exec_cas.py' ':!.github/qualification/original_arm_vdso/BUILD.src' ':!.github/qualification/original_arm_vdso/original.sh'
+          cp .github/qualification/original_arm_vdso/* "$w/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --retry 2 --max-time 100 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$w/bazel"
+          echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $w/bazel" | sha256sum -c -
+          chmod 755 "$w/bazel"
+      - name: Read only the original ARM link output and failed invocations
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -EsB "$RUNNER_TEMP/original-arm-vdso/recover.py"
+      - name: Run the unchanged ABI probe on the original ELF
+        run: |
+          set -eu
+          test -z "${ACCESS:-}"
+          w="$RUNNER_TEMP/original-arm-vdso"
+          echo "7e34fe3c975a09c00f3486e7c9a447493b142e7aa02f989e4222d6cb39e7077a  $w/original.elf" | sha256sum -c -
+          pkg=test/rbe/original_arm_vdso
+          mkdir "$pkg"
+          cp "$w/BUILD.src" "$pkg/BUILD"
+          cp "$w/"{original.sh,original.elf} vdso/{mixed_abi.py,check_vdso.py} "$pkg/"
+          cmp vdso/check_vdso.py "$pkg/check_vdso.py"
+          cmp vdso/mixed_abi.py "$pkg/mixed_abi.py"
+          code=0
+          "$w/bazel" --nosystem_rc --nohome_rc test --spawn_strategy=sandboxed --strategy=TestRunner=standalone --remote_executor= --remote_cache= --bes_backend= --nocache_test_results --flaky_test_attempts=1 --jobs=3 --build_event_json_file="$w/native.bep" //test/rbe/original_arm_vdso:original_arm64 > "$w/native.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$w/exit"
+      - name: Bind actual native result and source-matched versioned symbols
+        if: always() && !cancelled()
+        run: |
+          python3 -IB - <<'PY'
+          import hashlib,json,os,platform,re
+          from pathlib import Path
+          w=Path(os.environ["RUNNER_TEMP"])/"original-arm-vdso";r={"verified":False}
+          results=[]
+          if (w/"native.bep").is_file():
+              for l in (w/"native.bep").open():
+                  e=json.loads(l); t=e.get("testResult"); own=e["id"].get("testResult",{}).get("label")
+                  if t and own=="//test/rbe/original_arm_vdso:original_arm64":results.append(t)
+          p=Path("bazel-testlogs/test/rbe/original_arm_vdso/original_arm64/test.log")
+          if len(results)==1 and p.is_file():
+              t=results[0];b=p.read_bytes();logs=[x for x in t["testActionOutput"] if x["name"]=="test.log"]
+              h=hashlib.sha256(b).hexdigest(); row=logs[0] if logs else {}
+              d=re.search(r"/blobs/([a-f0-9]{64})/(\d+)$",row.get("uri","")); expect=(d[1],int(d[2])) if d else (row.get("digest"),int(row.get("length",0)))
+              lines=b.decode(errors="replace").splitlines();items=[json.loads(l.removeprefix("GVISOR_VDSO ")) for l in lines if l.startswith("GVISOR_VDSO ")]
+              r.update(log_hash=h,log_matches=expect==(h,len(b)),native=platform.machine(),status=t["status"],
+                  strategy=t.get("executionInfo",{}).get("strategy"),cached=bool(t.get("cachedLocally") or t.get("executionInfo",{}).get("cachedRemotely")))
+              if len(items)==1:
+                  v=items[0];names={"__kernel_rt_sigreturn","__kernel_clock_gettime","__kernel_clock_getres","__kernel_gettimeofday"}
+                  if set(v["symbols"])==set(v["symbol_offsets"])==names and all(isinstance(i,int) and 0<=i<2**21 for i in v["symbol_offsets"].values()) and v["version"]=="LINUX_2.6.39" and v["called"]=="__kernel_clock_gettime" and all(re.fullmatch(r"[a-f0-9]{64}",v[k]) for k in ("sha256","load_sha256")):
+                      r["elf"]={k:v[k] for k in ("arch","machine","size","version","called","sha256","load_sha256","symbol_offsets")}
+                      r["verified"]=(r["log_matches"] and v["checked"] and v["sha256"]=="7e34fe3c975a09c00f3486e7c9a447493b142e7aa02f989e4222d6cb39e7077a" and r["native"]==v["arch"]=="aarch64" and v["machine"]==183 and not r["cached"] and r["status"]=="PASSED" and r["strategy"] in ("standalone","local") and (w/"exit").read_text().strip()=="0")
+              if not r["verified"]:r["signals"]=[s for s in ("Traceback","AssertionError","CalledProcessError","No such file","Segmentation fault","CRITICAL") if any(s in l for l in lines)]
+          (w/"native.json").write_text(json.dumps(r,indent=1)+"\n")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: original-mixed-arm-vdso
+          path: |
+            ${{ runner.temp }}/original-arm-vdso/original.json
+            ${{ runner.temp }}/original-arm-vdso/native.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Confirm the original linked ELF ran
+        run: jq -e .verified "$RUNNER_TEMP/original-arm-vdso/native.json"

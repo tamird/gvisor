@@ -1,0 +1,8 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+sh_test(
+    name = "original_arm64",
+    srcs = ["original.sh"],
+    args = ["$(location mixed_abi.py)", "$(location original.elf)", "$(location check_vdso.py)"],
+    data = ["mixed_abi.py", "original.elf", "check_vdso.py"],
+)
