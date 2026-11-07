@@ -20,6 +20,7 @@ package fdbased
 import (
 	"encoding/binary"
 
+	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/rand"
 	"gvisor.dev/gvisor/pkg/sleep"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -43,7 +44,7 @@ type processor struct {
 	closeWaker  sleep.Waker
 }
 
-func (p *processor) start() {
+func (p *processor) start(m *processorManager) {
 	for {
 		switch w := p.sleeper.Fetch(true); {
 		case w == &p.packetWaker:
@@ -52,6 +53,9 @@ func (p *processor) start() {
 			p.mu.Lock()
 			p.pkts.Reset()
 			p.mu.Unlock()
+			if m.workersRemaining.Add(-1) == 0 && m.afterDrain != nil {
+				m.afterDrain()
+			}
 			return
 		}
 	}
@@ -75,6 +79,11 @@ type processorManager struct {
 	processors []processor
 	seed       uint32
 	ready      []bool
+
+	// close publishes afterDrain before setting workersRemaining and waking
+	// the workers. Only the last worker reads it after decrementing the count.
+	workersRemaining atomicbitops.Int64
+	afterDrain       func()
 }
 
 // start creates the packet queues and starts their background workers.
@@ -92,7 +101,7 @@ func (m *processorManager) start(count int, groEnabled bool, dispatcher stack.Ne
 		p := &workers[i]
 		p.sleeper.AddWaker(&p.packetWaker)
 		p.sleeper.AddWaker(&p.closeWaker)
-		go p.start()
+		go p.start(m)
 	}
 }
 
@@ -258,6 +267,7 @@ func (m *processorManager) detach() {
 
 func (m *processorManager) close() {
 	workers := m.backgroundProcessors()
+	m.workersRemaining.Store(int64(len(workers)))
 	for i := range workers {
 		workers[i].closeWaker.Assert()
 	}
