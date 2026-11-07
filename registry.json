@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T11:47:58+00:00",
+    "updatedAt": "2026-11-07T11:53:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59624,9 +59624,13 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
       "group": "buildbuddy",
       "status": "open",
-      "updatedAt": "2026-11-07T11:47:58+00:00",
+      "updatedAt": "2026-11-07T11:53:44+00:00",
       "summary": "The draft upgrades BuildBuddy’s ARM64 Firecracker guest kernel to 6.1. In isolated QEMU guests, its published image reported a synchronized filter on both test threads. The published 5.10 image and a shared 5.10.0 ARM64 Firecracker worker reported it only on the installing thread. Both threads enforced the filter in all three tests.",
       "evidence": [
+        {
+          "label": "Published comparison and request to roll out the ARM64 fix",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090#issuecomment-6706591708"
+        },
         {
           "label": "Same gVisor test on both published ARM64 kernel images in isolated QEMU guests",
           "url": "https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151"
@@ -59640,16 +59644,17 @@
           "url": "https://github.com/torvalds/linux/commit/b4d8a58f8"
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "d2c5b1a34bf13568b498dc2f42361ec9f56c7de6",
-        "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
-        "requestedAt": "2026-11-07T11:47:58+00:00",
-        "title": "Ask BuildBuddy to roll out the ARM64 procfs reporting fix",
-        "summary": "Review the proposed rollout request and the paired QEMU and shared-worker results.",
-        "body": "The ARM64 6.1 kernel in this PR fixes the `Seccomp_filters` discrepancy in gVisor’s two-thread test in QEMU. Both the published 5.10 image and this 6.1 image enforced the synchronized filter on both threads. On 5.10, `/proc/thread-self/status` counted the new filter only on the installing thread. On 6.1, both counts increased by one. [Paired QEMU result](https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151)\n\nA shared ARM64 Firecracker worker running 5.10.0 showed the same one-thread count. gVisor’s Sentry posture test fails there on differing per-thread counts. Could you roll out an ARM64 guest with this procfs fix? [Shared-worker result](https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404)\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "d2c5b1a34bf13568b498dc2f42361ec9f56c7de6",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
+          "body": "The ARM64 6.1 kernel in this PR fixes the `Seccomp_filters` discrepancy in gVisor’s two-thread test in QEMU. Both the published 5.10 image and this 6.1 image enforced the synchronized filter on both threads. On 5.10, `/proc/thread-self/status` counted the new filter only on the installing thread. On 6.1, both counts increased by one. [Paired QEMU result](https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151)\n\nA shared ARM64 Firecracker worker running 5.10.0 showed the same one-thread count. gVisor’s Sentry posture test fails there on differing per-thread counts. Could you roll out an ARM64 guest with this procfs fix? [Shared-worker result](https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-07T11:53:00+00:00",
+          "postedURL": "https://github.com/buildbuddy-io/buildbuddy/pull/11090#issuecomment-6706591708"
+        }
+      ]
     }
   ],
   "edges": [
@@ -82648,5 +82653,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T11:47:58+00:00"
+  "updatedAt": "2026-11-07T11:53:44+00:00"
 }
