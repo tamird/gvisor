@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T00:41:44.087Z",
+    "updatedAt": "2026-11-07T00:50:21.118Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3279,23 +3279,17 @@
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "owner": "root",
-        "disposition": "Amendment delivered; requested Xeon comparison reported complete",
+        "owner": "Agent",
         "sourceHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
-        "observedAt": "2026-10-26T00:43:09.596621+00:00",
-        "nextAction": "Follow current-head maintainer review and matching import. The October 25 review reports the requested Xeon comparison against 9b469b192862 and says the cold-size regression is gone. Preserve that source-specific reported evidence; it is not a new execution of current 36900f or fresh human approval. No duplicate benchmark request or acknowledgement.",
+        "observedAt": "2026-11-07T00:50:21.118Z",
+        "disposition": "Merged #17086 changed disk-backed zeroing. The allocator and its tests now conflict with this PR.",
+        "nextAction": "Preserve the merged disk-backed behavior and qualify the parts of AllocateAndCommit that still need a fix.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15181",
-          "https://github.com/tamird/gvisor/commit/854bf04d57cd4bb5ec7edfb124852a4cd8361eca",
-          "https://github.com/tamird/gvisor/commit/3255a52b212edcd2f526d3fb1afaa6d1523f7520",
-          "https://github.com/google/gvisor/pull/15181#discussion_r4362212232",
-          "https://github.com/google/gvisor/pull/15181#discussion_r4362531544",
-          "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e",
-          "https://github.com/google/gvisor/pull/15181#discussion_r4363233296",
-          "https://github.com/google/gvisor/pull/15181#pullrequestreview-5642039578"
+          "https://github.com/google/gvisor/pull/17086",
+          "https://github.com/google/gvisor/pull/15181"
         ]
       },
-      "updatedAt": "2026-10-26T00:43:09.596621+00:00",
+      "updatedAt": "2026-11-07T00:50:21.118Z",
       "head": "36900f03504f22a8a89271d95f9beaa172f9d233",
       "evidence": [
         {
@@ -4857,10 +4851,14 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn AMD64, c0511e1cd built all 2,880 build-only targets and passed all 373 fresh remote test shards. On ARM64, 353c484b4 built all 3,243 selected targets and ran all 373 shards. 371 passed. The cmd_test Sentry posture checks failed and netgofer_test timed out. An independent analysis matched the 363 owners and shard counts, including all six ARM64 Firecracker assignments.\n\nA native two-worker comparison reproduced the ARM64 posture counter discrepancy without starting gVisor. The synchronized test operation took effect on both threads on both architectures. Only the ARM64 worker running Linux 5.10.0 reported inconsistent counts. The unchanged posture tests still need a run on a corrected ARM64 kernel. Separately, the fork-only netgofer shutdown candidate passed 16 native ARM64 trials and preserved the final queued frame in all 16 delivery trials. These focused results leave the original full-run count at 371/373.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects. Within the mixed profile, the two AMD64 platform names produced distinct Bazel actions for LLVM’s empty.pic.o. With the supplier’s C++ path-mapping settings, they used the same compiler inputs and command, and the second build reused the 576-byte object from a temporary disk cache. The result covers this one compile.",
-      "updatedAt": "2026-11-07T00:32:32.030Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn AMD64, c0511e1cd built all 2,880 build-only targets and passed all 373 fresh remote test shards. On ARM64, 353c484b4 built all 3,243 selected targets and ran all 373 shards. 371 passed. The cmd_test Sentry posture checks failed and netgofer_test timed out. An independent analysis matched the 363 owners and shard counts, including all six ARM64 Firecracker assignments.\n\nA native two-worker comparison reproduced the ARM64 posture counter discrepancy without starting gVisor. The synchronized test operation took effect on both threads on both architectures. Only the ARM64 worker running Linux 5.10.0 reported inconsistent counts. On native hosted ARM64 Linux 6.8.0, all five previously failing Sentry checks and their five Gofer counterparts passed using the unchanged test executable. The outer Bazel command exited 1, so this run establishes the individual case outcomes only. Separately, the fork-only netgofer shutdown candidate passed 16 native ARM64 trials and preserved the final queued frame in all 16 delivery trials. These focused results leave the original full-run count at 371/373.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects. Within the mixed profile, the two AMD64 platform names produced distinct Bazel actions for LLVM’s empty.pic.o. With the supplier’s C++ path-mapping settings, they used the same compiler inputs and command, and the second build reused the 576-byte object from a temporary disk cache. The result covers this one compile.",
+      "updatedAt": "2026-11-07T00:50:21.118Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "label": "Original posture case outcomes on hosted ARM64 and the outer Bazel exit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42319546366/artifacts/13552427196"
+        },
         {
           "label": "Serialized C++ actions and observed cache reuse on the two AMD64 platform selections",
           "url": "https://github.com/tamird/gvisor/actions/runs/42318319615/artifacts/13551722923"
@@ -32286,22 +32284,14 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/16549",
       "head": "a869d645affee8384c7e6b063a0ebec9f1a64360",
-      "status": "open",
-      "updatedAt": "2026-11-06T23:08:10.479Z",
+      "status": "merged",
+      "updatedAt": "2026-11-07T00:50:21.118Z",
       "summary": "Declare the relative /etc/resolv.conf symlink as a layer on the pinned BusyBox image. #16549 preserves the approved resolver edits and the merged fsstress target. Earlier qualification covered both architecture archives, Make loading and AMD64 containerd mount-over-symlink tests.",
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "a869d645affee8384c7e6b063a0ebec9f1a64360",
-        "observedAt": "2026-11-06T23:08:10.479Z",
-        "disposition": "Copybara reports that the rebased change was imported into the internal review system.",
-        "nextAction": "Follow the resulting import through upstream integration.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/compare/7c3249833...a869d645a",
-          "https://github.com/google/gvisor/pull/16549",
-          "https://api.github.com/repos/google/gvisor/commits/a869d645a/status"
-        ]
-      },
       "evidence": [
+        {
+          "label": "Merged resolver image migration",
+          "url": "https://github.com/google/gvisor/commit/70008149c"
+        },
         {
           "label": "Rebased resolver",
           "url": "https://github.com/tamird/gvisor/commit/e4d530d2aa5499b279d08a1c88abc17c99abf933"
@@ -55603,9 +55593,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T00:41:44.087Z",
-      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. This Linux Bazel query checked target declarations. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.",
+      "updatedAt": "2026-11-07T00:50:21.118Z",
+      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. With only the shared Go default changed, one Bazel analysis selected all 700 expected TestRunner actions. Each architecture had 346 OCI shards and four Firecracker shards requiring root and IPv6. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.",
       "evidence": [
+        {
+          "label": "All 700 configured Go test shards, worker assignments and original expected shard numbers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42320043101/artifacts/13552632612"
+        },
         {
           "label": "Six original tests on native AMD64 and ARM64 with matching case outcomes, worker records and ELF identities",
           "url": "https://github.com/tamird/gvisor/actions/runs/42319086567/artifacts/13552696141"
