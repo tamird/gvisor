@@ -1,35 +1,41 @@
-name: CI
-
-"on":
+name: Check the TMPFS parent link guard
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tmpfs-parent-inode-lock]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the original Nogo owner with and without the guard
+        env:
+          PRODUCT: 6fd4f412b1351110e06f4c3149d9530676dfaf3f
+          ORIGINAL: e438da4be1095b62b03343a3ad78bf3c46f87e4f
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = "$ORIGINAL"
+          test "$(uname -m)" = x86_64
+          d="$RUNNER_TEMP/tmpfs-lock"
+          mkdir -p "$d"
+          printf '{"source":"%s","phase":"setup"}\n' "$PRODUCT" > "$d/result.json"
+          cp .github/qualification/tmpfs_lock.py "$d/"
+          git switch --detach "$PRODUCT"
+          curl -fsSL --retry 2 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazelisk" | sha256sum -c -
+          chmod +x "$d/bazelisk"
+          test "$("$d/bazelisk" --version)" = "bazel $(cat .bazelversion)"
+          python3 -B "$d/tmpfs_lock.py" "$d"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: tmpfs-parent-lock
+          path: ${{ runner.temp }}/tmpfs-lock/result.json
+          if-no-files-found: error
