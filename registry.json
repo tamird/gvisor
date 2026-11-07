@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T22:10:20+00:00",
+    "updatedAt": "2026-11-07T22:15:59+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52626,8 +52626,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T19:54:18.116293+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.",
+      "updatedAt": "2026-11-07T22:15:59+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52676,6 +52676,10 @@
         {
           "label": "The module map generator uses the same per-CPU transition",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/eb198127b"
+        },
+        {
+          "label": "Upstream review requests one platform transition",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
         }
       ],
       "settledReviews": [
@@ -61427,6 +61431,48 @@
         "requestedAt": "2026-11-07T20:20:11+00:00",
         "summary": "Open this single-commit PR to build the test binaries as default outputs and run a private native helper?",
         "body": "The root build_test uses sixteen shell actions to mark its Go test\nbinaries as built, then starts an empty Bash script. Workers without\nbash or env cannot run those actions or the test.\n\nBazel finishes building a test target’s default outputs before it\nexecutes the test. Expose the requested binaries as default outputs\nand use a small test-only Go executable. This keeps the binaries out\nof the test runfiles."
+      }
+    },
+    {
+      "id": "branch:cares-registry-platform-header",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/cares-registry-platform-header",
+      "head": "a5f2d32782f26b40f60fc91bb67f236b1c51a311",
+      "title": "Select the c-ares platform header without a shell",
+      "url": "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T22:15:59+00:00",
+      "summary": "gVisor’s PacketImpact POSIX server uses gRPC 1.84.0. This MODULE.bazel change raises its selected c-ares version from 1.34.5.bcr.2 to the already-released 1.34.9.bcr.1. The previous package staged two headers with CopyFile actions. On Linux AMD64 and ARM64, the updated package uses one symlink for ares_config.h and reads ares_build.h directly from source.\n\nOn native Linux AMD64 the C++ server handled Socket and Close RPCs sent to an IP literal, and the canonical license data matched byte for byte. That run’s original header query missed the actions. The corrected query and materialized headers are in the second receipt. The tests cover the IP-literal RPC and header staging. DNS lookup and a full server build on an empty worker remain unverified. The reviewed commit and the tested ca5436ed33 have the same tree.",
+      "evidence": [
+        {
+          "label": "Published fork branch",
+          "url": "https://github.com/tamird/gvisor/tree/research/cares-registry-platform-header"
+        },
+        {
+          "label": "Merged BCR supplier change",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11519"
+        },
+        {
+          "label": "Original version selection, license and native Socket/Close RPC",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42416125309/artifacts/13591904210"
+        },
+        {
+          "label": "Corrected header action and materialized file checks for AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42419207187/artifacts/13593015867"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a5f2d32782f26b40f60fc91bb67f236b1c51a311",
+        "baseHead": "fb9ee22abe02f61549755018afd2c124e55eea98",
+        "url": "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311",
+        "title": "Select the c-ares platform header without a shell",
+        "requestedAt": "2026-11-07T22:15:59+00:00",
+        "summary": "Open this single-commit gVisor PR to adopt the released c-ares header fix?",
+        "body": "The packetimpact POSIX server links gRPC. Its selected c-ares package\nstages two headers with shell copy actions. A worker without a shell\ncannot compile the server.\n\nRequire the registry release that symlinks the configured header and\nprovides ares_build.h as a source file. Set repo_name to None because\ngVisor does not use a c-ares repository name."
       }
     }
   ],
@@ -85073,5 +85119,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T22:10:20+00:00"
+  "updatedAt": "2026-11-07T22:15:59+00:00"
 }
