@@ -1,5 +1,6 @@
-"""Check the reduced Ubuntu builder around the existing ARM64 ELF verifier."""
+"""Run the release ELF verifier without native or cross compiler packages."""
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -38,14 +39,17 @@ def output(*argv):
 
 
 def main():
+    arch = os.environ["RELEASE_ARCH"]
+    config, cpu, machine = {"arm64": ("aarch64", "aarch64", 183), "amd64": ("x86_64", "k8", 62)}[arch]
     runtime.BAZEL = runtime.q.BAZEL = BAZEL
     result = {
         "source": SOURCE,
         "host": platform.machine(),
         "image_id": os.environ["BUILDER_IMAGE"],
-        "scope": "ARM64 runsc and Sentry built in the reduced AMD64 Ubuntu image; QEMU user-mode CLI version",
+        "scope": "runsc and Sentry built on a compiler-free AMD64 Jammy client",
+        "target": arch,
         "roots": runtime.ROOTS,
-        "arm64": {},
+        "targetResult": {},
     }
     path = runtime.TASK / "verdict.json"
 
@@ -58,22 +62,29 @@ def main():
     assert output("git", "rev-parse", "HEAD") == SOURCE
     assert result["host"] == "x86_64"
     result["bazel"] = output(BAZEL, "--version")
-    result["build_essential"] = installed_version("build-essential")
-    result["native_gcc"] = output("gcc", "-dumpmachine")
+    packages = output("dpkg-query", "-W", "-f=${binary:Package}=${Version}\n")
+    result["packagesSHA256"] = hashlib.sha256(packages.encode()).hexdigest()
+    result["client_packages"] = {name: installed_version(name) for name in
+                                 ("git", "python3", "ca-certificates", "patch", "zip", "unzip")}
+    result["system_compiler_packages"] = {name: installed_version(name) for name in
+                                          ("build-essential", "make", "gcc", "g++", "binutils", "clang", "lld", "docker.io")}
+    result["system_tools"] = {name: shutil.which(name) for name in
+                              ("cc", "c++", "gcc", "g++", "clang", "clang++", "as", "ld", "ld.lld",
+                               "ar", "nm", "objcopy", "readelf", "make", "docker")}
     result["foreign_packages"] = {p: installed_version(p) for p in FOREIGN_PACKAGES}
     result["foreign_tools"] = {
         t: shutil.which("aarch64-linux-gnu-" + t) for t in FOREIGN_TOOLS
     }
     save()
     assert result["bazel"] == "bazel 9.3.1"
-    assert result["build_essential"].startswith("installed ")
-    assert result["native_gcc"] == "x86_64-linux-gnu"
+    assert all(v is None for v in result["system_compiler_packages"].values())
+    assert all(v is None for v in result["system_tools"].values())
     assert all(v is None for v in result["foreign_packages"].values())
     assert all(v is None for v in result["foreign_tools"].values())
 
-    arm = result["arm64"]
+    arm = result["targetResult"]
     try:
-        runtime.phase("arm64", "aarch64", "aarch64", 183, arm, save)
+        runtime.phase(arch, config, cpu, machine, arm, save)
     finally:
         save()
     observed = {(runtime.native_owner(owner), kind, arch)
@@ -82,7 +93,7 @@ def main():
                 for kind in ("CppCompile", "CppLink") for arch in ("x86_64", "aarch64")}
     result["actual_compilers_and_links"] = sorted(observed)
     result["verified"] = bool(
-        arm.get("verified") and arm["compiler_flag"]["true"] and expected <= observed
+        arm.get("verified") and arm["compiler_flag"]["true"] and (arch == "amd64" or expected <= observed)
     )
     save()
     return 0 if result["verified"] else 1
