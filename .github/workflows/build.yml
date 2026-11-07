@@ -1,35 +1,94 @@
-name: CI
-
-"on":
+name: Qualify veth port MTU readback on Linux and gVisor
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/veth-port-mtu-netlink-bazel8]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  fifo:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Bind the syscall sources and prepare the GNU coordinator
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = ba42aa160e3fec678426c4b6037a5b715b545506
+          test "$(git rev-parse HEAD^^)" = fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8
+          test "$(git rev-parse HEAD^^^)" = 400bd2c81dcc0349033a8218bdf38e239d256678
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/veth_ports.py'
+          git diff --exit-code HEAD^^ HEAD^ -- . ':!pkg/tcpip/link/veth'
+          git diff --exit-code HEAD^^^ HEAD^ -- pkg/tcpip/link/veth test/rtnetlink/linux/setlink_test.sh
+          work="$RUNNER_TEMP/fifo"
+          mkdir -m 700 "$work" "$work/platform"
+          cp .github/qualification/veth_ports.py "$work/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 8.8.1
+          curl -fsSL --retry 2 --max-time 100 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazel" | sha256sum -c -
+          chmod 0755 "$work/bazel"
+          printf '%s\n' 'module(name = "fifo_worker")' > "$work/platform/MODULE.bazel"
+          cat > "$work/platform/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "EstimatedMemory": "16GB",
+                  "test.EstimatedMemory": "2GB",
+                  "test.dockerUser": "root",
+                  "workload-isolation-type": "firecracker",
+                  "network-enable-ipv6": "true",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          docker run --init -d --name fifo-gnu --entrypoint /bin/sleep -e HOME=/home/runner -e USER=runner \
+            -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro -v "$work:$work" \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$image" infinity
+          docker exec --user 0:0 fifo-gnu mkdir -p /home/runner
+          docker exec --user 0:0 fifo-gnu chown "$(id -u):$(id -g)" /home/runner
+          test "$(docker exec --user "$(id -u):$(id -g)" fifo-gnu "$work/bazel" --version)" = 'bazel 8.8.1'
+      - name: Run the Linux, stock, and fixed netlink cases and the Go checkpoint test
+        timeout-minutes: 72
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          work="$RUNNER_TEMP/fifo"
+          rc="$work/private.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat >"$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --strategy=TestRunner=remote --noremote_local_fallback --remote_timeout=10m
+          build --host_platform=@fifo_worker//:gnu --extra_execution_platforms=@fifo_worker//:gnu
+          RC
+          printf 'build --inject_repository=fifo_worker=%s/platform\n' "$work" >>"$rc"
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "${BUILDBUDDY_API_KEY:?}" "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          test "$(git rev-parse HEAD)" = ba42aa160e3fec678426c4b6037a5b715b545506
+          docker exec --user "$(id -u):$(id -g)" fifo-gnu python3 -IB "$work/veth_ports.py" run "$work"
+      - name: Check every original result without the client credential
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/fifo"
+          test ! -e "$work/private.rc"
+          if [[ "$(docker inspect --format '{{.State.Running}}' fifo-gnu 2>/dev/null || true)" = true ]]; then
+            docker exec --user "$(id -u):$(id -g)" fifo-gnu python3 -IB "$work/veth_ports.py" report "$work"
+          else
+            python3 -IB "$work/veth_ports.py" report "$work"
+          fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: veth-port-mtu-netlink
+          path: ${{ runner.temp }}/fifo/result.json
+          retention-days: 14
+          if-no-files-found: error
