@@ -1,35 +1,39 @@
-name: CI
-
+name: Reproduce the syscall size trial's native build
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/syscall-size-build-diagnostic]
+permissions: {}
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the original product and prepare its Jammy client
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/syscall-build"
+          mkdir -p "$work"
+          git init -q .
+          GIT_TERMINAL_PROMPT=0 git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          product=e988ba7ba6296bc23d2b8d6bff73d1a10bb9fd6a
+          test "$(git rev-parse FETCH_HEAD^)" = "$product"
+          git diff --exit-code "$product" FETCH_HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/syscall_size_build.py'
+          git show 'FETCH_HEAD:.github/qualification/syscall_size_build.py' > "$work/reproduce.py"
+          git checkout -q --detach "$product"
+          test "$(cat .bazelversion)" = 9.3.1
+          sudo apt-get -qq update
+          sudo apt-get -qq install --no-install-recommends crossbuild-essential-arm64 libnuma-dev
+          curl --fail --silent --show-error --location --proto '=https' --retry 3 --output "$work/bazel" https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64
+          printf '%s  %s\n' 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c "$work/bazel" | sha256sum --check
+          chmod 700 "$work/bazel"
+      - name: Analyze and compile the three original targets without executing them
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/syscall-build/reproduce.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: syscall-size-build-diagnostic
+          path: ${{ runner.temp }}/syscall-build/diagnostic.json
+          if-no-files-found: error
+          retention-days: 7
