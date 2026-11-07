@@ -204,6 +204,30 @@ test('an open current-source export does not request a rebase of an older export
   assert.equal(run('rebaseNeedsComparison(nodeInput)'), true);
 });
 
+test('an observed zero-check head needs maintainer review without a check refresh or passing result', () => {
+  const context = client(), head = 'a'.repeat(40);
+  const pr = { repo: 'bazel-contrib/rules_distroless', number: 293, head, branchHead: head, status: 'open',
+    mergeable: 'MERGEABLE', headOwner: 'tamird', importPolicy: 'none', imports: [], importsComplete: true,
+    reviewDecision: 'REVIEW_REQUIRED', githubReviewDecision: 'REVIEW_REQUIRED', reviewsComplete: true,
+    reviewRequests: [], reviewRequestsComplete: true, labels: [], labelsComplete: true,
+    threads: {complete: true, unresolved: 0}, feedback: {complete: true, items: []},
+    checks: {state: null, complete: true, reportedTotal: 0, total: 0, contexts: [], supersededContexts: []} };
+  context.n = { id: 'pr:bazel-contrib/rules_distroless:293', type: 'pr', number: 293, head, repo: pr.repo, github: pr };
+  const run = expression => vm.runInContext(expression, context);
+  const reasons = () => [...run('attentionReasons(n, "tamird").map(reason=>reason.id)')];
+  assert.equal(run('completeChecks(n.github)'), true);
+  assert.equal(run('checksPassed(n.github)'), false);
+  assert.equal(run('checkInfo(n.github).text'), 'No published checks');
+  assert.ok(reasons().includes('maintainer-review'));
+  assert.ok(!reasons().includes('agent-refresh'));
+  for (const incomplete of [null, {...pr.checks, complete: false}, {...pr.checks, reportedTotal: 1}]) {
+    pr.checks = incomplete;
+    assert.equal(run('completeChecks(n.github)'), false);
+    assert.equal(run('checksPassed(n.github)'), false);
+    assert.ok(reasons().includes('agent-refresh'));
+  }
+});
+
 test('every open snapshot PR shares its import decision with the periodic planner', () => {
   const context = client();
   const registry = JSON.parse(readFileSync(new URL('./registry.json', import.meta.url)));

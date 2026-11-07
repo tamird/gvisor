@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from work_states import checks_passed
+from work_states import check_qualifier, checks_passed, complete_checks, pr_states
 
 
 updater = importlib.import_module("update-status")
@@ -1369,6 +1369,26 @@ class ProviderStatusTest(unittest.TestCase):
             "state": "FAILURE", "contexts": {"totalCount": len(checks), "nodes": checks,
                                                "pageInfo": {"hasNextPage": not complete}}}
         return updater.normalize(pr)
+
+    def test_current_head_without_a_rollup_has_no_published_checks(self) -> None:
+        raw = raw_pr(293)
+        commit = raw["commits"]["nodes"][0]["commit"]
+        commit["statusCheckRollup"] = None
+        pr = updater.normalize(raw)
+        self.assertTrue(complete_checks(pr))
+        self.assertEqual(check_qualifier(pr), "No published checks")
+        self.assertFalse(checks_passed(pr))
+        self.assertNotIn("waiting-merge", pr_states({**pr, "importPolicy": "none", "mergeable": "MERGEABLE"}))
+        incomplete = self.normalize_checks([], complete=False)
+        self.assertFalse(complete_checks(incomplete))
+        self.assertFalse(checks_passed(incomplete))
+        self.assertFalse(complete_checks({"checks": None}))
+        del commit["statusCheckRollup"]
+        with self.assertRaises(KeyError):
+            updater.normalize(raw)
+        commit.update(oid="f" * 40, statusCheckRollup=None)
+        with self.assertRaisesRegex(RuntimeError, "head changed"):
+            updater.normalize(raw)
 
     def test_new_attempt_replaces_cancellation_without_changing_raw_rollup(self) -> None:
         old, current = self.check("old", "CANCELLED", 5957), self.check("new", "SUCCESS", 5958)

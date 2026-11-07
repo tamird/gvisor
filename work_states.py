@@ -93,8 +93,9 @@ def is_canceled_validation_check(check: dict) -> bool:
 
 def complete_checks(pr: dict) -> bool:
     checks = pr.get("checks") or {}
-    return bool(checks.get("complete") and checks.get("total", 0) > 0
-                and len(checks.get("contexts", [])) == checks["total"])
+    contexts = checks.get("contexts")
+    return bool(checks.get("complete") and isinstance(contexts, list) and len(contexts) == checks.get("total")
+                and (contexts or "state" in checks and checks["state"] is None and checks.get("reportedTotal") == 0))
 
 
 def validation_checks(pr: dict) -> list[dict]:
@@ -143,6 +144,7 @@ def check_qualifier(pr: dict) -> str:
     validation = ("Checks failing" if states & FAILURES else "Checks canceled" if canceled else "Checks pending" if states & PENDING
                   else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
                   and (not advisory or any(item["state"] == "SUCCESS" for item in validation_checks(pr)))
+                  else "No published checks" if complete_checks(pr) and pr["checks"]["total"] == 0
                   else "Checks unknown")
     if advisory:
         validation += "; First Pass advisory"

@@ -475,7 +475,10 @@ def normalize(pr: dict) -> dict:
     if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
         raise RuntimeError(f"PR #{pr['number']} head changed during retrieval")
     rollup = commits[0]["commit"]["statusCheckRollup"]
-    checks = None
+    # GitHub returned this exact commit. A null rollup means it has no
+    # published checks; there is no aggregate state or passing result.
+    checks = {"state": None, "total": 0, "reportedTotal": 0, "supersededContexts": [],
+              "complete": True, "contexts": []}
     if rollup is not None:
         connection = rollup["contexts"]
         contexts = []

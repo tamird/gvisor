@@ -179,7 +179,8 @@ function reviewInfo(pr, node) {
 }
 function completeChecks(pr) {
   const checks = pr?.checks;
-  return Boolean(checks?.complete && checks.total > 0 && checks.contexts.length === checks.total);
+  return Boolean(checks?.complete && Array.isArray(checks.contexts) && checks.contexts.length === checks.total
+    && (checks.total > 0 || checks.state === null && checks.reportedTotal === 0));
 }
 function isImportStatus(check) { return check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name); }
 function isAdvisoryCheck(pr, check) { return pr?.repo === "google/gvisor" && check.kind === "status" && check.name === "buildkite/first-pass"; }
@@ -210,6 +211,8 @@ function codeCheckStates(pr) {
 }
 function checkInfo(pr) {
   const checks = pr?.checks;
+  if (checks?.total === 0 && completeChecks(pr)) return { text: "No published checks", tone: "unknown", glyph: "—",
+    detail: "GitHub returned this revision with no published check runs or status contexts." };
   if (!checks || !checks.total) return { text: "Unavailable", tone: "unknown", glyph: "?", detail: "No visible check rollup for this head; no test result is implied." };
   const states = codeCheckStates(pr), substantive = validationChecks(pr);
   const canceled = substantive.filter(canceledValidationCheck);
