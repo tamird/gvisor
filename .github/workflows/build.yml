@@ -1,35 +1,98 @@
-name: CI
-
+name: Verify the staged release publisher
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/staged-release-publication-netns]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  publish-locally:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    timeout-minutes: 80
+    runs-on: ubuntu-22.04
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - name: Bind source and public archive checksums
+        id: bind
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/staged-publication"
+          mkdir -p "$w"/{source,public,input/x86_64,input/aarch64}
+          cd "$w/source"
+          git init -q
+          git -c gc.auto=0 fetch --quiet --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach FETCH_HEAD
+          test "$(git rev-parse HEAD^)" = c661271ae7b13f9e607958444e8cbf553c883720
+          test "$(git rev-parse HEAD^^)" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/BUILD .github/qualification/publisher.py .github/workflows/build.yml)"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --retry 2 --max-time 180 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          chmod 0755 "$w/bazel"
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y dpkg-sig apt-utils gnupg zstd xz-utils file
+          for cpu in x86_64 aarch64; do
+            case "$cpu" in x86_64) arch=amd64;; aarch64) arch=arm64;; esac
+            curl -fsSL --max-time 300 --retry 2 "https://storage.googleapis.com/gvisor/releases/pool/20261102.0/binary-$arch/runsc.deb" -o "$w/input/$cpu/runsc.deb"
+            for kind in bz2 zstd; do
+              curl -fsSL --max-time 300 --retry 2 "https://github.com/google/gvisor/releases/download/release-20261102.0/gvisor-$cpu.tar.$kind" -o "$w/input/$cpu/gvisor.tar.$kind"
+            done
+          done
+          cd "$w/input"
+          sha256sum -c - <<'SHA'
+          81e3ecc4bb0d3eb321f5cf357e97a26daea91c6dc70ec30c9240cd481e6cf2da  x86_64/runsc.deb
+          96f680452ec1bd94e693b3aade78d9c09f90ecfe8ee05dbe29782a6e725cad7a  aarch64/runsc.deb
+          909c95f245a46000d3bb0d5285f07dde23597056e7c3a4aab758b218e95bdab0  aarch64/gvisor.tar.bz2
+          f702ae92ad7a0c4134be34ca23f52966dbb696db0c0f5b8ec439210ab2cd7c6a  aarch64/gvisor.tar.zstd
+          6f6b1a8f0f4665a403238135167d0d990bfaeaff5544abf68f5e0d822b35484a  x86_64/gvisor.tar.bz2
+          a1439ffbba7d212e0fde32ea79fa9bb51cbc4c5f6c16af1f047260290b861d42  x86_64/gvisor.tar.zstd
+          SHA
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify the actual Buildkite calls, local APT signatures and failure controls
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/staged-publication"
+          cd "$w/source"
+          set +e
+          "$w/bazel" --nosystem_rc --nohome_rc test --jobs=3 --remote_executor= --remote_cache= --bes_backend= \
+              --strategy=TestRunner=local --test_env=PUBLICATION_FIXTURE="$w" --test_env=USER \
+              --nocache_test_results --test_timeout=2700 --test_output=errors --build_event_json_file="$w/test.bep" \
+              //.github/qualification:publisher >"$w/bazel.log" 2>&1
+          status=$?
+          set -e
+          python3 - "$w" "$status" <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          w=Path(sys.argv[1]); status=int(sys.argv[2]); rows=[]
+          bep=w/'test.bep'
+          if bep.exists():
+              for line in bep.open():
+                  e=json.loads(line)
+                  if e.get('id',{}).get('testResult',{}).get('label')=='//.github/qualification:publisher':
+                      r=e['testResult']
+                      rows.append({'status':r.get('status'),'strategy':r.get('executionInfo',{}).get('strategy'),
+                                   'cached':bool(r.get('cachedLocally') or r.get('executionInfo',{}).get('cachedRemotely'))})
+          log=(w/'bazel.log').read_bytes()
+          result={'bazel_exit':status,'test_results':rows,'log_sha256':hashlib.sha256(log).hexdigest()}
+          if status:
+              result['diagnostics']=[s[:400].replace(str(w),'<fixture>') for s in log.decode(errors='replace').splitlines()
+                  if s.startswith(('ERROR:','Traceback','AssertionError','FileNotFoundError','ValueError','subprocess.CalledProcessError'))][-12:]
+          (w/'public'/'bazel.json').write_text(json.dumps(result,indent=2)+'\n')
+          assert status==0 and len(rows)==1 and rows[0]['status']=='PASSED' and not rows[0]['cached'] and rows[0]['strategy'] in ('local','standalone'), result
+          assert json.loads((w/'public'/'publication.json').read_text())['verified']
+          PY
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+      - name: Upload bounded publisher observations
+        if: '!cancelled()'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: staged-publication
+          path: ${{ runner.temp }}/staged-publication/public/*.json
+          retention-days: 14
+          if-no-files-found: error
 
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Remove disposable configuration, inputs and reports
+        if: always()
+        run: |
+          w="$RUNNER_TEMP/staged-publication"
+          if [[ -d "$w/source/.git" && -x "$w/bazel" ]]; then
+            (cd "$w/source" && "$w/bazel" --nosystem_rc --nohome_rc shutdown) || true
+          fi
+          rm -rf -- "$w"
