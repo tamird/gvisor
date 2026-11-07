@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T06:33:05+00:00",
+    "updatedAt": "2026-11-07T06:53:28+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4934,10 +4934,14 @@
       "url": "https://github.com/tamird/gvisor/commit/4bee07965",
       "group": "bazel",
       "status": "Contributor review requested",
-      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. A dependency-only upgrade is being tested independently of the compiler PR.",
-      "updatedAt": "2026-11-07T06:33:05+00:00",
+      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. Its new supplier regression still needs verification.",
+      "updatedAt": "2026-11-07T06:45:05+00:00",
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
+        {
+          "label": "Released Gazelle 0.54.0 and master compared with the focused supplier change",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819"
+        },
         {
           "label": "Downstream ARM64 vDSO and stock/patched Gazelle runner comparisons",
           "url": "https://github.com/tamird/gvisor/actions/runs/42346848046/artifacts/13563847323"
@@ -21008,13 +21012,13 @@
       "url": "https://github.com/google/gvisor/pull/16076",
       "group": "rbe",
       "status": "open",
-      "summary": "Etienne asked to wait for an official Docker-in-Docker image with the Compose host-network fix, and Tamir agreed. Compose v5.6.1 and the official docker:29-dind image do not contain it.",
+      "summary": "Docker 29.9.3-dind ships Compose 5.7.0 on both AMD64 and ARM64. This release includes the host-network entitlement fix requested in review. Both architecture manifests were verified against the same official index. At gVisor’s current Make tag 9a49fc89adf655e5, the published AMD64 and ARM64 image configs still contain Docker 29.7.2 and Compose 5.4.0. Pinning the released base changes that tag. The remaining check is to build with host networking under gVisor with the overlay and VFS storage drivers.",
       "followup": {
-        "owner": "root",
+        "owner": "Agent",
         "sourceHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-        "observedAt": "2026-10-27T16:52:09+00:00",
-        "disposition": "Waiting for an upstream release",
-        "nextAction": "Check that the new Compose release contains the network.host fix and ships in the official dind image, then run both host-network cases.",
+        "observedAt": "2026-11-07T06:45:05+00:00",
+        "disposition": "The requested Compose fix is in the published official image.",
+        "nextAction": "Qualify a one-line official-image pin on native AMD64 and ARM64. Verify the actual Compose version and both Docker-in-gVisor builds before replacing the source-built plugin.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16076",
           "https://github.com/tamird/gvisor/commit/bc40a65c7d06164a2a6f941fbe86dd409699258d",
@@ -21023,8 +21027,24 @@
           "https://github.com/docker/compose/compare/1e1c577eab08ceb5ff0fcf4d8e3cbbc08a34ef35...v5.6.1"
         ]
       },
-      "updatedAt": "2026-10-27T16:52:09+00:00",
+      "updatedAt": "2026-11-07T06:45:05+00:00",
       "evidence": [
+        {
+          "label": "Compose change that grants host networking to Bake",
+          "url": "https://github.com/docker/compose/commit/43a5d5a25"
+        },
+        {
+          "label": "Make hashes the files in the image context",
+          "url": "https://github.com/google/gvisor/blob/3847ed738/tools/images.mk#L145-L150"
+        },
+        {
+          "label": "Compose 5.7.0 includes the host-network fix",
+          "url": "https://github.com/docker/compose/compare/43a5d5a25...v5.7.0"
+        },
+        {
+          "label": "Official Docker 29.9.3 CLI image selects Compose 5.7.0",
+          "url": "https://github.com/docker-library/docker/blob/3e782bbab/29/cli/Dockerfile"
+        },
         {
           "label": "Verified authorized delivery",
           "url": "https://github.com/google/gvisor/pull/16076"
@@ -29633,25 +29653,34 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-python-upstream-context",
-      "head": "00445531d15c3b662495b26eab9cf819bb278978",
+      "head": "e62c22929743792507634a4646d3a14936990fca",
       "title": "Build the Python HTTP image with rules_img",
       "url": "https://github.com/google/gvisor/pull/16459",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T18:43:53.566Z",
-      "summary": "The source is mergeable on current master. The patch matches the version approved by @manninglucas. Open import #16465 still names the earlier source.",
+      "updatedAt": "2026-11-07T06:53:28+00:00",
+      "summary": "Published the rebase onto the resolver image from #16549. Each original edit, file mode and commit message is preserved. The combined AMD64 check built all five image contexts and exercised their Make content tags. ARM64 verification covered target configuration and image inventories. The open import #16465 still refers to the earlier approved source.\n\nThe source is mergeable on current master. The patch matches the version approved by @manninglucas. Open import #16465 still names the earlier source.",
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "00445531d15c3b662495b26eab9cf819bb278978",
-        "observedAt": "2026-11-06T18:43:09.619Z",
-        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
-        "nextAction": "Follow the normal reapproval and import process for the published head and #16465.",
+        "sourceHead": "e62c22929743792507634a4646d3a14936990fca",
+        "observedAt": "2026-11-07T06:50:05+00:00",
+        "disposition": "The published source is mergeable. The open import has identical edits from the previous approval, but still conflicts. The reapproval reminder is eligible during Pacific business hours.",
+        "nextAction": "Lucas can reapprove the rebased source so Copybara refreshes #16465. The old import conflicts.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16459",
-          "https://github.com/tamird/gvisor/compare/022b009cf...00445531d"
+          "https://github.com/tamird/gvisor/commit/e62c22929",
+          "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974",
+          "https://github.com/google/gvisor/pull/16465"
         ]
       },
       "evidence": [
+        {
+          "label": "Published resolver rebase and combined native AMD64 Make and image check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
+        },
+        {
+          "label": "Independent rebase after the resolver image landed",
+          "url": "https://github.com/tamird/gvisor/commit/e62c22929"
+        },
         {
           "label": "Published rebase; unchanged file operations and content edits",
           "url": "https://github.com/tamird/gvisor/compare/022b009cf...00445531d"
@@ -29679,22 +29708,24 @@
       ],
       "number": 16459,
       "approvedPatch": {
-        "head": "00445531d15c3b662495b26eab9cf819bb278978",
+        "head": "e62c22929743792507634a4646d3a14936990fca",
         "approvedHead": "022b009cfe9b6bd92da786a1339de707fbea1d9c",
         "reviewId": "PRR_kwDOB9IlXs8AAAABVPY-Vw",
         "reviewer": "manninglucas",
         "submittedAt": "2026-10-31T01:37:18Z",
-        "verifiedAt": "2026-11-06T18:43:09.619Z",
+        "verifiedAt": "2026-11-07T06:53:28+00:00",
         "method": "reviewed-context-only",
         "oldPatchId": "fea8a04b4230f62db67d012f14dee2e824a03a83",
-        "newPatchId": "66b4c1eeb8e29e315df8208bd2f995b32314a268"
+        "newPatchId": "f867c040bbe621188c604210f1bdf1973d307d71"
       },
       "refinement": {
         "before": {
-          "head": "022b009cfe9b6bd92da786a1339de707fbea1d9c"
+          "head": "00445531d15c3b662495b26eab9cf819bb278978",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
         },
         "after": {
-          "head": "00445531d15c3b662495b26eab9cf819bb278978"
+          "head": "e62c22929743792507634a4646d3a14936990fca",
+          "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95"
         }
       }
     },
@@ -29703,25 +29734,33 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-mysql-upstream",
-      "head": "e0e48066480199426bbcfea4e509f375fbc82e8a",
+      "head": "1785bfc2680236e91724c0c826379a8c4cf74141",
       "title": "Pin the basic MySQL image",
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T18:43:53.566Z",
-      "summary": "Rebased the pinned MySQL image on current master. Its pinned image inputs and file edits match the previous PR. GitHub reports the current source is mergeable.",
+      "updatedAt": "2026-11-07T06:50:05+00:00",
+      "summary": "Published the rebase onto the resolver image from #16549. Each original edit, file mode and commit message is preserved. The combined AMD64 check built all five image contexts and exercised their Make content tags. ARM64 verification covered target configuration and image inventories.\n\nRebased the pinned MySQL image on current master. Its pinned image inputs and file edits match the previous PR. GitHub reports the current source is mergeable.",
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "e0e48066480199426bbcfea4e509f375fbc82e8a",
-        "observedAt": "2026-11-06T18:43:09.619Z",
-        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
-        "nextAction": "Follow the existing review request and source checks.",
+        "sourceHead": "1785bfc2680236e91724c0c826379a8c4cf74141",
+        "observedAt": "2026-11-07T06:50:05+00:00",
+        "disposition": "The resolver conflict was repaired on the public PR.",
+        "nextAction": "Review the rebased MySQL image change.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16458",
-          "https://github.com/tamird/gvisor/compare/7108c1aef...e0e480664"
+          "https://github.com/tamird/gvisor/commit/1785bfc26",
+          "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
         ]
       },
       "evidence": [
+        {
+          "label": "Published resolver rebase and combined native AMD64 Make and image check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
+        },
+        {
+          "label": "Independent rebase after the resolver image landed",
+          "url": "https://github.com/tamird/gvisor/commit/1785bfc26"
+        },
         {
           "label": "Published rebase; unchanged file operations and content edits",
           "url": "https://github.com/tamird/gvisor/compare/7108c1aef...e0e480664"
@@ -29750,10 +29789,12 @@
       "number": 16458,
       "refinement": {
         "before": {
-          "head": "7108c1aeff83b0f3bf5354d3c07bceabb39a45f4"
+          "head": "e0e48066480199426bbcfea4e509f375fbc82e8a",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
         },
         "after": {
-          "head": "e0e48066480199426bbcfea4e509f375fbc82e8a"
+          "head": "1785bfc2680236e91724c0c826379a8c4cf74141",
+          "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95"
         }
       }
     },
@@ -32913,9 +32954,9 @@
       "title": "Use the official server images in port-forward tests",
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/16551",
-      "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
+      "head": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
       "status": "open",
-      "updatedAt": "2026-11-06T18:43:53.566Z",
+      "updatedAt": "2026-11-07T06:53:28+00:00",
       "links": [
         {
           "label": "Historical Nginx proposal",
@@ -32959,6 +33000,14 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Published resolver rebase and combined native AMD64 Make and image check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
+        },
+        {
+          "label": "Independent rebase after the resolver image landed",
+          "url": "https://github.com/tamird/gvisor/commit/96bfe0c7e"
+        },
         {
           "label": "Published rebase; unchanged file operations and content edits",
           "url": "https://github.com/tamird/gvisor/compare/fa7daa135...776402f49"
@@ -33028,35 +33077,38 @@
           "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
       ],
-      "summary": "The source is mergeable on current master. The patch matches the version approved by @kerumeto. Open import #16637 still names the earlier source.",
+      "summary": "Published the rebase onto the resolver image from #16549. Each original edit, file mode and commit message is preserved. The combined AMD64 check built all five image contexts and exercised their Make content tags. ARM64 verification covered target configuration and image inventories. The open import #16637 still refers to the earlier approved source.\n\nThe source is mergeable on current master. The patch matches the version approved by @kerumeto. Open import #16637 still names the earlier source.",
       "approvedPatch": {
-        "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
+        "head": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
         "approvedHead": "fa7daa135f0ca5de5461ac4b27f046632707e5e2",
         "reviewId": "PRR_kwDOB9IlXs8AAAABVjp7dA",
         "reviewer": "kerumeto",
         "submittedAt": "2026-11-02T18:48:44Z",
-        "verifiedAt": "2026-11-06T18:43:09.619Z",
+        "verifiedAt": "2026-11-07T06:53:28+00:00",
         "method": "reviewed-context-only",
         "oldPatchId": "2e6fcc1dffeb1c5d7a3eb0cad90aa38923ad25dc",
-        "newPatchId": "e69a75162bf1ef5b79d239babc42094982e85294"
+        "newPatchId": "32373c9b2896bdf63dd0c0660ccac494c06bd783"
       },
       "refinement": {
         "before": {
-          "head": "fa7daa135f0ca5de5461ac4b27f046632707e5e2"
+          "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
         },
         "after": {
-          "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb"
+          "head": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
+          "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95"
         }
       },
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
-        "observedAt": "2026-11-06T18:43:09.619Z",
-        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
-        "nextAction": "Follow the normal reapproval and import process for the published head and #16637.",
+        "sourceHead": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
+        "observedAt": "2026-11-07T06:50:05+00:00",
+        "disposition": "The published source is mergeable. The open import has identical edits from the previous approval, but still conflicts. The reapproval reminder is eligible during Pacific business hours.",
+        "nextAction": "Kerem can reapprove the rebased source so Copybara refreshes #16637. The old import conflicts.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16551",
-          "https://github.com/tamird/gvisor/compare/fa7daa135...776402f49"
+          "https://github.com/tamird/gvisor/commit/96bfe0c7e",
+          "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974",
+          "https://github.com/google/gvisor/pull/16637"
         ]
       }
     },
@@ -37348,12 +37400,16 @@
       "repo": "google/gvisor",
       "number": 16662,
       "ref": "review/issue-reviver-native",
-      "head": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
+      "head": "3f9a9984a26daaf62abdb8498b98a2499e7e132f",
       "title": "Run the issue reviver without the Docker builder",
       "url": "https://github.com/google/gvisor/pull/16662",
       "group": "bazel",
       "summary": "Build the native launcher without passing it the issue token. The nightly run uses checkout-relative paths so its source links point to the right line. Six named Go test rows passed; a dry run opened one loopback connection and made no writes.",
       "evidence": [
+        {
+          "label": "Bazel 9.3.1: six named Go cases, loopback dry run and both upstream repository guards",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42347487381/artifacts/13563934227"
+        },
         {
           "label": "Rebased workflow on the two-repository guard",
           "url": "https://github.com/tamird/gvisor/commit/3f9a9984a"
@@ -37376,17 +37432,27 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-07T06:33:05+00:00",
+      "updatedAt": "2026-11-07T06:45:05+00:00",
       "followup": {
-        "owner": "Agent",
-        "observedAt": "2026-11-07T06:33:05+00:00",
-        "sourceHead": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
-        "disposition": "Master added gvisor/gvisor to both original workflow steps. The rebased job uses that exact condition once.",
-        "nextAction": "Check the native launcher, six unit cases and loopback dry run before updating the conflicted PR.",
+        "owner": "Maintainer",
+        "observedAt": "2026-11-07T06:45:05+00:00",
+        "sourceHead": "3f9a9984a26daaf62abdb8498b98a2499e7e132f",
+        "disposition": "The rebased PR is published and mergeable. Its job uses master’s unchanged two-repository condition.",
+        "nextAction": "Review the native issue reviver. The test fixture observed the expected repository-relative link for its closed issue and sent no writes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16662",
-          "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af"
+          "https://github.com/tamird/gvisor/actions/runs/42347487381/artifacts/13563934227"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
+          "base": "c6d44d572296f5226ebecd262c22e9f13c1800b4"
+        },
+        "after": {
+          "head": "3f9a9984a26daaf62abdb8498b98a2499e7e132f",
+          "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95"
+        }
       }
     },
     {
@@ -42936,15 +43002,31 @@
       "id": "branch:nogo-sandbox-actions",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/nogo-sandbox-actions",
-      "head": "a2a76817d2d66f2956059b464d2eadbb036078f9",
+      "ref": "research/nogo-execution-sdk-objdump",
+      "head": "4b4839487e5f8dc712ffbd6ae112f6d001a58f51",
       "title": "Sandbox Nogo package and standard-library analysis",
-      "url": "https://github.com/tamird/gvisor/commit/a2a76817d",
+      "url": "https://github.com/tamird/gvisor/commit/4b4839487",
       "group": "rbe",
       "status": "Agent work",
-      "updatedAt": "2026-11-05T05:53:50.961511+00:00",
-      "summary": "Package and standard-library analysis run checkescape, which invokes go tool objdump. The fork now supplies one reusable SDK disassembler for the execution platform. The original four-action experiment also included filtering and rendering, now split out at 55f8f34f4.\n\nOn AMD64, go tool objdump consumed 4.86–4.89 seconds of the 4.95-second sandboxed package check. The identical prebuilt SDK tool ran in 2 milliseconds and brought the action down to 0.060–0.066 seconds with all SDK inputs still present. Both target architectures produced unchanged facts and findings. The follow-up supplied the AMD64 SDK disassembler for both target archives. On 1668d83dc, strict native AMD64 and ARM64 runsc builds each built their execution SDK’s objdump once and checked the Noescape instructions in real input archives. Both architectures subsequently built and booted the full nine-program release on 5388293bd. The LLVM link fixes belong to that release integration; rules_go #4772 remains the dependency for adopting the SDK tool upstream.",
+      "updatedAt": "2026-11-07T06:53:28+00:00",
+      "summary": "The original four-action experiment removed sandbox exclusions. Filtering and rendering have a separate change. For package and standard-library analysis, the implementation on this card supplies checkescape with the disassembler from the execution platform’s Go SDK. It was qualified with a fork-only rules_go patch. The released rules_go 0.65.0 still lacks go_sdk_tool.\n\nOn AMD64, go tool objdump consumed 4.86–4.89 seconds of the 4.95-second sandboxed package check. The identical prebuilt SDK tool ran in 2 milliseconds and brought the action down to 0.060–0.066 seconds with all SDK inputs still present. Both target architectures produced unchanged facts and findings. The follow-up supplied the AMD64 SDK disassembler for both target archives. On 1668d83dc, strict native AMD64 and ARM64 runsc builds each built their execution SDK’s objdump once and checked the Noescape instructions in real input archives. Both architectures subsequently built and booted the full nine-program release on 5388293bd. The LLVM link fixes belong to that release integration; rules_go #4772 remains the dependency for adopting the SDK tool upstream.",
       "evidence": [
+        {
+          "label": "Nogo source that selects the SDK disassembler",
+          "url": "https://github.com/tamird/gvisor/commit/4b4839487"
+        },
+        {
+          "label": "Native integration that consumes the declared SDK tool",
+          "url": "https://github.com/tamird/gvisor/commit/1668d83dc"
+        },
+        {
+          "label": "Earlier four-action sandbox experiment",
+          "url": "https://github.com/tamird/gvisor/commit/a2a76817d"
+        },
+        {
+          "label": "Independent filter and rendering change",
+          "url": "https://github.com/tamird/gvisor/commit/55f8f34f4"
+        },
         {
           "label": "Native AMD64: SDK objdump and real analysis of both target architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41968655477/artifacts/13388882421"
@@ -42992,8 +43074,8 @@
       ],
       "followup": {
         "owner": "Build analysis",
-        "sourceHead": "a2a76817d2d66f2956059b464d2eadbb036078f9",
-        "observedAt": "2026-11-05T05:53:50.961511+00:00",
+        "sourceHead": "4b4839487e5f8dc712ffbd6ae112f6d001a58f51",
+        "observedAt": "2026-11-07T06:53:28+00:00",
         "disposition": "rules_go #4772 is open for upstream review. The contributor approved the supplier proposal and its follow-up reply.",
         "nextAction": "Once rules_go #4772 lands and is published, adopt the released SDK tool in the two checkescape-producing actions. The fork already qualified both native execution architectures.",
         "evidence": [
@@ -43005,6 +43087,16 @@
           "https://github.com/tamird/gvisor/actions/runs/41968778680/artifacts/13388757467",
           "https://tamird.github.io/gvisor/#investigation%3Ascratch-build-actions"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "a2a76817d2d66f2956059b464d2eadbb036078f9",
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+        },
+        "after": {
+          "head": "4b4839487e5f8dc712ffbd6ae112f6d001a58f51",
+          "base": "24d291a8fadc58b2c324af840c2c879b1c83dc30"
+        }
       }
     },
     {
