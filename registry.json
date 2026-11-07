@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:10:35+00:00",
+    "updatedAt": "2026-11-07T01:18:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22873,15 +22873,19 @@
       "id": "branch:rules-img-tcpdump",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-tcpdump-resource-current",
-      "head": "e7fc3626fce8184c2dd35debe8d413dd989b05ee",
-      "title": "Build tcpdump and its test sender with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
+      "ref": "research/tcpdump-jammy-bcr",
+      "head": "768579797b0d15dedee7b974dde31d09e529a152",
+      "title": "Assemble the tcpdump test image from signed Ubuntu packages",
+      "url": "https://github.com/tamird/gvisor/commit/768579797",
       "group": "bazel",
-      "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-07T01:08:23+00:00",
+      "status": "Waiting for packet socket and package inventory fixes",
+      "updatedAt": "2026-11-07T01:18:44+00:00",
       "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR lists only two of the 47 installed packages in the dpkg status file. The revised 225-entry catalog passed Fetch and Verify. Its manually recorded Ubuntu keyring matched the 3,607 bytes in Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.",
       "links": [
+        {
+          "label": "Signed Ubuntu package revision",
+          "url": "https://github.com/tamird/gvisor/commit/768579797"
+        },
         {
           "label": "Final image source and notices",
           "url": "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855"
@@ -22921,10 +22925,10 @@
       ],
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "e7fc3626fce8184c2dd35debe8d413dd989b05ee",
-        "observedAt": "2026-11-07T01:00:19+00:00",
-        "disposition": "The signed Ubuntu image passed capture and license checks. Its dpkg inventory still omits installed dependencies.",
-        "nextAction": "Follow the BCR release and rules_distroless package-inventory fix. Use the recorded catalog and capture results when evaluating the distro image.",
+        "sourceHead": "768579797b0d15dedee7b974dde31d09e529a152",
+        "observedAt": "2026-11-07T01:18:44+00:00",
+        "disposition": "Both architectures passed capture and catalog checks on the fork.",
+        "nextAction": "Qualify a BCR release or backport that records installed dependencies in dpkg status. The all-interfaces test also needs the PACKET_RESERVE readback. The earlier source-build approval is retained separately.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855",
           "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee"
@@ -59532,15 +59536,6 @@
       ]
     },
     {
-      "from": "pr:16051",
-      "to": "branch:rules-img-tcpdump",
-      "type": "depends_on",
-      "reason": "The retained approved tcpdump proposal explicitly waits for the manual-license artifact fix as well as the image foundation.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/16051"
-      ]
-    },
-    {
       "from": "pr:16379",
       "to": "pr:16466",
       "type": "depends_on",
@@ -60806,6 +60801,26 @@
       "evidence": [
         "https://github.com/tamird/gvisor/actions/runs/42303238900/artifacts/13545171695",
         "https://github.com/tamird/gvisor/actions/runs/42302502175/artifacts/13544592857"
+      ]
+    },
+    {
+      "from": "branch:packet-socket-reserve-readback",
+      "to": "branch:rules-img-tcpdump",
+      "type": "depends_on",
+      "reason": "Ubuntu tcpdump reads PACKET_RESERVE when capturing on all interfaces. The stock guest failed this capture; the corrected guest passed.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/5de0b08c4",
+        "https://github.com/tamird/gvisor/commit/768579797"
+      ]
+    },
+    {
+      "from": "pr:bazel-contrib/rules_distroless:294",
+      "to": "branch:rules-img-tcpdump",
+      "type": "depends_on",
+      "reason": "The 0.11.1 package extractor lists only two of the 47 installed packages. The distro image needs a supplier release or equivalent backport that records the complete package inventory.",
+      "evidence": [
+        "https://github.com/bazel-contrib/rules_distroless/pull/294",
+        "https://github.com/tamird/gvisor/commit/768579797"
       ]
     }
   ],
