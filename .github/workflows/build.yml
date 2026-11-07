@@ -1,35 +1,98 @@
-name: CI
-
-"on":
+name: Measure short TCP reads that retain their header views
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-read-remove-range]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Measure alternating source pairs with the same two CPUs
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/tcp-read-stream"
+          mkdir -p "$root/results"
+          printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$root/results/verdict.json"
+          cp .github/qualification/{stream_fixture.go,stream_profile.go,stream_compare.py,stream_owners.py} "$root/"
+          test "$(git rev-parse HEAD^)" = 279ee9dedb484efcf0d67faf5457781356624828
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/stream_fixture.go' ':!.github/qualification/stream_profile.go' ':!.github/qualification/stream_compare.py' ':!.github/qualification/stream_owners.py'
+          sha256sum --check <<'SUMS'
+          cd0b0af723f37718e8405c3db13b574db6a75ab33011006ec31eec7213d98735  .github/qualification/stream_fixture.go
+          5bd3bf1a3bd7904250f0c8d93834fa88730c8ecad979b61aa6f20e21121a4502  .github/qualification/stream_profile.go
+          SUMS
+          git fetch --quiet --depth=2 https://github.com/google/gvisor.git f51a205a8f4afbc5ab41aded070df74951b081ea e9abe5401c9fa5bc3c96738e52d406b0b1fbc15b
+          git fetch --quiet --depth=2 https://github.com/tamird/gvisor.git 890afa390aa44699ecbe493699b5260ad50dbaba
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bazelisk" | sha256sum -c
+          chmod 755 "$root/bazelisk"
+          git checkout --quiet --detach HEAD^
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -B "$root/stream_owners.py" ordinary
+          git checkout --quiet --detach "$GITHUB_SHA"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -B "$root/stream_compare.py"
+      - name: Calculate benchstat for the connected and packet-drain measurements
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/tcp-read-stream/results"
+          go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e e9abe5401 279ee9ded | tee benchstat.txt
+          grep -Fq 'sec/op' benchstat.txt
+          grep -Fq 'B/s' benchstat.txt
+          test "$(wc -l < drain-e9abe5401)" -eq 64
+          test "$(wc -l < drain-279ee9ded)" -eq 64
+          go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e drain-e9abe5401 drain-279ee9ded | tee drain-benchstat.txt
+          grep -Fq 'allocs/op' drain-benchstat.txt
+      - name: Verify the bounded original results
+        id: boundary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'tcp-read-stream' / 'results'
+          assert (root/'verdict.json').is_file()
+          for path in root.iterdir():
+              assert path.is_file() and not path.is_symlink()
+              assert re.fullmatch(r'verdict\.json|(?:drain-)?benchstat\.txt|correctness\.json|(?:drain-)?(?:e9abe5401|279ee9ded)|(?:check|shape|[pm][0-9]{2})-(?:e9abe5401|279ee9ded)\.log', path.name)
+              data = path.read_bytes()
+              assert len(data) < 256000
+              assert not re.search(rb'gh[pousr]_[A-Za-z0-9]{25,}|github_pat_[A-Za-z0-9]+|BEGIN (RSA |OPENSSH )?PRIVATE KEY|(?i:authorization|x-buildbuddy-api-key)\s*[:=]', data)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: range-removal-tcp-read-benchstat
+          path: ${{ runner.temp }}/tcp-read-stream/results/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Run the focused race test with the GNU toolchain
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/tcp-read-stream"
+          race="$RUNNER_TEMP/tcp-read-race"
+          mkdir -p "$race/results"
+          cp "$root/bazelisk" "$root/stream_owners.py" "$race/"
+          printf '{"race":{"verified":false,"phase":"collector did not complete"}}\n' > "$race/results/correctness.json"
+          # Remove only the benchmark's temporary overlays before checking the product.
+          git restore --worktree --source=HEAD -- pkg/tcpip/adapters/gonet/BUILD pkg/tcpip/transport/tcp/segment.go pkg/tcpip/stack/{nic,stack,save_restore}.go
+          rm -f pkg/tcpip/adapters/gonet/qualification_tcp_{read,shape}_test.go
+          git checkout --quiet --detach 279ee9dedb484efcf0d67faf5457781356624828
+          git diff --exit-code HEAD
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          docker run --rm --platform=linux/amd64 --entrypoint=python3 \
+              -v "$GITHUB_WORKSPACE:/workspace:ro" -w /workspace -v "$race:/tmp/qualification/tcp-read-stream" \
+              -e RUNNER_TEMP=/tmp/qualification -e GIT_CONFIG_COUNT=1 \
+              -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/workspace \
+              "$image" -B /tmp/qualification/tcp-read-stream/stream_owners.py race
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled()
+        with:
+          name: range-removal-focused-race
+          path: ${{ runner.temp }}/tcp-read-race/results/correctness.json
+          if-no-files-found: error
+          retention-days: 30
