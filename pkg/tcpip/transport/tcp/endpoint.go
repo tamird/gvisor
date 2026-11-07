@@ -356,19 +356,13 @@ type Endpoint struct {
 	stack.TransportEndpointInfo
 	tcpip.DefaultSocketOptionsHandler
 
-	// EndpointEntry is used to queue endpoints for processing to the
-	// a given tcp processor goroutine.
-	//
-	// Precondition: epQueue.mu must be held to read/write this field..
+	// endpointEntry links this endpoint into the processor queue that claimed it.
 	endpointEntry `state:"nosave"`
 
-	// pendingProcessingMu protects pendingProcessing.
-	pendingProcessingMu pendingProcessingMutex `state:"nosave"`
-
-	// pendingProcessing is true if this endpoint is queued for processing
-	// to a TCP processor.
-	// +checklocks:pendingProcessingMu
-	pendingProcessing bool `state:"nosave"`
+	// A listener can be scheduled on different processors for different peers.
+	// Claim pendingProcessing before linking the endpoint into a queue and
+	// clear it after unlinking, so only one queue owns the links at a time.
+	pendingProcessing atomicbitops.Bool `state:"nosave"`
 
 	// The following fields are initialized at creation time and do not
 	// change throughout the lifetime of the endpoint.
@@ -733,9 +727,9 @@ func (e *Endpoint) LockUser() {
 // held then such packets are queued up to be processed.
 //
 // Precondition: e.LockUser() must have been called before calling e.UnlockUser()
+//
 // +checklocksrelease:e.mu
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) UnlockUser() {
 	// Lock segment queue before checking so that we avoid a race where
 	// segments can be queued between the time we check if queue is empty
@@ -1053,7 +1047,6 @@ func (e *Endpoint) purgeWriteQueue() {
 // Abort implements stack.TransportEndpoint.Abort.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Abort() {
 	defer e.drainClosingSegmentQueue()
 	e.LockUser()
@@ -1074,7 +1067,6 @@ func (e *Endpoint) Abort() {
 // the endpoint.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Close() {
 	e.LockUser()
 	if e.closed {
@@ -1316,7 +1308,6 @@ func (e *Endpoint) initialReceiveWindow() int {
 // based on the number of bytes copied to userspace.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) ModerateRecvBuf(copied int) {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -1418,7 +1409,6 @@ func (e *Endpoint) lastErrorLocked() tcpip.Error {
 // LastError implements tcpip.Endpoint.LastError.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) LastError() tcpip.Error {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -1438,7 +1428,6 @@ func (e *Endpoint) LastErrorLocked() tcpip.Error {
 // UpdateLastError implements tcpip.SocketOptionsHandler.UpdateLastError.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) UpdateLastError(err tcpip.Error) {
 	e.LockUser()
 	e.lastErrorMu.Lock()
@@ -1450,7 +1439,6 @@ func (e *Endpoint) UpdateLastError(err tcpip.Error) {
 // Read implements tcpip.Endpoint.Read.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Read(dst io.Writer, opts tcpip.ReadOptions) (tcpip.ReadResult, tcpip.Error) {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -1603,10 +1591,10 @@ func (e *Endpoint) isEndpointWritableLocked() (int, tcpip.Error) {
 }
 
 // readFromPayloader reads a slice from the Payloader.
+//
 // +checklocks:e.mu
 // +checklocks:e.sndQueueInfo.sndQueueMu
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) readFromPayloader(p tcpip.Payloader, opts tcpip.WriteOptions, avail int) (buffer.Buffer, tcpip.Error) {
 	// We can release locks while copying data.
 	//
@@ -1643,9 +1631,9 @@ func (e *Endpoint) readFromPayloader(p tcpip.Payloader, opts tcpip.WriteOptions,
 }
 
 // queueSegment reads data from the payloader and returns a segment to be sent.
+//
 // +checklocks:e.mu
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) queueSegment(p tcpip.Payloader, opts tcpip.WriteOptions) (*segment, int, tcpip.Error) {
 	e.sndQueueInfo.sndQueueMu.Lock()
 	defer e.sndQueueInfo.sndQueueMu.Unlock()
@@ -1696,7 +1684,6 @@ func (e *Endpoint) queueSegment(p tcpip.Payloader, opts tcpip.WriteOptions) (*se
 // Write writes data to the endpoint's peer.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Write(p tcpip.Payloader, opts tcpip.WriteOptions) (int64, tcpip.Error) {
 	// Linux completely ignores any address passed to sendto(2) for TCP sockets
 	// (without the MSG_FASTOPEN flag). Corking is unimplemented, so opts.More
@@ -1792,7 +1779,6 @@ func (e *Endpoint) windowCrossedACKThresholdLocked(deltaBefore int, rcvBufSize i
 // OnReuseAddressSet implements tcpip.SocketOptionsHandler.OnReuseAddressSet.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) OnReuseAddressSet(v bool) {
 	e.LockUser()
 	e.portFlags.TupleOnly = v
@@ -1802,7 +1788,6 @@ func (e *Endpoint) OnReuseAddressSet(v bool) {
 // OnReusePortSet implements tcpip.SocketOptionsHandler.OnReusePortSet.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) OnReusePortSet(v bool) {
 	e.LockUser()
 	e.portFlags.LoadBalanced = v
@@ -1812,7 +1797,6 @@ func (e *Endpoint) OnReusePortSet(v bool) {
 // OnKeepAliveSet implements tcpip.SocketOptionsHandler.OnKeepAliveSet.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) OnKeepAliveSet(bool) {
 	e.LockUser()
 	e.resetKeepaliveTimer(true /* receivedData */)
@@ -1822,7 +1806,6 @@ func (e *Endpoint) OnKeepAliveSet(bool) {
 // OnDelayOptionSet implements tcpip.SocketOptionsHandler.OnDelayOptionSet.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) OnDelayOptionSet(v bool) {
 	if !v {
 		e.LockUser()
@@ -1837,7 +1820,6 @@ func (e *Endpoint) OnDelayOptionSet(v bool) {
 // OnCorkOptionSet implements tcpip.SocketOptionsHandler.OnCorkOptionSet.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) OnCorkOptionSet(v bool) {
 	if !v {
 		e.LockUser()
@@ -1859,7 +1841,6 @@ func (e *Endpoint) getSendBufferSize() int {
 // OnSetReceiveBufferSize implements tcpip.SocketOptionsHandler.OnSetReceiveBufferSize.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) OnSetReceiveBufferSize(rcvBufSz, oldSz int64) (newSz int64, postSet func()) {
 	e.LockUser()
 
@@ -1913,7 +1894,6 @@ func (e *Endpoint) OnSetSendBufferSize(sz int64) int64 {
 // WakeupWriters implements tcpip.SocketOptionsHandler.WakeupWriters.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) WakeupWriters() {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -1931,7 +1911,6 @@ func (e *Endpoint) WakeupWriters() {
 // SetSockOptInt sets a socket option.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) SetSockOptInt(opt tcpip.SockOptInt, v int) tcpip.Error {
 	// Lower 2 bits represents ECN bits. RFC 3168, section 23.1
 	const inetECNMask = 3
@@ -2034,7 +2013,6 @@ func (e *Endpoint) HasNIC(id int32) bool {
 // SetSockOpt sets a socket option.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) SetSockOpt(opt tcpip.SettableSocketOption) tcpip.Error {
 	switch v := opt.(type) {
 	case *tcpip.KeepaliveIdleOption:
@@ -2131,7 +2109,6 @@ func (e *Endpoint) SetSockOpt(opt tcpip.SettableSocketOption) tcpip.Error {
 // readyReceiveSize returns the number of bytes ready to be received.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) readyReceiveSize() (int, tcpip.Error) {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -2150,7 +2127,6 @@ func (e *Endpoint) readyReceiveSize() (int, tcpip.Error) {
 // GetSockOptInt implements tcpip.Endpoint.GetSockOptInt.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) GetSockOptInt(opt tcpip.SockOptInt) (int, tcpip.Error) {
 	switch opt {
 	case tcpip.KeepaliveCountOption:
@@ -2232,7 +2208,6 @@ func (e *Endpoint) GetSockOptInt(opt tcpip.SockOptInt) (int, tcpip.Error) {
 // through the unlocked e.snd association.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) getTCPInfo() tcpip.TCPInfoOption {
 	e.LockUser()
 	info := tcpip.TCPInfoOption{
@@ -2268,7 +2243,6 @@ func (e *Endpoint) getTCPInfo() tcpip.TCPInfoOption {
 // GetSockOpt implements tcpip.Endpoint.GetSockOpt.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) GetSockOpt(opt tcpip.GettableSocketOption) tcpip.Error {
 	switch o := opt.(type) {
 	case *tcpip.TCPInfoOption:
@@ -2342,7 +2316,6 @@ func (*Endpoint) Disconnect() tcpip.Error {
 // Connect connects the endpoint to its peer.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Connect(addr tcpip.FullAddress) tcpip.Error {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -2635,7 +2608,6 @@ func (*Endpoint) ConnectEndpoint(tcpip.Endpoint) tcpip.Error {
 // peer.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Shutdown(flags tcpip.ShutdownFlags) tcpip.Error {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -2748,7 +2720,6 @@ func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
 // new connections.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Listen(backlog int) tcpip.Error {
 	if err := e.listen(backlog); err != nil {
 		if !err.IgnoreStats() {
@@ -2761,7 +2732,6 @@ func (e *Endpoint) Listen(backlog int) tcpip.Error {
 }
 
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) listen(backlog int) tcpip.Error {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -2843,7 +2813,6 @@ func (e *Endpoint) listen(backlog int) tcpip.Error {
 // addr if not-nil will contain the peer address of the returned endpoint.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Accept(peerAddr *tcpip.FullAddress) (tcpip.Endpoint, *waiter.Queue, tcpip.Error) {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -2875,7 +2844,6 @@ func (e *Endpoint) Accept(peerAddr *tcpip.FullAddress) (tcpip.Endpoint, *waiter.
 // Bind binds the endpoint to a specific local port and optionally address.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Bind(addr tcpip.FullAddress) (err tcpip.Error) {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -2972,7 +2940,6 @@ func (e *Endpoint) bindLocked(addr tcpip.FullAddress) (err tcpip.Error) {
 // GetLocalAddress returns the address to which the endpoint is bound.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) GetLocalAddress() (tcpip.FullAddress, tcpip.Error) {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -2987,7 +2954,6 @@ func (e *Endpoint) GetLocalAddress() (tcpip.FullAddress, tcpip.Error) {
 // GetRemoteAddress returns the address to which the endpoint is connected.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) GetRemoteAddress() (tcpip.FullAddress, tcpip.Error) {
 	e.LockUser()
 	defer e.UnlockUser()
@@ -3384,7 +3350,6 @@ func (e *Endpoint) State() uint32 {
 // Info returns a copy of the endpoint info.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Info() tcpip.EndpointInfo {
 	e.LockUser()
 	// Make a copy of the endpoint info.
