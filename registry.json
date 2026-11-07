@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T13:17:28+00:00",
+    "updatedAt": "2026-11-07T14:05:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36581,11 +36581,11 @@
       "url": "https://github.com/google/gvisor/pull/16584",
       "group": "runtime",
       "status": "merged",
-      "updatedAt": "2026-10-29T23:12:26.596881+00:00",
+      "updatedAt": "2026-11-07T14:05:57+00:00",
       "summary": "The decoder merged. The named-map and overlapping-slice regressions pass; the map-copy callback finding remains open in #16715.",
       "evidence": [
         {
-          "label": "Open and verified graph findings",
+          "label": "Graph checkpoint roundup",
           "url": "https://github.com/google/gvisor/issues/16715"
         },
         {
@@ -57569,9 +57569,21 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T11:47:58+00:00",
-      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 run captured an intermittent FDs.Classes difference on default/sentry. Both subsequent default-case repeats passed. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.",
+      "updatedAt": "2026-11-07T14:05:57+00:00",
+      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 6.8 run observed an extra pidfd on the fourth default Sentry repeat. A retained-helper control reproduced that observation on stock. Waiting through the proc umounter’s Go handle fixed it, and all ten original comparisons passed on the uninstrumented corrected runtime. The Linux 5.10 per-thread reporting failure remains open. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.",
       "evidence": [
+        {
+          "label": "Independent Sentry pidfd fix on hosted ARM64",
+          "url": "https://github.com/tamird/gvisor/commit/c218182e1"
+        },
+        {
+          "label": "Native ARM64 6.8.0-1070-azure, retained helper on both arms and all ten original posture cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42378662487/artifacts/13577260754"
+        },
+        {
+          "label": "Spontaneous extra pidfd on the fourth default Sentry repeat, with no descriptor stat errors",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42376571453/artifacts/13576840093"
+        },
         {
           "label": "Same gVisor test on both published ARM64 kernel images in isolated QEMU guests",
           "url": "https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151"
@@ -60323,6 +60335,48 @@
         "requestedAt": "2026-11-07T13:07:28+00:00",
         "summary": "Open this one-commit Go replacement after #17184 lands? It preserves the Bazel target and passes six real transfer modes and six failure or interruption controls.",
         "body": "When the installed TCP benchmark's directory contains a space, its\ngenerated Bash script splits the unquoted PATH assignment. Bash\nrejects the remainder as an invalid identifier before iperf starts.\n\nRun the benchmark directly from Go. Create private mount, network and\nPID namespaces, pass each helper argument separately, and reap the\niperf server and both proxies. Read iperf3's aggregate sender rate and\nsample the selected proxy's CPU before shutdown so writing a profile\ndoes not inflate the result. Keep the Bazel entry point and resolve\nsibling helpers when the installed binary is invoked through PATH.\n\nLet the kernel reclaim the veth pairs and bridges with the namespace.\nLinux 3.2 contains the bridge teardown fix [1]. gVisor requires Linux\n5.6 or newer.\n\n[1] https://github.com/torvalds/linux/commit/1ce5cce89"
+      }
+    },
+    {
+      "id": "branch:proc-umounter-process-handle",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/proc-umounter-process-handle",
+      "head": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+      "title": "Wait for the proc umounter through its Go handle",
+      "url": "https://github.com/tamird/gvisor/commit/c218182e1",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T14:05:57+00:00",
+      "summary": "A Sentry that applies capabilities without an exec can retain the proc umounter’s pidfd after the helper exits. The original hosted ARM64 test observed it on the fourth default Sentry repeat. Holding the helper’s Go process object reachable reproduced the extra pidfd on stock. The default Gofer passed. With cmd.Wait, both retained-object cases passed and the same child’s WithHandle returned os.ErrProcessDone after the wait. Without instrumentation, all ten Sentry and Gofer comparisons across five modes passed uncached on native ARM64 Linux 6.8.0-1070-azure with the private namespaces and seven runtime sidecars verified. The qualification put the runtime files from 5ca9588a6 on fixture e34a3859c. The proposal adds three ownership-comment lines to that tested source.",
+      "evidence": [
+        {
+          "label": "Native ARM64 6.8.0-1070-azure, retained helper on both arms and all ten original posture cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42378662487/artifacts/13577260754"
+        },
+        {
+          "label": "Spontaneous extra pidfd on the fourth default Sentry repeat, with no descriptor stat errors",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42376571453/artifacts/13576840093"
+        },
+        {
+          "label": "Tested standalone source on the same master parent",
+          "url": "https://github.com/tamird/gvisor/commit/5ca9588a6"
+        },
+        {
+          "label": "Qualification carrier and source bindings",
+          "url": "https://github.com/tamird/gvisor/commit/bc1e4bbb8"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/c218182e1",
+        "title": "Wait for the proc umounter through its Go handle",
+        "requestedAt": "2026-11-07T14:05:57+00:00",
+        "summary": "Open this single-commit PR to wait through the proc umounter’s Go handle? The native ARM64 control reproduced the retained pidfd on stock. The corrected uninstrumented runtime passed all ten posture comparisons. The separate Linux 5.10 per-thread Seccomp_filters discrepancy is still open.",
+        "body": "Since f2f760bd4, the Sentry can apply capabilities without an exec.\nOn this path it starts the proc umounter with exec.Cmd and reaps it\nwith wait4. Go can keep the helper's pidfd open after the guest starts\nuntil garbage collection releases it. TestBootPosture then reports an\nunexpected pidfd.\n\nSignal the unmount through the pipe and wait on the Cmd that started\nthe helper. This checks the child's exit status and closes its pidfd.\nA Sentry that re-executes inherits only the pipe and uses wait4."
       }
     }
   ],
@@ -67260,7 +67314,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-07T06:03:46+00:00",
+      "updatedAt": "2026-11-07T14:05:57+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -70209,7 +70263,7 @@
           "text": "At generator revision c6afaa53a, graph Load restored a nested converted value as 22/22 instead of 11/22. The parent and legacy controls restored 11/22. Keeping the outer scratch slot unavailable during recursive LoadValueTo restored both tags. Issue #16715 tracks the finding.",
           "evidence": [
             {
-              "label": "Open graph codec correctness findings",
+              "label": "Graph checkpoint roundup",
               "url": "https://github.com/google/gvisor/issues/16715"
             },
             {
@@ -83539,5 +83593,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T13:17:28+00:00"
+  "updatedAt": "2026-11-07T14:05:57+00:00"
 }
