@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools:deps.bzl", "deps_test")
+load("//tools:deps.bzl", "presubmit_deps_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -56,7 +56,7 @@ go_library(
     ],
 )
 
-deps_test(
+presubmit_deps_test(
     name = "netstack_deps_test",
     # NOTE: Try not to let allowed or allowed_prefixes to grow large.
     #

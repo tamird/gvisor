@@ -101,7 +101,7 @@ def _check_definitely_not_allowed(ctx):
             if workspace == denied_workspace and (pkg.startswith(denied_pkg) or denied_pkg.startswith(pkg)):
                 fail("allowed_prefixes entry %s matches definitely_not_allowed_prefixes entry %s" % (prefix, denied))
 
-def _deps_test_impl(ctx):
+def _dependency_errors(ctx):
     _check_definitely_not_allowed(ctx)
 
     nodes = {}
@@ -120,8 +120,26 @@ def _deps_test_impl(ctx):
             if len(bad_deps) > 0:
                 nodes[node_target] = bad_deps
 
+    errors = []
+    for target, deps in nodes.items():
+        errors.append("{} depends on:".format(target.label))
+        errors.extend(["\t{}".format(dep.label) for dep in deps])
+    return errors
+
+_DependencyPolicy = provider(fields = ["errors"])
+
+def _policy_impl(ctx):
+    return [_DependencyPolicy(errors = _dependency_errors(ctx))]
+
+def _deps_test_impl(ctx):
+    errors = _dependency_errors(ctx)
+    for policy in ctx.attr.arm64_policy:
+        arm64_errors = policy[_DependencyPolicy].errors
+        if arm64_errors:
+            errors.extend(["ARM64 dependencies:"] + arm64_errors)
+
     # If there aren't any violations, write a passing test.
-    if len(nodes) == 0:
+    if not errors:
         ctx.actions.write(
             output = ctx.outputs.executable,
             content = "#!/bin/bash\n\nexit 0\n",
@@ -136,13 +154,7 @@ def _deps_test_impl(ctx):
         "echo",
     ]
 
-    # List the violations.
-    for target, deps in nodes.items():
-        script_lines.append(
-            'echo "{target} depends on:"'.format(target = target.label),
-        )
-        for dep in deps:
-            script_lines.append('echo "\t{dep}"'.format(dep = dep.label))
+    script_lines.extend(['echo "{}"'.format(line) for line in errors])
 
     # The test must fail.
     script_lines.append("exit 1\n")
@@ -153,6 +165,48 @@ def _deps_test_impl(ctx):
     )
     return []
 
+# Resolve these attributes in the same configuration as their dependency graph.
+_POLICY_ATTRS = {
+    "targets": attr.label_list(
+        doc = "The targets to check the transitive dependencies of.",
+        aspects = [_deps_check],
+    ),
+    "allowed": attr.label_list(
+        doc = "The allowed dependency targets.",
+    ),
+    "allowed_prefixes": attr.string_list(
+        doc = "Any packages beginning with these prefixes are allowed.",
+    ),
+    "denied_prefixes": attr.string_list(
+        doc = "Packages beginning with these prefixes are not allowed, " +
+              "even if covered by allowed_prefixes. Targets listed in " +
+              "allowed are still allowed.",
+    ),
+    "definitely_not_allowed_prefixes": attr.string_list(
+        doc = "Packages beginning with these prefixes must not be " +
+              "covered by allowed or allowed_prefixes. Makes " +
+              "'never add these' possible to be defined explicitly in " +
+              "the BUILD file.",
+    ),
+}
+
+_policy = rule(
+    implementation = _policy_impl,
+    attrs = _POLICY_ATTRS,
+)
+
+def _arm64_impl(_settings, _attr):
+    return {
+        "//command_line_option:cpu": "aarch64",
+        "//command_line_option:platforms": [Label("//tools/bazeldefs:linux_arm64")],
+    }
+
+_arm64 = transition(
+    implementation = _arm64_impl,
+    inputs = [],
+    outputs = ["//command_line_option:cpu", "//command_line_option:platforms"],
+)
+
 # Checks that targets only depend on an allowlist of other targets. Targets can
 # be specified directly, or prefixes can be used to allow entire packages or
 # directory trees.
@@ -162,28 +216,28 @@ def _deps_test_impl(ctx):
 # protobuf code, but aren't analyzed by deps_test.
 deps_test = rule(
     implementation = _deps_test_impl,
-    attrs = {
-        "targets": attr.label_list(
-            doc = "The targets to check the transitive dependencies of.",
-            aspects = [_deps_check],
-        ),
-        "allowed": attr.label_list(
-            doc = "The allowed dependency targets.",
-        ),
-        "allowed_prefixes": attr.string_list(
-            doc = "Any packages beginning with these prefixes are allowed.",
-        ),
-        "denied_prefixes": attr.string_list(
-            doc = "Packages beginning with these prefixes are not allowed, " +
-                  "even if covered by allowed_prefixes. Targets listed in " +
-                  "allowed are still allowed.",
-        ),
-        "definitely_not_allowed_prefixes": attr.string_list(
-            doc = "Packages beginning with these prefixes must not be " +
-                  "covered by allowed or allowed_prefixes. Makes " +
-                  "'never add these' possible to be defined explicitly in " +
-                  "the BUILD file.",
-        ),
-    },
+    attrs = dict(
+        _POLICY_ATTRS,
+        arm64_policy = attr.label_list(cfg = _arm64, providers = [_DependencyPolicy]),
+    ),
     test = True,
 )
+
+def presubmit_deps_test(name, **kwargs):
+    """Checks both configured policies in one test during mixed presubmit."""
+    policy = name + "_arm64_policy"
+    _policy(
+        name = policy,
+        tags = ["manual"],
+        testonly = True,
+        visibility = ["//visibility:private"],
+        **{key: kwargs[key] for key in _POLICY_ATTRS if key in kwargs}
+    )
+    deps_test(
+        name = name,
+        arm64_policy = select({
+            Label("//test/rbe:mixed_native_tests"): [":" + policy],
+            "//conditions:default": [],
+        }),
+        **kwargs
+    )

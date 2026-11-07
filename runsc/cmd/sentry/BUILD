@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "go_binary", "go_cov")
-load("//tools:deps.bzl", "deps_test")
+load("//tools:deps.bzl", "presubmit_deps_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -92,7 +92,7 @@ go_binary(
     ],
 )
 
-deps_test(
+presubmit_deps_test(
     name = "gvisor_sentry_deps_test",
     # The sentry binaries contain the sentry, and nothing else.
     # Keep this tight.

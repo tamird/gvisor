@@ -1,6 +1,6 @@
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "go_binary", "go_cov")
-load("//tools:deps.bzl", "deps_test")
+load("//tools:deps.bzl", "presubmit_deps_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -75,7 +75,7 @@ go_binary(
     deps = MAIN_DEPS,
 )
 
-deps_test(
+presubmit_deps_test(
     name = "runsc_deps_test",
     allowed = [
         # Sentry packages that runsc also uses. Keep them small.
