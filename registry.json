@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T14:29:49+00:00",
+    "updatedAt": "2026-11-07T14:46:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29036,20 +29036,20 @@
       "title": "Keep ssthresh on repeated TCP retransmission timeouts",
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
-      "status": "Open; conditional amendment for contributor review",
-      "updatedAt": "2026-11-07T14:29:49+00:00",
-      "summary": "An eight-segment CUBIC flight entered fast recovery. The receiver SACKed the seven segments past the hole and held its cumulative ACK fixed. When the repair timed out, Linux kept ssthresh at 7. The published head 4a4e33cfc reduced it from 14 to 9. Fork source 8a79ae452 held it at 14. All four no-ACK and half-segment-ACK packet cases across the two stacks and all eight Reno/CUBIC repeated-timeout sender cases passed on the paired run. The standalone amendment 8427512c2 simplifies the reduction condition. Its exact-source gVisor run is pending.\n\nThe approved message-only amendment 4a4e33cfc is published, with the PR body synchronized. It names retransmitTimerExpired as the destination of the one-segment congestion-window reset. The parent and source tree are unchanged, so the existing packet evidence applies; that message-only decision is complete.\n\nThe published packetimpact test at 67260334d reads TCP_INFO after two retransmission timeouts. Both the no-ACK and half-segment-ACK cases passed on Linux and gVisor in fresh AMD64 runs. The reply on Lucas’s original review thread describes both cases. The earlier instrumented test measured the threshold directly: with no ACK, Linux held at 5 and gVisor at 4; after a half-segment ACK both reduced it to 2.\n\nEarlier implementation at c25ba441f: It starts a new loss episode on any advancing cumulative ACK, including a partial-segment ACK, while a SACK alone does not reset the episode. A zero-window probe with no data in flight retains the congestion window and threshold. The focused remote qualification passes 425 records. If #15604 lands first, synchronize its two new HandleRTOExpired test calls with this signature; neither PR independently requires the other.\n\nEarlier source-specific record:\n\nThe approved e396b8c8a proposal is delivered as #16419 at d13561b12 with an identical diff. No contributor decision remains pending. Current public checks and maintainer review are tracked on the PR.\n\nA ten-segment flight set the slow-start threshold to five segments with Reno and seven with CUBIC on the first timeout. When the same retransmission timed out again, the sender reduced the threshold to two. The published change preserves five or seven until a timeout reaches new data, as RFC 5681 requires. In separate tests with no ACK and a half-segment ACK, the old code failed four cases per run; both corrected runs passed all 13 cases. These tests cover repeated timeouts on the same bytes; #16393 reported advancing oldest data.\n\nBroader validation passed 536 records across TCP, race, packet and analyzer checks, with one existing RACK skip. All seven packet cases passed. Each analyzer passed for AMD64 and ARM64; the runtime checks were on AMD64.\n\nThe integration at 185276b5b, which includes this fix, also passed its selected public socket slice: 11 targets and 38 sharded attempts, with 1,686 positive records, 32 known skips and no failures or missing results. Coverage includes ordinary AMD64, emulated ARM64 variants including 64 KiB pages, and separate AMD64 UNIX-stream save/restore cases. The TCP suite itself excludes save/restore. This is integration evidence, separate from the standalone repeated-timeout regression.",
+      "status": "Open; amendment for contributor review",
+      "updatedAt": "2026-11-07T14:46:34+00:00",
+      "summary": "An eight-segment CUBIC flight entered fast recovery. The receiver SACKed the seven segments past the hole and held its cumulative ACK fixed. When the repair timed out, Linux kept ssthresh at 7. The published head 4a4e33cfc reduced it from 14 to 9. Fork source 8a79ae452 held it at 14. All four no-ACK and half-segment-ACK packet cases across the two stacks and all eight Reno/CUBIC repeated-timeout sender cases passed on the paired run. The standalone amendment 8427512c2 simplifies the reduction condition. On that exact source, gVisor kept ssthresh at 14 as cwnd dropped from 17 to 1 on entry to Loss. Both of its no-ACK and half-segment-ACK packet cases and all eight Reno/CUBIC repeated-timeout sender cases passed on fresh local TestRunner executions.\n\nThe approved message-only amendment 4a4e33cfc is published, with the PR body synchronized. It names retransmitTimerExpired as the destination of the one-segment congestion-window reset. The parent and source tree are unchanged, so the existing packet evidence applies; that message-only decision is complete.\n\nThe published packetimpact test at 67260334d reads TCP_INFO after two retransmission timeouts. Both the no-ACK and half-segment-ACK cases passed on Linux and gVisor in fresh AMD64 runs. The reply on Lucas’s original review thread describes both cases. The earlier instrumented test measured the threshold directly: with no ACK, Linux held at 5 and gVisor at 4; after a half-segment ACK both reduced it to 2.\n\nEarlier implementation at c25ba441f: It starts a new loss episode on any advancing cumulative ACK, including a partial-segment ACK, while a SACK alone does not reset the episode. A zero-window probe with no data in flight retains the congestion window and threshold. The focused remote qualification passes 425 records. If #15604 lands first, synchronize its two new HandleRTOExpired test calls with this signature; neither PR independently requires the other.\n\nEarlier source-specific record:\n\nThe approved e396b8c8a proposal is delivered as #16419 at d13561b12 with an identical diff. No contributor decision remains pending. Current public checks and maintainer review are tracked on the PR.\n\nA ten-segment flight set the slow-start threshold to five segments with Reno and seven with CUBIC on the first timeout. When the same retransmission timed out again, the sender reduced the threshold to two. The published change preserves five or seven until a timeout reaches new data, as RFC 5681 requires. In separate tests with no ACK and a half-segment ACK, the old code failed four cases per run; both corrected runs passed all 13 cases. These tests cover repeated timeouts on the same bytes; #16393 reported advancing oldest data.\n\nBroader validation passed 536 records across TCP, race, packet and analyzer checks, with one existing RACK skip. All seven packet cases passed. Each analyzer passed for AMD64 and ARM64; the runtime checks were on AMD64.\n\nThe integration at 185276b5b, which includes this fix, also passed its selected public socket slice: 11 targets and 38 sharded attempts, with 1,686 positive records, 32 known skips and no failures or missing results. Coverage includes ordinary AMD64, emulated ARM64 variants including 64 KiB pages, and separate AMD64 UNIX-stream save/restore cases. The TCP suite itself excludes save/restore. This is integration evidence, separate from the standalone repeated-timeout regression.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "4a4e33cfc5dede7d3bfbfc8b43b7784578178eb6",
         "providerHead": "4a4e33cfc5dede7d3bfbfc8b43b7784578178eb6",
-        "observedAt": "2026-11-07T14:29:49+00:00",
-        "disposition": "Paired measurements reproduced the published-head threshold reduction and verified the corrected behavior on 8a79ae452. The exact standalone amendment is in its gVisor-only check.",
-        "nextAction": "Wait for contributor approval and the original passing packet and sender controls on 8427512c2 before updating #16419 or replying to Lucas.",
+        "observedAt": "2026-11-07T14:46:34+00:00",
+        "disposition": "Both source checks passed. The paired run includes Linux and gVisor, and the exact standalone commit passed the gVisor packet and sender controls.",
+        "nextAction": "Await contributor approval to publish 8427512c2 as an amendment to #16419 and send the proposed top-level reply.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8427512c2",
           "https://github.com/tamird/gvisor/actions/runs/42378653816/artifacts/13577603869",
-          "https://github.com/tamird/gvisor/actions/runs/42380102504",
+          "https://github.com/tamird/gvisor/actions/runs/42380102504/artifacts/13578306497",
           "https://github.com/tamird/gvisor/actions/runs/42373671016/artifacts/13574977842",
           "https://github.com/tamird/gvisor/actions/runs/42376142305",
           "https://github.com/google/gvisor/pull/16419#pullrequestreview-5758455453",
@@ -29067,8 +29067,8 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42378653816/artifacts/13577603869"
         },
         {
-          "label": "Exact-source gVisor packet and sender controls for 8427512c2",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42380102504"
+          "label": "Exact amendment: gVisor held ssthresh at 14; both packet controls and all eight sender cases passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42380102504/artifacts/13578306497"
         },
         {
           "label": "Original fast-recovery timeout comparison on the public source",
@@ -29192,8 +29192,8 @@
         "url": "https://github.com/tamird/gvisor/commit/8427512c2",
         "title": "Avoid redundant TCP ssthresh cuts on timeout",
         "requestedAt": "2026-11-07T14:29:49+00:00",
-        "summary": "Publish this amendment and reply to Lucas once the exact-source gVisor check passes? On the same packet trace, Linux held its threshold at 7, the published head cut 14 to 9, and the paired fork held 14. The final commit simplifies the condition. Publication and the proposed reply require both approval and a passing result for 8427512c2.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 4a4e33cfc^! 8427512c2^!",
-        "body": "The first timeout of a ten-segment flight sets ssthresh to five\nsegments with Reno or seven with CUBIC. Without an advancing ACK,\nthe next timeout recomputed ssthresh from the collapsed flight or\ncongestion window, bringing it down to two. RFC 5681 requires holding\nthe previous threshold on repeated timeouts [1].\n\nTrack whether the retransmit timer has fired since the last advancing\nACK. In timeout recovery, even an ACK that covers only part of the\nretransmitted segment permits a new threshold reduction. A SACK alone\ndoes not [2][3]. Move the one-segment cwnd reset from Reno and CUBIC's\nHandleRTOExpired methods into retransmitTimerExpired so it applies on\nevery data timeout. CUBIC still restarts its epoch.\n\nFast recovery already reduced ssthresh for its outstanding flight.\nKeep that threshold when the timer interrupts fast recovery [2]. The\nACK handler leaves recovery once its last byte has been cumulatively\nacknowledged. With an eight-segment flight and no cumulative ACK\nprogress, gVisor reduced CUBIC's threshold from 14 to 9. Linux held\nits threshold at 7.\n\nA zero-window probe when no data is in flight indicates flow control,\nnot packet loss. Keep the congestion window and ssthresh while the\nsender waits for the peer to reopen its window [4].\n\nExercise both loss paths on the wire. Read TCP_INFO after consecutive\ntimeouts with no ACK or an ACK covering half a segment. For fast\nrecovery, selectively acknowledge the seven segments after the hole\nand compare ssthresh before and after the head retransmission times\nout.\n\n[1]: https://www.rfc-editor.org/rfc/rfc5681#section-3.1\n[2]: https://github.com/torvalds/linux/blob/830b3c68c/net/ipv4/tcp_input.c#L2137-L2165\n[3]: https://github.com/torvalds/linux/blob/830b3c68c/net/ipv4/tcp_input.c#L3801-L3805\n[4]: https://github.com/torvalds/linux/blob/830b3c68c/net/ipv4/tcp_timer.c#L350-L393\n\nProposed top-level reply to https://github.com/google/gvisor/pull/16419#pullrequestreview-5758455453\n\n@manninglucas, the PR includes `TestRTOAfterPartialACK`, and the commit message explains why data timeouts reset `cwnd` to one in `retransmitTimerExpired`. I also reproduced the timeout during fast recovery. With no cumulative ACK progress, Linux kept `ssthresh` at 7 and gVisor cut it from 14 to 9. With this change, gVisor keeps it at 14. The no-ACK and half-segment ACK cases passed on both stacks, and all eight Reno/CUBIC repeated-timeout cases passed. [Original comparison](https://github.com/tamird/gvisor/actions/runs/42373671016/artifacts/13574977842) · [Corrected comparison](https://github.com/tamird/gvisor/actions/runs/42378653816/artifacts/13577603869) · [Final amendment tests](https://github.com/tamird/gvisor/actions/runs/42380102504)\n\nPosted by Codex on behalf of @tamird."
+        "summary": "Publish this amendment and reply to Lucas? With the same CUBIC trace, Linux held ssthresh at 7, the published gVisor head cut 14 to 9, and the exact amendment held 14 as cwnd fell from 17 to 1. Both partial-ACK packet cases and all eight repeated-timeout cases passed on the final gVisor source. Only contributor approval remains.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 4a4e33cfc^! 8427512c2^!",
+        "body": "The first timeout of a ten-segment flight sets ssthresh to five\nsegments with Reno or seven with CUBIC. Without an advancing ACK,\nthe next timeout recomputed ssthresh from the collapsed flight or\ncongestion window, bringing it down to two. RFC 5681 requires holding\nthe previous threshold on repeated timeouts [1].\n\nTrack whether the retransmit timer has fired since the last advancing\nACK. In timeout recovery, even an ACK that covers only part of the\nretransmitted segment permits a new threshold reduction. A SACK alone\ndoes not [2][3]. Move the one-segment cwnd reset from Reno and CUBIC's\nHandleRTOExpired methods into retransmitTimerExpired so it applies on\nevery data timeout. CUBIC still restarts its epoch.\n\nFast recovery already reduced ssthresh for its outstanding flight.\nKeep that threshold when the timer interrupts fast recovery [2]. The\nACK handler leaves recovery once its last byte has been cumulatively\nacknowledged. With an eight-segment flight and no cumulative ACK\nprogress, gVisor reduced CUBIC's threshold from 14 to 9. Linux held\nits threshold at 7.\n\nA zero-window probe when no data is in flight indicates flow control,\nnot packet loss. Keep the congestion window and ssthresh while the\nsender waits for the peer to reopen its window [4].\n\nExercise both loss paths on the wire. Read TCP_INFO after consecutive\ntimeouts with no ACK or an ACK covering half a segment. For fast\nrecovery, selectively acknowledge the seven segments after the hole\nand compare ssthresh before and after the head retransmission times\nout.\n\n[1]: https://www.rfc-editor.org/rfc/rfc5681#section-3.1\n[2]: https://github.com/torvalds/linux/blob/830b3c68c/net/ipv4/tcp_input.c#L2137-L2165\n[3]: https://github.com/torvalds/linux/blob/830b3c68c/net/ipv4/tcp_input.c#L3801-L3805\n[4]: https://github.com/torvalds/linux/blob/830b3c68c/net/ipv4/tcp_timer.c#L350-L393\n\nProposed top-level reply to https://github.com/google/gvisor/pull/16419#pullrequestreview-5758455453\n\n@manninglucas, the PR includes `TestRTOAfterPartialACK`, and the commit message explains why data timeouts reset `cwnd` to one in `retransmitTimerExpired`. I also reproduced the timeout during fast recovery. With no cumulative ACK progress, Linux kept `ssthresh` at 7 and gVisor cut it from 14 to 9. With this change, gVisor keeps it at 14. The no-ACK and half-segment ACK cases passed on both stacks, and all eight Reno/CUBIC repeated-timeout cases passed. [Original comparison](https://github.com/tamird/gvisor/actions/runs/42373671016/artifacts/13574977842) · [Corrected comparison](https://github.com/tamird/gvisor/actions/runs/42378653816/artifacts/13577603869) · [Final amendment tests](https://github.com/tamird/gvisor/actions/runs/42380102504/artifacts/13578306497)\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -77634,7 +77634,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T12:17:12+00:00",
+      "updatedAt": "2026-11-07T14:46:34+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -80201,6 +80201,23 @@
             {
               "label": "Matched native SDK actions with the shell declared as an input",
               "url": "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
+            }
+          ]
+        },
+        {
+          "text": "Four uncached remote Tar actions on an empty AMD64 worker produced the downloadable bzip2 and zstd archives for AMD64 and ARM64 on integration source 0a0fa1efb. For each target, all nine ELF hashes, raw tar header metadata and the publisher’s extraction of the literal runsc member matched the legacy reference. Both Bazel invocations exited 0. The first workflow failed its check of absolute alias links outside the coordinator. A paired control resolved the stock and replacement output and runfiles links inside the coordinator and verified that they reached the same files. The standalone change on master is being checked separately at 657d01de1.",
+          "evidence": [
+            {
+              "label": "Shipping archives for both targets, four original Tar actions and per-architecture legacy references",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42379445664/artifacts/13577123424"
+            },
+            {
+              "label": "Stock and replacement output and runfiles aliases resolved in the coordinator",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42381945915/artifacts/13577544737"
+            },
+            {
+              "label": "Standalone master-based archive qualification for 657d01de1",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42382741313"
             }
           ]
         }
@@ -83629,5 +83646,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T14:29:49+00:00"
+  "updatedAt": "2026-11-07T14:46:34+00:00"
 }
