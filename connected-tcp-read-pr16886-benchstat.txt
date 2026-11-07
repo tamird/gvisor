@@ -1,0 +1,17 @@
+                              │  a2e86ef83   │              e9abe5401              │
+                              │    sec/op    │    sec/op     vs base               │
+ConnectedTCPRead/read=64-2      11.43m ±  9%   10.44m ±  6%  -8.69% (p=0.001 n=16)
+ConnectedTCPRead/read=65536-2   5.862m ± 12%   5.834m ± 27%       ~ (p=0.696 n=16)
+geomean                         8.186m         7.803m        -4.67%
+
+                              │   a2e86ef83   │              e9abe5401               │
+                              │      B/s      │      B/s       vs base               │
+ConnectedTCPRead/read=64-2      87.48Mi ± 10%   95.81Mi ±  7%  +9.52% (p=0.001 n=16)
+ConnectedTCPRead/read=65536-2   170.6Mi ± 11%   171.5Mi ± 33%       ~ (p=0.696 n=16)
+geomean                         122.2Mi         128.2Mi        +4.93%
+
+                              │  a2e86ef83   │              e9abe5401               │
+                              │    B/read    │    B/read      vs base               │
+ConnectedTCPRead/read=64-2        63.99 ± 0%     63.99 ±  0%       ~ (p=0.709 n=16)
+ConnectedTCPRead/read=65536-2   51.52Ki ± 8%   53.20Ki ± 12%       ~ (p=0.290 n=16)
+geomean                         1.794Ki        1.823Ki        +1.62%
