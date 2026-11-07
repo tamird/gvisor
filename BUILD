@@ -2,6 +2,7 @@ load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
+load("//test/rbe/source_build_test:controls.bzl", "observe_launcher")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
@@ -306,3 +307,5 @@ exports_files(
     [".clang-format"],
     visibility = ["//tools:__pkg__"],
 )
+
+observe_launcher(name = "qualification_build_test_launcher", program = ":build_test", testonly = True)
