@@ -16,8 +16,10 @@
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 
+_EXEC_TOOLS = "@rules_python//python:exec_tools_toolchain_type"
+
 def _release_archives_impl(ctx):
-    runtime = ctx.toolchains["@rules_python//python:toolchain_type"].py3_runtime
+    runtime = ctx.toolchains[_EXEC_TOOLS].exec_tools.exec_runtime
     dist = ctx.actions.declare_directory(ctx.label.name)
     args = ctx.actions.args()
     args.add_all(["-I", "-B", ctx.file._builder, ctx.file._backend, ctx.file.project])
@@ -34,7 +36,7 @@ def _release_archives_impl(ctx):
         outputs = [dist],
         env = {"SOURCE_DATE_EPOCH": "315532800"},
         mnemonic = "SandboxExecDist",
-        toolchain = "@rules_python//python:toolchain_type",
+        toolchain = _EXEC_TOOLS,
     )
     return [DefaultInfo(files = depset([dist]))]
 
@@ -47,5 +49,5 @@ release_archives = rule(
         "_builder": attr.label(default = ":build_dist.py", allow_single_file = True),
         "_version": attr.label(default = ":dist_version"),
     },
-    toolchains = ["@rules_python//python:toolchain_type"],
+    toolchains = [_EXEC_TOOLS],
 )
