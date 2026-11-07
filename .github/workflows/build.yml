@@ -1,35 +1,38 @@
-name: CI
-
+name: Compare native and mixed source presubmit graphs
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/same-source-native-inventory]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Check out the public source and pinned Bazel client
+        env:
+          SOURCE: 2e72c3051b3d7a13761f90961f4e94b8cccc8b11
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/native-graph"
+          mkdir -p "$work/results"
+          git init -q .
+          GIT_TERMINAL_PROMPT=0 git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          test "$(git rev-parse FETCH_HEAD^)" = "$SOURCE"
+          git diff --exit-code "$SOURCE" FETCH_HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/native_graph.py'
+          git show 'FETCH_HEAD:.github/qualification/native_graph.py' > "$work/native_graph.py"
+          git checkout -q --detach "$SOURCE"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazel" | sha256sum -c -
+          chmod 755 "$work/bazel"
+      - name: Analyze the original native profiles and mixed profile
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/native-graph/native_graph.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: same-source-native-graphs
+          path: ${{ runner.temp }}/native-graph/results/*.json
+          if-no-files-found: error
+          retention-days: 14
