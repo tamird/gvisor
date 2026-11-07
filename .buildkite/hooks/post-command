@@ -5,6 +5,11 @@ source .buildkite/hooks/libhook
 # Clear any downloaded credentials.
 rm -f repo.key
 
+if is_remote_source_step; then
+  record_job_completion
+  return 0
+fi
+
 # Upload all relevant test failures.
 make -s testlogs 2>/dev/null | grep // | sort | uniq | (
   declare log_count=0
@@ -93,22 +98,7 @@ if test "${BUILDKITE_COMMAND_EXIT_STATUS}" -ne "0"; then
   sudo rm -rf "${HOME}/go"
 fi
 
-# Track consecutive failures.
-CONSECUTIVE_FAILURES_FILE="/tmp/consecutive_failures"
-if test "${BUILDKITE_COMMAND_EXIT_STATUS}" -ne "0"; then
-  count="$(cat "${CONSECUTIVE_FAILURES_FILE}" 2>/dev/null || echo 0)"
-  echo "$((count + 1))" > "${CONSECUTIVE_FAILURES_FILE}.tmp"
-  mv "${CONSECUTIVE_FAILURES_FILE}.tmp" "${CONSECUTIVE_FAILURES_FILE}"
-else
-  rm -f "${CONSECUTIVE_FAILURES_FILE}"
-fi
-
-# Track last job completed time and job assignment.
-JOB_ASSIGNED_FILE="/tmp/job_assigned"
-touch "${JOB_ASSIGNED_FILE}"
-LAST_JOB_COMPLETED_FILE="/tmp/last_job_completed_time"
-date +%s > "${LAST_JOB_COMPLETED_FILE}.tmp"
-mv "${LAST_JOB_COMPLETED_FILE}.tmp" "${LAST_JOB_COMPLETED_FILE}"
+record_job_completion
 
 clear_docker_containers
 

@@ -1,7 +1,4 @@
 steps:
   - label: "Remote source presubmit"
-    command: |
-      failed=0
-      bazel test --config=source-presubmit || failed=1
-      bazel test --config=source-presubmit-arm64 || failed=1
-      exit "$$failed"
+    key: rbe-source
+    command: .buildkite/scripts/rbe-source

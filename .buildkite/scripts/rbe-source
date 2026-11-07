@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+# Use the version from the checked-out .bazelversion when Bazelisk is installed.
+unset USE_BAZEL_VERSION
+export USE_BAZEL_FALLBACK_VERSION=error:
+bazel="$(command -v bazelisk || command -v bazel)" || {
+  echo "The remote source presubmit requires bazelisk or bazel on PATH" >&2
+  exit 127
+}
+
+failed=0
+for config in source-presubmit source-presubmit-arm64; do
+  echo "--- Bazel test --config=${config}"
+  if "${bazel}" test --config="${config}" --keep_going --test_output=errors --verbose_failures; then
+    continue
+  fi
+  failed=1
+  echo "Remote source presubmit failed for \`${config}\`. See the Bazel output in this job." |
+    buildkite-agent annotate --style error --context failures --append || true
+done
+"${bazel}" shutdown || echo "Bazel shutdown failed with status $?" >&2
+exit "${failed}"
