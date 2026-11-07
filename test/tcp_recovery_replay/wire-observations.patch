@@ -1,0 +1,26 @@
+diff --git a/wire-trace.go b/wire-trace.go
+index 93f38aab1f0311fb3b028e904d00d2264869f839..e9f4474f419807f4856de752f157956d1a954625 100644
+--- a/wire-trace.go
++++ b/wire-trace.go
+@@ -71,6 +71,7 @@
+ func seqLess(a, b uint32) bool { return int32(a-b) < 0 }
+ 
+ func (w *wireTrace) recordSent(now time.Time, p *packetInfo) {
++	recordObservation("sent",now,p)
+ 	if !p.isTCP || p.src != w.server {
+ 		return
+ 	}
+@@ -119,11 +120,13 @@
+ }
+ 
+ func (w *wireTrace) recordScriptDrop(now time.Time, p *packetInfo) {
++	recordObservation("drop",now,p)
+ 	w.recordQueueDrop(now, p)
+ }
+ 
+ func (w *wireTrace) recordDelivered(now time.Time, raw []byte) {
+ 	p := parsePacket(raw)
++	recordObservation("delivered",now,&p)
+ 	if !p.isTCP || p.dst != w.server || p.payloadLen != 0 {
+ 		return
+ 	}
