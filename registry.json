@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T17:26:09+00:00",
+    "updatedAt": "2026-11-07T17:29:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28433,14 +28433,14 @@
       "url": "https://github.com/google/gvisor/pull/16403",
       "group": "runtime",
       "status": "merged",
-      "updatedAt": "2026-11-07T12:57:14+00:00",
+      "updatedAt": "2026-11-07T17:29:49+00:00",
       "summary": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.\n\nEarlier source record:\n\nThe contributor-approved amendment is published on #16403 at c451fa7d6. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot.\n\nInclude a duplicate FIN sequence number and retain the duplicate report when filling a gap drains a queued FIN; simplify the SACK helper interface and comments.\n\nThe extended receiver fixture covers the queued-FIN ACK and retransmitted data/FIN in CLOSE-WAIT, with focused remote qualification passing. Duplicates wholly above the cumulative ACK remain outside this change. No production throughput or customer-outage claim follows.\n\nEarlier source-specific record:\n\nWith SACK negotiated, the receiver reports already acknowledged non-FIN data in its first SACK block. A wholly duplicate segment leaves the cumulative ACK and queued SACK ranges intact; a segment crossing the old ACK reports only the duplicate prefix. Both AMD64 and ARM64 controls failed as expected; the corrected SACK suites and analyzers passed on both CPUs.",
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
-        "observedAt": "2026-11-07T12:57:14+00:00",
+        "observedAt": "2026-11-07T17:29:49+00:00",
         "disposition": "The requested Linux and gVisor packet comparison passed. The results were posted on the merged PR.",
-        "nextAction": "The standalone PacketImpact test is on review/tcp-dsack-below-ack-parity. The above-gap implementation is tracked on #16999.",
+        "nextAction": "The below-ACK PacketImpact test is published as #17196. The separate above-gap implementation is tracked on #16999.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16403#issuecomment-6707089163",
           "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207",
@@ -28449,7 +28449,8 @@
           "https://github.com/google/gvisor/pull/16403#pullrequestreview-5657638067",
           "https://github.com/tamird/gvisor/commit/c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
           "https://app.buildbuddy.io/invocation/4c7ff6e6-8214-4380-8fe0-d55d6216698f",
-          "https://github.com/google/gvisor/pull/16403#pullrequestreview-5689638780"
+          "https://github.com/google/gvisor/pull/16403#pullrequestreview-5689638780",
+          "https://github.com/google/gvisor/pull/17196"
         ]
       },
       "evidence": [
@@ -28508,6 +28509,10 @@
         {
           "label": "Published receiver-DSACK review response",
           "url": "https://github.com/google/gvisor/pull/16403#discussion_r4383002637"
+        },
+        {
+          "label": "Published below-ACK packet parity test",
+          "url": "https://github.com/google/gvisor/pull/17196"
         }
       ],
       "number": 16403
@@ -60383,8 +60388,8 @@
       "title": "Check D-SACK blocks below the cumulative ACK",
       "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T12:57:14+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T17:29:49+00:00",
       "summary": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.",
       "evidence": [
         {
@@ -60398,18 +60403,37 @@
         {
           "label": "Separate above-gap behavior",
           "url": "https://github.com/google/gvisor/pull/16999"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17196"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
-        "title": "Check D-SACK blocks below the cumulative ACK",
-        "requestedAt": "2026-11-07T12:57:14+00:00",
-        "summary": "Open this standalone PacketImpact test? The native Linux and gVisor receivers reported the same cumulative ACK and D-SACK range for both retransmissions.",
-        "body": "Exercise the receiver with a retransmission inside acknowledged data\nand a second retransmission that extends into new data. Check the\nfirst SACK block against the duplicate bytes and the cumulative ACK\nagainst the newly received suffix."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
+          "title": "Check D-SACK blocks below the cumulative ACK",
+          "requestedAt": "2026-11-07T12:57:14+00:00",
+          "summary": "Open this standalone PacketImpact test? The native Linux and gVisor receivers reported the same cumulative ACK and D-SACK range for both retransmissions.",
+          "body": "Exercise the receiver with a retransmission inside acknowledged data\nand a second retransmission that extends into new data. Check the\nfirst SACK block against the duplicate bytes and the cumulative ACK\nagainst the newly received suffix.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:29:49+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17196"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
+        "observedAt": "2026-11-07T17:29:49+00:00",
+        "disposition": "The approved change is on #17196 at c6f1cf9b9.",
+        "nextAction": "Follow #17196 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17196",
+          "https://github.com/tamird/gvisor/commit/c6f1cf9b9"
+        ]
       }
     },
     {
@@ -60999,6 +61023,64 @@
         ]
       },
       "number": 17195
+    },
+    {
+      "id": "pr:17196",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/tcp-dsack-below-ack-parity",
+      "head": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
+      "title": "Check D-SACK blocks below the cumulative ACK",
+      "url": "https://github.com/google/gvisor/pull/17196",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-07T17:29:49+00:00",
+      "summary": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.",
+      "evidence": [
+        {
+          "label": "Native Linux and gVisor test results with packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207"
+        },
+        {
+          "label": "Published results for the original reviewer",
+          "url": "https://github.com/google/gvisor/pull/16403#issuecomment-6707089163"
+        },
+        {
+          "label": "Separate above-gap behavior",
+          "url": "https://github.com/google/gvisor/pull/16999"
+        },
+        {
+          "label": "Published single-commit pull request",
+          "url": "https://github.com/google/gvisor/pull/17196"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
+          "title": "Check D-SACK blocks below the cumulative ACK",
+          "requestedAt": "2026-11-07T12:57:14+00:00",
+          "summary": "Open this standalone PacketImpact test? The native Linux and gVisor receivers reported the same cumulative ACK and D-SACK range for both retransmissions.",
+          "body": "Exercise the receiver with a retransmission inside acknowledged data\nand a second retransmission that extends into new data. Check the\nfirst SACK block against the duplicate bytes and the cumulative ACK\nagainst the newly received suffix.",
+          "outcome": "approved",
+          "at": "2026-11-07T17:29:49+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17196"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
+        "observedAt": "2026-11-07T17:29:49+00:00",
+        "disposition": "The approved change is on #17196 at c6f1cf9b9.",
+        "nextAction": "Follow #17196 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17196",
+          "https://github.com/tamird/gvisor/commit/c6f1cf9b9"
+        ]
+      },
+      "number": 17196
     }
   ],
   "edges": [
@@ -84462,5 +84544,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T17:26:09+00:00"
+  "updatedAt": "2026-11-07T17:29:49+00:00"
 }
