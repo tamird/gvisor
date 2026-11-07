@@ -1,90 +1,52 @@
-name: Run the complete ARM64 source presubmit with the declared LLVM compiler
+name: Read original ARM64 cmd and netgofer test evidence
 on:
   push:
-    branches: [qualification/llvm-complete-arm64-presubmit]
-permissions:
-  contents: read
+    branches: [qualification/arm64-presubmit-original-owner-logs]
+permissions: {contents: read}
 jobs:
-  submit:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+  retrieve:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 140
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 3
-          persist-credentials: false
-      - name: Verify the original source and the Buildkite command
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Verify original source, owner, and evidence reader
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = 353c484b45fec1ba5ba19445ba03807a5f9638e0
-          test "$(git rev-parse HEAD^^)" = 127967d3179491381f2a85e4804ae8236fc89e35
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_presubmit_results.py' ':!.github/qualification/source_presubmit_memory.py' ':!.github/qualification/source_presubmit_selection.py'
-          git diff --exit-code HEAD^^ HEAD^ -- . ':!.bazelrc' ':!test/rbe/source-presubmit.targets'
-          cp .github/qualification/{source_presubmit_results.py,source_presubmit_selection.py,source_presubmit_memory.py} "$RUNNER_TEMP/"
-          git checkout --quiet --detach HEAD^
-          test "$(bazelisk --version)" = "bazel 9.3.1"
-          ruby -ryaml -e 'a=YAML.load_file(".buildkite/rbe-source.yaml").fetch("steps"); abort unless a.size==1 && a.first.fetch("command")=="bazel test --config=source-presubmit"'
-      - name: Size and check the Bazel server heap on this coordinator
-        run: python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
-      - name: Submit the complete graph to the remote executor
-        timeout-minutes: 95
+          test "$(git rev-parse HEAD^)" = dc9dcd2e3566e3adcdcf2fbf50297a95c853a620
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/arm64_owner_diagnostics.py'
+          cp .github/qualification/arm64_owner_diagnostics.py "$RUNNER_TEMP/"
+          echo "fb146b85daa34e1c99cac7bf95d177d2b54a209a0a17a5f0d30c731fa99ef218  $RUNNER_TEMP/arm64_owner_diagnostics.py" | sha256sum -c
+      - name: Read four exact original blobs with one scoped credential
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
-          set -eu
           umask 077
-          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
-          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
-          trap 'rm -f "$rc"' EXIT
-          cat > "$rc" <<'RC'
-          build:source-presubmit-arm64 --remote_executor=grpcs://remote.buildbuddy.io
-          build:source-presubmit-arm64 --remote_cache=grpcs://remote.buildbuddy.io
-          build:source-presubmit-arm64 --bes_backend=grpcs://remote.buildbuddy.io
-          build:source-presubmit-arm64 --bes_results_url=https://app.buildbuddy.io/invocation/
-          build:source-presubmit-arm64 --remote_download_outputs=minimal
-          build:source-presubmit-arm64 --remote_download_regex=.*testlogs/(.*/test[.]xml|(pkg/sentry/devices/nvproxy/nvproxy_driver_(abi|checksums)_test|runsc/gofer/net/netgofer_test|examples/sandboxexec/go/docprocessor/docprocessor_test|sandboxexec/sandbox/python/sandbox_py_test)/test[.]log)
-          build:source-presubmit-arm64 --jobs=64 --keep_going
-          test:source-presubmit-arm64 --nocache_test_results --flaky_test_attempts=1
-          test:source-presubmit-arm64 --test_env=GO_TEST_WRAP_TESTV=1
-          RC
-          printf 'build:source-presubmit-arm64 --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
-          printf 'build:source-presubmit-arm64 --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          code=0
-          timeout --signal=INT --kill-after=60s 90m bazelisk --bazelrc="$rc" test --config=source-presubmit-arm64 > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
-          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
-      - name: Record the completed submission before inspecting the independent Make oracle
-        continue-on-error: true
-        if: always() && !cancelled()
-        run: |
-          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
-          python3 -IB "$RUNNER_TEMP/source_presubmit_results.py" test_outputs
-          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose
-      - name: Derive the complete owner and shard oracle from the current Make recipe
-        if: always() && !cancelled()
-        continue-on-error: true
-        timeout-minutes: 32
+          python3 -IB "$RUNNER_TEMP/arm64_owner_diagnostics.py" retrieve
+      - name: Extract only source cases, source locations, and typed comparison fields
+        id: project
         run: |
           set -eu
-          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
-          python3 -IB "$RUNNER_TEMP/source_presubmit_selection.py"
-      - name: Collect typed target, shard and failure receipts
-        id: collect
-        if: always() && !cancelled()
-        run: |
-          set -eu
-          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep" "$RUNNER_TEMP/source-presubmit.bazelrc"' EXIT
-          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose
-          python3 "$RUNNER_TEMP/source_presubmit_results.py"
+          test -z "${BUILDBUDDY_API_KEY:-}"
+          python3 -IB "$RUNNER_TEMP/arm64_owner_diagnostics.py" summarize
+          python3 -IB - <<'PYSCAN'
+          import json, os, pathlib, re
+          path=pathlib.Path(os.environ["RUNNER_TEMP"])/"arm-owners.json"
+          assert path.is_file() and not path.is_symlink() and path.stat().st_size < 140000
+          raw=path.read_bytes()
+          assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",raw)
+          r=json.loads(raw)
+          assert r["invocation"]=="b31f8bfe-2484-48df-b737-5b9bc46052ac"
+          assert set(r["blobs"])=={"cmd.log","cmd.xml","netgofer.log","netgofer.xml"}
+          PYSCAN
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always() && steps.collect.outcome == 'success' && !cancelled()
+        if: steps.project.outcome == 'success'
         with:
-          name: llvm-arm64-source-presubmit-results
-          path: ${{ runner.temp }}/source-presubmit-results/receipt.json
+          name: original-arm64-owner-diagnostics
+          path: ${{ runner.temp }}/arm-owners.json
           if-no-files-found: error
           retention-days: 14
-      - name: Check the full presubmit result
-        if: always() && steps.collect.outcome == 'success' && !cancelled()
+      - name: Require all four originals
         run: |
-          python3 -c 'import json, os, pathlib; row=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"source-presubmit-results/receipt.json").read_text()); raise SystemExit(0 if row["complete_pass"] else 1)'
+          python3 -IB -c 'import json,os,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"arm-owners.json").read_text()); assert all(o["http"]==200 for o in r["blobs"].values())'
