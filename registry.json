@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T23:12:07+00:00",
+    "updatedAt": "2026-11-07T23:39:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43847,7 +43847,7 @@
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T10:58:13.320Z",
+      "updatedAt": "2026-11-07T23:28:16+00:00",
       "summary": "Flozano incorporated the timer change and its regression in a6a26052f. The ACK that ends SACK recovery now starts a full RTO for the remaining segment. The five probe tests match the previously tested cases. Flozano reports all five passed in 30 consecutive runs.",
       "evidence": [
         {
@@ -43909,6 +43909,10 @@
         {
           "label": "Published reply to Lucas with the two source revisions and measured result",
           "url": "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
+        },
+        {
+          "label": "Public GitHub status for First Pass #720",
+          "url": "https://api.github.com/repos/google/gvisor/commits/a6a26052f/status"
         }
       ],
       "settledReviews": [
@@ -43942,14 +43946,15 @@
       "followup": {
         "owner": "gVisor maintainer",
         "sourceHead": "a6a26052fcf59e25cb748093fb5017932c088c80",
-        "observedAt": "2026-11-06T10:31:14Z",
+        "observedAt": "2026-11-07T23:28:16+00:00",
         "disposition": "Both timer findings and their regression tests are in the rebased PR. The updated description covers both send paths and the recovery ACK.",
-        "nextAction": "Maintainer review. Flozano asked Lucas about the advisory First Pass build.",
+        "nextAction": "Awaiting review from @parth-opensrc. First Pass #720 passed on a6a26052f.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15972#discussion_r4491468229",
           "https://github.com/google/gvisor/commit/a6a26052f",
           "https://github.com/google/gvisor/pull/15972#pullrequestreview-5758454721",
-          "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
+          "https://github.com/google/gvisor/pull/15972#discussion_r4471155616",
+          "https://api.github.com/repos/google/gvisor/commits/a6a26052f/status"
         ]
       }
     },
@@ -49484,9 +49489,9 @@
       "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
       "url": "https://github.com/tamird/gvisor/commit/3c8aa1d51",
       "group": "runtime",
-      "status": "Contributor approved; waiting for #16809",
-      "updatedAt": "2026-11-06T17:33:33.842Z",
-      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and this revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. Submission waits for #16809, which provides the accepted socket’s TCP_INFO retransmission count.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T23:25:31+00:00",
+      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and the approved 3c8aa1d51 revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. The approved change is now open as #17206 at 1f50f4698 on the landed counter in master.",
       "evidence": [
         {
           "label": "Changes since the previous source review",
@@ -49511,6 +49516,22 @@
         {
           "label": "Final timestamp boundary and both architecture analyzers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41364729375/artifacts/13107085903"
+        },
+        {
+          "label": "Published one-commit change",
+          "url": "https://github.com/google/gvisor/pull/17206"
+        },
+        {
+          "label": "Published change on the imported TCP_INFO counter",
+          "url": "https://github.com/google/gvisor/commit/1f50f469810b7a38f9de87e8d84cbed627ed5730"
+        },
+        {
+          "label": "Landed counter prerequisite via Copybara",
+          "url": "https://github.com/google/gvisor/pull/16982"
+        },
+        {
+          "label": "Hosted Netstack replay of the published source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42425194587"
         }
       ],
       "settledReviews": [
@@ -49545,16 +49566,19 @@
         }
       },
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream review",
         "sourceHead": "3c8aa1d51dcfb99a39d967c45046483cd42c561d",
-        "observedAt": "2026-11-06T17:33:33.842Z",
-        "disposition": "Contributor approved submission after #16809 lands.",
-        "nextAction": "Open the qualified passive SYN retry change when the TCP_INFO counter reaches master.",
+        "observedAt": "2026-11-07T23:25:31+00:00",
+        "disposition": "Published the approved 3c8aa1d51 patch as a single commit on #17206 at 1f50f4698. The changed paths and all 123 ordered added or removed lines matched after the rebase.",
+        "nextAction": "Follow #17206 for maintainer review and import.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16809",
-          "https://github.com/tamird/gvisor/commit/3c8aa1d51"
+          "https://github.com/google/gvisor/pull/17206",
+          "https://github.com/google/gvisor/commit/1f50f469810b7a38f9de87e8d84cbed627ed5730",
+          "https://github.com/tamird/gvisor/compare/3c8aa1d51..1f50f4698",
+          "https://github.com/google/gvisor/pull/16982"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:16855",
@@ -51102,8 +51126,8 @@
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T18:22:25.827Z",
-      "summary": "Published the conflict resolution on the existing PR. All 16 named packet checks passed: active, passive and data retransmissions, TCP_INFO readback, and all four timestamp/SACK combinations on native Linux and gVisor.",
+      "updatedAt": "2026-11-07T23:25:31+00:00",
+      "summary": "Published the conflict resolution on the existing PR. All 16 named packet checks passed: active, passive and data retransmissions, TCP_INFO readback, and all four timestamp/SACK combinations on native Linux and gVisor. Copybara #16982 landed the current patch in 7eda82e34. The footer names f1dbaa4d1, but the ordered additions and removals, including path headers, match the landed change across all 135 compared lines. Replaying 0c8fe8397 onto that commit leaves the complete Git tree unchanged.",
       "evidence": [
         {
           "label": "Exact rebased source: Linux and gVisor passed all 16 packet cases",
@@ -51172,6 +51196,14 @@
         {
           "label": "November 3: export 17e0affe9 identifies f1dbaa4d1 and returns the SYN-cookie send error",
           "url": "https://github.com/google/gvisor/commit/17e0affe9"
+        },
+        {
+          "label": "Merged import carrying the current source patch",
+          "url": "https://github.com/google/gvisor/pull/16982"
+        },
+        {
+          "label": "Master commit of the imported retransmission counter",
+          "url": "https://github.com/google/gvisor/commit/7eda82e34c64918d1f1b2a3d73a244d6979dbe44"
         }
       ],
       "settledReviews": [
@@ -51236,14 +51268,27 @@
         "evidence": "https://github.com/tamird/gvisor/compare/f1dbaa4d1...0c8fe8397"
       },
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Upstream review",
         "sourceHead": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
-        "observedAt": "2026-11-06T17:57:27.739Z",
-        "disposition": "Approved amendment published as one commit; its tree matched the qualified source.",
-        "nextAction": "Wait for fresh upstream approval and an import of the rebased source.",
+        "observedAt": "2026-11-07T23:25:31+00:00",
+        "disposition": "The current source edits are in master through #16982.",
+        "nextAction": "Observe closure of the source PR.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16809",
-          "https://github.com/tamird/gvisor/actions/runs/42261812749/artifacts/13525828699"
+          "https://github.com/google/gvisor/pull/16982",
+          "https://github.com/google/gvisor/commit/7eda82e34c64918d1f1b2a3d73a244d6979dbe44"
+        ]
+      },
+      "landedPatch": {
+        "head": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
+        "method": "merge-tree-identical",
+        "upstreamHead": "7eda82e34c64918d1f1b2a3d73a244d6979dbe44",
+        "upstreamTree": "408ba65ae45ccadcb71374e118551fd6b17d0260",
+        "replayedTree": "408ba65ae45ccadcb71374e118551fd6b17d0260",
+        "verifiedAt": "2026-11-07T23:25:31+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16982",
+          "https://github.com/google/gvisor/commit/7eda82e34c64918d1f1b2a3d73a244d6979dbe44",
+          "https://github.com/google/gvisor/pull/16809"
         ]
       }
     },
@@ -52627,8 +52672,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T22:56:18+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. Updating the upstream LLVM PR awaits a supplier release.",
+      "updatedAt": "2026-11-07T23:34:36+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation. The author is testing it against the same LLVM consumers.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52695,8 +52740,12 @@
           "url": "https://github.com/tamird/hermetic-llvm/commit/51d740df1"
         },
         {
-          "label": "Supplier proposal and single contributor decision",
+          "label": "Qualified keep_if_empty experiment and current comparison",
           "url": "https://tamird.github.io/gvisor/#branch:with-cfg-conditional-list-setting"
+        },
+        {
+          "label": "Existing supplier prepend proposal and maintainer review",
+          "url": "https://github.com/fmeum/with_cfg.bzl/pull/178"
         }
       ],
       "settledReviews": [
@@ -61553,9 +61602,9 @@
       "title": "Preserve list settings on an empty selection",
       "url": "https://github.com/tamird/with_cfg.bzl/commit/8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T23:05:49+00:00",
-      "summary": "The opt-in preserves the caller’s incoming list when a configurable value selects an empty list. An ordinary empty assignment still clears the setting. The corrected supplier tests passed on Bazel 7.7.1 and 9.2.0, alongside all 24 current tests and the formatter and documentation checks. David’s #908 review identified the LLVM consumer. The fork implementation selects musl on the existing binary rule and preserves the caller’s custom MSVC platform. Updating #908 depends on a supplier release.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T23:34:36+00:00",
+      "summary": "The opt-in preserves the caller’s incoming list when a configurable value selects an empty list. An ordinary empty assignment still clears the setting. The corrected supplier tests passed on Bazel 7.7.1 and 9.2.0, alongside all 24 current tests and the formatter and documentation checks. David’s #908 review identified the LLVM consumer. The fork implementation selects musl on the existing binary rule and preserves the caller’s custom MSVC platform. The existing with_cfg PR #178 proposes prepending a platform, and its maintainer requested documentation and an example. The LLVM consumer is being checked against that approach before choosing a change.",
       "evidence": [
         {
           "label": "Supplier source-only branch",
@@ -61580,19 +61629,148 @@
         {
           "label": "Patched platform tests and native Linux tool",
           "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42421492776/artifacts/13593488151"
+        },
+        {
+          "label": "Existing supplier prepend proposal and maintainer review",
+          "url": "https://github.com/fmeum/with_cfg.bzl/pull/178"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
+        "observedAt": "2026-11-07T23:34:36+00:00",
+        "disposition": "The keep_if_empty fork remains qualified research. The pending decision was removed while checking the existing prepend proposal.",
+        "nextAction": "Test #178 on the #908 Linux and custom-Windows configuration paths, then reconcile the supplier and consumer changes.",
+        "evidence": [
+          "https://github.com/fmeum/with_cfg.bzl/pull/178",
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
+        ]
+      }
+    },
+    {
+      "id": "pr:17206",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17206,
+      "ref": "proposal/tcp-passive-syn-retry",
+      "head": "1f50f469810b7a38f9de87e8d84cbed627ed5730",
+      "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
+      "url": "https://github.com/google/gvisor/pull/17206",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-07T23:25:31+00:00",
+      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and the approved 3c8aa1d51 revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. The approved change is now open as #17206 at 1f50f4698 on the landed counter in master.",
+      "evidence": [
+        {
+          "label": "Changes since the previous source review",
+          "url": "https://github.com/tamird/gvisor/compare/22d8cfc02...3c8aa1d51"
+        },
+        {
+          "label": "Four original packet cases and retry timestamps on native Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42257460969/artifacts/13522064442"
+        },
+        {
+          "label": "Three handshake tests and AMD64/ARM64 Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42251069517/artifacts/13523330695"
+        },
+        {
+          "label": "Stock and Linux before the handshake timer fires",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41362026193/artifacts/13106345311"
+        },
+        {
+          "label": "Packet sequence, timer, rate limit and RTT on Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41364087508/artifacts/13106692029"
+        },
+        {
+          "label": "Final timestamp boundary and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41364729375/artifacts/13107085903"
+        },
+        {
+          "label": "Published one-commit change",
+          "url": "https://github.com/google/gvisor/pull/17206"
+        },
+        {
+          "label": "Published change on the imported TCP_INFO counter",
+          "url": "https://github.com/google/gvisor/commit/1f50f469810b7a38f9de87e8d84cbed627ed5730"
+        },
+        {
+          "label": "Landed counter prerequisite via Copybara",
+          "url": "https://github.com/google/gvisor/pull/16982"
+        },
+        {
+          "label": "Hosted Netstack replay of the published source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42425194587"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "22d8cfc02a0c99c00fc9e9a97160d3dae8208b48",
+          "url": "https://github.com/tamird/gvisor/commit/22d8cfc02",
+          "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
+          "body": "When the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T16:20:27.112Z",
+          "note": "Separate SYN retransmission accounting from sending the SYN."
+        },
+        {
+          "kind": "proposal",
+          "head": "3c8aa1d51dcfb99a39d967c45046483cd42c561d",
+          "baseHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+          "url": "https://github.com/tamird/gvisor/commit/3c8aa1d51",
+          "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
+          "body": "A passive TCP handshake answered a repeated SYN with a bare ACK. A\npeer that missed the SYN-ACK then had to wait for the handshake timer\nto retransmit it.\n\nResend the SYN-ACK for the original sequence number, subject to the\nexisting out-of-window response limit. A successful send restarts the\npending timer at its current interval and is charged to the accepted\nsocket. Give each passive retry its current transmit timestamp so the\nfinal ACK can supply the initial RTT. This follows the Linux\nrequest-socket path [1].\n\nThe packet test repeats the SYN before the initial timeout and checks\nthe sequence and acknowledgment numbers on the second SYN-ACK. A third\nSYN immediately afterward leaves the accepted socket with one retry.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_minisocks.c#L679-L719",
+          "summary": "Open the revised passive SYN retry fix after #16809 lands? The four packet cases passed on native Linux and corrected gVisor.",
+          "outcome": "approved",
+          "at": "2026-11-06T17:33:33.842Z"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "1f50f469810b7a38f9de87e8d84cbed627ed5730",
+        "observedAt": "2026-11-07T23:25:31+00:00",
+        "disposition": "Published the approved 3c8aa1d51 patch as a single commit on #17206 at 1f50f4698. The changed paths and all 123 ordered added or removed lines matched after the rebase.",
+        "nextAction": "Follow #17206 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17206",
+          "https://github.com/google/gvisor/commit/1f50f469810b7a38f9de87e8d84cbed627ed5730",
+          "https://github.com/tamird/gvisor/compare/3c8aa1d51..1f50f4698",
+          "https://github.com/google/gvisor/pull/16982"
+        ]
+      }
+    },
+    {
+      "id": "branch:yamltest-native-validator",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/yamltest-native-validator",
+      "head": "dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
+      "title": "Run YAML checks with the declared validator",
+      "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T23:39:37+00:00",
+      "summary": "All five existing YAML checks passed on the 22 original files with the direct Go validator. On stock, the tests passed with Bash and failed to start once their own namespaces hid /bin and /usr/bin. Bazel’s outer test setup ran on ordinary Ubuntu. All 20 test results were uncached. Direct execution now passes extra Bazel --test_arg values to the validator as additional filenames. None of the five current owners supplies any.",
+      "evidence": [
+        {
+          "label": "Published standalone source on 7eda82e34",
+          "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c"
+        },
+        {
+          "label": "Five stock and direct checks and five validator controls, on native AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42425854263/artifacts/13595004667"
         }
       ],
       "contributorReview": {
-        "status": "pending",
         "kind": "proposal",
-        "head": "8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
-        "baseHead": "9b8b10962419346889e528cbe57a539754489d57",
-        "url": "https://github.com/tamird/with_cfg.bzl/commit/8cd26b34acdb2da2a1b56331c267d8dcc0f29622",
-        "title": "Preserve list settings on an empty selection",
-        "requestedAt": "2026-11-07T22:56:18+00:00",
-        "summary": "Open the supplier PR and reply to David on #908 with its link?",
-        "body": "A configurable assignment can select a replacement platform on Linux\nbut should leave the caller's platform unchanged on other systems.\nSetting the value to an empty list clears the original platform, and\nextending the list leaves the original platform first.\n\nAllow set() to preserve a list-valued setting when its selected value\nis empty. Require an explicit keyword so existing empty assignments\nstill clear the setting.\n\nIn hermetic-llvm [1], one binary rule can select Linux musl while\nretaining the caller's custom Windows MSVC platform.\n\n[1]: https://github.com/hermeticbuild/hermetic-llvm/pull/908",
-        "replyBody": "@dzbarsky, yes. With the existing `set(\"platforms\", ...)`, selecting `[]` on Windows drops the caller’s MSVC platform. <supplier PR> adds an opt-in that keeps the incoming platform in that case. [The LLVM change](https://github.com/tamird/hermetic-llvm/commit/51d740df1) then selects Linux musl on the existing binary rule and removes the `native/` and `musl/` targets. I’ll update this PR once the supplier change is released.\n\nPosted by Codex on behalf of @tamird."
+        "status": "pending",
+        "head": "dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
+        "baseHead": "7eda82e34c64918d1f1b2a3d73a244d6979dbe44",
+        "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
+        "requestedAt": "2026-11-07T23:39:37+00:00",
+        "title": "Run YAML checks with the declared validator",
+        "summary": "Open this single-commit gVisor PR?",
+        "body": "The YAML checks for the Buildkite pipelines, GitHub workflows, Nogo configuration and two website datasets generate Bash scripts just to start the Go validator. Without `/bin/bash`, the test executable fails before it reads a single YAML file.\n\nRun the existing target-platform validator as a Bazel `native_test`. A private input target supplies the resolved schema, filegroups and options as test arguments so callers can continue using `select()`.\n\nOn Linux/AMD64 with Bazel 9.3.1, all five original checks passed with Bash and failed to start when the test's namespace hid `/bin` and `/usr/bin`. The replacement checked the same 22 files there. It also retained strict decoding, the comment policy and schema diagnostics, and handled a multi-file input containing spaces and a literal dollar expression. Bazel's outer test setup ran on ordinary Ubuntu. [Original qualification](https://github.com/tamird/gvisor/actions/runs/42425854263/artifacts/13595004667)"
       }
     }
   ],
@@ -64926,10 +65104,11 @@
       "type": "depends_on",
       "from": "pr:16809",
       "to": "branch:tcp-passive-syn-retry",
-      "reason": "The retry increments the socket counter introduced by #16809. The permanent packet test reads TCP_INFO.TotalRetrans on the accepted socket.",
+      "reason": "The retransmission counter landed in 7eda82e34 through #16982. Its approved dependent was published as #17206.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/3c8aa1d51",
-        "https://github.com/google/gvisor/pull/16809"
+        "https://github.com/google/gvisor/pull/16982",
+        "https://github.com/google/gvisor/commit/7eda82e34c64918d1f1b2a3d73a244d6979dbe44",
+        "https://github.com/google/gvisor/pull/17206"
       ]
     },
     {
@@ -85252,5 +85431,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T23:12:07+00:00"
+  "updatedAt": "2026-11-07T23:39:37+00:00"
 }
