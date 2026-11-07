@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T06:03:46+00:00",
+    "updatedAt": "2026-11-07T06:21:28+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1655,29 +1655,25 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-04T05:35:40.537494+00:00",
+      "updatedAt": "2026-11-07T06:21:28+00:00",
       "summary": "The November 4 rebase onto master 183a39d1b is published at e438da4be. GitHub reports the head is mergeable. All four Nogo targets passed on AMD64 and ARM64. On native AMD64, 171 TMPFS and 40 VFS cases passed, including both new SIGBUS cases. No cases were skipped. The earlier changes-requested review remains on the PR.\n\nOn October 25 the 12:53 provider snapshot reported e1e9c4ea0 mergeable. That source preserved the device-file credential callback with the landed Filesystem identity accessors. Its reconciliation did not include a runtime replay or fresh approval.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Rebase published and mergeable. Four Nogo targets and both native AMD64 suites passed.",
+        "owner": "Contributor",
         "sourceHead": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
-        "reviewedAt": "2026-10-10T18:38:04.777493+00:00",
-        "nextAction": "Follow the public checks and maintainer review on the rebased head. All earlier threads are resolved.",
+        "observedAt": "2026-11-07T06:21:28+00:00",
+        "disposition": "The alternate inode pointer makes the existing mutex visible to Nogo.",
+        "nextAction": "Review the TMPFS amendment before publication.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14343#discussion_r4260325076",
-          "https://github.com/tamird/gvisor/commit/ebebea2d39970e0da947503e4dc75af172a55e8c",
-          "https://github.com/tamird/gvisor/commit/dc2687aa226ef6501206c06b6395969bfe9f68ea",
-          "https://github.com/tamird/gvisor/commit/40f478e8cb1f7fa2216f34ca047b163d848d69a5",
-          "https://github.com/tamird/gvisor/commit/e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
-          "https://github.com/tamird/gvisor/commit/e438da4be",
-          "https://github.com/tamird/gvisor/actions/runs/41779051630/artifacts/13298471909"
-        ],
-        "observedAt": "2026-11-04T05:35:40.537494+00:00",
-        "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "MERGEABLE"
+          "https://github.com/tamird/gvisor/commit/c84ba7677",
+          "https://github.com/tamird/gvisor/actions/runs/42345809636/artifacts/13563068040"
+        ]
       },
       "head": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
       "evidence": [
+        {
+          "label": "TMPFS guard and unguarded control on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42345809636/artifacts/13563068040"
+        },
         {
           "label": "Four Nogo targets on AMD64 and ARM64, plus 211 native AMD64 TMPFS and VFS cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41779051630/artifacts/13298471909"
@@ -1694,7 +1690,28 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/40f478e8cb1f7fa2216f34ca047b163d848d69a5"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "c84ba767743ce2c96109a89f234d234485b3a230",
+        "baseHead": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
+        "url": "https://github.com/tamird/gvisor/commit/c84ba7677",
+        "title": "Check TMPFS and VFS locking contracts",
+        "requestedAt": "2026-11-07T06:21:28+00:00",
+        "summary": "Publish the three-line TMPFS lock annotation amendment on #14343?\n\ngit -C ~/code/gvisor range-diff e438da4be^! c84ba7677^!",
+        "body": "Dropping the child directory’s .. link uses the parent inode. Using the dentry’s existing pointer lets Nogo verify the filesystem mutex at that call. Both AMD64 and ARM64 analyses passed. Removing the function’s lock precondition made both report the missing mutex at this line."
+      },
+      "refinement": {
+        "before": {
+          "head": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
+          "base": "183a39d1b2aff9e8e2219171940001749a2b5db0"
+        },
+        "after": {
+          "head": "c84ba767743ce2c96109a89f234d234485b3a230",
+          "base": "183a39d1b2aff9e8e2219171940001749a2b5db0"
+        }
+      }
     },
     {
       "id": "pr:14338",
@@ -30556,12 +30573,12 @@
       "group": "runtime",
       "status": "Agent investigation",
       "summary": "On 14e1d0324, three of five Reno M003 transfers stalled at byte 134,684 of 524,288 through the 35 s deadline. Two finished. With #16495, all five finished in 0.648–1.211 s and preserved the payload hash. Both no-loss controls passed. The stock result on 597f36270 was five stalls in five runs. The reporter confirmed that their separate FreeBSD connection used Tailscale 1.80.0 without TCP timestamps. Its internal recovery sequence remains unknown.\n\nEarlier Reno/CUBIC comparison: With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
-      "updatedAt": "2026-11-07T03:08:22+00:00",
+      "updatedAt": "2026-11-07T06:21:28+00:00",
       "followup": {
-        "owner": "root",
-        "observedAt": "2026-10-31T13:27:19.063035+00:00",
-        "disposition": "Burst-loss fix verified. A separate packet test confirms when the earlier reneging timer applies.",
-        "nextAction": "Finish the live restore control for the sender’s SACK history before proposing the timer change. Keep the suffix-only control and the ordinary timeout fallback.",
+        "owner": "Agent",
+        "observedAt": "2026-11-07T06:21:28+00:00",
+        "disposition": "The M003 replay is measured on current source. Tamir approved the separate SACK reneging proposal after #15634.",
+        "nextAction": "Track #16495 for the M003 stall. For the FreeBSD report, the negotiated options are known, but attributing the stall to the same recovery path still needs a trace from that connection.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41204594691/artifacts/13044207947",
           "https://github.com/tamird/gvisor/actions/runs/41194692496/artifacts/13040800952",
@@ -44457,10 +44474,14 @@
       "head": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
       "title": "Retry promptly when a TCP ACK contradicts an earlier SACK",
       "url": "https://github.com/tamird/gvisor/commit/3d868e9c6",
-      "updatedAt": "2026-11-06T16:32:56.778Z",
+      "updatedAt": "2026-11-07T06:21:28+00:00",
       "status": "Approved; waiting for #15634",
       "summary": "If a cumulative ACK stops inside a packet that the peer reported receiving in full, Linux retries sooner. A SACK for only the packet’s suffix leaves the usual timeout in place. The same distinction applies when gVisor retransmits a shorter fragment. Submit after #15634.",
       "evidence": [
+        {
+          "label": "Live restore under the prerequisite: repeated and genuinely reordered SACKs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763"
+        },
         {
           "label": "Linux, original and fixed packet captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41204594691/artifacts/13044207947"
@@ -44498,7 +44519,7 @@
         "owner": "Agent",
         "sourceHead": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
         "observedAt": "2026-11-06T16:32:56.778Z",
-        "disposition": "Tamir approved submission after #15634.",
+        "disposition": "Tamir approved submission after #15634. The live restore under that prerequisite checked repeated SACKs and genuine reordering. The whole-packet and suffix-only timer measurements used live connections without a restore.",
         "nextAction": "Open the approved PR after #15634.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3d868e9c6",
@@ -55982,9 +56003,25 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T05:50:09+00:00",
-      "summary": "The rendered Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nA two-worker regression reproduced a lost final packet: peer EOF triggered detach while the first packet was still being delivered. Draining the socket and waiting for queued deliveries fixes the loss while letting administrative detach return even with a delivery blocked. On each architecture, 84 fdbased and 13 netgofer cases passed on the native Ubuntu OCI worker, including the filtered proxy. These were fresh remote actions on the original build integration plus the two netgofer changes.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).",
+      "updatedAt": "2026-11-07T06:21:28+00:00",
+      "summary": "The rendered Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nWith #17131 and the socket drain, peer EOF still discarded the second queued packet. Having the last receive worker signal EOF after delivery preserved both packets. An explicit detach could still discard queued packets while a callback was blocked. On each native Ubuntu OCI worker, the corrected code passed all 86 fdbased and 13 netgofer test records, with zero skips. The first combined run exposed a constructor mismatch in the existing fdbased test table. Its correction left the netgofer production code byte-identical.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).",
       "evidence": [
+        {
+          "label": "Two packets queued, one delivered on the original implementation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42346399767/artifacts/13563473729"
+        },
+        {
+          "label": "86 fdbased records on each native architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42345885372/artifacts/13563970470"
+        },
+        {
+          "label": "13 netgofer records on each architecture with identical production sources",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42345199822/artifacts/13562939062"
+        },
+        {
+          "label": "Integrated receive-worker fix on the fork",
+          "url": "https://github.com/tamird/gvisor/commit/ac9ce7c6c"
+        },
         {
           "label": "Both native RBE workers: 84 fdbased and 13 netgofer cases each, no skips",
           "url": "https://github.com/tamird/gvisor/actions/runs/42344326958/artifacts/13563190343"
@@ -56346,9 +56383,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T05:37:39+00:00",
+        "observedAt": "2026-11-07T06:21:28+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Reconcile the two-worker EOF fix with #17131’s receive-worker ownership before submission. Rerun the unchanged ARM64 cmd suite on a remote Firecracker guest that includes the filter-count fix.",
+        "nextAction": "Reduce the regression fixture and prepare the receive-worker fix against #17131. Rerun the ARM64 cmd suite when a remote Firecracker guest with the filter-count correction is available.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
@@ -80111,7 +80148,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-07T05:50:09+00:00",
+      "updatedAt": "2026-11-07T06:21:28+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -80287,7 +80324,7 @@
           ]
         },
         {
-          "text": "Checked the added Go lines on all 189 open gVisor PR heads owned by tamird for a missing blank comment line between prose and checklocks annotations. The 76 matching file diffs had no adjacent prose/annotation pair. Suppressions require separate review in context: on #17059 the comment above f.set explains both accesses inside the same locked callback. The 31 suppressions flagged by a line-only check span six PRs. On #14343, releaseChildrenLocked already holds the dentry inode’s filesystem mutex. The call through the directory alias hides that lock relationship from Nogo. The other 30 flagged sites have an enclosing ownership or lifetime explanation. These include unpublished objects, callbacks invoked while the named mutex is held, and two futex buckets that may share a lock.",
+          "text": "Checked the added Go lines on all 189 open gVisor PR heads owned by tamird for a missing blank comment line between prose and checklocks annotations. The 76 matching file diffs had no adjacent prose/annotation pair. Suppressions require separate review in context: on #17059 the comment above f.set explains both accesses inside the same locked callback. The 31 suppressions flagged by a line-only check span six PRs. On #14343, releaseChildrenLocked already holds the dentry inode’s filesystem mutex. The call through the directory alias hides that lock relationship from Nogo. The other 30 flagged sites have an enclosing ownership or lifetime explanation. These include unpublished objects, callbacks invoked while the named mutex is held, and two futex buckets that may share a lock. Using the dentry’s inode lets Nogo check this call. Removing only the function’s precondition then fails on both architectures.",
           "evidence": [
             {
               "label": "FDTable removal callback and its two guarded accesses",
@@ -80296,6 +80333,31 @@
             {
               "label": "Directory inode alias in the tmpfs release loop",
               "url": "https://github.com/tamird/gvisor/blob/e438da4be/pkg/sentry/fsimpl/tmpfs/tmpfs.go#L537"
+            },
+            {
+              "label": "The three-line change on the published PR",
+              "url": "https://github.com/tamird/gvisor/commit/c84ba7677"
+            },
+            {
+              "label": "Matched positive and negative Nogo runs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42345809636/artifacts/13563068040"
+            }
+          ]
+        },
+        {
+          "text": "Checked all 190 open gVisor PR descriptions and their 203 commit messages for inline Markdown links, long GitHub commit or file citations and the delegated submitter line. Removed that line from #17102, #17103, #17104, #17105 and #17109. Replaced the inline test-results link on #16830 with a numbered reference. The PR description on #16593 already cites nine digits. Its single commit still has a 40-digit citation to rules_go.",
+          "evidence": [
+            {
+              "label": "Corrected result citation on the Unix datagram PR",
+              "url": "https://github.com/google/gvisor/pull/16830"
+            },
+            {
+              "label": "Coverage PR with the short source citation",
+              "url": "https://github.com/google/gvisor/pull/16593"
+            },
+            {
+              "label": "Submitter line removed from the benchmark fixture PR",
+              "url": "https://github.com/google/gvisor/pull/17102"
             }
           ]
         }
