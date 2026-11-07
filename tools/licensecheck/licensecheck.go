@@ -571,8 +571,7 @@ func (graph *modGraph) repoRefs() ([]repoRef, error) {
 			refs = append(refs, qemuRefs...)
 			continue
 		default:
-			// Toolchain extensions (crosstool, llvm_zlib, python, go_sdk,
-			// ...) are not audited.
+			// Toolchain extensions (llvm_zlib, python, go_sdk, ...) are not audited.
 			continue
 		}
 		for _, r := range u.UsedRepos {

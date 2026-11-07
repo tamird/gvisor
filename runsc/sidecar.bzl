@@ -1,6 +1,6 @@
 """C programs shipped alongside runsc that run without a C runtime."""
 
-load("//tools:defs.bzl", "freestanding_cc_binary")
+load("//tools:defs.bzl", "freestanding_cc_binary", "linux_headers")
 
 def freestanding_sidecar(name, src, out):
     """Builds a static executable with its own process entry point.
@@ -23,6 +23,7 @@ def freestanding_sidecar(name, src, out):
             "-fno-asynchronous-unwind-tables",
             "-fno-unwind-tables",
         ],
+        deps = [linux_headers],
         linkopts = [
             "-static",
             "-nostdlib",

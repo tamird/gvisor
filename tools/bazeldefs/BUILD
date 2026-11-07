@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "bzl_library", "string_flag")
+load(":cc.bzl", "using_llvm")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -54,6 +55,50 @@ platform(
     ],
     visibility = ["//visibility:public"],
 )
+
+using_llvm(name = "using_llvm")
+
+# Use LLVM's musl sysroot for static race links on the project platforms and
+# on an unmodified Linux host. Do not replace a custom target or toolchain.
+[
+    config_setting(
+        name = "race_link_" + name,
+        constraint_values = [
+            "@platforms//cpu:" + cpu,
+            "@platforms//os:linux",
+        ],
+        flag_values = {":using_llvm": "True"},
+        values = options,
+    )
+    for name, cpu, options in [
+        (
+            "amd64",
+            "x86_64",
+            {"platforms": "//tools/bazeldefs:linux_amd64"},
+        ),
+        (
+            "arm64",
+            "aarch64",
+            {"platforms": "//tools/bazeldefs:linux_arm64"},
+        ),
+        (
+            "native_amd64",
+            "x86_64",
+            {
+                "host_platform": "@bazel_tools//tools:host_platform",
+                "platforms": "@bazel_tools//tools:host_platform",
+            },
+        ),
+        (
+            "native_arm64",
+            "aarch64",
+            {
+                "host_platform": "@bazel_tools//tools:host_platform",
+                "platforms": "@bazel_tools//tools:host_platform",
+            },
+        ),
+    ]
+]
 
 config_setting(
     name = "amd64",
