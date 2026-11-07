@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T04:36:17+00:00",
+    "updatedAt": "2026-11-07T04:53:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55927,9 +55927,17 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T04:36:17+00:00",
-      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.",
+      "updatedAt": "2026-11-07T04:53:42+00:00",
+      "summary": "The rendered Buildkite step ran all 374 expected test shards across 364 owners on each architecture. Every test ran remotely without a cached result. On AMD64, 373 passed and the netgofer test timed out. On ARM64, 373 passed and the cmd test failed five Sentry posture cases. All five corresponding gofer cases passed. Both checkpoint permission assertions passed on each architecture.\n\nA benign filter test on the same ARM64 worker verified that synchronized threads enforced the filter even though Linux 5.10 reported different filter counts. Linux fixed the accounting in 5.10.60. The older single-invocation experiment omitted 22 ARM64 shards and skipped both permission assertions on both CPUs.\n\nBoth build targets omitted on ARM64 explicitly require x86_64. On a hosted ARM64 Linux 6.8 worker, the full cmd test failed during container startup in no_directfs with ECONNRESET. Neither of that mode's posture checks ran. The other four modes passed both checks; the record contains 167 passes, two failures including the parent, and two skips.",
       "evidence": [
+        {
+          "label": "Hosted ARM64 complete cmd owner: no_directfs startup reset before the two posture checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42340051680/artifacts/13561402312"
+        },
+        {
+          "label": "Original RBE invocations: the timed-out netgofer action and both x86-only build targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42340271761/artifacts/13560464690"
+        },
         {
           "label": "Complete native results, all 748 test shards and the named permission checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42337131999/artifacts/13560359842"
@@ -56253,7 +56261,7 @@
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
         "observedAt": "2026-11-07T04:08:00+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Inspect the original AMD64 netgofer timeout and qualify the full ARM64 cmd owner. Keep both failing owners in the source presubmit.",
+        "nextAction": "Identify which netgofer case timed out. Diagnose the no_directfs startup reset separately from the filter-count mismatch on Linux 5.10.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
@@ -57663,9 +57671,21 @@
       "group": "bazel",
       "ref": "proposal/runsc-version-line",
       "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
-      "summary": "The test now compares the version printed by the built runsc with Bazel’s STABLE_VERSION. It accepts Buildkite’s alphabetic tag, its dirty form and a downstream stamp. It rejects the same executable when that stamp belongs to a different build. All eleven controls behaved as expected on both architectures.",
-      "updatedAt": "2026-11-07T03:08:22+00:00",
+      "summary": "The reviewer reports that Google's internal go_test rule rejects x_defs, preventing the runsc package from loading. The amendment finds the declared binary with testutil.FindFile and checks its first version line. It accepts a nonempty workspace tag or build number and rejects VERSION_MISSING.",
+      "updatedAt": "2026-11-07T04:53:42+00:00",
       "evidence": [
+        {
+          "label": "Proposed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/3cc89424a"
+        },
+        {
+          "label": "Internal build failure reported by the reviewer",
+          "url": "https://github.com/google/gvisor/pull/17169#discussion_r4500083462"
+        },
+        {
+          "label": "Public Linux tests for alphabetic, numeric, empty and missing stamps",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42340018896"
+        },
         {
           "label": "Eleven native AMD64 version-stamp outcomes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42325801260/artifacts/13555253040"
@@ -57707,13 +57727,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor",
         "sourceHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
-        "observedAt": "2026-11-07T03:08:22+00:00",
-        "disposition": "The runsc version stamp regression test is open upstream.",
-        "nextAction": "Follow #17169 for review.",
+        "observedAt": "2026-11-07T04:53:42+00:00",
+        "disposition": "The fork revision addresses both review comments; the upstream head is unchanged.",
+        "nextAction": "Review the amendment. After qualification and approval, publish it and answer the reviewer on the existing thread.",
         "evidence": [
-          "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
+          "https://github.com/tamird/gvisor/commit/3cc89424a",
+          "https://github.com/google/gvisor/pull/17169#discussion_r4500083462",
+          "https://github.com/tamird/gvisor/actions/runs/42340018896"
         ]
       },
       "id": "pr:17169",
@@ -57721,7 +57743,28 @@
       "repo": "google/gvisor",
       "number": 17169,
       "url": "https://github.com/google/gvisor/pull/17169",
-      "status": "open"
+      "status": "Awaiting contributor review",
+      "refinement": {
+        "before": {
+          "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+          "head": "d81096ecce6877b6dcb4a00686e68198752153aa"
+        },
+        "after": {
+          "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+          "head": "3cc89424abd7e0784c8196b175217aae6e47f919"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "3cc89424abd7e0784c8196b175217aae6e47f919",
+        "baseHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
+        "url": "https://github.com/tamird/gvisor/commit/3cc89424a",
+        "title": "Check the runsc build version on the first output line",
+        "body": "The version test accepts an empty runsc version because the OCI spec\nversion on the second line contains digits. Buildkite also uses an\nalphabetic version for test branches.\n\nRun the declared binary from a Go test and require its first line to\ncontain a nonempty runsc version other than VERSION_MISSING. Read the\nversion from the binary so that the same test accepts a workspace\nstamp or an internal build number.",
+        "requestedAt": "2026-11-07T04:53:42+00:00",
+        "summary": "Publish and reply after the public version tests pass. The shared Go test drops x_defs, env and rundir. The internal importer is available to the maintainers."
+      }
     },
     {
       "title": "Watch bound Unix sockets only when they listen",

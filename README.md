@@ -158,7 +158,9 @@ owner monitoring, check `github-status.json.checkedAt` every ten minutes,
 including while builds run. If it is stale and no refresh is queued or running
 on the fork's default branch, dispatch this workflow once. A registry edit can
 advance `registryDate` between full GitHub observations. This uses the existing
-collector and does not create a second scheduled monitor. The token never reaches
+collector. A local full refresh also leaves the reminder step to the workflow.
+During Pacific business hours, dispatch it if a reminder is due and no
+default-branch refresh is active. The token never reaches
 the browser. A visible tab checks the published data every five minutes; a
 hidden tab waits until it is visible again. A failed request leaves the last
 usable data and the current view in place. The workflow's commit
@@ -877,7 +879,8 @@ holds and dependency relationships remain.
 If Copybara still names a revision from before a second rebase, record the
 import number, its source head, and its verified comparison with the approved
 head in `approvedPatch.earlierExport`. The two comparisons must agree on the
-patch ID at the approved head. An open export of the current head takes
+patch ID at the approved head. Clearing a merge conflict on the older import
+does not update its source commit. An open export of the current head takes
 precedence.
 A ready-to-pull label alone supplies neither kind of approval.
 

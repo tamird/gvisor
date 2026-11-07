@@ -487,8 +487,7 @@ function importLineage(node, includeAmendment = false) {
   }
   if (earlier.length || !pr.importsComplete) return earlier;
   const proof = certifiedEarlierExport(patch);
-  return pr.imports.filter(item => proof && item.number === proof.number && item.sourceHead === proof.sourceHead
-    && (item.status === "closed" || item.status === "open" && item.mergeable === "CONFLICTING"));
+  return pr.imports.filter(item => proof && item.number === proof.number && item.sourceHead === proof.sourceHead);
 }
 function publicImportDisposition(node) {
   const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);

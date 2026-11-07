@@ -418,8 +418,7 @@ def import_lineage(pr: dict, patch: dict | None = None, amendment: dict | None =
         return earlier
     proof = certified_earlier_export(patch)
     return [item for item in pr.get("imports", [])
-            if proof and item.get("number") == proof["number"] and item.get("sourceHead") == proof["sourceHead"]
-            and (item["status"] == "closed" or item["status"] == "open" and item.get("mergeable") == "CONFLICTING")]
+            if proof and item.get("number") == proof["number"] and item.get("sourceHead") == proof["sourceHead"]]
 
 
 def import_trigger(pr: dict) -> dict:

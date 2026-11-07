@@ -1464,7 +1464,9 @@ class ReapprovalReminderTest(unittest.TestCase):
             self.assertFalse(plan()["publicImportDisposition"]["binding"]["eligible"])
             self.assertNotEqual(plan()["status"], "due")
         with mock.patch.dict(export, {"mergeable": "MERGEABLE"}):
-            self.assertNotEqual(plan()["status"], "due")
+            self.assertEqual(plan()["action"], "reapprove-amendment")
+            with mock.patch.dict(export, {"number": export["number"] + 1}):
+                self.assertNotEqual(plan()["status"], "due")
         fresh = dict(export, number=17000, matchesSourceHead=True, sourceHead=pr["head"], mergeable="MERGEABLE")
         with mock.patch.dict(pr, {"imports": [export, fresh]}):
             self.assertEqual(plan()["publicImportDisposition"]["scope"], "exact")
