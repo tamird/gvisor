@@ -48,6 +48,108 @@ import (
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+func TestCubicIdleRestart(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		idle time.Duration
+	}{
+		{"short", time.Millisecond},
+		{"long", 30 * time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			const mss = 32
+			const rtt = 50 * time.Millisecond
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true,
+				MTU:      header.IPv4MinimumSize + header.TCPMinimumSize + mss,
+				Clock:    clock,
+			})
+			defer c.Cleanup()
+			e2e.EnableCUBIC(t, c)
+			c.CreateConnected(context.TestInitialSequenceNumber, 30000, -1)
+
+			data := make([]byte, 32<<10)
+			write := func(packets int) {
+				t.Helper()
+				size := packets * mss
+				if n, err := c.EP.Write(bytes.NewReader(data[:size]), tcpip.WriteOptions{}); err != nil || n != int64(size) {
+					t.Fatalf("Write(%d) = (%d, %v)", size, n, err)
+				}
+			}
+			received := 0
+			read := func(packets int) {
+				t.Helper()
+				for range packets {
+					c.ReceiveAndCheckPacket(data, received, mss)
+					received += mss
+				}
+			}
+			ack := func(offset int) {
+				c.SendAck(context.TestInitialSequenceNumber+1, offset)
+				c.Stack().Pause()
+				c.Stack().Resume()
+			}
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var v tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&v); err != nil {
+					t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+				}
+				return v
+			}
+
+			// Lose one segment while the initial window is still small. This
+			// lowers ssthresh enough for the restarted sender to remain in
+			// congestion avoidance when its window falls back to InitialCwnd.
+			write(tcp.InitialCwnd)
+			read(tcp.InitialCwnd)
+			clock.Advance(rtt)
+			// Advance past the initial recovery sequence before repeating
+			// the ACK for the missing second segment (RFC 6582 section 3.2).
+			ack(mss)
+			for range 3 {
+				ack(mss)
+			}
+			c.ReceiveAndCheckPacket(data, mss, mss)
+			ack(received)
+			for range 64 {
+				window := int(info().SndCwnd)
+				if window > tcp.InitialCwnd {
+					break
+				}
+				write(window)
+				read(window)
+				clock.Advance(rtt)
+				ack(received)
+			}
+			before := info()
+			if before.SndCwnd <= tcp.InitialCwnd || before.SndSsthresh > tcp.InitialCwnd {
+				t.Fatalf("idle precondition: cwnd=%d ssthresh=%d", before.SndCwnd, before.SndSsthresh)
+			}
+
+			clock.Advance(tc.idle)
+			start := received
+			write(3 * tcp.InitialCwnd)
+			restarted := info()
+			read(int(restarted.SndCwnd))
+			clock.Advance(rtt)
+			ack(start + 2*mss)
+			after := info()
+			t.Logf("idle=%s before=%d ssthresh=%d rto=%s restart=%d after=%d", tc.idle, before.SndCwnd, before.SndSsthresh, before.RTO, restarted.SndCwnd, after.SndCwnd)
+			if rtt+tc.idle <= before.RTO {
+				if restarted.SndCwnd != before.SndCwnd {
+					t.Errorf("short idle reduced cwnd from %d to %d", before.SndCwnd, restarted.SndCwnd)
+				}
+				return
+			}
+			if restarted.SndCwnd != tcp.InitialCwnd || after.SndCwnd != tcp.InitialCwnd {
+				t.Errorf("idle restart and first ACK: cwnd=%d then %d, want %d", restarted.SndCwnd, after.SndCwnd, tcp.InitialCwnd)
+			}
+		})
+	}
+}
+
 func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
 	for _, recovery := range []string{"fast_retransmit", "retransmission_timeout"} {
 		// Individual ACKs expose lost fractional credit; delayed and batched
