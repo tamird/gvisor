@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T06:21:28+00:00",
+    "updatedAt": "2026-11-07T06:33:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4934,10 +4934,14 @@
       "url": "https://github.com/tamird/gvisor/commit/4bee07965",
       "group": "bazel",
       "status": "Contributor review requested",
-      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nAn AMD64 client declaring only gVisor linked its ARM64 vDSO with the declared Clang toolchain after a separate fork change isolated Gazelle in the root BUILD. The ELF checker passed. The six root Gazelle executable and runner paths and their script behavior were preserved. The fork drops the Gazelle re-export from tools/bazeldefs/go.bzl; a supplier-side alternative could preserve that import too. This downstream issue is independent of the compiler PR.",
-      "updatedAt": "2026-11-07T05:50:09+00:00",
+      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. A dependency-only upgrade is being tested independently of the compiler PR.",
+      "updatedAt": "2026-11-07T06:33:05+00:00",
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
+        {
+          "label": "Downstream ARM64 vDSO and stock/patched Gazelle runner comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42346848046/artifacts/13563847323"
+        },
         {
           "label": "External-root ARM64 vDSO, ELF checks and the root Gazelle runner controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42345475600/artifacts/13563412639"
@@ -33450,7 +33454,7 @@
       "number": 16593,
       "group": "bazel",
       "ref": "review/rules-go-reproducible-coverage",
-      "head": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+      "head": "6f2f1f4f70be77c329e2be8d92eb5491b238392a",
       "title": "Make Go coverage archives reproducible",
       "url": "https://github.com/google/gvisor/pull/16593",
       "evidence": [
@@ -33507,7 +33511,7 @@
           "url": "https://github.com/google/gvisor/pull/16507"
         }
       ],
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-11-07T06:33:05+00:00",
       "status": "open",
       "summary": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries. The requested comment explains the purpose of the export-data patch; its applied contents are unchanged.",
       "refinement": {
@@ -33515,15 +33519,15 @@
           "head": "bb6b2eeab45f28dc4b20110c0f1ee45779582386"
         },
         "after": {
-          "head": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+          "head": "6f2f1f4f70be77c329e2be8d92eb5491b238392a",
           "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Contributor-approved change published",
+        "sourceHead": "6f2f1f4f70be77c329e2be8d92eb5491b238392a",
+        "observedAt": "2026-11-07T06:33:05+00:00",
+        "disposition": "Published with the same source tree. The rules_go citation in the commit and PR description now uses nine digits.",
         "nextAction": "Follow checks, maintainer review and import on #16593.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16593",
@@ -37351,6 +37355,14 @@
       "summary": "Build the native launcher without passing it the issue token. The nightly run uses checkout-relative paths so its source links point to the right line. Six named Go test rows passed; a dry run opened one loopback connection and made no writes.",
       "evidence": [
         {
+          "label": "Rebased workflow on the two-repository guard",
+          "url": "https://github.com/tamird/gvisor/commit/3f9a9984a"
+        },
+        {
+          "label": "Native Bazel 9.3.1 and loopback reviver qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42347487381"
+        },
+        {
           "label": "Named tests and isolated replay",
           "url": "https://github.com/tamird/gvisor/actions/runs/40823691712"
         },
@@ -37364,13 +37376,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "updatedAt": "2026-11-07T06:33:05+00:00",
       "followup": {
-        "owner": "root",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "owner": "Agent",
+        "observedAt": "2026-11-07T06:33:05+00:00",
         "sourceHead": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow maintainer review, checks and import on #16662.",
+        "disposition": "Master added gvisor/gvisor to both original workflow steps. The rebased job uses that exact condition once.",
+        "nextAction": "Check the native launcher, six unit cases and loopback dry run before updating the conflicted PR.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16662",
           "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af"
@@ -56007,6 +56019,10 @@
       "summary": "The rendered Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nWith #17131 and the socket drain, peer EOF still discarded the second queued packet. Having the last receive worker signal EOF after delivery preserved both packets. An explicit detach could still discard queued packets while a callback was blocked. On each native Ubuntu OCI worker, the corrected code passed all 86 fdbased and 13 netgofer test records, with zero skips. The first combined run exposed a constructor mismatch in the existing fdbased test table. Its correction left the netgofer production code byte-identical.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).",
       "evidence": [
         {
+          "label": "Smaller two-packet regression on native AMD64: stock failed and all 86 corrected fdbased records passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42347168725/artifacts/13564196913"
+        },
+        {
           "label": "Two packets queued, one delivered on the original implementation",
           "url": "https://github.com/tamird/gvisor/actions/runs/42346399767/artifacts/13563473729"
         },
@@ -56385,7 +56401,7 @@
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
         "observedAt": "2026-11-07T06:21:28+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Reduce the regression fixture and prepare the receive-worker fix against #17131. Rerun the ARM64 cmd suite when a remote Firecracker guest with the filter-count correction is available.",
+        "nextAction": "Once #17131 and a packet-socket EOF mechanism land, rebase the receive-worker handoff. The scoped FIONREAD change has fork-test authorization only. The ARM64 cmd suite still needs a remote Firecracker guest with the filter-count correction.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
@@ -56445,9 +56461,13 @@
       "url": "https://github.com/google/gvisor/pull/16081",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T15:58:09.697Z",
-      "summary": "The master sender closed after fast retransmissions exhausted the retry count on the segment the client was missing. The same seed finished on the PR in 985 ms. The cause of the reporter’s occasional stalls on the PR remains open.",
+      "updatedAt": "2026-11-07T06:33:05+00:00",
+      "summary": "In the reporter’s 600 ms burst, #16081 improved the median among completed reads. On the PR itself, three of the six previously failing seeds timed out again. On its first timeout the sender closed after 19, 16 or 20 transmissions of the first missing segment (limit 15). With only the separate timeout counter from #17113, all six heavy transfers finished in 0.757–1.171 s. Both no-loss controls read all 2.8 MB. Each selected seed was measured once per arm.",
       "evidence": [
+        {
+          "label": "Six previously failing seeds on the PR and on its timeout-counting control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42346954870/artifacts/13564685595"
+        },
         {
           "label": "Published retry-counter finding",
           "url": "https://github.com/google/gvisor/pull/16081#issuecomment-6689168373"
@@ -56496,6 +56516,10 @@
       "updatedAt": "2026-11-06T22:29:56.883Z",
       "summary": "Under the loss burst reported on #16081, master closed a TCP connection on its second retransmission timeout. Sixteen sends of the first missing segment exhausted the configured limit of 15, including fast retransmits. This change measures how long data remains unacknowledged across timer expirations. All six heavy-loss transfers finished with the fix. The comparison covers the timeout decision independently of #16081’s recovery-performance changes.\n\nA second packet test sets TCP_USER_TIMEOUT. Before the fix, the socket closed with ETIMEDOUT when newly outstanding data was only 497 ms old on an 800 ms timeout. Linux and the fix both transmitted the fourth segment. The submitted source drops six telemetry-only lines from the tested fixture.",
       "evidence": [
+        {
+          "label": "Independent sibling counter on #16081: six heavy reads complete; three stalled without it",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42346954870/artifacts/13564685595"
+        },
         {
           "label": "Competing upstream fix counts timeouts after an advancing ACK",
           "url": "https://github.com/google/gvisor/pull/17113"
@@ -80148,7 +80172,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-07T06:21:28+00:00",
+      "updatedAt": "2026-11-07T06:33:05+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -80345,7 +80369,7 @@
           ]
         },
         {
-          "text": "Checked all 190 open gVisor PR descriptions and their 203 commit messages for inline Markdown links, long GitHub commit or file citations and the delegated submitter line. Removed that line from #17102, #17103, #17104, #17105 and #17109. Replaced the inline test-results link on #16830 with a numbered reference. The PR description on #16593 already cites nine digits. Its single commit still has a 40-digit citation to rules_go.",
+          "text": "Checked all 190 open gVisor PR descriptions and their 203 commit messages for inline Markdown links, long GitHub commit or file citations and the delegated submitter line. Removed that line from #17102, #17103, #17104, #17105 and #17109. Replaced the inline test-results link on #16830 with a numbered reference. Shortened the rules_go citation on #16593 to the same nine digits used in its PR description. Its source tree and parent are unchanged.",
           "evidence": [
             {
               "label": "Corrected result citation on the Unix datagram PR",
@@ -80358,6 +80382,10 @@
             {
               "label": "Submitter line removed from the benchmark fixture PR",
               "url": "https://github.com/google/gvisor/pull/17102"
+            },
+            {
+              "label": "Coverage commit with the corrected citation",
+              "url": "https://github.com/tamird/gvisor/commit/6f2f1f4f7"
             }
           ]
         }
