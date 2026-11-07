@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T07:57:34+00:00",
+    "updatedAt": "2026-11-07T08:02:28+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54284,8 +54284,8 @@
       "url": "https://github.com/google/gvisor/pull/17023",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T07:34:12+00:00",
-      "summary": "Aditya added a RACK-enabled spurious-RTO test and documented the remaining integration cases. The #16081 repair needs a reordering-timer test. With #17022, an out-of-order ACK after recovery resumes can put the sender in Disorder and skip undo. The independent replay passed all four named cases on f23070977 against base f51a205a8. Adding #16081 missed the repair after a full or partial first ACK and with default RACK. Allowing fast recovery once step 8 resumes fixed all three cases. The four genuine-loss controls, including the RACK timer, passed with or without that integration change.",
+      "updatedAt": "2026-11-07T08:02:28+00:00",
+      "summary": "Aditya added a RACK-enabled spurious-RTO test and documented two integration cases. Four named cases passed on f23070977 against its base. Adding #16081 missed the repair after a full or partial first ACK and with default RACK. Allowing fast recovery once step 8 resumes fixed those three cases. With #17022, a single reordered segment produced one SACK and entered Disorder without fast retransmit. The in-order control restored the initial slow-start threshold of 4,294,967,295. The reordered case left it at 3. Preserving the pending Eifel response restored the initial threshold in both. The genuine timeout and RACK-loss controls passed on both combined variants.",
       "evidence": [
         {
           "label": "Author’s combined-stack result and planned follow-up",
@@ -54326,6 +54326,14 @@
         {
           "label": "Combined #16081 replay and genuine-loss controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42351331112/artifacts/13566240801"
+        },
+        {
+          "label": "Combined RACK/Eifel replay, reordered ACK and genuine-loss controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42353074169/artifacts/13567040519"
+        },
+        {
+          "label": "Living TCP issue with both landing-order observations",
+          "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
       "settledReviews": [
@@ -54353,14 +54361,16 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "f23070977169b4084ae8f4a0b18fa139404467e9",
-        "observedAt": "2026-11-07T07:34:12+00:00",
-        "disposition": "Author’s #16081 integration explanation reproduced.",
-        "nextAction": "Independently test the separate #17022 Disorder/undo interaction. The author has already described the #16081 correction.",
+        "observedAt": "2026-11-07T08:02:28+00:00",
+        "disposition": "Both landing-order interactions documented by Aditya were reproduced. The independent Disorder control isolated the skipped Eifel response from genuine timeout and RACK loss.",
+        "nextAction": "Check the combined behavior when #17022 or #17023 changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
           "https://github.com/google/gvisor/pull/17023#discussion_r4483001034",
           "https://github.com/google/gvisor/pull/17023#issuecomment-6703237785",
-          "https://github.com/tamird/gvisor/actions/runs/42351331112/artifacts/13566240801"
+          "https://github.com/tamird/gvisor/actions/runs/42351331112/artifacts/13566240801",
+          "https://github.com/tamird/gvisor/actions/runs/42353074169/artifacts/13567040519",
+          "https://github.com/google/gvisor/issues/16670"
         ]
       }
     },
@@ -54426,8 +54436,8 @@
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T05:00:13+00:00",
-      "summary": "The author folded in the tested RACK cancellation. The final slow-start threshold stayed at 2 with and without #16081. Both timestamp controls passed. Aditya plans to address the step-8 interaction on #17023.",
+      "updatedAt": "2026-11-07T08:02:28+00:00",
+      "summary": "Aditya incorporated the tested RACK cancellation. The final slow-start threshold stayed at 2 with and without #16081. Both timestamp controls passed. When this change is combined with #17023, one reordered segment can leave an Eifel response pending after the sender enters Disorder.",
       "evidence": [
         {
           "label": "Author incorporated the tested RACK change",
@@ -54480,6 +54490,14 @@
         {
           "label": "Standalone and stacked packet replays on the revised and preceding heads",
           "url": "https://github.com/tamird/gvisor/actions/runs/42220388804/artifacts/13504305289"
+        },
+        {
+          "label": "Combined RACK/Eifel replay, reordered ACK and genuine-loss controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42353074169/artifacts/13567040519"
+        },
+        {
+          "label": "Living TCP issue with both landing-order observations",
+          "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
       "settledReviews": [
@@ -54517,12 +54535,14 @@
         "owner": "Agent",
         "sourceHead": "62277fb4a1eaaaf515d84d284ef080a71215f627",
         "providerHead": "62277fb4a1eaaaf515d84d284ef080a71215f627",
-        "observedAt": "2026-11-07T05:00:13+00:00",
-        "disposition": "The published RACK loss handling matches the tested correction.",
-        "nextAction": "Track the remaining combined-stack review on #17023.",
+        "observedAt": "2026-11-07T08:02:28+00:00",
+        "disposition": "The RACK correction matches the independently qualified source. The remaining Eifel response depends on the landing order with #17023.",
+        "nextAction": "Track the Disorder case with #17023 when either source changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
-          "https://github.com/tamird/gvisor/actions/runs/42269372740/artifacts/13528043589"
+          "https://github.com/tamird/gvisor/actions/runs/42269372740/artifacts/13528043589",
+          "https://github.com/tamird/gvisor/actions/runs/42353074169/artifacts/13567040519",
+          "https://github.com/google/gvisor/issues/16670"
         ]
       }
     },
