@@ -1,7 +1,7 @@
-name: Check fast retransmit after a spurious timeout
+name: Check the Eifel response after one reordered segment
 on:
   push:
-    branches: [qualification/eifel-step8-composition]
+    branches: [qualification/eifel-reordered-ack-response]
 permissions:
   contents: read
 jobs:
@@ -18,9 +18,10 @@ jobs:
           dir="$RUNNER_TEMP/eifel-check"
           mkdir -m 700 "$dir"
           cp .github/qualification/eifel_check.py "$dir/"
-          test "$(git rev-parse HEAD^)" = f23070977169b4084ae8f4a0b18fa139404467e9
-          git fetch --quiet --depth=2 https://github.com/google/gvisor.git 1b9768b199524246fe8e4fa66a0b623069778780
-          test "$(git rev-parse FETCH_HEAD^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          cp pkg/tcpip/transport/tcp/test/e2e/tcp_sack_reordered_response_test.go "$dir/"
+          test "$(git rev-parse HEAD^^)" = f23070977169b4084ae8f4a0b18fa139404467e9
+          git fetch --quiet --depth=2 https://github.com/google/gvisor.git 62277fb4a1eaaaf515d84d284ef080a71215f627
+          test "$(git rev-parse FETCH_HEAD^)" = e3496657de25339f11754172e448b29f71882e7d
           git checkout --detach f23070977169b4084ae8f4a0b18fa139404467e9
           test -z "$(git status --short)"
           curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$dir/bazelisk"
@@ -30,7 +31,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: eifel-resume-composition
+          name: eifel-reordered-ack-response
           path: ${{ runner.temp }}/eifel-check/receipts.json
           if-no-files-found: error
           retention-days: 7

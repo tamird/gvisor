@@ -1,4 +1,4 @@
-"""Verify recovery after a spurious timeout with both TCP proposals."""
+"""Compare the Eifel response with in-order and reordered ACKs."""
 import hashlib
 import json
 import os
@@ -22,10 +22,6 @@ flags = [
     "--nocache_test_results", "--test_sharding_strategy=disabled", "--flaky_test_attempts=1",
     "--test_timeout=180", "--test_output=errors", "--color=no", "--curses=no", "--noshow_progress",
 ]
-resume = ("TestSpuriousRTOResumesWithUnsentData", "TestSpuriousRTOFastRetransmit",
-          "TestSpuriousRTOPartialFirstACK", "TestSpuriousRTORACKRetransmit")
-drain = "TestRTORecoveryDrainsLostWindow"
-
 def check(name, owner, cases):
     bep = root / (name + ".bep")
     cmd = [root / "bazelisk", "--nosystem_rc", "--nohome_rc", "test", *flags,
@@ -68,70 +64,50 @@ def check(name, owner, cases):
     detail["test_diagnostics"] = [line.strip()[:400] for line in joined.splitlines()
                                   if re.search(r"tcp_(sack|rto_recovery)_test[.]go:[0-9]+:", line)][:16]
     detail["two_timeouts"] = re.findall(r"two RTOs before detection, original=(true|false): ssthresh=(\d+)", joined)
+    detail["observed_thresholds"] = re.findall(r"threshold after cumulative ACK = (\d+)", joined)
     receipt[name] = detail
     (root / "receipts.json").write_text(json.dumps(receipt, indent=2) + "\n")
     print(name, detail, flush=True)
     return detail
 
-sack = owner
-rack = owner.replace(":tcp_sack_test", ":tcp_rack_test")
-recovery = "1b9768b199524246fe8e4fa66a0b623069778780"
-base = "f51a205a8f4afbc5ab41aded070df74951b081ea"
-receipt.update(recovery=recovery, common_comparison_base=base, verified=False)
-
-def select_tree(parent, expected):
-    subprocess.run(["git", "switch", "--quiet", "--detach", parent], check=True)
-    subprocess.run(["git", "cherry-pick", "--no-commit", source], check=True)
-    assert subprocess.check_output(["git", "write-tree"], text=True).strip() == expected
-    receipt[parent] = expected
-
-def discard_comparison():
-    subprocess.run(["git", "restore", "--staged", "--worktree", "--source=HEAD", "--",
-                    "pkg/tcpip/transport/tcp/snd.go",
-                    "pkg/tcpip/transport/tcp/test/e2e/tcp_sack_test.go"], check=True)
-    assert not subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"])
-
-check("published", sack, resume)
-select_tree(base, "55f7129413f601ea9e688b1839a5dad0e133416a")
-check("on_common_base", sack, resume)
-discard_comparison()
-select_tree(recovery, "aea8e6d1e33a7245fea22651f42e7eec19ac9afb")
-check("combined", sack, resume)
-check("combined_genuine_loss", rack, [drain])
-
+other = "62277fb4a1eaaaf515d84d284ef080a71215f627"
+common = "e3496657de25339f11754172e448b29f71882e7d"
+subprocess.run(["git", "cherry-pick", "--no-commit", other], check=True)
+tree = subprocess.check_output(["git", "write-tree"], text=True).strip()
+assert tree == "d48e521b932b553f0469b3c70cacc0f5d569410f"
+receipt.update(second=other, combined_tree=tree, common_base=common, verified=False)
+directory = Path("pkg/tcpip/transport/tcp/test/e2e")
+fixture = directory / "tcp_sack_reordered_response_test.go"
+assert not fixture.exists()
+fixture.write_bytes((root / fixture.name).read_bytes())
+receipt["fixture"] = hashlib.sha256(fixture.read_bytes()).hexdigest()
+build = directory / "BUILD"
+contents = build.read_text()
+before = 'srcs = ["tcp_sack_test.go"]'
+assert contents.count(before) == 1
+build.write_text(contents.replace(before, 'srcs = ["tcp_sack_test.go", "tcp_sack_reordered_response_test.go"]'))
+case = "TestEifelResponseAfterReorderedACK"
+genuine = "TestEifelGenuineLossAfterSpuriousDetection"
+check("combined", owner, [case, genuine])
 sender = Path("pkg/tcpip/transport/tcp/snd.go")
-rack_source = Path("pkg/tcpip/transport/tcp/rack.go")
-def replace_once(p, before, after):
-    contents = p.read_text()
-    assert contents.count(before) == 1, before
-    p.write_text(contents.replace(before, after))
-
-anchor = "// detectLoss "
-replace_once(sender, anchor, """// A detected spurious timeout has stopped retransmitting the old flight.
-func (s *sender) suppressFastRecovery() bool {
-	return s.state == tcpip.RTORecovery && !s.spuriousTimeoutResumed
-}
-
-""" + anchor)
-replace_once(sender, "if s.state == tcpip.RTORecovery {\n\t\treturn false\n\t}\n\n\t// If RACK is enabled",
-             "if s.suppressFastRecovery() {\n\t\treturn false\n\t}\n\n\t// If RACK is enabled")
-replace_once(sender, "numLost > 0 && !s.FastRecovery.Active && s.state != tcpip.RTORecovery {",
-             "numLost > 0 && !s.FastRecovery.Active && !s.suppressFastRecovery() {")
-replace_once(rack_source, "numLost == 0 || rc.snd.state == tcpip.RTORecovery {",
-             "numLost == 0 || rc.snd.suppressFastRecovery() {")
-receipt["guard_blobs"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in (sender, rack_source)}
-check("resumed", sack, resume)
-check("resumed_genuine_loss", rack, [drain])
-genuine_cases = {drain, *(drain + "/" + mode for mode in ("rack", "sack", "rack_reordered", "rack_timer"))}
-for arm in ("published", "on_common_base", "combined", "resumed", "combined_genuine_loss", "resumed_genuine_loss"):
-    detail = receipt[arm]
-    record, = detail["records"]
-    assert record["strategy"] == "linux-sandbox" and not record["cached"], arm
-    expected = dict.fromkeys(genuine_cases if "genuine_loss" in arm else resume, "PASS")
-    if arm == "combined":
-        for case in resume[1:]:
-            expected[case] = "FAIL"
-    assert detail["xml"] == expected and detail["cases"] == expected, arm
-    assert (detail["exit"] != 0) == (arm == "combined"), arm
+contents = sender.read_text()
+before = "if s.inRecovery() && s.spuriousRecovery {"
+assert contents.count(before) == 1
+sender.write_text(contents.replace(before, "if (s.inRecovery() || s.spuriousTimeoutResumed) && s.spuriousRecovery {"))
+receipt["corrected_sender"] = hashlib.sha256(sender.read_bytes()).hexdigest()
+check("resumed", owner, [case, genuine])
+for arm in ("combined", "resumed"):
+    d = receipt[arm]
+    record, = d["records"]
+    assert record["strategy"] == "linux-sandbox" and not record["cached"]
+    assert d["cases"] == d["xml"]
+    assert d["cases"][case + "/in_order"] == "PASS"
+    assert d["cases"][genuine] == "PASS"
+    assert d["cases"][case + "/one_reordered_segment"] == ("FAIL" if arm == "combined" else "PASS")
+    assert (d["exit"] != 0) == (arm == "combined")
+    assert len(d["observed_thresholds"]) == 2
+    for name, status in d["cases"].items():
+        want = "FAIL" if arm == "combined" and name in (case, case + "/one_reordered_segment") else "PASS"
+        assert status == want, (name, status, want)
 receipt["verified"] = True
 (root / "receipts.json").write_text(json.dumps(receipt, indent=2) + "\n")
