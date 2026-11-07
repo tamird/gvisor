@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T15:36:56+00:00",
+    "updatedAt": "2026-11-07T16:50:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2210,15 +2210,23 @@
       "id": "branch:bazel-python-release",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/release-wheel-frontend",
-      "title": "Build Python distributions with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/b5bd72431",
+      "ref": "research/flit-release-execution-runtime",
+      "title": "Build Python releases with declared Flit",
+      "url": "https://github.com/tamird/gvisor/commit/6650e2f29",
       "group": "release",
-      "status": "Agent work",
-      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite command at 11013b7d6 ran without Docker and staged the same wheel and source archive. The original caller tried Docker 13 times and failed before creating either file. The comparison supplied a fixed version and registry reply. With the Buildkite Bazelisk prerequisite, the plain make artifacts-python command takes DOCKER_BUILD=false from the job environment. GNU Make selected the same build and copy commands as the tested explicit override.\n\nrules_python 2.4.5 selects uv for the target platform and keeps its toolchain executable alias private. Using uv for a cross build would require another execution-platform adapter. Replacing a literal version in pyproject.toml can also silently lose a release override. The uv experiment did not replace the qualified Flit producer.",
-      "updatedAt": "2026-11-03T10:35:38.185367+00:00",
-      "head": "b5bd72431940ce903fe7521e2498811d8420f750",
+      "status": "Contributor review requested",
+      "summary": "Flit now runs with the execution platform’s registered Python. The previous action tried to start a GNU-linked target interpreter on an AMD64 musl worker that lacks its ELF loader. The integrated action used the static execution interpreter and produced the wheel and source distribution. The older combined proposal and wheel-scanner amendment remain on hold.\n\nThe large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite command at 11013b7d6 ran without Docker and staged the same wheel and source archive. The original caller tried Docker 13 times and failed before creating either file. The comparison supplied a fixed version and registry reply. With the Buildkite Bazelisk prerequisite, the plain make artifacts-python command takes DOCKER_BUILD=false from the job environment. GNU Make selected the same build and copy commands as the tested explicit override.\n\nrules_python 2.4.5 selects uv for the target platform and keeps its toolchain executable alias private. Using uv for a cross build would require another execution-platform adapter. Replacing a literal version in pyproject.toml can also silently lose a release override. The uv experiment did not replace the qualified Flit producer.",
+      "updatedAt": "2026-11-07T16:35:38+00:00",
+      "head": "6650e2f29d84dc3409678a3bdcaacf81a48ca7aa",
       "evidence": [
+        {
+          "label": "Revised standalone commit and permanent description",
+          "url": "https://github.com/tamird/gvisor/commit/6650e2f29"
+        },
+        {
+          "label": "Integrated native package writers, manifest interface and offline publisher",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42390561513/artifacts/13581566721"
+        },
         {
           "label": "Identical package prerequisites and commands with the Buildkite job environment",
           "url": "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
@@ -2338,14 +2346,18 @@
         {
           "label": "CPython 3.7.17 installs and backend comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/41004416541/artifacts/12954523262"
+        },
+        {
+          "label": "Earlier combined proposal withheld following contributor feedback",
+          "url": "https://github.com/tamird/gvisor/commit/b5bd72431"
         }
       ],
       "refinement": {
         "before": {
-          "head": "d916fe3c16adda0472ab24d2e42ce84d91a8da29"
+          "head": "feab64aff25e950f5f3095c73cc5f6176efedddc"
         },
         "after": {
-          "head": "b5bd72431940ce903fe7521e2498811d8420f750"
+          "head": "6650e2f29d84dc3409678a3bdcaacf81a48ca7aa"
         }
       },
       "followup": {
@@ -2364,9 +2376,16 @@
           "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
         ]
       },
-      "contributorChangesRequested": {
-        "head": "b5bd72431940ce903fe7521e2498811d8420f750",
-        "url": "https://github.com/tamird/gvisor/commit/b5bd72431"
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6650e2f29d84dc3409678a3bdcaacf81a48ca7aa",
+        "baseHead": "7ad5699f22516e5d7a3fed787ff7e14c8c5535e5",
+        "url": "https://github.com/tamird/gvisor/commit/6650e2f29",
+        "title": "Build Python releases with declared Flit",
+        "requestedAt": "2026-11-07T16:35:38+00:00",
+        "summary": "Open this single-commit PR to build the Python release with declared Flit and the execution-platform interpreter? The previous Flit proposal used the target interpreter.",
+        "body": "Build the SandboxExec sdist from declared sources with Flit's public\nPEP 517 hooks. Build the wheel from that sdist and stage both files in\nthe existing release directory. The release service selects the version.\n\nUse the registered execution-platform Python to run Flit. On the AMD64\nmusl release worker, the target interpreter requested the absent GNU\nloader /lib64/ld-linux-x86-64.so.2. The static execution interpreter\nbuilt both packages from the same sources and version.\n\nThe build needs one pinned wheel. Record the BSD-3-Clause Flit notice\nand the MIT notice for its bundled copy of Tomli in the license catalog."
       }
     },
     {
@@ -60499,15 +60518,23 @@
       "id": "branch:staged-release-publication",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/staged-release-publication",
-      "head": "c661271ae7b13f9e607958444e8cbf553c883720",
+      "ref": "research/staged-release-publisher-inputs",
+      "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
       "title": "Publish staged releases without the builder",
-      "url": "https://github.com/tamird/gvisor/commit/c661271ae",
+      "url": "https://github.com/tamird/gvisor/commit/a7e84cf82",
       "group": "release",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T15:33:26+00:00",
-      "summary": "Buildkite stages the release artifacts before signing. The proposed publisher consumes that directory directly. The Make frontend still builds its package prerequisites and generates the disposable presubmit key. Ordinary Make completed after six denied Docker calls, including two builder exec probes. Host-only Make and the direct publisher used no Docker; the publisher used no Bazel. A fresh native test verified the signed APT indexes and matched AMD64 and ARM64 package payloads, normalized metadata and optional .changes files. Signed .deb hashes differed. All four raw downloads and their SHA512 sidecars matched byte for byte. The test exercised head, nightly and tagged routing with a disposable key. It intercepted Twine offline and recorded zero cloud writes. Missing key, missing directory, empty directory and scan failure each stopped before repository output.",
+      "updatedAt": "2026-11-07T16:35:38+00:00",
+      "summary": "The revision accepts explicit staged package files and directories. It follows a symlink only when the caller names a package file directly. The combined offline publisher consumed the exact configured outputs, preserved a filename containing a newline and refused an explicit directory symlink. Both APT suites were signed and verified. The Make frontend retains its package and disposable-key prerequisites.\n\nBuildkite stages the release artifacts before signing. The proposed publisher consumes that directory directly. The Make frontend still builds its package prerequisites and generates the disposable presubmit key. Ordinary Make completed after six denied Docker calls, including two builder exec probes. Host-only Make and the direct publisher used no Docker; the publisher used no Bazel. A fresh native test verified the signed APT indexes and matched AMD64 and ARM64 package payloads, normalized metadata and optional .changes files. Signed .deb hashes differed. All four raw downloads and their SHA512 sidecars matched byte for byte. The test exercised head, nightly and tagged routing with a disposable key. It intercepted Twine offline and recorded zero cloud writes. Missing key, missing directory, empty directory and scan failure each stopped before repository output.",
       "evidence": [
+        {
+          "label": "Revised standalone commit and permanent description",
+          "url": "https://github.com/tamird/gvisor/commit/a7e84cf82"
+        },
+        {
+          "label": "Integrated native package writers, manifest interface and offline publisher",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42390561513/artifacts/13581566721"
+        },
         {
           "label": "Original local Bazel test, three publisher paths, signed APT outputs, routing and four input controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42386105556/artifacts/13578969295"
@@ -60520,13 +60547,21 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "c661271ae7b13f9e607958444e8cbf553c883720",
+        "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
         "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/c661271ae",
+        "url": "https://github.com/tamird/gvisor/commit/a7e84cf82",
         "title": "Publish staged releases without the builder",
-        "requestedAt": "2026-11-07T15:33:26+00:00",
-        "summary": "Open this one-commit PR so Buildkite can publish already-staged files directly? The direct path produced verified signed APT repositories and matching raw downloads without invoking Docker or Bazel. Presubmit still uses Make for its disposable key. The tagged Twine call was intercepted offline.",
-        "body": "Buildkite stages the release files before it signs them. Running make\nrelease then probes the Docker builder before invoking the publisher.\n\nPass the staging directory directly to the publisher. Discover regular\nfiles there once and preserve filename boundaries. Stop on a failed or\nempty scan before writing the repository. Local Make keeps its package\nand key prerequisites, including the disposable key used in presubmit."
+        "requestedAt": "2026-11-07T16:35:38+00:00",
+        "summary": "Open this revised standalone PR to publish explicitly staged release files without invoking the builder? The earlier proposal accepted one staging directory. The revised interface also accepts explicitly named package files and handles their symlinks.",
+        "body": "Buildkite stages the release files before it signs them. The Make\npublisher still probes the Docker builder and attempts an image build.\n\nPass staged input paths directly to the publisher. Read directory\nentries without splitting filenames, and follow only explicitly named\npackage files. Bazel can supply the same interface from its configured\noutputs. Local Make retains its package and signing-key prerequisites."
+      },
+      "refinement": {
+        "before": {
+          "head": "c661271ae7b13f9e607958444e8cbf553c883720"
+        },
+        "after": {
+          "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320"
+        }
       }
     }
   ],
@@ -64330,9 +64365,35 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-07T15:27:26+00:00",
+      "updatedAt": "2026-11-07T16:38:23+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "A fork-only endpoint test on master 9ee2906f5 exercised the CUBIC restart callback through the real sender. After 30 seconds with no outstanding data and a 3-second RTO, cwnd fell from 11 to 10. The first ACK for two segments kept it at 10. Removing only the call to HandleWindowRestart still reduced cwnd to 10, then the same ACK raised it to 11. Both 1 ms idle controls held at 11.",
+          "evidence": [
+            {
+              "label": "Actual sender traces and XML for the normal and callback-omitted cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42391719435/artifacts/13581832610"
+            },
+            {
+              "label": "Fork-only end-to-end sender fixture",
+              "url": "https://github.com/tamird/gvisor/commit/defbf4057"
+            }
+          ]
+        },
+        {
+          "text": "The author’s Eifel fix passed all 11 packet cases with #17022 and #17023 together. Adding the published #16081 left five passing. Restricting its recovery guard so Eifel may resume loss recovery restored all 11. All four genuine-timeout controls passed with either version of the guard.",
+          "evidence": [
+            {
+              "label": "Matched packet cases and genuine-timeout controls for all three changes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42389216876/artifacts/13580933149"
+            },
+            {
+              "label": "TCP reviewer guide and landing order",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "With a 200 ms timeout, the baseline sender retransmitted its oldest repair after 93–98 ms. When an ACK came about 125 ms after repair, #16624 avoided the extra packet in eight of eight pairs. With the ACK 355–360 ms after repair, the corrected sender timed out after 200–201 ms in all eight pairs. All 34 transfers delivered 512 KiB. The two policies used identical loss ranges.",
           "evidence": [
@@ -67505,7 +67566,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-07T15:36:56+00:00",
+      "updatedAt": "2026-11-07T16:31:47+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -73254,6 +73315,43 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42384990607/artifacts/13580057034"
             }
           ]
+        },
+        {
+          "title": "Graph restore with the pages and metadata cached separately",
+          "description": "On master 9ee2906f5, each group restored the same graph checkpoint four times on one four-CPU AMD64 systrap worker. The table compares 12 measured groups. The first timed guest read verified 512 MiB of memory and eight 1 MiB pipes.",
+          "columns": [
+            "Interval",
+            "All files cold",
+            "Only pages.img warm",
+            "Only checkpoint and pages metadata warm"
+          ],
+          "rows": [
+            [
+              "Restore return to cached guest READY",
+              "56.49 ms",
+              "55.34 ms, p = 0.977",
+              "56.39 ms, p = 0.977"
+            ],
+            [
+              "Restore start to full guest verification",
+              "1,101 ms",
+              "590 ms, −46.41%, p < 0.001",
+              "1,102 ms, p = 0.713"
+            ],
+            [
+              "Background page-loader duration",
+              "1,048.5 ms",
+              "214.5 ms, −79.54%, p < 0.001",
+              "1,042 ms, p = 0.236"
+            ]
+          ],
+          "note": "The earlier cold delay after restore returned did not recur. The page loader finished after the cached READY response in all 48 measured restores. All 52 restores, including warmup, matched both digests.",
+          "evidence": [
+            {
+              "label": "Original cache-condition benchstat, per-file residency, loader counters and guest digests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42388577043/artifacts/13581750393"
+            }
+          ]
         }
       ]
     },
@@ -77832,9 +77930,60 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T14:56:09+00:00",
+      "updatedAt": "2026-11-07T16:50:10+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
+        {
+          "text": "On integration 89dd704c2, seven fresh native remote actions produced eight release files. Four Tar actions and two MakeDeb actions wrote the bzip2 and zstd archives and the Debian package for each architecture. One AMD64 SandboxExecDist action wrote the Python wheel and source distribution. The offline publisher signed and verified the release and 20261106 APT suites and staged the raw downloads. Twine was intercepted before upload. The Buildkite host setup in #16904 remains a separate prerequisite.",
+          "evidence": [
+            {
+              "label": "Native writers, eight outputs and offline signing and publication",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42390561513/artifacts/13581566721"
+            },
+            {
+              "label": "Buildkite agent prerequisite",
+              "url": "https://github.com/google/gvisor/pull/16904"
+            }
+          ]
+        },
+        {
+          "text": "Without remote execution, dd2be7670 reached Nogo’s standard-library analysis on both targets in an AMD64 client with empty /bin and /usr/bin. Both builds stopped because compiled archives lacked matching declared source. The original stderr digests identify reflect/internal/example2 on AMD64 and reflect/internal/example1 on ARM64. The focused owner also failed on both targets with ordinary Ubuntu tools. rules_go 0.65.0 excludes these test packages from SDK inputs, while its local builder copies the physical SDK source directory. The earlier remote release receipt records the release products but omits the individual Nogo action. Applying the existing rules_go #4774 patch on 61ff148f0d let both complete releases build locally in the same empty client. All nine ELF digests per target matched the remote reference. The local GoStdlib producer supplied 366 AMD64 and 364 ARM64 archive packages, every one with source. The unchanged Nogo analyzer ran locally and wrote its facts for both targets. The installed AMD64 runsc and netgofer both reported (devel). The ARM64 check inspected the cross-built ELFs. Neither release invoked GoStdlibList.",
+          "evidence": [
+            {
+              "label": "Original local release failures, configured owners and stderr digests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42389281553/artifacts/13581077103"
+            },
+            {
+              "label": "Original Nogo errors from both empty and ordinary clients",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42390250354/artifacts/13580994591"
+            },
+            {
+              "label": "Supplier change to stage the declared SDK sources",
+              "url": "https://github.com/bazel-contrib/rules_go/pull/4774"
+            },
+            {
+              "label": "Both successful local releases, nine ELF hashes per target, local archive-to-Nogo joins and native CLI versions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42391653387/artifacts/13581779546"
+            }
+          ]
+        },
+        {
+          "text": "On Git-free registry LLVM source a13d73782, both optimized target builds failed in Protobuf’s ProtocAuthenticityCheck when the Jammy client lacked grep. Bash reported the missing command at both version checks. With grep available, each build reproduced the nine original ELF digests. The AMD64 CLI and netgofer printed the supplied version. Each trace contained 2,196 calls from the six seccomp loader templates and four validating the selected protoc versions. #16590 replaces the loader templates, and Protobuf c64743979 replaces the validator’s grep calls with shell builtins.",
+          "evidence": [
+            {
+              "label": "Both failing validation actions, matched releases and traced command arguments",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42388512100/artifacts/13582280090"
+            },
+            {
+              "label": "Replace the seccomp template loop",
+              "url": "https://github.com/google/gvisor/pull/16590"
+            },
+            {
+              "label": "Read and check the protoc version with shell builtins",
+              "url": "https://github.com/protocolbuffers/protobuf/commit/c64743979"
+            }
+          ]
+        },
         {
           "text": "The dd2be7670 integration built both optimized //:release targets on tool-free AMD64 OCI workers with a single Ubuntu coordinator. Each of the nine staged ELFs per target matched its original linker output and target architecture. Both Protobuf checks and the native signal-stub generator were verified. The AMD64 release used 4,021 fresh remote actions and 776 cache hits. The ARM64 cross-build used 2,831 fresh actions and 26 cache hits.",
           "evidence": [
@@ -83853,5 +84002,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T15:36:56+00:00"
+  "updatedAt": "2026-11-07T16:50:10+00:00"
 }
