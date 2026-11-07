@@ -1,12 +1,12 @@
-name: Check fast retransmit after a spurious timeout
+name: Check recovery after reordering with three TCP changes
 on:
   push:
-    branches: [qualification/eifel-step8-composition]
+    branches: [qualification/eifel-author-three-way]
 permissions:
   contents: read
 jobs:
   check:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-22.04
     timeout-minutes: 50
     steps:
@@ -18,10 +18,13 @@ jobs:
           dir="$RUNNER_TEMP/eifel-check"
           mkdir -m 700 "$dir"
           cp .github/qualification/eifel_check.py "$dir/"
-          test "$(git rev-parse HEAD^)" = f23070977169b4084ae8f4a0b18fa139404467e9
-          git fetch --quiet --depth=2 https://github.com/google/gvisor.git 1b9768b199524246fe8e4fa66a0b623069778780
+          test "$(git rev-parse HEAD^)" = b390a538e5582ef577188cb4965c5cd7b117ffb9
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/eifel_check.py'
+          git fetch --quiet --no-tags --depth=3 https://github.com/adios-404/gvisor.git f85916767e5f2a21315076bc8661be567dc736f7
+          test "$(git rev-parse FETCH_HEAD^)" = 1ebae73b9a566f63fc85e83f4b554a0a409a13ec
+          git fetch --quiet --no-tags --depth=2 https://github.com/google/gvisor.git 1b9768b199524246fe8e4fa66a0b623069778780
           test "$(git rev-parse FETCH_HEAD^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
-          git checkout --detach f23070977169b4084ae8f4a0b18fa139404467e9
+          git checkout --detach f85916767e5f2a21315076bc8661be567dc736f7
           test -z "$(git status --short)"
           curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$dir/bazelisk"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $dir/bazelisk" | sha256sum -c
@@ -30,7 +33,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: eifel-resume-composition
+          name: eifel-author-three-way
           path: ${{ runner.temp }}/eifel-check/receipts.json
           if-no-files-found: error
           retention-days: 7
