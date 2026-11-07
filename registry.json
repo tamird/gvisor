@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T12:04:09+00:00",
+    "updatedAt": "2026-11-07T12:42:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5055,9 +5055,13 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.\n\nA subsequent run on this exact proposal booted source-built Sentries on native AMD64 and ARM64 Firecracker workers. Each execution verified the nine release ELFs, ran TestProcessDocuments_BasicTransform uncached, and checked the guest-written output HELLO FROM UNTRUSTED INPUT.\n\nOn c115840f8, an AMD64 Ubuntu builder without Debian’s ARM64 GCC or binutils cross-compiled the nine ARM64 release files. A separate native ARM64 worker verified their hashes and booted the transferred runsc and Sentry under rootless systrap. The guest’s uname -m returned aarch64 and it exited 0.\n\nA second client built both nine-file releases on c115840f8 without installing any packages. All 18 executable hashes matched the compiler-free client, including the nine previously booted on ARM64. The base image supplied shell utilities. Bazel, Git and the public CA bundle were supplied separately.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.",
-      "updatedAt": "2026-11-07T10:25:32+00:00",
+      "updatedAt": "2026-11-07T12:17:12+00:00",
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
+        {
+          "label": "Separate dd2be7670 integration with two target architectures on tool-free AMD64 workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42370658626/artifacts/13574101258"
+        },
         {
           "label": "Optimized release from a Git-free source export with registry LLVM 0.8.24",
           "url": "https://github.com/tamird/gvisor/actions/runs/42361840401/artifacts/13571015047"
@@ -7431,17 +7435,20 @@
       "url": "https://github.com/google/gvisor/pull/15476",
       "group": "runtime",
       "status": "merged",
-      "updatedAt": "2026-10-16T21:33:52.482989+00:00",
-      "summary": "The shared checkpoint codec merged on 13 October 2026, satisfying the core netip migration prerequisite. The delivered source 9c1aeb068 uses encoding.BinaryAppender and copies encoded bytes before buffer reuse. The earlier BinaryAppender discussion describes implemented source; no separate codec landing task remains.",
+      "updatedAt": "2026-11-07T12:14:13+00:00",
+      "summary": "The merged encoder reuses its BinaryAppender buffer and copies each saved string. At 32 queued packets the median allocation count per Save fell from 3659.5 to 3628. Timing differences were not statistically significant. Etienne’s original inline question now links to the source and matched benchmark.\n\nEarlier record:\n\nThe shared checkpoint codec merged on 13 October 2026, satisfying the core netip migration prerequisite. The delivered source 9c1aeb068 uses encoding.BinaryAppender and copies encoded bytes before buffer reuse. The earlier BinaryAppender discussion describes implemented source; no separate codec landing task remains.",
       "followup": {
-        "disposition": "Merged; core netip prerequisite satisfied",
+        "disposition": "Merged and the original inline question is answered.",
         "owner": "external_sweeps",
-        "nextAction": "No further codec delivery is pending. Continue maintainer review of the delivered core netip migration in #15730.",
+        "nextAction": "The codec work and its reviewer response are complete.",
         "sourceHead": "9c1aeb0686a60878ecb92d6fe7694324dfabebbe",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15476#discussion_r4501622364",
+          "https://app.buildbuddy.io/invocation/a7862de8-23ec-47f3-b9b1-29ec1f103ee6",
+          "https://github.com/google/gvisor/pull/15476#discussion_r4216106437",
           "https://github.com/tamird/gvisor/commit/f9984e9e845cf07f7e11850d7f219d006ef17e55",
           "https://app.buildbuddy.io/invocation/69c94a6e-5162-4070-96f3-88e8fa6075d5",
           "https://github.com/google/gvisor/pull/15476",
@@ -7454,7 +7461,6 @@
           "https://app.buildbuddy.io/invocation/91d7662c-227f-4afd-bdc2-e465c4f117e2",
           "https://github.com/tamird/gvisor/commit/bfeafd451816044ccf84e62f80a0c916e221605c",
           "https://github.com/google/gvisor/pull/15476#issuecomment-6053509833",
-          "https://github.com/google/gvisor/pull/15476#discussion_r4216106437",
           "https://github.com/tamird/gvisor/commit/ac2bf475abf21ca7e44caf7f39f418c7cc7534e3",
           "https://github.com/google/gvisor/pull/15476#issuecomment-6059004075",
           "https://github.com/google/gvisor/actions/runs/37771113544/job/113290633479",
@@ -7464,7 +7470,6 @@
           "https://app.buildbuddy.io/invocation/2694803b-cc9d-471a-9858-66546ab153d0",
           "https://github.com/tamird/gvisor/commit/55a5ff9d74dff7ab1b0710c45a0cb3ead8656cfa",
           "https://app.buildbuddy.io/invocation/5d457c55-5ed2-4b1e-bfee-db0d5c91965c",
-          "https://app.buildbuddy.io/invocation/a7862de8-23ec-47f3-b9b1-29ec1f103ee6",
           "https://github.com/tamird/gvisor/commit/654339a2846f1232e0d62870434ceae7bb470085",
           "https://app.buildbuddy.io/invocation/8d7587bb-e339-4d39-b21e-315ff4adf450",
           "https://github.com/tamird/gvisor/commit/9c1aeb0686a60878ecb92d6fe7694324dfabebbe",
@@ -7473,10 +7478,24 @@
           "https://github.com/google/gvisor/pull/15476#issuecomment-6071098018",
           "https://github.com/google/gvisor/pull/15548"
         ],
-        "observedAt": "2026-10-15T17:50:09.335568+00:00"
+        "observedAt": "2026-11-07T12:14:13+00:00"
       },
       "number": 15476,
-      "reviewDecision": "APPROVED"
+      "reviewDecision": "APPROVED",
+      "evidence": [
+        {
+          "label": "Reply with merged source and matched allocation results",
+          "url": "https://github.com/google/gvisor/pull/15476#discussion_r4501622364"
+        },
+        {
+          "label": "Matched BinaryAppender measurements at three queue sizes",
+          "url": "https://app.buildbuddy.io/invocation/a7862de8-23ec-47f3-b9b1-29ec1f103ee6"
+        },
+        {
+          "label": "Etienne’s original BinaryAppender question",
+          "url": "https://github.com/google/gvisor/pull/15476#discussion_r4216106437"
+        }
+      ]
     },
     {
       "id": "pr:15401",
@@ -12690,17 +12709,19 @@
       "head": "f057834035ce37166fc50c9c066865d9bff90efb",
       "title": "Respect sandbox exit in FS checkpoint tests",
       "group": "tests",
-      "summary": "Root closed #15653 as landed through import #15928 at 6567a6c991. Independent complete-patch comparison against current f057 found only two comment lines and imported trailers; no executable amendment remains. The closure comment links the landed import. Exact-head guarded deletion of the idle local and remote fscheckpoint-test-lifecycle branches is complete, with recovery commands retained. Historical qualification and import evidence remain unchanged.\n\nImport #15928 merged at 17:52:04 UTC, while source #15653 still reports open at f05783403. This is import progress, not evidence that the current source PR is closed or that any descendant is ready. No recorded dependency edge is released.\n\nExact current Gazelle job 118764755074 at import #15928 (79fe653e) fails only on removal of the unused production //pkg/zip dependency in tools/nogo/check/BUILD, the shared #16031 correction. No independent source defect or retry is established.\n\nEtienne approved exact current head f057834035ce37166fc50c9c066865d9bff90efb at 2026-10-20T06:30:12Z (review5581499824). Public source checks pass and ready-to-pull remains set. The old import15928 is green but still identifies source534046f9; current Copybara reports an unspecified migration error. No cause or new matching import is inferred.\n\nThe published mechanical rebase is at f057834035ce on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The existing native review request was already pending.\n\nEarlier source-specific record:\n\nThe requested comment amendment is published at e10ab455e3. It explains why the resumed sandbox must be stopped before restoring it, without referring to removed code. Rebase range-diff confirms executable code is unchanged. Etienne’s changes-requested thread remains open; no new reply or resolution has been posted.\n\nThe observed shared-volume test sent a child signal after filesystem checkpointing and root termination had closed the control server. Both synchronous ExitAfterSaving tests now wait for the root sandbox and require status zero; the resume=true annotation test explicitly destroys the whole sandbox. The separate filesystem-checkpoint waiter, which lacked a registration handshake, is removed without changing production API semantics. The three existing roots and subtests pass across both cgroup modes and systrap/KVM, with owning analyzers passing both architectures. The actual before failure and the separate unresolved chained-restore stall remain recorded.\n\nA later third-party report on ARM64/systrap in a Docker Desktop builder observed three failures in sixty SharedVolume runs on master c1058949e and sixty passes with this change, plus twenty passes each for Command and Annotation and one clean combined checkpoint run. That report does not cover KVM or cgroup v1 and is separate from our source-bound validation. The user subsequently requested Etienne review in the public thread.",
+      "summary": "The import kept the earlier comment. The reviewed wording explaining why the checkpointed sandbox is stopped and reaped before restore is in #16893 at 93a31792b. The original reviewer received a direct reply.\n\nEarlier source record:\n\nRoot closed #15653 as landed through import #15928 at 6567a6c991. Independent complete-patch comparison against current f057 found only two comment lines and imported trailers; no executable amendment remains. The closure comment links the landed import. Exact-head guarded deletion of the idle local and remote fscheckpoint-test-lifecycle branches is complete, with recovery commands retained. Historical qualification and import evidence remain unchanged.\n\nImport #15928 merged at 17:52:04 UTC, while source #15653 still reports open at f05783403. This is import progress, not evidence that the current source PR is closed or that any descendant is ready. No recorded dependency edge is released.\n\nExact current Gazelle job 118764755074 at import #15928 (79fe653e) fails only on removal of the unused production //pkg/zip dependency in tools/nogo/check/BUILD, the shared #16031 correction. No independent source defect or retry is established.\n\nEtienne approved exact current head f057834035ce37166fc50c9c066865d9bff90efb at 2026-10-20T06:30:12Z (review5581499824). Public source checks pass and ready-to-pull remains set. The old import15928 is green but still identifies source534046f9; current Copybara reports an unspecified migration error. No cause or new matching import is inferred.\n\nThe published mechanical rebase is at f057834035ce on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The existing native review request was already pending.\n\nEarlier source-specific record:\n\nThe requested comment amendment is published at e10ab455e3. It explains why the resumed sandbox must be stopped before restoring it, without referring to removed code. Rebase range-diff confirms executable code is unchanged. Etienne’s changes-requested thread remains open; no new reply or resolution has been posted.\n\nThe observed shared-volume test sent a child signal after filesystem checkpointing and root termination had closed the control server. Both synchronous ExitAfterSaving tests now wait for the root sandbox and require status zero; the resume=true annotation test explicitly destroys the whole sandbox. The separate filesystem-checkpoint waiter, which lacked a registration handshake, is removed without changing production API semantics. The three existing roots and subtests pass across both cgroup modes and systrap/KVM, with owning analyzers passing both architectures. The actual before failure and the separate unresolved chained-restore stall remain recorded.\n\nA later third-party report on ARM64/systrap in a Docker Desktop builder observed three failures in sixty SharedVolume runs on master c1058949e and sixty passes with this change, plus twenty passes each for Command and Annotation and one clean combined checkpoint run. That report does not cover KVM or cgroup v1 and is separate from our source-bound validation. The user subsequently requested Etienne review in the public thread.",
       "url": "https://github.com/google/gvisor/pull/15653",
       "status": "closed",
-      "updatedAt": "2026-10-20T21:41:08.473648+00:00",
+      "updatedAt": "2026-11-07T12:42:32+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "Source PR owner",
         "sourceHead": "f057834035ce37166fc50c9c066865d9bff90efb",
-        "observedAt": "2026-10-20T21:32:26.662577+00:00",
-        "disposition": "Landed through #15928; source PR closed and idle branch cleanup complete",
-        "nextAction": "No remaining source or outreach action; preserve landed commit and original qualification evidence.",
+        "observedAt": "2026-11-07T12:42:32+00:00",
+        "disposition": "The correction is published on #16893 and the original thread is answered.",
+        "nextAction": "Follow the source correction on #16893.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16893",
+          "https://github.com/google/gvisor/pull/15653#discussion_r4501753435",
           "https://github.com/google/gvisor/pull/15928",
           "https://github.com/google/gvisor/pull/15653#issuecomment-6301951816"
         ]
@@ -12715,6 +12736,14 @@
         }
       },
       "evidence": [
+        {
+          "label": "Five source corrections in the amended #16893",
+          "url": "https://github.com/google/gvisor/pull/16893"
+        },
+        {
+          "label": "Reply on the original test comment",
+          "url": "https://github.com/google/gvisor/pull/15653#discussion_r4501753435"
+        },
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/f057834035ce37166fc50c9c066865d9bff90efb"
@@ -20280,14 +20309,16 @@
       "url": "https://github.com/google/gvisor/pull/16055",
       "group": "tests",
       "status": "merged",
-      "summary": "The approved comment-only amendment is published at 792659c37. The review thread is answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nEarlier source-specific history:\n\nThe requested post-#16046 rebase is published at bd37d23bc935 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at a7ad53e89f. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at a7ad53e89f4045cc8bbfbdb7ad490b13fc3cdf7d on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633275867 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16055 at 3782966d5f1f5a14baa6d14ba296998088be0fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe proposed fixture replaces an unconditional skip with a manual-clock SACK/cumulative-ACK sequence and unchanged production RACK code. Qualified integration6c8c passed all18 RACK methods per architecture plus owning Nogo/buildifier; the negative mutation failed the exact final reordering assertion on both architectures. Root requested contributor review once; no upstream PR. The prior529906 revision differs only in its message.",
+      "summary": "The merged PR description now names the RACK test target with its 18 passing cases, the tcp_rack_test_nogo analyzer and Buildifier. It also records that disabling reordering detection failed the intended assertion on both architectures.\n\nEarlier record:\n\nThe approved comment-only amendment is published at 792659c37. The review thread is answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nEarlier source-specific history:\n\nThe requested post-#16046 rebase is published at bd37d23bc935 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at a7ad53e89f. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at a7ad53e89f4045cc8bbfbdb7ad490b13fc3cdf7d on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633275867 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16055 at 3782966d5f1f5a14baa6d14ba296998088be0fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe proposed fixture replaces an unconditional skip with a manual-clock SACK/cumulative-ACK sequence and unchanged production RACK code. Qualified integration6c8c passed all18 RACK methods per architecture plus owning Nogo/buildifier; the negative mutation failed the exact final reordering assertion on both architectures. Root requested contributor review once; no upstream PR. The prior529906 revision differs only in its message.",
       "followup": {
         "owner": "root",
         "sourceHead": "792659c3733210dd8943e52dcd64a47b467791cd",
-        "observedAt": "2026-10-26T20:31:06.337471+00:00",
-        "disposition": "Approved amendment published; review thread resolved",
-        "nextAction": "Follow current-head checks and maintainer review. No contributor decision or duplicate reply is needed.",
+        "observedAt": "2026-11-07T12:14:13+00:00",
+        "disposition": "The historical PR description and original source review are complete.",
+        "nextAction": "The requested description correction is public.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16055",
+          "https://github.com/google/gvisor/pull/16055#pullrequestreview-5657647569",
           "https://github.com/google/gvisor/actions/runs/39424435862/job/118633275867",
           "https://github.com/google/gvisor/pull/16031",
           "https://github.com/google/gvisor/pull/16048",
@@ -20297,8 +20328,12 @@
           "https://github.com/google/gvisor/pull/16055#discussion_r4382064934"
         ]
       },
-      "updatedAt": "2026-11-06T23:37:40.578Z",
+      "updatedAt": "2026-11-07T12:14:13+00:00",
       "evidence": [
+        {
+          "label": "Review requesting names for the checks",
+          "url": "https://github.com/google/gvisor/pull/16055#pullrequestreview-5657647569"
+        },
         {
           "label": "Verified authorized delivery",
           "url": "https://github.com/google/gvisor/pull/16055"
@@ -27577,16 +27612,23 @@
       "url": "https://github.com/google/gvisor/pull/16345",
       "group": "analysis",
       "status": "Open; reviewer feedback applied",
-      "summary": "The approved amendment is published at 641a5c300. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nThe amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged.\n\nEarlier source-specific history:\n\nCurrent public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL. The description now makes clear that the client dials and the server listens.",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "summary": "Both the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR’s port validation. The original reviewer received the results. The standalone script correction is #17184. Work on a Go replacement continues separately.\n\nEarlier record:\n\nThe approved amendment is published at 641a5c300. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nThe amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged.\n\nEarlier source-specific history:\n\nCurrent public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL. The description now makes clear that the client dials and the server listens.",
+      "updatedAt": "2026-11-07T12:42:32+00:00",
       "number": 16345,
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "641a5c300750a72805d4cacbcd71c92f91f5d46f",
-        "observedAt": "2026-11-03T02:30:53.096288+00:00",
-        "disposition": "Open; reviewer feedback applied",
-        "nextAction": "Follow the original PR. No contributor decision is pending.",
+        "observedAt": "2026-11-07T12:36:39+00:00",
+        "disposition": "The requested dual-netstack comparison is complete and the original reviewer has the result.",
+        "nextAction": "Follow the original port-validation PR and #17184 separately. The Go replacement is agent work.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16345#issuecomment-6707013553",
+          "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943",
+          "https://github.com/tamird/gvisor/actions/runs/42372178933",
+          "https://github.com/tamird/gvisor/commit/9c541c3ae",
+          "https://github.com/tamird/gvisor/actions/runs/42371214043/artifacts/13573662056",
+          "https://github.com/tamird/gvisor/commit/98fcb4c0d",
+          "https://github.com/google/gvisor/commit/30fa3bd85",
           "https://github.com/google/gvisor/pull/16345",
           "https://github.com/google/gvisor/pull/16345#discussion_r4382159476",
           "https://github.com/google/gvisor/pull/16345/commits/641a5c300750a72805d4cacbcd71c92f91f5d46f",
@@ -27594,6 +27636,34 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Published standalone benchmark correction",
+          "url": "https://github.com/google/gvisor/pull/17184"
+        },
+        {
+          "label": "Published answer with the controlled transfer",
+          "url": "https://github.com/google/gvisor/pull/16345#issuecomment-6707013553"
+        },
+        {
+          "label": "Both original scripts, corrected transfer and negative controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943"
+        },
+        {
+          "label": "Controlled comparison of both public sources and the corrected script",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42372178933"
+        },
+        {
+          "label": "Fork revision for proxy readiness and iperf3 failure reporting",
+          "url": "https://github.com/tamird/gvisor/commit/9c541c3ae"
+        },
+        {
+          "label": "Dual-netstack run with an empty throughput result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42371214043/artifacts/13573662056"
+        },
+        {
+          "label": "Fork change for listener readiness and iperf3 errors",
+          "url": "https://github.com/tamird/gvisor/commit/98fcb4c0d"
+        },
         {
           "label": "Proposed reviewed amendment",
           "url": "https://github.com/tamird/gvisor/commit/641a5c300750a72805d4cacbcd71c92f91f5d46f"
@@ -28332,15 +28402,18 @@
       "url": "https://github.com/google/gvisor/pull/16403",
       "group": "runtime",
       "status": "merged",
-      "updatedAt": "2026-11-06T23:37:40.578Z",
-      "summary": "The contributor-approved amendment is published on #16403 at c451fa7d6. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot.\n\nInclude a duplicate FIN sequence number and retain the duplicate report when filling a gap drains a queued FIN; simplify the SACK helper interface and comments.\n\nThe extended receiver fixture covers the queued-FIN ACK and retransmitted data/FIN in CLOSE-WAIT, with focused remote qualification passing. Duplicates wholly above the cumulative ACK remain outside this change. No production throughput or customer-outage claim follows.\n\nEarlier source-specific record:\n\nWith SACK negotiated, the receiver reports already acknowledged non-FIN data in its first SACK block. A wholly duplicate segment leaves the cumulative ACK and queued SACK ranges intact; a segment crossing the old ACK reports only the duplicate prefix. Both AMD64 and ARM64 controls failed as expected; the corrected SACK suites and analyzers passed on both CPUs.",
+      "updatedAt": "2026-11-07T12:42:32+00:00",
+      "summary": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.\n\nEarlier source record:\n\nThe contributor-approved amendment is published on #16403 at c451fa7d6. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot.\n\nInclude a duplicate FIN sequence number and retain the duplicate report when filling a gap drains a queued FIN; simplify the SACK helper interface and comments.\n\nThe extended receiver fixture covers the queued-FIN ACK and retransmitted data/FIN in CLOSE-WAIT, with focused remote qualification passing. Duplicates wholly above the cumulative ACK remain outside this change. No production throughput or customer-outage claim follows.\n\nEarlier source-specific record:\n\nWith SACK negotiated, the receiver reports already acknowledged non-FIN data in its first SACK block. A wholly duplicate segment leaves the cumulative ACK and queued SACK ranges intact; a segment crossing the old ACK reports only the duplicate prefix. Both AMD64 and ARM64 controls failed as expected; the corrected SACK suites and analyzers passed on both CPUs.",
       "followup": {
-        "owner": "root",
+        "owner": "Source PR owner",
         "sourceHead": "c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
-        "observedAt": "2026-10-28T21:10:30Z",
-        "disposition": "Current head approved",
-        "nextAction": "Compare duplicate out-of-order data and D-SACK packet traces against Linux separately; keep the approved head unchanged.",
+        "observedAt": "2026-11-07T12:42:32+00:00",
+        "disposition": "The packet comparison requested on #16403 passed on both receivers.",
+        "nextAction": "The verified below-ACK test is on the fork. The above-gap implementation is #16999.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207",
+          "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
+          "https://github.com/google/gvisor/pull/16999",
           "https://github.com/google/gvisor/pull/16403#pullrequestreview-5657638067",
           "https://github.com/tamird/gvisor/commit/c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
           "https://app.buildbuddy.io/invocation/4c7ff6e6-8214-4380-8fe0-d55d6216698f",
@@ -28348,6 +28421,18 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Native Linux and gVisor results, including original PCAPs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207"
+        },
+        {
+          "label": "TestDSACKBelowCumulativeACK source",
+          "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9"
+        },
+        {
+          "label": "Separate above-gap behavior",
+          "url": "https://github.com/google/gvisor/pull/16999"
+        },
         {
           "label": "Open upstream PR",
           "url": "https://github.com/google/gvisor/pull/16403"
@@ -31962,20 +32047,34 @@
       "url": "https://github.com/google/gvisor/pull/16513",
       "group": "runtime",
       "status": "merged",
-      "summary": "Published the contributor-approved failed-registration fix as #16513. If waiter registration returns an error after signaling readability, remove both the epoll interest and the queued event. The published head has the exact tested tree: all 40 named AMD64 VFS cases passed; the control exposed both a phantom event and EEXIST on retry. The separate product-identical VFS Nogo checked AMD64 and ARM64. This is a synthetic registration-error fixture, not host exhaustion or ARM runtime coverage.",
-      "updatedAt": "2026-11-06T23:37:40.578Z",
+      "summary": "The ADD rollback landed at efb9dffe1 and #13245 closed. The separate MOD investigation produced an approved correction, 82f0e4f38. Its provider prerequisites remain on the MOD card.\n\nEarlier record:\n\nPublished the contributor-approved failed-registration fix as #16513. If waiter registration returns an error after signaling readability, remove both the epoll interest and the queued event. The published head has the exact tested tree: all 40 named AMD64 VFS cases passed; the control exposed both a phantom event and EEXIST on retry. The separate product-identical VFS Nogo checked AMD64 and ARM64. This is a synthetic registration-error fixture, not host exhaustion or ARM runtime coverage.",
+      "updatedAt": "2026-11-07T12:14:13+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9",
-        "observedAt": "2026-10-28T21:25:12Z",
-        "disposition": "Approved; separate ModifyInterest follow-up under investigation",
-        "nextAction": "Keep the approved ADD fix unchanged. Reproduce the MOD re-registration failure and compare Linux behavior before preparing a separate fix.",
+        "observedAt": "2026-11-07T12:14:13+00:00",
+        "disposition": "ADD fix landed and the prior PR is closed. The MOD follow-up is approved.",
+        "nextAction": "Track the remaining provider prerequisites on the separate MOD proposal.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16513#pullrequestreview-5689766487",
+          "https://github.com/google/gvisor/pull/13245",
+          "https://github.com/tamird/gvisor/commit/82f0e4f38",
           "https://github.com/torvalds/linux/blob/v6.18/fs/eventpoll.c#L1586-L1651"
         ]
       },
       "evidence": [
+        {
+          "label": "Original review covering ADD and MOD",
+          "url": "https://github.com/google/gvisor/pull/16513#pullrequestreview-5689766487"
+        },
+        {
+          "label": "Retired predecessor",
+          "url": "https://github.com/google/gvisor/pull/13245"
+        },
+        {
+          "label": "Approved MOD follow-up, waiting for its provider changes",
+          "url": "https://github.com/tamird/gvisor/commit/82f0e4f38"
+        },
         {
           "label": "Published exact tested tree",
           "url": "https://github.com/tamird/gvisor/commit/9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9"
@@ -47135,14 +47234,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/buildkite-source-release-staging",
-      "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
+      "head": "4ba049ba5c249f885a0a249c921b60931897ea5d",
       "title": "Install runsc with its Sentry in Buildkite source jobs",
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
-      "status": "Open; amendment approved, waiting for prerequisites",
-      "updatedAt": "2026-11-07T12:02:13+00:00",
-      "summary": "The native-installation amendment is approved at d978a41320 after wrapping its commit message to 72 columns. Its parent, source tree, words and paragraphs are unchanged from 88cf79c93. Keep the published e7e0d5319 fileset change as-is while #16904 and the declared compiler prerequisites remain open; no contributor decision remains.\n\nThe current PR stages runsc with its sidecars. The approved amendment builds that release on the agent through Make, without starting the Docker builder. On native AMD64 and ARM64, all eight installed executables matched their Bazel outputs and the staged runtime started a Docker container after bazel clean. Both runs used the declared LLVM compiler at a385bd2b0 on integration 2e9e15266. Archive-only installation preserved the same bytes and explicit runtime flags; an invalid Bazel option failed and cleanup removed the job launcher. Other Buildkite commands may still use Make or Docker.\n\ngit -C ~/code/gvisor range-diff 88cf79c93^! d978a41320^!",
+      "status": "Open; cleanup comment published, awaiting review of the new head",
+      "updatedAt": "2026-11-07T12:23:40+00:00",
+      "summary": "The approved staging-directory comment is published at 4ba049ba5. The original PR reply asks Ryan for fresh review. Export #17179 still names e7e0d5319. The independent native-installation amendment d978a4132 retains its own prerequisites.\n\nEarlier native-installation record:\n\nThe native-installation amendment is approved at d978a41320 after wrapping its commit message to 72 columns. Its parent, source tree, words and paragraphs are unchanged from 88cf79c93. That native-installation amendment waits for #16904 and the declared compiler.\n\nThe current PR stages runsc with its sidecars. The approved amendment builds that release on the agent through Make, without starting the Docker builder. On native AMD64 and ARM64, all eight installed executables matched their Bazel outputs and the staged runtime started a Docker container after bazel clean. Both runs used the declared LLVM compiler at a385bd2b0 on integration 2e9e15266. Archive-only installation preserved the same bytes and explicit runtime flags; an invalid Bazel option failed and cleanup removed the job launcher. Other Buildkite commands may still use Make or Docker.\n\ngit -C ~/code/gvisor range-diff 88cf79c93^! d978a41320^!",
       "evidence": [
+        {
+          "label": "Published cleanup comment and request for fresh review",
+          "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6706880986"
+        },
+        {
+          "label": "Open export still on the previously approved source",
+          "url": "https://github.com/google/gvisor/pull/17179"
+        },
         {
           "label": "Identical CLI, bare versus full release layout",
           "url": "https://github.com/tamird/gvisor/actions/runs/41276936602/artifacts/13071652881"
@@ -47206,37 +47313,30 @@
           "at": "2026-11-03T21:57:02.318113+00:00",
           "url": "https://github.com/tamird/gvisor/commit/d978a413203531124310968f4fa679dbf5b96db6",
           "body": "The approved wrapping correction is applied with normal signing. Words and paragraph boundaries, parent 2333f0b2b and source tree 2ace06d66 are identical to 88cf79c93; every prose line is at most 72 columns. Delivery still waits for #16904 and the declared compiler."
+        },
+        {
+          "kind": "amendment",
+          "head": "4ba049ba5c249f885a0a249c921b60931897ea5d",
+          "outcome": "approved",
+          "at": "2026-11-07T12:23:40+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/4ba049ba5",
+          "body": "Published on the original PR. Ryan was asked to reapprove the one-line change."
         }
       ],
       "number": 16843,
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
-        "observedAt": "2026-11-07T12:02:13+00:00",
-        "disposition": "The approved source still says only STAGED_BINARIES uses the release directory. A one-line amendment is ready.",
-        "nextAction": "Review 4ba049ba5 for publication on the original PR or a follow-up if it merges.",
+        "owner": "Reviewer",
+        "sourceHead": "4ba049ba5c249f885a0a249c921b60931897ea5d",
+        "observedAt": "2026-11-07T12:23:40+00:00",
+        "disposition": "The original PR now covers both staging paths and its author replied to Ryan.",
+        "nextAction": "Wait for review or an import naming the amended source.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16843#issuecomment-6706880986",
+          "https://github.com/google/gvisor/pull/17179",
           "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344",
-          "https://github.com/tamird/gvisor/commit/4ba049ba5",
-          "https://github.com/google/gvisor/pull/17179"
+          "https://github.com/tamird/gvisor/commit/4ba049ba5"
         ],
-        "actionableComment": {
-          "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
-          "commentId": "PRR_kwDOB9IlXs8AAAABWlxi0A",
-          "kind": "review",
-          "url": "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344"
-        }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "title": "Install runsc with its Sentry in Buildkite source jobs",
-        "body": "Buildkite registered the standalone //runsc:runsc CLI with Docker.\nRegistration succeeded, but a container using that runtime exited 127\nbecause runsc could not find gvisor_sentry next to the executable.\n\nStage //:release, which includes the CLI and its sidecars in the layout\nrunsc expects. Install from the same directory for source and archive\njobs. Pass the configured arguments individually so Docker can invoke\nrunsc directly when no flags are set.",
-        "head": "4ba049ba5c249f885a0a249c921b60931897ea5d",
-        "baseHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
-        "url": "https://github.com/tamird/gvisor/commit/4ba049ba5",
-        "summary": "The post-command hook stages both source and archive installations. Update its comment to describe both paths. Only the comment changes. After contributor review, publish it and answer Ryan. If the import lands first, submit a follow-up.",
-        "requestedAt": "2026-11-07T12:02:13+00:00"
+        "providerHead": "4ba049ba5c249f885a0a249c921b60931897ea5d"
       },
       "refinement": {
         "before": {
@@ -51113,9 +51213,17 @@
       "url": "https://github.com/google/gvisor/pull/16812",
       "group": "analysis",
       "status": "closed",
-      "updatedAt": "2026-11-05T10:45:41.558885Z",
-      "summary": "The inotify lock annotations landed through #16882. Lucas also approved removing Watch.OwnerID, but Copybara imported the earlier revision. The follow-up branch contains just that deletion.",
+      "updatedAt": "2026-11-07T12:14:13+00:00",
+      "summary": "The instance-locking change reached master at 738ede495. Lucas reapproved the amendment removing Watch.OwnerID at 637158efc, but the imported source retained that method. The standalone deletion is approved in #17044 and has open export #17068.\n\nEarlier record:\n\nThe inotify lock annotations landed through #16882. Lucas also approved removing Watch.OwnerID, but Copybara imported the earlier revision. The follow-up branch contains just that deletion.",
       "evidence": [
+        {
+          "label": "Approved standalone removal of Watch.OwnerID",
+          "url": "https://github.com/google/gvisor/pull/17044"
+        },
+        {
+          "label": "Open Copybara export of the standalone removal",
+          "url": "https://github.com/google/gvisor/pull/17068"
+        },
         {
           "label": "VFS analyzer: product passes",
           "url": "https://app.buildbuddy.io/invocation/e7e8b98a-fcdd-4eb9-8a96-131a56b2b26b"
@@ -51177,16 +51285,18 @@
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "637158efcbee8244f5df020b57bb0296c0c15fe6",
-        "observedAt": "2026-11-05T10:45:41.558885Z",
-        "disposition": "Locking change landed; unused accessor tracked separately",
-        "nextAction": "See the standalone Watch.OwnerID change.",
+        "observedAt": "2026-11-07T12:14:13+00:00",
+        "disposition": "The locking change landed. The approved accessor removal is in its own export.",
+        "nextAction": "Follow #17044 and its export #17068.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16812#pullrequestreview-5758478567",
+          "https://github.com/google/gvisor/pull/17044",
+          "https://github.com/google/gvisor/pull/17068",
           "https://github.com/google/gvisor/pull/16812/commits/637158efcbee8244f5df020b57bb0296c0c15fe6",
           "https://github.com/tamird/gvisor/actions/runs/41566873882/artifacts/13199093632",
           "https://github.com/google/gvisor/pull/16812#issuecomment-6594039363",
           "https://github.com/google/gvisor/pull/16812#pullrequestreview-5744328851",
           "https://github.com/google/gvisor/pull/16882",
-          "https://github.com/google/gvisor/pull/16812#pullrequestreview-5758478567",
           "https://github.com/tamird/gvisor/commit/3cc383db9"
         ]
       }
@@ -59908,6 +60018,182 @@
         ]
       },
       "number": 17182
+    },
+    {
+      "id": "branch:inspect-explicit-checkpoint-memoryfiles",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/inspect-explicit-checkpoint-memoryfiles",
+      "head": "2d112a9314987d6c2ad9317947a9908ce770dff9",
+      "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
+      "url": "https://github.com/tamird/gvisor/commit/2d112a931",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T12:14:13+00:00",
+      "summary": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings.\n\nThe nine files add 603 lines and remove 74. Of the additions, 255 are permanent tests and 29 are BUILD declarations. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context.",
+      "evidence": [
+        {
+          "label": "Fresh native ARM64 inspection, private file controls and same-image restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42369973734/artifacts/13574155486"
+        },
+        {
+          "label": "Generic and split controls, filesystem-only guest and permanent reader tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368279071/artifacts/13573286927"
+        },
+        {
+          "label": "Independent historical corpus with 59 and 56 regions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42365642428/artifacts/13572575742"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "2d112a9314987d6c2ad9317947a9908ce770dff9",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/2d112a931",
+        "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
+        "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed\nprotobuf. A generic statefile dump can skip later objects or print\nincorrect page boundaries while reporting success.\n\nAdd a -checkpoint mode for existing Sentry files. The historical\nenvelope has no payload tag, and ordinary state streams can contain\nthe same roots. Keep their default text and HTML rendering intact.\n\nUse the shared graph printer and pgalloc metadata reader to display\nthe application MemoryFile and its committed ranges. Read one private\nMemoryFile per saved owner and reject missing or trailing data. Retain\nthe earlier object-framed layout and the separate split-page layout.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")",
+        "requestedAt": "2026-11-07T12:14:13+00:00",
+        "summary": "Open this opt-in inspector for historical Sentry checkpoints? The default generic dump is preserved because the inputs have no unique format tag. On native ARM64 the new mode identified all 64 and 62 regions and both original checkpoints restored. The change adds 603 lines, including 255 test lines and 29 BUILD lines, and removes 74."
+      }
+    },
+    {
+      "id": "branch:tcp-cookie-local-hash",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-cookie-local-hash",
+      "head": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
+      "title": "Hash TCP SYN cookies without shared state",
+      "url": "https://github.com/tamird/gvisor/commit/e12c6d591",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T12:19:15+00:00",
+      "summary": "The listener and child now calculate each SYN cookie hash locally. The qualified source has the same Git tree as the proposal. On both source versions the TCP package, two-architecture Nogo checks, handshake and close cases, and race and digest controls passed. In 16 alternating AMD64 pairs, creating and validating one cookie reduced serial time by 18.56% for IPv4 and 17.31% for IPv6. All four cases fell from 12 allocations to zero. The shared cases measure two goroutines using the same listener. The experiment measures cookie operations.",
+      "evidence": [
+        {
+          "label": "TCP owners, race and digest checks, 16 pairs and four benchstat rows",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42370230508/artifacts/13574595198"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e12c6d5914f88ae1cb28f7ec107f5a28b38f5db3",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/e12c6d591",
+        "title": "Hash TCP SYN cookies without shared state",
+        "requestedAt": "2026-11-07T12:19:15+00:00",
+        "summary": "Open this one-commit SYN-cookie change? The two serial create-and-validate cases fell by 18.56% and 17.31%, and all four cases went from 12 allocations to zero. The shared case is a microbenchmark. Live connection throughput was outside its scope.",
+        "body": "A listener creating a SYN cookie and a child validating a late cookie\nboth use the listener's hash object. Each hash locks that object, resets\nit, and discards its state after computing the digest.\n\nUse a local hash for each calculation and supply storage for its result.\nRemove the listener's hasher, its mutex, and the lock exclusions that\ncallers had to propagate.\n\nEach benchmark operation creates and validates a cookie. The shared\ncases use one listener from two goroutines on AMD64. All four cases\nwent from 12 allocations (384 B) per operation to zero. Benchstat for\nSYNCookieRoundTrip, with the common benchmark prefix omitted [1]:\n\n               │   before   │             after\n               │   sec/op   │   sec/op     vs base\nIPv4/Serial-2    624.2n ± 1%   508.3n ± 3%  -18.56% (p=0.000 n=16)\nIPv4/Shared-2    731.2n ± 2%   296.6n ± 1%  -59.44% (p=0.000 n=16)\nIPv6/Serial-2    627.5n ± 2%   518.9n ± 1%  -17.31% (p=0.000 n=16)\nIPv6/Shared-2    740.4n ± 2%   304.9n ± 2%  -58.82% (p=0.000 n=16)\n\n[1] https://github.com/tamird/gvisor/actions/runs/42370230508"
+      }
+    },
+    {
+      "id": "branch:tcp-benchmark-listener-readiness",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-benchmark-listener-readiness",
+      "head": "9c541c3ae1cd68df1741882480d5bf184396e695",
+      "title": "Wait for the TCP benchmark proxy and verify the sender rate",
+      "url": "https://github.com/tamird/gvisor/commit/9c541c3ae",
+      "group": "tests",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T12:42:32+00:00",
+      "summary": "Both the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR’s port validation. The script now waits for the local listener without consuming its first connection and requires a numeric sender rate.",
+      "evidence": [
+        {
+          "label": "Published standalone benchmark correction",
+          "url": "https://github.com/google/gvisor/pull/17184"
+        },
+        {
+          "label": "30-second transfer and matching original controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943"
+        },
+        {
+          "label": "Published answer with the controlled transfer",
+          "url": "https://github.com/google/gvisor/pull/16345#issuecomment-6707013553"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9c541c3ae1cd68df1741882480d5bf184396e695",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/9c541c3ae",
+          "title": "Wait for the TCP benchmark proxy and verify the sender rate",
+          "body": "The client proxy connects to the server before it listens for iperf.\nThe benchmark can start iperf during that interval, ignore a failed\nclient, and report success with an empty throughput field.\n\nWait for the listener without consuming its first connection, checking\neach child for an early exit. Propagate the iperf client status and\nrequire a numeric rate from its final sender row. With parallel\nstreams, that row carries the aggregate throughput.",
+          "outcome": "approved",
+          "at": "2026-11-07T12:42:32+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Source PR owner",
+        "observedAt": "2026-11-07T12:42:32+00:00",
+        "sourceHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
+        "disposition": "The approved correction is published as #17184.",
+        "nextAction": "Follow #17184 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17184",
+          "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943"
+        ]
+      }
+    },
+    {
+      "id": "pr:16893",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16893,
+      "ref": "review/address-merged-review-notes",
+      "head": "93a31792b187b722bd9352ce987732e39b92010a",
+      "title": "Cover UDP destination-port checksum boundaries and clarify lock behavior",
+      "url": "https://github.com/google/gvisor/pull/16893",
+      "group": "tests",
+      "status": "open",
+      "summary": "The five-item follow-up contains the four earlier corrections and the restored checkpoint wording from #15653. The original reviewer has the public reply.",
+      "evidence": [
+        {
+          "label": "Five source corrections in the amended #16893",
+          "url": "https://github.com/google/gvisor/pull/16893"
+        },
+        {
+          "label": "Reply on the original test comment",
+          "url": "https://github.com/google/gvisor/pull/15653#discussion_r4501753435"
+        }
+      ],
+      "updatedAt": "2026-11-07T12:42:32+00:00",
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "93a31792b187b722bd9352ce987732e39b92010a",
+          "baseHead": "3b2cebb8b851eae6c10111ca484907a8f4e22c89",
+          "outcome": "approved",
+          "at": "2026-11-07T12:42:32+00:00",
+          "url": "https://github.com/google/gvisor/pull/16893"
+        }
+      ]
+    },
+    {
+      "id": "pr:17184",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17184,
+      "ref": "research/tcp-benchmark-listener-readiness",
+      "head": "9c541c3ae1cd68df1741882480d5bf184396e695",
+      "title": "Wait for the TCP benchmark proxy and verify the sender rate",
+      "url": "https://github.com/google/gvisor/pull/17184",
+      "group": "tests",
+      "status": "open",
+      "summary": "The approved fix waits for the benchmark listener, propagates iperf3 errors and validates the sender rate. The Go replacement is separate agent work.",
+      "evidence": [
+        {
+          "label": "Published standalone benchmark correction",
+          "url": "https://github.com/google/gvisor/pull/17184"
+        },
+        {
+          "label": "30-second transfer and matching original controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943"
+        }
+      ],
+      "updatedAt": "2026-11-07T12:42:32+00:00"
     }
   ],
   "edges": [
@@ -77121,9 +77407,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T11:43:06+00:00",
+      "updatedAt": "2026-11-07T12:17:12+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
+        {
+          "text": "The dd2be7670 integration built both optimized //:release targets on tool-free AMD64 OCI workers with a single Ubuntu coordinator. Each of the nine staged ELFs per target matched its original linker output and target architecture. Both Protobuf checks and the native signal-stub generator were verified. The AMD64 release used 4,021 fresh remote actions and 776 cache hits. The ARM64 cross-build used 2,831 fresh actions and 26 cache hits.",
+          "evidence": [
+            {
+              "label": "Both optimized release layouts from tool-free AMD64 workers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42370658626/artifacts/13574101258"
+            },
+            {
+              "label": "Open rules_shell shell-toolchain supplier change",
+              "url": "https://github.com/bazelbuild/rules_shell/pull/64"
+            }
+          ]
+        },
         {
           "text": "With current rules_python main, both native launchers ran their extracted programs on Linux with an empty PATH. The ARM64 Python distribution needed libgcc_s.so.1 from a pinned distroless/cc image. Both architectures passed 26 bootstrap tests. Invoking the program through a symlink or passing another program’s runfiles directory still failed only with the native launcher. The supplier change remains on the fork.",
           "evidence": [
@@ -79679,8 +79978,12 @@
           ]
         }
       ],
-      "nextStep": "Carry the proven SDK bootstrap into the real release build and locate the next user of an undeclared tool. Track the rules_shell API separately until a released provider supplies it.",
+      "nextStep": "Follow the rules_shell #64 toolchain API through upstream release and reconcile the qualified integrations with their separately tracked product prerequisites.",
       "evidence": [
+        {
+          "label": "Both optimized release layouts from tool-free AMD64 workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42370658626/artifacts/13574101258"
+        },
         {
           "label": "Matched native SDK actions with the shell declared as an input",
           "url": "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
@@ -80568,8 +80871,8 @@
       "status": "active",
       "group": "tests",
       "owner": "Source PR owners",
-      "updatedAt": "2026-11-07T12:04:09+00:00",
-      "summary": "Track requested edits through the original source, its public description and the result on master. Comments in an approving review count even when there is no inline thread.",
+      "updatedAt": "2026-11-07T12:42:32+00:00",
+      "summary": "Reviewed 654 source PRs, including 922 reviews, 195 inline threads and 752 top-level comments. The findings trace substantive requests to the source, public reply and landing status. An approving review can contain a request without opening an inline thread.",
       "findings": [
         {
           "text": "Ryan’s timestamp comment is in the current #16851 head (74952bf99), and his original thread has a reply. The prior approval and import refer to 47e4c458f.",
@@ -80589,19 +80892,19 @@
           ]
         },
         {
-          "text": "Ryan requested a staging-directory comment in the approval body of #16843. The original PR and its export still have the stale wording. The one-line fork revision is awaiting contributor review.",
+          "text": "Ryan requested the staging-directory comment in his approval body on #16843. The approved amendment is published at 4ba049ba5 with a reply asking Ryan for a fresh review. #17179 still names the prior source.",
           "evidence": [
             {
-              "label": "Review body",
-              "url": "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344"
+              "label": "Published cleanup comment and request for fresh review",
+              "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6706880986"
             },
             {
-              "label": "One changed comment",
-              "url": "https://github.com/tamird/gvisor/commit/4ba049ba5"
-            },
-            {
-              "label": "Current import",
+              "label": "Open export still on the previously approved source",
               "url": "https://github.com/google/gvisor/pull/17179"
+            },
+            {
+              "label": "Original review body",
+              "url": "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344"
             }
           ]
         },
@@ -80619,11 +80922,32 @@
           ]
         },
         {
-          "text": "Four requested edits are in open #16893. They cover the benchmark comment (#16453), UDP checksum tests (#16493), capability-test package documentation (#16496) and the epoll lock-order citation (#16505). Each original thread links to the follow-up. All four are still absent from master.",
+          "text": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.",
           "evidence": [
             {
-              "label": "Reviewable rollup",
+              "label": "Native Linux and gVisor results, including original PCAPs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42371354708/artifacts/13574284207"
+            },
+            {
+              "label": "TestDSACKBelowCumulativeACK source",
+              "url": "https://github.com/tamird/gvisor/commit/c6f1cf9b9"
+            },
+            {
+              "label": "Separate above-gap behavior",
+              "url": "https://github.com/google/gvisor/pull/16999"
+            }
+          ]
+        },
+        {
+          "text": "Open #16893 retains the benchmark comment, UDP destination-port assertions, capabilitytest documentation and epoll lock-order citation. Its approved amendment also restores the reviewed wording on #15653. The five original review threads link to the follow-up.",
+          "evidence": [
+            {
+              "label": "Five source corrections in the amended #16893",
               "url": "https://github.com/google/gvisor/pull/16893"
+            },
+            {
+              "label": "Reply on the original test comment",
+              "url": "https://github.com/google/gvisor/pull/15653#discussion_r4501753435"
             }
           ]
         },
@@ -80645,11 +80969,52 @@
           ]
         },
         {
-          "text": "The port-forward flag descriptions on #16345 reach the actual Copybara commit. A normal dual-netstack benchmark run is a separate verification request. The #17067 internal toolchain adjustment is prepared against its open prerequisite #16522.",
+          "text": "#16513’s ADD rollback landed and #13245 closed. The separate MOD correction is approved at 82f0e4f38 and awaits its provider prerequisites. On #16055 the public description now names the RACK suite, Nogo and Buildifier.",
           "evidence": [
             {
-              "label": "Imported change record",
+              "label": "Approved MOD follow-up, waiting for its provider changes",
+              "url": "https://github.com/tamird/gvisor/commit/82f0e4f38"
+            },
+            {
+              "label": "Corrected public test and analyzer description",
+              "url": "https://github.com/google/gvisor/pull/16055"
+            }
+          ]
+        },
+        {
+          "text": "The #16345 flag descriptions reached the import. Both the unmodified parent and PR exited zero without transferring data. With the independent script correction, the PR sent 38.8 MiB and received 32.2 MiB over 30 seconds. The original reviewer now has the results. The #17067 internal toolchain adjustment remains prepared for its open prerequisite #16522. The script correction is now #17184. A Go replacement remains separate agent work.",
+          "evidence": [
+            {
+              "label": "Published standalone benchmark correction",
+              "url": "https://github.com/google/gvisor/pull/17184"
+            },
+            {
+              "label": "Published answer with the controlled transfer",
+              "url": "https://github.com/google/gvisor/pull/16345#issuecomment-6707013553"
+            },
+            {
+              "label": "Both original scripts, corrected transfer and negative controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943"
+            },
+            {
+              "label": "Controlled comparison of both public sources and the corrected script",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42372178933"
+            },
+            {
+              "label": "Fork revision for proxy readiness and iperf3 failure reporting",
+              "url": "https://github.com/tamird/gvisor/commit/9c541c3ae"
+            },
+            {
+              "label": "Imported flag descriptions",
               "url": "https://github.com/google/gvisor/commit/30fa3bd85"
+            },
+            {
+              "label": "Dual-netstack run with an empty throughput result",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42371214043/artifacts/13573662056"
+            },
+            {
+              "label": "Fork change for listener readiness and iperf3 errors",
+              "url": "https://github.com/tamird/gvisor/commit/98fcb4c0d"
             },
             {
               "label": "Compiler prerequisite",
@@ -80804,6 +81169,10 @@
       ],
       "nextStep": "Inspect new review bodies as well as inline threads. For each actionable item, verify the original or follow-up change and answer the reviewer. Carry unfinished edits through an import or merge.",
       "evidence": [
+        {
+          "label": "Full audit of the 654 public source PRs",
+          "url": "https://github.com/tamird/gvisor/blob/gh-pages/review-cleanup-audit.md"
+        },
         {
           "label": "Approved cleanup with final comment wording and Linux source link",
           "url": "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726"
@@ -82880,11 +83249,28 @@
     {
       "id": "investigation:statefile-inline-memoryfile",
       "title": "Printing inline checkpoint memory",
-      "status": "active",
+      "status": "concluded",
       "owner": "Agent",
-      "updatedAt": "2026-11-07T11:17:48+00:00",
-      "summary": "Two checkpoints restored correctly but the stock statefile command printed incorrect page boundaries in both text and HTML. It reported 13 of 59 regions for the wire checkpoint and 29 of 56 for the graph checkpoint. The revised reader matched every region in both files without changing their bytes.",
+      "updatedAt": "2026-11-07T12:14:13+00:00",
+      "summary": "The opt-in reader for historical inline checkpoints is ready for contributor review on its fork branch. The existing generic command keeps its original text and HTML behavior. The earlier corpus covered 59 and 56 regions; fresh checkpoints verified 64 and 62, all on the same bytes subsequently restored.",
       "findings": [
+        {
+          "text": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings. The nine files add 603 lines and remove 74. Of the additions, 255 are permanent tests and 29 are BUILD declarations. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context. The earlier split-page and filesystem-only checks passed. That run exposed the generic short-frame difference that the final native run verifies on stock, the intermediate reader and the corrected reader.",
+          "evidence": [
+            {
+              "label": "One-commit checkpoint reader proposal",
+              "url": "https://github.com/tamird/gvisor/commit/2d112a931"
+            },
+            {
+              "label": "Fresh native ARM64 inspection, private file controls and same-image restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42369973734/artifacts/13574155486"
+            },
+            {
+              "label": "Generic and split controls, filesystem-only guest and permanent reader tests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42368279071/artifacts/13573286927"
+            }
+          ]
+        },
         {
           "text": "The stored protobuf was 98 bytes. Its eight-byte prefix placed the end at offset 106; the printer treated the prefix as a one-byte state header and ended at 99. Five real wire checkpoints printed and restored in the same run. Those five did not reproduce the earlier command error.",
           "evidence": [
@@ -82947,8 +83333,20 @@
           ]
         }
       ],
-      "nextStep": "Keep generic printing for inputs without an unambiguous format tag. Check that the number of private MemoryFiles matches the recorded owners, including a missing last file and an extra file.",
+      "nextStep": "Contributor review is on the fork branch for the explicit checkpoint reader. The producer-side framing experiment remains separate.",
       "evidence": [
+        {
+          "label": "Inspect existing inline checkpoints",
+          "url": "https://github.com/tamird/gvisor/commit/2d112a931"
+        },
+        {
+          "label": "Fresh native ARM64 inspection, private file controls and same-image restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42369973734/artifacts/13574155486"
+        },
+        {
+          "label": "Generic and split controls, filesystem-only guest and permanent reader tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368279071/artifacts/13573286927"
+        },
         {
           "label": "Original checkpoints, independent page boundaries and four guest restores",
           "url": "https://github.com/tamird/gvisor/actions/runs/42365642428/artifacts/13572575742"
@@ -82996,5 +83394,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T12:04:09+00:00"
+  "updatedAt": "2026-11-07T12:42:32+00:00"
 }
