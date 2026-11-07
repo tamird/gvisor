@@ -1,0 +1,321 @@
+"""Read the original PacketImpact Ethernet capture, retaining the controlled flow."""
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import re
+import struct
+import subprocess
+from urllib.parse import unquote, urlsplit
+from xml.etree import ElementTree
+import zipfile
+
+
+def need(value, reason):
+    if not value:
+        raise ValueError(reason)
+
+
+def sacks(opts):
+    blocks = []
+    while opts:
+        kind = opts[0]
+        if kind == 0:
+            break
+        if kind == 1:
+            opts = opts[1:]
+            continue
+        need(len(opts) >= 2 and 2 <= opts[1] <= len(opts), "invalid TCP option")
+        size = opts[1]
+        if kind == 5:
+            need(size >= 10 and (size - 2) % 8 == 0, "invalid SACK option")
+            blocks.extend(struct.iter_unpack("!II", opts[2:size]))
+        opts = opts[size:]
+    return blocks
+
+
+def inspect_pcap(data):
+    need(len(data) >= 24 and len(data) < 8 << 20, "pcap size")
+    endians = {
+        b"\xd4\xc3\xb2\xa1": "<",
+        b"\xa1\xb2\xc3\xd4": ">",
+        b"\x4d\x3c\xb2\xa1": "<",
+        b"\xa1\xb2\x3c\x4d": ">",
+    }
+    endian = endians[data[:4]]
+    need(struct.unpack_from(endian + "I", data, 20)[0] == 1, "expected Ethernet pcap")
+    frames = []
+    pos = 24
+    while pos < len(data):
+        need(pos + 16 <= len(data), "truncated record")
+        sec, subsec, size, original = struct.unpack_from(endian + "IIII", data, pos)
+        pos += 16
+        need(size <= original and pos + size <= len(data), "truncated frame")
+        fr = data[pos : pos + size]
+        pos += size
+        if len(fr) < 34 or fr[12:14] != b"\x08\x00" or fr[23] != 6:
+            continue
+        iplen = struct.unpack_from("!H", fr, 16)[0]
+        iph = (fr[14] & 15) * 4
+        start = 14 + iph
+        need(
+            iph >= 20 and len(fr) >= 14 + iplen and iplen >= iph + 20,
+            "short IPv4 TCP frame",
+        )
+        tcp = fr[start : 14 + iplen]
+        off = (tcp[12] >> 4) * 4
+        need(20 <= off <= len(tcp), "invalid TCP data offset")
+        sport, dport, seq, ack = struct.unpack_from("!HHII", tcp)
+        frames.append(
+            dict(
+                sport=sport,
+                dport=dport,
+                seq=seq,
+                ack=ack,
+                flags=tcp[13],
+                opts=tcp[20:off],
+                sacks=sacks(tcp[20:off]),
+                payload=tcp[off:],
+                timestamp=[sec, subsec],
+            )
+        )
+    # Select the controlled connection before using its sequence space.
+    (flow,) = {(f["sport"], f["dport"]) for f in frames if f["payload"] == b"abcd"}
+    (syn,) = {
+        f["seq"]
+        for f in frames
+        if (f["sport"], f["dport"]) == flow and f["flags"] & 0x12 == 2
+    }
+    base = (syn + 1) & 0xFFFFFFFF
+    markers = [
+        (i, f)
+        for i, f in enumerate(frames)
+        if (f["sport"], f["dport"]) == flow and f["payload"]
+    ]
+    need(
+        [f["payload"] for _, f in markers] == [b"abcd", b"bc", b"cdef"],
+        "controlled send sequence",
+    )
+    rows = []
+    for j, (i, packet) in enumerate(markers):
+        stop = markers[j + 1][0] if j + 1 < len(markers) else len(frames)
+        ack = next(
+            f
+            for f in frames[i + 1 : stop]
+            if (f["sport"], f["dport"]) == flow[::-1]
+            and f["flags"] == 0x10
+            and not f["payload"]
+        )
+        start = (packet["seq"] - base) & 0xFFFFFFFF
+        rows.append(
+            {
+                "sent": [start, start + len(packet["payload"])],
+                "ack": (ack["ack"] - base) & 0xFFFFFFFF,
+                "sack": [
+                    [(v - base) & 0xFFFFFFFF for v in block] for block in ack["sacks"]
+                ],
+            }
+        )
+    return rows
+
+
+TMP = Path(os.environ["RUNNER_TEMP"])
+OUT = TMP / "dsack-below-ack"
+CASE = "TestDSACKBelowCumulativeACK"
+TARGETS = [
+    f"//test/packetimpact/tests:tcp_rack_{dut}_test" for dut in ("native", "netstack")
+]
+SOURCE = "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789"
+MASTER = "9ee2906f518e1d0f9fd109e9e1feb2812096418b"
+EXPECTED = [
+    {"sent": [0, 4], "ack": 4, "sack": []},
+    {"sent": [1, 3], "ack": 4, "sack": [[1, 3]]},
+    {"sent": [2, 6], "ack": 6, "sack": [[2, 4]]},
+]
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], text=True).strip()
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def save(value):
+    (OUT / "result.json").write_text(json.dumps(value, indent=2) + "\n")
+
+
+def record(event, row):
+    ident = event["id"]["testResult"]
+    label = ident["label"]
+    result = event["testResult"]
+    strat = result.get("executionInfo", {})
+    row.update(
+        status=result["status"],
+        strategy=strat.get("strategy"),
+        cached=bool(strat.get("cachedRemotely") or result.get("cachedLocally")),
+        run=ident.get("run", 1),
+        shard=ident.get("shard", 1),
+        attempt=ident.get("attempt", 1),
+        outputs={},
+    )
+    root = (
+        Path("bazel-testlogs/test/packetimpact/tests") / label.split(":")[1]
+    ).resolve()
+    for f in result.get("testActionOutput", []):
+        name = f["name"]
+        if name not in ("test.log", "test.xml", "test.outputs__outputs.zip"):
+            continue
+        url = urlsplit(f["uri"])
+        assert url.scheme == "file" and not url.netloc and name not in row["outputs"]
+        path = Path(unquote(url.path)).resolve()
+        assert path.is_relative_to(root) and 0 < path.stat().st_size <= 30 << 20
+        data = path.read_bytes()
+        h = sha(data)
+        assert not f.get("digest") or f["digest"] == h
+        row["outputs"][name] = {"bytes": len(data), "sha256": h}
+        if name == "test.log":
+            text = data.decode(errors="replace")
+            row["go_cases"] = re.findall(
+                r"(?m)^\s*--- (PASS|FAIL|SKIP): (Test\w+) \(", text.replace("\x16", "")
+            )
+            row["diagnostics"] = [
+                msg
+                for msg in (
+                    "did not permit SACK",
+                    "waiting for ACK",
+                    "SACK blocks after sending",
+                    "failed to bootstrap dut",
+                    "permission denied",
+                )
+                if msg in text
+            ]
+        elif name == "test.xml":
+            xml = ElementTree.fromstring(data)
+            row["xml_cases"] = len(list(xml.iter("testcase")))
+            row["xml_problems"] = sum(
+                1
+                for c in xml.iter("testcase")
+                if c.get("status") in ("skipped", "notrun")
+                or c.get("result") in ("skipped", "suppressed")
+                or any(x.tag in ("error", "failure", "skipped") for x in c)
+            )
+        else:
+            with zipfile.ZipFile(path) as z:
+                captures = [f for f in z.infolist() if f.filename.endswith(".pcap")]
+                assert len(captures) == 1 and 24 <= captures[0].file_size < 8 << 20
+                raw = z.read(captures[0])
+                row["pcap_sha256"] = sha(raw)
+                row["wire"] = inspect_pcap(raw)
+    row["verified"] = (
+        row["status"] == "PASSED"
+        and row["strategy"] in ("local", "standalone")
+        and not row["cached"]
+        and (row["run"], row["attempt"], row["shard"]) == (1, 1, 1)
+        and row.get("go_cases") == [("PASS", CASE)]
+        and row.get("xml_cases", 0) > 0
+        and row.get("xml_problems") == 0
+        and row.get("wire") == EXPECTED
+    )
+
+
+def main():
+    report = {
+        "source": git("rev-parse", "HEAD"),
+        "master": git("rev-parse", "HEAD^"),
+        "machine": platform.machine(),
+        "owners": {},
+        "verified": False,
+    }
+    save(report)
+    assert (
+        report["source"] == SOURCE
+        and report["master"] == MASTER
+        and report["machine"] == "x86_64"
+    )
+    bep = OUT / "events"
+    cmd = [
+        str(TMP / "bazel"),
+        "--nosystem_rc",
+        "--nohome_rc",
+        "--host_jvm_args=-Xmx4g",
+        "test",
+        "--config=x86_64",
+        "--jobs=3",
+        "--strategy=TestRunner=local",
+        "--test_env=GO_TEST_WRAP_TESTV=1",
+        "--test_sharding_strategy=disabled",
+        "--nocache_test_results",
+        "--flaky_test_attempts=1",
+        "--runs_per_test=1",
+        "--test_timeout=200",
+        "--keep_going",
+        "--remote_cache=",
+        "--remote_executor=",
+        "--bes_backend=",
+        "--zip_undeclared_test_outputs",
+        "--test_filter=^" + CASE + "$",
+        "--build_event_json_file=" + str(bep),
+        "--build_event_json_file_path_conversion=false",
+        *TARGETS,
+    ]
+    with (OUT / "bazel.log").open("wb") as log:
+        report["bazel_exit"] = subprocess.run(
+            cmd, stdout=log, stderr=subprocess.STDOUT, timeout=2850
+        ).returncode
+    console = (OUT / "bazel.log").read_text(errors="replace").lower()
+    report["diagnostics"] = [
+        s
+        for s in (
+            "no such target",
+            "no such package",
+            "no space left",
+            "not a recognized option",
+            "error downloading",
+            "compilation of rule",
+            "out of memory",
+        )
+        if s in console
+    ]
+    ends = []
+    if bep.is_file():
+        for line in bep.open():
+            e = json.loads(line)
+            if "started" in e:
+                report["invocation"] = e["started"].get("uuid")
+            if "finished" in e:
+                ends.append(e["finished"].get("exitCode", {}).get("code", 0))
+            if "testResult" in e:
+                label = e["id"]["testResult"]["label"]
+                assert label in TARGETS and label not in report["owners"]
+                report["owners"][label] = row = {"verified": False}
+                try:
+                    record(e, row)
+                except (
+                    AssertionError,
+                    OSError,
+                    ValueError,
+                    KeyError,
+                    StopIteration,
+                    struct.error,
+                    zipfile.BadZipFile,
+                    ElementTree.ParseError,
+                ) as e:
+                    row["error"] = type(e).__name__
+                save(report)
+    report["finish"] = ends
+    report["verified"] = (
+        ends == [0]
+        and report["bazel_exit"] == 0
+        and set(report["owners"]) == set(TARGETS)
+        and all(r["verified"] for r in report["owners"].values())
+    )
+    save(report)
+    return report["verified"]
+
+
+if __name__ == "__main__":
+    raise SystemExit(not main())
