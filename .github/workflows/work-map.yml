@@ -1,0 +1,28 @@
+name: Verify tracker queues and copy controls
+on:
+  push:
+    branches: [qualification/tracker-comparison-ranges]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 5
+          persist-credentials: false
+      - name: Bind the proposed site and validate its paired metadata
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 9ee74a6a7e79dab4f9532e8a79ed8905fd451faf
+          cp .github/qualification/queues-browser.py "$RUNNER_TEMP/"
+          git checkout --detach 9ee74a6a7e79dab4f9532e8a79ed8905fd451faf
+          node metadata-preflight.mjs .
+      - name: Run the frontend suite
+        run: node --test app_test.mjs
+      - name: Click the four queues and copy a real amendment in Chromium
+        if: success() || failure()
+        run: python3 "$RUNNER_TEMP/queues-browser.py"
