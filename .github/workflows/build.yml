@@ -1,35 +1,61 @@
-name: CI
-
-"on":
+name: Attribute the original ARM presubmit tests to their configured workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-original-arm-source-shards]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  join:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the exact source and original result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/arm-presubmit-original"
+          mkdir -p "$work/results"
+          test "$(git rev-parse HEAD^)" = 353c484b45fec1ba5ba19445ba03807a5f9638e0
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/arm_presubmit_original/join.py' ':!.github/qualification/arm_presubmit_original/exec_cas.py'
+          cp .github/qualification/arm_presubmit_original/{join,exec_cas}.py "$work/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          gh api repos/tamird/gvisor/actions/artifacts/13550377161/zip > "$work/original.zip"
+          echo "e43d53642ce0a664c2cabfe81a19344e2710eeb22a2509ba71b03e198f03576e  $work/original.zip" | sha256sum -c -
+          unset GH_TOKEN
+          curl -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazel" | sha256sum -c -
+          chmod 755 "$work/bazel"
+      - name: Read the six original namespace actions without scheduling work
+        timeout-minutes: 4
+        continue-on-error: true
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -EsB "$RUNNER_TEMP/arm-presubmit-original/join.py" workers
+      - name: Match configured TestRunner outputs to the completed run and shard
+        timeout-minutes: 16
+        run: python3 -EsB "$RUNNER_TEMP/arm-presubmit-original/join.py" query
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: original-arm-presubmit-shards
+          path: |
+            ${{ runner.temp }}/arm-presubmit-original/results/join.json
+            ${{ runner.temp }}/arm-presubmit-original/results/workers.json
+            ${{ runner.temp }}/arm-presubmit-original/results/shards.tsv
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Confirm the join and the original worker identities
+        if: always() && !cancelled()
+        run: |
+          python3 -IB - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"arm-presubmit-original/results"
+          assert all(json.loads((p/(n+".json")).read_text())["verified"] for n in ("join","workers"))
+          PY
