@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T07:03:52+00:00",
+    "updatedAt": "2026-11-07T07:13:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21016,22 +21016,22 @@
       "url": "https://github.com/google/gvisor/pull/16076",
       "group": "rbe",
       "status": "open",
-      "summary": "Docker 29.9.3-dind ships Compose 5.7.0 on both AMD64 and ARM64. This release includes the host-network entitlement fix requested in review. Both architecture manifests were verified against the same official index. At gVisor’s current Make tag 9a49fc89adf655e5, the published AMD64 and ARM64 image configs still contain Docker 29.7.2 and Compose 5.4.0. Pinning the released base changes that tag. The remaining check is to build with host networking under gVisor with the overlay and VFS storage drivers.",
+      "summary": "The official Docker 29.9.3 dind image includes Compose 5.7.0. Pinning its multi-architecture digest gives Make a new cache key. The overlay and VFS host-network Compose builds each passed under gVisor on native AMD64 and ARM64. The proposed one-line pin replaces the published source-build workaround.",
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-        "observedAt": "2026-11-07T06:45:05+00:00",
-        "disposition": "The requested Compose fix is in the published official image.",
-        "nextAction": "Qualify a one-line official-image pin on native AMD64 and ARM64. Verify the actual Compose version and both Docker-in-gVisor builds before replacing the source-built plugin.",
+        "observedAt": "2026-11-07T07:13:57+00:00",
+        "disposition": "Native AMD64 and ARM64 checks passed; source amendment and reply ready for review.",
+        "nextAction": "Review the single-commit replacement and the proposed reply to Etienne.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16076",
-          "https://github.com/tamird/gvisor/commit/bc40a65c7d06164a2a6f941fbe86dd409699258d",
+          "https://github.com/tamird/gvisor/commit/8bc1587d9",
+          "https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13565073295",
+          "https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13564887693",
           "https://github.com/google/gvisor/pull/16076#pullrequestreview-5637257577",
-          "https://github.com/google/gvisor/pull/16076#issuecomment-6383590047",
-          "https://github.com/docker/compose/compare/1e1c577eab08ceb5ff0fcf4d8e3cbbc08a34ef35...v5.6.1"
+          "https://github.com/google/gvisor/pull/16076#issuecomment-6383590047"
         ]
       },
-      "updatedAt": "2026-11-07T07:03:52+00:00",
+      "updatedAt": "2026-11-07T07:13:57+00:00",
       "evidence": [
         {
           "label": "Compose change that grants host networking to Bake",
@@ -21084,14 +21084,38 @@
         {
           "label": "Pinned Docker image on native AMD64 and ARM64 workers",
           "url": "https://github.com/tamird/gvisor/actions/runs/42349216411"
+        },
+        {
+          "label": "One-line official Docker image pin",
+          "url": "https://github.com/tamird/gvisor/commit/8bc1587d9"
+        },
+        {
+          "label": "Native AMD64 Compose host networking with overlay and VFS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13565073295"
+        },
+        {
+          "label": "Native ARM64 Compose host networking with overlay and VFS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13564887693"
         }
       ],
-      "releaseWait": {
-        "head": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-        "confirmedAt": "2026-10-27T16:52:09+00:00",
-        "checkedVersion": "v5.6.1",
-        "repository": "docker/compose",
-        "nextAction": "Compose 5.7.0 is in the official Docker 29.9.3 image. Verify both storage drivers on the native workers before proposing the one-line pin."
+      "refinement": {
+        "before": {
+          "head": "ec776316b254a79cb8eab6f76c5164459e8481b9"
+        },
+        "after": {
+          "head": "8bc1587d96559fa14081e54fb4f93e92ea3350d3"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "8bc1587d96559fa14081e54fb4f93e92ea3350d3",
+        "baseHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
+        "url": "https://github.com/tamird/gvisor/commit/8bc1587d9",
+        "title": "Pin Docker 29.9.3 for Compose host networking",
+        "body": "The cached test images for AMD64 and ARM64 contain Docker 29.7.2 and\nCompose 5.4.0. That plugin does not grant Buildx Bake the network.host\nentitlement when a Compose build requests the host network, so the\nbuild fails.\n\nThe tag in tools/images.mk hashes the files in images/basic/docker.\nMoving the floating docker:29-dind tag leaves that hash unchanged.\nPin the official Docker 29.9.3 multi-architecture image to give the\nrecipe a new cache key and pick up Compose 5.7.0, which grants the\nrequested entitlement [1].\n\n[1] https://github.com/docker/compose/commit/43a5d5a25",
+        "requestedAt": "2026-11-07T07:13:57+00:00",
+        "summary": "Publish the one-line official Docker image pin on #16076 and reply to Etienne with the native results?\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 ec776316b^! 8bc1587d9^!\n\nProposed reply\n\n@EtiennePerot, the official Docker 29.9.3 dind image now includes Compose 5.7.0. I replaced the source-built plugin with a one-line pin to that image. The existing host-network Compose build passed with both the overlay and VFS storage drivers under gVisor on native AMD64 and ARM64. [AMD64 results](https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13565073295) · [ARM64 results](https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13564887693).\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -40967,10 +40991,40 @@
       "title": "Add an opt-in native POSIX test wrapper",
       "url": "https://github.com/bazelbuild/bazel/pull/30837",
       "group": "bazel",
-      "summary": "Bazel’s proposed native Linux/macOS wrapper supplies the execution platform binary used by the fallback test XML change.",
+      "summary": "Dmitry Zbarsky’s open PR adds an opt-in native POSIX test wrapper. Its head b9d613ad6 conflicts with Bazel master a765dc177 in the coverage resolver and the wrapper test’s filesystem dependency. Tamir’s fork at aa90c0a75 preserves the upstream conditional coverage behavior and the filesystem header used by the new POSIX tests. The prepared revision applies to the inspected master source. A current-master build and the maintainers’ cross-compilation concern remain open.",
       "ref": "codex/native-posix-test-wrapper",
-      "updatedAt": "2026-09-10T16:45:32Z",
-      "status": "open"
+      "updatedAt": "2026-11-07T07:11:52+00:00",
+      "status": "open",
+      "followup": {
+        "owner": "Bazel PR author and maintainers",
+        "disposition": "Prepared fork rebase available",
+        "sourceHead": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+        "observedAt": "2026-11-07T07:11:52+00:00",
+        "nextAction": "Follow the author’s revision of #30837 and the maintainers’ decision about prebuilt wrappers for cross-platform executors.",
+        "evidence": [
+          "https://github.com/bazelbuild/bazel/pull/30837",
+          "https://github.com/tamird/bazel/commit/aa90c0a75",
+          "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5600246279"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Fork rebase on the October 30 Bazel source",
+          "url": "https://github.com/tamird/bazel/commit/aa90c0a75"
+        },
+        {
+          "label": "Conditional coverage-wrapper selection",
+          "url": "https://github.com/bazelbuild/bazel/commit/d458fabd3"
+        },
+        {
+          "label": "Upstream filesystem dependency cleanup",
+          "url": "https://github.com/bazelbuild/bazel/commit/75af8862f"
+        },
+        {
+          "label": "Maintainer question about a cross-platform C++ toolchain",
+          "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5600246279"
+        }
+      ]
     },
     {
       "id": "branch:bazel-native-test-xml",
@@ -40982,8 +41036,8 @@
       "url": "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b",
       "group": "bazel",
       "status": "Approved; waiting for Bazel #30837",
-      "updatedAt": "2026-10-30T15:01:09.436731+00:00",
-      "summary": "When a test produces no XML, Bazel launches a second action. With the native POSIX wrapper selected, that action can write the report on a worker without Bash, sed or cat. The POSIX and Windows wrappers share the XML writer.",
+      "updatedAt": "2026-11-07T07:11:52+00:00",
+      "summary": "When a test produces no XML, Bazel launches a second action. With the native POSIX wrapper selected, that action can write the report on a worker without Bash, sed or cat. The POSIX and Windows wrappers share the XML writer.\n\nThe approved commit is based on b9d613ad6. Applying it to the fork wrapper rebase aa90c0a75 conflicts in tools/test/windows/tw.cc and tw_test.cc, where both changes touch Windows output handling and tests.",
       "evidence": [
         {
           "label": "Parent native wrapper",
@@ -41000,6 +41054,10 @@
         {
           "label": "Native ARM64 gVisor eventfd_test on a scratch worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/41071795282/artifacts/12986015991"
+        },
+        {
+          "label": "Prepared wrapper rebase with the two Windows overlaps",
+          "url": "https://github.com/tamird/bazel/commit/aa90c0a75"
         }
       ],
       "settledReviews": [
@@ -41015,9 +41073,9 @@
       "followup": {
         "owner": "release_owner",
         "sourceHead": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
-        "observedAt": "2026-10-30T15:01:09.436731+00:00",
+        "observedAt": "2026-11-07T07:11:52+00:00",
         "disposition": "Approved after prerequisite",
-        "nextAction": "Submit to Bazel once its native POSIX wrapper parent #30837 merges.",
+        "nextAction": "After #30837 merges, reconcile the two Windows conflicts against its final source and recheck the shared XML writer before submitting the approved follow-up.",
         "evidence": [
           "https://github.com/bazelbuild/bazel/pull/30837",
           "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b"
