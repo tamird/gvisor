@@ -1,35 +1,94 @@
-name: CI
-
-"on":
+name: Verify the mixed build_test binaries
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/mixed-build-test-binaries]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Bind the product, original targets and client
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/mixed-build-test"
+          mkdir -p "$work/results"
+          test "$(git rev-parse HEAD^)" = a5f8e93fb181bb1ea7eb055353ee4bbf8d8a61b1
+          test "$(git rev-parse HEAD^^^)" = 4b87bd4875ecde1ab6b994030d59871b59363ca1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/build_test_payload'
+          cp .github/qualification/build_test_payload/{check.py,roots.py,suites.txt,original.txt,runnable.json} "$work/"
+          git checkout -q --detach 4b87bd4875ecde1ab6b994030d59871b59363ca1
+          test "$(uname -m)" = x86_64
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          cd "$work"
+          sha256sum --check <<'SUMS'
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          d6afff277a7066c6fcbc2da0c9f5014d7263d5f42290dcc17735930a25961d7f  original.txt
+          e882cee2dcfd58f4b955fbcbb93bdd4c057ca33592080a877ba4ceefb78fe803  runnable.json
+          SUMS
+          chmod 755 bazel
+      - name: Follow the original labels from build_test in each configuration
+        timeout-minutes: 30
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/mixed-build-test"
+          python3 -EsB "$work/check.py" configure base-mixed mixed
+          git checkout -q --detach a5f8e93fb181bb1ea7eb055353ee4bbf8d8a61b1
+          for mode in amd64 arm64 mixed; do
+            python3 -EsB "$work/check.py" configure "new-$mode" "$mode"
+          done
+      - name: Run only the mixed build_test and retrieve its binary inputs
+        timeout-minutes: 55
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork key}"
+          work="$RUNNER_TEMP/mixed-build-test"
+          rc="$work/remote.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit-mixed --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:source-presubmit-mixed --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -EsB "$work/check.py" execute
+      - name: Verify the original compiler outputs on the coordinator
+        if: always() && !cancelled()
+        run: |
+          work="$RUNNER_TEMP/mixed-build-test"
+          test ! -e "$work/remote.rc"
+          python3 -EsB "$work/check.py" collect
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: mixed-build-test-binaries
+          path: ${{ runner.temp }}/mixed-build-test/results/*.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Inspect the default products for the original 2880 build-only labels
+        if: always() && !cancelled()
+        timeout-minutes: 22
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/mixed-build-test"
+          test ! -e "$work/remote.rc"
+          git checkout -q --detach 4b87bd4875ecde1ab6b994030d59871b59363ca1
+          env -i HOME="$HOME" PATH="$PATH" USER="$USER" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -EsB "$work/roots.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: original-build-only-configured-files
+          path: |
+            ${{ runner.temp }}/mixed-build-test/results/roots-*.json
+            ${{ runner.temp }}/mixed-build-test/results/build-roots.json
+          if-no-files-found: warn
+          retention-days: 14
