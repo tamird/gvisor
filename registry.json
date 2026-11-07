@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T02:30:44+00:00",
+    "updatedAt": "2026-11-07T02:36:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31821,9 +31821,17 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-06T13:31:05.085Z",
-      "summary": "The four commits were squashed to 11fc65fd9 with the same source tree as 244010f9c. The PR awaits maintainer review.\n\nLucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
+      "updatedAt": "2026-11-07T02:36:21+00:00",
+      "summary": "Lucas’s latest review of 11fc65fd9 says the earlier code issues are resolved. It asks for a first-pass rerun. Maintainers have said to ignore that pipeline while it is being set up. Formal approval is outstanding.\n\nThe four commits were squashed to 11fc65fd9 with the same source tree as 244010f9c. The PR awaits maintainer review.\n\nLucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
       "evidence": [
+        {
+          "label": "Latest exact-head review",
+          "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-5805781350"
+        },
+        {
+          "label": "Maintainer guidance on first-pass",
+          "url": "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255"
+        },
         {
           "label": "Single reviewed commit with the same source tree",
           "url": "https://github.com/google/gvisor/commit/11fc65fd9"
@@ -31980,7 +31988,17 @@
           "at": "2026-11-04T18:36:54Z",
           "url": "https://github.com/tamird/gvisor/commit/c329a6e31"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "11fc65fd99396932faecf9b8ed2c298fe7288f70",
+        "url": "https://github.com/google/gvisor/pull/16522",
+        "title": "Ask Lucas to approve the reviewed sidecar build",
+        "summary": "The code review is resolved. #16791 documents the maintainer guidance for the remaining red check.",
+        "body": "@manninglucas, thanks for checking the rebase. Ryan confirmed in #16791 that first-pass can be ignored while the pipeline is being set up. Could you approve 11fc65fd9?\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-07T02:36:21+00:00"
+      }
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -32164,13 +32182,13 @@
       "group": "bazel",
       "status": "Contributor approved; waiting for #16516",
       "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.\n\nWith the current native C rule, the approved Go tool extracted 5,280 bytes on AMD64 and 4,864 on ARM64. All 10 and 11 generated offsets matched the ELF symbols. The same bytes linked at zero and 2 MiB. Both stubs had zero load-time relocations with the relocation tables retained. Adding an absolute pointer produced one relocation on each CPU.",
-      "updatedAt": "2026-11-06T17:28:15.846Z",
+      "updatedAt": "2026-11-07T02:36:21+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "observedAt": "2026-11-05T22:23:08.487188Z",
+        "observedAt": "2026-11-07T02:36:21+00:00",
         "disposition": "Approved; #16518 merged",
-        "nextAction": "The contributor already reviewed this implementation. The decision on #16516 is whether to deliver both ELF outputs together. If they are combined, retire this separate submission.",
+        "nextAction": "After #16516 lands, qualify the approved raw stub-data change against its landed parent and open the separate PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
           "https://github.com/google/gvisor/pull/16516",
@@ -33075,8 +33093,8 @@
       "url": "https://github.com/google/gvisor/pull/16586",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-28T13:38:53.803726+00:00",
-      "summary": "Use the C++ toolchain for the Sentry vDSO. Both target ELFs kept their public symbols, versions and offsets, and both were embedded in the matching Go archive. Native AMD64 passed the layout and two Systrap clock tests; a separate QEMU user-mode probe exercised the ARM64 entry point. The outer verifier failed on a wrapper-argv assumption; the original test logs verify the actual runner and sandbox arguments.",
+      "updatedAt": "2026-11-07T02:36:21+00:00",
+      "summary": "The native vDSO change is approved at 1d73cd496 and has an open Copybara import, #16983.",
       "evidence": [
         {
           "label": "Published upstream PR #16586",
@@ -33106,9 +33124,9 @@
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
-        "observedAt": "2026-10-28T13:38:53.803726+00:00",
+        "observedAt": "2026-11-07T02:36:21+00:00",
         "disposition": "Approved native vDSO change published as #16586",
-        "nextAction": "Follow checks, maintainer review and import on #16586. No contributor decision remains.",
+        "nextAction": "Follow the open Copybara import #16983.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16586",
           "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
