@@ -50,6 +50,13 @@ fi
 
 # The remote coordinator does not run tests or install runtimes locally.
 if is_remote_source_step; then
+  unset USE_BAZEL_VERSION
+  export USE_BAZEL_FALLBACK_VERSION=error:
+  BUILDKITE_SOURCE_BAZEL="$(command -v bazelisk || command -v bazel)" || {
+    echo "The remote source presubmit requires bazelisk or bazel on PATH" >&2
+    return 127
+  }
+  export BUILDKITE_SOURCE_BAZEL
   return 0
 fi
 

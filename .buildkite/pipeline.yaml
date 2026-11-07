@@ -386,19 +386,13 @@ steps:
       queue: "cgroupv1"
   - <<: *common
     <<: *source_test
-    label: ":test_tube: Unit tests (cgroupv2)"
-    command: make unit-tests
+    label: ":test_tube: Remote source unit tests (AMD64 and ARM64)"
+    key: rbe-source
+    command: '"$${BUILDKITE_SOURCE_BAZEL}" test --config=source-presubmit-mixed'
     agents:
       cgroup: "v2"
       arch: "amd64"
       queue: "default"
-  - <<: *common
-    <<: *source_test
-    label: ":test_tube: Unit tests (ARM64)"
-    command: make unit-tests
-    agents:
-      arch: "arm64"
-      queue: "arm64"
   - <<: *common
     <<: *source_test
     <<: *docker

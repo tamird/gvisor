@@ -6,6 +6,13 @@ source .buildkite/hooks/libhook
 rm -f repo.key
 
 if is_remote_source_step; then
+  if [[ "${BUILDKITE_COMMAND_EXIT_STATUS}" != 0 ]]; then
+    echo "Remote source unit tests failed. See the Bazel errors in this job." |
+      buildkite-agent annotate --style error --context failures --append || true
+  fi
+  if [[ -n "${BUILDKITE_SOURCE_BAZEL:-}" ]]; then
+    "${BUILDKITE_SOURCE_BAZEL}" shutdown || echo "Bazel shutdown failed with status $?" >&2
+  fi
   record_job_completion
   return 0
 fi

@@ -1,4 +1,0 @@
-steps:
-  - label: "Remote source presubmit"
-    key: rbe-source
-    command: .buildkite/scripts/rbe-source

@@ -93,3 +93,12 @@ build:source-presubmit-arm64 --config=aarch64
 build:source-presubmit-arm64 --host_platform=//tools/bazeldefs:linux_arm64
 build:source-presubmit-arm64 --extra_execution_platforms=//tools/bazeldefs:linux_arm64
 build:source-presubmit-arm64 --remote_default_exec_properties=Arch=arm64
+
+# The original test labels run on AMD64. Mixed-only variants select their
+# ARM64 data and constrain the test action to the matching worker.
+build:source-presubmit-mixed --config=source-presubmit-common
+build:source-presubmit-mixed --config=x86_64
+build:source-presubmit-mixed --host_platform=//tools/bazeldefs:linux_amd64
+build:source-presubmit-mixed --extra_execution_platforms=//test/rbe:ubuntu_amd64,//test/rbe:ubuntu_arm64
+build:source-presubmit-mixed --define=mixed_native_tests=true
+test:source-presubmit-mixed --keep_going --test_output=errors --verbose_failures
