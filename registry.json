@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T02:06:32+00:00",
+    "updatedAt": "2026-11-07T02:18:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55681,9 +55681,21 @@
       "url": "https://github.com/tamird/gvisor/commit/a39f38e89",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T02:06:32+00:00",
-      "summary": "One Bazel package list now serves single-CPU and mixed presubmits. Single-CPU analysis selected the original 363 tests and 373 shards on each architecture. Mixed analysis selected 724 shards: 373 on AMD64 and 351 on ARM64. The original test labels supply AMD64. All 340 Go tests and the native uname test gain ARM64 coverage. The other 22 tests still run on AMD64 only.\n\nIn execution checks, state, TCP and VFS passed 153 cases per CPU. Four uname cases passed on each CPU directly on Linux and again inside systrap. The separate vDSO clock checks also ran on matching native workers. The single-CPU AMD64 presubmit passed all 373 shards; the ARM64 presubmit passed 371. The fork’s Buildkite command is executing that 724-shard graph on RBE.\n\nTwo follow-ups cover outputs absent from the ARM64 selection. Bazel built or fetched all 16 integration and benchmark binaries for each CPU; every ELF had the expected machine type. The Python SDK passed 38 methods and skipped its non-root case on each CPU. The structural vDSO test passed on both native workers.",
+      "updatedAt": "2026-11-07T02:18:37+00:00",
+      "summary": "The mixed RBE invocation built all 2,885 selected build-only targets and ran all 724 selected test shards uncached. AMD64 passed all 373. ARM64 passed 350 of 351. Five Sentry checks failed in one runsc/cmd shard. In both ARM64 runs the collector reported a difference between process-wide and per-thread state. All five corresponding gofer checks passed. The ARM64 netgofer test passed all six cases.\n\nThe two ordinary profiles select 373 shards each from the same package list. Mixed selects 22 fewer ARM64 shards. It also omits ARM64 configurations for some compiled libraries and coverage frontends. In separate fork checks, all 16 integration and benchmark binaries had the expected ELF machine on each CPU. On each native worker the Python SDK passed 38 methods with one non-root skip, and the vDSO checker passed.",
       "evidence": [
+        {
+          "label": "Full mixed result: 2,885 build-only targets and 724 fresh remote test shards",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42324657295/artifacts/13555674170"
+        },
+        {
+          "label": "Original Sentry thread-consistency assertions from both ARM64 runs and the AMD64 control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42328740175/artifacts/13556119764"
+        },
+        {
+          "label": "ARM64 configured outputs of the original 2,880 build-only labels",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42326651041/artifacts/13555468854"
+        },
         {
           "label": "Full mixed-architecture fork submission using the Buildkite command",
           "url": "https://github.com/tamird/gvisor/actions/runs/42324657295"
@@ -55929,9 +55941,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "a39f38e89dc7110a5bc35cd70821388d2d22f62a",
-        "observedAt": "2026-11-07T02:06:32+00:00",
-        "disposition": "The same package patterns select the mixed graph and preserve ordinary developer tests.",
-        "nextAction": "Collect the first full mixed Buildkite-command run. Inspect all build-only targets and shard outcomes, including the two previous ARM64 failures.",
+        "observedAt": "2026-11-07T02:18:37+00:00",
+        "disposition": "All selected actions finished. Only the ARM64 runsc/cmd package failed.",
+        "nextAction": "Determine the source of the thread-consistency mismatch before enabling this job. Verify the one-step alternative that preserves all 373 ordinary shards on each architecture.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
