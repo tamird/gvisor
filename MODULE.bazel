@@ -60,6 +60,12 @@ single_version_override(
     patches = ["//tools:benchmark-umbrella-exports.patch"],
 )
 
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//tools:protobuf_authenticity.patch"],
+)
+
 # Drop the backport when the llvm module includes kernel_headers.configure.
 single_version_override(
     module_name = "llvm",
