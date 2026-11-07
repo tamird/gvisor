@@ -170,6 +170,10 @@ go_test(
     ],
     data = ["//:release"],  # keep
     embed = [":cmd"],
+    exec_properties = {
+        "test.dockerUser": "65534:65534",
+        "test.nonroot-workspace": "true",
+    },
     deps = [
         "//pkg/state/statefile",
         "//pkg/test/testutil",
