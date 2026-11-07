@@ -1,116 +1,81 @@
-name: Build and publish all staged release inputs
+name: Read the original SandboxExec distribution failure
 "on":
   push:
-    branches: [qualification/mixed-release-provider-inputs]
-permissions: {}
+    branches: [qualification/mixed-flit-original-stderr]
+permissions:
+  actions: read
 jobs:
-  release:
+  original:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
-    runs-on: ubuntu-22.04
-    timeout-minutes: 145
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-      - name: Bind the physical release source, regular archive inputs and qualification platform
-        id: prepare
+      - name: Bind the verified reader and the original writer receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           umask 077
-          d="$RUNNER_TEMP/mixed-publication"
-          mkdir -p "$d"/{source,public,platform}
-          cd "$d/source"
-          git init -q
-          git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
-          git checkout -q --detach FETCH_HEAD
-          test "$(git rev-parse HEAD^)" = 331c9f51e7e380fc243f8dcae646a9794f2aef65
-          test "$(git rev-parse HEAD^^)" = b95ea1cb6e56608b839272644bc5356a77dcf353
-          git diff --quiet HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/mixed_release/**' ':!test/rbe/stamped_release/**'
-          cp .github/qualification/mixed_release/*.py "$d/"
-          cp test/rbe/stamped_release/{BUILD,boundary.bzl,platform_mappings} "$d/platform/"
-          git checkout -q --detach 331c9f51e7e380fc243f8dcae646a9794f2aef65
-          test "$(git rev-parse 'HEAD^{tree}')" = 75576a717382e5815f4d1e526b2a5882e0b89f4a
-          mkdir -p test/rbe/stamped_release
-          cp "$d/platform/"* test/rbe/stamped_release/
-          git diff --quiet HEAD
-          test "$(git ls-files --others --exclude-standard)" = "$(printf '%s\n' test/rbe/stamped_release/{BUILD,boundary.bzl,platform_mappings})"
-          test "$(cat .bazelversion)" = 9.3.1
-          sudo apt-get -qq update
-          sudo apt-get -qq install -y dpkg-sig apt-utils gnupg zstd jq
-          curl -fsSL --retry 2 --max-time 150 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel.public"
-          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel.public" | sha256sum -c -
-          curl -fsSL --retry 2 --max-time 150 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
-          echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $d/bb" | sha256sum -c -
-          chmod 0755 "$d"/{bb,bazel.public}
-          python3 -IBs "$d/memory.py"
-
-      - name: Inspect both configured native sets and the single Python writer
-        id: graph
-        run: |
-          d="$RUNNER_TEMP/mixed-publication"
-          cd "$d/source"
-          python3 -IBs "$d/mixed.py" graph
-
-      - name: Pass unusual provider paths through the actual Buildkite shell command
-        if: '!cancelled() && steps.prepare.outcome == ''success'''
-        run: |
-          d="$RUNNER_TEMP/mixed-publication"
-          cd "$d/source"
-          python3 -IBs "$d/mixed.py" boundary
-
-      - name: Execute one release build on the two declared native RBE platforms
-        id: build
-        if: '!cancelled() && steps.graph.outcome == ''success'''
+          task="$RUNNER_TEMP/mixed-flit-diagnostic"
+          mkdir -p "$task"
+          cd "$task"
+          git init -q .
+          git fetch --quiet --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          test "$(git rev-parse FETCH_HEAD^)" = a57a8be7f0f73f1862a4e0797cab6ac1ff4b1b62
+          git diff --exit-code FETCH_HEAD^ FETCH_HEAD -- . ':!.github/workflows/build.yml'
+          git fetch --quiet --no-tags --depth=1 https://github.com/tamird/gvisor.git 7aa5d441a1078a4e9e77547a2a56e23faa6fc238
+          test "$(git rev-parse FETCH_HEAD:test/rbe/plugin_programs/cas_inputs.py)" = 54047870d2d32c621a5c8616687a74bdc75001d5
+          git show FETCH_HEAD:test/rbe/plugin_programs/cas_inputs.py > cas_inputs.py
+          gh api repos/tamird/gvisor/actions/artifacts/13580519640/zip > original.zip
+          echo '5e59cbb967e9d9c2b8f46409c80c7ac75a44ed8428866600be2182fd548c27ad  original.zip' | sha256sum -c -
+      - name: Read and verify the one original 260-byte writer stderr
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
           umask 077
-          d="$RUNNER_TEMP/mixed-publication"
-          cd "$d/source"
-          rc="$d/client.rc"
-          trap 'rm -f "$rc"' EXIT
-          test -n "$BUILDBUDDY_API_KEY"
-          cat >"$rc" <<'RC'
-          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
-          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
-          build --spawn_strategy=remote --noremote_local_fallback --jobs=48 --remote_timeout=10m
-          build --remote_default_exec_properties=OSFamily=linux
-          build --remote_default_exec_properties=workload-isolation-type=oci
-          build --remote_default_exec_properties=container-image=docker://cgr.dev/chainguard/static@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9
-          RC
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >>"$rc"
-          unset BUILDBUDDY_API_KEY
-          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -IBs "$d/mixed.py" build
+          cd "$RUNNER_TEMP/mixed-flit-diagnostic"
+          python3 -IB - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import sys
+          import zipfile
+          sys.path.insert(0, str(Path.cwd()))
+          from cas_inputs import blob
 
-      - name: Join materialized files and tree children to original configured remote actions
-        id: outputs
-        if: '!cancelled() && steps.graph.outcome == ''success'' && steps.build.outcome != ''skipped'''
-        run: |
-          d="$RUNNER_TEMP/mixed-publication"
-          cd "$d/source"
-          test ! -e "$d/client.rc"
-          python3 -IBs "$d/mixed.py" collect
-
-      - name: Publish the actual downloaded inputs offline with a disposable key
-        if: '!cancelled() && steps.outputs.outcome == ''success'''
-        run: |
-          d="$RUNNER_TEMP/mixed-publication"
-          cd "$d/source"
-          test ! -e "$d/client.rc"
-          python3 -IBs "$d/publish.py"
-
-      - name: Upload only bounded typed observations
-        if: '!cancelled()'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+          with zipfile.ZipFile("original.zip") as archive:
+              original = json.loads(archive.read("outputs.json"))
+          invocation = "78ad8dfa-f556-4cbe-a9bb-7cc73fcbdb4e"
+          digest = "4f409f8c9a96120c010b2721de7b3395a716452a52ee46981b9f328b306503df"
+          owner = "//sandboxexec/sandbox/python:dist"
+          assert original["source"] == "331c9f51e7e380fc243f8dcae646a9794f2aef65"
+          assert original["invocation"] == original["bep"]["iid"] == invocation
+          assert original["bep"]["exit"] == 1 and not original["bep"]["complete"]
+          failed, = original["bep"]["failures"]
+          assert failed == {"owner": owner, "mnemonic": "SandboxExecDist", "exit": 1, "stderr": [digest, 260]}
+          raw = blob({"hash": digest, "sizeBytes": 260}, invocation)
+          assert len(raw) == 260 and hashlib.sha256(raw).hexdigest() == digest
+          key = os.environ.pop("BUILDBUDDY_API_KEY").encode()
+          assert key and key not in raw
+          assert not re.search(rb"(?i)https?://|bearer |authorization|password|api[-_]?key=|token=", raw)
+          lines = raw.decode("utf-8").splitlines()
+          assert len(lines) <= 16 and all(all(c.isprintable() or c == "\t" for c in line) for line in lines)
+          # Keep original messages and source locations. Normalize only runner-specific path components.
+          text = [re.sub(r"/(?:buildbuddy|tmp|home/runner)/[^\s\x22']*?/(?:execroot/[^/]+/)?(?=sandboxexec/|external/)", "<execroot>/", line) for line in lines]
+          result = {"source": original["source"], "invocation": invocation, "owner": owner,
+                    "mnemonic": failed["mnemonic"], "exit": failed["exit"], "sha256": digest,
+                    "size": len(raw), "diagnostic": text}
+          Path("diagnostic.json").write_text(json.dumps(result, indent=2) + "\n")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: mixed-release-provider-inputs
-          path: ${{ runner.temp }}/mixed-publication/public/*.json
+          name: original-sandboxexec-dist-stderr
+          path: ${{ runner.temp }}/mixed-flit-diagnostic/diagnostic.json
           if-no-files-found: error
           retention-days: 14
-
-      - name: Remove disposable source, private logs and fixture
+      - name: Remove the temporary original data
         if: always()
-        run: |
-          d="$RUNNER_TEMP/mixed-publication"
-          if [[ -d "$d/source/.git" && -x "$d/bazel.public" ]]; then
-            (cd "$d/source" && "$d/bazel.public" --nosystem_rc --nohome_rc --bazelrc="$d/heap.rc" shutdown) || true
-          fi
-          rm -rf -- "$d"
+        run: rm -rf -- "$RUNNER_TEMP/mixed-flit-diagnostic"
