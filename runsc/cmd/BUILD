@@ -118,10 +118,12 @@ go_test(
         "statefile_fixture_test.go",
         "statefile_test.go",
         "tar_test.go",
+        "tsync_observer_test.go",
     ],
     data = [
         "//:release",  # keep
         "//runsc",  # keep
+        "//test/syscalls/linux:seccomp_test",
     ],
     embed = [":cmd"],
     exec_properties = namespace_test_exec_properties,

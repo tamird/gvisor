@@ -213,6 +213,7 @@ func testBootPosture(t *testing.T, tc postureCase) {
 		if d := sandboxposture.Diff(sandboxposture.Expected(opts), got); d != "" {
 			t.Errorf("Sandbox %d: %s", pid, d)
 		}
+		observeSentryCounts(t, pid)
 	})
 	t.Run("gofer", func(t *testing.T) {
 		if err := checkProcessCaps(goferPid, goferCaps); err != nil {

@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <linux/audit.h>
 #include <linux/bpf_common.h>
 #include <linux/capability.h>
@@ -469,38 +471,85 @@ TEST(SeccompTest, RetAllowAllowsNonCachableSyscall) {
       << "status " << status;
 }
 
+// Read only the calling thread's displayed count. This runs in a fork/clone
+// child, so avoid stdio and allocation.
+static int DisplayedFilterCount() {
+  int fd = open("/proc/thread-self/status", O_RDONLY | O_CLOEXEC);
+  if (fd < 0) return -1;
+  char status[4096] = {};
+  ssize_t n = read(fd, status, sizeof(status) - 1);
+  close(fd);
+  if (n <= 0) return -1;
+  constexpr char field[] = "\nSeccomp_filters:";
+  const char* p = strstr(status, field);
+  if (p == nullptr) return -1;
+  p += sizeof(field) - 1;
+  while (*p == ' ' || *p == '\t') ++p;
+  if (*p < '0' || *p > '9') return -1;
+  int count = 0;
+  while (*p >= '0' && *p <= '9') {
+    if (count >= 10000) return -1;
+    count = count * 10 + *p++ - '0';
+  }
+  return *p == '\n' ? count : -1;
+}
+
 // This test will validate that TSYNC will apply to all threads.
 TEST(SeccompTest, TsyncAppliesToAllThreads) {
   Mapping stack = ASSERT_NO_ERRNO_AND_VALUE(
-      MmapAnon(2 * kPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE));
+      MmapAnon(16 * kPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE));
 
   // We don't want to apply this policy to other test runner threads, so fork.
+  Mapping shared = ASSERT_NO_ERRNO_AND_VALUE(
+      MmapAnon(kPageSize, PROT_READ | PROT_WRITE, MAP_SHARED));
+  struct Counts {
+    int peer_before, installer_before, peer_after, installer_after;
+    int peer_enforced, installer_enforced, peer_baseline, installer_baseline;
+  };
+  auto* counts = static_cast<Counts*>(shared.ptr());
+  *counts = {-1, -1, -1, -1, 0, 0, 0, 0};
   const pid_t pid = fork();
 
   if (pid == 0) {
     // First check that we receive a ENOSYS before the policy is applied.
-    TEST_CHECK(syscall(kFilteredSyscall) == -1 && errno == ENOSYS);
+    counts->peer_baseline =
+        (syscall(kFilteredSyscall) == -1 && errno == ENOSYS) ? 1 : -1;
+    TEST_CHECK(counts->peer_baseline == 1);
+
+    counts->peer_before = DisplayedFilterCount();
 
     // N.B. clone(2) is not officially async-signal-safe, but at minimum glibc's
     // x86_64 implementation is safe. See glibc
     // sysdeps/unix/sysv/linux/x86_64/clone.S.
     clone(
         +[](void* arg) {
+          auto* installer = static_cast<Counts*>(arg);
+          installer->installer_before = DisplayedFilterCount();
+          installer->installer_baseline =
+              (syscall(kFilteredSyscall) == -1 && errno == ENOSYS) ? 1 : -1;
+          TEST_CHECK(installer->installer_baseline == 1);
           ApplySeccompFilter(kFilteredSyscall, SECCOMP_RET_ERRNO | ENOTNAM,
                              SECCOMP_FILTER_FLAG_TSYNC);
+          installer->installer_enforced =
+              (syscall(kFilteredSyscall) == -1 && errno == ENOTNAM) ? 1 : -1;
+          TEST_CHECK(installer->installer_enforced == 1);
+          installer->installer_after = DisplayedFilterCount();
           return 0;
         },
         stack.endptr(),
         CLONE_FILES | CLONE_FS | CLONE_SIGHAND | CLONE_THREAD | CLONE_VM |
             CLONE_VFORK,
-        nullptr);
+        counts);
 
     // Because we're using CLONE_VFORK this thread will be blocked until
     // the second thread has released resources to our virtual memory, since
     // we're not execing that will happen on _exit.
 
     // Now verify that the policy applied to this thread too.
-    TEST_CHECK(syscall(kFilteredSyscall) == -1 && errno == ENOTNAM);
+    counts->peer_enforced =
+        (syscall(kFilteredSyscall) == -1 && errno == ENOTNAM) ? 1 : -1;
+    TEST_CHECK(counts->peer_enforced == 1);
+    counts->peer_after = DisplayedFilterCount();
     _exit(0);
   }
 
@@ -509,6 +558,18 @@ TEST(SeccompTest, TsyncAppliesToAllThreads) {
   ASSERT_THAT(waitpid(pid, &status, 0), SyscallSucceedsWithValue(pid));
   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0)
       << "status " << status;
+  const bool available =
+      counts->peer_before >= 0 && counts->installer_before >= 0 &&
+      counts->peer_after >= 0 && counts->installer_after >= 0;
+  printf(
+      "TSYNC_CONTROL peer_delta=%d installer_delta=%d same_before=%d counts=%d "
+      "peer_baseline=%d installer_baseline=%d peer_enforced=%d "
+      "installer_enforced=%d\n",
+      available ? counts->peer_after - counts->peer_before : 0,
+      available ? counts->installer_after - counts->installer_before : 0,
+      available && counts->peer_before == counts->installer_before, available,
+      counts->peer_baseline, counts->installer_baseline, counts->peer_enforced,
+      counts->installer_enforced);
 }
 
 // This test will validate that seccomp(2) rejects unsupported flags.
