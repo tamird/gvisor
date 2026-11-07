@@ -1,0 +1,17 @@
+                              │  f51a205a8   │              e9abe5401               │
+                              │    sec/op    │    sec/op     vs base                │
+ConnectedTCPRead/read=64-2      14.23m ± 16%   16.56m ±  9%  +16.44% (p=0.017 n=16)
+ConnectedTCPRead/read=65536-2   11.05m ± 25%   10.77m ± 15%        ~ (p=0.696 n=16)
+geomean                         12.54m         13.36m         +6.55%
+
+                              │   f51a205a8   │               e9abe5401               │
+                              │      B/s      │      B/s       vs base                │
+ConnectedTCPRead/read=64-2      70.30Mi ± 15%   60.56Mi ±  9%  -13.86% (p=0.017 n=16)
+ConnectedTCPRead/read=65536-2   90.51Mi ± 24%   92.84Mi ± 14%        ~ (p=0.696 n=16)
+geomean                         79.77Mi         74.98Mi         -6.01%
+
+                              │   f51a205a8   │              e9abe5401              │
+                              │    B/read     │    B/read     vs base               │
+ConnectedTCPRead/read=64-2        63.98 ±  0%     63.99 ± 0%       ~ (p=0.479 n=16)
+ConnectedTCPRead/read=65536-2   54.25Ki ± 12%   52.85Ki ± 9%       ~ (p=0.520 n=16)
+geomean                         1.841Ki         1.817Ki       -1.29%

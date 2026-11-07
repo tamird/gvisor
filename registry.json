@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:54:07+00:00",
+    "updatedAt": "2026-11-07T02:06:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55676,17 +55676,25 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/mixed-presubmit-package-patterns",
-      "head": "4b87bd4875ecde1ab6b994030d59871b59363ca1",
+      "head": "a39f38e89dc7110a5bc35cd70821388d2d22f62a",
       "title": "Run CI targets together in one Bazel invocation on RBE",
-      "url": "https://github.com/tamird/gvisor/commit/4b87bd487",
+      "url": "https://github.com/tamird/gvisor/commit/a39f38e89",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T01:37:38+00:00",
-      "summary": "One Bazel package list now serves single-CPU and mixed presubmits. Single-CPU analysis selected the original 363 tests and 373 shards on each architecture. Mixed analysis selected 724 shards: 373 on AMD64 and 351 on ARM64. The original test labels supply AMD64. All 340 Go tests and the native uname test gain ARM64 coverage. The other 22 tests still run on AMD64 only.\n\nIn execution checks, state, TCP and VFS passed 153 cases per CPU. Four uname cases passed on each CPU directly on Linux and again inside systrap. The separate vDSO clock checks also ran on matching native workers. The single-CPU AMD64 presubmit passed all 373 shards; the ARM64 presubmit passed 371. The 724-shard mixed selection has only been analyzed.",
+      "updatedAt": "2026-11-07T02:06:32+00:00",
+      "summary": "One Bazel package list now serves single-CPU and mixed presubmits. Single-CPU analysis selected the original 363 tests and 373 shards on each architecture. Mixed analysis selected 724 shards: 373 on AMD64 and 351 on ARM64. The original test labels supply AMD64. All 340 Go tests and the native uname test gain ARM64 coverage. The other 22 tests still run on AMD64 only.\n\nIn execution checks, state, TCP and VFS passed 153 cases per CPU. Four uname cases passed on each CPU directly on Linux and again inside systrap. The separate vDSO clock checks also ran on matching native workers. The single-CPU AMD64 presubmit passed all 373 shards; the ARM64 presubmit passed 371. The fork’s Buildkite command is executing that 724-shard graph on RBE.\n\nTwo follow-ups cover outputs absent from the ARM64 selection. Bazel built or fetched all 16 integration and benchmark binaries for each CPU; every ELF had the expected machine type. The Python SDK passed 38 methods and skipped its non-root case on each CPU. The structural vDSO test passed on both native workers.",
       "evidence": [
         {
           "label": "Full mixed-architecture fork submission using the Buildkite command",
           "url": "https://github.com/tamird/gvisor/actions/runs/42324657295"
+        },
+        {
+          "label": "Original build_test inputs: 32 compiled ELF files, sizes, machine types and hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42326651041/artifacts/13554709817"
+        },
+        {
+          "label": "Native Python SDK method outcomes and linked vDSO checks on both worker CPUs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42326136412/artifacts/13555164462"
         },
         {
           "label": "Normal and mixed package selection, original labels, worker bindings and shard counts",
@@ -55920,8 +55928,8 @@
       },
       "followup": {
         "owner": "Agent",
-        "sourceHead": "4b87bd4875ecde1ab6b994030d59871b59363ca1",
-        "observedAt": "2026-11-07T01:23:17+00:00",
+        "sourceHead": "a39f38e89dc7110a5bc35cd70821388d2d22f62a",
+        "observedAt": "2026-11-07T02:06:32+00:00",
         "disposition": "The same package patterns select the mixed graph and preserve ordinary developer tests.",
         "nextAction": "Collect the first full mixed Buildkite-command run. Inspect all build-only targets and shard outcomes, including the two previous ARM64 failures.",
         "evidence": [
