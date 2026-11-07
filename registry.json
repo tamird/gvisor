@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T07:45:29+00:00",
+    "updatedAt": "2026-11-07T07:57:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -58112,7 +58112,7 @@
       "url": "https://github.com/google/gvisor/pull/17128",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T22:29:56.883Z",
+      "updatedAt": "2026-11-07T07:57:34+00:00",
       "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The sender now tracks the last byte of the old flight and keeps the backed-off retransmission interval for the next send. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
       "evidence": [
         {
@@ -58142,6 +58142,14 @@
         {
           "label": "Earlier boundary change still retried too soon",
           "url": "https://github.com/tamird/gvisor/actions/runs/42267413085/artifacts/13530857318"
+        },
+        {
+          "label": "Single amendment on current master, including the zero-window deadline",
+          "url": "https://github.com/tamird/gvisor/commit/6c97901f7"
+        },
+        {
+          "label": "Six native Linux and gVisor packet tests and the matched missing-cap control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42351186113/artifacts/13566092481"
         }
       ],
       "settledReviews": [
@@ -58156,7 +58164,26 @@
           "postedURL": "https://github.com/google/gvisor/pull/17128",
           "note": "Published as #17128 at the exact approved head."
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "de11f9e09290b75ab5aa7291fb0d308244b72067"
+        },
+        "after": {
+          "head": "6c97901f75134c9f00493736db035f840f513331"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "6c97901f75134c9f00493736db035f840f513331",
+        "baseHead": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+        "url": "https://github.com/tamird/gvisor/commit/6c97901f7",
+        "title": "Tie TCP_USER_TIMEOUT to the outstanding flight",
+        "body": "During loss recovery, a partial ACK can let the sender transmit new\ndata before the peer acknowledges all the old bytes. gVisor kept the\nold deadline even after those bytes were acknowledged, so it could\nclose the connection while the new data still had time left. It also\nshortened the stored retransmission timeout to fit the old deadline.\n\nTrack the end of the flight covered by the deadline. Once the peer\nacknowledges it, start from the transmit time of the oldest remaining\nsegment. Limit the next timer wakeup without changing the backed-off\nRTO. This also enforces the deadline when the peer has acknowledged\nall data in flight but keeps its receive window closed.\n\nExercise an ACK covering the old flight before and after another\nretransmission. On a closed window, require the socket to report\nETIMEDOUT before the next uncapped probe.",
+        "requestedAt": "2026-11-07T07:57:34+00:00",
+        "summary": "The amended sender caps the timer wakeup on the closed-window path even after all data in flight has been acknowledged. In the controlled gVisor run the socket timed out at 809 ms with TCP_USER_TIMEOUT set to 806 ms. With that cap omitted, it was still open at 1,106 ms with an 803 ms setting. Both retained an 800 ms backed-off RTO. Native Linux timed out 1,040 ms after the test started, about 830 ms after its first probe. All six uncached Linux and gVisor packet tests passed, including both outstanding-flight cases. The final commit adds the symbolic errno to one test failure message."
+      }
     },
     {
       "id": "pr:17131",
