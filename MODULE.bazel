@@ -37,6 +37,16 @@ bazel_dep(name = "cel-spec", version = "0.25.1")
 governance = use_extension("//governance/tools/maintainers:repositories.bzl", "governance")
 use_repo(governance, "governance_areas")
 
+# Exercise the existing Python bootstrap shipped by rules_python 2.4.5.
+archive_override(
+    module_name = "rules_python",
+    integrity = "sha256-BQiEAvo1avCXBk28zXCCoGEXHvOfvXSPq5Rul3X0ahY=",
+    patch_strip = 1,
+    patches = ["//tools:rules_python_native_launcher.patch"],
+    strip_prefix = "rules_python-2.4.5",
+    urls = ["https://github.com/bazel-contrib/rules_python/releases/download/2.4.5/rules_python-2.4.5.tar.gz"],
+)
+
 single_version_override(
     module_name = "gazelle",
     patch_strip = 1,
@@ -101,6 +111,14 @@ http_archive(
 )
 
 ### Python
+
+http_archive(
+    name = "release_static_cpython",
+    build_file = "//test/rbe/release_python:python.BUILD",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
