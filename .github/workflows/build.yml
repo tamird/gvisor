@@ -1,35 +1,75 @@
-name: CI
-
-"on":
+name: Check syscall memory budgets on native workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/syscall-test-sizes-native]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscall-sizes:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 115
+    env:
+      PRODUCT: e988ba7ba6296bc23d2b8d6bff73d1a10bb9fd6a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Prepare native worker trial
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -eu
+        umask 077
+        work="$RUNNER_TEMP/syscall-test-sizes"
+        mkdir "$work"
+        printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$work/receipt.json"
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        cp .github/qualification/syscall-test-sizes/run.py "$work/run.py"
+        git checkout --quiet --detach "$PRODUCT"
+        test -z "$(git status --porcelain)"
+        test "$(cat .bazelversion)" = 9.3.1
+        sudo apt-get -qq update
+        sudo apt-get -qq install --no-install-recommends crossbuild-essential-arm64 libnuma-dev
+        curl --fail --silent --show-error --location --proto '=https' --retry 3 --output "$work/bazel" https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64
+        printf '%s  %s\n' 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c "$work/bazel" | sha256sum --check
+        chmod 700 "$work/bazel"
+    - name: Configure BuildBuddy
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -eu
+        umask 077
+        test -n "$BUILDBUDDY_API_KEY"
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+          printf '%s\n' 'build --remote_default_exec_properties=Arch=amd64' 'build --remote_default_exec_properties=OSFamily=linux' 'build --remote_default_exec_properties=workload-isolation-type=firecracker' 'build --remote_default_exec_properties=dockerUser=root' 'build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/syscall-test-sizes/remote.bazelrc"
+    - name: Run both memory checkpoint suites and the ptrace process suite
+      run: |
+        export BAZEL="$RUNNER_TEMP/syscall-test-sizes/bazel"
+        python3 -B "$RUNNER_TEMP/syscall-test-sizes/run.py"
+    - name: Check the only public artifact
+      id: scan
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PY'
+        import json, os, pathlib, re
+        path = pathlib.Path(os.environ['RUNNER_TEMP'], 'syscall-test-sizes', 'receipt.json')
+        data = path.read_bytes()
+        assert len(data) < 512*1024
+        assert not re.search(rb'gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY|(?i:authorization|x-buildbuddy-api-key)\s*[:=]', data)
+        key = os.environ['BUILDBUDDY_API_KEY']
+        assert key and key.encode() not in data and json.dumps(key)[1:-1].encode() not in data
+        assert json.loads(data)['status'] in ('PASS','FAIL','INCOMPLETE')
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.scan.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: syscall-test-sizes
+        path: ${{ runner.temp }}/syscall-test-sizes/receipt.json
+        if-no-files-found: error
+    - name: Remove temporary settings and raw output
+      if: always()
+      run: rm -f "$RUNNER_TEMP/syscall-test-sizes/remote.bazelrc" "$RUNNER_TEMP/syscall-test-sizes/console" "$RUNNER_TEMP/syscall-test-sizes/events.json"
