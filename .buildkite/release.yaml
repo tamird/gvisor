@@ -55,7 +55,7 @@ steps:
       - "make BAZEL_OPTIONS='--config=x86_64 --compilation_mode=opt' artifacts/x86_64"
       - "make BAZEL_OPTIONS='--config=aarch64 --compilation_mode=opt' artifacts/aarch64"
       - make artifacts-python
-      - make release RELEASE_NIGHTLY=$$RELEASE_NIGHTLY
+      - NIGHTLY=$$RELEASE_NIGHTLY tools/make_release.sh repo.key repo artifacts
       - (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)
       # Pushes release-<name> to GitHub.
       - ./.buildkite/scripts/release/tag.sh publish

@@ -289,7 +289,8 @@ steps:
     commands:
       - make BAZEL_OPTIONS=--config=x86_64 artifacts/x86_64
       - make BAZEL_OPTIONS=--config=aarch64 artifacts/aarch64
-      - make release
+      - make DOCKER_BUILD=false repo.key
+      - tools/make_release.sh repo.key repo artifacts
     agents:
       arch: "amd64"
       queue: "default"
