@@ -39,6 +39,13 @@ string_flag(
     build_setting_default = "",
 )
 
+# Head and nightly releases do not publish Python distributions.
+config_setting(
+    name = "no_dist_version",
+    flag_values = {":dist_version": ""},
+    visibility = ["//debian:__pkg__"],
+)
+
 release_archives(
     name = "dist",
     srcs = [
@@ -47,4 +54,5 @@ release_archives(
     ],
     project = "pyproject.toml",
     tags = ["manual"],
+    visibility = ["//debian:__pkg__"],
 )
