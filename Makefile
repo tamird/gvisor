@@ -999,8 +999,7 @@ artifacts-python: ensure-bazel-server ## Builds Python SandboxExec wheels into $
 .PHONY: artifacts-python
 
 release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
-	@mkdir -p $(RELEASE_ROOT)
-	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh $(RELEASE_KEY) $(RELEASE_ROOT) $$(find $(RELEASE_ARTIFACTS) -type f)
+	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" "$(RELEASE_ARTIFACTS)"
 .PHONY: release
 
 release-tarball: DESTINATION ?= .

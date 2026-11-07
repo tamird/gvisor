@@ -14,23 +14,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [[ "$#" -le 2 ]]; then
-  echo "usage: $0 <private-key> <root> <binaries & packages...>"
-  echo "The environment variable NIGHTLY may be set to control"
-  echo "whether the nightly packages are produced or not."
+if [[ "$#" -lt 3 ]]; then
+  echo "usage: $0 <private-key> <root> <artifact files or directories...>" >&2
+  echo "Set NIGHTLY=true to produce nightly packages." >&2
   exit 1
 fi
 
 set -xeo pipefail
 declare -r private_key="$1"
-shift
-declare -r root="$1"
-shift
+declare -r root="$2"
+shift 2
+if [[ ! -f "${private_key}" ]]; then
+  echo "Missing release key: ${private_key}" >&2
+  exit 1
+fi
+inputs=()
+for input in "$@"; do
+  if [[ "${input}" != /* ]]; then
+    input="./${input}"
+  fi
+  # Follow an explicitly selected package file. Never traverse a linked tree.
+  if [[ ! -f "${input}" && ( ! -d "${input}" || -L "${input}" ) ]]; then
+    echo "Missing release input or unsupported directory link: ${input}" >&2
+    exit 1
+  fi
+  inputs+=("${input}")
+done
+
+# -H follows command-line file links only. Nested symlinks are not selected.
+# Keep mapfile in this shell and propagate find errors before signing anything.
+shopt -s lastpipe
+find -H "${inputs[@]}" -type f -print0 | mapfile -d '' -t files
+shopt -u lastpipe
+if [[ "${#files[@]}" -eq 0 ]]; then
+  echo "No release artifacts in the supplied inputs." >&2
+  exit 1
+fi
+mkdir -p -- "${root}"
+
 declare -a binaries
 declare -a pkgs
-
-# Collect binaries & packages.
-for arg in "$@"; do
+for arg in "${files[@]}"; do
   if [[ "${arg}" == *.deb ]] || [[ "${arg}" == *.changes ]]; then
     pkgs+=("${arg}")
   else
@@ -66,16 +90,16 @@ install_raw() {
         arch="python"
         ;;
       *)
-        arch=$(file "${binary}" | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
+        arch=$(file --dereference --brief -- "${binary}" | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
         ;;
     esac
     if [[ "${arch}" == "python" ]] && [[ "${include_python}" != "true" ]]; then
       continue
     fi
-    name=$(basename "${binary}")
+    name="${binary##*/}"
     mkdir -p "${root}/${dest}/${arch}"
     cp -f "${binary}" "${root}/${dest}/${arch}"
-    (cd "${root}/${dest}/${arch}" && sha512sum "${name}" >"${name}.sha512")
+    (cd "${root}/${dest}/${arch}" && sha512sum -- "${name}" >"${name}.sha512")
   done
 }
 
