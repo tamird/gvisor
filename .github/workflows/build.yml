@@ -1,35 +1,46 @@
-name: CI
-
-"on":
+name: Measure regular FUSE file storage
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fuse-file-storage]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Prepare the native FUSE test and original measurement fixture
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = cf38192044626b448d1bac5ceaab8f1991ccbace
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/fuse_file_storage'
+          d="$RUNNER_TEMP/fuse-storage"
+          mkdir -p "$d/results"
+          cp .github/qualification/fuse_file_storage/{measure.go,run.py} "$d/"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c
+          chmod 755 "$d/bazel"
+          sudo apt-get -qq update
+          sudo apt-get -qq install g++-aarch64-linux-gnu
+      - name: Compare descriptor storage and both codecs, then run the owning tests
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/fuse-storage/run.py"
+      - name: Compare the allocation samples
+        if: always() && !cancelled()
+        run: |
+          cd "$RUNNER_TEMP/fuse-storage/results"
+          test -s 70008149c && test -s cf3819204
+          go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e -filter '.unit:B/op' 70008149c cf3819204 > benchstat.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: fuse-storage-results
+          path: |
+            ${{ runner.temp }}/fuse-storage/results/receipt.json
+            ${{ runner.temp }}/fuse-storage/results/benchstat.txt
+            ${{ runner.temp }}/fuse-storage/results/70008149c
+            ${{ runner.temp }}/fuse-storage/results/cf3819204
+          if-no-files-found: warn
+          retention-days: 30
