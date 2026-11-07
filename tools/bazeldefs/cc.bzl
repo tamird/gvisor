@@ -11,7 +11,7 @@ load(":defs.bzl", "transition_allowlist")
 cc_amd64_test, _cc_amd64_transition = with_test_architecture(_cc_test_rule, "amd64").build()
 cc_arm64_test, _cc_arm64_transition = with_test_architecture(_cc_test_rule, "arm64").build()
 
-def cc_test(name, architectures = [], **kwargs):
+def cc_test(name, architectures = ["amd64", "arm64"], **kwargs):
     """Declares a C++ test and optional native architecture variants."""
     _cc_test(name = name, **kwargs)
     # The public cc_test macro adds the extra link library. The architecture

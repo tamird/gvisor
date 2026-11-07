@@ -211,7 +211,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, architectures = [], **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], **kwargs):
     """Build a go test.
 
     Args:
