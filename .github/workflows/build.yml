@@ -1,35 +1,37 @@
-name: CI
-
-"on":
+name: Build both local empty-client releases with declared SDK inputs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/declared-stdlib-local-release]
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Check the exact source and build both releases locally
+        run: |
+          set -euo pipefail
+          base=dd2be7670c1baaacebfdcab31bb6145ebce39037
+          source=61ff148f0df0efa29c9f500914477525c5debe62
+          test "$(git rev-parse HEAD^^)" = "$base"
+          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse "$source^{tree}")" = 76fe30712ce56b49cf20e1afc144de04d6fca5b2
+          git diff --exit-code "$base" "$source" -- . ':!MODULE.bazel' ':!tools/rules_go_stdlib_srcs.patch'
+          git show "$source:tools/rules_go_stdlib_srcs.patch" | sha256sum | grep -qx '771cbdc87709d8e176708bf8b2f19c4628b4403e7b6972a68667930bd9bde384  -'
+          git diff --exit-code "$source" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/lean_release_client.py' ':!.github/qualification/stdlib_release.py'
+          mkdir "$RUNNER_TEMP/$source"
+          git archive "$source" | tar -x -C "$RUNNER_TEMP/$source"
+          test ! -e "$RUNNER_TEMP/$source/.git"
+          test "$(cat "$RUNNER_TEMP/$source/.bazelversion")" = 9.3.1
+          python3 -IB .github/qualification/lean_release_client.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled()
+        with:
+          name: declared-stdlib-local-release
+          path: ${{ runner.temp }}/lean-client.json
+          if-no-files-found: error
+          retention-days: 7
