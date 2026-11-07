@@ -1,7 +1,7 @@
-name: Compare restore through verified working-set access
+name: Isolate page-file residency in background restore
 on:
   push:
-    branches: [qualification/state-restore-working-set]
+    branches: [qualification/state-restore-page-cache-control]
 permissions: {}
 jobs:
   measure:
@@ -17,9 +17,12 @@ jobs:
         echo '{"build_verified":false,"stage":"setup"}' > "$w/results/build.json"
         cd "$w/src"
         git init -q
-        git -c gc.auto=0 fetch -q --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+        git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
         s=9ee2906f518e1d0f9fd109e9e1feb2812096418b
-        test "$(git rev-parse "$GITHUB_SHA^")" = "$s"
+        q=f948a2221d2329e8e0897eb8b562c859da77468a
+        test "$(git rev-parse "$GITHUB_SHA^")" = "$q"
+        test "$(git rev-parse "$q^")" = "$s"
+        git diff --exit-code "$q" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set/measure.py'
         git diff --exit-code "$s" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set' ':!test/rbe/restore_advice'
         test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/guest.go")" = fa8722188274a32ffecd31a55da785c613585fc8
         test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/BUILD")" = 41436c5859495ec8d2c95d66289a3ba51d149c3a
@@ -43,22 +46,22 @@ jobs:
       run: |
         w="$RUNNER_TEMP/state-working-set"
         sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$w/measure.py"
-    - name: Analyze the balanced warm and cold samples
+    - name: Compare each separately warmed cohort against the all-cold baseline
       run: |
         set -euo pipefail
         w="$RUNNER_TEMP/state-working-set"
         cd "$w/results"
-        "$w/benchstat" wire.txt graph.txt > benchstat.txt
-        for c in cold warm; do
-          for metric in restore ready verified verify_after_ready; do
-            grep -q "Restore/$c/$metric " benchstat.txt
+        for c in pages_warm state_warm; do
+          "$w/benchstat" cold.txt "$c.txt" > "benchstat-$c.txt"
+          for metric in restore ready_after_return ready verified verify_after_ready; do
+            grep -q "Restore/$metric " "benchstat-$c.txt"
           done
+          cat "benchstat-$c.txt"
         done
-        cat benchstat.txt
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && !cancelled()
       with:
-        name: state-restore-working-set
+        name: state-restore-page-cache-control
         path: ${{ runner.temp }}/state-working-set/results
         if-no-files-found: error
         retention-days: 14
