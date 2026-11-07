@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T03:42:00+00:00",
+    "updatedAt": "2026-11-07T04:18:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2081,11 +2081,19 @@
       "repo": "tamird/gvisor",
       "ref": "research/llvm-builder-native-packages",
       "title": "Remove builder cross-compilers",
-      "url": "https://github.com/tamird/gvisor/tree/research/llvm-builder-native-packages",
+      "url": "https://github.com/tamird/gvisor/commit/c115840f8",
       "group": "bazel",
       "status": "Contributor review requested",
-      "summary": "After the declared LLVM toolchain lands, remove the two Ubuntu cross-compiler packages from the builder. The reduced AMD64 image retained native GCC and produced the ARM64 ELF and both architectures’ systrap binaries and offset tables.",
+      "summary": "Once Bazel selects LLVM, the Ubuntu builder can keep native build-essential and drop both crossbuild-essential packages. Without Debian’s ARM64 GCC or binutils, the AMD64 builder compiled static ARM64 runsc and Sentry. The systrap rules read offsets from the linked ELF and use LLVM objcopy for the raw handler. QEMU user mode ran the ARM64 CLI’s version command.",
       "evidence": [
+        {
+          "label": "Rebuilt Ubuntu AMD64 image, ARM64 runsc and Sentry, CLI version and both architectures’ ELF checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42335676373/artifacts/13560340065"
+        },
+        {
+          "label": "Default compiler prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/4bee07965"
+        },
         {
           "label": "Declared compiler successor",
           "url": "https://github.com/tamird/gvisor/commit/0afd5b37e"
@@ -2103,18 +2111,39 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/36261274265/artifacts/10912408612"
         }
       ],
-      "updatedAt": "2026-11-02T19:17:25.956977+00:00",
-      "head": "c8bde107ba5507498fec6a91501942be21157f25",
+      "updatedAt": "2026-11-07T04:07:52+00:00",
+      "head": "c115840f8a85010111fa5d72b611d7d9ab1df34b",
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "c8bde107ba5507498fec6a91501942be21157f25",
-        "baseHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
-        "url": "https://github.com/tamird/gvisor/commit/c8bde107b",
-        "title": "Drop Ubuntu cross compilers from the builder",
-        "requestedAt": "2026-10-31T16:57:06.135+00:00",
-        "summary": "Approve opening this two-line change after the declared LLVM toolchain lands. The original ARM smoke and systrap builds use its target tools. Native build-essential stays in the image.",
-        "body": "The ARM smoke build and systrap generators get their compiler, linker,\nnm, and objcopy from the Bazel LLVM toolchain. Remove both Ubuntu\ncross-compiler packages from the builder image. Native Make builds\nstill use build-essential.\n\nThe reduced AMD64 image produced the ARM64 smoke binary and the systrap\nbinaries and offsets for both architectures [1]. A separate build also\nproduced native runsc without the cross compilers [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41221686598/artifacts/13049958048\n[2]: https://github.com/tamird/gvisor/actions/runs/36261274265/artifacts/10912408612"
+        "head": "c115840f8a85010111fa5d72b611d7d9ab1df34b",
+        "baseHead": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
+        "url": "https://github.com/tamird/gvisor/commit/c115840f8",
+        "title": "Drop Ubuntu's cross compilers from the builder",
+        "requestedAt": "2026-11-07T04:07:52+00:00",
+        "summary": "Open after the default LLVM compiler lands. The Dockerfile deletions match the earlier proposal. The message identifies the tools the current rules actually use.",
+        "body": "The ARM smoke test added a cross compiler to the Ubuntu builder in\n8de562b79. Bazel now selects LLVM and the target sysroot when an AMD64\nbuilder compiles and links ARM64 code. The systrap rules use LLVM\nobjcopy for the raw signal handler and read its offsets directly from\nthe linked ELF.\n\nDrop crossbuild-essential-arm64 and crossbuild-essential-amd64 from\nthe default image. Keep build-essential for native Make builds."
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c8bde107ba5507498fec6a91501942be21157f25",
+          "baseHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
+          "url": "https://github.com/tamird/gvisor/commit/c8bde107b",
+          "title": "Drop Ubuntu cross compilers from the builder",
+          "requestedAt": "2026-10-31T16:57:06.135+00:00",
+          "summary": "Approve opening this two-line change after the declared LLVM toolchain lands. The original ARM smoke and systrap builds use its target tools. Native build-essential stays in the image.",
+          "at": "2026-11-07T04:07:52+00:00",
+          "outcome": "superseded"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "c8bde107ba5507498fec6a91501942be21157f25"
+        },
+        "after": {
+          "head": "c115840f8a85010111fa5d72b611d7d9ab1df34b"
+        }
       }
     },
     {
@@ -29864,25 +29893,30 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-httpd-upstream-current",
-      "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
+      "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
       "title": "Pin upstream Apache test images",
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T18:50:14.461Z",
-      "summary": "The rebased Apache fixtures preserve the two image contexts and master’s PostgreSQL context. The source is mergeable. Carzh approved the equivalent earlier patch. Open import #16879 still names that head.",
+      "updatedAt": "2026-11-07T04:18:10+00:00",
+      "summary": "The Apache fixtures retain their reviewed image pins, configuration and Make names. The rebase preserves master’s resolver-symlink and PostgreSQL contexts. GitHub reports the source is mergeable. Carzh approved c1511cf4b. Copybara import #16879 still names 2595b7928.",
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
-        "observedAt": "2026-11-06T18:50:14.461Z",
-        "disposition": "Published the reviewed changes on the current base. GitHub reports the source is mergeable.",
-        "nextAction": "Follow the published source, its checks and import.",
+        "sourceHead": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
+        "observedAt": "2026-11-07T04:18:10+00:00",
+        "disposition": "Published the patch-equivalent rebase onto the resolver-symlink registry.",
+        "nextAction": "Watch for a Copybara import of the new source. The older import is conflicted and the latest maintainer review is on the immediately preceding source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16466",
-          "https://github.com/tamird/gvisor/compare/2595b7928...c1511cf4b"
+          "https://github.com/tamird/gvisor/compare/c1511cf4b...f7b488717",
+          "https://github.com/google/gvisor/pull/16879"
         ]
       },
       "evidence": [
+        {
+          "label": "Only the new resolver entry appears as context in the range-diff; the Apache change has the same added and removed lines",
+          "url": "https://github.com/tamird/gvisor/compare/c1511cf4b...f7b488717"
+        },
         {
           "label": "Rebase onto the PostgreSQL landing",
           "url": "https://github.com/tamird/gvisor/compare/2595b7928...c1511cf4b"
@@ -29906,22 +29940,22 @@
       ],
       "number": 16466,
       "approvedPatch": {
-        "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
-        "approvedHead": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
-        "reviewId": "PRR_kwDOB9IlXs8AAAABVlnY1A",
+        "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
+        "approvedHead": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABWg4QIQ",
         "reviewer": "carzh",
-        "submittedAt": "2026-11-02T21:35:41Z",
-        "verifiedAt": "2026-11-06T18:50:14.461Z",
+        "submittedAt": "2026-11-06T19:29:35Z",
+        "verifiedAt": "2026-11-07T04:18:10+00:00",
         "method": "reviewed-context-only",
-        "oldPatchId": "082c29a543fbee7818a03095132be05b251930f9",
-        "newPatchId": "9ae7ab1d41f0a6c0295720f441a5325cccdf2b59"
+        "oldPatchId": "9ae7ab1d41f0a6c0295720f441a5325cccdf2b59",
+        "newPatchId": "80c584dee017ead87eedec109c1d42364d601939"
       },
       "refinement": {
         "before": {
-          "head": "2595b792845f88b24f0ff1d2b1a5c749bead8807"
+          "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a"
         },
         "after": {
-          "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a"
+          "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94"
         }
       }
     },
@@ -38068,15 +38102,23 @@
       "id": "branch:release-archives-versioned",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/release-job-launcher",
-      "head": "d58d385a80301b9b65f05614dbc437e970afd8e3",
+      "ref": "research/stamped-release-output-paths",
+      "head": "1824f3ee0a9e500491535331312ac08fe8da5004",
       "title": "Stage both release architectures with one Bazel target",
-      "url": "https://github.com/tamird/gvisor/commit/d58d385a8",
+      "url": "https://github.com/tamird/gvisor/commit/1824f3ee0",
       "group": "release",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T23:12:46+00:00",
-      "summary": "One Bazel target stages two Debian packages and four tarballs for AMD64 and ARM64. All six were built and signed on the compiler-free worker using ebceb0d81. Its nine staging source files match 2c0b9071a. The revised source changes only the two Buildkite job definitions. With Bazel absent, both old job environments exited 127 and both revised environments launched Bazel 8.8.1 through the approved bootstrap. The real Python Make recipe expanded to its existing Docker builder in a dry run.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T04:09:41+00:00",
+      "summary": "One Bazel target stages a Debian package and two tarballs per architecture. The revised publisher enables output-path mapping in the stamped release profile. Ordinary developer builds retain the paths used to find generated source in a debugger.\n\nOn the LLVM integration source, the full bzip2 archive and all nine executables matched byte for byte between direct and transitioned native builds on each architecture. The stamped Debian and zstd packages have a separate qualification in progress.",
       "evidence": [
+        {
+          "label": "Stamped Debian, bzip2 and zstd packages through the real release target and direct producers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42337163017"
+        },
+        {
+          "label": "All nine executables and entire bzip2 archive matched between direct and transitioned native builds on each architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42334577785/artifacts/13559781475"
+        },
         {
           "label": "Identical package prerequisites and commands with the Buildkite job environment",
           "url": "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
@@ -38180,20 +38222,18 @@
       ],
       "refinement": {
         "before": {
-          "base": "a303ec9336e4844e589cd35c891301856369038a",
-          "head": "2c0b9071a31bcb5bd2562e16fe1ede94fe3b67e3"
+          "head": "d58d385a80301b9b65f05614dbc437e970afd8e3"
         },
         "after": {
-          "base": "a303ec9336e4844e589cd35c891301856369038a",
-          "head": "d58d385a80301b9b65f05614dbc437e970afd8e3"
+          "head": "1824f3ee0a9e500491535331312ac08fe8da5004"
         }
       },
       "followup": {
         "owner": "Build and release",
-        "disposition": "Contributor review requested",
-        "observedAt": "2026-11-01T23:12:46+00:00",
-        "sourceHead": "d58d385a80301b9b65f05614dbc437e970afd8e3",
-        "nextAction": "Review the staging change for submission after the source-export version change a303ec933, the Buildkite Bazelisk hook eafcb8392 and the declared LLVM compiler bcb5de5b2 land. Keep the Python release on Docker until the Flit producer lands. If Flit lands first, use its native Make target when rebasing staging. If staging lands first, switch that caller with Flit. The earlier archive evidence and the missing-ARM64-input rejection still apply.",
+        "disposition": "Qualifying the revised stamped release profile",
+        "observedAt": "2026-11-07T04:09:41+00:00",
+        "sourceHead": "1824f3ee0a9e500491535331312ac08fe8da5004",
+        "nextAction": "Check the actual release-artifacts target against all three direct package producers on both native architectures, including version, contents and worker identity. Ask for review of the revised publisher when these results are available.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/a303ec933...d58d385a8",
           "https://github.com/tamird/gvisor/compare/2c0b9071a..d58d385a8",
@@ -38206,14 +38246,17 @@
           "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d58d385a80301b9b65f05614dbc437e970afd8e3",
-        "url": "https://github.com/tamird/gvisor/commit/d58d385a8",
-        "title": "Open the six-archive staging change after its release prerequisites land",
-        "summary": "Review the staging change for submission after the source-export version change a303ec933, the Buildkite Bazelisk hook eafcb8392 and the declared LLVM compiler bcb5de5b2 land. The Python release step keeps its separate Docker command. The earlier archive evidence and the missing-ARM64-input rejection still apply."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d58d385a80301b9b65f05614dbc437e970afd8e3",
+          "url": "https://github.com/tamird/gvisor/commit/d58d385a8",
+          "title": "Open the six-archive staging change after its release prerequisites land",
+          "summary": "Review the staging change for submission after the source-export version change a303ec933, the Buildkite Bazelisk hook eafcb8392 and the declared LLVM compiler bcb5de5b2 land. The Python release step keeps its separate Docker command. The earlier archive evidence and the missing-ARM64-input rejection still apply.",
+          "at": "2026-11-07T04:09:41+00:00",
+          "outcome": "superseded"
+        }
+      ]
     },
     {
       "id": "branch:overlay-close-lifetime",
@@ -41847,14 +41890,14 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/commit/bb040106f",
-      "updatedAt": "2026-11-03T10:58:22.926125+00:00",
+      "updatedAt": "2026-11-07T04:08:00+00:00",
       "summary": "The Website Deploy step now selects the native Bazel bootstrap and shutdown hooks. On Ubuntu 22.04 the release Make command loaded the AMD64 image and pushed it to a loopback registry. A failed push stopped deployment. The renderer also built both vDSOs and 278 site files without host ARM GNU tools.",
       "followup": {
         "owner": "Workstream owner",
         "sourceHead": "bb040106f370ea27c513a984a51995a08da69f26",
-        "observedAt": "2026-11-03T10:58:22.926125+00:00",
+        "observedAt": "2026-11-07T04:08:00+00:00",
         "disposition": "Native release job verified on a loopback registry",
-        "nextAction": "Land the shared native Bazelisk setup and full LLVM toolchain. The toolchain needs a supplier release containing hermetic-llvm #892. Reconcile the license catalog against the version selected for delivery. Keep the website profile viewer’s Google trust roots when making the image reproducible. The pinned gRPC bundle omits two of Google’s 21 roots and adds 96 others.",
+        "nextAction": "Land the shared native Bazelisk setup and full LLVM toolchain. Both recorded website builds used released hermetic-llvm 0.8.24. Reconcile the license catalog against the version selected for delivery. Keep the website profile viewer’s Google trust roots when making the image reproducible. The pinned gRPC bundle omits two of Google’s 21 roots and adds 96 others.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41622324026/artifacts/13224416963",
           "https://github.com/tamird/gvisor/actions/runs/41618830995/artifacts/13222892486",
@@ -55783,18 +55826,38 @@
       "id": "branch:buildkite-source-syscalls",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/mixed-presubmit-package-patterns",
-      "head": "a39f38e89dc7110a5bc35cd70821388d2d22f62a",
-      "title": "Run CI targets together in one Bazel invocation on RBE",
-      "url": "https://github.com/tamird/gvisor/commit/a39f38e89",
+      "ref": "research/llvm-full-native-presubmit",
+      "head": "4eb27c4081e535d69c1257998a6c94256d9812e2",
+      "title": "Run the source presubmit on native AMD64 and ARM64 workers",
+      "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T02:30:44+00:00",
-      "summary": "One Buildkite step can run both ordinary RBE profiles over the existing package list. Each profile selects all 373 original shards. Buildkite’s rendered command ran both profiles in all four pass/fail controls, including after an AMD64 failure. The two complete suites previously ran separately; the combined step has only been qualified with a command recorder.\n\nThe experimental mixed invocation built 2,885 build-only targets and ran 724 shards uncached. AMD64 passed 373/373 and ARM64 passed 350/351. The ARM64 Linux 5.10 guest reported inconsistent synchronized-filter counts in five Sentry checks. Those were the only differences in both the ordinary and mixed ARM64 logs. The unchanged test binary passed those five cases and the matching gofer checks on Linux 6.8. Netgofer passed all six cases on both CPUs. Mixed also omitted 22 ordinary ARM64 shards and some ARM64 build products.",
+      "updatedAt": "2026-11-07T04:09:41+00:00",
+      "summary": "One Buildkite step calls the two ordinary Bazel profiles over the same package list. Each architecture selects 364 test owners and 374 shards. The dedicated statefile owner ran both permission checks on native AMD64 and ARM64 as UID 65534. The same checks passed under an ordinary Linux Bazel sandbox as UID 1001.\n\nThe separate single-invocation experiment at a39f38e89 executed 724 shards. AMD64 passed 373/373 and ARM64 passed 350/351. Linux 5.10 reported inconsistent synchronized-filter counts in five Sentry checks. On Linux 6.8 all ten Sentry and gofer posture checks passed in one replay, while the enclosing test failed. The mixed selection omitted 22 ARM64 shards and some ARM64 build products. Both permission assertions skipped on both CPUs.",
       "evidence": [
         {
-          "label": "Single-step alternative with both complete profiles",
+          "label": "Full rendered Buildkite step on the consolidated compiler, one fork job for both native profiles",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42337131999"
+        },
+        {
+          "label": "Downstream Gazelle query failed identically before and after the test setting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42336114868/artifacts/13559149552"
+        },
+        {
+          "label": "Six permission cases executed across native AMD64, native ARM64 and a local Linux sandbox",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42334058518/artifacts/13559278783"
+        },
+        {
+          "label": "Complete native profiles with the non-root permission-test owner",
+          "url": "https://github.com/tamird/gvisor/commit/4eb27c408"
+        },
+        {
+          "label": "Two ordinary native profiles in one Buildkite step",
           "url": "https://github.com/tamird/gvisor/commit/b3e6b0409"
+        },
+        {
+          "label": "Single-invocation experiment with incomplete ARM64 selection",
+          "url": "https://github.com/tamird/gvisor/commit/a39f38e89"
         },
         {
           "label": "Offline Buildkite upload and all four pass/fail coordinator outcomes",
@@ -56080,10 +56143,10 @@
       },
       "followup": {
         "owner": "Agent",
-        "sourceHead": "a39f38e89dc7110a5bc35cd70821388d2d22f62a",
-        "observedAt": "2026-11-07T02:30:44+00:00",
-        "disposition": "The remaining ARM64 failure is a guest-kernel accounting discrepancy. All ten posture cases passed with the unchanged ARM binary on Linux 6.8.",
-        "nextAction": "Qualify the full ARM64 owner on an RBE guest kernel carrying the Linux accounting fix, then verify the two profiles together. The candidate BuildBuddy 6.1 image has not been deployed or booted in this comparison.",
+        "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
+        "observedAt": "2026-11-07T04:08:00+00:00",
+        "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
+        "nextAction": "Execute the rendered Buildkite command over both ordinary profiles on the consolidated compiler. Check each shard and the permission-test XML. Qualify the full ARM64 posture owner on a worker with the Linux synchronized-filter accounting fix.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
