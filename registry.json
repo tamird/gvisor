@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T19:29:25+00:00",
+    "updatedAt": "2026-11-07T20:05:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34398,11 +34398,19 @@
         {
           "label": "Symlink action, source SHA, real consumer extraction and original Docker unit tests",
           "url": "https://app.buildbuddy.io/invocation/8a565aaf-6cd7-4e83-a063-4b833e9b2221"
+        },
+        {
+          "label": "Original sniffer Genrule failure on both empty workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42407287842/artifacts/13588675951"
+        },
+        {
+          "label": "Native //:build_test and its 16 outputs on AMD64 and ARM64 with #16592",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42408832999/artifacts/13587949277"
         }
       ],
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-11-07T20:05:52+00:00",
       "status": "open",
-      "summary": "Bazel staged the existing ioctl sniffer with a Symlink action and no shell. On Linux AMD64, the Docker test library extracted exactly the producer’s 32,822,413-byte executable with mode 0555 for its read-only container mount. The original Docker API unit tests passed, including all three exec-status subcases. This check did not start Docker or run a GPU workload.",
+      "summary": "Bazel staged the existing ioctl sniffer with a Symlink action and no shell. On Linux AMD64, the Docker test library extracted exactly the producer’s 32,822,413-byte executable with mode 0555 for its read-only container mount. The original Docker API unit tests passed, including all three exec-status subcases. This check did not start Docker or run a GPU workload. On integration 61ff148f0, the vDSO and ioctl hook linked on both empty workers, then the original run_sniffer_bin Genrule failed. Applying this PR’s exact BUILD change let //:build_test complete with all 16 selected Go test executables on native AMD64 and ARM64. Only //:build_test ran.",
       "refinement": {
         "before": {
           "head": "cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5"
@@ -78643,9 +78651,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T17:26:09+00:00",
+      "updatedAt": "2026-11-07T20:05:52+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
+        {
+          "text": "On integration 61ff148f0, the candidate native Bazel POSIX test wrapper ran //:build_test on empty AMD64 and ARM64 workers. The compile-test fixture declared the 16 selected Go test executables as default outputs. Before #16592, the ordinary vDSO and ioctl hook linked on both architectures, then the run_sniffer_bin Genrule failed. With the exact sniffer staging change at 1b96205bd, all 16 executables were accounted for on each architecture. Only //:build_test executed, passing uncached on x86_64 and aarch64. The 16 configured outputs totaled 362,281,063 bytes on AMD64 and 339,445,946 bytes on ARM64. These totals describe logical file sizes. This establishes #16592 as a prerequisite for this compile-test target on the empty workers.",
+          "evidence": [
+            {
+              "label": "Original sniffer Genrule failure on both empty workers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42407287842/artifacts/13588675951"
+            },
+            {
+              "label": "Native //:build_test and its 16 outputs on AMD64 and ARM64 with #16592",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42408832999/artifacts/13587949277"
+            }
+          ]
+        },
         {
           "text": "On integration 89dd704c2, seven fresh native remote actions produced eight release files. Four Tar actions and two MakeDeb actions wrote the bzip2 and zstd archives and the Debian package for each architecture. One AMD64 SandboxExecDist action wrote the Python wheel and source distribution. The offline publisher signed and verified the release and 20261106 APT suites and staged the raw downloads. Twine was intercepted before upload. The Buildkite host setup in #16904 remains a separate prerequisite. The stock local fixture also supplied a runsc.changes file for each architecture. rules_pkg exposes those optional files separately from the default .deb output. The published 20261102.0 pool contained only runsc.deb in each architecture directory. The eight-file test covers regular release outputs and signing. The release publisher design is being revised.",
           "evidence": [
@@ -84830,5 +84851,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T19:29:25+00:00"
+  "updatedAt": "2026-11-07T20:05:52+00:00"
 }
