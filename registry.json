@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T21:17:40+00:00",
+    "updatedAt": "2026-11-07T21:30:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57706,9 +57706,13 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T14:05:57+00:00",
-      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 6.8 run observed an extra pidfd on the fourth default Sentry repeat. A retained-helper control reproduced that observation on stock. Waiting through the proc umounter’s Go handle fixed it, and all ten original comparisons passed on the uninstrumented corrected runtime. The Linux 5.10 per-thread reporting failure remains open. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.",
+      "updatedAt": "2026-11-07T21:30:00+00:00",
+      "summary": "One mixed Bazel invocation built the 2,887 top-level build-only labels in their selected configurations and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 6.8 run observed an extra pidfd on the fourth default Sentry repeat. A retained-helper control reproduced that observation on stock. Waiting through the proc umounter’s Go handle fixed it, and all ten original comparisons passed on the uninstrumented corrected runtime. The Linux 5.10 per-thread reporting failure remains open. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.\n\nThe separate native ARM64 wildcard selects //runsc:runsc_race_coverage, //runsc/cmd/sentry:gvisor_sentry_race_coverage and //pkg/metric:metric_cc_proto. Across all 11 mixed cquery partitions, encompassing 16,709 distinct pkg/runsc rows, those three targets and their generated output paths appeared only in AMD64 configurations. Both inventories used the same source tree, 4305e961c. Removing the separate ARM64 wildcard job would drop those ARM64 builds. The local Go standard-library analyzer could not run with processwrapper-sandbox, so the comparison produced no new binaries. The separate native wildcard projection also omitted some selected rows.",
       "evidence": [
+        {
+          "label": "Mixed cquery inventory across all 11 partitions and original local build failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42414811525/artifacts/13591670976"
+        },
         {
           "label": "Independent Sentry pidfd fix on hosted ARM64",
           "url": "https://github.com/tamird/gvisor/commit/c218182e1"
@@ -58198,10 +58202,11 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T11:47:58+00:00",
+        "observedAt": "2026-11-07T21:30:00+00:00",
         "disposition": "Full mixed presubmit completed with one failing ARM64 shard",
-        "nextAction": "When BuildBuddy rolls out a corrected ARM64 guest, rerun the original runsc/cmd test shard on that worker with all posture assertions.",
+        "nextAction": "When BuildBuddy rolls out a corrected ARM64 guest, rerun the original runsc/cmd test shard on that worker with all posture assertions. Keep the ARM64 wildcard job while qualifying the missing outputs and correcting their selection in the mixed presubmit.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42414811525/artifacts/13591670976",
           "https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151",
           "https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404",
           "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
@@ -85032,5 +85037,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T21:17:40+00:00"
+  "updatedAt": "2026-11-07T21:30:00+00:00"
 }
