@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T11:53:44+00:00",
+    "updatedAt": "2026-11-07T12:04:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1655,20 +1655,20 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-07T06:21:28+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "summary": "The November 4 rebase onto master 183a39d1b is published at e438da4be. GitHub reports the head is mergeable. All four Nogo targets passed on AMD64 and ARM64. On native AMD64, 171 TMPFS and 40 VFS cases passed, including both new SIGBUS cases. No cases were skipped. The earlier changes-requested review remains on the PR.\n\nOn October 25 the 12:53 provider snapshot reported e1e9c4ea0 mergeable. That source preserved the device-file credential callback with the landed Filesystem identity accessors. Its reconciliation did not include a runtime replay or fresh approval.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
-        "observedAt": "2026-11-07T06:21:28+00:00",
-        "disposition": "The alternate inode pointer makes the existing mutex visible to Nogo.",
-        "nextAction": "Review the TMPFS amendment before publication.",
+        "owner": "Upstream review",
+        "sourceHead": "c84ba767743ce2c96109a89f234d234485b3a230",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #14343 at c84ba7677.",
+        "nextAction": "Follow #14343 for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/c84ba7677",
-          "https://github.com/tamird/gvisor/actions/runs/42345809636/artifacts/13563068040"
+          "https://github.com/google/gvisor/pull/14343",
+          "https://github.com/tamird/gvisor/commit/c84ba7677"
         ]
       },
-      "head": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
+      "head": "c84ba767743ce2c96109a89f234d234485b3a230",
       "evidence": [
         {
           "label": "TMPFS guard and unguarded control on AMD64 and ARM64",
@@ -1689,19 +1689,12 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/40f478e8cb1f7fa2216f34ca047b163d848d69a5"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/14343"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "c84ba767743ce2c96109a89f234d234485b3a230",
-        "baseHead": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
-        "url": "https://github.com/tamird/gvisor/commit/c84ba7677",
-        "title": "Check TMPFS and VFS locking contracts",
-        "requestedAt": "2026-11-07T06:21:28+00:00",
-        "summary": "Publish the three-line TMPFS lock annotation amendment on #14343?\n\ngit -C ~/code/gvisor range-diff e438da4be^! c84ba7677^!",
-        "body": "Dropping the child directory’s .. link uses the parent inode. Using the dentry’s existing pointer lets Nogo verify the filesystem mutex at that call. Both AMD64 and ARM64 analyses passed. Removing the function’s lock precondition made both report the missing mutex at this line."
-      },
       "refinement": {
         "before": {
           "head": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
@@ -1711,7 +1704,22 @@
           "head": "c84ba767743ce2c96109a89f234d234485b3a230",
           "base": "183a39d1b2aff9e8e2219171940001749a2b5db0"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "c84ba767743ce2c96109a89f234d234485b3a230",
+          "baseHead": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
+          "url": "https://github.com/tamird/gvisor/commit/c84ba7677",
+          "title": "Check TMPFS and VFS locking contracts",
+          "requestedAt": "2026-11-07T06:21:28+00:00",
+          "summary": "Publish the three-line TMPFS lock annotation amendment on #14343?\n\ngit -C ~/code/gvisor range-diff e438da4be^! c84ba7677^!",
+          "body": "Dropping the child directory’s .. link uses the parent inode. Using the dentry’s existing pointer lets Nogo verify the filesystem mutex at that call. Both AMD64 and ARM64 analyses passed. Removing the function’s lock precondition made both report the missing mutex at this line.",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/14343"
+        }
+      ]
     },
     {
       "id": "pr:14338",
@@ -2571,9 +2579,9 @@
       "title": "Size workers for the memory accounting and process syscall tests",
       "url": "https://github.com/tamird/gvisor/commit/31d5b49f3",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "Delivered",
       "summary": "The accounting test touches 524,288 KiB. A default large worker reported 475,728 KiB total and no swap. Both save and save/resume passed on enormous workers. The ptrace process suite ran all seven cases on a large worker, including the 1,000-thread case. A separate medium worker reported a system-wide cap of 1,821 threads. All nine cases ran uncached on the declared LLVM integration with the same size patch. The control measured default worker capacity without launching a workload too large for it.",
-      "updatedAt": "2026-11-07T11:40:35+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "evidence": [
         {
           "label": "Default medium and large workers, including available RAM, swap and threads-max",
@@ -2610,32 +2618,39 @@
         {
           "label": "Previous configured properties and incomplete physical trials",
           "url": "https://github.com/tamird/gvisor/actions/runs/41786100190/artifacts/13305179066"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/17181"
         }
       ],
       "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
-        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
-        "url": "https://github.com/tamird/gvisor/commit/31d5b49f3",
-        "title": "Size workers for the memory accounting and process syscall tests",
-        "body": "The memory accounting test populates 512 MiB before it checkpoints.\nA large Firecracker worker reported 475,728 KiB of memory and no swap,\nless than the mapping alone. Request an enormous worker. Preserve this\nsize for save and save/resume tests, which otherwise request a large\nworker regardless of the suite's memory requirement.\n\nThe process suite keeps 1,000 guest threads alive at once. On a medium\nworker Linux reported a system-wide limit of 1,821 threads. Request a\nlarge worker to leave room for the ptrace tracers and the guest tasks.",
-        "summary": "Open the independent syscall-sizing change. Its code is identical to the qualified patch and its parent is current master.",
-        "requestedAt": "2026-11-07T11:40:35+00:00"
-      },
       "followup": {
-        "owner": "root",
+        "owner": "Upstream review",
         "sourceHead": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
-        "observedAt": "2026-11-07T11:40:35+00:00",
-        "disposition": "Contributor review requested for the standalone syscall size change",
-        "nextAction": "Open the independent PR after contributor review.",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #17181 at 31d5b49f3.",
+        "nextAction": "Follow #17181 for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/31d5b49f3",
-          "https://github.com/tamird/gvisor/actions/runs/42367564451/artifacts/13572855935",
-          "https://github.com/tamird/gvisor/actions/runs/42368827189/artifacts/13572951004"
+          "https://github.com/google/gvisor/pull/17181",
+          "https://github.com/tamird/gvisor/commit/31d5b49f3"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/31d5b49f3",
+          "title": "Size workers for the memory accounting and process syscall tests",
+          "body": "The memory accounting test populates 512 MiB before it checkpoints.\nA large Firecracker worker reported 475,728 KiB of memory and no swap,\nless than the mapping alone. Request an enormous worker. Preserve this\nsize for save and save/resume tests, which otherwise request a large\nworker regardless of the suite's memory requirement.\n\nThe process suite keeps 1,000 guest threads alive at once. On a medium\nworker Linux reported a system-wide limit of 1,821 threads. Request a\nlarge worker to leave room for the ptrace tracers and the guest tasks.",
+          "summary": "Open the independent syscall-sizing change. Its code is identical to the qualified patch and its parent is current master.",
+          "requestedAt": "2026-11-07T11:40:35+00:00",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17181"
+        }
+      ]
     },
     {
       "id": "branch:syscall-socket-stress-resources",
@@ -21183,27 +21198,25 @@
       "repo": "google/gvisor",
       "number": 16076,
       "ref": "docker-compose-host-network",
-      "head": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-      "title": "Fix Compose builds with host networking",
+      "head": "8bc1587d96559fa14081e54fb4f93e92ea3350d3",
+      "title": "Pin Docker 29.9.3 for Compose host networking",
       "url": "https://github.com/google/gvisor/pull/16076",
       "group": "rbe",
       "status": "open",
       "summary": "The official Docker 29.9.3 dind image includes Compose 5.7.0. Pinning its multi-architecture digest gives Make a new cache key. The overlay and VFS host-network Compose builds each passed under gVisor on native AMD64 and ARM64. The proposed one-line pin replaces the published source-build workaround.",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-        "observedAt": "2026-11-07T07:13:57+00:00",
-        "disposition": "Native AMD64 and ARM64 checks passed; source amendment and reply ready for review.",
-        "nextAction": "Review the single-commit replacement and the proposed reply to Etienne.",
+        "owner": "Upstream review",
+        "sourceHead": "8bc1587d96559fa14081e54fb4f93e92ea3350d3",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #16076 at 8bc1587d9.",
+        "nextAction": "Follow #16076 for maintainer review and import.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16076",
           "https://github.com/tamird/gvisor/commit/8bc1587d9",
-          "https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13565073295",
-          "https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13564887693",
-          "https://github.com/google/gvisor/pull/16076#pullrequestreview-5637257577",
-          "https://github.com/google/gvisor/pull/16076#issuecomment-6383590047"
+          "https://github.com/google/gvisor/pull/16076#issuecomment-6706644889"
         ]
       },
-      "updatedAt": "2026-11-07T07:13:57+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "evidence": [
         {
           "label": "Compose change that grants host networking to Bake",
@@ -21268,6 +21281,10 @@
         {
           "label": "Native ARM64 Compose host networking with overlay and VFS",
           "url": "https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13564887693"
+        },
+        {
+          "label": "Reply on the original review",
+          "url": "https://github.com/google/gvisor/pull/16076#issuecomment-6706644889"
         }
       ],
       "refinement": {
@@ -21278,17 +21295,21 @@
           "head": "8bc1587d96559fa14081e54fb4f93e92ea3350d3"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "8bc1587d96559fa14081e54fb4f93e92ea3350d3",
-        "baseHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-        "url": "https://github.com/tamird/gvisor/commit/8bc1587d9",
-        "title": "Pin Docker 29.9.3 for Compose host networking",
-        "body": "The cached test images for AMD64 and ARM64 contain Docker 29.7.2 and\nCompose 5.4.0. That plugin does not grant Buildx Bake the network.host\nentitlement when a Compose build requests the host network, so the\nbuild fails.\n\nThe tag in tools/images.mk hashes the files in images/basic/docker.\nMoving the floating docker:29-dind tag leaves that hash unchanged.\nPin the official Docker 29.9.3 multi-architecture image to give the\nrecipe a new cache key and pick up Compose 5.7.0, which grants the\nrequested entitlement [1].\n\n[1] https://github.com/docker/compose/commit/43a5d5a25",
-        "requestedAt": "2026-11-07T07:13:57+00:00",
-        "summary": "Publish the one-line official Docker image pin on #16076 and reply to Etienne with the native results?\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 ec776316b^! 8bc1587d9^!\n\nProposed reply\n\n@EtiennePerot, the official Docker 29.9.3 dind image now includes Compose 5.7.0. I replaced the source-built plugin with a one-line pin to that image. The existing host-network Compose build passed with both the overlay and VFS storage drivers under gVisor on native AMD64 and ARM64. [AMD64 results](https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13565073295) · [ARM64 results](https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13564887693).\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "8bc1587d96559fa14081e54fb4f93e92ea3350d3",
+          "baseHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
+          "url": "https://github.com/tamird/gvisor/commit/8bc1587d9",
+          "title": "Pin Docker 29.9.3 for Compose host networking",
+          "body": "The cached test images for AMD64 and ARM64 contain Docker 29.7.2 and\nCompose 5.4.0. That plugin does not grant Buildx Bake the network.host\nentitlement when a Compose build requests the host network, so the\nbuild fails.\n\nThe tag in tools/images.mk hashes the files in images/basic/docker.\nMoving the floating docker:29-dind tag leaves that hash unchanged.\nPin the official Docker 29.9.3 multi-architecture image to give the\nrecipe a new cache key and pick up Compose 5.7.0, which grants the\nrequested entitlement [1].\n\n[1] https://github.com/docker/compose/commit/43a5d5a25",
+          "requestedAt": "2026-11-07T07:13:57+00:00",
+          "summary": "Publish the one-line official Docker image pin on #16076 and reply to Etienne with the native results?\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 ec776316b^! 8bc1587d9^!\n\nProposed reply\n\n@EtiennePerot, the official Docker 29.9.3 dind image now includes Compose 5.7.0. I replaced the source-built plugin with a one-line pin to that image. The existing host-network Compose build passed with both the overlay and VFS storage drivers under gVisor on native AMD64 and ARM64. [AMD64 results](https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13565073295) · [ARM64 results](https://github.com/tamird/gvisor/actions/runs/42349216411/artifacts/13564887693).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16076"
+        }
+      ]
     },
     {
       "id": "pr:16077",
@@ -47119,7 +47140,7 @@
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
       "status": "Open; amendment approved, waiting for prerequisites",
-      "updatedAt": "2026-11-03T22:12:12.298157+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "summary": "The native-installation amendment is approved at d978a41320 after wrapping its commit message to 72 columns. Its parent, source tree, words and paragraphs are unchanged from 88cf79c93. Keep the published e7e0d5319 fileset change as-is while #16904 and the declared compiler prerequisites remain open; no contributor decision remains.\n\nThe current PR stages runsc with its sidecars. The approved amendment builds that release on the agent through Make, without starting the Docker builder. On native AMD64 and ARM64, all eight installed executables matched their Bazel outputs and the staged runtime started a Docker container after bazel clean. Both runs used the declared LLVM compiler at a385bd2b0 on integration 2e9e15266. Archive-only installation preserved the same bytes and explicit runtime flags; an invalid Bazel option failed and cleanup removed the job launcher. Other Buildkite commands may still use Make or Docker.\n\ngit -C ~/code/gvisor range-diff 88cf79c93^! d978a41320^!",
       "evidence": [
         {
@@ -47157,6 +47178,10 @@
         {
           "label": "Native ARM64 source install, eight matching AArch64 ELFs, post-clean Docker exit 0 and failed-job cleanup",
           "url": "https://github.com/tamird/gvisor/actions/runs/41726803761/artifacts/13275712796"
+        },
+        {
+          "label": "One-line fix requested in the approving review",
+          "url": "https://github.com/tamird/gvisor/commit/4ba049ba5"
         }
       ],
       "settledReviews": [
@@ -47185,20 +47210,41 @@
       ],
       "number": 16843,
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
-        "providerHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
-        "observedAt": "2026-11-03T22:12:12.298157+00:00",
-        "disposition": "Wrapped native-installation amendment approved; delivery waits for prerequisites",
-        "nextAction": "Keep public #16843 at e7e0d5319. Deliver approved d978a41320 after #16904 and the declared compiler prerequisites are available; retain the original receipts for the identical source tree. No public comment or additional contributor decision is needed.",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The approved source still says only STAGED_BINARIES uses the release directory. A one-line amendment is ready.",
+        "nextAction": "Review 4ba049ba5 for publication on the original PR or a follow-up if it merges.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/2333f0b2b...88cf79c935",
-          "https://github.com/tamird/gvisor/actions/runs/41706024202/artifacts/13267764176",
-          "https://github.com/tamird/gvisor/actions/runs/41712215585/artifacts/13267259575",
-          "https://github.com/tamird/gvisor/commit/2e9e15266979cfb4a75f4a0ef9ef23b2948fda62",
-          "https://github.com/tamird/gvisor/commit/d978a413203531124310968f4fa679dbf5b96db6",
-          "https://github.com/tamird/gvisor/actions/runs/41726803761/artifacts/13275712796"
-        ]
+          "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344",
+          "https://github.com/tamird/gvisor/commit/4ba049ba5",
+          "https://github.com/google/gvisor/pull/17179"
+        ],
+        "actionableComment": {
+          "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
+          "commentId": "PRR_kwDOB9IlXs8AAAABWlxi0A",
+          "kind": "review",
+          "url": "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "title": "Install runsc with its Sentry in Buildkite source jobs",
+        "body": "Buildkite registered the standalone //runsc:runsc CLI with Docker.\nRegistration succeeded, but a container using that runtime exited 127\nbecause runsc could not find gvisor_sentry next to the executable.\n\nStage //:release, which includes the CLI and its sidecars in the layout\nrunsc expects. Install from the same directory for source and archive\njobs. Pass the configured arguments individually so Docker can invoke\nrunsc directly when no flags are set.",
+        "head": "4ba049ba5c249f885a0a249c921b60931897ea5d",
+        "baseHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
+        "url": "https://github.com/tamird/gvisor/commit/4ba049ba5",
+        "summary": "The post-command hook stages both source and archive installations. Update its comment to describe both paths. Only the comment changes. After contributor review, publish it and answer Ryan. If the import lands first, submit a follow-up.",
+        "requestedAt": "2026-11-07T12:02:13+00:00"
+      },
+      "refinement": {
+        "before": {
+          "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca"
+        },
+        "after": {
+          "head": "4ba049ba5c249f885a0a249c921b60931897ea5d"
+        }
       }
     },
     {
@@ -48895,12 +48941,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "research/tcp-eifel-first-repair",
-      "head": "47e4c458fbbe6607005442e23591f2b501f1644e",
+      "head": "74952bf99e98a628b5621812118bd24b381168b7",
       "title": "Keep the first TCP repair timestamp through recovery",
       "url": "https://github.com/google/gvisor/pull/16851",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T08:16:12+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "summary": "TCP can miss evidence that a timeout was unnecessary when the timestamp wraps or a second timeout clears the first retransmission’s timestamp. Keep that timestamp until recovery ends and compare the ACK’s echo in TCP serial order.\n\nRyan approved the public head and requested a test comment explaining why the first repair’s timestamp precedes zero in serial order. The fork amendment changes only comments and blank lines. The PR remains ready to pull at 47e4c458f.",
       "evidence": [
         {
@@ -48922,6 +48968,14 @@
         {
           "label": "Unchanged transport and RACK suites and transport Nogo",
           "url": "https://github.com/tamird/gvisor/actions/runs/41349787642/artifacts/13100613145"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/16851"
+        },
+        {
+          "label": "Reply on the original review",
+          "url": "https://github.com/google/gvisor/pull/16851#discussion_r4501607215"
         }
       ],
       "settledReviews": [
@@ -48930,6 +48984,19 @@
           "head": "9dbf919c7a32add65b269dac2cd66891a29a640f",
           "outcome": "approved",
           "at": "2026-11-02T20:41:05Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "74952bf99e98a628b5621812118bd24b381168b7",
+          "baseHead": "47e4c458fbbe6607005442e23591f2b501f1644e",
+          "url": "https://github.com/tamird/gvisor/commit/74952bf99",
+          "title": "Keep the first TCP repair timestamp through recovery",
+          "body": "Document why this test uses a first-repair timestamp above 2^31. If a second timeout clears the saved value, the ACK echo of the actual repair precedes zero in TCP serial order and can incorrectly count the timeout as spurious. The change preserves the constants, test assertions and production code.",
+          "requestedAt": "2026-11-07T08:16:12+00:00",
+          "summary": "Publish the test-comment amendment on #16851 and reply to Ryan? If the approved source lands first, use the same comment in a follow-up.\n\ngit -C ~/code/gvisor range-diff 47e4c458f^! 74952bf99^!\n\nProposed reply\n\nThanks, Ryan. The comment now explains why the first repair’s timestamp precedes zero in TCP serial order. Could you reapprove the updated head for import?",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16851"
         }
       ],
       "number": 16851,
@@ -48943,16 +49010,17 @@
           "base": "aa767e4c43d011121271551fe24da501a56f729d"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "74952bf99e98a628b5621812118bd24b381168b7",
-        "baseHead": "47e4c458fbbe6607005442e23591f2b501f1644e",
-        "url": "https://github.com/tamird/gvisor/commit/74952bf99",
-        "title": "Keep the first TCP repair timestamp through recovery",
-        "body": "Document why this test uses a first-repair timestamp above 2^31. If a second timeout clears the saved value, the ACK echo of the actual repair precedes zero in TCP serial order and can incorrectly count the timeout as spurious. The change preserves the constants, test assertions and production code.",
-        "requestedAt": "2026-11-07T08:16:12+00:00",
-        "summary": "Publish the test-comment amendment on #16851 and reply to Ryan? If the approved source lands first, use the same comment in a follow-up.\n\ngit -C ~/code/gvisor range-diff 47e4c458f^! 74952bf99^!\n\nProposed reply\n\nThanks, Ryan. The comment now explains why the first repair’s timestamp precedes zero in TCP serial order. Could you reapprove the updated head for import?"
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "74952bf99e98a628b5621812118bd24b381168b7",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "Ryan approved the prior revision. The explanatory comment is present on the new head and the reviewer has been asked to reapprove.",
+        "nextAction": "Confirm a fresh approval and import of 74952bf99. The existing import #17180 names the previous head.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16851",
+          "https://github.com/tamird/gvisor/commit/74952bf99",
+          "https://github.com/google/gvisor/pull/16851#discussion_r4501607215"
+        ]
       }
     },
     {
@@ -53362,7 +53430,7 @@
       "repo": "google/gvisor",
       "number": 16957,
       "ref": "proposal/veth-port-mtu",
-      "head": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+      "head": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
       "title": "Keep the MTU on each veth endpoint",
       "url": "https://github.com/google/gvisor/pull/16957",
       "group": "runtime",
@@ -53375,19 +53443,23 @@
         {
           "label": "Linux and Sentry netlink readbacks, Go checkpoint case and tuntap build",
           "url": "https://github.com/tamird/gvisor/actions/runs/42336953125/artifacts/13560608253"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/16957"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-07T04:35:44+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
-        "observedAt": "2026-11-07T04:35:44+00:00",
-        "disposition": "The netlink test passed on Linux and the revised Sentry. Both peer assertions failed on stock Sentry.",
-        "nextAction": "Review the test amendment before updating #16957.",
+        "owner": "Upstream review",
+        "sourceHead": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #16957 at fea7e15b6.",
+        "nextAction": "Follow #16957 for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/fea7e15b6",
-          "https://github.com/tamird/gvisor/actions/runs/42336953125/artifacts/13560608253"
+          "https://github.com/google/gvisor/pull/16957",
+          "https://github.com/tamird/gvisor/commit/fea7e15b6"
         ]
       },
       "refinement": {
@@ -53400,17 +53472,21 @@
           "base": "400bd2c81dcc0349033a8218bdf38e239d256678"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
-        "baseHead": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
-        "url": "https://github.com/tamird/gvisor/commit/fea7e15b6",
-        "title": "Keep the MTU on each veth endpoint",
-        "requestedAt": "2026-11-07T04:35:44+00:00",
-        "summary": "Publish the netlink test amendment to #16957?\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 400bd2c81..dfbc2ca70 400bd2c81..fea7e15b6",
-        "body": "Linux keeps the MTU on each veth endpoint. NetlinkRouteTest.VethAdd sets each port in turn and reads both back with RTM_GETLINK. On stock Sentry, setting veth1 changed its peer from 1486 to 2986, then setting veth2 changed its peer from 2986 to 1446. Linux and the revised Sentry preserved the peer’s MTU after both writes. The test checks port independence across the two writes. The existing Go TestMTU separately verifies both values survive checkpoint and restore."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
+          "baseHead": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+          "url": "https://github.com/tamird/gvisor/commit/fea7e15b6",
+          "title": "Keep the MTU on each veth endpoint",
+          "requestedAt": "2026-11-07T04:35:44+00:00",
+          "summary": "Publish the netlink test amendment to #16957?\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 400bd2c81..dfbc2ca70 400bd2c81..fea7e15b6",
+          "body": "Linux keeps the MTU on each veth endpoint. NetlinkRouteTest.VethAdd sets each port in turn and reads both back with RTM_GETLINK. On stock Sentry, setting veth1 changed its peer from 1486 to 2986, then setting veth2 changed its peer from 2986 to 1446. Linux and the revised Sentry preserved the peer’s MTU after both writes. The test checks port independence across the two writes. The existing Go TestMTU separately verifies both values survive checkpoint and restore.",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16957"
+        }
+      ]
     },
     {
       "id": "branch:veth-port-mtu",
@@ -58419,12 +58495,12 @@
       "repo": "google/gvisor",
       "number": 17128,
       "ref": "proposal/tcp-user-timeout-outstanding-flight",
-      "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
-      "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
+      "head": "6c97901f75134c9f00493736db035f840f513331",
+      "title": "Tie TCP_USER_TIMEOUT to the outstanding flight",
       "url": "https://github.com/google/gvisor/pull/17128",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T07:57:34+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The sender now tracks the last byte of the old flight and keeps the backed-off retransmission interval for the next send. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
       "evidence": [
         {
@@ -58462,6 +58538,10 @@
         {
           "label": "Six native Linux and gVisor packet tests and the matched missing-cap control",
           "url": "https://github.com/tamird/gvisor/actions/runs/42351186113/artifacts/13566092481"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/17128"
         }
       ],
       "settledReviews": [
@@ -58475,6 +58555,19 @@
           "at": "2026-11-06T20:48:54.951Z",
           "postedURL": "https://github.com/google/gvisor/pull/17128",
           "note": "Published as #17128 at the exact approved head."
+        },
+        {
+          "kind": "amendment",
+          "head": "6c97901f75134c9f00493736db035f840f513331",
+          "baseHead": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+          "url": "https://github.com/tamird/gvisor/commit/6c97901f7",
+          "title": "Tie TCP_USER_TIMEOUT to the outstanding flight",
+          "body": "During loss recovery, a partial ACK can let the sender transmit new\ndata before the peer acknowledges all the old bytes. gVisor kept the\nold deadline even after those bytes were acknowledged, so it could\nclose the connection while the new data still had time left. It also\nshortened the stored retransmission timeout to fit the old deadline.\n\nTrack the end of the flight covered by the deadline. Once the peer\nacknowledges it, start from the transmit time of the oldest remaining\nsegment. Limit the next timer wakeup without changing the backed-off\nRTO. This also enforces the deadline when the peer has acknowledged\nall data in flight but keeps its receive window closed.\n\nExercise an ACK covering the old flight before and after another\nretransmission. On a closed window, require the socket to report\nETIMEDOUT before the next uncapped probe.",
+          "requestedAt": "2026-11-07T07:57:34+00:00",
+          "summary": "The amended sender caps the timer wakeup on the closed-window path even after all data in flight has been acknowledged. In the controlled gVisor run the socket timed out at 809 ms with TCP_USER_TIMEOUT set to 806 ms. With that cap omitted, it was still open at 1,106 ms with an 803 ms setting. Both retained an 800 ms backed-off RTO. Native Linux timed out 1,040 ms after the test started, about 830 ms after its first probe. All six uncached Linux and gVisor packet tests passed, including both outstanding-flight cases. The final commit adds the symbolic errno to one test failure message.",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17128"
         }
       ],
       "refinement": {
@@ -58485,16 +58578,16 @@
           "head": "6c97901f75134c9f00493736db035f840f513331"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "6c97901f75134c9f00493736db035f840f513331",
-        "baseHead": "de11f9e09290b75ab5aa7291fb0d308244b72067",
-        "url": "https://github.com/tamird/gvisor/commit/6c97901f7",
-        "title": "Tie TCP_USER_TIMEOUT to the outstanding flight",
-        "body": "During loss recovery, a partial ACK can let the sender transmit new\ndata before the peer acknowledges all the old bytes. gVisor kept the\nold deadline even after those bytes were acknowledged, so it could\nclose the connection while the new data still had time left. It also\nshortened the stored retransmission timeout to fit the old deadline.\n\nTrack the end of the flight covered by the deadline. Once the peer\nacknowledges it, start from the transmit time of the oldest remaining\nsegment. Limit the next timer wakeup without changing the backed-off\nRTO. This also enforces the deadline when the peer has acknowledged\nall data in flight but keeps its receive window closed.\n\nExercise an ACK covering the old flight before and after another\nretransmission. On a closed window, require the socket to report\nETIMEDOUT before the next uncapped probe.",
-        "requestedAt": "2026-11-07T07:57:34+00:00",
-        "summary": "The amended sender caps the timer wakeup on the closed-window path even after all data in flight has been acknowledged. In the controlled gVisor run the socket timed out at 809 ms with TCP_USER_TIMEOUT set to 806 ms. With that cap omitted, it was still open at 1,106 ms with an 803 ms setting. Both retained an 800 ms backed-off RTO. Native Linux timed out 1,040 ms after the test started, about 830 ms after its first probe. All six uncached Linux and gVisor packet tests passed, including both outstanding-flight cases. The final commit adds the symbolic errno to one test failure message."
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "6c97901f75134c9f00493736db035f840f513331",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #17128 at 6c97901f7.",
+        "nextAction": "Follow #17128 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17128",
+          "https://github.com/tamird/gvisor/commit/6c97901f7"
+        ]
       }
     },
     {
@@ -59274,12 +59367,12 @@
       "status": "open"
     },
     {
-      "title": "Verify that runsc prints the version supplied by Bazel",
+      "title": "Check the runsc build version on the first output line",
       "group": "bazel",
       "ref": "proposal/runsc-version-line",
-      "head": "d81096ecce6877b6dcb4a00686e68198752153aa",
+      "head": "3cc89424abd7e0784c8196b175217aae6e47f919",
       "summary": "The reviewer reports that Google's internal go_test rule rejects x_defs, preventing the runsc package from loading. The amendment finds the declared binary with testutil.FindFile and checks its first version line. It accepts a nonempty workspace tag or build number and rejects VERSION_MISSING.",
-      "updatedAt": "2026-11-07T05:00:13+00:00",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "evidence": [
         {
           "label": "Proposed amendment",
@@ -59316,6 +59409,10 @@
         {
           "label": "Published d81096ecc",
           "url": "https://github.com/google/gvisor/pull/17169"
+        },
+        {
+          "label": "Reply on the original review",
+          "url": "https://github.com/google/gvisor/pull/17169#discussion_r4501609272"
         }
       ],
       "settledReviews": [
@@ -59331,18 +59428,31 @@
           "outcome": "approved",
           "at": "2026-11-07T03:08:22+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17169"
+        },
+        {
+          "kind": "amendment",
+          "head": "3cc89424abd7e0784c8196b175217aae6e47f919",
+          "baseHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
+          "url": "https://github.com/tamird/gvisor/commit/3cc89424a",
+          "title": "Check the runsc build version on the first output line",
+          "body": "The version test accepts an empty runsc version because the OCI spec\nversion on the second line contains digits. Buildkite also uses an\nalphabetic version for test branches.\n\nRun the declared binary from a Go test and require its first line to\ncontain a nonempty runsc version other than VERSION_MISSING. Read the\nversion from the binary so that the same test accepts a workspace\nstamp or an internal build number.",
+          "requestedAt": "2026-11-07T04:53:42+00:00",
+          "summary": "Publish and reply after the public version tests pass. The shared Go test drops x_defs, env and rundir. The internal importer is available to the maintainers.",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17169"
         }
       ],
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
-        "observedAt": "2026-11-07T05:00:13+00:00",
-        "disposition": "The fork revision passed its public version-stamp controls. The internal importer remains a maintainer check.",
-        "nextAction": "Review the amendment. After approval, publish it and answer the reviewer on the existing thread.",
+        "owner": "Upstream review",
+        "sourceHead": "3cc89424abd7e0784c8196b175217aae6e47f919",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #17169 at 3cc89424a.",
+        "nextAction": "Follow #17169 for maintainer review and import.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17169",
           "https://github.com/tamird/gvisor/commit/3cc89424a",
-          "https://github.com/google/gvisor/pull/17169#discussion_r4500083462",
-          "https://github.com/tamird/gvisor/actions/runs/42340018896/artifacts/13561193512"
+          "https://github.com/google/gvisor/pull/17169#discussion_r4501609272"
         ]
       },
       "id": "pr:17169",
@@ -59350,7 +59460,7 @@
       "repo": "google/gvisor",
       "number": 17169,
       "url": "https://github.com/google/gvisor/pull/17169",
-      "status": "Awaiting contributor review",
+      "status": "open",
       "refinement": {
         "before": {
           "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
@@ -59360,17 +59470,6 @@
           "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
           "head": "3cc89424abd7e0784c8196b175217aae6e47f919"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "3cc89424abd7e0784c8196b175217aae6e47f919",
-        "baseHead": "d81096ecce6877b6dcb4a00686e68198752153aa",
-        "url": "https://github.com/tamird/gvisor/commit/3cc89424a",
-        "title": "Check the runsc build version on the first output line",
-        "body": "The version test accepts an empty runsc version because the OCI spec\nversion on the second line contains digits. Buildkite also uses an\nalphabetic version for test branches.\n\nRun the declared binary from a Go test and require its first line to\ncontain a nonempty runsc version other than VERSION_MISSING. Read the\nversion from the binary so that the same test accepts a workspace\nstamp or an internal build number.",
-        "requestedAt": "2026-11-07T04:53:42+00:00",
-        "summary": "Publish and reply after the public version tests pass. The shared Go test drops x_defs, env and rundir. The internal importer is available to the maintainers."
       }
     },
     {
@@ -59543,8 +59642,8 @@
       "title": "Clear only used entries in the graph decoder",
       "url": "https://github.com/tamird/gvisor/commit/2effeef10",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T06:03:46+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
       "summary": "Clearing a pooled decoder’s five live table ranges avoids clearing about 1.92 MiB of unused storage in a 50,000-file guest restore on both architectures. A separate benchmark measures a small scalar load immediately after a large graph. All 11,543 executed state test records per architecture passed; 85 were skipped on each. The guest timing sample per revision is insufficient for a latency claim.",
       "evidence": [
         {
@@ -59554,17 +59653,36 @@
         {
           "label": "Twelve alternating sample pairs, benchstat, two state owners and real guest restoration",
           "url": "https://github.com/tamird/gvisor/actions/runs/42343597571/artifacts/13561834852"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/17182"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "2effeef1023e837ec9ccb143b856ce9c3648d498",
-        "baseHead": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
-        "url": "https://github.com/tamird/gvisor/commit/2effeef10",
-        "title": "Clear only used entries in the graph decoder",
-        "body": "The graph decoder clears five pointer-bearing tables before returning them to its pool. Clearing each table to capacity also writes through unused slots. Restoring 50,000 tmpfs files on AMD64 cleared 23,347,000 bytes for the kernel frame, including 2,015,680 unused bytes. ARM64 cleared 2,016,424 unused bytes for the same workload [1].\n\nClear each table to its length. A load sizes the type, object and target tables before filling them and only appends to the callback table. Any slots beyond those lengths were zeroed on allocation or cleared by the last load that used them.\n\nThe cost also carries over to small loads that reuse a large decoder. The Large case of BenchmarkSmallGraphAfterRestore decodes one uint64 after a graph of 50,000 objects on one AMD64 CPU, with GC disabled [2].\n\n       │     stock     │                fixed                │\n       │    sec/op     │    sec/op    vs base                │\nLarge    121891.0n ± 1%   686.8n ± 6%  -99.44% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42344764074\n[2]: https://github.com/tamird/gvisor/actions/runs/42343597571",
-        "requestedAt": "2026-11-07T06:03:46+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "2effeef1023e837ec9ccb143b856ce9c3648d498",
+          "baseHead": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
+          "url": "https://github.com/tamird/gvisor/commit/2effeef10",
+          "title": "Clear only used entries in the graph decoder",
+          "body": "The graph decoder clears five pointer-bearing tables before returning them to its pool. Clearing each table to capacity also writes through unused slots. Restoring 50,000 tmpfs files on AMD64 cleared 23,347,000 bytes for the kernel frame, including 2,015,680 unused bytes. ARM64 cleared 2,016,424 unused bytes for the same workload [1].\n\nClear each table to its length. A load sizes the type, object and target tables before filling them and only appends to the callback table. Any slots beyond those lengths were zeroed on allocation or cleared by the last load that used them.\n\nThe cost also carries over to small loads that reuse a large decoder. The Large case of BenchmarkSmallGraphAfterRestore decodes one uint64 after a graph of 50,000 objects on one AMD64 CPU, with GC disabled [2].\n\n       │     stock     │                fixed                │\n       │    sec/op     │    sec/op    vs base                │\nLarge    121891.0n ± 1%   686.8n ± 6%  -99.44% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42344764074\n[2]: https://github.com/tamird/gvisor/actions/runs/42343597571",
+          "requestedAt": "2026-11-07T06:03:46+00:00",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17182"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "2effeef1023e837ec9ccb143b856ce9c3648d498",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #17182 at 2effeef10.",
+        "nextAction": "Follow #17182 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17182",
+          "https://github.com/tamird/gvisor/commit/2effeef10"
+        ]
       }
     },
     {
@@ -59655,6 +59773,141 @@
           "postedURL": "https://github.com/buildbuddy-io/buildbuddy/pull/11090#issuecomment-6706591708"
         }
       ]
+    },
+    {
+      "id": "pr:17181",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/syscall-worker-sizes",
+      "title": "Size workers for the memory accounting and process syscall tests",
+      "url": "https://github.com/google/gvisor/pull/17181",
+      "group": "tests",
+      "status": "open",
+      "summary": "The accounting test touches 524,288 KiB. A default large worker reported 475,728 KiB total and no swap. Both save and save/resume passed on enormous workers. The ptrace process suite ran all seven cases on a large worker, including the 1,000-thread case. A separate medium worker reported a system-wide cap of 1,821 threads. All nine cases ran uncached on the declared LLVM integration with the same size patch. The control measured default worker capacity without launching a workload too large for it.",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
+      "evidence": [
+        {
+          "label": "Default medium and large workers, including available RAM, swap and threads-max",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368827189/artifacts/13572951004"
+        },
+        {
+          "label": "Three actual TestRunner attempts, resource classes and all nine syscall results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367564451/artifacts/13572855935"
+        },
+        {
+          "label": "Three test owners with the declared LLVM toolchain",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367564451"
+        },
+        {
+          "label": "Original Nogo execution-strategy error",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42365023579/artifacts/13571104338"
+        },
+        {
+          "label": "Successful three-target build and subsequent pre-test failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42366007580/artifacts/13572166468"
+        },
+        {
+          "label": "Original no-attempt result for the three syscall targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42363758011/artifacts/13570706983"
+        },
+        {
+          "label": "Current Bazel-size candidate",
+          "url": "https://github.com/tamird/gvisor/commit/e988ba7ba"
+        },
+        {
+          "label": "Native AMD64 TestRunner and named syscall results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42363758011"
+        },
+        {
+          "label": "Previous configured properties and incomplete physical trials",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41786100190/artifacts/13305179066"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/17181"
+        }
+      ],
+      "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #17181 at 31d5b49f3.",
+        "nextAction": "Follow #17181 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17181",
+          "https://github.com/tamird/gvisor/commit/31d5b49f3"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/31d5b49f3",
+          "title": "Size workers for the memory accounting and process syscall tests",
+          "body": "The memory accounting test populates 512 MiB before it checkpoints.\nA large Firecracker worker reported 475,728 KiB of memory and no swap,\nless than the mapping alone. Request an enormous worker. Preserve this\nsize for save and save/resume tests, which otherwise request a large\nworker regardless of the suite's memory requirement.\n\nThe process suite keeps 1,000 guest threads alive at once. On a medium\nworker Linux reported a system-wide limit of 1,821 threads. Request a\nlarge worker to leave room for the ptrace tracers and the guest tasks.",
+          "summary": "Open the independent syscall-sizing change. Its code is identical to the qualified patch and its parent is current master.",
+          "requestedAt": "2026-11-07T11:40:35+00:00",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17181"
+        }
+      ],
+      "number": 17181
+    },
+    {
+      "id": "pr:17182",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/state-clear-used-decode-storage",
+      "head": "2effeef1023e837ec9ccb143b856ce9c3648d498",
+      "title": "Clear only used entries in the graph decoder",
+      "url": "https://github.com/google/gvisor/pull/17182",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-07T12:02:13+00:00",
+      "summary": "Clearing a pooled decoder’s five live table ranges avoids clearing about 1.92 MiB of unused storage in a 50,000-file guest restore on both architectures. A separate benchmark measures a small scalar load immediately after a large graph. All 11,543 executed state test records per architecture passed; 85 were skipped on each. The guest timing sample per revision is insufficient for a latency claim.",
+      "evidence": [
+        {
+          "label": "Per-frame lengths and capacities inside the restored Sentry on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42344764074/artifacts/13562139734"
+        },
+        {
+          "label": "Twelve alternating sample pairs, benchstat, two state owners and real guest restoration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42343597571/artifacts/13561834852"
+        },
+        {
+          "label": "Reviewed change published upstream",
+          "url": "https://github.com/google/gvisor/pull/17182"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "2effeef1023e837ec9ccb143b856ce9c3648d498",
+          "baseHead": "3847ed738e1a59892b936aebb1b9164c4f31ee95",
+          "url": "https://github.com/tamird/gvisor/commit/2effeef10",
+          "title": "Clear only used entries in the graph decoder",
+          "body": "The graph decoder clears five pointer-bearing tables before returning them to its pool. Clearing each table to capacity also writes through unused slots. Restoring 50,000 tmpfs files on AMD64 cleared 23,347,000 bytes for the kernel frame, including 2,015,680 unused bytes. ARM64 cleared 2,016,424 unused bytes for the same workload [1].\n\nClear each table to its length. A load sizes the type, object and target tables before filling them and only appends to the callback table. Any slots beyond those lengths were zeroed on allocation or cleared by the last load that used them.\n\nThe cost also carries over to small loads that reuse a large decoder. The Large case of BenchmarkSmallGraphAfterRestore decodes one uint64 after a graph of 50,000 objects on one AMD64 CPU, with GC disabled [2].\n\n       │     stock     │                fixed                │\n       │    sec/op     │    sec/op    vs base                │\nLarge    121891.0n ± 1%   686.8n ± 6%  -99.44% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42344764074\n[2]: https://github.com/tamird/gvisor/actions/runs/42343597571",
+          "requestedAt": "2026-11-07T06:03:46+00:00",
+          "outcome": "approved",
+          "at": "2026-11-07T12:02:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17182"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "2effeef1023e837ec9ccb143b856ce9c3648d498",
+        "observedAt": "2026-11-07T12:02:13+00:00",
+        "disposition": "The reviewed change is on #17182 at 2effeef10.",
+        "nextAction": "Follow #17182 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17182",
+          "https://github.com/tamird/gvisor/commit/2effeef10"
+        ]
+      },
+      "number": 17182
     }
   ],
   "edges": [
@@ -80315,9 +80568,99 @@
       "status": "active",
       "group": "tests",
       "owner": "Source PR owners",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
-      "summary": "Apply Lucas Manning’s requested cleanups directly to open source PRs, even after approval or while a Copybara import is running. The earlier rollups below preserve tested changes and prior commitments.",
+      "updatedAt": "2026-11-07T12:04:09+00:00",
+      "summary": "Track requested edits through the original source, its public description and the result on master. Comments in an approving review count even when there is no inline thread.",
       "findings": [
+        {
+          "text": "Ryan’s timestamp comment is in the current #16851 head (74952bf99), and his original thread has a reply. The prior approval and import refer to 47e4c458f.",
+          "evidence": [
+            {
+              "label": "Comment in the published source",
+              "url": "https://github.com/google/gvisor/blob/74952bf99/pkg/tcpip/transport/tcp/test/e2e/tcp_sack_test.go#L888"
+            },
+            {
+              "label": "Original thread and reply",
+              "url": "https://github.com/google/gvisor/pull/16851#discussion_r4501607215"
+            },
+            {
+              "label": "Earlier import",
+              "url": "https://github.com/google/gvisor/pull/17180"
+            }
+          ]
+        },
+        {
+          "text": "Ryan requested a staging-directory comment in the approval body of #16843. The original PR and its export still have the stale wording. The one-line fork revision is awaiting contributor review.",
+          "evidence": [
+            {
+              "label": "Review body",
+              "url": "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344"
+            },
+            {
+              "label": "One changed comment",
+              "url": "https://github.com/tamird/gvisor/commit/4ba049ba5"
+            },
+            {
+              "label": "Current import",
+              "url": "https://github.com/google/gvisor/pull/17179"
+            }
+          ]
+        },
+        {
+          "text": "On #16059 the multicast test and the Linux references were present, but the public description still described only interfaces with an IPv6 address. The opening paragraph now covers all affected interfaces.",
+          "evidence": [
+            {
+              "label": "Review requesting the description correction",
+              "url": "https://github.com/google/gvisor/pull/16059#pullrequestreview-5657645610"
+            },
+            {
+              "label": "Corrected PR description",
+              "url": "https://github.com/google/gvisor/pull/16059"
+            }
+          ]
+        },
+        {
+          "text": "Four requested edits are in open #16893. They cover the benchmark comment (#16453), UDP checksum tests (#16493), capability-test package documentation (#16496) and the epoll lock-order citation (#16505). Each original thread links to the follow-up. All four are still absent from master.",
+          "evidence": [
+            {
+              "label": "Reviewable rollup",
+              "url": "https://github.com/google/gvisor/pull/16893"
+            }
+          ]
+        },
+        {
+          "text": "The removed Watch.OwnerID accessor on #16812 did not reach master through its original import. #17044 carries the deletion, with a live export. The BinaryAppender request on #15476 is on master, and the previously unanswered inline question now links to the change and its allocation measurements.",
+          "evidence": [
+            {
+              "label": "Watch.OwnerID follow-up",
+              "url": "https://github.com/google/gvisor/pull/17044"
+            },
+            {
+              "label": "Pending export",
+              "url": "https://github.com/google/gvisor/pull/17068"
+            },
+            {
+              "label": "BinaryAppender reply",
+              "url": "https://github.com/google/gvisor/pull/15476#discussion_r4501622364"
+            }
+          ]
+        },
+        {
+          "text": "The port-forward flag descriptions on #16345 reach the actual Copybara commit. A normal dual-netstack benchmark run is a separate verification request. The #17067 internal toolchain adjustment is prepared against its open prerequisite #16522.",
+          "evidence": [
+            {
+              "label": "Imported change record",
+              "url": "https://github.com/google/gvisor/commit/30fa3bd85"
+            },
+            {
+              "label": "Compiler prerequisite",
+              "url": "https://github.com/google/gvisor/pull/16522"
+            },
+            {
+              "label": "Prepared toolchain fix",
+              "url": "https://github.com/tamird/gvisor/commit/7f6ecfff6"
+            }
+          ]
+        },
         {
           "text": "#16453 (landed): Explain when the state benchmark encounters the array after encoding its elements.",
           "evidence": [
@@ -80459,7 +80802,7 @@
           ]
         }
       ],
-      "nextStep": "Check each original PR and its current source just before publication. For an open PR, its owner applies the qualified edit there. If it merged without the change, only then route the missing edit to a follow-up. No weekly batch is required.",
+      "nextStep": "Inspect new review bodies as well as inline threads. For each actionable item, verify the original or follow-up change and answer the reviewer. Carry unfinished edits through an import or merge.",
       "evidence": [
         {
           "label": "Approved cleanup with final comment wording and Linux source link",
@@ -82653,5 +82996,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T11:53:44+00:00"
+  "updatedAt": "2026-11-07T12:04:09+00:00"
 }
