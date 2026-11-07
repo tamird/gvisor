@@ -181,18 +181,20 @@ def shard_key(owner: str, arch: str, label: str, reversed_path: list[str]) -> Sh
 
 
 def inventory(mode: str) -> dict[Shard, Placement]:
-    owners = selected(mode, False)
     tests = selected(mode, True)
+    save(mode + "-selection", {"source": SOURCE, "test_configurations_and_rules": tests})
+    owners = selected(mode, False)
     assert tests.items() <= owners.items()
     build_only = sorted(owners.keys() - tests.keys())
     save(mode + "-roots", {"source": SOURCE, "profile": PROFILES[mode], "build_only": build_only})
-    layouts = release_products(mode, owners)
-    save(mode + "-release", layouts)
-    expr = 'mnemonic("^TestRunner$", ' + target_set(tests) + ")"
+    # Read the action graph retained by the actual full test command. A normal
+    # aquery starts a new analysis with aquery's own configuration options.
     raw, _, rc = invoke(mode, "actions", "aquery", [
-        "--output=jsonproto", "--include_artifacts", "--noinclude_commandline", query_file(mode, "actions", expr),
+        "--skyframe_state", "--output=jsonproto", "--include_artifacts", "--noinclude_commandline",
+        'mnemonic("^TestRunner$")',
     ])
     assert rc == 0, rc
+    save(mode + "-release", release_products(mode, owners))
     # Free the server's action graph before parsing the full artifact and path tables.
     subprocess.run([*BAZEL, "shutdown"], check=True, timeout=120)
     with raw.open() as stream:
@@ -203,14 +205,20 @@ def inventory(mode: str) -> dict[Shard, Placement]:
     fragments = {str(row["id"]): row for row in graph["pathFragments"]}
     records = {}
     auxiliary = Counter()
+    unselected = 0
     for action in graph["actions"]:
         label = targets[str(action["targetId"])]
-        assert action["mnemonic"] == "TestRunner" and label in tests, label
+        assert action["mnemonic"] == "TestRunner", label
+        config = configs[str(action["configurationId"])]
+        if label not in tests or tests[label][0] != config:
+            # The stored graph also contains TestRunners for tests built as
+            # dependencies (and these can use another target configuration).
+            unselected += 1
+            continue
         if not (path := test_log(action, artifacts, fragments)):
             auxiliary[label] += 1
             continue
-        config, rule = tests[label]
-        assert config == configs[str(action["configurationId"])], (label, config)
+        _, rule = tests[label]
         owner = label.removesuffix(SUFFIX) if mode == "mixed" else label
         arch = ("arm64" if label.endswith(SUFFIX) else "amd64") if mode == "mixed" else mode
         platform = action["executionPlatform"].removeprefix("@@")
@@ -220,9 +228,11 @@ def inventory(mode: str) -> dict[Shard, Placement]:
         records[key] = Placement(label, rule, config, platform, properties.get("Arch", CPU.get(platform, "unknown")),
                                  properties.get("workload-isolation-type", "oci"), properties.get("dockerUser", ""),
                                  properties.get("network-enable-ipv6", ""), properties)
-    assert {record.label for record in records.values()} == tests.keys()
+    missing = sorted(tests.keys() - {record.label for record in records.values()})
     save(mode + "-actions", {"source": SOURCE, "profile": PROFILES[mode], "auxiliary": auxiliary,
+                             "unselected_actions": unselected, "selected_without_test_log": missing,
                              "shards": [{**asdict(k), **asdict(v)} for k, v in sorted(records.items())]})
+    assert not missing, (mode, missing[:8])
     raw.unlink()
     return records
 
