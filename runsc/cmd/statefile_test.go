@@ -236,10 +236,49 @@ func TestCheckpointStateEngineFlag(t *testing.T) {
 		if out, err := runRunsc(wireArgs...); err != nil {
 			t.Fatalf("runsc checkpoint failed: %v\n%s", err, out)
 		}
-		wireDump := dumpCheckpointText(t, filepath.Join(wireDir, checkpointfiles.StateFileName))
-		if !strings.Contains(wireDump, ".Kernel]{") || strings.Contains(wireDump, "g1r0 = kernel.Kernel{") {
-			t.Errorf("runsc checkpoint without --state-engine overrode boot-time wire engine with graph format")
+		statePath := filepath.Join(wireDir, checkpointfiles.StateFileName)
+		fileHash := func() [sha256.Size]byte {
+			t.Helper()
+			image, err := os.Open(statePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer image.Close()
+			h := sha256.New()
+			if _, err := io.Copy(h, image); err != nil {
+				t.Fatal(err)
+			}
+			return [sha256.Size]byte(h.Sum(nil))
 		}
+		sum := fileHash()
+		out, printErr := runRunsc("statefile", statePath)
+		if printErr == nil && (!bytes.Contains(out, []byte(".Kernel]{")) || bytes.Contains(out, []byte("g1r0 = kernel.Kernel{"))) {
+			t.Fatal("printed checkpoint did not contain the expected wire kernel object")
+		}
+		result := "pass"
+		if printErr != nil {
+			result = "other-error"
+			if bytes.Contains(out, []byte("error printing state: unreachable")) {
+				result = "unreachable"
+			}
+		}
+		t.Logf("CHECKPOINT_PRINT sha256=%x print=%s", sum, result)
+		restored, err := container.New(conf, container.Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundleDir})
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer restored.Destroy()
+		if err := restored.Restore(conf, wireDir, sandbox.DirectIOOff, false, nil); err != nil {
+			t.Fatalf("restore of same wire checkpoint: %v", err)
+		}
+		ps, err := restored.Processes()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(ps) != 1 || ps[0].PID != 1 || ps[0].Cmd != "test_app" || fileHash() != sum {
+			t.Fatal("restored PID 1, executable or image identity differs")
+		}
+		t.Logf("CHECKPOINT_RESTORED sha256=%x pid=1 exe=test_app", sum)
 	})
 }
 

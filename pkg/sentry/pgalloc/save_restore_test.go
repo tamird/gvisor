@@ -19,6 +19,7 @@ package pgalloc
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -29,6 +30,9 @@ import (
 	"gvisor.dev/gvisor/pkg/memutil"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
+	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/pretty"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 // openSaveTestFile returns a file in dir, or a memfd if dir is empty.
@@ -139,6 +143,78 @@ func TestHostFileDataSeeker(t *testing.T) {
 	if d := pipeMemFile.newHostFileDataSeeker(); d != nil {
 		t.Errorf("newHostFileDataSeeker returned %v for a closed file, want nil", d)
 	}
+}
+
+func TestSameSavedMemoryFilePrintAndLoad(t *testing.T) {
+	f := newSaveTestMemoryFile(t, "", false)
+	fr := allocateSaveTestPages(t, f)
+	writeMappedPage(f, fr, 5, 3)
+	var saved bytes.Buffer
+	if err := f.SaveTo(context.Background(), &saved, &SaveOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	b := saved.Bytes()
+	restored := newSaveTestMemoryFile(t, "", false)
+	readback := bytes.NewReader(b)
+	if err := restored.LoadFrom(context.Background(), readback, &LoadOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	defer restored.DecRef(fr)
+	want := make([]byte, fr.Length())
+	want[5*hostarch.PageSize+17] = 3
+	if readback.Len() != 0 {
+		t.Fatalf("LoadFrom left %d bytes unread", readback.Len())
+	}
+	restored.forEachMappingSlice(fr, func(s []byte) {
+		if len(s) > len(want) || !bytes.Equal(s, want[:len(s)]) {
+			t.Fatal("restored memory differs")
+		}
+		want = want[len(s):]
+	})
+	if len(want) != 0 {
+		t.Fatalf("missing %d restored bytes", len(want))
+	}
+	// The second view frames the same protobuf as an opaque region,
+	// as SaveTo already does for the following page data.
+	length := binary.LittleEndian.Uint64(b[:8])
+	if length == 0 || length > uint64(len(b)-8) {
+		t.Fatalf("invalid metadata length %d", length)
+	}
+	probe := bytes.NewReader(b)
+	h, err := state.ReadHeaderMode(&wire.Reader{Reader: probe})
+	if err != nil || h.Object || h.Graph {
+		t.Fatalf("generic first header: %+v, %v", h, err)
+	}
+	firstEnd := uint64(len(b)-probe.Len()) + h.Length
+	if firstEnd == 8+length {
+		t.Fatal("generic and actual first region unexpectedly end at the same offset")
+	}
+	var framed, tail bytes.Buffer
+	if err := state.WriteHeader(&wire.Writer{Writer: &framed}, length, false); err != nil {
+		t.Fatal(err)
+	}
+	framed.Write(b[8:])
+	ww := wire.Writer{Writer: &tail}
+	if err := state.WriteHeader(&ww, 1, true); err != nil {
+		t.Fatal(err)
+	}
+	marker := wire.String("checkpoint tail")
+	wire.Save(&ww, wire.Uint(1))
+	wire.Save(&ww, &marker)
+	var control bytes.Buffer
+	if err := pretty.PrintText(&control, io.MultiReader(&framed, bytes.NewReader(tail.Bytes()))); err != nil {
+		t.Fatal(err)
+	}
+	wantSummary := fmt.Sprintf("(%d bytes non-object data)\n(%d bytes non-object data)\ng2r1 = %q\n", length, hostarch.PageSize, marker)
+	if control.String() != wantSummary {
+		t.Fatalf("framed print = %q, want %q", control.String(), wantSummary)
+	}
+	var original bytes.Buffer
+	printErr := pretty.PrintText(&original, io.MultiReader(bytes.NewReader(b), bytes.NewReader(tail.Bytes())))
+	if printErr == nil && original.String() == wantSummary {
+		t.Fatal("original printer unexpectedly reported both whole regions and the following object")
+	}
+	t.Logf("MEMORYFILE_CONTROL restored=true metadata_bytes=%d actual_end=%d guessed_end=%d framed_print=true original_matches=false original_print_exit_ok=%t", length, 8+length, firstEnd, printErr == nil)
 }
 
 func TestSaveToPreservesContents(t *testing.T) {
