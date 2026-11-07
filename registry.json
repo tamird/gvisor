@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T19:12:17+00:00",
+    "updatedAt": "2026-11-07T19:22:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -68218,7 +68218,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-07T16:31:47+00:00",
+      "updatedAt": "2026-11-07T19:22:05+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -74002,6 +74002,67 @@
             {
               "label": "Original cache-condition benchstat, per-file residency, loader counters and guest digests",
               "url": "https://github.com/tamird/gvisor/actions/runs/42388577043/artifacts/13581750393"
+            }
+          ]
+        },
+        {
+          "title": "Foreground checkpoint and restore with both compression modes",
+          "description": "On gVisor master 9ee2906f5, each block saved one live guest with both state engines and both supported compression modes. The table shows medians from 12 balanced blocks on four AMD64 CPUs with the image files resident in the host page cache. Verified readback measures from restore start until the guest checks 512 MiB of high-entropy memory and 8 MiB of pipe data against the original SHA-256 digests.",
+          "columns": [
+            "Format",
+            "Engine",
+            "Save",
+            "Foreground restore",
+            "Through verified readback",
+            "Complete image (bytes)"
+          ],
+          "rows": [
+            [
+              "Uncompressed, split",
+              "Wire",
+              "0.401 s",
+              "0.494 s",
+              "0.977 s",
+              "551,086,815.5"
+            ],
+            [
+              "Uncompressed, split",
+              "Graph",
+              "0.317 s",
+              "0.175 s",
+              "0.658 s",
+              "546,833,704.5"
+            ],
+            [
+              "Flate best speed, inline",
+              "Wire",
+              "0.817 s",
+              "0.780 s",
+              "1.262 s",
+              "549,508,596.5"
+            ],
+            [
+              "Flate best speed, inline",
+              "Graph",
+              "0.408 s",
+              "0.255 s",
+              "0.737 s",
+              "545,416,538"
+            ]
+          ],
+          "note": "Switching from wire to graph reduced median time through verified readback by 32.66% with uncompressed images and 41.62% with Flate best speed (both p < 0.001). The uncompressed format stores pages and their metadata separately. The compressed format stores both inline, so changing formats measures the combined effect of compression and layout.",
+          "evidence": [
+            {
+              "label": "Original benchstat for ten within-format comparisons",
+              "url": "https://tamird.github.io/gvisor/checkpoint-compression-benchstat.txt"
+            },
+            {
+              "label": "Preserved original ZIP with all four cells and guest hashes",
+              "url": "https://tamird.github.io/gvisor/checkpoint-compression-results.zip"
+            },
+            {
+              "label": "Native run, individual measurements, image hashes and both guest digests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42403570351/artifacts/13587417134"
             }
           ]
         }
@@ -84699,5 +84760,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T19:12:17+00:00"
+  "updatedAt": "2026-11-07T19:22:05+00:00"
 }

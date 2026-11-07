@@ -1,0 +1,17 @@
+                                     │   wire.txt   │              graph.txt              │
+                                     │    sec/op    │   sec/op     vs base                │
+Checkpoint/none/save                    401.5m ± 8%   317.5m ± 4%  -20.92% (p=0.000 n=12)
+Checkpoint/none/restore                 494.3m ± 3%   175.3m ± 2%  -64.54% (p=0.000 n=12)
+Checkpoint/none/ready                   505.5m ± 3%   185.9m ± 2%  -63.22% (p=0.000 n=12)
+Checkpoint/none/verified                977.1m ± 2%   657.9m ± 1%  -32.66% (p=0.000 n=12)
+Checkpoint/flate-best-speed/save        817.5m ± 4%   408.1m ± 4%  -50.08% (p=0.000 n=12)
+Checkpoint/flate-best-speed/restore     780.2m ± 5%   255.2m ± 5%  -67.29% (p=0.000 n=12)
+Checkpoint/flate-best-speed/ready       791.4m ± 5%   266.0m ± 4%  -66.39% (p=0.000 n=12)
+Checkpoint/flate-best-speed/verified   1262.2m ± 3%   736.9m ± 2%  -41.62% (p=0.000 n=12)
+geomean                                 707.0m        329.5m       -53.40%
+
+                                  │   wire.txt   │              graph.txt              │
+                                  │     B/op     │     B/op      vs base               │
+Checkpoint/none/media               525.6Mi ± 0%   521.5Mi ± 0%  -0.77% (p=0.000 n=12)
+Checkpoint/flate-best-speed/media   524.1Mi ± 0%   520.1Mi ± 0%  -0.74% (p=0.000 n=12)
+geomean                             524.8Mi        520.8Mi       -0.76%
