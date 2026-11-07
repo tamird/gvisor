@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T06:53:28+00:00",
+    "updatedAt": "2026-11-07T07:03:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4934,8 +4934,8 @@
       "url": "https://github.com/tamird/gvisor/commit/4bee07965",
       "group": "bazel",
       "status": "Contributor review requested",
-      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. Its new supplier regression still needs verification.",
-      "updatedAt": "2026-11-07T06:45:05+00:00",
+      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.",
+      "updatedAt": "2026-11-07T07:01:44+00:00",
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
         {
@@ -5549,6 +5549,10 @@
         {
           "label": "Four static executables and all embedded code on the single compiler commit",
           "url": "https://github.com/tamird/gvisor/actions/runs/42331076521/artifacts/13557604627"
+        },
+        {
+          "label": "Gazelle query on stock and corrected master with Bazel 8.2.1",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743"
         }
       ],
       "refinement": {
@@ -21027,7 +21031,7 @@
           "https://github.com/docker/compose/compare/1e1c577eab08ceb5ff0fcf4d8e3cbbc08a34ef35...v5.6.1"
         ]
       },
-      "updatedAt": "2026-11-07T06:45:05+00:00",
+      "updatedAt": "2026-11-07T07:03:52+00:00",
       "evidence": [
         {
           "label": "Compose change that grants host networking to Bake",
@@ -21076,6 +21080,10 @@
         {
           "label": "Official Docker image source manifest",
           "url": "https://github.com/docker-library/official-images/blob/master/library/docker"
+        },
+        {
+          "label": "Pinned Docker image on native AMD64 and ARM64 workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42349216411"
         }
       ],
       "releaseWait": {
@@ -21083,7 +21091,7 @@
         "confirmedAt": "2026-10-27T16:52:09+00:00",
         "checkedVersion": "v5.6.1",
         "repository": "docker/compose",
-        "nextAction": "Check that the new Compose release contains the network.host fix and ships in the official dind image, then run both host-network cases."
+        "nextAction": "Compose 5.7.0 is in the official Docker 29.9.3 image. Verify both storage drivers on the native workers before proposing the one-line pin."
       }
     },
     {
@@ -49331,7 +49339,7 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T05:50:09+00:00",
+      "updatedAt": "2026-11-07T07:01:44+00:00",
       "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers. With only gVisor declared downstream, this change removes the unsupported header-tag diagnostic. The header query and ARM64 vDSO build still fail because Gazelle rejects gVisor’s non-root go_deps.gazelle_override tags. No compiler action ran. The same restriction was reproduced before the compiler migration.",
       "evidence": [
         {
@@ -49353,6 +49361,14 @@
         {
           "label": "Reconciled query verdict and checked product tree",
           "url": "https://github.com/tamird/gvisor/actions/runs/41412191540/artifacts/13125079783"
+        },
+        {
+          "label": "Downstream ARM64 vDSO, generated runners and Gazelle environment tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819"
+        },
+        {
+          "label": "Gazelle query on stock and corrected master with Bazel 8.2.1",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743"
         }
       ],
       "settledReviews": [
@@ -49368,7 +49384,17 @@
           "outcome": "approved",
           "at": "2026-11-02T16:20:02.085486+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "issue",
+        "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
+        "title": "Querying a Gazelle target loads the Go environment",
+        "requestedAt": "2026-11-07T07:01:44+00:00",
+        "summary": "Review the proposed Gazelle report. Opening a public tamird/bazel-gazelle fork would also allow the tested change to be prepared as a single upstream commit.",
+        "body": "Loading `def.bzl` reads `GO_ENV` at the top level. In a WORKSPACE build, `bazel query //:gazelle` fails if the Go repository configuration is unavailable, before Bazel can return the target label. With Bzlmod, building the ARM64 vDSO from gVisor’s LLVM integration as a downstream dependency evaluates a root-only go_deps override before compiling any C. [Query regression](https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743)\n\nI propose reading the generated environment through a private label attribute on the Gazelle runner. In a prototype against Gazelle master, the query succeeded and the downstream vDSO linked. The runner scripts stayed byte-identical to their originals in both Bzlmod and WORKSPACE, including the precedence of per-target environment overrides. [Build and runner comparison](https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819)\n\nFiled by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11518",
