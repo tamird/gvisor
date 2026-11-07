@@ -883,6 +883,160 @@ func TestInjectableAttachment(t *testing.T) {
 	}
 }
 
+// pausedReceiver holds the first delivery in GRO.Flush while the FD reader
+// queues the final packet from the same flow.
+type pausedReceiver struct {
+	entered chan struct{}
+	resume  chan struct{}
+	got     chan byte
+}
+
+func (r *pausedReceiver) DeliverNetworkPacket(_ tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {
+	data := pkt.Data().AsRange().ToSlice()
+	value := data[len(data)-1]
+	if value == 1 {
+		close(r.entered)
+		<-r.resume
+	}
+	r.got <- value
+}
+
+func (*pausedReceiver) DeliverLinkPacket(tcpip.NetworkProtocolNumber, *stack.PacketBuffer) {
+	panic("unexpected link packet")
+}
+
+func TestSeqpacketWorkerShutdown(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		stop   bool
+		detach bool
+		want   []byte
+	}{
+		{name: "PeerEOF", want: []byte{1, 2}},
+		{name: "DetachAfterEOF", detach: true, want: []byte{1}},
+		{name: "AdministrativeStop", stop: true, want: []byte{1}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer unix.Close(fds[1])
+			closed := make(chan tcpip.Error, 1)
+			link, err := New(&Options{
+				FDs:                  []int{fds[0]},
+				MTU:                  mtu,
+				PacketDispatchMode:   RecvMMsg,
+				ProcessorsPerChannel: 2,
+				DetectSeqpacketEOF:   true,
+				GRO:                  true,
+				RXChecksumOffload:    true,
+				ClosedFunc:           func(err tcpip.Error) { closed <- err },
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			r := &pausedReceiver{entered: make(chan struct{}), resume: make(chan struct{}, 1), got: make(chan byte, 2)}
+			link.Attach(r)
+			ep := link.(*endpoint)
+			ep.mu.RLock()
+			m := &ep.receivers[0]
+			ep.mu.RUnlock()
+			pending := func() int {
+				var n int
+				for i := range m.processors {
+					p := &m.processors[i]
+					p.mu.Lock()
+					n += p.pkts.Len()
+					p.mu.Unlock()
+				}
+				return n
+			}
+			defer func() {
+				close(r.resume)
+				link.Attach(nil)
+				link.Close()
+			}()
+
+			send := func(value byte) {
+				t.Helper()
+				frame := make([]byte, header.IPv4MinimumSize+header.TCPMinimumSize+1)
+				header.IPv4(frame).Encode(&header.IPv4Fields{
+					TotalLength: uint16(len(frame)),
+					Protocol:    uint8(header.TCPProtocolNumber),
+					TTL:         64,
+					SrcAddr:     tcpip.AddrFrom4([4]byte{192, 0, 2, 1}),
+					DstAddr:     tcpip.AddrFrom4([4]byte{192, 0, 2, 2}),
+				})
+				header.TCP(frame[header.IPv4MinimumSize:]).Encode(&header.TCPFields{
+					SrcPort:    1,
+					DstPort:    2,
+					DataOffset: header.TCPMinimumSize,
+					Flags:      header.TCPFlagAck,
+					SeqNum:     uint32(value),
+				})
+				frame[len(frame)-1] = value
+				if err := unix.Sendmsg(fds[1], frame, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			send(1)
+			<-r.entered
+			send(2)
+			if test.stop {
+				link.Attach(nil)
+			} else {
+				if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+					t.Fatal(err)
+				}
+				link.Wait()
+				if n := pending(); n != 1 {
+					t.Fatalf("queued packets at EOF = %d, want 1", n)
+				}
+			}
+
+			// A peer-close notification lets the owner tear down its NIC.
+			// Administrative detach may also proceed while the worker is busy.
+			var early bool
+			select {
+			case err := <-closed:
+				if !test.stop {
+					t.Errorf("ClosedFunc(%v) ran before the occupied worker returned", err)
+				}
+				early = true
+			default:
+				if test.stop {
+					t.Error("administrative detach returned before ClosedFunc")
+				}
+			}
+			if (early && !test.stop) || test.detach {
+				link.Attach(nil)
+			}
+			if test.stop || test.detach || early {
+				if n := pending(); n != 0 {
+					t.Errorf("queued packets after detach = %d, want 0", n)
+				}
+			}
+			r.resume <- struct{}{}
+			if !early {
+				if err := <-closed; err != nil {
+					t.Errorf("ClosedFunc(%v), want nil", err)
+				}
+			}
+			got := []byte{<-r.got}
+			select {
+			case b := <-r.got:
+				got = append(got, b)
+			default:
+			}
+			if !bytes.Equal(got, test.want) {
+				t.Errorf("delivered packets = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
 func TestMain(m *testing.M) {
 	refs.SetLeakMode(refs.LeaksPanic)
 	code := m.Run()
