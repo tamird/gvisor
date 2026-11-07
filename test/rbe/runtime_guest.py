@@ -86,15 +86,17 @@ def capsule(name, busybox, install=None):
     return root, marker
 
 
-def launch(root, row, control=False):
+def launch(root, row, control=False, pivot="pivot_root"):
     # Same user/mount/network/PID capsule as c911d4a545, before any product runs.
     setup = r'''set -eu
 root=$1
+echo GUEST_SETUP_NAMESPACES >&2
 test "$(id -u)" = 0
 test "$(awk 'NR==1{print $2,$3}' /proc/self/uid_map)" = "$2 1"
 test "$(readlink /proc/self/ns/user)" != "$3"
 test "$(readlink /proc/self/ns/net)" != "$4"
 test "$(readlink /proc/self/ns/pid)" != "$5"
+echo GUEST_SETUP_MOUNTS >&2
 mount --bind "$root" "$root"
 mount -t proc proc "$root/proc"
 mount -t sysfs -o ro sysfs "$root/sys"
@@ -105,7 +107,9 @@ done
 ln -s /proc/self/fd "$root/dev/fd"
 ln -s /proc/self/fd/2 "$root/dev/stderr"
 cd "$root"
-pivot_root . .
+echo GUEST_SETUP_PIVOT >&2
+"$6" . .
+echo GUEST_SETUP_BUSYBOX >&2
 exec /busybox sh -ec '
   /busybox umount -l .
   cd /
@@ -118,9 +122,24 @@ exec /busybox sh -ec '
     command = "exec /busybox true" if control else "exec /release/runsc --rootless --root=/run/state --platform=systrap --network=none --ignore-cgroups=true --sidecar-release-enforcement-policy=ALWAYS --debug-log=/dev/stderr run --bundle=/bundle default-llvm-smoke"
     setup = setup.replace("COMMAND", command)
     names = [os.readlink("/proc/self/ns/" + n) for n in ("user", "net", "pid")]
-    args = ["/usr/bin/setpriv", "--no-new-privs", "/usr/bin/unshare", "--user", "--map-root-user", "--mount", "--net", "--pid", "--fork", "--kill-child", "--ipc", "--uts", "--propagation", "private", "/bin/sh", "-ec", setup, "guest", str(root), str(os.getuid()), *names]
+    args = ["/usr/bin/setpriv", "--no-new-privs", "/usr/bin/unshare", "--user", "--map-root-user", "--mount", "--net", "--pid", "--fork", "--kill-child", "--ipc", "--uts", "--propagation", "private", "/bin/sh", "-ec", setup, "guest", str(root), str(os.getuid()), *names, pivot]
     code, stdout, stderr = q.command(args, 120)
     row.update(exit=code, stdout_sha256=q.digest(stdout), stderr=q.diagnostics(stderr), private_root_entered=b"NATIVE_GUEST_PRIVATE_ROOT" in stderr.splitlines())
+    row["setupStages"] = [stage for stage in ("NAMESPACES", "MOUNTS", "PIVOT", "BUSYBOX")
+                          if ("GUEST_SETUP_" + stage).encode() in stderr.splitlines()]
+    row["startupFailures"] = []
+    for line in stderr.lower().splitlines():
+        reasons = [s for s in ("not found", "no such file or directory", "permission denied",
+                               "operation not permitted", "exec format error", "unknown flag",
+                               "not a mount point", "connection reset by peer", "timed out")
+                   if s.encode() in line]
+        if reasons:
+            commands = [s for s in ("setpriv", "unshare", "readlink", "awk", "mount", "ln",
+                                    "pivot_root", "busybox", "umount", "runsc", "gvisor_sentry")
+                        if re.search(rb"(?<![\w-])" + s.encode() + rb"(?![\w-])", line)]
+            row["startupFailures"].append({"tools": commands, "errors": reasons})
+        if len(row["startupFailures"]) == 8:
+            break
     row["sentry_stdio_witness"] = bool(re.search(rb"Remapped stdio FDs to \[\d+, \d+\] in [^\s]+", stderr))
     row["prewarmer_selected"] = b'Sidecar "gvisor-sentry-prewarmer" found: prepending Sentry boot command' in stderr
     row["sentry_selected"] = b'Sidecar "gvisor_sentry" found: booting sandbox' in stderr

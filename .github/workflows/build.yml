@@ -1,113 +1,38 @@
-name: Boot the reduced AMD64 builder's ARM64 release
+name: Boot the original cross-built release on native ARM64
 on:
   push:
-    branches: [qualification/reduced-builder-native-arm64-handoff]
+    branches: [qualification/reduced-builder-native-arm64-guest-recovery]
 permissions:
   contents: read
+  actions: read
 jobs:
-  producer:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created
-    runs-on: ubuntu-22.04
-    timeout-minutes: 90
-    outputs:
-      archive_sha: ${{ steps.bind.outputs.archive_sha }}
-      archive_bytes: ${{ steps.bind.outputs.archive_bytes }}
-      manifest_sha: ${{ steps.bind.outputs.manifest_sha }}
-    env:
-      SOURCE: c115840f8a85010111fa5d72b611d7d9ab1df34b
-      COMPILER: 4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {persist-credentials: false, fetch-depth: 4}
-    - name: Bind original AMD64 builder and cross compiler
-      run: |
-        set -euo pipefail
-        test "$(git rev-parse HEAD^)" = a6ee60cbfde801a347d8da4710c7ad22c3d07747
-        test "$(git rev-parse HEAD^^)" = "$SOURCE"
-        test "$(git rev-parse HEAD^^^)" = "$COMPILER"
-        test "$(uname -m)" = x86_64
-        d="$RUNNER_TEMP/builder-cross/runtime-cross"
-        mkdir -p "$d"
-        cp .github/qualification/{reduced_builder,cross_release_pack}.py test/rbe/{native_cross_inputs,runtime_cross}.py "$d/"
-        test "$(git hash-object "$d/reduced_builder.py")" = 418d15bbf0b69e994d5ac0f0f8989321a88210be
-        test "$(git hash-object "$d/runtime_cross.py")" = 83a26b9ea471725d241410dd8aaf568d92817b1d
-        test "$(git hash-object "$d/native_cross_inputs.py")" = 0698511b2caa444374f9ba98a52470a56cb164da
-        git switch --detach "$SOURCE"
-        test "$(git diff --name-only HEAD^ HEAD)" = images/default/Dockerfile
-        test "$(git rev-parse HEAD:images/default/Dockerfile)" = 82a81262bc83ad8328ee60e2963835ac53fb4ee5
-        test "$(cat images/default/bazelversion)" = 9.3.1
-        grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
-    - name: Build the existing reduced Ubuntu image and cross-build its public release
-      run: |
-        set -euo pipefail
-        d="$RUNNER_TEMP/builder-cross"
-        docker build --progress=plain --tag gvisor-builder:checked --iidfile "$d/image-id" images/default
-        test "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' gvisor-builder:checked)" = linux/amd64
-        docker run --rm --entrypoint /bin/bash \
-          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/workspace \
-          -e RUNNER_TEMP=/audit -e BUILDER_IMAGE="$(cat "$d/image-id")" \
-          -v "$GITHUB_WORKSPACE:/workspace" -v "$d:/audit" gvisor-builder:checked \
-          -ec 'python3 -B /audit/runtime-cross/reduced_builder.py && python3 -B /audit/runtime-cross/cross_release_pack.py'
-    - name: Bind producer output before transfer
-      id: bind
-      run: |
-        set -euo pipefail
-        d="$RUNNER_TEMP/builder-cross"
-        mv "$d/handoff" "$d/transfer"
-        python3 -B - "$d" <<'PY'
-        import hashlib, json, os, pathlib, sys
-        d = pathlib.Path(sys.argv[1])
-        p = json.loads((d/"pack.json").read_text())
-        assert p["verified"] and set(f.name for f in (d/"transfer").iterdir()) == {"manifest.json","release.tar.gz"}
-        m = d/"transfer/manifest.json"
-        a = d/"transfer/release.tar.gz"
-        assert hashlib.sha256(m.read_bytes()).hexdigest() == p["manifestSHA256"]
-        assert a.stat().st_size == p["archiveBytes"] and a.stat().st_size < 200 << 20
-        assert hashlib.sha256(a.read_bytes()).hexdigest() == p["archiveSHA256"]
-        with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-            print("archive_sha=" + p["archiveSHA256"], file=out)
-            print("archive_bytes=" + str(p["archiveBytes"]), file=out)
-            print("manifest_sha=" + p["manifestSHA256"], file=out)
-        PY
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: arm64-cross-release-transfer
-        path: |
-          ${{ runner.temp }}/builder-cross/transfer/release.tar.gz
-          ${{ runner.temp }}/builder-cross/transfer/manifest.json
-        compression-level: 0
-        if-no-files-found: error
-        retention-days: 1
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always() && !cancelled()
-      with:
-        name: reduced-amd64-producer
-        path: |
-          ${{ runner.temp }}/builder-cross/pack.json
-          ${{ runner.temp }}/builder-cross/runtime-cross/verdict.json
-        if-no-files-found: warn
-        retention-days: 14
   consumer:
-    needs: producer
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
     runs-on: ubuntu-22.04-arm
     timeout-minutes: 25
     env:
-      ARCHIVE_SHA256: ${{ needs.producer.outputs.archive_sha }}
-      ARCHIVE_BYTES: ${{ needs.producer.outputs.archive_bytes }}
-      MANIFEST_SHA256: ${{ needs.producer.outputs.manifest_sha }}
+      ARCHIVE_SHA256: 25e2fa457655c435b5ea1b259a2a12d52ec2c0c21b58a151651966f704574f3a
+      ARCHIVE_BYTES: '42909838'
+      MANIFEST_SHA256: b1823305e79c2147d1f7ced114b5ec65282d5aa6e32cf1d7b7890f2e1d9ee218
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {persist-credentials: false, fetch-depth: 3}
+      with: {persist-credentials: false, fetch-depth: 4}
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
       with:
-        name: arm64-cross-release-transfer
+        artifact-ids: '13567019396'
+        run-id: '42354328925'
+        repository: tamird/gvisor
+        github-token: ${{ github.token }}
+        merge-multiple: true
         path: test/rbe/payload
     - name: Verify handoff and prepare the existing static ARM64 guest
       run: |
         set -euo pipefail
         test "$(uname -m)" = aarch64
-        test "$(git rev-parse HEAD^^)" = c115840f8a85010111fa5d72b611d7d9ab1df34b
-        test "$(git hash-object test/rbe/runtime_guest.py)" = b03c7ad2f220a265b111e003f1e094ffa1622cf8
+        test "$(git rev-parse HEAD^)" = a267777547f2177040ec004b6c638bfc6b0c7fe3
+        test "$(git rev-parse HEAD~3)" = c115840f8a85010111fa5d72b611d7d9ab1df34b
+        test "$(git rev-parse HEAD^:test/rbe/runtime_guest.py)" = b03c7ad2f220a265b111e003f1e094ffa1622cf8
+        test -x /usr/sbin/pivot_root
         test "$(stat -c '%s' test/rbe/payload/release.tar.gz)" = "$ARCHIVE_BYTES"
         printf '%s  %s\n' "$ARCHIVE_SHA256" test/rbe/payload/release.tar.gz "$MANIFEST_SHA256" test/rbe/payload/manifest.json | sha256sum --check --strict
         d="$RUNNER_TEMP/cross-native-guest"

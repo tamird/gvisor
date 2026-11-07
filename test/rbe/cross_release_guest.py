@@ -94,6 +94,16 @@ def execute(row):
     guest.r.TASK = guest.q.TASK = WORK
     guest.r.SOURCE = SOURCE
     guest.MEMBERS = MEMBERS
+    row["stage"] = "namespace-control"
+    control_root, _ = guest.capsule("old-pivot-lookup", box)
+    control = {}
+    guest.launch(control_root, control, control=True)
+    row["originalSetup"] = {key: control[key] for key in
+                            ("exit", "setupStages", "startupFailures", "private_root_entered")}
+    row["originalSetup"]["pivotOnTestPATH"] = shutil.which("pivot_root") is not None
+    pivot = Path("/usr/sbin/pivot_root")
+    assert pivot.is_file() and os.access(pivot, os.X_OK)
+    row["stage"] = "guest"
     capsule, marker = guest.capsule("capsule", box, installed)
     assert all((capsule/"release"/name).samefile(installed/name) for name in MEMBERS)
     cfg = capsule / "bundle/config.json"
@@ -102,9 +112,10 @@ def execute(row):
                                '/busybox echo "$1"; exec /busybox uname -m', "guest", marker]
     cfg.write_text(json.dumps(spec))
     smoke = {}
-    result = guest.launch(capsule, smoke)
+    result = guest.launch(capsule, smoke, pivot=str(pivot))
     criteria = ("private_root_entered", "sentry_selected", "sentry_release_matches", "sentry_stdio_witness")
-    row["guest"] = {key: smoke.get(key) for key in (*criteria, "exit", "stdout_sha256", "prewarmer_selected")}
+    row["guest"] = {key: smoke.get(key) for key in (*criteria, "exit", "stdout_sha256", "prewarmer_selected",
+                                                    "setupStages", "startupFailures")}
     row["guest"]["sameSentryInode"] = (capsule/"release"/SENTRY).samefile(installed/SENTRY)
     row["guest"]["cpu"] = "aarch64" if result.splitlines()[-1:] == [b"aarch64"] else None
     row["guest"]["marker"] = result.splitlines()[:1] == [marker.encode()]
