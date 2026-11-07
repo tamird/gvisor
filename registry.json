@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:37:38+00:00",
+    "updatedAt": "2026-11-07T01:40:36+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57084,10 +57084,14 @@
       "head": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
       "title": "Check the runsc version independently of the OCI spec version",
       "url": "https://github.com/tamird/gvisor/commit/d243ff20a",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T01:37:38+00:00",
-      "summary": "The runsc version test accepted a nonnumeric build stamp because it found a digit in the OCI spec version on the next line. The existing Bazel target now checks the stamped executable directly with a Go test. On native AMD64 and ARM64, the original passed the malformed binary and the correction rejected it. Both accepted the normal stamp. The final revision corrects one word in the license header.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T01:40:36+00:00",
+      "summary": "The existing stamp test reads both version lines. Checking only the first line exposed a second issue: Buildkite assigns the valid alphabetic tag buildkite-test-branch to test/* branches. The digit-based proposal would reject that tag. The replacement needs to check the stamp the build supplied.",
       "evidence": [
+        {
+          "label": "Buildkite assigns an alphabetic tag to test branches",
+          "url": "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
+        },
         {
           "label": "Native AMD64 controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42324187283/artifacts/13554403101"
@@ -57097,16 +57101,15 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42324187283/artifacts/13555225426"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
-        "baseHead": "70008149cff7b8d3b858877ae9c359b9046d19c5",
-        "url": "https://github.com/tamird/gvisor/commit/d243ff20a",
-        "title": "Check the runsc version independently of the OCI spec version",
-        "requestedAt": "2026-11-07T01:37:38+00:00",
-        "summary": "Open a standalone PR fixing the runsc version check and removing its shell script?",
-        "body": "runsc --version prints two lines. The stamping test searches both for a\ndigit, so a runsc version such as development passes as long as the OCI\nspec version contains a digit.\n\nRun the stamped binary directly from a Go test. Check that the runsc\nline contains a digit and reject an unresolved VERSION placeholder."
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "d243ff20ac43beb4ee5ec8d175b2a6d7662285b3",
+        "observedAt": "2026-11-07T01:40:36+00:00",
+        "disposition": "The digit check rejects a legitimate Buildkite stamp.",
+        "nextAction": "Qualify the intended stamp against ordinary Git IDs, alphabetic tags, Buildkite test branches and the unstamped binary.",
+        "evidence": [
+          "https://github.com/google/gvisor/blob/70008149c/.buildkite/hooks/pre-command#L65-L74"
+        ]
       }
     }
   ],
