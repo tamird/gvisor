@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T00:14:02.706Z",
+    "updatedAt": "2026-11-07T00:15:53.625Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56890,18 +56890,13 @@
       "url": "https://github.com/google/gvisor/pull/17155",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T00:14:02.706Z",
+      "updatedAt": "2026-11-07T00:15:53.625Z",
       "summary": "Konstantin requested review of the Buildkite results CLI. Tamir separately asked whether Go would fit the repository’s tooling better.",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "30143217adf5ade390febe1a48447b334c874c2e",
-        "url": "https://github.com/google/gvisor/pull/17155",
-        "title": "Review the Buildkite command and its failure attribution",
-        "body": "AGENTS.md, line 209\nThe documented command exits 126 on a fresh checkout because buildkite.py is mode 100644. The BUILD file currently exposes only the test. Once the entry point is settled, could the smoke test run that exact command with --help?\n\ntools/buildkite/buildkite.py, line 469\nIf attempt 1 failed and its retry is still running, retried is already true. With --logs this skips the only completed failure, and the documented rule would call the retry a pass. Could we show the retry as pending and keep that failed log available until we actually observe a passing attempt?\n\ntools/buildkite/buildkite.py, line 416\nmake testlogs includes FLAKY as well as FAILED and TIMEOUT (tools/bazel.mk:408). If one target passes on a Bazel retry and a different target fails the job, the hook annotates both and this lists both as failed_targets. Could we separate final failures from failed attempts, or call these annotated targets when their final status is unknown?\n\ntools/buildkite/buildkite.py, line 318\nA passing Go test can log a line like client_test.go:17: expected connection reset before a different test panics. This puts the passing test’s message in failure_lines without its PASS context. Could ordinary test messages stay in the excerpt unless they can be associated with a failing test?",
-        "requestedAt": "2026-11-07T00:10:56.960Z"
-      },
       "evidence": [
+        {
+          "label": "Four verified inline comments in the submitted review",
+          "url": "https://github.com/google/gvisor/pull/17155#pullrequestreview-5808768537"
+        },
         {
           "label": "Linux: 25 author tests, three offline controls and the direct entry point",
           "url": "https://github.com/tamird/gvisor/actions/runs/42316682619/artifacts/13550853026"
@@ -56914,7 +56909,30 @@
           "label": "Bazel target statuses reported by the existing testlogs recipe",
           "url": "https://github.com/google/gvisor/blob/30143217a/tools/bazel.mk#L405-L410"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "30143217adf5ade390febe1a48447b334c874c2e",
+          "url": "https://github.com/google/gvisor/pull/17155",
+          "title": "Review the Buildkite command and its failure attribution",
+          "body": "AGENTS.md, line 209\nThe documented command exits 126 on a fresh checkout because buildkite.py is mode 100644. The BUILD file currently exposes only the test. Once the entry point is settled, could the smoke test run that exact command with --help?\n\ntools/buildkite/buildkite.py, line 469\nIf attempt 1 failed and its retry is still running, retried is already true. With --logs this skips the only completed failure, and the documented rule would call the retry a pass. Could we show the retry as pending and keep that failed log available until we actually observe a passing attempt?\n\ntools/buildkite/buildkite.py, line 416\nmake testlogs includes FLAKY as well as FAILED and TIMEOUT (tools/bazel.mk:408). If one target passes on a Bazel retry and a different target fails the job, the hook annotates both and this lists both as failed_targets. Could we separate final failures from failed attempts, or call these annotated targets when their final status is unknown?\n\ntools/buildkite/buildkite.py, line 318\nA passing Go test can log a line like client_test.go:17: expected connection reset before a different test panics. This puts the passing test’s message in failure_lines without its PASS context. Could ordinary test messages stay in the excerpt unless they can be associated with a failing test?",
+          "outcome": "approved",
+          "at": "2026-11-07T00:15:53.625Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17155#pullrequestreview-5808768537",
+          "note": "All four comments were posted together and verified on the reviewed head."
+        }
+      ],
+      "followup": {
+        "owner": "Author",
+        "sourceHead": "30143217adf5ade390febe1a48447b334c874c2e",
+        "observedAt": "2026-11-07T00:15:53.625Z",
+        "disposition": "The requested review was posted on 30143217a.",
+        "nextAction": "Follow the author’s response or revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17155#pullrequestreview-5808768537"
+        ]
+      }
     }
   ],
   "edges": [
