@@ -1,35 +1,81 @@
-name: CI
-
-"on":
+name: Measure the disk cache keys of one LLVM runtime object
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-runtime-top-level-cache-identity]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 72
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Verify the native worker and restore the unmodified source
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 35aa6228edcf1eb2bc07d6aa877b4317da27d68a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/llvm-runtime-digest/check.py'
+          w="$RUNNER_TEMP/llvm-runtime-digest"
+          mkdir -m 700 "$w"
+          cp .github/qualification/llvm-runtime-digest/check.py "$w/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1 && test "$(uname -m)" = x86_64
+          curl --fail --location --retry 2 --max-time 100 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$w/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $w/bazel" | sha256sum -c -
+          chmod 755 "$w/bazel"
+      - name: Build the two platform spellings with stock output stripping
+        run: |
+          w="$RUNNER_TEMP/llvm-runtime-digest"
+          python3 -IB "$w/check.py" stock linux
+          python3 -IB "$w/check.py" stock ubuntu
+      - name: Build the same object with the supplier's documented C++ mapping opt-in
+        run: |
+          w="$RUNNER_TEMP/llvm-runtime-digest"
+          python3 -IB "$w/check.py" supplier linux
+          python3 -IB "$w/check.py" supplier ubuntu
+      - name: Compare the original serialized commands, input trees, and objects
+        if: always() && !cancelled()
+        run: |
+          python3 -IB - <<'PY'
+          from pathlib import Path
+          import json, os
+          w=Path(os.environ["RUNNER_TEMP"])/"llvm-runtime-digest"
+          out={}
+          for mode in ("stock","supplier"):
+              paths=[w/(mode+"-"+p+".json") for p in ("linux","ubuntu")]
+              if not all(p.is_file() for p in paths):continue
+              a,b=[json.loads(p.read_text()) for p in paths]
+              rows={}
+              for arm,data in (("first",a),("second",b)):
+                  rows[arm]={Path(x["configured_output"]).name:x for x in data.get("spawns",[])}
+              pairs=[]
+              for obj in sorted(rows["first"].keys()&rows["second"].keys()):
+                  x,y=rows["first"][obj],rows["second"][obj]
+                  def equal(k):
+                      return x.get(k) is not None and x.get(k)==y.get(k)
+                  pairs.append({"object":obj,"distinct_configured_outputs":not equal("configured_output"),
+                                "commands_equal":equal("command_digest"),"input_roots_equal":equal("input_root_digest"),
+                                "actions_equal":equal("action_digest"),"objects_equal":equal("object"),
+                                "first_runner":x.get("runner"),"second_runner":y.get("runner"),
+                                "same_compiler_bytes":bool(x.get("compiler") and y.get("compiler") and x["compiler"].get("sha256")==y["compiler"].get("sha256")),
+                                "second_cache_hit":y.get("cache_hit")})
+              out[mode]={"both_verified":bool(a["verified"] and b["verified"]),"pairs":pairs}
+          (w/"comparison.json").write_text(json.dumps(out,indent=2)+"\n")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: llvm-runtime-object-action-identity
+          path: |
+            ${{ runner.temp }}/llvm-runtime-digest/stock-linux.json
+            ${{ runner.temp }}/llvm-runtime-digest/stock-ubuntu.json
+            ${{ runner.temp }}/llvm-runtime-digest/supplier-linux.json
+            ${{ runner.temp }}/llvm-runtime-digest/supplier-ubuntu.json
+            ${{ runner.temp }}/llvm-runtime-digest/comparison.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Verify the complete measurement
+        if: always() && !cancelled()
+        run: |
+          jq -e 'length == 2 and all(.[]; .both_verified and (.pairs|length)>0 and all(.pairs[]; .distinct_configured_outputs and .same_compiler_bytes))' "$RUNNER_TEMP/llvm-runtime-digest/comparison.json"
