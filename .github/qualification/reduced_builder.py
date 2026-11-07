@@ -31,7 +31,9 @@ def installed_version(name):
     if result.returncode == 1 and not result.stdout:
         return None
     result.check_returncode()
-    return result.stdout.strip()
+    status = result.stdout.strip()
+    # dpkg-query can know a package name even when it was never installed.
+    return None if status == "not-installed" else status
 
 
 def output(*argv):
