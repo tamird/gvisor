@@ -1,0 +1,46 @@
+name: Read original invocation results for both native presubmits
+on:
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/read-original-native-presubmit' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the original invocation reader and source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 546a292f5c9a18e6d5c8ee05796baceff7b29b31
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/workflows/work-map.yml'
+          w="$RUNNER_TEMP/ordinary-profiles"
+          mkdir -m 700 "$w"
+          cp .github/qualification/original_native_presubmit.py "$w/read.py"
+          echo "fc290e5bdd6ff6348773ccf815013435b8dd2d20c03315c66325ad50f412f318  $w/read.py" | sha256sum --check
+      - name: Read the original timed-out test and skipped target groups
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          umask 077
+          python3 -IB "$RUNNER_TEMP/ordinary-profiles/read.py" retrieve
+      - name: Summarize the original cases and frames without a credential
+        id: project
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/ordinary-profiles"
+          python3 -IB "$w/read.py" project
+          test ! -e "$w/netgofer.log"
+          test -f "$w/receipt.json"
+          test ! -L "$w/receipt.json"
+          test "$(wc -c <"$w/receipt.json")" -lt 60001
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: steps.project.outcome == 'success'
+        with:
+          name: original-native-presubmit-results
+          path: ${{ runner.temp }}/ordinary-profiles/receipt.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Require receipt of both skipped targets and original timeout log
+        run: jq -e '.read_complete' "$RUNNER_TEMP/ordinary-profiles/receipt.json"

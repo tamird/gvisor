@@ -1,47 +1,108 @@
-name: Read original invocation results for both native presubmits
+name: Run the rendered native source presubmits
 on:
   push:
-    branches: [qualification/read-original-native-presubmit]
+    branches: [qualification/llvm-rendered-native-profiles]
 permissions: {contents: read}
 jobs:
-  read:
+  submit:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 2}
-      - name: Bind the original invocation reader and source
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the product, shard inventory and released Buildkite agent
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = d3273816959a082c3813b129234ed8ff22293bac
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/original_native_presubmit.py'
+          test "$(git rev-parse HEAD^)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/ordinary_presubmit_shards.tsv' ':!.github/qualification/native_profile_results.py' ':!.github/qualification/source_presubmit_memory.py'
           w="$RUNNER_TEMP/ordinary-profiles"
-          mkdir -m 700 "$w"
-          cp .github/qualification/original_native_presubmit.py "$w/read.py"
-          echo "fc290e5bdd6ff6348773ccf815013435b8dd2d20c03315c66325ad50f412f318  $w/read.py" | sha256sum --check
-      - name: Read the original timed-out test and skipped target groups
+          mkdir -p "$w"
+          cp .github/qualification/ordinary_presubmit_shards.tsv "$w/oracle.tsv"
+          cp .github/qualification/{native_profile_results,source_presubmit_memory}.py "$w/"
+          git checkout -q --detach HEAD^
+          cd "$w"
+          curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 https://github.com/buildkite/agent/releases/download/v4.10.1/buildkite-agent-linux-amd64-4.10.1.tar.gz -o agent.tar.gz
+          curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o bazel
+          sha256sum --check <<'SUMS'
+          f7ecf75a3be41a786f25e9cdbff332dc49b7f18ef63a1fd73bf77056fd4d7fe0  agent.tar.gz
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          791fd93c8cd768c1b3bf5e6696f945566937f40912a6dafd644a332dc22fa008  oracle.tsv
+          SUMS
+          python3 -IB - <<'PY'
+          import pathlib, tarfile
+          with tarfile.open("agent.tar.gz") as archive:
+              member, = [m for m in archive if m.isfile() and pathlib.PurePosixPath(m.name).name == "buildkite-agent"]
+              pathlib.Path("agent").write_bytes(archive.extractfile(member).read())
+          PY
+          chmod 755 bazel agent
+      - name: Render the original step and size the Bazel server
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/ordinary-profiles"
+          test "$("$w/bazel" --version)" = 'bazel 9.3.1'
+          BUILDKITE_AGENT_ENDPOINT=http://127.0.0.1:1 "$w/agent" pipeline upload --dry-run --format json --agent-access-token unused-token .buildkite/rbe-source.yaml >"$w/pipeline.json"
+          python3 -IB - <<'PY'
+          import json, os, pathlib
+          w = pathlib.Path(os.environ["RUNNER_TEMP"], "ordinary-profiles")
+          step, = json.loads((w/"pipeline.json").read_text())["steps"]
+          command = step["command"]
+          assert step["label"] == "Remote source presubmit"
+          assert command.splitlines() == ["failed=0", "bazel test --config=source-presubmit || failed=1",
+                                         "bazel test --config=source-presubmit-arm64 || failed=1", 'exit "$failed"']
+          (w/"command").write_text(command)
+          PY
+          python3 -IB "$w/source_presubmit_memory.py"
+      - name: Execute both complete native profiles from the rendered step
+        timeout-minutes: 168
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/ordinary-profiles"
           umask 077
-          python3 -IB "$RUNNER_TEMP/ordinary-profiles/read.py" retrieve
-      - name: Summarize the original cases and frames without a credential
-        id: project
+          rc="$w/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          cat "$RUNNER_TEMP/source-presubmit-heap.bazelrc" >"$rc"
+          cat >>"$rc" <<'RC'
+          build:source-presubmit-common --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit-common --keep_going --jobs=64 --remote_download_outputs=minimal
+          build:source-presubmit-common --remote_download_regex=.*testlogs/runsc/cmd/(cmd_test|statefile_output_permissions_test)/test[.]xml
+          test:source-presubmit-common --nocache_test_results --flaky_test_attempts=1
+          test:source-presubmit-common --modify_execution_info=^TestRunner$=+no-remote-cache
+          test:source-presubmit-common --test_env=GO_TEST_WRAP_TESTV=1
+          RC
+          printf 'build:source-presubmit-common --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >>"$rc"
+          unset BUILDBUDDY_API_KEY
+          for arch in amd64 arm64; do
+            profile=source-presubmit
+            if [ "$arch" = arm64 ]; then profile=source-presubmit-arm64; fi
+            printf 'build:%s --build_event_json_file=%s/%s.bep --symlink_prefix=bazel-qual-%s-\n' "$profile" "$w" "$arch" "$arch" >>"$rc"
+          done
+          code=0
+          PATH="$w:$PATH" BAZELRC="$rc" bash "$w/command" >"$w/bazel.log" 2>&1 || code=$?
+          printf '%s\n' "$code" >"$w/step.exit"
+      - name: Verify original test executions, skips and target coverage
+        id: collect
+        if: always() && !cancelled()
         run: |
           set -euo pipefail
           w="$RUNNER_TEMP/ordinary-profiles"
-          python3 -IB "$w/read.py" project
-          test ! -e "$w/netgofer.log"
-          test -f "$w/receipt.json"
-          test ! -L "$w/receipt.json"
-          test "$(wc -c <"$w/receipt.json")" -lt 60001
+          test ! -e "$w/client.rc"
+          python3 -IB "$w/native_profile_results.py"
+          test "$(wc -c < "$w/receipt.json")" -lt 262144
+          rm -f "$w/bazel.log" "$w/amd64.bep" "$w/arm64.bep"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: steps.project.outcome == 'success'
+        if: always() && steps.collect.outcome == 'success' && !cancelled()
         with:
-          name: original-native-presubmit-results
+          name: native-source-presubmits
           path: ${{ runner.temp }}/ordinary-profiles/receipt.json
           if-no-files-found: error
-          retention-days: 7
-      - name: Require receipt of both skipped targets and original timeout log
-        run: jq -e '.read_complete' "$RUNNER_TEMP/ordinary-profiles/receipt.json"
+          retention-days: 14
+      - name: Require complete passing results on both architectures
+        if: always() && steps.collect.outcome == 'success' && !cancelled()
+        run: jq -e '.complete_pass' "$RUNNER_TEMP/ordinary-profiles/receipt.json"
