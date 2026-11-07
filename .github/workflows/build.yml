@@ -1,35 +1,39 @@
-name: CI
-
-"on":
+name: Check the two ordinary source profiles in one Buildkite step
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/ordinary-source-profiles]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  coordinator:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the fork product and released clients
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = b3e6b0409ad2b1609a519b58e30b774664b1457f
+          test "$(git rev-parse HEAD^^)" = 353c484b45fec1ba5ba19445ba03807a5f9638e0
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_profile_step.py' ':!test/rbe/source_profiles_qualification'
+          work="$RUNNER_TEMP/ordinary-source-profiles"
+          mkdir -p "$work/results"
+          curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 https://github.com/buildkite/agent/releases/download/v4.10.1/buildkite-agent-linux-amd64-4.10.1.tar.gz -o "$work/agent.tar.gz"
+          curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          cd "$work"
+          sha256sum --check <<'SUMS'
+          f7ecf75a3be41a786f25e9cdbff332dc49b7f18ef63a1fd73bf77056fd4d7fe0  agent.tar.gz
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          SUMS
+          chmod 755 bazel
+      - name: Render the upload offline and run the four coordinator controls
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -EsB .github/qualification/source_profile_step.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: ordinary-source-profiles
+          path: ${{ runner.temp }}/ordinary-source-profiles/results/result.json
+          if-no-files-found: warn
+          retention-days: 14
