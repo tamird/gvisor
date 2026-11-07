@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T02:24:56+00:00",
+    "updatedAt": "2026-11-07T02:30:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55681,8 +55681,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a39f38e89",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T02:24:56+00:00",
-      "summary": "One Buildkite step can run both ordinary RBE profiles over the existing package list. Each profile selects all 373 original shards. Buildkite’s rendered command ran both profiles in all four pass/fail controls, including after an AMD64 failure. The two complete suites previously ran separately; the combined step has only been qualified with a command recorder.\n\nThe experimental mixed invocation built 2,885 build-only targets and ran 724 shards uncached. AMD64 passed 373/373 and ARM64 passed 350/351. Five Sentry checks reported a process/thread mismatch on ARM64; their paired gofer checks passed. Netgofer passed all six cases on both CPUs. Mixed also omitted 22 ordinary ARM64 shards and some ARM64 build products.",
+      "updatedAt": "2026-11-07T02:30:44+00:00",
+      "summary": "One Buildkite step can run both ordinary RBE profiles over the existing package list. Each profile selects all 373 original shards. Buildkite’s rendered command ran both profiles in all four pass/fail controls, including after an AMD64 failure. The two complete suites previously ran separately; the combined step has only been qualified with a command recorder.\n\nThe experimental mixed invocation built 2,885 build-only targets and ran 724 shards uncached. AMD64 passed 373/373 and ARM64 passed 350/351. The ARM64 Linux 5.10 guest reported inconsistent synchronized-filter counts in five Sentry checks. Those were the only differences in both the ordinary and mixed ARM64 logs. The unchanged test binary passed those five cases and the matching gofer checks on Linux 6.8. Netgofer passed all six cases on both CPUs. Mixed also omitted 22 ordinary ARM64 shards and some ARM64 build products.",
       "evidence": [
         {
           "label": "Single-step alternative with both complete profiles",
@@ -55691,6 +55691,22 @@
         {
           "label": "Offline Buildkite upload and all four pass/fail coordinator outcomes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42329025031/artifacts/13556940789"
+        },
+        {
+          "label": "Original ARM64 mixed result: all five checks differ only on the kernel accounting counter",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42329520747/artifacts/13556946674"
+        },
+        {
+          "label": "Same ARM64 executable on Linux 6.8: ten original posture cases passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42319546366/artifacts/13552427196"
+        },
+        {
+          "label": "Linux correction for synchronized filter accounting",
+          "url": "https://github.com/torvalds/linux/commit/b4d8a58f8"
+        },
+        {
+          "label": "Existing upstream proposal for an ARM64 Linux 6.1 Firecracker guest",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090"
         },
         {
           "label": "Optional mixed-profile dependency policy: 21 roots per architecture and directed violations",
@@ -55957,9 +55973,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "a39f38e89dc7110a5bc35cd70821388d2d22f62a",
-        "observedAt": "2026-11-07T02:24:56+00:00",
-        "disposition": "All selected actions finished. Only the ARM64 runsc/cmd package failed.",
-        "nextAction": "Resolve the ARM64 Sentry thread-consistency failure and qualify the two ordinary profiles together on RBE before enabling the Buildkite job.",
+        "observedAt": "2026-11-07T02:30:44+00:00",
+        "disposition": "The remaining ARM64 failure is a guest-kernel accounting discrepancy. All ten posture cases passed with the unchanged ARM binary on Linux 6.8.",
+        "nextAction": "Qualify the full ARM64 owner on an RBE guest kernel carrying the Linux accounting fix, then verify the two profiles together. The candidate BuildBuddy 6.1 image has not been deployed or booted in this comparison.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
