@@ -528,13 +528,13 @@ func (fs *filesystem) Release(ctx context.Context) {
 func (d *dentry) releaseChildrenLocked(ctx context.Context) {
 	dir := d.inode.impl.(*directory)
 	for _, child := range dir.childMap {
-		// dir and child belong to d.inode.fs, whose mu remains held.
-		// checklocks cannot follow the implementation/map-entry aliases.
+		// child belongs to d.inode.fs, whose mu remains held.
+		// checklocks cannot follow the map-entry alias.
 		if child.inode.isDir() {
 			child.releaseChildrenLocked(ctx) // +checklocksignore
 			// Drop child/. and child/.. links.
 			child.inode.decLinksLocked(ctx) // +checklocksignore
-			dir.inode.decLinksLocked(ctx)   // +checklocksignore
+			d.inode.decLinksLocked(ctx)
 		}
 		// Drop the parent's entry for child.
 		child.inode.decLinksLocked(ctx) // +checklocksignore
