@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T10:40:41+00:00",
+    "updatedAt": "2026-11-07T11:17:48+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2572,9 +2572,17 @@
       "url": "https://github.com/tamird/gvisor/tree/syscall-processes-memory",
       "group": "tests",
       "status": "Agent work",
-      "summary": "The candidate requests standard Bazel test sizes for the ptrace process suite and the test that keeps 512 MiB resident across restore. The native job finished before any of its three tests executed. The receipt has no test attempts or named results. A credential-free build of the same targets on Ubuntu 22.04 is being used to locate the first failure; physical memory sizing is still unverified.",
-      "updatedAt": "2026-11-07T10:40:41+00:00",
+      "summary": "The ptrace and memory-accounting tests need workers that can create 1,000 threads or retain 512 MiB through restore. With only linux-sandbox enabled, the first trial stopped at a Nogo action requiring local execution. Allowing that action built all three targets. The subsequent remote test command failed in five Nogo standard-library analyses before starting a test. Worker sizing remains unverified.",
+      "updatedAt": "2026-11-07T11:12:45+00:00",
       "evidence": [
+        {
+          "label": "Original Nogo execution-strategy error",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42365023579/artifacts/13571104338"
+        },
+        {
+          "label": "Successful three-target build and subsequent pre-test failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42366007580/artifacts/13572166468"
+        },
         {
           "label": "Original no-attempt result for the three syscall targets",
           "url": "https://github.com/tamird/gvisor/actions/runs/42363758011/artifacts/13570706983"
@@ -32838,8 +32846,8 @@
       "url": "https://github.com/tamird/gvisor/commit/b598877f1cfbf369d9dd1c07758707fadaa990c5",
       "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
       "status": "Published as #16590",
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
-      "summary": "Published after contributor approval as #16590. Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.",
+      "updatedAt": "2026-11-07T11:12:45+00:00",
+      "summary": "Published after contributor approval as #16590. Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
@@ -32853,6 +32861,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Optimized releases and generator traces for both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42364033903/artifacts/13571014685"
+        },
         {
           "label": "Published upstream PR",
           "url": "https://github.com/google/gvisor/pull/16590"
@@ -33907,6 +33919,10 @@
       "url": "https://github.com/google/gvisor/pull/16590",
       "evidence": [
         {
+          "label": "Optimized releases and generator traces for both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42364033903/artifacts/13571014685"
+        },
+        {
           "label": "Upstream pull request",
           "url": "https://github.com/google/gvisor/pull/16590"
         },
@@ -33923,9 +33939,9 @@
           "url": "https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
         }
       ],
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-11-07T11:12:45+00:00",
       "status": "open",
-      "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.",
+      "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.",
       "refinement": {
         "before": {
           "head": "4598fe8128aed1be205ee8b848c002b7f85bd897"
@@ -57277,9 +57293,21 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T10:40:41+00:00",
-      "summary": "The mixed Bazel invocation selects 374 shards on each architecture. Every public TestRunner has the same target OS, CPU, test size and worker class as its native counterpart. All 21 previously missing ARM64 test targets and the AMD64 control passed uncached on native workers in one invocation. The three extra build-only labels are ARM64 forms of existing KVM tests that each native invocation also builds. No KVM test execution was added. The complete 748-shard suite has not yet run in a single mixed invocation.",
+      "updatedAt": "2026-11-07T11:17:48+00:00",
+      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment.",
       "evidence": [
+        {
+          "label": "The five original diffs and ten leaf outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367351219/artifacts/13572591028"
+        },
+        {
+          "label": "Original results for all 748 uncached native shards",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525"
+        },
+        {
+          "label": "Single mixed-architecture Bazel invocation",
+          "url": "https://app.buildbuddy.io/invocation/b1d7f5c9-8917-421d-b273-c1ac8e4ef288"
+        },
         {
           "label": "All 748 configured shards and 22 uncached native TestRunner results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42363113678/artifacts/13571137111"
@@ -57733,10 +57761,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T10:40:41+00:00",
-        "disposition": "All 748 selected test shards match the two native configurations. The 21 restored ARM64 owners and the single AMD64 control ran uncached.",
-        "nextAction": "Compare the two original native runs with the corrected source and determine which results can be reused when the complete suite runs in one mixed invocation.",
+        "observedAt": "2026-11-07T11:17:48+00:00",
+        "disposition": "Full mixed presubmit completed with one failing ARM64 shard",
+        "nextAction": "Use an independent two-thread control on the same worker to distinguish filter enforcement from the number reported by procfs.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42367351219/artifacts/13572591028",
+          "https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525",
+          "https://app.buildbuddy.io/invocation/b1d7f5c9-8917-421d-b273-c1ac8e4ef288",
           "https://github.com/tamird/gvisor/actions/runs/42363113678/artifacts/13571137111",
           "https://github.com/tamird/gvisor/commit/f6d6788e8",
           "https://app.buildbuddy.io/invocation/96cf642f-df9f-4ca9-82a5-5dd3717edf45",
@@ -59480,6 +59511,25 @@
         "body": "The graph decoder clears five pointer-bearing tables before returning them to its pool. Clearing each table to capacity also writes through unused slots. Restoring 50,000 tmpfs files on AMD64 cleared 23,347,000 bytes for the kernel frame, including 2,015,680 unused bytes. ARM64 cleared 2,016,424 unused bytes for the same workload [1].\n\nClear each table to its length. A load sizes the type, object and target tables before filling them and only appends to the callback table. Any slots beyond those lengths were zeroed on allocation or cleared by the last load that used them.\n\nThe cost also carries over to small loads that reuse a large decoder. The Large case of BenchmarkSmallGraphAfterRestore decodes one uint64 after a graph of 50,000 objects on one AMD64 CPU, with GC disabled [2].\n\n       │     stock     │                fixed                │\n       │    sec/op     │    sec/op    vs base                │\nLarge    121891.0n ± 1%   686.8n ± 6%  -99.44% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42344764074\n[2]: https://github.com/tamird/gvisor/actions/runs/42343597571",
         "requestedAt": "2026-11-07T06:03:46+00:00"
       }
+    },
+    {
+      "id": "branch:tcp-atomic-queue-membership",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-atomic-queue-membership",
+      "head": "01da93c33151cf9fa7daa6919bd6337f975afa14",
+      "url": "https://github.com/tamird/gvisor/commit/01da93c33",
+      "title": "Remove the TCP endpoint mutex used only for queue membership",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T11:14:14+00:00",
+      "summary": "Two processors can try to queue the same listener. The candidate atomically claims membership before linking the endpoint, and releases it after unlinking. The queue keeps its existing mutex. A native Linux comparison exercises simultaneous claims, dispatcher handoff and the fairness tests.",
+      "evidence": [
+        {
+          "label": "Queue handoff, race checks and paired benchmarks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42366670610"
+        }
+      ]
     }
   ],
   "edges": [
@@ -63260,6 +63310,13 @@
       "type": "depends_on",
       "reason": "Preserve the packet headers retained by the parent while reducing short-read CPU time.",
       "evidence": "https://github.com/google/gvisor/pull/16886"
+    },
+    {
+      "from": "pr:17045",
+      "to": "branch:tcp-atomic-queue-membership",
+      "type": "depends_on",
+      "reason": "Exercise the same enqueue and retry behavior as the pending TCP fairness fix.",
+      "evidence": "https://github.com/google/gvisor/pull/17045"
     }
   ],
   "investigations": [
@@ -76686,7 +76743,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T10:25:32+00:00",
+      "updatedAt": "2026-11-07T11:17:48+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -79206,10 +79263,27 @@
               "url": "https://github.com/tamird/gvisor/commit/a13d73782"
             }
           ]
+        },
+        {
+          "text": "In matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.",
+          "evidence": [
+            {
+              "label": "Optimized releases and generator traces for both architectures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42364033903/artifacts/13571014685"
+            }
+          ]
         }
       ],
-      "nextStep": "Check the remaining release executables when qualifying the release profile. Preserve source lookup for debugging when choosing where to enable Bazel output-path mapping. Follow hermeticbuild/hermetic-launcher#95 for the Python launcher.",
+      "nextStep": "Verify which client-side programs a clean source export needs with Bazel Central Registry LLVM. Trace the remaining host shell uses separately from compilation on the remote workers.",
       "evidence": [
+        {
+          "label": "Empty PATH client comparison on registry LLVM 0.8.24",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42367347403"
+        },
+        {
+          "label": "Optimized releases and generator traces for both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42364033903/artifacts/13571014685"
+        },
         {
           "label": "Optimized release from a Git-free source export with registry LLVM 0.8.24",
           "url": "https://github.com/tamird/gvisor/actions/runs/42361840401/artifacts/13571015047"
@@ -82301,8 +82375,8 @@
       "title": "Printing inline checkpoint memory",
       "status": "active",
       "owner": "Agent",
-      "updatedAt": "2026-11-07T10:40:41+00:00",
-      "summary": "The checkpoint printer treated an eight-byte length as a one-byte state header. It returned success with the wrong boundaries for the following records. The loader restored all 16 pages from the same file byte for byte.",
+      "updatedAt": "2026-11-07T11:17:48+00:00",
+      "summary": "Two checkpoints restored correctly but the stock statefile command printed incorrect page boundaries in both text and HTML. It reported 13 of 59 regions for the wire checkpoint and 29 of 56 for the graph checkpoint. The revised reader matched every region in both files without changing their bytes.",
       "findings": [
         {
           "text": "The stored protobuf was 98 bytes. Its eight-byte prefix placed the end at offset 106; the printer treated the prefix as a one-byte state header and ended at 99. Five real wire checkpoints printed and restored in the same run. Those five did not reproduce the earlier command error.",
@@ -82355,10 +82429,31 @@
               "url": "https://github.com/tamird/gvisor/commit/36c45f974"
             }
           ]
+        },
+        {
+          "text": "On native ARM64 the reader matched the independent byte walk for both MemoryFiles in each checkpoint. The split-page text and HTML outputs matched stock, and all four guest restores verified the original file contents. The reader does not independently count private MemoryFiles against the list of owners.",
+          "evidence": [
+            {
+              "label": "Original checkpoints, independent page boundaries and four guest restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42365642428/artifacts/13572575742"
+            }
+          ]
         }
       ],
-      "nextStep": "Test a reader that uses the existing graph traversal for both output formats and lets pgalloc consume its own metadata and page ranges. Verify text, HTML and restore on identical existing checkpoints without changing any writer.",
+      "nextStep": "Keep generic printing for inputs without an unambiguous format tag. Check that the number of private MemoryFiles matches the recorded owners, including a missing last file and an extra file.",
       "evidence": [
+        {
+          "label": "Original checkpoints, independent page boundaries and four guest restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42365642428/artifacts/13572575742"
+        },
+        {
+          "label": "Reader change on the original checkpoint producer",
+          "url": "https://github.com/tamird/gvisor/commit/11956fada"
+        },
+        {
+          "label": "Same-file decoder, diagnostic and restore comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42365642428"
+        },
         {
           "label": "Four restored guest checkpoints and rejection before loading split pages",
           "url": "https://github.com/tamird/gvisor/actions/runs/42363644244/artifacts/13570642868"
@@ -82394,5 +82489,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T10:40:41+00:00"
+  "updatedAt": "2026-11-07T11:17:48+00:00"
 }
