@@ -1,0 +1,17 @@
+load("//tools:release.bzl", "release_inputs")
+load(":boundary.bzl", "data_fixture", "tree_fixture")
+
+data_fixture(name = "boundary-package", filename = "runsc.deb")
+data_fixture(name = "boundary-archive", filename = "-archive, space\n")
+tree_fixture(name = "boundary-tree")
+
+filegroup(
+    name = "boundary-packages",
+    srcs = [":boundary-package", ":boundary-archive"],
+)
+
+release_inputs(
+    name = "boundary-inputs",
+    packages = ":boundary-packages",
+    python_dist = ":boundary-tree",
+)

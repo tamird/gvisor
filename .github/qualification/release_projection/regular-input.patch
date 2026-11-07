@@ -1,0 +1,17 @@
+diff --git a/tools/release/stage.go b/tools/release/stage.go
+index 5ae35db4fd..ced3071404 100644
+--- a/tools/release/stage.go
++++ b/tools/release/stage.go
+@@ -35,0 +36,8 @@ func sum(src, check, copyTo string) error {
++	// A local Bazel sandbox may expose the declared input through a symlink.
++	info, err := f.Stat()
++	if err != nil {
++		return err
++	}
++	if !info.Mode().IsRegular() {
++		return fmt.Errorf("not a regular release file: %s", src)
++	}
+@@ -83,3 +90,0 @@ func python(src, dst string) error {
+-		if !f.Type().IsRegular() {
+-			return fmt.Errorf("not a regular distribution: %s", name)
+-		}
