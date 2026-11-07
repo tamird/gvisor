@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T15:27:26+00:00",
+    "updatedAt": "2026-11-07T15:33:26+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60494,6 +60494,40 @@
         "summary": "Open this single-commit test fix? The named ICMP test passed. On AMD64 and ARM64, checklocks caught the direct call missing the endpoint lock and accepted the corrected call. The old interface hid the missing precondition on both.",
         "body": "TestConnectICMPError reads the soft error through a local interface\nthat hides LastErrorLocked's lock requirement from checklocks. Joining\nthe handshake and ICMP goroutines does not acquire the endpoint lock.\n\nUse the concrete TCP endpoint and hold its user lock while reading and\nclearing the soft error. The ordinary socket error accessor would\nconsume the hard connection error first."
       }
+    },
+    {
+      "id": "branch:staged-release-publication",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/staged-release-publication",
+      "head": "c661271ae7b13f9e607958444e8cbf553c883720",
+      "title": "Publish staged releases without the builder",
+      "url": "https://github.com/tamird/gvisor/commit/c661271ae",
+      "group": "release",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T15:33:26+00:00",
+      "summary": "Buildkite stages the release artifacts before signing. The proposed publisher consumes that directory directly. The Make frontend still builds its package prerequisites and generates the disposable presubmit key. Ordinary Make completed after six denied Docker calls, including two builder exec probes. Host-only Make and the direct publisher used no Docker; the publisher used no Bazel. A fresh native test verified the signed APT indexes and matched AMD64 and ARM64 package payloads, normalized metadata and optional .changes files. Signed .deb hashes differed. All four raw downloads and their SHA512 sidecars matched byte for byte. The test exercised head, nightly and tagged routing with a disposable key. It intercepted Twine offline and recorded zero cloud writes. Missing key, missing directory, empty directory and scan failure each stopped before repository output.",
+      "evidence": [
+        {
+          "label": "Original local Bazel test, three publisher paths, signed APT outputs, routing and four input controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42386105556/artifacts/13578969295"
+        },
+        {
+          "label": "Single master-based commit and production/presubmit entry points",
+          "url": "https://github.com/tamird/gvisor/commit/c661271ae"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c661271ae7b13f9e607958444e8cbf553c883720",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/c661271ae",
+        "title": "Publish staged releases without the builder",
+        "requestedAt": "2026-11-07T15:33:26+00:00",
+        "summary": "Open this one-commit PR so Buildkite can publish already-staged files directly? The direct path produced verified signed APT repositories and matching raw downloads without invoking Docker or Bazel. Presubmit still uses Make for its disposable key. The tagged Twine call was intercepted offline.",
+        "body": "Buildkite stages the release files before it signs them. Running make\nrelease then probes the Docker builder before invoking the publisher.\n\nPass the staging directory directly to the publisher. Discover regular\nfiles there once and preserve filename boundaries. Stop on a failed or\nempty scan before writing the repository. Local Make keeps its package\nand key prerequisites, including the disposable key used in presubmit."
+      }
     }
   ],
   "edges": [
@@ -83776,5 +83810,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T15:27:26+00:00"
+  "updatedAt": "2026-11-07T15:33:26+00:00"
 }
