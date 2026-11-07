@@ -1,35 +1,51 @@
-name: CI
-
-"on":
+name: Check both checkpoint inspector test owners
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/checkpoint-inspector-format-tests]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 120
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Prepare the previous native GNU client and verify the unchanged product
+        env: {CPU: arm64}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = ebcea451de61a61957c82527fa94241827267cde
+          test "$(git rev-parse HEAD^^)" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/checkpoint_format_tests.py' ':!.github/workflows/build.yml'
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git 2d112a9314987d6c2ad9317947a9908ce770dff9
+          git diff --exit-code FETCH_HEAD HEAD^ -- . ':!runsc/cmd/sentry/forwardcmd/statefile_test.go' ':!pkg/state/graph_print_test.go'
+          d="$RUNNER_TEMP/checkpoint-format-tests"
+          mkdir -m 0700 "$d"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = aarch64
+          checksum=bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d
+          mirror=https://ports.ubuntu.com/ubuntu-ports
+          other_arch=amd64
+          other_cxx=x86_64-linux-gnu-g++
+          if ! command -v "$other_cxx" >/dev/null || ! dpkg -s libnuma-dev >/dev/null 2>&1; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] $mirror $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=- -o Acquire::Retries=3)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends "crossbuild-essential-$other_arch" libnuma-dev
+          fi
+          curl -fsSL --max-time 120 "https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$CPU" -o "$d/bazel"
+          echo "$checksum  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Run both complete test owners and focused regression controls
+        run: python3 -IB .github/qualification/checkpoint_format_tests.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: checkpoint-format-tests-arm64
+          path: ${{ runner.temp }}/checkpoint-format-tests/result.json
+          if-no-files-found: warn
+          retention-days: 14
