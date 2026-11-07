@@ -46,40 +46,29 @@ type epQueue struct {
 // pending on at most one processor.
 //
 // +checklocksexclude:q.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (q *epQueue) enqueue(e *Endpoint) bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	e.pendingProcessingMu.Lock()
-	defer e.pendingProcessingMu.Unlock()
-
-	if e.pendingProcessing {
+	if !e.pendingProcessing.CompareAndSwap(false, true) {
 		return false
 	}
 	q.list.PushBack(e)
-	e.pendingProcessing = true
 	return true
 }
 
 // dequeue removes and returns the first element from the queue if available,
 // returns nil otherwise.
 //
-// The caller must not hold a queued endpoint's pendingProcessingMu. checklocks
-// cannot name that mutex through the endpoint obtained from the queue.
-//
 // +checklocksexclude:q.mu
 func (q *epQueue) dequeue() *Endpoint {
 	q.mu.Lock()
-	if e := q.list.Front(); e != nil {
+	defer q.mu.Unlock()
+	e := q.list.Front()
+	if e != nil {
 		q.list.Remove(e)
-		e.pendingProcessingMu.Lock()
-		e.pendingProcessing = false
-		e.pendingProcessingMu.Unlock()
-		q.mu.Unlock()
-		return e
+		e.pendingProcessing.Store(false)
 	}
-	q.mu.Unlock()
-	return nil
+	return e
 }
 
 // empty returns true if the queue is empty, false otherwise.
@@ -110,7 +99,6 @@ func (p *processor) close() {
 }
 
 // +checklocksexclude:p.epQ.mu
-// +checklocksexclude:ep.pendingProcessingMu
 func (p *processor) queueEndpoint(ep *Endpoint) {
 	// Queue an endpoint for processing by the processor goroutine.
 	p.epQ.enqueue(ep)
@@ -156,7 +144,6 @@ func deliverAccepted(ep *Endpoint) bool {
 //
 // +checklocksrelease:ep.mu
 // +checklocksexclude:ep.segmentQueue.mu
-// +checklocksexclude:ep.pendingProcessingMu
 func handleConnecting(ep *Endpoint) {
 	cleanup := func() {
 		ep.mu.Unlock()
@@ -484,10 +471,9 @@ func (d *dispatcher) wait() {
 // queuePacket queues an incoming packet to the matching tcp endpoint and
 // also queues the endpoint to a processor queue for processing.
 //
-// The caller must not hold the target endpoint's segmentQueue.mu or
-// pendingProcessingMu, or the selected processor's queue mutex. checklocks
-// cannot name these locks through stackEP's interface type and the indexed
-// processor selection.
+// The caller must not hold the target endpoint's segmentQueue.mu or the
+// selected processor's queue mutex. checklocks cannot name these locks
+// through stackEP's interface type and the indexed processor selection.
 func (d *dispatcher) queuePacket(stackEP stack.TransportEndpoint, id stack.TransportEndpointID, clock tcpip.Clock, pkt *stack.PacketBuffer) {
 	d.mu.Lock()
 	closed := d.closed

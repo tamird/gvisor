@@ -39,7 +39,6 @@ func logDisconnect() {
 // beforeSave is invoked by stateify.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) beforeSave() {
 	// Stop incoming packets.
 	e.segmentQueue.freeze()
@@ -178,7 +177,6 @@ func (e *Endpoint) closeEndpointAtRestore() {
 // Restore implements tcpip.RestoredEndpoint.Restore.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Restore(s *stack.Stack) {
 	if !e.EndpointState().closed() {
 		e.keepalive.timer.init(s.Clock(), timerHandler(e, e.keepaliveTimerExpired))
@@ -376,7 +374,6 @@ func (e *Endpoint) Resume() {
 // queued segments. The run-queue is not saved across checkpoint/restore.
 //
 // +checklocksexclude:e.segmentQueue.mu
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) requeueOnRestore() {
 	if e.segmentQueue.empty() || e.isOwnedByUser() {
 		return

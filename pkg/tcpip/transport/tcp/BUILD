@@ -15,13 +15,6 @@ declare_mutex(
 )
 
 declare_mutex(
-    name = "pending_processing_mutex",
-    out = "pending_processing_mutex.go",
-    package = "tcp",
-    prefix = "pendingProcessing",
-)
-
-declare_mutex(
     name = "last_error_mutex",
     out = "last_error_mutex.go",
     package = "tcp",
@@ -159,7 +152,6 @@ go_library(
         "hasher_mutex.go",
         "keepalive_mutex.go",
         "last_error_mutex.go",
-        "pending_processing_mutex.go",
         "protocol.go",
         "protocol_mutex.go",
         "protocol_state.go",
