@@ -99,6 +99,7 @@ go_library(
     ],
     deps = [
         "//pkg/gohacks",
+        "//pkg/log",
         "//pkg/state/wire",
     ],
 )

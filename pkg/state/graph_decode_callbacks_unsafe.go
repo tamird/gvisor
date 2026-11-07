@@ -23,6 +23,7 @@ import (
 	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/gohacks"
+	"gvisor.dev/gvisor/pkg/log"
 )
 
 // load decodes the stream in data into the value of type ti at root.
@@ -414,6 +415,9 @@ func (gd *graphStructDecoder) afterLoadTo(l AfterLoader) {
 func loadGraph(ctx context.Context, r io.Reader, rootPtr any, length uint64, start int64) (Stats, error) {
 	ds := newGraphDecodeState(ctx)
 	defer ds.release()
+	previous := ds.studyRoot
+	ds.studyRoot = fmt.Sprintf("%T", rootPtr)
+	previousCallbacks := cap(ds.cbs)
 	ds.stats.used = true
 	ds.stats.enabled = collectStats.Load()
 	if length > maxStreamLength {
@@ -442,5 +446,14 @@ func loadGraph(ctx context.Context, r io.Reader, rootPtr any, length uint64, sta
 	ds.stats.bytes = len(data)
 	ds.stats.objects = len(ds.objs)
 	ds.stats.elapsed = gohacks.Nanotime() - start
+	if err == nil {
+		kept := cap(ds.objs) <= maxPooledBytes/64 && cap(ds.targets) <= maxPooledBytes/8 && cap(ds.cbs) <= maxPooledBytes/64
+		live := uintptr(len(ds.types))*unsafe.Sizeof(ds.types[0]) + uintptr(len(ds.typeNames))*unsafe.Sizeof(ds.typeNames[0]) +
+			uintptr(len(ds.objs))*unsafe.Sizeof(ds.objs[0]) + uintptr(len(ds.cbs))*unsafe.Sizeof(ds.cbs[0]) + uintptr(len(ds.targets))*unsafe.Sizeof(ds.targets[0])
+		capacity := uintptr(cap(ds.types))*unsafe.Sizeof(ds.types[0]) + uintptr(cap(ds.typeNames))*unsafe.Sizeof(ds.typeNames[0]) +
+			uintptr(cap(ds.objs))*unsafe.Sizeof(ds.objs[0]) + uintptr(cap(ds.cbs))*unsafe.Sizeof(ds.cbs[0]) + uintptr(cap(ds.targets))*unsafe.Sizeof(ds.targets[0])
+		log.Infof("STATE-POOL-FRAME root=%s previous=%q previousCallbacks=%d callbacks=%d kept=%t live=%d capacity=%d",
+			ds.studyRoot, previous, previousCallbacks, len(ds.cbs), kept, live, capacity)
+	}
 	return Stats{graph: ds.stats}, err
 }

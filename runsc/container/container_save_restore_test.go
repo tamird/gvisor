@@ -3075,6 +3075,8 @@ func TestCheckpointTmpfsTreeForProfile(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(imageDir, "spec.json"), []byte(`{"names":["__no_name_0"],"mounts":["/","/tmpfs"]}`), 0644); err != nil {
 		t.Fatal(err)
 	}
+	logs := t.TempDir()
+	conf.DebugLog = filepath.Join(logs, "%COMMAND%-%TIMESTAMP%.log")
 	start = time.Now()
 	restored, err := New(conf, args)
 	if err != nil {
@@ -3098,4 +3100,26 @@ func TestCheckpointTmpfsTreeForProfile(t *testing.T) {
 	t.Logf("TMPFS-NS new-to-guest %d", ready.Sub(start).Nanoseconds())
 	work(restored, "fsTreeVerify")
 	t.Logf("TMPFS-VERIFIED 50000")
+	files, err := filepath.Glob(filepath.Join(logs, "boot-*.log"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 {
+		t.Fatalf("expected one restored Sentry log, found %d", len(files))
+	}
+	var featuresSeen, kernelSeen bool
+	content, err := os.ReadFile(files[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range strings.Split(string(content), "\n") {
+		if _, row, ok := strings.Cut(line, "STATE-POOL-FRAME "); ok {
+			t.Logf("FRAME-CENSUS %s", row)
+			featuresSeen = featuresSeen || strings.HasPrefix(row, "root=*cpuid.FeatureSet ")
+			kernelSeen = kernelSeen || strings.HasPrefix(row, "root=*kernel.Kernel ")
+		}
+	}
+	if !featuresSeen || !kernelSeen {
+		t.Fatalf("missing restore frames: feature set=%t kernel=%t", featuresSeen, kernelSeen)
+	}
 }
