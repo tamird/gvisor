@@ -50,6 +50,8 @@ single_version_override(
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
         "//tools:rules_go_bootstrap_shell.patch",
+        # Drop once rules_go includes bazel-contrib/rules_go#4774.
+        "//tools:rules_go_stdlib_srcs.patch",
     ],
     version = "0.65.0",
 )
