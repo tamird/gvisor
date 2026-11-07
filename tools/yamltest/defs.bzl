@@ -1,6 +1,6 @@
 """Tools for testing yaml files against schemas."""
 
-load("//tools/bazeldefs:test_architectures.bzl", "with_presubmit_variant")
+load("//tools/bazeldefs:test_architectures.bzl", "with_presubmit_variant", "with_test_architecture")
 
 def _yaml_test_impl(ctx):
     """Implementation for yaml_test."""
@@ -54,4 +54,5 @@ yaml_test = rule(
     test = True,
 )
 
-presubmit_yaml_test = with_presubmit_variant(yaml_test)
+_arm64_yaml_test, _arm64_transition = with_test_architecture(yaml_test, "arm64").build()
+presubmit_yaml_test = with_presubmit_variant(yaml_test, _arm64_yaml_test)

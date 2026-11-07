@@ -16,8 +16,7 @@
 
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_lib//lib:write_source_files.bzl", "write_source_file", "write_source_files")
-load("@bazel_skylib//rules:native_binary.bzl", "native_test")
-load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_declaration")
+load("//tools/bazeldefs:presubmit_tests.bzl", "arm64_presubmit_executable")
 
 def governance_source_files(name, files):
     """Declares the workspace updater and checks its generated files on both CPUs."""
@@ -36,7 +35,7 @@ def governance_source_files(name, files):
 
         # Run bazel-lib's generated test with its original check, message
         # and runfiles, all configured for the ARM64 target.
-        arm64_presubmit_declaration(test, native_test, src = ":" + test, size = "small")
+        arm64_presubmit_executable(test, size = "small")
     write_source_files(name = name, additional_update_targets = updates)
     native.test_suite(name = name + "_tests", tests = tests)
 
