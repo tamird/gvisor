@@ -1,35 +1,68 @@
-name: CI
-
-"on":
+name: Measure decoder reuse on native Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-decoder-release-study]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Pin source trees and prepare Bazelisk
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 370940da75fccafe7b07d01f2edb9b74dc0ce0dd
+          test "$(git rev-parse HEAD~2)" = 0e60eabcc2ef88f5962db3f988813faee6a391df
+          test "$(git rev-parse HEAD~3)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
+          git diff --exit-code HEAD~2 HEAD^ -- . ':!pkg/state/graph_decode_unsafe.go'
+          test "$(git rev-parse HEAD^:pkg/state/graph_decode_unsafe.go)" = 3b4661d8bdb7e5db6088ac282d70769dbb7159b9
+          test "$(git rev-parse HEAD~2:pkg/state/graph_decode_unsafe.go)" = 9747246294ee5188bce4f888d4e5f061e3a9aba8
+          w="$RUNNER_TEMP/state-release"
+          mkdir -p "$w/records"
+          cp .github/qualification/state_release.py "$w/"
+          cd "$w"
+          curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o bazel
+          echo 'e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel' | sha256sum --check
+          chmod 755 bazel
+      - name: Configure the native RBE profiles
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          rc="$RUNNER_TEMP/state-release/remote.bazelrc"
+          cat >"$rc" <<'RC'
+          build:source-presubmit-common --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit-common --jobs=48 --remote_download_outputs=toplevel
+          test:source-presubmit-common --remote_download_regex=.*test[.](log|xml)$
+          test:source-presubmit-common --nocache_test_results --flaky_test_attempts=1
+          test:source-presubmit-common --modify_execution_info=^TestRunner$=+no-remote-cache
+          RC
+          printf 'build:source-presubmit-common --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >>"$rc"
+      - name: Build benchstat and the two benchmark binaries
+        id: compiled
+        run: python3 -IB "$RUNNER_TEMP/state-release/state_release.py" build
+      - name: Alternate the two binaries on one CPU and compare with benchstat
+        if: ${{ !cancelled() && steps.compiled.outcome == 'success' }}
+        run: python3 -IB "$RUNNER_TEMP/state-release/state_release.py" measure
+      - name: Verify the owning state suites on native AMD64 and ARM64
+        if: ${{ !cancelled() }}
+        run: python3 -IB "$RUNNER_TEMP/state-release/state_release.py" suites
+      - name: Restore and read all 50,000 files on both versions
+        if: ${{ !cancelled() }}
+        run: python3 -IB "$RUNNER_TEMP/state-release/state_release.py" guest
+      - name: Remove the private RBE configuration
+        if: always()
+        run: rm -f -- "$RUNNER_TEMP/state-release/remote.bazelrc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: state-decoder-release
+          path: ${{ runner.temp }}/state-release/records/
+          if-no-files-found: error
