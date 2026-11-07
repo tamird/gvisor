@@ -25,7 +25,27 @@ import (
 	"github.com/google/go-cmp/cmp"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"google.golang.org/protobuf/proto"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 )
+
+// idleGuestSpec keeps the container running until the test destroys it.
+func idleGuestSpec(t *testing.T) *specs.Spec {
+	t.Helper()
+	appPath, ok := os.LookupEnv("GVISOR_CMD_TEST_APP")
+	if !ok {
+		t.Fatal("GVISOR_CMD_TEST_APP is not set")
+	}
+	app, err := testutil.FindFile(appPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec := testutil.NewSpecWithArgs("/test_app", "task-tree", "--depth=0")
+	spec.Root.Path = t.TempDir()
+	if err := testutil.Copy(app, filepath.Join(spec.Root.Path, "test_app")); err != nil {
+		t.Fatalf("copy test_app to guest root: %v", err)
+	}
+	return spec
+}
 
 func makedev(maj, min uint32) uint64 {
 	return (uint64(min) & 0xff) | (uint64(maj) & 0xfff << 8) | ((uint64(min) &^ 0xff) << 12) | ((uint64(maj) &^ 0xfff) << 32)

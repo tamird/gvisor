@@ -122,8 +122,10 @@ go_test(
     data = [
         "//:release",  # keep
         "//runsc",  # keep
+        "//test/cmd/test_app",
     ],
     embed = [":cmd"],
+    env = {"GVISOR_CMD_TEST_APP": "$(rootpath //test/cmd/test_app)"},
     deps = [
         "//pkg/abi/linux",
         "//pkg/control/server",
