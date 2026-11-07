@@ -1,4 +1,4 @@
-"""Materialize only the nine ARM64 release blobs in the two original manifests."""
+"""Materialize only the nine AMD64 release blobs in the two original manifests."""
 
 import hashlib
 import importlib.util
@@ -13,8 +13,8 @@ WORK = Path(os.environ["RUNNER_TEMP"]) / "cross-native-guest"
 INPUTS = Path("test/rbe/payload")
 REMOTE = "500c9c79a833d1037e3b2532e8174a94b22398123f5e6b50fb8c408b7f43a046"
 LOCAL = "9fdc1f767876e5f5ffd520eaae6afe2b790cca8617b1fff7703d09e36f22a813"
-MANIFEST = "31bdb511152716c0bf87d2b6b127b2dab0fa92f707be03437cfc841dcd15db85"
-INVOCATION = "d9b43462-e952-48ce-9e40-d22437114368"
+MANIFEST = "b347f60b12e4b0631a9252f216c6b72cfd62850f36f0a8811b9e20306fca4fda"
+INVOCATION = "46d694c5-51fc-4719-9d5c-3212406fe734"
 
 
 def original(filename, checksum, member):
@@ -29,18 +29,18 @@ def main():
     receipt = {"originalRemote": REMOTE, "originalLocal": LOCAL, "invocation": INVOCATION,
                "materialized": {}, "verified": False}
     try:
-        remote = original("remote.zip", REMOTE, "release-arm64.json")
+        remote = original("remote.zip", REMOTE, "release-amd64.json")
         local = original("local.zip", LOCAL, "lean-client.json")
         assert remote["source"] == local["base"] == "dd2be7670c1baaacebfdcab31bb6145ebce39037"
         assert local["source"] == "61ff148f0df0efa29c9f500914477525c5debe62" and local["both_releases_verified"]
-        assert remote["target"] == "arm64" and remote["exec"] == "amd64" and remote["roots"] == ["//:release"]
+        assert remote["target"] == "amd64" and remote["exec"] == "amd64" and remote["roots"] == ["//:release"]
         assert remote["verified"] and remote["all_native_copies"] and remote["all_original_links"]
         assert remote["invocation"] == INVOCATION
-        same = local["arms"]["arm64"]["files"]
+        same = local["arms"]["amd64"]["files"]
         assert len(same) == 9 and same.keys() == remote["files"].keys()
         files = {}
         for name, item in remote["files"].items():
-            assert item["machine"] == same[name]["machine"] == 183 and item["load"] and item["entry"]
+            assert item["machine"] == same[name]["machine"] == 62 and item["load"] and item["entry"]
             assert not item["interp"] and not item["dynamic"] and same[name]["reference_matches"]
             assert item["bytes"] == same[name]["bytes"] and item["sha256"] == same[name]["sha256"]
             files[name] = {"sha256": item["sha256"], "bytes": item["bytes"]}

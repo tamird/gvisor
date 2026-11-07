@@ -1,4 +1,4 @@
-"""Check the transferred ARM64 release and boot its Sentry in a private root."""
+"""Check the transferred AMD64 release and boot its Sentry in a private root."""
 
 import hashlib
 import json
@@ -17,10 +17,10 @@ import runtime_guest as guest
 
 SOURCE = "61ff148f0df0efa29c9f500914477525c5debe62"
 PRODUCER = "dd2be7670c1baaacebfdcab31bb6145ebce39037"
-INVOCATION = "d9b43462-e952-48ce-9e40-d22437114368"
-MANIFEST = "31bdb511152716c0bf87d2b6b127b2dab0fa92f707be03437cfc841dcd15db85"
+INVOCATION = "46d694c5-51fc-4719-9d5c-3212406fe734"
+MANIFEST = "b347f60b12e4b0631a9252f216c6b72cfd62850f36f0a8811b9e20306fca4fda"
 TARGET = "//test/rbe:cross_built_release_guest"
-BUSYBOX = "52151e7f322f926b64049cdaa1410dc3ea6485525e0624b05813791c219ae933"
+BUSYBOX = "dbac288c29ba568459550a2da9e7ae0ded6b1fc728ee9fad3044c44e62d6ac14"
 MEMBERS = {"runsc", "containerd-shim-runsc-v1"} | {"gvisor-bin/"+s for s in (
     "gvisor_sentry", "checkpointgofer", "gvisor-sentry-prewarmer", "runsc-fd-parking",
     "runsc-metric-server", "runsc-netgofer", "gvisor-proc-umounter")}
@@ -54,7 +54,7 @@ def install(directory, expected, archive):
             path.chmod(0o755)
             with path.open("rb") as stream:
                 hdr = stream.read(64)
-            assert hdr[:6] == b"\x7fELF\x02\x01" and int.from_bytes(hdr[18:20], "little") == 183
+            assert hdr[:6] == b"\x7fELF\x02\x01" and int.from_bytes(hdr[18:20], "little") == 62
             got[name] = digest(path)
             assert got[name] == expected[name]["sha256"]
     assert got.keys() == MEMBERS
@@ -65,14 +65,14 @@ def fetch_fixture():
     WORK.mkdir(exist_ok=True)
     guest.q.TASK = guest.r.TASK = WORK
     row = {}
-    path = guest.fixture(row, "arm64")
+    path = guest.fixture(row, "amd64")
     assert digest(path) == BUSYBOX
     shutil.copy2(path, PAYLOAD / "busybox")
 
 
 def execute(row):
     assert not {"BUILDBUDDY_API_KEY", "ACCESS", "GITHUB_TOKEN", "GH_TOKEN"}.intersection(os.environ)
-    assert os.geteuid() != 0 and platform.machine() == "aarch64"
+    assert os.geteuid() != 0 and platform.machine() == "x86_64"
     inputs = Path(os.environ["TEST_SRCDIR"]) / os.environ["TEST_WORKSPACE"] / PAYLOAD
     archive = inputs / "release.tar.gz"
     metadata = inputs / "manifest.json"
@@ -106,14 +106,14 @@ def execute(row):
     row["guest"] = {key: smoke.get(key) for key in (*criteria, "exit", "stdout_sha256", "prewarmer_selected",
                                                     "setupStages", "startupFailures")}
     row["guest"]["sameSentryInode"] = (capsule/"release"/SENTRY).samefile(installed/SENTRY)
-    row["guest"]["cpu"] = "aarch64" if result.splitlines()[-1:] == [b"aarch64"] else None
+    row["guest"]["cpu"] = "x86_64" if result.splitlines()[-1:] == [b"x86_64"] else None
     row["guest"]["marker"] = marker if result.splitlines()[:1] == [marker.encode()] else None
     diag = " ".join(smoke.get("stderr", {}).get("lines", [])).lower()
     row["guest"]["diagnostics"] = [term for term in ("not permitted", "permission denied", "no such file",
                                    "exec format error", "timed out", "unknown flag", "release version")
                                    if term in diag]
     row["verified"] = bool(smoke.get("exit") == 0 and all(smoke.get(k) for k in criteria)
-                           and row["guest"]["sameSentryInode"] and result.splitlines() == [marker.encode(), b"aarch64"])
+                           and row["guest"]["sameSentryInode"] and result.splitlines() == [marker.encode(), b"x86_64"])
     assert row["verified"]
     row["stage"] = "complete"
 
