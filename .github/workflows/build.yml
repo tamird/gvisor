@@ -1,99 +1,35 @@
-name: Recover the missing attachment-local fdbased results
+name: Recover the original occupied-worker control
 on:
   push:
-    branches: [qualification/netgofer-fdbased-attachment-recovery]
+    branches: [qualification/fdbased-attachment-original-result]
 permissions: {contents: read}
 jobs:
-  qualify:
+  original:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 5}
-      - name: Bind the two products to the tested full-presubmit integration
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the original native qualification
         run: |
-          set -eu
-          test "$(git rev-parse HEAD^)" = ac9ce7c6cedddadcba30b2b183ccf7068ab3e551
-          test "$(git rev-parse HEAD^^)" = 8a120ab6c04ad9b8007be155d16ce0f98b0b87df
-          test "$(git rev-parse HEAD^^^)" = fbad38ea661236e230a355fde5d0f87d9cac44bb
-          test "$(git rev-parse HEAD^^^^)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/netgofer_profiles.py' ':!.github/qualification/netgofer_profile_cases.json' ':!.github/qualification/exec_cas.py' ':!.github/qualification/source_presubmit_workers.py'
-          d="$RUNNER_TEMP/netgofer-native-profiles"
-          mkdir -p "$d"
-          cp .github/qualification/{exec_cas.py,source_presubmit_workers.py,netgofer_profiles.py,netgofer_profile_cases.json} "$d/"
-          git checkout --quiet --detach HEAD^
-          test "$(git rev-parse HEAD^{tree})" = 70e864a8fe0f98a07ef1689046fcac94dc1364ff
-          printf '%s\n' //pkg/tcpip/link/fdbased:fdbased_test > "$d/owner.targets"
-          head -1 "$d/owner.targets" > "$d/before.targets"
-          curl --retry 2 -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
-          cd "$d"
-          echo '8e4eca567f69cbbf64f848358f069b0f47a12ea83460da8c0102b877323ee164  netgofer_profile_cases.json' | sha256sum --check
-          echo 'e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel' | sha256sum --check
-          chmod 755 bazel
-      - name: Run only the missing fdbased owner
-        id: execute
+          test "$(git rev-parse HEAD^)" = 5d0ce126c6119470ac3a59330e8db83dfe24a64b
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/fdbased_original.py'
+      - name: Read only the original failed TestRunner log and XML
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -IB .github/qualification/fdbased_original.py
+      - name: Verify the bounded receipt
+        id: bound
+        if: always() && !cancelled()
         run: |
-          set -eu
-          umask 077
-          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
-          d="$RUNNER_TEMP/netgofer-native-profiles"
-          rc="$d/client.rc"
-          trap 'rm -f "$rc"' EXIT
-          cat > "$rc" <<'RC'
-          build:source-presubmit-common --remote_executor=grpcs://remote.buildbuddy.io
-          build:source-presubmit-common --remote_cache=grpcs://remote.buildbuddy.io
-          build:source-presubmit-common --bes_backend=grpcs://remote.buildbuddy.io
-          build:source-presubmit-common --bes_results_url=https://app.buildbuddy.io/invocation/
-          RC
-          printf 'build:source-presubmit-common --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >>"$rc"
-          unset BUILDBUDDY_API_KEY
-          for arch in before amd64 arm64; do
-            fixed=ac9ce7c6cedddadcba30b2b183ccf7068ab3e551
-            test_file=pkg/tcpip/link/fdbased/endpoint_test.go
-            targets="$d/owner.targets"
-            filter=()
-            if [ "$arch" = before ]; then
-              git checkout -q --detach 8a120ab6c04ad9b8007be155d16ce0f98b0b87df
-              git restore --source="$fixed" --worktree -- "$test_file"
-              test "$(git diff --name-only)" = "$test_file"
-              test "$(git hash-object "$test_file")" = "$(git rev-parse "$fixed:$test_file")"
-              targets="$d/before.targets"
-              filter=('--test_filter=^TestSeqpacketWorkerShutdown$')
-            else
-              git restore --worktree -- "$test_file"
-              git checkout -q --detach "$fixed"
-              git diff --exit-code --quiet
-            fi
-            profile=source-presubmit
-            if [ "$arch" = arm64 ]; then profile=source-presubmit-arm64; fi
-            code=0
-            "$d/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx6g --bazelrc="$rc" test \
-              --config="$profile" --jobs=48 --keep_going --noremote_local_fallback --nocache_test_results --flaky_test_attempts=1 \
-              '--modify_execution_info=^TestRunner$=+no-remote-cache' --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v \
-              --remote_download_outputs=minimal '--remote_download_regex=.*testlogs/pkg/tcpip/link/fdbased/fdbased_test/test[.](log|xml)$' \
-              --run_under="bash -c 'echo NATIVE_PEER_WORKER=\$(/bin/uname -m); exec \"\$@\"' observe" \
-              --build_event_json_file="$d/$arch.bep" --symlink_prefix="bazel-peer-$arch-" \
-              "${filter[@]}" --target_pattern_file="$targets" >"$d/$arch.console" 2>&1 || code=$?
-            echo "$code" > "$d/$arch.exit"
-          done
-      - name: Read each original test log and XML after credential removal
-        id: tests
-        if: always() && !cancelled() && steps.execute.outcome != 'skipped'
-        run: python3 -IB "$RUNNER_TEMP/netgofer-native-profiles/netgofer_profiles.py" tests
-      - name: Read the three fresh TestRunner assignments and the original compiler diagnostic
-        if: always() && !cancelled() && steps.tests.outcome == 'success'
-        env:
-          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -IB "$RUNNER_TEMP/netgofer-native-profiles/netgofer_profiles.py" workers
+          f="$RUNNER_TEMP/fdbased-original.json"
+          test -s "$f" && test "$(wc -c < "$f")" -lt 8192
+          jq -e '.invocation=="f9367db2-e9da-4009-be7f-3e7521dcc254" and .owner=="//pkg/tcpip/link/fdbased:fdbased_test"' "$f" >/dev/null
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always() && !cancelled() && steps.tests.outcome == 'success'
+        if: always() && steps.bound.outcome == 'success' && !cancelled()
         with:
-          name: fdbased-attachment-recovery
-          path: ${{ runner.temp }}/netgofer-native-profiles/receipt.json
+          name: fdbased-original-control
+          path: ${{ runner.temp }}/fdbased-original.json
           if-no-files-found: error
           retention-days: 14
-      - name: Require all original test and worker evidence
-        run: jq -e '.verified == true' "$RUNNER_TEMP/netgofer-native-profiles/receipt.json"
