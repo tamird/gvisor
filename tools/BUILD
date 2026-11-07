@@ -78,6 +78,7 @@ exports_files([
     "gazelle-native-environment.patch",
     "go-allow-internal.patch",
     "llvm-linux-header-default.patch",
+    "rules_go_bootstrap_shell.patch",
 ])
 
 py_test(
