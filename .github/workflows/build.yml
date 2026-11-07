@@ -1,35 +1,98 @@
-name: CI
-
-"on":
+name: Compare mapped public releases on native AMD64 and ARM64 workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/mapped-public-release-pair]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  archives:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 130
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the original nine-member release, both native workers and verification tools
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/chainguard-release"
+          mkdir -m 700 "$d"
+          source=bb983b988802b854bd03dd7a0a5220e7e7b4440e
+          test "$(git rev-parse HEAD^)" = "$source"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/chainguard_release/**' ':!test/rbe/release_prewarmer/**'
+          cp .github/qualification/chainguard_release/{collect.py,memory.py,baselines.json,direct.py} "$d/"
+          cp test/rbe/release_prewarmer/{BUILD,native.bzl} "$d/"
+          git checkout -q --detach "$source"
+          mkdir -p test/rbe/release_prewarmer
+          cp "$d"/{BUILD,native.bzl} test/rbe/release_prewarmer/
+          git diff --exit-code HEAD
+          test "$(git ls-files --others --exclude-standard)" = "$(printf '%s\n' test/rbe/release_prewarmer/BUILD test/rbe/release_prewarmer/native.bzl)"
+          git describe --always --tags --exclude 'release-*-staging' --abbrev=12 --dirty >"$d/version"
+          test "$(cat "$d/version")" = bb983b988802
+          test "$(git rev-parse HEAD:debian/BUILD)" = 00412de320be320c9cbee06463906dec55bac125
+          test "$(git rev-parse HEAD:MODULE.bazel)" = 7cbdd087006af2f31b9873410b05866d5ee45f1b
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          curl -fsSL --retry 2 --proto '=https' --proto-redir '=https' --max-time 120 \
+            https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $d/bb" | sha256sum -c -
+          chmod 755 "$d/bb"
+          python3 -IB "$d/memory.py"
+      - name: Package the existing CLI, Sentry, and sidecars on both native workers
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/chainguard-release"
+          rc="$d/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          test "$(git rev-parse HEAD)" = bb983b988802b854bd03dd7a0a5220e7e7b4440e
+          cat >"$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=48 --remote_timeout=10m
+          build --experimental_output_paths=strip
+          build --host_platform=//test/rbe/release_prewarmer:amd64
+          build --extra_execution_platforms=//test/rbe/release_prewarmer:amd64,//test/rbe/release_prewarmer:arm64
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://cgr.dev/chainguard/static@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >>"$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout --signal=INT --kill-after=45s 60m bazelisk --bazelrc="$d/heap.rc" --bazelrc="$rc" build \
+            --config=x86_64 -c opt --keep_going --lockfile_mode=off --remote_download_outputs=toplevel \
+            --@rules_python//python/config_settings:bootstrap_impl=native \
+            --@io_bazel_rules_go//go/config:experimental_use_sh_toolchain \
+            '--modify_execution_info=^PackageTar$=+no-remote-cache' \
+            --build_event_publish_all_actions --build_event_json_file_path_conversion=false \
+            --build_event_json_file="$d/build.bep" --execution_log_compact_file="$d/build.compact" \
+            --color=no --curses=no --noshow_progress \
+            //test/rbe/release_prewarmer:release_amd64 //test/rbe/release_prewarmer:release_arm64 >"$d/build.log" 2>&1 || code=$?
+          printf '%s\n' "$code" >"$d/exit"
+          if [ "$code" = 0 ]; then
+            python3 -IB "$d/direct.py" build
+          fi
+      - name: Verify the original archives, named output sets and action records without credentials
+        id: result
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/chainguard-release"
+          test ! -e "$d/client.rc"
+          python3 -IB "$d/collect.py"
+          python3 -IB "$d/direct.py" verify
+          test -f "$d/result.json" && test ! -L "$d/result.json" && test "$(wc -c <"$d/result.json")" -lt 65536
+          jq -e '.source=="bb983b988802b854bd03dd7a0a5220e7e7b4440e"' "$d/result.json" >/dev/null
+          ! grep -Eiq 'x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$d/result.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.result.outcome == 'success'
+        with:
+          name: mapped-public-release-comparison
+          path: ${{ runner.temp }}/chainguard-release/result.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require both actual nine-file archives and fresh native packaging actions
+        if: always() && steps.result.outcome == 'success'
+        run: jq -e '.verified and .direct_match_verified' "$RUNNER_TEMP/chainguard-release/result.json"
