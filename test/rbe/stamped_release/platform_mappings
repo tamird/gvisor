@@ -1,0 +1,7 @@
+platforms:
+  //tools/bazeldefs:linux_amd64
+    --host_platform=//test/rbe/stamped_release:amd64
+    --extra_execution_platforms=//test/rbe/stamped_release:amd64
+  //tools/bazeldefs:linux_arm64
+    --host_platform=//test/rbe/stamped_release:arm64
+    --extra_execution_platforms=//test/rbe/stamped_release:arm64

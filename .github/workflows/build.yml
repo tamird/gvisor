@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Check installed release identities on native workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/release-sidecar-identity]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Verify the two release inputs and test scope
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = b95ea1cb6e56608b839272644bc5356a77dcf353
+          test "$(git rev-parse HEAD^^)" = f462794c042c7325ac0452551b1f18e7083dede4
+          test "$(git diff --name-only HEAD^^ HEAD^)" = runsc/cmd/netgofer/BUILD
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/sidecar_identity.py' ':!test/rbe/release_identity/**' ':!test/rbe/stamped_release/**'
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+          mkdir -m 700 "$RUNNER_TEMP/sidecar-identity"
+      - name: Compare matching and mismatched labels on the installed binaries
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/sidecar-identity"
+          rc="$d/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat >"$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=48 --remote_timeout=10m
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://cgr.dev/chainguard/static@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >>"$rc"
+          unset BUILDBUDDY_API_KEY
+          for arch in amd64 arm64; do
+            config=x86_64
+            if [[ $arch == arm64 ]]; then config=aarch64; fi
+            for variant in stock fixed; do
+              revision=HEAD^
+              if [[ $variant == stock ]]; then revision=HEAD^^; fi
+              git restore --source="$revision" -- runsc/cmd/netgofer/BUILD
+              git diff --exit-code "$revision" -- runsc/cmd/netgofer/BUILD
+              stem="$d/$arch-$variant"
+              status=0
+              bazelisk --nosystem_rc --nohome_rc --bazelrc="$rc" test \
+                --config="$config" --config=release_version --embed_label=release-20261106.0 -c opt --lockfile_mode=off \
+                --platform_mappings=test/rbe/stamped_release/platform_mappings \
+                --extra_execution_platforms=//test/rbe/stamped_release:amd64,//test/rbe/stamped_release:arm64 \
+                --extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash,//test/rbe/go_bootstrap:linux_arm64_ash \
+                --@io_bazel_rules_go//go/config:experimental_use_sh_toolchain --@rules_python//python/config_settings:bootstrap_impl=native \
+                --strategy=TestRunner=remote --remote_download_outputs=toplevel --nocache_test_results --test_timeout=120 \
+                --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --test_output=all --flaky_test_attempts=1 \
+                --test_env=RELEASE_TEST_ARCH="$arch" --test_env=RELEASE_TEST_VARIANT="$variant" \
+                --noshow_progress --curses=no --color=no --build_event_json_file="$stem.bep" \
+                "//test/rbe/release_identity:$arch" >"$stem.log" 2>&1 || status=$?
+              echo "$status" >"$stem.exit"
+              echo "$arch $variant: bazel exit $status"
+            done
+          done
+      - name: Check four uncached native test results
+        if: always() && !cancelled()
+        run: python3 -IB .github/qualification/sidecar_identity.py "$RUNNER_TEMP/sidecar-identity"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: release-sidecar-identity
+          path: ${{ runner.temp }}/sidecar-identity/receipt.json
+          if-no-files-found: error
+          retention-days: 14
