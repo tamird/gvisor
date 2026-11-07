@@ -1,0 +1,223 @@
+{
+  "source": "b58c1ff588fe543d296ca5810e4033eb13345767",
+  "parent": "9c541c3ae1cd68df1741882480d5bf184396e695",
+  "qualifier": "c578f92bbf3368ec8f249d37da93703766753614",
+  "archive": "https://github.com/tamird/gvisor/actions/runs/42374729637/artifacts/13574933620",
+  "archive_sha256": "8fdd05aa47061e01d12bd044ca4b4f5020c912fc5c6922a43c937800a514a9d2",
+  "original_workflow": "failure",
+  "original_observer_error": "Nested iperf intervals contain numeric start/end and were counted alongside the complete client report.",
+  "machine": "x86_64",
+  "transfers": {
+    "canonical": {
+      "status": 0,
+      "duration_seconds": 30,
+      "streams": 1,
+      "ip_versions": [
+        4
+      ],
+      "netstack_roles": [
+        "client",
+        "server"
+      ],
+      "sender_bytes": 39321600,
+      "receiver_bytes": 33292288,
+      "summary": {
+        "role": "client",
+        "host_gso": "true",
+        "host_gro": "true",
+        "mbps": "10.4855010081251",
+        "cpu": "0.03"
+      },
+      "sha256": {
+        "stdout": "1f7b3f36f58908d3184d309f4469d8bff37a1621e0f246dd333228458f1d6413",
+        "stderr": "0256cf8597a8fcb18dabf8a2040e2c6383bdecb0b8a69cb7596beee576ae0fb3"
+      }
+    },
+    "dual-parallel": {
+      "status": 0,
+      "duration_seconds": 30,
+      "streams": 2,
+      "ip_versions": [
+        4
+      ],
+      "netstack_roles": [
+        "client",
+        "server"
+      ],
+      "sender_bytes": 79953920,
+      "receiver_bytes": 67371008,
+      "summary": {
+        "role": "client",
+        "host_gso": "true",
+        "host_gro": "true",
+        "mbps": "21.320599022127137",
+        "cpu": "0.0523333333333"
+      },
+      "sha256": {
+        "stdout": "b2c9ca06628e4302dae95e834c1225c13dc43f7f7f229670410f9ecdf4a402f4",
+        "stderr": "d2946f7b9339d8dff356385c88a46e862b8382a348e084c6fd8d23e762bef196"
+      }
+    },
+    "client-ipv6-paths": {
+      "status": 0,
+      "duration_seconds": 4,
+      "streams": 1,
+      "ip_versions": [
+        6
+      ],
+      "netstack_roles": [
+        "client"
+      ],
+      "sender_bytes": 11662528,
+      "receiver_bytes": 4194304,
+      "summary": {
+        "role": "client",
+        "host_gso": "true",
+        "host_gro": "true",
+        "mbps": "23.31936607467778",
+        "cpu": "0.035"
+      },
+      "sha256": {
+        "stdout": "3ede54cb8aff13b708b137e81ea42c28db4548660197b1a0afa8785f7a3a6b24",
+        "stderr": "bac1053f9819de98d84815e3157160d67f293ad73ffd129fdc8fa3640a6f2250"
+      },
+      "profile": {
+        "sha256": null,
+        "note": "The path reached the proxy. The original observer stopped before reading the file."
+      }
+    },
+    "standalone-server": {
+      "status": 0,
+      "duration_seconds": 4,
+      "streams": 1,
+      "ip_versions": [
+        4
+      ],
+      "netstack_roles": [
+        "server"
+      ],
+      "sender_bytes": 456130560,
+      "receiver_bytes": 447348736,
+      "summary": {
+        "role": "server",
+        "host_gso": "true",
+        "host_gro": "true",
+        "mbps": "912.24378736804",
+        "cpu": "0.0875"
+      },
+      "sha256": {
+        "stdout": "1eb315ce7f046e2c497bbdb157d52310a07fd204801991d096a26a789d891650",
+        "stderr": "101f378a26ab1b5737527dfb452963a38306c74983781f861b5833e4c2691239"
+      }
+    },
+    "native-client": {
+      "status": 0,
+      "duration_seconds": 4,
+      "streams": 1,
+      "ip_versions": [
+        4
+      ],
+      "netstack_roles": [],
+      "sender_bytes": 28835840,
+      "receiver_bytes": 23461888,
+      "summary": {
+        "role": "client",
+        "host_gso": "false",
+        "host_gro": "false",
+        "mbps": "57.67022382684837",
+        "cpu": "0"
+      },
+      "sha256": {
+        "stdout": "c8ffd32f139e8f32a5023e8a4c3d610c339b05824f70db7d9e955e2848628339",
+        "stderr": "91cde2a9998178752bb08e82bf142068ec20ef40a8a609dbe82f1a7f2343ded7"
+      }
+    },
+    "default-userns": {
+      "status": 0,
+      "duration_seconds": 4,
+      "streams": 1,
+      "ip_versions": [
+        4
+      ],
+      "netstack_roles": [
+        "client"
+      ],
+      "sender_bytes": 10485760,
+      "receiver_bytes": 3932160,
+      "summary": {
+        "role": "client",
+        "host_gso": "true",
+        "host_gro": "true",
+        "mbps": "20.970073064958516",
+        "cpu": "0.0275"
+      },
+      "sha256": {
+        "stdout": "afdb902061bd974ce54da91fae8ab1d65c4f4b6209945642753e58aa8332f2cc",
+        "stderr": "3005c3417f72bfbc43dfd359ff55f0e2867765cefb2ab8f9cd4a2072b9ac5c82"
+      },
+      "outer_uid": 1001
+    }
+  },
+  "controls": {
+    "server-exit": {
+      "status": 1,
+      "sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "c8d9bd6bb6b75f5d93f40f23f352b4a0e6bc2681cd69a87b3fd375564d987e2b"
+      }
+    },
+    "client-error": {
+      "status": 7,
+      "sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "a77ae933fe22fee73d43dc5056e0b41240bd951c82e5ea630e255829a6d3cea6"
+      }
+    },
+    "client-signal": {
+      "status": 143,
+      "sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "3d7f9d700569c3512163a7c9b73e8f75ce08b4ef237875c4e8a517779defccad"
+      }
+    },
+    "no-sender": {
+      "status": 1,
+      "sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "3f726f3eab3fb38e586908531d48e6788e27eb568c9eed694bf4e79c87bd439f"
+      }
+    },
+    "no-sum": {
+      "status": 1,
+      "sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "c7771535c3e7b64b5390f61a284d37f7df6e93b50bd3f8d79c2ed34bcd9b4423"
+      }
+    },
+    "interrupted": {
+      "status": 1,
+      "sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "13e463b1040af6b81244aafe3dbf44a43d5a1c84815bc1cdcce21475e71a424a"
+      },
+      "profile": {
+        "bytes": 1475,
+        "sha256": "b8f13b304a547f6136319bea58111e2b1bf6800acb3fb5782714ad76066d1fde"
+      },
+      "connections_before_signal": 5,
+      "outer_executable_verified": true
+    }
+  },
+  "historical_installed": {
+    "source": "9c541c3ae1cd68df1741882480d5bf184396e695",
+    "status": 1,
+    "sha256": {
+      "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": "134d149cee6ab479c9ab70b9bd406ee6daf327e0f43ce667d423914c61f6f291"
+    },
+    "execution": "split PATH export",
+    "path_errors": [
+      "/bin/bash: line 11: export: `executables:/usr/sbin:/usr/bin:/sbin:/bin': not a valid identifier"
+    ]
+  }
+}

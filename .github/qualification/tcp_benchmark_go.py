@@ -2,6 +2,7 @@
 
 from decimal import Decimal
 import gzip
+import io
 import hashlib
 import ipaddress
 import json
@@ -13,8 +14,9 @@ import shutil
 import subprocess
 import sys
 import time
+import zipfile
 
-WORK = Path(os.environ["RUNNER_TEMP"]) / "tcp-benchmark-go"
+WORK = Path(os.environ.get("RUNNER_TEMP", ".")) / "tcp-benchmark-go"
 PUBLIC = WORK / "public"
 SIBLINGS = WORK / "standalone executables"
 BAZEL = str(WORK / "bazelisk")
@@ -95,7 +97,8 @@ def collect_transfer(row, out, err, flags):
             obj, _ = json.JSONDecoder().raw_decode(err[mark.start():])
         except ValueError:
             continue
-        if "end" in obj:
+        if (isinstance(obj.get("start"), dict) and "test_start" in obj["start"] and
+                isinstance(obj.get("end"), dict) and "sum_sent" in obj["end"]):
             results.append(obj)
     need(len(results) == 1, "unique original client iperf JSON")
     obj, = results
@@ -270,6 +273,19 @@ def interruption():
     return row["verified"]
 
 
+def shell_verdict(status, out, err):
+    errors = [line for line in err.splitlines() if
+              ("standalone:" in line and ("No such file or directory" in line or "command not found" in line)) or
+              ("export:" in line and "executables:" in line and "not a valid identifier" in line)]
+    if status == 0 and SUMMARY.findall(out):
+        cause = "reported transfer"
+    elif status not in (0, 124, 137) and errors:
+        cause = "split PATH export" if "not a valid identifier" in errors[0] else "split helper path"
+    else:
+        cause = "inconclusive"
+    return {"execution":cause, "path_errors":errors[:6]}
+
+
 def shell_reference():
     # Both historical helper rules have identical source inputs. Install the
     # original driver itself alongside the same two already-built helpers.
@@ -287,10 +303,7 @@ def shell_reference():
             (PUBLIC / ("historical-installed." + label + ".log")).write_bytes(data)
     out, err = run.stdout.decode(errors="replace"), run.stderr.decode(errors="replace")
     row["benchmarks"] = SUMMARY.findall(out)
-    row["path_errors"] = [l for l in err.splitlines() if "standalone:" in l and
-                          ("No such file or directory" in l or "command not found" in l)][:6]
-    row["execution"] = "reported transfer" if run.returncode == 0 and row["benchmarks"] else (
-        "split helper path" if run.returncode not in (0, 124, 137) and row["path_errors"] else "inconclusive")
+    row.update(shell_verdict(run.returncode, out, err))
     persist(PUBLIC / "historical-installed.json", row)
     return row
 
@@ -337,5 +350,84 @@ def main():
     return report["verified"]
 
 
+def read_original(data):
+    digest = "8fdd05aa47061e01d12bd044ca4b4f5020c912fc5c6922a43c937800a514a9d2"
+    need(sha(data) == digest, "original GitHub ZIP digest")
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        files = {name: z.read(name) for name in z.namelist()}
+    original = json.loads(files["result.json"])
+    need(original["source"] == SOURCE and original["parent"] == PARENT and original["machine"] == "x86_64", "original source")
+    archive = "https://github.com/tamird/gvisor/actions/runs/42374729637/artifacts/13574933620"
+    receipt = {"source":SOURCE, "parent":PARENT, "qualifier":"c578f92bbf3368ec8f249d37da93703766753614",
+               "archive":archive, "archive_sha256":digest, "original_workflow":"failure",
+               "original_observer_error":"Nested iperf intervals contain numeric start/end and were counted alongside the complete client report.",
+               "machine":original["machine"], "transfers":{}, "controls":{}}
+
+    def streams(name):
+        row = json.loads(files[name + ".json"])
+        original_sha = {}
+        text = {}
+        for key in ("stdout", "stderr"):
+            content = files[name + "." + key + ".log"]
+            original_sha[key] = sha(content)
+            need(original_sha[key] == row[key]["sha256"] and len(content) == row[key]["bytes"], name + " " + key)
+            text[key] = content.decode(errors="replace")
+        return row, text["stdout"], text["stderr"], original_sha
+
+    modes = {"canonical":["--client","--server"], "dual-parallel":["--client","--server"],
+             "client-ipv6-paths":["--client","--ipv6"], "standalone-server":["--server"],
+             "native-client":["--linux-client","--disable-linux-gso","--disable-linux-gro"],
+             "default-userns":["--client"]}
+    for name, flags in modes.items():
+        row, out, err, hashes = streams(name)
+        need(row["error"] == "unique original client iperf JSON", name + " original verdict")
+        need(row["duration"] == (30 if name in ("canonical","dual-parallel") else 4), name + " seconds")
+        need(row["streams"] == (2 if name == "dual-parallel" else 1), name + " stream count")
+        row["ready"] = re.findall(r"client=(true|false), server=(true|false), ready\.", err)
+        row["stats"] = re.findall(r"netstack (\S+) Stats:", err)
+        collect_transfer(row, out, err, flags)
+        result = receipt["transfers"][name] = {"status":row["status"], "duration_seconds":row["duration"],
+                   "streams":row["streams"], "ip_versions":sorted(set(row["iperf"]["address_families"])),
+                   "netstack_roles":sorted(set(row["stats"])), "sender_bytes":row["iperf"]["sent"]["bytes"],
+                   "receiver_bytes":row["iperf"]["received"]["bytes"], "summary":row["summary"], "sha256":hashes}
+        if name == "client-ipv6-paths":
+            need("client cpu.pprof" in err, "spaced profile path did not reach proxy")
+            result["profile"] = {"sha256":None, "note":"The path reached the proxy. The original observer stopped before reading the file."}
+        if name == "standalone-server":
+            need(row["standalone"] and not row["explicit_helpers"], "standalone sibling lookup")
+        if name == "default-userns":
+            probe = row["namespace_probe"]
+            need(probe["uid"] > 0 and probe["exit"] == 0, "ordinary default namespace probe")
+            result["outer_uid"] = probe["uid"]
+
+    controls = {"server-exit":(1,"INTENTIONAL_SERVER_EXIT"), "client-error":(7,"INTENTIONAL_CLIENT_ERROR"),
+                "client-signal":(143,"INTENTIONAL_CLIENT_SIGNAL"), "no-sender":(1,"iperf did not report an aggregate sender rate"),
+                "no-sum":(1,"iperf did not report an aggregate sender rate"), "interrupted":(1,"incoming connection established.")}
+    for name, (status, marker) in controls.items():
+        row, out, err, hashes = streams(name)
+        need(row["verified"] and row["status"] == status and not SUMMARY.search(out) and marker in err, name)
+        ctl = receipt["controls"][name] = {"status":status, "sha256":hashes}
+        if name == "interrupted":
+            need(row["outer_verified"] and row["connections_before_signal"] >= 3 and row["profile"]["bytes"] > 0, name)
+            ctl.update(profile=row["profile"], connections_before_signal=row["connections_before_signal"], outer_executable_verified=True)
+        elif name == "server-exit":
+            need("client" not in row["iperf_args"] and "server" in row["iperf_args"], "unexpected iperf client")
+        else:
+            need("-J" in row["iperf_args"]["client"], "client process not executed")
+            if name in ("no-sender", "no-sum"):
+                records = [json.loads(line)["end"] for line in err.splitlines() if line.startswith('{"end"')]
+                need(len(records) == 1 and "sum_sent" not in records[0], "missing aggregate fixture")
+                need(len(records[0]["streams"]) == (2 if name == "no-sum" else 0), "stream fixture")
+    row, out, err, hashes = streams("historical-installed")
+    old = shell_verdict(row["status"], out, err)
+    need(row["source"] == PARENT and row["status"] == 1 and not out and old["execution"] == "split PATH export", "historical PATH comparison")
+    receipt["historical_installed"] = {"source":PARENT, "status":row["status"], "sha256":hashes, **old}
+    return receipt
+
+
 if __name__ == "__main__":
-    sys.exit(not main())
+    if sys.argv[1:] == ["--read-original"]:
+        print(json.dumps(read_original(sys.stdin.buffer.read()), indent=2))
+    else:
+        need(len(sys.argv) == 1 and "RUNNER_TEMP" in os.environ, "expected --read-original or a native qualification runner")
+        sys.exit(not main())
