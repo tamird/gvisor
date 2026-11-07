@@ -1,7 +1,7 @@
 name: Qualify the shipping archive on the empty coordinator and AMD64 executor
 "on":
   push:
-    branches: [qualification/registry-llvm-empty-client-shipping]
+    branches: [qualification/registry-llvm-writable-jni-shipping]
 permissions: {}
 jobs:
   archive:
@@ -18,12 +18,15 @@ jobs:
           trial=15a0b6098b03c050baeb404cac40c820d9a19a97
           mkdir -p "$w/public" "$w/data" "$w/base" "$w/trial"
           git init -q .
-          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
-          test "$(git rev-parse FETCH_HEAD^)" = "$trial"
+          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance -q --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          previous=0b006e06280a785585d5ba0ce0b5d3944fba4226
+          test "$(git rev-parse FETCH_HEAD^)" = "$previous"
+          test "$(git rev-parse "$previous^")" = "$trial"
           test "$(git rev-parse "$trial^")" = "$base"
           test "$(git rev-parse "$trial:tools/rules_python_native_launcher.patch")" = fcc585b97c33c4afe7281d3bb32b7e5731da0894
-          git diff --exit-code "$trial" FETCH_HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/registry_shipping.py'
+          git diff --exit-code "$previous" FETCH_HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/registry_shipping.py' ':!.github/qualification/cold_repository.py'
           git show 'FETCH_HEAD:.github/qualification/registry_shipping.py' > "$w/qualify.py"
+          git show 'FETCH_HEAD:.github/qualification/cold_repository.py' > "$w/cold_repository.py"
           git archive "$base" | tar -x -C "$w/base"
           git archive "$trial" | tar -x -C "$w/trial"
           cd "$w"
@@ -44,7 +47,7 @@ jobs:
           cat > observe <<'BASH'
           #!/bin/bash
           set -eu
-          exec env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" python3 -IB "$RUNNER_TEMP/registry-shipping/qualify.py" "$@"
+          exec env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" python3 -BEs "$RUNNER_TEMP/registry-shipping/qualify.py" "$@"
           BASH
           cat > submit <<'BASH'
           #!/bin/bash
@@ -99,7 +102,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && !cancelled()
         with:
-          name: registry-llvm-empty-client-shipping
+          name: registry-llvm-writable-jni-shipping
           path: ${{ runner.temp }}/registry-shipping/public/*.json
           if-no-files-found: error
           retention-days: 14

@@ -11,6 +11,7 @@ import struct
 import subprocess
 import sys
 import tarfile
+import time
 import uuid
 from urllib.parse import unquote, urlparse
 
@@ -110,6 +111,9 @@ def setup():
     report["system_bin_entries"] = {p: sorted(x.name for x in (image / p).iterdir()) for p in ("bin", "usr/bin")}
     (STAGE / "downloads").mkdir()
     (W / "home").mkdir()
+    (W / "home-legacy").mkdir()
+    (STAGE / "downloads-legacy").mkdir()
+    (W / "jvm-tmp").mkdir(mode=0o700)
     save("client", report)
 
 
@@ -151,14 +155,20 @@ def flags(arch, mode):
     return opts
 
 
-def command(mode, remote):
+def command(mode, remote, legacy=False):
     mount = ["-v", str(W / ("base" if mode == "baseline" else "trial")) + ":/workspace:ro",
-             "-v", str(W / "home") + ":/home/runner", "-v", str(STAGE / "downloads") + ":/downloads",
+             "-v", str(W / ("home-legacy" if legacy else "home")) + ":/home/runner",
+             "-v", str(STAGE / ("downloads-legacy" if legacy else "downloads")) + ":/downloads",
              "-v", str(W / "data") + ":/data"]
     if remote:
         mount.extend(["-v", str(W / "remote.bazelrc") + ":/authorized.bazelrc:ro"])
     bazel = ["/probe/bazel", "--batch", "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Djavax.net.ssl.trustStore=/trust/cacerts",
              "--host_jvm_args=-Djavax.net.ssl.trustStoreType=JKS"]
+    if not legacy:
+        mount.extend(["-v",str(W / "jvm-tmp") + ":/jvm-tmp"])
+        selected = record("jvm-selector-original").get("selector","java.io.tmpdir")
+        assert selected in {"java.io.tmpdir","ZstdTempFolder"}
+        bazel.append("--host_jvm_args=-D" + selected + "=/jvm-tmp")
     if remote:
         bazel.append("--bazelrc=/authorized.bazelrc")
     return ["docker", "run", "--rm", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges",
@@ -167,14 +177,124 @@ def command(mode, remote):
             "-e", "LANG=C.UTF-8", "-e", "LC_ALL=C.UTF-8", IMAGE, *bazel]
 
 
-def graph(arch, mode):
+def directory(pid, path, uid, gid):
+    if not re.fullmatch(r"/(?:(?:tmp|jvm-tmp)|home/runner(?:/[A-Za-z0-9_.+-]+)*|workspace)", path):
+        return {"path":"other", "stat":False}
+    actual = Path("/proc") / str(pid) / "root" / path.lstrip("/")
+    stat = subprocess.run(["sudo","-n","stat","-L","-c","%a %u %g",actual],capture_output=True,text=True)
+    row = {"path":path, "stat":stat.returncode == 0}
+    if row["stat"]:
+        mode, owner, group = stat.stdout.split()
+        shift = 6 if uid == int(owner) else 3 if gid == int(group) else 0
+        row.update(mode=mode,owner=int(owner),group=int(group),write_search_mode=((int(mode,8)>>shift)&3)==3)
+    return row
+
+
+def observed_query(args, legacy):
+    name = "jvm-selector-" + ("original" if legacy else "corrected")
+    work = W / "data"
+    log = work / (name + ".err")
+    output = work / (name + ".json")
+    doc = {"base":BASE, "legacy":legacy, "running_dirs":{}, "registered_user":f"{os.getuid()}:{os.getgid()}"}
+    args[args.index("--rm"):args.index("--rm")+1] = ["--name",name]
+    args.insert(args.index("--nosystem_rc"),"--host_jvm_args=-XshowSettings:properties")
+    trace = None
+    proc_pid = 0
+    with log.open("wb") as stderr, output.open("wb") as stdout:
+        proc = subprocess.Popen(args,stdout=stdout,stderr=stderr)
+        try:
+            while proc.poll() is None:
+                if not proc_pid:
+                    p = subprocess.run(["docker","inspect","-f","{{.State.Pid}}",name],capture_output=True,text=True)
+                    if p.returncode == 0 and p.stdout.strip().isdigit():
+                        proc_pid = int(p.stdout)
+                    if proc_pid:
+                        ids = Path(f"/proc/{proc_pid}/status").read_text()
+                        uid = int(re.search(r"(?m)^Uid:\s+\d+\s+(\d+)",ids)[1])
+                        gid = int(re.search(r"(?m)^Gid:\s+\d+\s+(\d+)",ids)[1])
+                        doc.update(effective_uid=uid,effective_gid=gid)
+                        # Only file-creation syscalls in the no-credential query.
+                        # The root-owned observer sees this one container process.
+                        (work / (name+".strace")).touch(mode=0o600)
+                        trace = subprocess.Popen(["sudo","-n","strace","-fq","-Z","-s","240","-e","trace=openat,creat",
+                                                  "-p",str(proc_pid),"-o",work/(name+".strace")],
+                                                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                if proc_pid:
+                    observed = log.read_text(errors="replace")[:80_000]
+                    for key in ("java.io.tmpdir","ZstdTempFolder"):
+                        match = re.search(r"(?m)^\s*" + re.escape(key) + r" = (/\S+)\s*$",observed)
+                        if match and key not in doc["running_dirs"]:
+                            doc["running_dirs"][key] = directory(proc_pid,match[1],uid,gid)
+                if not legacy and not doc.get("native_library"):
+                    for lib in (W / "jvm-tmp").glob("*zstd-jni*"):
+                        if lib.is_file():
+                            with lib.open("rb") as f:
+                                if f.read(4) == b"\x7fELF":
+                                    doc["native_library"] = {"uid":lib.stat().st_uid,"elf":True}
+                time.sleep(.35)
+        finally:
+            if trace is not None:
+                try:
+                    trace.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    trace.terminate()
+                    trace.wait(timeout=5)
+            subprocess.run(["docker","rm","-f",name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    err = log.read_bytes()
+    diag = err.decode(errors="replace")
+    doc["java_properties_seen"] = "java.io.tmpdir" in doc["running_dirs"]
+    doc["selector"] = "ZstdTempFolder" if "ZstdTempFolder" in doc["running_dirs"] else "java.io.tmpdir"
+    doc["jni_unpack_eacces"] = "Cannot unpack libzstd-jni-1.5.6-9: Permission denied" in diag
+    trace_path = work / (name+".strace")
+    failed = set()
+    if trace_path.is_file():
+        with trace_path.open(errors="replace") as f:
+            for line in f:
+                if "EACCES" not in line or "O_CREAT" not in line:
+                    continue
+                m = re.search(r'"(/[^"]*/(?:lib)?zstd[^"]*)"',line)
+                if m:
+                    parent = str(Path(m[1]).parent)
+                    if re.fullmatch(r"/[A-Za-z0-9_./+-]{1,200}",parent):
+                        failed.add(parent)
+    doc["jni_create_eacces_directories"] = sorted(failed)
+    doc["bazel_exit"] = proc.returncode
+    doc["diagnostic"] = failure(diag)
+    from cold_repository import headlines
+    if proc.returncode:
+        doc["primary"] = headlines(err)
+    save(name,doc)
+    print(name, "Bazel",proc.returncode, "Zstandard extraction EACCES",doc["jni_unpack_eacces"])
+    return subprocess.CompletedProcess(args,proc.returncode,output.read_bytes(),err)
+
+
+def jvm_comparison():
+    old, fixed = (record("jvm-selector-" + name) for name in ("original","corrected"))
+    before = old["running_dirs"].get(old["selector"],{})
+    after = fixed["running_dirs"].get(fixed["selector"],{})
+    captured = bool(old["jni_unpack_eacces"] and old["bazel_exit"] != 0 and fixed["bazel_exit"] == 0
+                    and old["java_properties_seen"] and fixed["java_properties_seen"]
+                    and before.get("stat") and after.get("stat") and after.get("path") == "/jvm-tmp"
+                    and after.get("write_search_mode") and old["selector"] == fixed["selector"]
+                    and fixed.get("effective_uid") == old.get("effective_uid") == os.getuid())
+    save("jvm-comparison",{"observed":captured,"source":BASE,"original_directory":before,"fixed_directory":after,
+                           "selector":old["selector"],"original_bazel_exit":old["bazel_exit"],
+                           "fixed_bazel_exit":fixed["bazel_exit"],"original_create_eacces":old["jni_create_eacces_directories"],
+                           "fixed_native_elf_seen":bool(fixed.get("native_library"))})
+
+
+def graph(arch, mode, legacy=False):
     assert not (W / "remote.bazelrc").exists()
-    key = "graph-" + mode + "-" + arch
+    key = "graph-" + ("original-" if legacy else "") + mode + "-" + arch
     data = {"embed_label":TRIAL, "architecture":arch, "source":BASE if mode == "baseline" else TRIAL, "mode":mode, "roots":ROOTS}
-    result = subprocess.run([*command(mode, False), "aquery", *flags(arch, mode),
+    argv = [*command(mode, False, legacy), "aquery", *flags(arch, mode),
                              "--remote_executor=", "--remote_cache=", "--bes_backend=", "--include_artifacts=false",
-                             "--output=jsonproto", 'mnemonic("PackageTar", deps(set(' + ' '.join(ROOTS) + ')))'], capture_output=True)
+                             "--output=jsonproto", 'mnemonic("PackageTar", deps(set(' + ' '.join(ROOTS) + ')))']
+    result = observed_query(argv,legacy) if mode == 'baseline' else subprocess.run(argv,capture_output=True)
     data.update(returncode=result.returncode, diagnostic=failure(result.stderr.decode(errors="replace")), matches=False)
+    if result.returncode:
+        from cold_repository import headlines
+        data["primary"] = headlines(result.stderr)
     save(key, data)
     if result.returncode:
         return False
@@ -458,9 +578,12 @@ if __name__ == "__main__":
     if op == "setup":
         setup()
     elif op == "graphs":
+        graph("amd64","baseline",legacy=True)
         results = []
         for arch, mode in (("amd64","baseline"), ("amd64","script"), ("amd64","native"), ("arm64","native")):
             results.append(graph(arch, mode))
+            if mode == "baseline":
+                jvm_comparison()
             if not results[-1]:
                 break
         sys.exit(not all(results))
