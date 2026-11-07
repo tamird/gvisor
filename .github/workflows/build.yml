@@ -1,35 +1,67 @@
-name: CI
-
-"on":
+name: Qualify the reduced Ubuntu builder with the default LLVM compiler
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/reduced-builder-default-llvm]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  cross:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    env:
+      SOURCE: c115840f8a85010111fa5d72b611d7d9ab1df34b
+      COMPILER: 4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Bind the Dockerfile and both ELF verifier sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          test "$(git rev-parse HEAD^^)" = "$COMPILER"
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/reduced_builder.py .github/workflows/build.yml test/rbe/native_cross_inputs.py test/rbe/runtime_cross.py)"
+          d="$RUNNER_TEMP/builder-cross/runtime-cross"
+          mkdir -p "$d"
+          cp .github/qualification/reduced_builder.py test/rbe/{native_cross_inputs,runtime_cross}.py "$d/"
+          echo "6e5110d042e88f2c8ab8fc3ff63aa66acf81f74e1f9a49c5a59c6cce3c9afabb  $d/native_cross_inputs.py" | sha256sum -c -
+          echo "f78a6a372af5142b0d4f107d1b058944bb9f5897adf7308d0959bcd8e7e9321b  $d/runtime_cross.py" | sha256sum -c -
+          git checkout --detach "$SOURCE"
+          test "$(git diff --name-only HEAD^ HEAD)" = "images/default/Dockerfile"
+          test "$(git rev-parse HEAD:images/default/Dockerfile)" = "82a81262bc83ad8328ee60e2963835ac53fb4ee5"
+          test "$(cat images/default/bazelversion)" = 9.3.1
+          grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+          test "$(uname -m)" = x86_64
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+      - name: Build the actual Ubuntu image
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/builder-cross"
+          rc=0
+          docker build --progress=plain --tag gvisor-builder:checked --iidfile "$d/image-id" images/default || rc=$?
+          printf '{"source":"%s","compiler":"%s","image_build_exit":%s}\n' "$SOURCE" "$COMPILER" "$rc" > "$d/image.json"
+          test "$rc" = 0
+          test "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' gvisor-builder:checked)" = linux/amd64
 
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Cross-build the public runtime and check its embedded inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/builder-cross"
+          docker run --rm --entrypoint /usr/bin/python3 \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/workspace \
+            -e RUNNER_TEMP=/audit -e BUILDER_IMAGE="$(cat "$d/image-id")" \
+            -v "$GITHUB_WORKSPACE:/workspace" -v "$d:/audit" \
+            gvisor-builder:checked -B /audit/runtime-cross/reduced_builder.py
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reduced-ubuntu-default-llvm
+          path: |
+            ${{ runner.temp }}/builder-cross/image.json
+            ${{ runner.temp }}/builder-cross/runtime-cross/verdict.json
+          if-no-files-found: error
