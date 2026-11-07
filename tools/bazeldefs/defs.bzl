@@ -2,7 +2,6 @@
 
 load("@bazel_lib//lib:copy_file.bzl", _COPY_FILE_TOOLCHAINS = "COPY_FILE_TOOLCHAINS", _copy_file_action = "copy_file_action")
 load("@bazel_skylib//:bzl_library.bzl", _bzl_library = "bzl_library")
-load("@bazel_skylib//rules:build_test.bzl", _build_test = "build_test")
 load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _string_flag = "string_flag")
 load("@bazel_skylib//rules:expand_template.bzl", _expand_template = "expand_template")
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
@@ -11,7 +10,6 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
 COPY_FILE_TOOLCHAINS = _COPY_FILE_TOOLCHAINS
 copy_file_action = _copy_file_action
-build_test = _build_test
 bzl_library = _bzl_library
 bool_flag = _bool_flag
 string_flag = _string_flag
@@ -20,6 +18,32 @@ expand_template = _expand_template
 more_shards = 4
 most_shards = 8
 version = "//tools/bazeldefs:version"
+
+def _build_test_impl(ctx):
+    runner = ctx.executable._runner
+    executable = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.symlink(output = executable, target_file = runner, is_executable = True)
+
+    # Bazel builds a test's default outputs before it starts the TestRunner.
+    # The binaries under test do not need to be in the test's runfiles.
+    return [DefaultInfo(
+        executable = executable,
+        files = depset([executable], transitive = [target[DefaultInfo].files for target in ctx.attr.targets]),
+        runfiles = ctx.runfiles(files = [runner]),
+    )]
+
+_build_test = rule(
+    implementation = _build_test_impl,
+    test = True,
+    attrs = {
+        "targets": attr.label_list(allow_empty = False, allow_files = True, mandatory = True),
+        "_runner": attr.label(default = "//tools/bazeldefs:build_test_runner", cfg = "target", executable = True),
+    },
+)
+
+def build_test(name, targets, size = "small", **kwargs):
+    """Verifies that the targets' default outputs build."""
+    _build_test(name = name, targets = targets, size = size, **kwargs)
 
 def short_path(path):
     return path

@@ -1,9 +1,20 @@
-load("//tools:defs.bzl", "bzl_library", "string_flag")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "string_flag")
 
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = ["//:sandbox"],
     licenses = ["notice"],
+)
+
+go_binary(
+    name = "build_test_runner",
+    testonly = True,
+    srcs = ["build_test_runner.go"],
+    nogo = False,
+    pure = True,
+    static = True,
+    tags = ["manual"],
+    visibility = ["//visibility:private"],
 )
 
 bzl_library(
