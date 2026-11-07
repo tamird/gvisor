@@ -19,13 +19,15 @@ jobs:
           candidate=0a0fa1efbacbe9f18b377a954f3f249001c32e21
           mkdir -p "$w/public" "$w/data" "$w/base" "$w/trial" "$w/candidate"
           git init -q .
-          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$trial"
-          test "$(git rev-parse "$GITHUB_SHA^")" = "$candidate"
+          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance -q --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$trial"
+          historical=a8ac3ce3e183cd236ad1e5fc3ba5187754ca59c0
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$historical"
+          test "$(git rev-parse "$historical^")" = "$candidate"
           test "$(git rev-parse "$candidate^")" = "$base"
           test "$(git rev-parse "$trial^")" = "$base"
           test "$(git rev-parse "$trial:tools/rules_python_native_launcher.patch")" = fcc585b97c33c4afe7281d3bb32b7e5731da0894
-          git diff --exit-code "$candidate" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/registry_shipping.py' ':!.github/qualification/native_archive.py' ':!.github/qualification/cold_repository.py'
-          for file in registry_shipping.py native_archive.py cold_repository.py; do
+          git diff --exit-code "$candidate" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/registry_shipping.py' ':!.github/qualification/native_archive.py' ':!.github/qualification/archive_alias.py' ':!.github/qualification/cold_repository.py'
+          for file in registry_shipping.py native_archive.py cold_repository.py archive_alias.py; do
             git show "$GITHUB_SHA:.github/qualification/$file" > "$w/$file"
           done
           git archive "$base" | tar -x -C "$w/base"

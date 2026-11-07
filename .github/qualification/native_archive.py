@@ -10,6 +10,7 @@ import tarfile
 import uuid
 from xml.etree import ElementTree
 
+from archive_alias import observe as observe_alias
 import registry_shipping as q
 from cold_repository import headlines
 
@@ -240,7 +241,9 @@ def collect(arch):
         p = base/ev["output"]
         row = inspect(p,kind,arch)
         alias = p.parent/("gvisor-release-tar-"+kind+".tar."+kind)
-        row["legacy_link"] = alias.is_symlink() and alias.resolve() == p.resolve()
+        checked = observe_alias(alias,p,Path("/home/runner"),q.W/"home")
+        row["legacy_link_observation"] = checked
+        row["legacy_link"] = checked.get("kind") == "symlink" and checked["mapped_samefile"] and checked.get("mapped_sha256") == row["archive_sha256"]
         if legacy.get("original_action_verified"):
             row["different_headers"] = sorted(n for n in set(row["headers"])|set(legacy["headers"]) if row["headers"].get(n) != legacy["headers"].get(n))
         row["reference_available"] = bool(legacy.get("original_action_verified"))
