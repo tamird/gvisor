@@ -1,4 +1,3 @@
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
 
 package(
@@ -45,12 +44,24 @@ cc_binary(
     visibility = ["//:sandbox"],
 )
 
-sh_binary(
+go_binary(
     name = "tcp_benchmark",
-    srcs = ["tcp_benchmark.sh"],
+    srcs = [
+        "benchmark/benchmark.go",
+        "benchmark/main.go",
+        "benchmark/network.go",
+    ],
+    args = [
+        "--nsjoin=$(rootpath :nsjoin)",
+        "--tcp-proxy=$(rootpath :tcp_proxy)",
+    ],
     data = [
         ":nsjoin",
         ":tcp_proxy",
     ],
     visibility = ["//:sandbox"],
+    deps = [
+        "//pkg/abi/linux",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
 )

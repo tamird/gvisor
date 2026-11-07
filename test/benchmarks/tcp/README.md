@@ -42,46 +42,32 @@ Different configurations can be run using different arguments. For example:
 *   Netstack client with 5% packet loss: `tcp_benchmark --client --ideal --loss
     5`
 
-Use `tcp_benchmark --help` for full arguments.
+Run `bazel run //test/benchmarks/tcp:tcp_benchmark -- --help` for all options.
+The Linux host supplies iproute2 (including its netem distributions) and iperf3.
+Turning off Linux offloads also needs ethtool. Bazel provides the two proxy
+helpers. When invoking an installed binary directly, place `tcp_proxy` and
+`nsjoin` beside it or specify their directory with `--helpers`.
 
-This tool may be used to easily generate data for graphing. For example, to
-generate a CSV for various latencies, you might do:
+The benchmark prints a Go benchmark result on stdout, for example:
 
-```
-rm -f /tmp/netstack_latency.csv /tmp/native_latency.csv
-latencies=$(seq 0 5 50;
-            seq 60 10 100;
-            seq 125 25 250;
-            seq 300 50 500)
-for latency in $latencies; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --client --ideal --latency $latency)
-  echo $latency,$throughput,$client_cpu >> /tmp/netstack_latency.csv
-done
-for latency in $latencies; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --ideal --latency $latency)
-  echo $latency,$throughput,$client_cpu >> /tmp/native_latency.csv
-done
+```text
+BenchmarkTCP/role=client/host-gso=true/host-gro=true 1 10.8 Mb/s 0.06 cpu-time
 ```
 
-Similarly, to generate a CSV for various levels of packet loss, the following
-would be appropriate:
+The rate comes from iperf3's aggregate sender result. CPU time is the selected
+proxy's user and system CPU seconds divided by the requested duration.
+`--client` and `--linux-client` select the client proxy. Otherwise the benchmark
+reports the server proxy. Diagnostics and the raw iperf3 results go to stderr.
 
-```
-rm -f /tmp/netstack_loss.csv /tmp/native_loss.csv
-losses=$(seq 0 0.1 1.0;
-         seq 1.2 0.2 2.0;
-         seq 2.5 0.5 5.0;
-         seq 6.0 1.0 10.0)
-for loss in $losses; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --client --ideal --latency 10 --loss $loss)
-  echo $loss,$throughput,$client_cpu >> /tmp/netstack_loss.csv
-done
-for loss in $losses; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --ideal --latency 10 --loss $loss)
-  echo $loss,$throughput,$client_cpu >> /tmp/native_loss.csv
+For example, collect client throughput and CPU use under different link delays:
+
+```bash
+set -o pipefail
+for latency in 0 5 10 25 50 100; do
+  tcp_benchmark --client --ideal --latency "$latency" |
+    awk -v latency="$latency" '{print latency "," $3 "," $5}' || exit
 done
 ```
+
+Use `--linux-client` in place of `--client` to measure the native client.
+To vary packet loss, hold `--latency` constant and change `--loss`.
