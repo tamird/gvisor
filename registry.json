@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T17:47:20+00:00",
+    "updatedAt": "2026-11-07T18:02:27+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57134,12 +57134,24 @@
       "url": "https://github.com/bazel-contrib/rules_python/issues/2500",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T17:47:20+00:00",
-      "summary": "The launcher change for independently packaged Python children is under upstream review in hermetic-launcher #96. On native AMD64, all 22 launcher integration cases passed. Both the stock launcher and the new launcher without the option failed to start the independently packaged child. When rules_python named its stage-two bootstrap as a required runfile, the launcher selected the child’s own tree and started it. Direct launches and launches from a parent that declared the child still worked. Downstream use with the default toolchains requires the supplier to merge #96, release new template and finalizer binaries, and update its prebuilt toolchain pins.",
+      "updatedAt": "2026-11-07T18:02:27+00:00",
+      "summary": "Upstream hermetic-launcher #96 at 0b5abb565 contains the finalizer and launcher stub. They let a packaged child select runfiles containing its bootstrap. Review identified that the default toolchain still pins a finalizer that rejects the new option and a template without its marker. The prepared Starlark API at 44a48ed35 can land with the pin update after the maintainers publish a tag containing both binaries.\n\nThe combined implementation at cb36641e5 passed all 22 launcher integration cases on native AMD64. An independently packaged Python child failed with the stock launcher and with the option unset. Naming its stage-two bootstrap selected the child’s own runfiles and started it. Direct launches and launches from a parent that declared the child also passed. The Starlark companion was prepared on 2d0fdd797. Its tree differed from the tested implementation by one README line. The final upstream revision changes only a Windows test fixture’s manifest filename and its comment. The finalizer, stub and companion implementation are identical to the versions tested on AMD64.",
       "evidence": [
         {
-          "label": "Upstream launcher implementation at cb36641e5",
+          "label": "Upstream finalizer and stub change, 0b5abb565",
           "url": "https://github.com/hermeticbuild/hermetic-launcher/pull/96"
+        },
+        {
+          "label": "Prepared Starlark API for the joint binary pin update",
+          "url": "https://github.com/tamird/hermetic-launcher/commit/44a48ed35"
+        },
+        {
+          "label": "Original review finding on the prebuilt finalizer and template",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/pull/96#discussion_r4503091073"
+        },
+        {
+          "label": "Windows test fixture filename correction relative to the companion’s parent",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/compare/2d0fdd797..0b5abb565"
         },
         {
           "label": "Native AMD64 supplier suite and packaged-child comparisons",
@@ -84600,5 +84612,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T17:47:20+00:00"
+  "updatedAt": "2026-11-07T18:02:27+00:00"
 }
