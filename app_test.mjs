@@ -416,7 +416,11 @@ print(json.dumps(public_import_disposition(row['pr'], amendment=row['node'].get(
     assert.ok(vm.runInContext('publicImportDisposition(nodeInput)', context));
     return JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
   };
-  const row = structuredClone(original), reasons = classify(row);
+  const row = structuredClone(original);
+  const previous = row.pr.imports[0];
+  previous.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('buildkite/pipeline', 'FAILURE')] };
+  const reasons = classify(row);
+  assert.ok(reasons.some(item => item.id === 'maintainer-import-checks'));
   const reason = reasons.find(item => item.id === 'maintainer-reapproval');
   assert.equal(reason.title, 'Reapprove current source PR');
   assert.match(reason.detail, /#16647.*is open and names 6fe570155/);
@@ -432,6 +436,21 @@ print(json.dumps(public_import_disposition(row['pr'], amendment=row['node'].get(
   const fresh = classify(row);
   assert.ok(!fresh.some(item => item.id === 'maintainer-reapproval'));
   assert.ok(fresh.some(item => item.title === 'Reapproved; waiting for Copybara'));
+  assert.ok(!fresh.some(item => item.id === 'maintainer-import-checks'));
+  assert.equal(previous.checks.contexts[0].state, 'FAILURE');
+  const matching = structuredClone(row);
+  matching.pr.imports.push({ ...previous, number: 99999, sourceHead: row.pr.head, matchesSourceHead: true });
+  assert.match(classify(matching).find(item => item.id === 'maintainer-import-checks').detail, /Import #99999/);
+  const sourceError = structuredClone(row);
+  sourceError.pr.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('import/copybara', 'FAILURE')] };
+  assert.ok(classify(sourceError).some(item => item.id === 'maintainer-import-failed'));
+  const missingLabel = structuredClone(row);
+  missingLabel.pr.labels = [];
+  missingLabel.pr.threads.unresolved = 0;
+  for (const item of missingLabel.pr.feedback.items) if (item.kind === 'inline') item.isResolved = true;
+  missingLabel.pr.labelHistory.items.push({ ...missingLabel.pr.labelHistory.items.at(-1),
+    __typename: 'UnlabeledEvent', id: 'removed-before-approval', createdAt: '2026-11-04T17:45:00Z' });
+  assert.ok(classify(missingLabel).some(item => item.id === 'maintainer-import-label'));
   for (const change of [current => { current.pr.importsComplete = false; },
     current => { current.node.reapproval.diffSha256 = 'invalid'; },
     current => { current.pr.reviewsComplete = false; },

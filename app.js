@@ -639,7 +639,11 @@ function attentionReasons(node, owner) {
     add("maintainer-unknown", `Current source ${pr.head.slice(0, 9)} has a fresh approval. Copybara still shows the earlier export ${lineage.map(item => "#" + item.number).join(", ")}; wait for its replacement. The earlier export is not a request for manual conflict repair.`, "Reapproved; waiting for Copybara");
   for (const item of active) if (conflictRecord(item) && (current.length || importAction === "maintainer-import-refresh"))
     add(current.length ? "author-conflicts" : "maintainer-import-refresh", `Import #${item.number}: ${mergeDescription(item)}${current.length ? "" : " This export predates the equivalent source rebase. Refresh the export; its conflict does not establish a conflict on the current source."}`);
-  const failed = unresolvedImportChecks(lineage).filter(item => checkInfo(item).tone === "bad");
+  // After reapproval, a failed check on the previous export stays in that
+  // export's details. Source checks and checks on a replacement still apply.
+  const checkImports = awaitingReapprovedExport && importDisposition.binding.complete && importDisposition.trigger?.state === "present"
+    ? lineage.filter(item => item.sourceHead === pr.head) : lineage;
+  const failed = unresolvedImportChecks(checkImports).filter(item => checkInfo(item).tone === "bad");
   const recoveries = new Map(failed.map(item => [item.number, blockedImportRetry(node, item)]));
   const retryDetails = sourceRecovery ? [sourceRecovery.detail] : [];
   retryDetails.push(...[...recoveries.values()].filter(Boolean).map(item => item.detail));
