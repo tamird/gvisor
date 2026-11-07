@@ -1,0 +1,155 @@
+{
+  "originalArchive": "https://github.com/tamird/gvisor/actions/runs/42385235839/artifacts/13579008321",
+  "archiveSHA256": "57f39045ad8b19ad963309ac983d2d8d201a3956f907b289d3ed3c713c14852e",
+  "product": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+  "base": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+  "qualification": "a1fd0bc2f743422a385a88424ab55d170f34fe63",
+  "originalAggregate": false,
+  "controlSatisfied": true,
+  "arms": {
+    "runtime": {
+      "verified": true,
+      "source": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+      "testBlob": "936d3940da835d5d8e5dc663d9d88518e0740735",
+      "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_test",
+      "exit": 0,
+      "invocation": "70933a9d-5b20-4257-8889-044600f1ac5a",
+      "finished": [
+        0
+      ],
+      "attempts": 1,
+      "status": "PASSED",
+      "strategy": "local",
+      "cached": false,
+      "logSHA256": "8bde3497d8081d91e23b1debd45580576238ca9c4d22c62bf8421d361016a192",
+      "xmlSHA256": "8bd05bc6c457ad314c38a78da493921543429acb8f78a15920b3ad714a69d485",
+      "namedXML": true,
+      "xmlCases": 1,
+      "xmlClean": true,
+      "goRuns": [
+        "TestConnectICMPError"
+      ],
+      "goResults": [
+        [
+          "PASS",
+          "TestConnectICMPError"
+        ]
+      ]
+    },
+    "concrete_locked": {
+      "verified": true,
+      "source": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+      "testBlob": "936d3940da835d5d8e5dc663d9d88518e0740735",
+      "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo",
+      "exit": 0,
+      "invocation": "919537e1-af9a-4bae-b284-01dd824b5835",
+      "finished": [
+        0
+      ],
+      "attempts": 1,
+      "status": "PASSED",
+      "strategy": "local",
+      "cached": false,
+      "logSHA256": "d5761648e791a02238ac5c3da0e00d14803ed0ba628a51e91749ad30eb4406d7",
+      "sections": [
+        [
+          "arm64",
+          "PASS"
+        ],
+        [
+          "amd64",
+          "PASS"
+        ]
+      ],
+      "findings": {
+        "amd64": {
+          "count": 0,
+          "matching": 0,
+          "sha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed"
+        },
+        "arm64": {
+          "count": 0,
+          "matching": 0,
+          "sha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed"
+        }
+      }
+    },
+    "concrete_unlocked": {
+      "verified": false,
+      "source": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+      "testBlob": "b52ef67179bbb48617f03cc3d29c41f49be51f46",
+      "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo",
+      "exit": 3,
+      "invocation": "c015f25b-d106-42fd-9c85-1900bfb75c58",
+      "finished": [
+        3
+      ],
+      "attempts": 1,
+      "status": "FAILED",
+      "strategy": "local",
+      "cached": false,
+      "logSHA256": "94f273c82b69d48d0275f34f85f81fd39544b4074e733997b7d3839cfda6d4f9",
+      "sections": [
+        [
+          "arm64",
+          ""
+        ],
+        [
+          "amd64",
+          ""
+        ]
+      ],
+      "callLine": 387,
+      "findings": {
+        "amd64": {
+          "count": 2,
+          "matching": 2,
+          "sha256": "71633388b5f22398c81711ae975df86ccb2be30d2a911f7f84fbdfe55fbe2730"
+        },
+        "arm64": {
+          "count": 2,
+          "matching": 2,
+          "sha256": "9552d782612df000eeb4b760fde5ad36dbf7d44f3b8eaa7034030700df73e218"
+        }
+      }
+    },
+    "original_interface": {
+      "verified": true,
+      "source": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+      "testBlob": "8ca4aa54820c4869ed9aa36677015e1b89a18d23",
+      "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo",
+      "exit": 0,
+      "invocation": "a28b1780-589f-46ed-a940-360eda714579",
+      "finished": [
+        0
+      ],
+      "attempts": 1,
+      "status": "PASSED",
+      "strategy": "local",
+      "cached": false,
+      "logSHA256": "d5761648e791a02238ac5c3da0e00d14803ed0ba628a51e91749ad30eb4406d7",
+      "sections": [
+        [
+          "arm64",
+          "PASS"
+        ],
+        [
+          "amd64",
+          "PASS"
+        ]
+      ],
+      "findings": {
+        "amd64": {
+          "count": 0,
+          "matching": 0,
+          "sha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed"
+        },
+        "arm64": {
+          "count": 0,
+          "matching": 0,
+          "sha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed"
+        }
+      }
+    }
+  }
+}
