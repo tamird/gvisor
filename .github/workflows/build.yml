@@ -1,35 +1,36 @@
-name: CI
-
-"on":
+name: Check the endpoint lock on receive-side TCP SACK blocks
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-receiver-sack-history-lock]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  analyzer:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the product, current master and analyzer input
+        run: |
+          set -euo pipefail
+          product=6adb2b8822c12eef7653344809794a4d1e6f4000
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse HEAD^^)" = 3847ed738e1a59892b936aebb1b9164c4f31ee95
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/tcp_sack_lock.py .github/workflows/build.yml)"
+          mkdir "$RUNNER_TEMP/tcp-sack-lock"
+          cp .github/qualification/tcp_sack_lock.py "$RUNNER_TEMP/tcp-sack-lock/"
+          git switch --detach "$product"
+          test "$(git rev-parse HEAD^{tree})" = aea922fa71f4aa63dd382c960cab614356261527
+          test "$(uname -m)" = x86_64
+          test "$(bazel --version)" = 'bazel 9.3.1'
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu
+      - name: Run the ordinary analyzer and compare both missing-precondition controls
+        run: python3 -IB "$RUNNER_TEMP/tcp-sack-lock/tcp_sack_lock.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: tcp-sack-history-lock
+          path: ${{ runner.temp }}/tcp-sack-lock/result.json
+          if-no-files-found: error
