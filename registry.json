@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T21:30:00+00:00",
+    "updatedAt": "2026-11-07T22:03:54+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3454,25 +3454,26 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. At bf2f967e3, #17204 reserves space before clearing recycled disk-backed pages and falls back to protected writes if fallocate fails. Successful fallback writes leave #15181’s AllocateAndCommit reservation guarantee open. Fresh advised and shmem allocations also remain in #15181’s scope.\n\nOn native AMD64, #17204 alone returned [0, 12288) with no error for a strict recycled allocation through a read-only file descriptor and a writable mapping. The same fixture on the two-parent integration 5b93713ad returned an empty range and EBADF. With a writable descriptor, the integration returned all 12,288 bytes. The trace recorded one successful fallocate over that one-chunk range. All 84 pgalloc and 356 safecopy cases passed, along with the two selected tmpfs cases.",
+      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. Fresh advised and shmem allocations are also covered by #15181.\n\nAyush closed #17204 without merging it. On copy-on-write filesystems such as Btrfs, a write to a mapped page can still fault after fallocate succeeds. The plain clear in #17204 and fork integration 5b93713ad would reintroduce the SIGBUS addressed by #17086. The integration is unsuitable. The published #15181 head 61470ea41 keeps fault-protected clearing and separately reserves storage for strict disk-backed allocations.\n\nThe native AMD64 comparison exercised reservation errors and syscall count. With a read-only descriptor and a writable mapping, #17204 returned all 12,288 bytes with no error. The fork integration returned an empty range and EBADF. With a writable descriptor, the integration reserved the same range once and returned all 12,288 bytes. The 84 pgalloc, 356 safecopy and two selected tmpfs cases passed. These tests did not exercise a copy-on-write fault after a successful reservation.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "61470ea4162137e6871edd94e369f1c03592c163",
-        "observedAt": "2026-11-07T21:17:40+00:00",
-        "disposition": "Published the disk-backed reservation amendment with the measured 4 KiB allocation costs.",
-        "nextAction": "Await upstream review. When either PR lands, compare its landed source to the fork integration, which preserves strict reservation failures and carries a successful reservation through without repeating it.",
+        "observedAt": "2026-11-07T22:03:54+00:00",
+        "disposition": "61470ea41 retains the fault protection from #17086. Retired fork integration 5b93713ad after Ayush closed #17204 over the copy-on-write SIGBUS risk.",
+        "nextAction": "Await upstream review of 61470ea41.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17086",
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/google/gvisor/pull/17204",
           "https://github.com/tamird/gvisor/commit/61470ea41",
           "https://github.com/tamird/gvisor/commit/5b93713ad",
-          "https://github.com/tamird/gvisor/actions/runs/42414525094/artifacts/13590248941"
+          "https://github.com/tamird/gvisor/actions/runs/42414525094/artifacts/13590248941",
+          "https://github.com/google/gvisor/pull/17204#issuecomment-6713531237"
         ]
       },
-      "updatedAt": "2026-11-07T21:17:40+00:00",
+      "updatedAt": "2026-11-07T22:03:54+00:00",
       "head": "61470ea4162137e6871edd94e369f1c03592c163",
       "evidence": [
         {
@@ -3492,16 +3493,20 @@
           "url": "https://github.com/google/gvisor/pull/15181"
         },
         {
-          "label": "Overlapping reservation before clearing recycled disk-backed pages",
+          "label": "Closed reservation-before-clear proposal",
           "url": "https://github.com/google/gvisor/pull/17204"
         },
         {
-          "label": "Fork-only integration of the two published source revisions",
+          "label": "Retired fork integration with an unprotected clear after reservation",
           "url": "https://github.com/tamird/gvisor/commit/5b93713ad"
         },
         {
           "label": "Native AMD64 disk reservation comparison and original allocator, safecopy and tmpfs results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42414525094/artifacts/13590248941"
+        },
+        {
+          "label": "Ayush explains the copy-on-write fault and closes #17204",
+          "url": "https://github.com/google/gvisor/pull/17204#issuecomment-6713531237"
         }
       ],
       "refinement": {
@@ -56115,8 +56120,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T02:45:41.617288Z",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.",
+      "updatedAt": "2026-11-07T22:03:54+00:00",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.",
       "evidence": [
         {
           "label": "GNU ARM64 -O1 versus -O2 cross-build",
@@ -56185,6 +56190,18 @@
         {
           "label": "Reply to Lucas about the approved amendment",
           "url": "https://github.com/google/gvisor/pull/17067#discussion_r4488483371"
+        },
+        {
+          "label": "Proposed runtime ARM64 page-size layout",
+          "url": "https://github.com/google/gvisor/pull/17089"
+        },
+        {
+          "label": "Fork-only native stub and runtime page-size integration",
+          "url": "https://github.com/tamird/gvisor/commit/c157b4d8f"
+        },
+        {
+          "label": "GNU cross-build with linked symbol and embedded blob comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42416239181/artifacts/13591427541"
         }
       ],
       "settledReviews": [
@@ -85037,5 +85054,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T21:30:00+00:00"
+  "updatedAt": "2026-11-07T22:03:54+00:00"
 }
