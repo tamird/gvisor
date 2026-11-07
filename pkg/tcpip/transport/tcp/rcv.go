@@ -32,9 +32,13 @@ type receiver struct {
 	ep *Endpoint
 
 	// rcvWnd is the non-scaled receive window last advertised to the peer.
+	//
+	// +checklocks:ep.mu
 	rcvWnd seqnum.Size
 
 	// rcvWUP is the RcvNxt value at the last window update sent.
+	//
+	// +checklocks:ep.mu
 	rcvWUP seqnum.Value
 
 	// prevBufused is the snapshot of endpoint rcvBufUsed taken when we
@@ -67,12 +71,16 @@ func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale
 
 // acceptable checks if the segment sequence number range is acceptable
 // according to the table on page 26 of RFC 793.
+//
+// +checklocks:r.ep.mu
 func (r *receiver) acceptable(segSeq seqnum.Value, segLen seqnum.Size) bool {
 	return header.Acceptable(segSeq, segLen, r.RcvNxt, r.RcvNxt.Add(r.rcvWnd))
 }
 
 // currentWindow returns the available space in the window that was advertised
 // last to our peer.
+//
+// +checklocks:r.ep.mu
 func (r *receiver) currentWindow() (curWnd seqnum.Size) {
 	endOfWnd := r.rcvWUP.Add(r.rcvWnd)
 	if endOfWnd.LessThan(r.RcvNxt) {
@@ -303,6 +311,8 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 // timestamp of the segment that triggered this measurement; it is used instead
 // of the current clock so that an internal processing delay does not inflate the
 // estimate (which would size the receive buffer too large).
+//
+// +checklocks:r.ep.mu
 func (r *receiver) updateRTT(rcvdTime tcpip.MonotonicTime) {
 	// From: https://public.lanl.gov/radiant/pubs/drs/sc2001-poster.pdf
 	//
