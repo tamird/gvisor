@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T18:40:14+00:00",
+    "updatedAt": "2026-11-07T19:12:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -61173,6 +61173,48 @@
         ]
       },
       "number": 17196
+    },
+    {
+      "id": "branch:tcp-advertised-window-lock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-advertised-window-lock",
+      "head": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba",
+      "title": "Check the endpoint lock on the advertised TCP window",
+      "url": "https://github.com/tamird/gvisor/commit/a6536561c",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T19:12:17+00:00",
+      "summary": "TCP uses the endpoint mutex to update the receive window, its sequence number and the buffered-byte count sampled at the last advertisement. The RTT estimator also holds the receive queue mutex when it reads the advertised window. This change lets Nogo check the existing endpoint lock at both RTT reads and in the segment acceptance and window helpers. It adds no runtime locks.\n\nOn the final commit, a fresh TCP Nogo run on native AMD64 reported zero findings for both Linux AMD64 and ARM64. On the preceding two-field version, TestZeroScaledWindowReceive passed on AMD64. Removing only the RTT helper’s endpoint-lock precondition produced three findings across its two accesses on each analyzer architecture. Each finding named the missing endpoint mutex and the held receive queue mutex. The final revision also covers the buffered-byte sample and leaves the tested Go statements unchanged.",
+      "evidence": [
+        {
+          "label": "Standalone proposal and permanent description",
+          "url": "https://github.com/tamird/gvisor/commit/a6536561c"
+        },
+        {
+          "label": "Final source and both TCP analyzer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42404341264/artifacts/13587295944"
+        },
+        {
+          "label": "Scaled-window regression, stock and guarded analyzers, and the missing endpoint-lock control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42403702588/artifacts/13586352840"
+        },
+        {
+          "label": "Merged advertised-window update and scaled zero-window regression",
+          "url": "https://github.com/google/gvisor/pull/16382"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/a6536561c",
+        "title": "Check the endpoint lock on the advertised TCP window",
+        "requestedAt": "2026-11-07T19:12:17+00:00",
+        "summary": "Open this single-commit PR to check the existing endpoint mutex at the TCP receive-window fields and their readers?",
+        "body": "When sending an ACK, TCP records the receive window, its sequence\nnumber and the amount of buffered data. Later window updates use\nthat snapshot. Segment acceptance and RTT estimation also read the\nadvertised window. The RTT estimator takes the receive queue lock\nto update its sample, but the window writer does not hold that lock.\n\nHave checklocks require the endpoint lock on the snapshot fields and\non the helpers that read them. Their callers already hold it."
+      }
     }
   ],
   "edges": [
@@ -84657,5 +84699,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T18:40:14+00:00"
+  "updatedAt": "2026-11-07T19:12:17+00:00"
 }
