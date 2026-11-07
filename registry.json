@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T18:02:27+00:00",
+    "updatedAt": "2026-11-07T18:40:14+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60719,17 +60719,53 @@
       "id": "branch:staged-release-publication",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/staged-release-publisher-inputs",
-      "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
-      "title": "Publish staged releases without the builder",
-      "url": "https://github.com/tamird/gvisor/commit/a7e84cf82",
+      "ref": "research/release-staging-standalone",
+      "head": "8a31f637817a7bece72b26e45b8a14e2e80ddedd",
+      "title": "Stage release downloads and checksums with Bazel",
+      "url": "https://github.com/tamird/gvisor/commit/8a31f6378",
       "group": "release",
-      "status": "Agent work",
-      "updatedAt": "2026-11-07T17:19:43+00:00",
-      "summary": "The revision accepts explicit staged package files and directories. It follows a symlink only when the caller names a package file directly. The combined offline publisher consumed the exact configured outputs, preserved a filename containing a newline and refused an explicit directory symlink. Both APT suites were signed and verified. The Make frontend retains its package and disposable-key prerequisites.\n\nBuildkite stages the release artifacts before signing. The proposed publisher consumes that directory directly. The Make frontend still builds its package prerequisites and generates the disposable presubmit key. Ordinary Make completed after six denied Docker calls, including two builder exec probes. Host-only Make and the direct publisher used no Docker; the publisher used no Bazel. A fresh native test verified the signed APT indexes and matched AMD64 and ARM64 package payloads, normalized metadata and optional .changes files. Signed .deb hashes differed. All four raw downloads and their SHA512 sidecars matched byte for byte. The test exercised head, nightly and tagged routing with a disposable key. It intercepted Twine offline and recorded zero cloud writes. Missing key, missing directory, empty directory and scan failure each stopped before repository output.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T18:40:14+00:00",
+      "summary": "Bazel already knows each archive’s target architecture. This revision stages the Debian package and both download archives for AMD64 and ARM64, with one SHA512 checkfile per archive. Tagged builds add the wheel and source distribution. Debian signing and APT index generation stay on the trusted release host. The earlier shell publisher a7e84cf82 was withdrawn after review.\n\nThe tested commit 3432ab916 has the same source tree as the proposal. Bazel configured four native archive checksums in both modes, one Flit action for a tagged release and none for an untagged one. The local staging fixture reproduced a failure when a declared wheel appeared as a symlink. The corrected stager checked the opened file, copied both distributions, and replaced them with an empty directory on the next untagged build. Default and prebuilt Make paths rejected an incomplete release before signing. The default archive build was suppressed for that control.\n\nOn the separate integration d6f54c947, twelve fresh remote actions produced eight payloads and six SHA512 checkfiles. The offline stock and candidate publishers agreed for head, nightly, tagged, older-tag, ignored-tag and prebuilt-input releases. Tagged host checksum calls fell from 16 to zero. A disposable key signed the APT outputs. The test intercepted Twine and performed no cloud publication.\n\nThe immediate parent bb565d846 combines the #16490 architecture split and the Flit prerequisites. Buildkite activation also needs the host Bazel bootstrap from #16904 and a working toolchain for both target architectures. The deployed release queue remains unverified.",
       "evidence": [
         {
-          "label": "Revised standalone commit and permanent description",
+          "label": "Standalone proposal and permanent description",
+          "url": "https://github.com/tamird/gvisor/commit/8a31f6378"
+        },
+        {
+          "label": "Clean prerequisite parent for this single commit",
+          "url": "https://github.com/tamird/gvisor/commit/bb565d846"
+        },
+        {
+          "label": "Final-tree action graph for tagged and untagged releases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42402026987/artifacts/13585454586"
+        },
+        {
+          "label": "Local symlink failure and fix, stale-wheel control, configured files and both Make paths",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42401367486/artifacts/13585765912"
+        },
+        {
+          "label": "Integrated remote producers and six offline stock/publisher comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42399661675/artifacts/13585307666"
+        },
+        {
+          "label": "Architecture split prerequisite, gVisor #16490",
+          "url": "https://github.com/google/gvisor/pull/16490"
+        },
+        {
+          "label": "Declared Flit prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/6650e2f29"
+        },
+        {
+          "label": "Buildkite host Bazel bootstrap, gVisor #16904",
+          "url": "https://github.com/google/gvisor/pull/16904"
+        },
+        {
+          "label": "Qualified compiler option for both targets",
+          "url": "https://github.com/tamird/gvisor/commit/4bee07965"
+        },
+        {
+          "label": "Earlier withdrawn shell publisher",
           "url": "https://github.com/tamird/gvisor/commit/a7e84cf82"
         },
         {
@@ -60747,10 +60783,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "c661271ae7b13f9e607958444e8cbf553c883720"
+          "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320"
         },
         "after": {
-          "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320"
+          "head": "8a31f637817a7bece72b26e45b8a14e2e80ddedd"
         }
       },
       "settledReviews": [
@@ -60767,20 +60803,29 @@
           "at": "2026-11-07T17:19:43+00:00"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
-        "url": "https://github.com/tamird/gvisor/commit/a7e84cf82"
-      },
       "followup": {
         "owner": "Release workstream owner",
-        "sourceHead": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320",
-        "observedAt": "2026-11-07T17:19:43+00:00",
-        "disposition": "The contributor rejected the staged publisher at a7e84cf82 as too narrow and requested a design that avoids adding shell logic. The earlier directory-only proposal c661271ae is superseded.",
-        "nextAction": "Revisit the release publishing design and use the existing signed APT, archive and routing checks to qualify it.",
+        "sourceHead": "8a31f637817a7bece72b26e45b8a14e2e80ddedd",
+        "observedAt": "2026-11-07T18:40:14+00:00",
+        "disposition": "The contributor requested a broader design with less release logic in shell. The earlier a7e84cf82 proposal remains withdrawn. The replacement moves unsigned staging and per-archive checksums to Bazel and keeps signing on the release host.",
+        "nextAction": "Review the standalone staging commit. Coordinate submission with the architecture split and Flit prerequisites, and verify the native host Bazel and compiler before enabling the release queue.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/a7e84cf82",
-          "https://github.com/tamird/gvisor/actions/runs/42390561513/artifacts/13581566721"
+          "https://github.com/tamird/gvisor/commit/8a31f6378",
+          "https://github.com/tamird/gvisor/actions/runs/42402026987/artifacts/13585454586",
+          "https://github.com/tamird/gvisor/actions/runs/42401367486/artifacts/13585765912",
+          "https://github.com/tamird/gvisor/actions/runs/42399661675/artifacts/13585307666"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "8a31f637817a7bece72b26e45b8a14e2e80ddedd",
+        "baseHead": "bb565d84650bd92fd525d05f934aeea8ac058dec",
+        "url": "https://github.com/tamird/gvisor/commit/8a31f6378",
+        "title": "Stage release downloads and checksums with Bazel",
+        "requestedAt": "2026-11-07T18:40:14+00:00",
+        "summary": "Open this standalone PR after the architecture split and Flit prerequisites land? It moves archive layout and checksums into Bazel and keeps Debian signing on the trusted host. Activation requires host Bazel and a working compiler for both targets.",
+        "body": "The release publisher extracts runsc from each tarball to identify\nits architecture, then hashes the same archive for each download\nalias. Bazel knows the target architecture when it builds the archive.\n\nUse //debian:release-inputs to stage the Debian package and both\ndownload archives for AMD64 and ARM64 in one build. Compute each\narchive checksum once. Tagged releases also stage the wheel and\nsource distribution. Other builds produce an empty Python directory\nso a wheel from an earlier release cannot be promoted.\n\nDebian signing stays on the trusted release host, which holds the\nprivate key. The host signs copies of the packages before building\nthe APT indexes."
       }
     },
     {
@@ -84612,5 +84657,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T18:02:27+00:00"
+  "updatedAt": "2026-11-07T18:40:14+00:00"
 }
