@@ -1,35 +1,93 @@
-name: CI
-
+name: Measure FD receive on the connected guest server
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-receive-download]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 185
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - name: Bind both production receive patches and the original connected benchmark
+        run: |
+          set -euo pipefail
+          umask 077
+          r="$RUNNER_TEMP/fdbased-receive"
+          mkdir -p "$r"/{public,fixture,source}
+          cd "$r/source"
+          git init -q .
+          git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach FETCH_HEAD
+          test "$(git rev-parse HEAD^)" = 99caa17bf576354c16a5ab027fa2efd151871ab0
+          test "$(git rev-parse HEAD^^)" = 57e19e31a16e4781e14a17e8d7c8b20366fccaa9
+          git diff --quiet HEAD^ HEAD -- . ':!.github/qualification/fdbased_rx/**' ':!.github/workflows/build.yml'
+          cp .github/qualification/fdbased_rx/receive.py "$r/"
+          cp .github/qualification/fdbased_rx/iperf_test.go "$r/fixture/"
+          git fetch -q --depth=2 https://github.com/google/gvisor.git refs/pull/17187/head
+          test "$(git rev-parse FETCH_HEAD^)" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          test "$(git rev-parse FETCH_HEAD)" = 57e19e31a16e4781e14a17e8d7c8b20366fccaa9
+          git fetch -q --depth=2 https://github.com/google/gvisor.git refs/pull/17188/head
+          test "$(git rev-parse FETCH_HEAD^)" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          test "$(git rev-parse FETCH_HEAD)" = e1be5f9ec42853e2c24f4a9d86b4fe7c16e36f98
+          test "$(git diff FETCH_HEAD^ FETCH_HEAD | git patch-id --stable | cut -d' ' -f1)" = "$(git diff HEAD^^ HEAD^ | git patch-id --stable | cut -d' ' -f1)"
+          git fetch -q --depth=1 https://github.com/tamird/gvisor.git 50c1a9f4734be4c51e74c9df739c9ce015a53b73 e61da06dc253bd3a62c6583f3350520d305d07c5 2b51abee8530385431b7225198fdd5cd65e78696
+          test "$(git rev-parse 50c1a9f47:test/rbe/image_runtime.py)" = c2e837657f9ab178606a6b7d2ac6d2cec568397a
+          test "$(git rev-parse 50c1a9f47:test/rbe/image_archive.py)" = e2e3598777916d1cbb4e8e07f54c4dba0d650fbe
+          test "$(git rev-parse 50c1a9f47:test/benchmarks/tools/iperf.go)" = 8e20827f4c1b44d7280cb7d1145718fa11e096e0
+          git show 50c1a9f47:test/rbe/image_archive.py > "$r/image_archive.py"
+          git show 50c1a9f47:test/rbe/image_runtime.py > "$r/image_runtime.py"
+          git show 50c1a9f47:test/benchmarks/tools/iperf.go > "$r/fixture/iperf.go"
+          echo '{"status":"INCOMPLETE","phase":"host setup"}' > "$r/public/result.json"
+          test "$(uname -m)" = x86_64
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y build-essential crossbuild-essential-arm64 libnuma-dev zstd strace busybox-static
+          test -x /usr/bin/busybox
+          test -z "$(readelf -lW /usr/bin/busybox | grep INTERP || true)"
+          curl -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$r/bazel9"
+          curl -fsSL --retry 3 https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$r/bazel8"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $r/bazel9" | sha256sum -c -
+          echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $r/bazel8" | sha256sum -c -
+          curl -fsSL --retry 3 https://releases.bazel.build/8.5.0/release/bazel-8.5.0-linux-x86_64 -o "$r/bazel85"
+          echo "18255229d933b8da10151bdef223a302744296b09af8af1988c93faa1ea3c71f  $r/bazel85" | sha256sum -c -
+          chmod 0755 "$r"/bazel{8,9,85}
+          cat > "$r/local.bazelrc" <<'RC'
+          startup --host_jvm_args=-Xmx3000m
+          build --remote_executor= --remote_cache= --bes_backend=
+          build --jobs=4 --local_resources=cpu=4 --color=no --curses=no --noshow_progress
+          RC
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build native runsc and measure the private four-stream download
+        timeout-minutes: 170
+        run: |
+          set -euo pipefail
+          r="$RUNNER_TEMP/fdbased-receive"
+          cd "$r/source"
+          sudo -n env -i PATH="$PATH" HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 python3 "$r/receive.py" "$r" > "$r/private-console" 2>&1
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Verify and upload the bounded original observations
+        id: privacy
+        if: '!cancelled()'
+        run: |
+          r="$RUNNER_TEMP/fdbased-receive"
+          sudo -n chmod -R a+rX "$r/public"
+          python3 -IB - "$r/public" <<'PY'
+          from pathlib import Path
+          import json,sys,re
+          root=Path(sys.argv[1])
+          for f in root.iterdir():
+              assert f.name in ('result.json','before.bench','after.bench','benchstat.txt') and f.is_file() and not f.is_symlink()
+              data=f.read_bytes()
+              assert 0<len(data)<2**20 and not re.search(rb'(?i)x-buildbuddy-api-key|authorization:|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}',data)
+          assert json.loads((root/'result.json').read_text())['status'] in ('PASS','FAIL','INCOMPLETE')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: '!cancelled() && steps.privacy.outcome == ''success'''
+        with:
+          name: fdbased-guest-receive
+          path: ${{ runner.temp }}/fdbased-receive/public/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove the disposable comparison files
+        if: always()
+        run: sudo -n rm -rf -- "$RUNNER_TEMP/fdbased-receive"
