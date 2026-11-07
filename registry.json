@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T00:00:33.281Z",
+    "updatedAt": "2026-11-07T00:10:56.960Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6556,12 +6556,16 @@
       "url": "https://github.com/google/gvisor/pull/15370",
       "group": "bazel",
       "status": "open",
-      "head": "da88f239eb2f37f2a58db6c3a70296c562ed006a",
-      "updatedAt": "2026-11-06T23:46:05.439Z",
+      "head": "baa9e8af1e4fd8539f7dcee007e845f3a606c54b",
+      "updatedAt": "2026-11-07T00:10:56.960Z",
       "summary": "The revision uses with_cfg 1.0.2 and the public rules_cc test-extension API. All four test owners ran uncached on the requested native CPUs: 10,933 atomicbitops cases and three PosixError cases passed on each of AMD64 and ARM64. With the same pin, wrapping only the public macro still selects the AMD64 test toolchain for the ARM64 binary and fails before execution. The catalog regenerated its exact new row and verified all 224 entries.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Upstream lint passed after documenting the cc_test arguments",
+          "url": "https://github.com/google/gvisor/actions/runs/42316057877/job/128228810387"
+        },
         {
           "label": "Buildifier rejects the old cc_test docstring and accepts the revision",
           "url": "https://github.com/tamird/gvisor/actions/runs/42313822953/artifacts/13550325435"
@@ -6672,19 +6676,19 @@
           "at": "2026-11-06T23:37:40.578Z",
           "postedURL": "https://github.com/google/gvisor/pull/15370",
           "note": "Published at the exact approved commit."
+        },
+        {
+          "kind": "amendment",
+          "head": "baa9e8af1e4fd8539f7dcee007e845f3a606c54b",
+          "url": "https://github.com/tamird/gvisor/commit/baa9e8af1",
+          "title": "Run Go and C++ tests on native architectures",
+          "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
+          "outcome": "approved",
+          "at": "2026-11-07T00:10:56.960Z",
+          "postedURL": "https://github.com/google/gvisor/pull/15370",
+          "note": "Published. Upstream lint passed on the approved one-commit head."
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "baa9e8af1e4fd8539f7dcee007e845f3a606c54b",
-        "baseHead": "da88f239eb2f37f2a58db6c3a70296c562ed006a",
-        "url": "https://github.com/tamird/gvisor/commit/baa9e8af1",
-        "title": "Run Go and C++ tests on native architectures",
-        "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
-        "summary": "Buildifier requires the public cc_test macro to document name, architectures and **kwargs. The amendment adds those argument descriptions and one formatter-requested blank line. The project’s Buildifier reported the original error and accepted the revision on Linux. The executable Starlark syntax matched.",
-        "requestedAt": "2026-11-06T23:46:05.439Z"
-      }
+      ]
     },
     {
       "id": "pr:15371",
@@ -56856,6 +56860,39 @@
           "at": "2026-11-06T23:37:40.578Z",
           "postedURL": "https://github.com/google/gvisor/pull/17151",
           "note": "Published at the exact approved commit."
+        }
+      ]
+    },
+    {
+      "id": "pr:17155",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17155,
+      "ref": "buildkite-cli-small",
+      "head": "30143217adf5ade390febe1a48447b334c874c2e",
+      "title": "Add a tool for reading Buildkite CI results",
+      "url": "https://github.com/google/gvisor/pull/17155",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-07T00:10:56.960Z",
+      "summary": "Konstantin requested review of the Buildkite results CLI. Tamir separately asked whether Go would fit the repository’s tooling better.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "30143217adf5ade390febe1a48447b334c874c2e",
+        "url": "https://github.com/google/gvisor/pull/17155",
+        "title": "Review the Buildkite command and its failure attribution",
+        "body": "AGENTS.md, line 209\nThe checkout gives buildkite.py mode 100644, so this command exits with permission denied before it can print help. Could you mark the script executable or use python3 in the examples?\n\ntools/buildkite/buildkite.py, line 469\nIf attempt 1 failed and its retry is still running, retried is already true. With --logs this skips the only completed failure, and the documented rule would call the retry a pass. Could we show the retry as pending and keep that failed log available until we actually observe a passing attempt?\n\ntools/buildkite/buildkite.py, line 416\nmake testlogs includes FLAKY as well as FAILED and TIMEOUT (tools/bazel.mk:408). If one target passes on a Bazel retry and a different target fails the job, the hook annotates both and this lists both as failed_targets. Could we separate final failures from failed attempts, or call these annotated targets when their final status is unknown?\n\ntools/buildkite/buildkite.py, line 318\nA passing Go test can log a line like client_test.go:17: expected connection reset before a different test panics. This puts the passing test’s message in failure_lines without its PASS context. Could ordinary test messages stay in the excerpt unless they can be associated with a failing test?",
+        "requestedAt": "2026-11-07T00:10:56.960Z"
+      },
+      "evidence": [
+        {
+          "label": "Tamir’s language and tooling comment",
+          "url": "https://github.com/google/gvisor/pull/17155#issuecomment-6699281133"
+        },
+        {
+          "label": "Bazel target statuses reported by the existing testlogs recipe",
+          "url": "https://github.com/google/gvisor/blob/30143217a/tools/bazel.mk#L405-L410"
         }
       ]
     }
