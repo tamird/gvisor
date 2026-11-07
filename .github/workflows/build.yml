@@ -1,35 +1,57 @@
-name: CI
-
-"on":
+name: Qualify atomic TCP endpoint queue membership
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-atomic-membership-native]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Compare the two TCP implementations on native Jammy
+      shell: bash
+      run: |
+        set -euo pipefail
+        root="$RUNNER_TEMP/tcp-dispatcher-queue"
+        umask 077
+        mkdir -p "$root"/{out,tmp}
+        test "$(uname -m)" = x86_64
+        if ! command -v aarch64-linux-gnu-g++ >/dev/null || ! dpkg -s libnuma-dev >/dev/null 2>&1; then
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > "$root/jammy.list"
+          aptopts=(-o "Dir::Etc::sourcelist=$root/jammy.list" -o Dir::Etc::sourceparts=- -o Acquire::Retries=3)
+          sudo -n apt-get "${aptopts[@]}" update -qq
+          sudo -n apt-get "${aptopts[@]}" install -qq -y --no-install-recommends build-essential crossbuild-essential-arm64 libnuma-dev
+        fi
+        command -v x86_64-linux-gnu-gcc
+        command -v aarch64-linux-gnu-g++
+        cp .github/qualification/tcp_queue/{qualify.py,fixture.go.inc} "$root/"
+        donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+        pin=2b51abee8530385431b7225198fdd5cd65e78696
+        git fetch --quiet --depth=2 https://github.com/tamird/gvisor.git "$donor" "$pin"
+        test "$(git rev-parse "$donor:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+        test "$(git rev-parse "$donor:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+        for helper in qualification_report unit_matrix; do git show "$donor:test/rbe/$helper.py" > "$root/$helper.py"; done
+        curl --fail --silent --show-error --location https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bazelisk"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bazelisk" | sha256sum -c -
+        chmod 755 "$root/bazelisk"
+        test "$(cat .bazelversion)" = 9.3.1
+        ctl=(env -i HOME="$HOME" PATH=/usr/local/bin:/usr/bin:/bin USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0)
+        test "$("${ctl[@]}" "$root/bazelisk" --version)" = 'bazel 9.3.1'
+        "${ctl[@]}" python3 -B "$root/qualify.py" orchestrate
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: tcp-atomic-queue-native
+        path: |
+          ${{ runner.temp }}/tcp-dispatcher-queue/out/*.json
+          ${{ runner.temp }}/tcp-dispatcher-queue/out/*.txt
+        if-no-files-found: warn
+        retention-days: 14
