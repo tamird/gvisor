@@ -648,20 +648,24 @@ func (d PacketData) ReadTo(dst io.Writer, peek bool) (int, error) {
 		done int
 	)
 	offset := d.pk.dataOffset()
-	d.pk.buf.SubApply(offset, int(d.pk.buf.Size())-offset, func(v *buffer.View) {
-		if err != nil {
-			return
+	views := d.pk.buf.AsViewList()
+	for v := views.Front(); v != nil; v = v.Next() {
+		if offset >= v.Size() {
+			offset -= v.Size()
+			continue
 		}
+		p := v.AsSlice()[offset:]
+		offset = 0
 		var n int
-		n, err = dst.Write(v.AsSlice())
+		n, err = dst.Write(p)
 		done += n
 		if err != nil {
-			return
+			break
 		}
-		if n != v.Size() {
-			panic(fmt.Sprintf("io.Writer.Write succeeded with incomplete write: %d != %d", n, v.Size()))
+		if n != len(p) {
+			panic(fmt.Sprintf("io.Writer.Write succeeded with incomplete write: %d != %d", n, len(p)))
 		}
-	})
+	}
 	if !peek && done != 0 {
 		d.TrimFront(done)
 	}
