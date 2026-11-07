@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T11:43:06+00:00",
+    "updatedAt": "2026-11-07T11:47:58+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57333,9 +57333,13 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T11:35:54+00:00",
-      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 run captured an intermittent FDs.Classes difference on default/sentry. Both subsequent default-case repeats passed. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60.",
+      "updatedAt": "2026-11-07T11:47:58+00:00",
+      "summary": "One Bazel invocation built all 2,887 build-only labels and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 run captured an intermittent FDs.Classes difference on default/sentry. Both subsequent default-case repeats passed. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.",
       "evidence": [
+        {
+          "label": "Same gVisor test on both published ARM64 kernel images in isolated QEMU guests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151"
+        },
         {
           "label": "Matched two-thread control and actual Sentry samples on both native workers",
           "url": "https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404"
@@ -57809,10 +57813,11 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T11:35:54+00:00",
+        "observedAt": "2026-11-07T11:47:58+00:00",
         "disposition": "Full mixed presubmit completed with one failing ARM64 shard",
-        "nextAction": "Check BuildBuddy #11090’s proposed ARM64 kernel with the same control and rerun the original owner when a corrected guest is available.",
+        "nextAction": "When BuildBuddy rolls out a corrected ARM64 guest, rerun the original runsc/cmd test shard on that worker with all posture assertions.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151",
           "https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404",
           "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
           "https://github.com/tamird/gvisor/actions/runs/42367351219/artifacts/13572591028",
@@ -59606,6 +59611,44 @@
           "https://github.com/tamird/gvisor/actions/runs/42366670610/artifacts/13573320005",
           "https://github.com/google/gvisor/pull/17045"
         ]
+      }
+    },
+    {
+      "id": "pr:buildbuddy-io/buildbuddy:11090",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 11090,
+      "ref": "firecracker-arm64-guest-v6-1",
+      "head": "d2c5b1a34bf13568b498dc2f42361ec9f56c7de6",
+      "title": "Upgrade firecracker arm64 guest kernel to v6.1",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
+      "group": "buildbuddy",
+      "status": "open",
+      "updatedAt": "2026-11-07T11:47:58+00:00",
+      "summary": "The draft upgrades BuildBuddy’s ARM64 Firecracker guest kernel to 6.1. In isolated QEMU guests, its published image reported a synchronized filter on both test threads. The published 5.10 image and a shared 5.10.0 ARM64 Firecracker worker reported it only on the installing thread. Both threads enforced the filter in all three tests.",
+      "evidence": [
+        {
+          "label": "Same gVisor test on both published ARM64 kernel images in isolated QEMU guests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151"
+        },
+        {
+          "label": "Two-thread test and gVisor Sentry posture checks on shared workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404"
+        },
+        {
+          "label": "Linux per-thread filter-count fix",
+          "url": "https://github.com/torvalds/linux/commit/b4d8a58f8"
+        }
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "d2c5b1a34bf13568b498dc2f42361ec9f56c7de6",
+        "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
+        "requestedAt": "2026-11-07T11:47:58+00:00",
+        "title": "Ask BuildBuddy to roll out the ARM64 procfs reporting fix",
+        "summary": "Review the proposed rollout request and the paired QEMU and shared-worker results.",
+        "body": "The ARM64 6.1 kernel in this PR fixes the `Seccomp_filters` discrepancy in gVisor’s two-thread test in QEMU. Both the published 5.10 image and this 6.1 image enforced the synchronized filter on both threads. On 5.10, `/proc/thread-self/status` counted the new filter only on the installing thread. On 6.1, both counts increased by one. [Paired QEMU result](https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151)\n\nA shared ARM64 Firecracker worker running 5.10.0 showed the same one-thread count. gVisor’s Sentry posture test fails there on differing per-thread counts. Could you roll out an ARM64 guest with this procfs fix? [Shared-worker result](https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404)\n\nPosted by Codex on behalf of @tamird."
       }
     }
   ],
@@ -82605,5 +82648,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T11:43:06+00:00"
+  "updatedAt": "2026-11-07T11:47:58+00:00"
 }
