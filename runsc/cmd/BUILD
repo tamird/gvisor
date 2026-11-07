@@ -170,6 +170,13 @@ go_test(
     ],
     data = ["//:release"],  # keep
     embed = [":cmd"],
+    exec_properties = select({
+        "//test/rbe:source_presubmit": {
+            "test.dockerUser": "65534:65534",
+            "test.nonroot-workspace": "true",
+        },
+        "//conditions:default": {},
+    }),
     deps = [
         "//pkg/state/statefile",
         "//pkg/test/testutil",
