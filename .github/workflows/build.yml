@@ -1,35 +1,39 @@
-name: CI
-
+name: Qualify the Go TCP benchmark driver
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-benchmark-go-native]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  benchmark:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Build the exact driver and run its real transfers and process controls
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/tcp-benchmark-go"
+          mkdir -p "$work/public"
+          echo '{"verified":false,"stage":"setup"}' > "$work/public/result.json"
+          git init -q .
+          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          src=b58c1ff588fe543d296ca5810e4033eb13345767
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$src"
+          test "$(git rev-parse "$src^")" = 9c541c3ae1cd68df1741882480d5bf184396e695
+          git diff --exit-code "$src" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/tcp_benchmark_go.py'
+          git show "$GITHUB_SHA:.github/qualification/tcp_benchmark_go.py" > "$work/qualify.py"
+          git checkout -q --detach "$src"
+          sudo -n apt-get -qq update
+          sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -qq install -y --no-install-recommends bc ethtool iperf3 iproute2 kmod build-essential
+          sudo -n modprobe sch_netem || test -d /sys/module/sch_netem
+          curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazelisk" | sha256sum -c -
+          chmod +x "$work/bazelisk"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GIT_TERMINAL_PROMPT=0 python3 -B "$work/qualify.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tcp-benchmark-go-native
+          path: ${{ runner.temp }}/tcp-benchmark-go/public/
+          if-no-files-found: error
+          retention-days: 14
