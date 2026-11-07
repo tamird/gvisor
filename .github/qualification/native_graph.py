@@ -1,12 +1,13 @@
 """Compare TestRunner shards selected by three source-presubmit profiles."""
 
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
+import traceback
 
 
 SOURCE = "2e72c3051b3d7a13761f90961f4e94b8cccc8b11"
@@ -58,8 +59,15 @@ def invoke(mode: str, phase: str, command: str, args: list[str]) -> tuple[Path, 
     return output, bep, rc
 
 
-def selected(mode: str, tests_only: bool) -> dict[str, tuple[str, str]]:
+def selected(mode: str, tests_only: bool, *, fixture: bool = False, dump: Path | None = None) -> dict[str, tuple[str, str]]:
     args = ["--nobuild"]
+    if fixture:
+        patterns = WORK / "bits.targets"
+        patterns.write_text("//pkg/bits:all\n")
+        args.append("--target_pattern_file=" + str(patterns))
+    if dump:
+        args.extend(["--experimental_aquery_dump_after_build_format=streamed_proto",
+                     "--experimental_aquery_dump_after_build_output_file=" + str(dump)])
     if tests_only:
         args.append("--build_tests_only")
     _, bep, rc = invoke(mode, "tests" if tests_only else "all", "test", args)
@@ -83,7 +91,8 @@ def selected(mode: str, tests_only: bool) -> dict[str, tuple[str, str]]:
                     assert configs.setdefault(label, checksum) == checksum, label
             if finished := event.get("finished"):
                 finish.append(finished["exitCode"])
-    assert rc == 1 and finish == [{"code": 1, "name": "BUILD_FAILURE"}] and CONTROL in configs, (rc, finish)
+    control = "//pkg/bits:bits_test" if fixture else CONTROL
+    assert rc == 1 and finish == [{"code": 1, "name": "BUILD_FAILURE"}] and control in configs, (rc, finish)
     return {k: (v, kinds[k]) for k, v in configs.items() if kinds[k] != "test_suite rule"}
 
 
@@ -180,29 +189,92 @@ def shard_key(owner: str, arch: str, label: str, reversed_path: list[str]) -> Sh
     return Shard(owner, arch, *dimensions.get("run", (1, 1)), *dimensions.get("shard", (1, 1)))
 
 
-def inventory(mode: str) -> dict[Shard, Placement]:
-    tests = selected(mode, True)
-    save(mode + "-selection", {"source": SOURCE, "test_configurations_and_rules": tests})
-    owners = selected(mode, False)
-    assert tests.items() <= owners.items()
-    build_only = sorted(owners.keys() - tests.keys())
-    save(mode + "-roots", {"source": SOURCE, "profile": PROFILES[mode], "build_only": build_only})
-    # Read the action graph retained by the actual full test command. A normal
-    # aquery starts a new analysis with aquery's own configuration options.
-    raw, _, rc = invoke(mode, "actions", "aquery", [
-        "--skyframe_state", "--output=jsonproto", "--include_artifacts", "--noinclude_commandline",
-        'mnemonic("^TestRunner$")',
-    ])
-    assert rc == 0, rc
-    save(mode + "-release", release_products(mode, owners))
-    # Free the server's action graph before parsing the full artifact and path tables.
-    subprocess.run([*BAZEL, "shutdown"], check=True, timeout=120)
-    with raw.open() as stream:
-        graph = json.load(stream)
-    targets = {str(row["id"]): row["label"] for row in graph["targets"]}
-    configs = {str(row["id"]): row["checksum"] for row in graph["configuration"]}
-    artifacts = {str(row["id"]): str(row["pathFragmentId"]) for row in graph["artifacts"]}
-    fragments = {str(row["id"]): row for row in graph["pathFragments"]}
+def varint(raw: bytes, offset: int) -> tuple[int, int]:
+    value = 0
+    for shift in range(0, 70, 7):
+        byte = raw[offset]
+        offset += 1
+        value |= (byte & 127) << shift
+        if byte < 128:
+            return value, offset
+    raise ValueError("invalid protobuf varint")
+
+
+def fields(raw: bytes) -> dict:
+    result = defaultdict(list)
+    offset = 0
+    while offset < len(raw):
+        tag, offset = varint(raw, offset)
+        if tag & 7 == 0:
+            value, offset = varint(raw, offset)
+        else:
+            assert tag & 7 == 2, tag
+            size, offset = varint(raw, offset)
+            value = raw[offset:offset + size]
+            assert len(value) == size
+            offset += size
+        result[tag >> 3].append(value)
+    return result
+
+
+def output_ids(values: list) -> list[int]:
+    ids = []
+    for value in values:
+        if isinstance(value, int):
+            ids.append(value)
+        else:
+            offset = 0
+            while offset < len(value):
+                index, offset = varint(value, offset)
+                ids.append(index)
+    return ids
+
+
+def project_dump(path: Path) -> dict:
+    # Bazel's analysis_v2.proto streamed_proto is length-delimited
+    # ActionGraphContainers. Consume one message at a time, retaining only
+    # the indexes needed to resolve TestRunner output paths and placement.
+    graph = {name: {} for name in ("targets", "configs", "artifacts", "fragments")}
+    graph["actions"] = []
+    with path.open("rb") as stream:
+        while prefix := stream.read(1):
+            while prefix[-1] >= 128:
+                b = stream.read(1)
+                assert b and len(prefix) < 10
+                prefix += b
+            size, _ = varint(prefix, 0)
+            raw = stream.read(size)
+            assert len(raw) == size
+            for table, rows in fields(raw).items():
+                if table not in (1, 2, 3, 5, 8):
+                    continue
+                for row in rows:
+                    item = fields(row)
+                    index = str(item[1][0])
+                    if table == 1:
+                        graph["artifacts"][index] = str(item[2][0])
+                    elif table == 3:
+                        graph["targets"][index] = item[2][0].decode()
+                    elif table == 5:
+                        graph["configs"][index] = item[4][0].decode()
+                    elif table == 8:
+                        graph["fragments"][index] = {"label": item[2][0].decode(),
+                                                     "parentId": (item[3] or [0])[0]}
+                    elif item[4] == [b"TestRunner"]:
+                        info = [fields(entry) for entry in item[11]]
+                        graph["actions"].append({
+                            "targetId": index, "configurationId": item[5][0], "mnemonic": "TestRunner",
+                            "executionPlatform": (item[14] or [b""])[0].decode(), "outputIds": output_ids(item[9]),
+                            "executionInfo": [{"key": v[1][0].decode(), "value": (v[2] or [b""])[0].decode()} for v in info],
+                        })
+    return graph
+
+
+def inventory(mode: str, tests: dict, graph: dict, phase: str) -> dict[Shard, Placement]:
+    targets = graph["targets"]
+    configs = graph["configs"]
+    artifacts = graph["artifacts"]
+    fragments = graph["fragments"]
     records = {}
     auxiliary = Counter()
     unselected = 0
@@ -229,12 +301,58 @@ def inventory(mode: str) -> dict[Shard, Placement]:
                                  properties.get("workload-isolation-type", "oci"), properties.get("dockerUser", ""),
                                  properties.get("network-enable-ipv6", ""), properties)
     missing = sorted(tests.keys() - {record.label for record in records.values()})
-    save(mode + "-actions", {"source": SOURCE, "profile": PROFILES[mode], "auxiliary": auxiliary,
+    save(phase + "-actions", {"source": SOURCE, "profile": PROFILES[mode], "auxiliary": auxiliary,
                              "unselected_actions": unselected, "selected_without_test_log": missing,
                              "shards": [{**asdict(k), **asdict(v)} for k, v in sorted(records.items())]})
     assert not missing, (mode, missing[:8])
-    raw.unlink()
     return records
+
+
+def probe() -> bool:
+    mode = "mixed"
+    tests = selected(mode, True, fixture=True)
+    expected = {"//pkg/bits:bits_test", "//pkg/bits:bits_test" + SUFFIX}
+    assert tests.keys() == expected, tests
+    report = {"source": SOURCE, "selected": tests}
+    for name, args in [
+        ("skyframe", ["--skyframe_state", 'mnemonic("^TestRunner$")']),
+        ("ordinary", ['mnemonic("^TestRunner$", ' + target_set(tests) + ")"]),
+    ]:
+        output, _, rc = invoke(mode, name, "aquery", ["--output=jsonproto", "--noinclude_commandline", *args])
+        data = json.loads(output.read_text()) if rc == 0 else {}
+        labels = {str(i["id"]): i["label"] for i in data.get("targets", [])}
+        checksums = {str(i["id"]): i["checksum"] for i in data.get("configuration", [])}
+        pairs = {(labels[str(a["targetId"])], checksums[str(a["configurationId"])])
+                 for a in data.get("actions", []) if a.get("mnemonic") == "TestRunner"}
+        report[name] = {"exit": rc, "bytes": output.stat().st_size,
+                        "tables": {key: len(items) for key, items in data.items()},
+                        "test_configs": sorted(p for p in pairs if p[0] in expected)}
+        if name == "ordinary":
+            diffs = {}
+            for label, observed in pairs:
+                if label in tests and tests[label][0] != observed:
+                    prior = tests[label][0]
+                    control = subprocess.run([*BAZEL, "config", "--output=json", prior, observed],
+                                             capture_output=True, text=True)
+                    delta = json.loads(control.stdout) if control.returncode == 0 else {}
+                    diffs[label] = {"exit": control.returncode, "option_names": {
+                        fragment["name"]: sorted(fragment.get("optionsDiff", {}))
+                        for fragment in delta.get("fragmentsDiff", [])
+                    }}
+            report[name]["config_differences"] = diffs
+        save("control", report)
+    path = WORK / "bits.pb"
+    actual = selected(mode, True, fixture=True, dump=path)
+    assert actual == tests, (actual, tests)
+    graph = project_dump(path)
+    report["in_command"] = {"bytes": path.stat().st_size, "tables": {k: len(v) for k, v in graph.items()}}
+    save("control", report)
+    rows = inventory(mode, tests, graph, "control")
+    observed = {(k.owner, k.arch, k.run, k.total_runs, k.shard, k.total, v.worker_arch) for k, v in rows.items()}
+    report["qualified"] = observed == {("//pkg/bits:bits_test", arch, 1, 1, 1, 1, arch) for arch in ("amd64", "arm64")}
+    save("control", report)
+    path.unlink()
+    return report["qualified"]
 
 
 def compare(native: dict[Shard, Placement], mixed: dict[Shard, Placement]) -> dict:
@@ -256,10 +374,40 @@ def compare(native: dict[Shard, Placement], mixed: dict[Shard, Placement]) -> di
 
 if __name__ == "__main__":
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == SOURCE
-    amd64 = inventory("amd64")
-    arm64 = inventory("arm64")
-    mixed = inventory("mixed")
-    result = compare(amd64 | arm64, mixed)
+    qualified = False
+    try:
+        qualified = probe()
+    except Exception:
+        traceback.print_exc()
+    # Keep each native/mixed selection independently even when the optional
+    # action projection is unavailable. An incomplete graph cannot pass.
+    records = {}
+    release_observed = dict.fromkeys(PROFILES, False)
+    for mode in PROFILES:
+        try:
+            tests = selected(mode, True)
+            save(mode + "-selection", {"source": SOURCE, "test_configurations_and_rules": tests})
+            if qualified:
+                path = WORK / (mode + ".pb")
+                owners = selected(mode, False, dump=path)
+                assert tests.items() <= owners.items()
+                save(mode + "-roots", {"source": SOURCE, "profile": PROFILES[mode],
+                                       "build_only": sorted(owners.keys() - tests.keys())})
+                graph = project_dump(path)
+                save(mode + "-dump", {"bytes": path.stat().st_size, "tables": {k: len(v) for k, v in graph.items()}})
+                path.unlink()
+                records[mode] = inventory(mode, tests, graph, mode)
+                del graph
+                release = release_products(mode, owners)
+                save(mode + "-release", release)
+                release_observed[mode] = bool(release["exit"] == 0 and release["direct_root"] and release["layouts"])
+        except Exception:
+            traceback.print_exc()
+        finally:
+            subprocess.run([*BAZEL, "shutdown"], check=False, timeout=120)
+    assert records.keys() == PROFILES.keys(), sorted(records)
+    result = compare(records["amd64"] | records["arm64"], records["mixed"])
+    result["optional_release_layouts_observed"] = release_observed
     save("comparison", result)
     print("Native shards", result["native_shards"], "mixed", result["mixed_shards"])
     print("Missing", len(result["missing"]), "extra", len(result["extra"]), "changed", len(result["changed"]))

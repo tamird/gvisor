@@ -1,7 +1,7 @@
 name: Compare native and mixed source presubmit graphs
 "on":
   push:
-    branches: [qualification/same-source-native-skyframe]
+    branches: [qualification/same-source-native-action-dump]
 permissions: {}
 jobs:
   compare:
@@ -17,9 +17,9 @@ jobs:
           work="$RUNNER_TEMP/native-graph"
           mkdir -p "$work/results"
           git init -q .
-          GIT_TERMINAL_PROMPT=0 git fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
-          test "$(git rev-parse FETCH_HEAD^)" = 05b8711cd1e2e6634baf9957d176cf63e7402c7a
-          test "$(git rev-parse FETCH_HEAD~2)" = "$SOURCE"
+          GIT_TERMINAL_PROMPT=0 git fetch -q --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          test "$(git rev-parse FETCH_HEAD^)" = 920c713c8a8d8ffcb0f0479e75f07b952eb9cfc7
+          test "$(git rev-parse FETCH_HEAD~3)" = "$SOURCE"
           git diff --exit-code "$SOURCE" FETCH_HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/native_graph.py'
           git show 'FETCH_HEAD:.github/qualification/native_graph.py' > "$work/native_graph.py"
           git checkout -q --detach "$SOURCE"
