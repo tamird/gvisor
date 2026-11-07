@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T08:02:28+00:00",
+    "updatedAt": "2026-11-07T08:16:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48747,9 +48747,21 @@
       "url": "https://github.com/google/gvisor/pull/16851",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
-      "summary": "TCP can miss evidence that a timeout was unnecessary when the timestamp wraps or a second timeout clears the first retransmission’s timestamp. Keep that timestamp until recovery ends and compare the ACK’s echo in TCP serial order.",
+      "updatedAt": "2026-11-07T08:16:12+00:00",
+      "summary": "TCP can miss evidence that a timeout was unnecessary when the timestamp wraps or a second timeout clears the first retransmission’s timestamp. Keep that timestamp until recovery ends and compare the ACK’s echo in TCP serial order.\n\nRyan approved the public head and requested a test comment explaining why the first repair’s timestamp precedes zero in serial order. The fork amendment changes only comments and blank lines. The PR remains ready to pull at 47e4c458f.",
       "evidence": [
+        {
+          "label": "Ryan’s inline request to explain the serial-order timestamp",
+          "url": "https://github.com/google/gvisor/pull/16851#discussion_r4500830328"
+        },
+        {
+          "label": "Ryan’s approval and independent split-fix test results",
+          "url": "https://github.com/google/gvisor/pull/16851#pullrequestreview-5810986723"
+        },
+        {
+          "label": "Comment-only fork amendment for the two-timeout recovery test",
+          "url": "https://github.com/tamird/gvisor/commit/74952bf99"
+        },
         {
           "label": "Final ACK tests: stock, corrected SACK suite and Nogo on both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41351297555/artifacts/13101204074"
@@ -48767,7 +48779,28 @@
           "at": "2026-11-02T20:41:05Z"
         }
       ],
-      "number": 16851
+      "number": 16851,
+      "refinement": {
+        "before": {
+          "head": "47e4c458fbbe6607005442e23591f2b501f1644e",
+          "base": "aa767e4c43d011121271551fe24da501a56f729d"
+        },
+        "after": {
+          "head": "74952bf99e98a628b5621812118bd24b381168b7",
+          "base": "aa767e4c43d011121271551fe24da501a56f729d"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "74952bf99e98a628b5621812118bd24b381168b7",
+        "baseHead": "47e4c458fbbe6607005442e23591f2b501f1644e",
+        "url": "https://github.com/tamird/gvisor/commit/74952bf99",
+        "title": "Keep the first TCP repair timestamp through recovery",
+        "body": "Document why this test uses a first-repair timestamp above 2^31. If a second timeout clears the saved value, the ACK echo of the actual repair precedes zero in TCP serial order and can incorrectly count the timeout as spurious. The change preserves the constants, test assertions and production code.",
+        "requestedAt": "2026-11-07T08:16:12+00:00",
+        "summary": "Publish the test-comment amendment on #16851 and reply to Ryan? If the approved source lands first, use the same comment in a follow-up.\n\ngit -C ~/code/gvisor range-diff 47e4c458f^! 74952bf99^!\n\nProposed reply\n\nThanks, Ryan. The comment now explains why the first repair’s timestamp precedes zero in TCP serial order. Could you reapprove the updated head for import?"
+      }
     },
     {
       "id": "branch:pidfd-lock-contract",
@@ -57143,9 +57176,25 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T07:34:12+00:00",
-      "summary": "The rendered Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nWith #17131 and the socket drain, peer EOF still discarded the second queued packet. Having the last receive worker signal EOF after delivery preserved both packets. An explicit detach could still discard queued packets while a callback was blocked. On each native Ubuntu OCI worker, the corrected code passed all 86 fdbased and 13 netgofer test records, with zero skips. The first combined run exposed a constructor mismatch in the existing fdbased test table. Its correction left the netgofer production code byte-identical.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).\n\nThe coordinator used Buildkite pipeline upload --dry-run and executed the rendered command. The repository’s pre-command hook calls clear_docker_containers and installs packages with apt. Its post-command hook reads Make test logs and performs cleanup. The 748 test shards therefore establish the rendered command’s coverage. A complete Docker-free Buildkite agent lifecycle remains unverified.",
+      "updatedAt": "2026-11-07T08:09:43+00:00",
+      "summary": "The rendered Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nWith #17131 and the socket drain, peer EOF still discarded the second queued packet. Having the last receive worker signal EOF after delivery preserved both packets. An explicit detach could still discard queued packets while a callback was blocked. On each native Ubuntu OCI worker, the corrected code passed all 86 fdbased and 13 netgofer test records, with zero skips. The first combined run exposed a constructor mismatch in the existing fdbased test table. Its correction left the netgofer production code byte-identical.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).\n\nThe 748-shard run executed the rendered Buildkite command. A separate offline Linux check ran the real Buildkite agent 4.10.1 pre-command and post-command hooks. The original source called docker ps and retried sudo apt-get update 30 times in eight seconds before reaching Bazel. With the coordinator change, each profile ran the same local Bazel sentinel. A deliberate failure in either profile still allowed the other to run and returned exit 1. The hooks kept the test-branch stamp and completion and failure tracking. The specialized-job control kept its Make log discovery, artifact and annotation calls, and cleanup. Service writes were recorded offline.\n\nThe separate research step still invokes Bazel twice. The ordinary pipeline runs make unit-tests on the default AMD64 cgroupv2 queue and on the ARM64 queue, whose cgroup version is unspecified. The selected coordinator needs Bazel or Bazelisk and a site-configured remote executor with any required access. The repository declares worker constraints but no upstream executor address.",
       "evidence": [
+        {
+          "label": "Offline Buildkite agent command-phase hooks, two local Bazel profiles and deliberate failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42353594969/artifacts/13566263218"
+        },
+        {
+          "label": "Fork coordinator hook change with the tested tree",
+          "url": "https://github.com/tamird/gvisor/commit/3d33ffbfa"
+        },
+        {
+          "label": "Canonical source-only AMD64 and ARM64 unit jobs",
+          "url": "https://github.com/google/gvisor/blob/3847ed738/.buildkite/pipeline.yaml#L387"
+        },
+        {
+          "label": "Worker constraints and the coordinator Bazel rc on the research source",
+          "url": "https://github.com/tamird/gvisor/blob/4eb27c408/.bazelrc#L69"
+        },
         {
           "label": "Smaller two-packet regression on native AMD64: stock failed and all 86 corrected fdbased records passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/42347168725/artifacts/13564196913"
@@ -57539,10 +57588,12 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T06:21:28+00:00",
+        "observedAt": "2026-11-07T08:09:43+00:00",
         "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Once #17131 and a packet-socket EOF mechanism land, rebase the receive-worker handoff. The scoped FIONREAD change has fork-test authorization only. The ARM64 cmd suite still needs a remote Firecracker guest with the filter-count correction.",
+        "nextAction": "Apply the tested hook split to the two source-only unit entries in .buildkite/pipeline.yaml. Replace the temporary two-command shell loop with one mixed Bazel invocation, verify the intended owner coverage, and confirm the chosen queue's trusted executor settings. Once #17131 and a packet-socket EOF mechanism land, rebase the receive-worker handoff. The scoped FIONREAD change has fork-test authorization only. The ARM64 cmd suite still needs a remote Firecracker guest with the filter-count correction.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42353594969/artifacts/13566263218",
+          "https://github.com/tamird/gvisor/commit/3d33ffbfa",
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
           "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
           "https://github.com/tamird/gvisor/actions/runs/42292881614/artifacts/13540783719",
