@@ -1,35 +1,37 @@
-name: CI
-
-"on":
+name: Inspect the original mixed presubmit failure
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/mixed-arm-cmd-comparison]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  inspect:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Match the recorded product and the fixed reader
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = f6d6788e84731673a155c9fff6f28b8624e34c50
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/mixed_posture_receipt.py'
+          cp .github/qualification/mixed_posture_receipt.py "$RUNNER_TEMP/"
+          echo "a1d1a6f848ca2a50bc888c9784bd5db5e6090df841f47ca907544ba6ec960cba  $RUNNER_TEMP/mixed_posture_receipt.py" | sha256sum -c
+      - name: Retrieve the two original files
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          umask 077
+          python3 -IB "$RUNNER_TEMP/mixed_posture_receipt.py" retrieve
+      - name: Record changed fields and case outcomes
+        id: classify
+        run: |
+          python3 -IB "$RUNNER_TEMP/mixed_posture_receipt.py" classify
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: steps.classify.outcome == 'success'
+        with:
+          name: mixed-arm-cmd-field-comparison
+          path: ${{ runner.temp }}/mixed-arm-cmd-evidence/result.json
+          if-no-files-found: error
+          retention-days: 7
