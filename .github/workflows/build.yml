@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Compare downstream statefile package loading before and after placement
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/downstream-statefile-profiles]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  query:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Compare the original module consumer on both inputs
+        env:
+          SOURCE: 4eb27c4081e535d69c1257998a6c94256d9812e2
+          BASE: d78fe07a0a829205c5e26b864c648efdcb4d098d
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          test "$(git rev-parse HEAD^^)" = "$BASE"
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/build.yml
+          test "$(git diff --name-only "$BASE" "$SOURCE")" = runsc/cmd/BUILD
+          test "$(git rev-parse "$BASE":runsc/cmd/BUILD)" = 82474e44fab40f52074dafdb6e8dc57c9dd646f9
+          test "$(git rev-parse "$SOURCE":runsc/cmd/BUILD)" = 722bb0e4c0966ae9bb0388ed5460219e63d17f80
+          d="$RUNNER_TEMP/statefile-query"
+          mkdir -p "$d/consumer" "$d/results"
+          curl --retry 2 -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          python3 -I - <<'PY'
+          import hashlib, json, os, re, subprocess
+          from pathlib import Path
+          root=Path.cwd()
+          d=Path(os.environ["RUNNER_TEMP"])/"statefile-query"
+          client=d/"consumer"
+          (client/"MODULE.bazel").write_text('module(name="statefile_consumer",version="0.1")\nbazel_dep(name="gvisor",version="0.0.1")\nlocal_path_override(module_name="gvisor",path='+json.dumps(str(root))+')\n')
+          (client/"BUILD.bazel").touch()
+          (client/".bazelversion").write_text("9.3.1\n")
+          labels=["@gvisor//runsc/cmd:statefile_output_permissions_test","@gvisor//test/rbe:source_presubmit"]
+          result={}
+          for arm in ("BASE","SOURCE"):
+              sha=os.environ[arm]
+              subprocess.run(["git","checkout","-q","--detach",sha],check=True,cwd=root)
+              assert subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip()==sha
+              records={}
+              for key,query in (("owner","set("+" ".join(labels)+")"),("config",labels[1])):
+                  proc=subprocess.run([str(d/"bazel"),"--nosystem_rc","--nohome_rc","query","--output=label",query],cwd=client,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                  diagnostics=[]
+                  for line in proc.stderr.splitlines():
+                      if not re.search(r'ERROR:|Error in |Error computing|no such (package|target)|not visible|not found|Unable to find|Unable to load|must be a root|not the root|forbidden|cannot load|does not contain|Invalid label',line,re.I):
+                          continue
+                      if re.search(r'password|credential|authorization|api[-_]?key|bearer',line,re.I):
+                          continue
+                      line=re.sub(r'/home/runner/[^ ]*?/external/','external/',line)
+                      line=line.replace(str(root),'WORKSPACE').replace(str(d),'CONSUMER').replace(os.environ["RUNNER_TEMP"],'TMP')
+                      line=re.sub(r'https?://[^\s]+','<public-url>',line)
+                      if len(diagnostics)<6 and line[:500] not in diagnostics:
+                          diagnostics.append(line[:500])
+                  records[key]={"exit":proc.returncode,"labels":[l for l in proc.stdout.splitlines() if re.fullmatch(r"@{1,2}gvisor\+?//[A-Za-z0-9/_:.\-]+",l)][:2],"diagnostics":diagnostics,
+                                "stderr_sha256":hashlib.sha256(proc.stderr.encode()).hexdigest()}
+              result[arm]={"sha":sha,"queries":records}
+              (d/"results"/"comparison.json").write_text(json.dumps(result,indent=2)+"\n")
+          before,after=(result[arm]["queries"] for arm in ("BASE","SOURCE"))
+          for key in ("config","owner"):
+              a,b=before[key],after[key]
+              assert a['exit']==b['exit'] and a['labels']==b['labels']
+              assert (a["exit"]==0 and len(a['labels'])==(1 if key=="config" else 2)) or (a["diagnostics"] and a["diagnostics"]==b["diagnostics"])
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: downstream-statefile-query
+          path: ${{ runner.temp }}/statefile-query/results/comparison.json
+          if-no-files-found: error
+          retention-days: 14
