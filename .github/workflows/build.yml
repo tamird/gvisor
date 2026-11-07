@@ -1,35 +1,74 @@
-name: CI
-
-"on":
+name: Inspect the ARM64 netgofer child after peer close
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/arm64-netgofer-child-stack]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  readback:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Verify the exact source and the owner
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = d453d2243cf3dced3f19684b0b5c607400b3c6f3
+          test "$(git rev-parse HEAD^^)" = 353c484b45fec1ba5ba19445ba03807a5f9638e0
+          test "$(git diff --name-only HEAD^^ HEAD^)" = runsc/gofer/net/netgofer_test.go
+          test "$(git rev-parse HEAD^:runsc/gofer/net/netgofer_test.go)" = 982ebbe7ab5eb7e43e31aa8790d8849d31edb5c5
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_test_readback.py'
+          d="$RUNNER_TEMP/source-test-readback"
+          mkdir -m 700 "$d"
+          cp .github/qualification/source_test_readback.py "$d/"
+          git fetch --quiet --depth=1 origin 1819ee51a2f541b0adc7cacd60bea59ddc4712e6
+          git show 1819ee51a2:.github/qualification/three_source_failures.py > "$d/three_source_failures.py"
+          echo "e8e678e77c5ecb816da2eb33b07f5c6e365648ea4fb36fadf6597f276b02c49d  $d/three_source_failures.py" | sha256sum -c
+          git checkout -q --detach HEAD^
+      - name: Run the original suite on the same remote worker profiles
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          umask 077
+          d="$RUNNER_TEMP/source-test-readback"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          printf '%s\n' '//runsc/gofer/net:netgofer_test' > "$d/owner"
+          cat >> "$rc" <<'RC'
+          build:source-presubmit-arm64 --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-arm64 --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit-arm64 --remote_download_outputs=toplevel --jobs=12 --remote_download_regex=.*/runsc/gofer/net/netgofer_test/test[.](log|xml)
+          test:source-presubmit-arm64 --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:source-presubmit-arm64 --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          bazelisk --nosystem_rc --nohome_rc --bazelrc="$rc" test --config=source-presubmit-arm64 --target_pattern_file="$d/owner" --build_event_json_file="$d/run.bep" \
+            --test_arg=-test.run=^TestRunProxyModeWithSeccomp$ --test_arg=-test.count=16 --test_arg=-test.failfast --test_timeout=190 --test_arg=-test.timeout=160s --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 \
+            --run_under="/bin/sh -c 'echo ARM_NETGOFER_HOST=\$(/bin/uname -m); exec \"\$@\"' netgofer" \
+            --modify_execution_info=^TestRunner$=+no-remote-cache > "$d/run.console" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$d/exit"
+      - name: Collect the original test cases and timeout stack
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          d="$RUNNER_TEMP/source-test-readback"
+          trap 'rm -f "$d/run.bep" "$d/run.console" "$d/private.bazelrc"' EXIT
+          python3 -B "$d/source_test_readback.py"
+      - name: Verify the result boundary
+        id: receipt
+        if: always() && !cancelled()
+        run: |
+          p="$RUNNER_TEMP/source-test-readback/receipt.json"
+          test -s "$p" && test ! -L "$p" && test "$(wc -c < "$p")" -lt 240000
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$p"; then exit 1; fi
+          jq -e '.source=="d453d2243cf3dced3f19684b0b5c607400b3c6f3"' "$p" >/dev/null
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: arm64-netgofer-stalled-child-stack
+          path: ${{ runner.temp }}/source-test-readback/receipt.json
+          retention-days: 14
