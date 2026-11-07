@@ -1,35 +1,34 @@
-name: CI
-
-"on":
+name: Downstream ARM64 vDSO with released LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-downstream-arm-vdso]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  downstream:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Pin the compiler, upstream header policy and Linux client
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 69e89d7a3dfc6b2b484f7dc01a68fad68741dd03
+          test "$(git rev-parse HEAD^^)" = 4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
+          d="$RUNNER_TEMP/downstream-llvm"
+          mkdir -p "$d"
+          cp .github/qualification/downstream_llvm.py "$d/check.py"
+          echo '{"passed":false,"phase":"bootstrap"}' > "$d/result.json"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazelisk" | sha256sum -c -
+          chmod 755 "$d/bazelisk"
+      - name: Resolve both consumer graphs and link the corrected vDSO
+        run: python3 -B "$RUNNER_TEMP/downstream-llvm/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: downstream-llvm-vdso
+          path: ${{ runner.temp }}/downstream-llvm/result.json
+          if-no-files-found: error
