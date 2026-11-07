@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:00:19+00:00",
+    "updatedAt": "2026-11-07T01:08:23+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22850,8 +22850,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "group": "bazel",
       "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-07T01:00:19+00:00",
-      "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR omits installed dependencies from the dpkg status file. The revised catalog passed Fetch and Verify with the keyring bytes matched to Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.",
+      "updatedAt": "2026-11-07T01:08:23+00:00",
+      "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR lists only two of the 47 installed packages in the dpkg status file. The revised 225-entry catalog passed Fetch and Verify. Its manually recorded Ubuntu keyring matched the 3,607 bytes in Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.",
       "links": [
         {
           "label": "Final image source and notices",
@@ -37151,8 +37151,12 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "The lint amendment runs Buildifier and cpplint on declared inputs. The Bazel 9 prerequisite (#16801) has landed. The amendment uses bazel_lib 3.4.0 supplied by the approved #16736, whose import is open at #16890. Four fresh remote actions checked the qualified 3.4.0 tree. The clean controls covered 624 Buildifier inputs and 485 C/C++ inputs. Deliberately malformed files made both tools fail.",
+      "summary": "The lint amendment runs Buildifier and cpplint on declared inputs. Bazel 9 and bazel_lib 3.4.0 have both landed. The lint-only patch applies cleanly to master at 70008149c. On the qualified tree, the remote checks covered 624 Buildifier inputs and 485 C/C++ inputs. Both tools rejected deliberately malformed files.",
       "evidence": [
+        {
+          "label": "bazel_lib 3.4.0 on master",
+          "url": "https://github.com/google/gvisor/commit/89e0a744e"
+        },
         {
           "label": "Proposed lint-only amendment",
           "url": "https://github.com/tamird/gvisor/commit/e216e3075"
@@ -37275,13 +37279,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-06T21:59:06.193Z",
+      "updatedAt": "2026-11-07T01:08:23+00:00",
       "followup": {
         "owner": "Contributor",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-11-04T05:00:25.863097+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the lint-only amendment now. Publish it to #16663 after the #16736 supplier imports.",
+        "observedAt": "2026-11-07T01:08:23+00:00",
+        "disposition": "Both prerequisites landed; the lint amendment is awaiting contributor review.",
+        "nextAction": "Publish the reviewed amendment after the contributor approves it.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e216e3075",
           "https://github.com/tamird/gvisor/commit/0b1ad2d6d",
@@ -37318,7 +37322,7 @@
         "url": "https://github.com/tamird/gvisor/commit/e216e3075",
         "title": "Run Buildifier and cpplint on declared inputs",
         "requestedAt": "2026-11-01T17:58:13.420713+00:00",
-        "summary": "Publish the lint-only amendment after #16736 imports?\n\ngit -C ~/code/gvisor range-diff ac7b4e0fd..1dac5af96 0b1ad2d6d..e216e3075",
+        "summary": "Publish the lint-only amendment to #16663? Both prerequisites have landed.\n\ngit -C ~/code/gvisor range-diff ac7b4e0fd..1dac5af96 0b1ad2d6d..e216e3075",
         "body": "Run both tools through //tools/lint:check with declared tools and inputs. The inventory also handles removal and recreation of a source directory on Bazel 9. The prerequisite supplies bazel_lib 3.4.0. The amendment adds no dependency version change. The qualified tree checked 624 Buildifier files and 485 C/C++ files. Malformed inputs produced Buildifier exit 4 and cpplint exit 1, and Bazel reported failure. The existing public PR is still at 1dac5af96."
       }
     },
