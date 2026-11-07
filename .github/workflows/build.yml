@@ -1,82 +1,38 @@
-name: Qualify the source build test on empty workers
+name: Qualify build-test dependency selection
 on:
   push:
-    branches: [qualification/registry-llvm-source-build-test]
-permissions:
-  contents: read
-  actions: read
+    branches: [qualification/source-build-test-dependency-contract]
+permissions: {contents: read}
 jobs:
-  native-build-test:
+  dependency-contract:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 145
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
-      - name: Verify the product and previously built native Bazel test wrapper
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Bind the original compiler, source and unchanged good and broken dependencies
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = 61ff148f0df0efa29c9f500914477525c5debe62
-          git diff --exit-code HEAD^ HEAD -- . ':!BUILD' ':!test/rbe/source_build_test' ':!test/rbe/release_prewarmer/BUILD' ':!.github/qualification/build_test.py' ':!.github/workflows/build.yml'
+          test "$(git rev-parse HEAD^)" = 57bd4192fc404cc52298a1a7408efdd3610717bc
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/build_test*.py'
           work="$RUNNER_TEMP/source-build-test"
           mkdir -m 700 "$work"
-          gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$work/native.zip"
-          unset GH_TOKEN
           cd "$work"
           curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o stock
           curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o bb
           sha256sum -c <<'SUMS'
-          993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619  native.zip
           7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  stock
           205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
           SUMS
-          unzip -p native.zip bazel-candidate > native
-          test "$(unzip -p native.zip native-package-evidence/supplier.json | jq -r '[.status,.source]|join(" ")')" = 'PASS c2f5f79dce24877679cede14b85666b7ca65c6de'
-          echo '556164c2874fc66cdac3a32b53f862e705e9b9643c0ad3dea12880c97687d250  native' | sha256sum -c -
-          chmod 700 native stock bb
-          cd "$GITHUB_WORKSPACE"
-          echo 'ae1f23a11f3cb747fbec49a34c510c5ab9dcb75d06d94bfd4d9a49d50c629271  test/rbe/release_prewarmer/BUILD' | sha256sum -c -
-          python3 -IB - <<'PY'
-          import pathlib, subprocess
-          root = pathlib.Path("BUILD").read_text()
-          stock = subprocess.check_output(["git","show","HEAD^:BUILD"], text=True)
-          assert root == stock.replace('load("//tools:defs.bzl", "build_test", "gazelle", "go_path")', 'load("//test/rbe/source_build_test:controls.bzl", "observe_launcher")\nload("//tools:defs.bzl", "build_test", "gazelle", "go_path")') + '\nobserve_launcher(name = "qualification_build_test_launcher", program = ":build_test", testonly = True)\n'
-          PY
-      - name: Compare real successful and failing builds directly and through test suites
-        run: python3 -IB .github/qualification/build_test.py host
-      - name: Observe the original shell-dependent actions on both pinned workers
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: &submit |
-          set -eu
-          umask 077
-          rc="$RUNNER_TEMP/source-build-test/remote.bazelrc"
-          trap 'rm -f "$rc"' EXIT
-          : "${BUILDBUDDY_API_KEY:?missing existing fork key}"
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$rc"
-          unset BUILDBUDDY_API_KEY
-          phase=stock
-          if test -e "$RUNNER_TEMP/source-build-test/selected"; then phase=real; fi
-          env -i PATH="$PATH" HOME="$HOME" USER="$USER" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -IB .github/qualification/build_test.py "$phase"
-      - name: Verify the chosen native test's unchanged 16 build roots and small runfiles
+          chmod 700 stock bb
+      - name: Preserve the original diagnosis, dependency runs and configured shared links
         run: |
-          test ! -e "$RUNNER_TEMP/source-build-test/remote.bazelrc"
-          python3 -IB .github/qualification/build_test.py select
-          touch "$RUNNER_TEMP/source-build-test/selected"
-      - name: Exercise both real native TestRunners and both dependency-selection paths
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: *submit
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B .github/qualification/build_test_contract.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && !cancelled()
         with:
-          name: registry-llvm-source-build-test
+          name: source-build-test-dependency-contract
           path: ${{ runner.temp }}/source-build-test/result.json
           if-no-files-found: error
           retention-days: 14

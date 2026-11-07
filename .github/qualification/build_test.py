@@ -96,6 +96,22 @@ def owner(label):
     return clean(label.removeprefix("@@") if label and label.startswith("@@//") else label)
 
 
+def local_detail(message):
+    # This path is used only by the credential-free env-cleared host workflow.
+    out = []
+    for line in message.splitlines():
+        if not re.search(r"(?i)error:|invalid|not registered|available strateg|not supported|not available|requested|not found|no such|permission denied|exception|failed", line):
+            continue
+        if re.search(r"(?i)authorization|credential|api.?key|password|token|--.*header|command line:|subcommand:", line):
+            continue
+        short = line.replace(str(WORK), "<qualification>").replace(str(Path.home()), "~").strip()
+        if short and short not in out:
+            out.append(short[:900])
+        if len(out) == 7:
+            break
+    return out
+
+
 def file_data(item):
     uri = urllib.parse.urlsplit(item.get("uri", ""))
     if uri.scheme != "file":
@@ -107,7 +123,7 @@ def file_data(item):
     return data if sha(data) == item.get("digest") and len(data) == int(item.get("length", 0)) else None
 
 
-def observe(bep, row):
+def observe(bep, row, host=False):
     if not bep.exists():
         return
     actions, tests, targets = [], [], {}
@@ -116,6 +132,13 @@ def observe(bep, row):
     for line in bep.open():
         event = json.loads(line)
         ident = event["id"]
+        if host and "finished" in event:
+            f = event["finished"]
+            detail = f.get("failureDetail", {})
+            row["finished"] = {"exit": f.get("exitCode"), "diagnosis": local_detail("ERROR: " + detail.get("message", "")) if detail else [],
+                               "failure_codes": {key: value.get("code") for key, value in detail.items() if isinstance(value, dict)}}
+        if host and "testSummary" in event:
+            row.setdefault("summaries", {})[owner(ident["testSummary"]["label"])] = event["testSummary"].get("overallStatus")
         if "started" in event:
             row["invocation"] = clean(event["started"].get("uuid"))
         if "namedSetOfFiles" in event:
@@ -149,7 +172,17 @@ def observe(bep, row):
             for item in test.get("testActionOutput", []):
                 if item["name"] in ("test.log", "test.xml"):
                     data = file_data(item)
-                    entry[item["name"]] = {"verified": data is not None, "digest": clean(item.get("digest"))}
+                    direct = False
+                    if host and data is None and not item.get("digest") and entry["owner"].startswith(PKG):
+                        uri = urllib.parse.urlsplit(item.get("uri", ""))
+                        path = Path(urllib.parse.unquote(uri.path))
+                        suffix = "/testlogs/test/rbe/source_build_test/" + entry["owner"].removeprefix(PKG) + "/" + item["name"]
+                        if uri.scheme == "file" and path.as_posix().endswith(suffix) and path.is_file() and 0 < path.stat().st_size < 2000000:
+                            observed = path.read_bytes()
+                            if "length" not in item or len(observed) == int(item["length"]):
+                                data, direct = observed, True
+                    entry[item["name"]] = {"verified": data is not None, "digest": clean(item.get("digest")),
+                                           "observed_sha256": sha(data) if data is not None else None, "direct_local_output": direct}
                     if data is not None and item["name"] == "test.log":
                         entry["machines"] = [m.decode() for m in re.findall(rb"(?m)^build_test native machine=(x86_64|aarch64)\r?$", data)]
             tests.append(entry)
@@ -201,13 +234,16 @@ def spawns(path, row, arch):
     row["spawns"] = result
 
 
-def run(name, arch, native, remote, command, labels):
+def run(name, arch, native, remote, command, labels, host_strategy=None):
     d = WORK / name
     d.mkdir()
     bep, compact = d / "events", d / "compact"
     args = startup(native, remote) + [command] + opts(arch, native, remote)
     args += ["--build_event_publish_all_actions", "--nobuild_event_json_file_path_conversion", "--build_event_json_file=" + str(bep)]
     args += ["--execution_log_compact_file=" + str(compact)]
+    if host_strategy:
+        assert not remote and host_strategy in ("linux-sandbox", "processwrapper-sandbox")
+        args[args.index("--spawn_strategy=linux-sandbox")] = "--spawn_strategy=" + host_strategy
     with (d / "output").open("wb") as log:
         status = subprocess.run(args + labels, stdout=log, stderr=subprocess.STDOUT).returncode
     raw = (d / "output").read_bytes()
@@ -220,7 +256,9 @@ def run(name, arch, native, remote, command, labels):
     row["diagnostics"] = diagnostics(raw)
     report["cells"][name] = row
     save()
-    observe(bep, row)
+    if host_strategy:
+        row["client_diagnosis"] = local_detail(raw.decode("utf-8", "replace"))
+    observe(bep, row, host=bool(host_strategy))
     spawns(compact, row, arch)
     save()
     print(name, "exit", status, "results", len(row.get("tests", [])), "signals", row["signals"], flush=True)
@@ -242,13 +280,13 @@ def fresh(row, label, kind, arch):
                and s["runner"] == "remote" and not s["cache"] for s in row.get("spawns", []))
 
 
-def control(form, suite, remote=False, arch="amd64"):
+def control(form, suite, remote=False, arch="amd64", host_strategy=None, prefix=""):
     suffix = "_via_suite" if suite else ""
     tests = [PKG + form + "_" + state for state in ("valid", "broken")]
     args = [name + ("_suite" if suite else "") for name in tests]
     good, bad = [name + suffix for name in tests]
     label = ("remote-" + arch if remote else "host") + "-" + form + ("-suite" if suite else "-direct")
-    row = run(label, arch, remote, remote, "test", args)
+    row = run(prefix + label, arch, remote, remote, "test", args, host_strategy)
     def input_ran(owner, expected):
         return (any(a["owner"] == owner + "_input" and a["kind"] == "BuildTestFixture" and a["success"] == (expected == 0)
                     for a in row.get("actions", [])) and any(s["owner"] == owner + "_input" and s["kind"] == "BuildTestFixture"
@@ -351,4 +389,5 @@ def main(mode):
         raise SystemExit("See original per-target observations")
 
 
-main(sys.argv[1])
+if __name__ == "__main__":
+    main(sys.argv[1])
