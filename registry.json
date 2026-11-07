@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T17:29:49+00:00",
+    "updatedAt": "2026-11-07T17:36:27+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60170,15 +60170,19 @@
       "id": "branch:inspect-explicit-checkpoint-memoryfiles",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/inspect-explicit-checkpoint-memoryfiles",
-      "head": "2d112a9314987d6c2ad9317947a9908ce770dff9",
+      "ref": "proposal/checkpoint-inspector-format-tests",
+      "head": "ebcea451de61a61957c82527fa94241827267cde",
       "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
-      "url": "https://github.com/tamird/gvisor/commit/2d112a931",
+      "url": "https://github.com/tamird/gvisor/commit/ebcea451d",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-07T17:25:48+00:00",
-      "summary": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings.\n\nThe nine files add 603 lines and remove 74. Of the additions, 255 are permanent tests and 29 are BUILD declarations. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T17:36:27+00:00",
+      "summary": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings.\n\nThe revised tests remove 70 net lines relative to approved 2d112a931. Across ten files the full change adds 535 lines and removes 76. Tests account for 187 added and two removed lines. The 348 other additions include 29 BUILD lines. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context.",
       "evidence": [
+        {
+          "label": "Revised native ARM64 test suites and four mutations rejected for their expected failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42396550227/artifacts/13583881407"
+        },
         {
           "label": "Fresh native ARM64 inspection, private file controls and same-image restores",
           "url": "https://github.com/tamird/gvisor/actions/runs/42369973734/artifacts/13574155486"
@@ -60208,14 +60212,33 @@
       ],
       "followup": {
         "owner": "Checkpoint workstream owner",
-        "sourceHead": "2d112a9314987d6c2ad9317947a9908ce770dff9",
-        "observedAt": "2026-11-07T17:25:48+00:00",
-        "disposition": "The contributor approved the historical checkpoint inspector and requested a second look at its 255 lines of new tests.",
-        "nextAction": "Audit the fixture against existing coverage, retain cases that distinguish incorrect behavior, and verify the resulting tests before submission.",
+        "sourceHead": "ebcea451de61a61957c82527fa94241827267cde",
+        "observedAt": "2026-11-07T17:36:27+00:00",
+        "disposition": "The production reader is identical to approved 2d112a931. The requested test audit is complete.",
+        "nextAction": "Open the upstream PR after review of the revised tests.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2d112a931",
-          "https://github.com/tamird/gvisor/actions/runs/42369973734/artifacts/13574155486"
+          "https://github.com/tamird/gvisor/commit/ebcea451d",
+          "https://github.com/tamird/gvisor/actions/runs/42396550227/artifacts/13583881407"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "2d112a9314987d6c2ad9317947a9908ce770dff9"
+        },
+        "after": {
+          "head": "ebcea451de61a61957c82527fa94241827267cde"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "ebcea451de61a61957c82527fa94241827267cde",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/ebcea451d",
+        "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
+        "requestedAt": "2026-11-07T17:36:27+00:00",
+        "summary": "Review the revised tests before opening the already approved checkpoint inspector. Only the two test files changed. Both ARM64 suites passed. Four controlled changes each failed the intended assertion: reporting slice capacity, accepting a short final page, printing a constant raw-region size, and rendering HTML as text.\n\ngit -C ~/code/gvisor range-diff 2d112a931^! ebcea451d^!",
+        "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed\nprotobuf. A generic statefile dump can skip later objects or print\nincorrect page boundaries while reporting success.\n\nAdd a -checkpoint mode for existing Sentry files. The historical\nenvelope has no payload tag, and ordinary state streams can contain\nthe same roots. Keep their default text and HTML rendering intact.\n\nUse the shared graph printer and pgalloc metadata reader to display\nthe application MemoryFile and its committed ranges. Read one private\nMemoryFile per saved owner and reject missing or trailing data. Retain\nthe earlier object-framed layout and the separate split-page layout.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")"
       }
     },
     {
@@ -82614,10 +82637,31 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-07T03:31:55+00:00",
+      "updatedAt": "2026-11-07T17:33:34+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
+        {
+          "text": "With four TCP download streams over Ethernet and one recvMMsg worker, #17187 and #17188 together reduced whole-Sentry allocations per GiB received from 55.25k to 20.34k (−63.18%) and allocated bytes per GiB from 2763.4 KiB to 1016.2 KiB (−63.23%). The 12 paired native AMD64 measurements compared master 9ee2906f5 with the combined changes at 99caa17bf. Throughput was 4.100 versus 4.142 GiB/s (p = .089), with no detectable change. The comparison measures both changes together.",
+          "evidence": [
+            {
+              "label": "Original benchstat, raw samples and receiver evidence",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42393657602/artifacts/13583069933"
+            },
+            {
+              "label": "TCP reviewer guide and per-metric results",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            },
+            {
+              "label": "Remove temporary receive-buffer allocations",
+              "url": "https://github.com/google/gvisor/pull/17187"
+            },
+            {
+              "label": "Skip unused receive flow parsing with one worker",
+              "url": "https://github.com/google/gvisor/pull/17188"
+            }
+          ]
+        },
         {
           "text": "On #16886, borrowing views and stopping the read walk at the first short write did not produce a detectable throughput change relative to the approved PR (64 B p=.402, 64 KiB p=.323, 16 alternating pairs). Both arms verified the same 4 MiB transfer and EOF. The stock comparison is separate: the approved PR was 13.86% slower than its parent on 64 B reads.",
           "evidence": [
@@ -84544,5 +84588,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T17:29:49+00:00"
+  "updatedAt": "2026-11-07T17:36:27+00:00"
 }
