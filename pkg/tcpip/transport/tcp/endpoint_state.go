@@ -180,9 +180,6 @@ func (e *Endpoint) closeEndpointAtRestore() {
 // +checklocksexclude:e.segmentQueue.mu
 // +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Restore(s *stack.Stack) {
-	if !e.EndpointState().closed() {
-		e.keepalive.timer.init(s.Clock(), timerHandler(e, e.keepaliveTimerExpired))
-	}
 	if snd := e.snd; snd != nil {
 		snd.resendTimer.init(s.Clock(), timerHandler(e, e.snd.retransmitTimerExpired))
 		snd.reorderTimer.init(s.Clock(), timerHandler(e, e.snd.rc.reorderTimerExpired))

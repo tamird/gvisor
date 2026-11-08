@@ -123,10 +123,9 @@ func (t *timer) checkExpiration() bool {
 	return true
 }
 
-// disable disables the timer, leaving it in an orphaned state if it wasn't
-// already disabled.
+// disable leaves a scheduled timer orphaned until its callback fires.
 func (t *timer) disable() {
-	if t.state != timerStateDisabled {
+	if t.state == timerStateEnabled {
 		t.state = timerStateOrphaned
 	}
 }
