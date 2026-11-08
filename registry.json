@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T01:14:58+00:00",
+    "updatedAt": "2026-11-08T01:51:11+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52712,8 +52712,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T01:08:00+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The approved successor is open as with_cfg.bzl #275 and the author replied to David on #908. David then proposed adding the musl libc constraint to the execution platform. Stock hermetic-llvm passed all six helper operations in an empty AMD64 root when the execution platform specified musl. With only Linux and x86_64 specified, five helpers failed to start. The GNU target executable had the same bytes across both selections. gVisor’s scratch-worker path can use the execution-platform constraint with the released tools.\n\nOn native ARM64, the gVisor-pinned LLVM 0.8.24 release passed all six helper operations in an empty root with an explicitly musl execution platform. With libc unspecified, each helper required the absent AArch64 glibc loader and exited 127. Both settings produced the same runnable GNU ARM64 target. The musl ARM64 execution platform also compiled and linked a GNU AMD64 ELF, which the qualification inspected without executing.",
+      "updatedAt": "2026-11-08T01:50:44+00:00",
+      "summary": "David asked whether gVisor could select musl on the execution platform. In empty Linux roots, that constraint let all six stock LLVM helpers run on AMD64 and ARM64. Without it, five failed to start on AMD64 at f9abea4c9 and all six failed on ARM64 at LLVM 0.8.24. Each comparison preserved the bytes of its GNU target executable. gVisor’s fork release-prewarmer already declares musl on both distroless execution platforms. The pending decision is whether to reply to David and close #908. The with_cfg prepend operation in #275 remains independently motivated by with_cfg #151.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52826,6 +52826,10 @@
         {
           "label": "LLVM 0.8.24 on native ARM64: six helper operations and an AMD64 GNU cross-build",
           "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42432577638/artifacts/13597483989"
+        },
+        {
+          "label": "gVisor’s fork declares musl on both distroless release-prewarmer execution platforms",
+          "url": "https://github.com/tamird/gvisor/blob/e89646dda/test/rbe/release_prewarmer/BUILD#L5"
         }
       ],
       "settledReviews": [
@@ -62455,6 +62459,40 @@
         "requestedAt": "2026-11-08T01:14:10+00:00",
         "summary": "Open this single-commit gVisor PR?",
         "body": "Since 6fb2e9fe2, the graph encoder has reserved ten bytes for a length\nprefix on every value object when sizing its output buffer. It writes\nthat prefix only for inexact values. The decoder may need to skip their\ndata until a reference supplies the exact type.\n\nUse the object table's objInexact flag to reserve the prefix.\n\nEncoding a kernel restored from a checkpoint with 50,000 empty tmpfs\nfiles reserved space for 100,727 exact values' unused prefixes. The\noutput buffer shrank from 8,306,688 to 7,299,072 bytes. Both versions\nmade 100,937 allocations per encode. [1]\n\n                      │    stock     │                fixed                │\n                      │     B/op     │     B/op      vs base               │\nCheckpointFile/Encode   118.9Mi ± 0%   117.9Mi ± 0%  -0.81% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42431995900/artifacts/13598227954"
+      }
+    },
+    {
+      "id": "branch:native-runtime-test-runner",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/native-runtime-test-runner",
+      "head": "0e35a2d054edb4ea8614c44b76e1e54776d96b4d",
+      "title": "Run language tests without a Bash launcher",
+      "url": "https://github.com/tamird/gvisor/commit/0e35a2d054edb4ea8614c44b76e1e54776d96b4d",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T01:51:11+00:00",
+      "summary": "The original Bash launcher split an exclusion CSV pathname containing a space. With the native launcher, the Go runner opened the complete path and reported the deliberately malformed CSV row. All five language test owners used executable symlinks to the runner, and Buildifier passed. The original Docker proctor exited successfully under the freshly built runsc. A separate replay with the same proctor and image reported 31 passing CPython test_bool cases.",
+      "evidence": [
+        {
+          "label": "Five language launchers, missing Bash, and the exclusion CSV path",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42432232502/artifacts/13598691839"
+        },
+        {
+          "label": "Buildifier, native launcher actions and the original CPython guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42433954397/artifacts/13599468196"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "0e35a2d054edb4ea8614c44b76e1e54776d96b4d",
+        "baseHead": "7d1b049f5d541992b47cc38cf564025908a9ed7b",
+        "title": "Run language tests without a Bash launcher",
+        "url": "https://github.com/tamird/gvisor/commit/0e35a2d054edb4ea8614c44b76e1e54776d96b4d",
+        "requestedAt": "2026-11-08T01:51:11+00:00",
+        "summary": "Open this single-commit gVisor PR?",
+        "body": "Passing `--test_arg` with a space in an exclusion CSV path makes the language runner try to open only the first word. The generated Bash launcher expands `$@` without quotes, even though Bazel already supplied the argument in one piece.\n\nUse Skylib’s `native_test` to pass each suite’s arguments and declared CSV directly to the existing Go runner. Keep the proctor and release in its runfiles."
       }
     }
   ],
@@ -79909,7 +79947,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T01:08:00+00:00",
+      "updatedAt": "2026-11-08T01:50:44+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -82645,11 +82683,15 @@
           ]
         },
         {
-          "text": "On a native ARM64 Ubuntu worker, all 370 published files in LLVM 0.8.24 matched the supplier tag. The BCR patch sets the module version. In an empty root, all six real helper operations exited 127 for a missing glibc loader when the execution platform specified Linux and ARM64 alone. Adding the musl constraint let all six complete. Both configurations ran the byte-identical 6,256-byte GNU ARM64 target. The musl ARM64 worker also compiled and linked a 5,336-byte GNU AMD64 ELF, verified by its machine type and x86-64 interpreter. The AMD64 file was inspected only.",
+          "text": "On a native ARM64 Ubuntu worker, all 370 published files in LLVM 0.8.24 matched the supplier tag. The BCR patch sets the module version. In an empty root, all six real helper operations exited 127 for a missing glibc loader when the execution platform specified Linux and ARM64 alone. Adding the musl constraint let all six complete. Both configurations ran the byte-identical 6,256-byte GNU ARM64 target. The musl ARM64 worker also compiled and linked a 5,336-byte GNU AMD64 ELF, verified by its machine type and x86-64 interpreter. The AMD64 file was inspected only. The release-prewarmer already selects musl on both distroless worker platforms. The constraint selects the worker that runs the helpers. The GNU target and normal Ubuntu presubmit retain their own platform selections.",
           "evidence": [
             {
               "label": "LLVM 0.8.24 on native ARM64: six helper operations and an AMD64 GNU cross-build",
               "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42432577638/artifacts/13597483989"
+            },
+            {
+              "label": "gVisor’s fork declares musl on both distroless release-prewarmer execution platforms",
+              "url": "https://github.com/tamird/gvisor/blob/e89646dda/test/rbe/release_prewarmer/BUILD#L5"
             }
           ]
         }
@@ -86226,5 +86268,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T01:14:58+00:00"
+  "updatedAt": "2026-11-08T01:51:11+00:00"
 }
