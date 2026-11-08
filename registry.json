@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T17:42:17+00:00",
+    "updatedAt": "2026-11-08T17:49:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31269,12 +31269,12 @@
       "url": "https://github.com/google/gvisor/issues/16393",
       "group": "runtime",
       "status": "Agent investigation",
-      "summary": "On 14e1d0324, three of five Reno M003 transfers stalled at byte 134,684 of 524,288 through the 35 s deadline. Two finished. With #16495, all five finished in 0.648–1.211 s and preserved the payload hash. Both no-loss controls passed. The stock result on 597f36270 was five stalls in five runs. The reporter confirmed that their separate FreeBSD connection used Tailscale 1.80.0 without TCP timestamps. Its internal recovery sequence remains unknown.\n\nEarlier Reno/CUBIC comparison: With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
-      "updatedAt": "2026-11-07T06:21:28+00:00",
+      "summary": "On the M003 Reno replay after #15785, three of five burst-loss transfers on master 975fb1722 stopped at byte 134,684. Two of five stopped at the same byte on 451b92800, before the tail-loss probe timeout floor. Each stalled transfer reached the 35 s deadline with seven retransmission timeouts. With the public #16495 fix (ffac28a03) replayed on that master as 766bc97e9, all five delivered the complete 524,288-byte payload in 0.651–0.787 s with one timeout each. All three no-loss controls verified the payload.\n\nEarlier replay: On 14e1d0324, three of five Reno M003 transfers stalled at byte 134,684 of 524,288 through the 35 s deadline. Two finished. With #16495, all five finished in 0.648–1.211 s and preserved the payload hash. Both no-loss controls passed. The stock result on 597f36270 was five stalls in five runs. The reporter confirmed that their separate FreeBSD connection used Tailscale 1.80.0 without TCP timestamps. Its internal recovery sequence remains unknown.\n\nEarlier Reno/CUBIC comparison: With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
+      "updatedAt": "2026-11-08T17:47:59+00:00",
       "followup": {
         "owner": "Agent",
-        "observedAt": "2026-11-07T06:21:28+00:00",
-        "disposition": "The M003 replay is measured on current source. Tamir approved the separate SACK reneging proposal after #15634.",
+        "observedAt": "2026-11-08T17:47:59+00:00",
+        "disposition": "The current M003 replay still stalls on master after #15785. The tested #16495 integration delivered every burst-loss transfer. The separate FreeBSD report still lacks an internal recovery trace.",
         "nextAction": "Track #16495 for the M003 stall. For the FreeBSD report, the negotiated options are known, but attributing the stall to the same recovery path still needs a trace from that connection.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41204594691/artifacts/13044207947",
@@ -31293,7 +31293,8 @@
           "https://github.com/tamird/gvisor/commit/845b402744714ba61067f0617e7d6d30479e624f",
           "https://github.com/tamird/gvisor/actions/runs/41192834457/artifacts/13039847737",
           "https://github.com/tamird/gvisor/actions/runs/41194692496",
-          "https://github.com/tamird/gvisor/actions/runs/41195717107/artifacts/13041122022"
+          "https://github.com/tamird/gvisor/actions/runs/41195717107/artifacts/13041122022",
+          "https://github.com/tamird/gvisor/actions/runs/42505838248/artifacts/13627368628"
         ]
       },
       "evidence": [
@@ -31364,6 +31365,10 @@
         {
           "label": "Twelve original Linux M003 transfer traces on 14e1d0324 and with #16495",
           "url": "https://github.com/tamird/gvisor/actions/runs/42331567852/artifacts/13558241626"
+        },
+        {
+          "label": "Native M003 replay before/after #15785 and with #16495 on master: original 18 trial records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42505838248/artifacts/13627368628"
         }
       ]
     },
@@ -63488,12 +63493,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fixes/netgofer-shutdown-pipes",
-      "head": "a412fc982b122590975cf4f1257fa52294bc0751",
+      "head": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
       "title": "Exercise netgofer shutdown with the test binary",
-      "url": "https://github.com/tamird/gvisor/commit/a412fc982",
+      "url": "https://github.com/tamird/gvisor/commit/4b33ee009",
       "group": "tests",
-      "status": "Agent work",
-      "summary": "The revised fixture uses Cmd.StdinPipe to keep the child running. Both native tests on a412fc982 reached stopNetgofer with cat and sleep hidden. The original wait4 reported exit 0 for the graceful child and SIGKILL for the forced child. Both PIDs returned ESRCH afterward.",
+      "status": "Published as #17242",
+      "summary": "The child runs the test executable with --fake-netgofer, closes stdout to signal readiness, and waits for EOF on stdin. The reaper goroutine records the actual wait4 result. Both native Linux tests passed with cat and sleep hidden. The graceful child exited with status 0. The forced child died from SIGKILL. Each PID returned ESRCH afterward.",
       "evidence": [
         {
           "label": "Original missing executables and both Linux child exit statuses",
@@ -63534,29 +63539,40 @@
         {
           "label": "Original graceful and forced TestRunner XML/log with wait4 and ESRCH checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42504226748/artifacts/13626599266"
+        },
+        {
+          "label": "Revised source with flag, close-stdout readiness and wait results in the goroutine",
+          "url": "https://github.com/tamird/gvisor/commit/4b33ee009"
+        },
+        {
+          "label": "Original masked Linux tests with child argv, wait4 statuses and ESRCH",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42505972978/artifacts/13627382332"
+        },
+        {
+          "label": "Published single-commit PR #17242",
+          "url": "https://github.com/google/gvisor/pull/17242"
         }
       ],
-      "updatedAt": "2026-11-08T17:35:07+00:00",
+      "updatedAt": "2026-11-08T17:49:27Z",
       "refinement": {
         "before": {
-          "head": "06a606a324af88250a2e1be16679479d09f3b0c8",
+          "head": "a412fc982b122590975cf4f1257fa52294bc0751",
           "base": "975fb172241c7946a9f67b4f52e0349d9240589a"
         },
         "after": {
-          "head": "a412fc982b122590975cf4f1257fa52294bc0751",
+          "head": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
           "base": "975fb172241c7946a9f67b4f52e0349d9240589a"
         }
       },
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "a412fc982b122590975cf4f1257fa52294bc0751",
-        "observedAt": "2026-11-08T17:35:07+00:00",
-        "disposition": "The StdinPipe tests passed, and Tamir requested a simpler child command and reaper ownership before submission.",
-        "nextAction": "Use a --fake-netgofer flag, close stdout to signal readiness, and keep the wait results inside the goroutine. Validate the revised source before returning for contributor review.",
+        "owner": "Upstream review",
+        "sourceHead": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
+        "observedAt": "2026-11-08T17:49:27Z",
+        "disposition": "The approved change was published as #17242.",
+        "nextAction": "Follow upstream review on #17242.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/a412fc982",
-          "https://github.com/tamird/gvisor/actions/runs/42504226748",
-          "https://github.com/tamird/gvisor/actions/runs/42504226748/artifacts/13626599266"
+          "https://github.com/google/gvisor/pull/17242",
+          "https://github.com/tamird/gvisor/commit/4b33ee009"
         ]
       },
       "settledReviews": [
@@ -63583,12 +63599,21 @@
           "requestedAt": "2026-11-08T17:19:18+00:00",
           "at": "2026-11-08T17:35:07+00:00",
           "outcome": "changes-requested"
+        },
+        {
+          "kind": "proposal",
+          "head": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "title": "Exercise netgofer shutdown with the test binary",
+          "url": "https://github.com/tamird/gvisor/commit/4b33ee009",
+          "summary": "Approve opening the revised single-commit shutdown-test PR. The native test traces verify the child flag, graceful exit and forced SIGKILL.\n\ngit range-diff a412fc982^! 4b33ee009^!",
+          "body": "451b92800 added two shutdown tests that depend on /bin/cat and /bin/sleep. If either program is missing, its test fails before stopNetgofer runs. A PID check alone also accepts a force-killed child in the graceful case.\n\nRun the test binary as the child. Have it close stdout when ready and wait for EOF on stdin. Closing stdin lets the child exit normally. Leaving stdin open keeps it blocked until the sandbox kills it after the grace period.\n\nReturn the status from the reaper's existing wait4 so the tests can check how the child exited. The production caller still reaps in the background and signals completion after clearing the PID.",
+          "requestedAt": "2026-11-08T17:47:59+00:00",
+          "at": "2026-11-08T17:49:27Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17242"
         }
-      ],
-      "contributorChangesRequested": {
-        "head": "a412fc982b122590975cf4f1257fa52294bc0751",
-        "url": "https://github.com/tamird/gvisor/commit/a412fc982"
-      }
+      ]
     },
     {
       "id": "branch:marshal-test-per-library",
@@ -65582,6 +65607,100 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/17241",
           "https://github.com/tamird/gvisor/commit/cd9d815dc"
+        ]
+      }
+    },
+    {
+      "id": "pr:17242",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17242,
+      "ref": "fixes/netgofer-shutdown-pipes",
+      "head": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
+      "title": "Exercise netgofer shutdown with the test binary",
+      "url": "https://github.com/google/gvisor/pull/17242",
+      "status": "open",
+      "group": "tests",
+      "updatedAt": "2026-11-08T17:49:27Z",
+      "summary": "The child runs the test executable with --fake-netgofer, closes stdout to signal readiness, and waits for EOF on stdin. The reaper goroutine records the actual wait4 result. Both native Linux tests passed with cat and sleep hidden. The graceful child exited with status 0. The forced child died from SIGKILL. Each PID returned ESRCH afterward.",
+      "evidence": [
+        {
+          "label": "Original missing executables and both Linux child exit statuses",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42453602753/artifacts/13607151542"
+        },
+        {
+          "label": "Landed change introducing the tests",
+          "url": "https://github.com/google/gvisor/commit/451b92800"
+        },
+        {
+          "label": "Same reviewed tree on the landed parent",
+          "url": "https://github.com/tamird/gvisor/commit/5bc377314"
+        },
+        {
+          "label": "Pipe revision awaiting native validation",
+          "url": "https://github.com/tamird/gvisor/commit/68343a66b"
+        },
+        {
+          "label": "First pipe-revision job stopped before Bazel",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42485302748"
+        },
+        {
+          "label": "Check the sandbox reaper’s observed exit statuses",
+          "url": "https://github.com/tamird/gvisor/commit/06a606a32"
+        },
+        {
+          "label": "Native graceful and forced child exit statuses with cat and sleep hidden",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42485997744/artifacts/13619507760"
+        },
+        {
+          "label": "Revised single commit using Cmd.StdinPipe",
+          "url": "https://github.com/tamird/gvisor/commit/a412fc982"
+        },
+        {
+          "label": "Linux comparison for the revised graceful and forced stops",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42504226748"
+        },
+        {
+          "label": "Original graceful and forced TestRunner XML/log with wait4 and ESRCH checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42504226748/artifacts/13626599266"
+        },
+        {
+          "label": "Revised source with flag, close-stdout readiness and wait results in the goroutine",
+          "url": "https://github.com/tamird/gvisor/commit/4b33ee009"
+        },
+        {
+          "label": "Original masked Linux tests with child argv, wait4 statuses and ESRCH",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42505972978/artifacts/13627382332"
+        },
+        {
+          "label": "Published single-commit PR #17242",
+          "url": "https://github.com/google/gvisor/pull/17242"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "title": "Exercise netgofer shutdown with the test binary",
+          "url": "https://github.com/tamird/gvisor/commit/4b33ee009",
+          "summary": "Approve opening the revised single-commit shutdown-test PR. The native test traces verify the child flag, graceful exit and forced SIGKILL.\n\ngit range-diff a412fc982^! 4b33ee009^!",
+          "body": "451b92800 added two shutdown tests that depend on /bin/cat and /bin/sleep. If either program is missing, its test fails before stopNetgofer runs. A PID check alone also accepts a force-killed child in the graceful case.\n\nRun the test binary as the child. Have it close stdout when ready and wait for EOF on stdin. Closing stdin lets the child exit normally. Leaving stdin open keeps it blocked until the sandbox kills it after the grace period.\n\nReturn the status from the reaper's existing wait4 so the tests can check how the child exited. The production caller still reaps in the background and signals completion after clearing the PID.",
+          "requestedAt": "2026-11-08T17:47:59+00:00",
+          "at": "2026-11-08T17:49:27Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17242"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
+        "observedAt": "2026-11-08T17:49:27Z",
+        "disposition": "The approved change was published as #17242.",
+        "nextAction": "Follow upstream review on #17242.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17242",
+          "https://github.com/tamird/gvisor/commit/4b33ee009"
         ]
       }
     }
