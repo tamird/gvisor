@@ -22,6 +22,7 @@ import (
 	"time"
 	"unsafe"
 
+	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
@@ -823,6 +824,91 @@ func TestRestoreSendTimer(t *testing.T) {
 			}
 			if got, want := string(pkt.Data().AsRange().ToSlice()), tc.wantPayload; got != want {
 				t.Errorf("payload = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestRestoreKeepalive(t *testing.T) {
+	const idle, interval = 10 * time.Second, 4 * time.Second
+	for _, tc := range []struct {
+		name       string
+		afterProbe bool
+		disabled   bool
+	}{
+		{name: "idle"},
+		{name: "between probes", afterProbe: true},
+		{name: "disabled", disabled: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: e2e.DefaultMTU, Clock: clock})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			c.CreateConnected(testcontext.TestInitialSequenceNumber, 30000, -1)
+			idleOpt, intervalOpt := tcpip.KeepaliveIdleOption(idle), tcpip.KeepaliveIntervalOption(interval)
+			if err := c.EP.SetSockOpt(&idleOpt); err != nil {
+				t.Fatal(err)
+			}
+			if err := c.EP.SetSockOpt(&intervalOpt); err != nil {
+				t.Fatal(err)
+			}
+			if err := c.EP.SetSockOptInt(tcpip.KeepaliveCountOption, 2); err != nil {
+				t.Fatal(err)
+			}
+			c.EP.SocketOptions().SetKeepAlive(true)
+			checkProbe := func(v *buffer.View) {
+				t.Helper()
+				if v == nil {
+					t.Fatal("missing keepalive probe")
+				}
+				defer v.Release()
+				checker.IPv4(t, v, checker.SrcAddr(testcontext.StackAddr), checker.DstAddr(testcontext.TestAddr),
+					checker.TCP(checker.SrcPort(c.Port), checker.DstPort(testcontext.TestPort),
+						checker.TCPFlags(header.TCPFlagAck), checker.TCPSeqNum(uint32(c.IRS)),
+						checker.TCPAckNum(testcontext.TestInitialSequenceNumber+1), checker.Payload(nil)))
+			}
+			period := idle
+			if tc.afterProbe {
+				clock.Advance(idle)
+				checkProbe(c.GetPacketNonBlocking())
+				period = interval
+			}
+			clock.Advance(period / 2)
+			if tc.disabled {
+				c.EP.SocketOptions().SetKeepAlive(false)
+			}
+			st, link := restoreTCPStack(t, c, e2e.DefaultMTU, stack.GSONotSupported)
+			defer st.Destroy()
+			restored := st.Clock().(*faketime.ManualClock)
+			ep := st.RegisteredEndpoints()[0].(tcpip.Endpoint)
+			restored.Advance(period/2 - time.Nanosecond)
+			if pkt := link.Read(); pkt != nil {
+				pkt.DecRef()
+				t.Fatal("packet before saved keepalive deadline")
+			}
+			restored.Advance(time.Nanosecond)
+			if tc.disabled {
+				if pkt := link.Read(); pkt != nil {
+					pkt.DecRef()
+					t.Fatal("keepalive from a disabled timer")
+				}
+				ep.SocketOptions().SetKeepAlive(true)
+				restored.Advance(idle)
+			}
+			pkt := link.Read()
+			if pkt == nil {
+				t.Fatal("no probe at saved keepalive deadline")
+			}
+			defer pkt.DecRef()
+			checkProbe(pkt.ToView())
+			if tc.afterProbe {
+				// One probe preceded the checkpoint and one followed it.
+				restored.Advance(interval)
+				if got := tcp.EndpointState(ep.State()); got != tcp.StateError {
+					t.Fatalf("state after two unanswered probes = %s, want %s", got, tcp.StateError)
+				}
 			}
 		})
 	}

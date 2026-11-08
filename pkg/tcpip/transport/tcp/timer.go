@@ -96,11 +96,9 @@ func (t *timer) restore(clock tcpip.Clock, f func()) {
 
 // cleanup frees all resources associated with the timer.
 func (t *timer) cleanup() {
-	if t.timer == nil {
-		// No cleanup needed.
-		return
+	if t.timer != nil {
+		t.timer.Stop()
 	}
-	t.timer.Stop()
 	*t = timer{}
 }
 
