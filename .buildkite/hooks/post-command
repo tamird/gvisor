@@ -10,9 +10,7 @@ if is_remote_source_step; then
     echo "Remote source unit tests failed. See the Bazel errors in this job." |
       buildkite-agent annotate --style error --context failures --append || true
   fi
-  if [[ -n "${BUILDKITE_SOURCE_BAZEL:-}" ]]; then
-    "${BUILDKITE_SOURCE_BAZEL}" shutdown || echo "Bazel shutdown failed with status $?" >&2
-  fi
+  shutdown_agent_bazel || echo "Bazel shutdown failed with status $?" >&2
   record_job_completion
   return 0
 fi
@@ -128,12 +126,9 @@ if [[ -n "${BUILDKITE_STAGED_BINARIES_DIRECTORY:-}" ]]; then
   rm -rf "$BUILDKITE_STAGED_BINARIES_DIRECTORY" || true
 fi
 
-if [[ -n "${BUILDKITE_BAZEL_DIRECTORY:-}" ]]; then
-  # The native Bazel server runs on the host, outside the containers stopped above.
+if [[ "${DOCKER_BUILD:-}" == false ]]; then
   shutdown_status=0
-  bazel shutdown || shutdown_status=$?
-  rm -f -- "$BUILDKITE_BAZEL_DIRECTORY/bazel"
-  rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
+  shutdown_agent_bazel || shutdown_status=$?
   if [[ "$shutdown_status" != 0 && "$BUILDKITE_COMMAND_EXIT_STATUS" == 0 ]]; then
     exit "$shutdown_status"
   fi

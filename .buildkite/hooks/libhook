@@ -49,6 +49,60 @@ is_remote_source_step() {
   [[ "${BUILDKITE_STEP_KEY:-}" == rbe-source ]]
 }
 
+# Native Make targets require a command named bazel. The remote coordinator
+# can use an installed Bazelisk directly.
+prepare_agent_bazel() {
+  local bazelisk bazel actual expected
+  # Buildkite overlays hook exports on the original agent environment. An
+  # unset variable can reappear in the command or post-command hook.
+  local version
+  version="$(<.bazelversion)" || return 1
+  export USE_BAZEL_VERSION="$version" BUILDKITE_BAZEL_DIRECTORY=
+  export USE_BAZEL_FALLBACK_VERSION=error:
+  bazelisk="$(command -v bazelisk)" || bazelisk=
+  if [[ -n "$bazelisk" ]] && is_remote_source_step; then
+    export BUILDKITE_SOURCE_BAZEL="$bazelisk"
+    return 0
+  fi
+  if [[ -z "$bazelisk" ]] && bazel="$(command -v bazel)"; then
+    expected="bazel $version"
+    if actual="$("$bazel" --version)" && [[ "$actual" == "$expected" ]]; then
+      export BUILDKITE_SOURCE_BAZEL="$bazel"
+      return 0
+    fi
+    echo "Ignoring $bazel: expected '$expected', got '$actual'; selecting Bazelisk" >&2
+  fi
+
+  local dir
+  dir="$(mktemp -d)" || return 1
+  if [[ -n "$bazelisk" ]]; then
+    ln -s -- "$bazelisk" "$dir/bazel" || { rmdir -- "$dir"; return 1; }
+  elif ! GOBIN="$dir" go install github.com/bazelbuild/bazelisk@v1.30.0 ||
+       ! mv -- "$dir/bazelisk" "$dir/bazel"; then
+    rm -f -- "$dir"/{bazel,bazelisk}
+    rmdir -- "$dir"
+    return 1
+  fi
+  export BUILDKITE_BAZEL_DIRECTORY="$dir"
+  export BUILDKITE_SOURCE_BAZEL="$dir/bazel"
+  export PATH="$dir:$PATH"
+}
+
+shutdown_agent_bazel() {
+  local status=0 cleanup=0
+  if [[ -n "${BUILDKITE_SOURCE_BAZEL:-}" ]]; then
+    "${BUILDKITE_SOURCE_BAZEL}" shutdown || status=$?
+  fi
+  if [[ -n "${BUILDKITE_BAZEL_DIRECTORY:-}" ]]; then
+    rm -f -- "${BUILDKITE_BAZEL_DIRECTORY}/bazel" || cleanup=$?
+    rmdir -- "${BUILDKITE_BAZEL_DIRECTORY}" || cleanup=$?
+  fi
+  if (( status != 0 )); then
+    return "$status"
+  fi
+  return "$cleanup"
+}
+
 record_job_completion() {
   local count CONSECUTIVE_FAILURES_FILE JOB_ASSIGNED_FILE LAST_JOB_COMPLETED_FILE
   # Track consecutive failures.

@@ -50,13 +50,7 @@ fi
 
 # The remote coordinator does not run tests or install runtimes locally.
 if is_remote_source_step; then
-  unset USE_BAZEL_VERSION
-  export USE_BAZEL_FALLBACK_VERSION=error:
-  BUILDKITE_SOURCE_BAZEL="$(command -v bazelisk || command -v bazel)" || {
-    echo "The remote source presubmit requires bazelisk or bazel on PATH" >&2
-    return 127
-  }
-  export BUILDKITE_SOURCE_BAZEL
+  prepare_agent_bazel
   return 0
 fi
 
@@ -203,26 +197,6 @@ if [[ "${BUILDKITE_COMMAND:-}" =~ "pipeline upload" ]]; then
   fi
 fi
 
-# The job and its post-command cleanup must use the same Bazel server.
-install_bazelisk() {
-  local dir="$1" bazelisk
-  if bazelisk="$(command -v bazelisk)"; then
-    ln -s -- "$bazelisk" "$dir/bazel"
-  else
-    GOBIN="$dir" go install github.com/bazelbuild/bazelisk@v1.30.0 &&
-      mv -- "$dir/bazelisk" "$dir/bazel"
-  fi
-}
-
 if [[ "${DOCKER_BUILD:-}" == false ]]; then
-  BUILDKITE_BAZEL_DIRECTORY="$(mktemp -d)"
-  if ! install_bazelisk "$BUILDKITE_BAZEL_DIRECTORY"; then
-    rm -f -- "$BUILDKITE_BAZEL_DIRECTORY"/{bazel,bazelisk}
-    rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
-    exit 1
-  fi
-  export BUILDKITE_BAZEL_DIRECTORY
-  export PATH="$BUILDKITE_BAZEL_DIRECTORY:$PATH"
-  unset USE_BAZEL_VERSION
-  export USE_BAZEL_FALLBACK_VERSION=error:
+  prepare_agent_bazel
 fi
