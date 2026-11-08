@@ -270,7 +270,7 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 	// The sender MUST reduce the TCP data length to account for any IP or
 	// TCP options that it is including in the packets that it sends.
 	// See: https://tools.ietf.org/html/rfc6691#section-2
-	maxPayloadSize := int(mss) - ep.maxOptionSize()
+	maxPayloadSize := max(1, int(mss)-ep.maxOptionSize())
 
 	ep.snd = &sender{
 		ep: ep,
