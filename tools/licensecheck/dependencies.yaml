@@ -78,6 +78,12 @@
   commit: 914e7df21a07ef503a81201c76d2b11c789d3fca
   sha256: cadcf7ea4efe3a68728893813643cebe1185e5b1d4be5b96245f65c9a4d5ea41
   license: MIT
+- dependency: ape
+  version: https://gitlab.arm.com/bazel/ape/-/releases/v1.1.0/downloads/src.tar.gz
+  retrieved: "2026-11-08"
+  commit: f95dd6b338835f3f516de5b94c15931dd8c3656d
+  sha256: 1a9ddad97072e08a85f8ac1f8a7227e38aeaa713fa8396bc10b276a4a97dd813
+  license: MIT
 - dependency: bazel_lib
   version: https://github.com/bazel-contrib/bazel-lib/releases/download/v3.4.0/bazel-lib-v3.4.0.tar.gz
   retrieved: "2026-10-30"
