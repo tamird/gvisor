@@ -508,6 +508,11 @@ after addressing them. `batch-cleanup` routes only the bound feedback to
 the queue; other PR actions and new feedback remain visible. A review
 that says “LGTM” without approving the change still gets direct triage.
 
+For an optional BCR upgrade on an open PR, set `releaseWait.blocking` to
+`false`. A newer non-yanked registry entry prompts the agent to check the
+published source for the expected changes. The PR keeps its review and import
+actions while the agent checks the release.
+
 When the next step depends on a public release, record a `releaseWait`
 on the owning PR with its source head, the version checked and the next
 verification step. The existing refresh reads the latest non-yanked BCR

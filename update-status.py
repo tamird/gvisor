@@ -887,6 +887,11 @@ def release_version(wait: dict) -> str | None:
             case {"versions": list(versions), "yanked_versions": dict(yanked)} if all(
                 isinstance(version, str) and version for version in versions
             ):
+                if wait.get("blocking") is False:
+                    # A yank can make BCR's latest available version older than the one already checked.
+                    if wait["checkedVersion"] not in versions:
+                        return None
+                    versions = versions[versions.index(wait["checkedVersion"]):]
                 return next((version for version in reversed(versions) if version not in yanked), None)
     elif repository and not module and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
         owner, name = repository.split("/")

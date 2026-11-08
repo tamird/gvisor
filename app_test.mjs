@@ -2051,6 +2051,46 @@ test('attention uses current approvals and import associations without inventing
   assert.equal(reasonsFor(node)[0].owner, 'agent');
 });
 
+test('a BCR release opportunity preserves independent upstream review', () => {
+  const node = attentionNode(), pr = node.github, c = client();
+  pr.reviewDecision = 'REVIEW_REQUIRED';
+  pr.approvedHead = pr.approvedAt = null;
+  c.nodeInput = node;
+  c.snapshotInput.workStates[node.id] = { 'maintainer-review': { scope: pr.head } };
+  const read = expression => JSON.parse(vm.runInContext(`JSON.stringify(${expression})`, c));
+  const normalReasons = idsFor(node);
+  const normalStates = read('stateRecords(snapshotInput, nodeInput)');
+  const normalReview = read('reviewInfo(nodeInput.github, nodeInput)');
+  const primary = () => read('primaryAttention(attentionReasons(nodeInput, "tamird")).id');
+  const normalPrimary = primary();
+  assert.ok(normalReasons.includes('maintainer-review'));
+  node.releaseWait = { head: pr.head, module: 'llvm', checkedVersion: '0.8.26', blocking: false,
+    confirmedAt: '2026-11-01T00:00:00Z', nextAction: 'Inspect the BCR source for both fixes.' };
+  for (const version of [null, '0.8.26', '0.8.27']) {
+    pr.releaseVersion = version;
+    const expected = version === '0.8.27' ? [...normalReasons, 'agent-release-opportunity'] : normalReasons;
+    assert.deepEqual(idsFor(node).sort(), [...expected].sort());
+    assert.deepEqual(read('stateRecords(snapshotInput, nodeInput)'), normalStates);
+    assert.deepEqual(read('reviewInfo(nodeInput.github, nodeInput)'), normalReview);
+    assert.equal(primary(), normalPrimary);
+  }
+  const newer = reasonsFor(node).find(reason => reason.id === 'agent-release-opportunity');
+  assert.equal(newer.owner, 'agent');
+  assert.match(newer.detail, /llvm 0\.8\.27/);
+  const watch = node.releaseWait;
+  delete node.releaseWait;
+  pr.reviewDecision = 'APPROVED';
+  pr.approvedHead = pr.head;
+  pr.approvedAt = '2026-10-13T09:00:00Z';
+  const approvedReasons = idsFor(node), approvedPrimary = primary();
+  assert.ok(approvedReasons.includes('maintainer-import-label'));
+  node.releaseWait = watch;
+  assert.deepEqual(idsFor(node).sort(), [...approvedReasons, 'agent-release-opportunity'].sort());
+  assert.equal(primary(), approvedPrimary);
+  pr.branchHead = 'b'.repeat(40);
+  assert.ok(!idsFor(node).includes('agent-release-opportunity'));
+});
+
 test('agreed release wait leaves the maintainer queue; new feedback and upstream versions surface', () => {
   const node = attentionNode(), pr = node.github;
   node.releaseWait = { head: pr.head, checkedVersion: 'v5.6.1', repository: 'docker/compose',

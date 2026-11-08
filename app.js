@@ -260,6 +260,7 @@ const ATTENTION_REASONS = [
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
   { id: "agent-release-check", owner: "agent", title: "Check an upstream release" },
+  { id: "agent-release-opportunity", owner: "agent", title: "Inspect a newer BCR release", secondary: true },
   { id: "upstream-release", owner: "agent", title: "Waiting for an upstream release" },
   { id: "agent-rebase-check", owner: "agent", title: "Compare rebased patch" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
@@ -369,7 +370,7 @@ function actionableComment(node) {
 }
 function releaseWait(node) {
   const wait = node?.releaseWait, pr = node?.github;
-  if (!wait || pr?.status !== "open" || pr.head !== wait.head || pr.revisionChanged
+  if (!wait || wait.blocking === false || pr?.status !== "open" || pr.head !== wait.head || pr.revisionChanged
       || pr.branchHead && pr.branchHead !== pr.head || !pr.feedback?.complete || !pr.reviewsComplete
       || !pr.threads?.complete || pr.threads.unresolved || actionableComment(node)) return null;
   // A new review or reply can change what was agreed. Do not suppress it.
@@ -722,12 +723,17 @@ function attentionReasons(node, owner) {
       else add("maintainer-import", `${acceptedPatch ? "Approval of the unchanged patch" : "Current-head approval"} and the ready to pull label are recorded; no matching public import was found. An internal CL may already exist.`);
     }
   }
+  const opportunity = node.releaseWait;
+  if (!landed && opportunity?.blocking === false && pr.status === "open" && opportunity.head === pr.head
+      && (!pr.branchHead || pr.branchHead === pr.head) && pr.releaseVersion && pr.releaseVersion !== opportunity.checkedVersion) {
+    add("agent-release-opportunity", `BCR lists ${opportunity.module} ${pr.releaseVersion}. ${opportunity.nextAction}`);
+  }
   return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
 }
 // A decision the contributor can make takes precedence over a simultaneous
 // code fix or maintainer request. Individual reason filters still match both.
 function primaryAttention(reasons) {
-  return reasons.find(reason => reason.owner === "user") || reasons.find(reason => reason.owner === "agent")
+  return reasons.find(reason => reason.owner === "user") || reasons.find(reason => reason.owner === "agent" && !reason.secondary)
     || reasons.find(reason => reason.owner === "maintainer") || reasons[0];
 }
 function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) {
@@ -1975,6 +1981,7 @@ function validateRegistry(candidate) {
     if (wait !== undefined && (node.type !== "pr" || !wait || !/^[0-9a-f]{40}$/.test(wait.head)
         || !Number.isFinite(Date.parse(wait.confirmedAt)) || typeof wait.checkedVersion !== "string" || !wait.checkedVersion
         || typeof wait.nextAction !== "string" || !wait.nextAction.trim()
+        || wait.blocking !== undefined && (typeof wait.blocking !== "boolean" || wait.blocking === false && !wait.module)
         || Boolean(wait.module) === Boolean(wait.repository)
         || wait.module && !/^[a-z][a-z0-9._-]*$/.test(wait.module)
         || wait.repository && !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(wait.repository)))
