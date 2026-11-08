@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T14:03:23+00:00",
+    "updatedAt": "2026-11-08T14:08:27+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11870,13 +11870,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-sack-credit-accounting",
-      "head": "30bc8ce21de213711dd86da5cf607ec5487259ee",
+      "head": "679d14eed77a4ce6029065d88248c8ce0902c270",
       "title": "Count selectively acknowledged TCP packets on their transmit boundaries",
       "url": "https://github.com/google/gvisor/pull/15634",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T13:23:10Z",
-      "summary": "Count selectively acknowledged packets at their original transmit boundaries. Preserve RACK’s delivery history when a timeout or restore clears the SACK scoreboard. Earlier code double-counted packet credit or reported reordering on a repeated SACK.",
+      "updatedAt": "2026-11-08T14:05:18+00:00",
+      "summary": "Count selectively acknowledged packets at their original transmit boundaries. Preserve RACK’s delivery history when a timeout or restore clears the SACK scoreboard. Earlier code double-counted packet credit or reported reordering on a repeated SACK. The current one-commit revision retains upstream’s RACK-duration test alongside the SACK bridge case. The topic changes match 30bc8ce21 when unchanged diff context is excluded.",
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
@@ -11943,15 +11943,18 @@
         {
           "label": "Published as one commit on 757d67e79, with the same tree as f96afe457",
           "url": "https://github.com/tamird/gvisor/commit/30bc8ce21"
+        },
+        {
+          "label": "Native TCP packet and RACK cases with both architecture Nogo checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42486225408/artifacts/13620332045"
         }
       ],
       "refinement": {
         "before": {
-          "base": "757d67e79ca401d6d662c470d6470d13f9e23a45",
-          "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4"
+          "head": "30bc8ce21de213711dd86da5cf607ec5487259ee"
         },
         "after": {
-          "head": "30bc8ce21de213711dd86da5cf607ec5487259ee"
+          "head": "679d14eed77a4ce6029065d88248c8ce0902c270"
         }
       },
       "settledReviews": [
@@ -11971,13 +11974,14 @@
       "followup": {
         "owner": "netstack owner",
         "disposition": "Published",
-        "sourceHead": "30bc8ce21de213711dd86da5cf607ec5487259ee",
-        "observedAt": "2026-11-08T13:23:10Z",
+        "sourceHead": "679d14eed77a4ce6029065d88248c8ce0902c270",
+        "observedAt": "2026-11-08T14:05:18+00:00",
         "nextAction": "Follow upstream checks and maintainer review of the published amendment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
           "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763"
-        ]
+        ],
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -52843,7 +52847,7 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "closed",
-      "updatedAt": "2026-11-08T13:00:39+00:00",
+      "updatedAt": "2026-11-08T14:08:27+00:00",
       "summary": "Tamir replied to David and closed #908 after all six stock LLVM helpers ran in empty Linux roots with @llvm//constraints/libc:musl on the execution platform. Without that constraint, five helpers failed on AMD64 at f9abea4c9 and all six failed on ARM64 at LLVM 0.8.24. The GNU target executable remained byte-identical in each comparison. The gVisor fork declares musl on both scratch execution platforms. The with_cfg prepend change in #275 has its own use case in with_cfg #151.",
       "evidence": [
         {
@@ -52965,6 +52969,10 @@
         {
           "label": "Posted reply to David before closing the PR",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
+        },
+        {
+          "label": "David asks whether to revert the earlier generator change",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6722445873"
         }
       ],
       "settledReviews": [
@@ -52995,6 +53003,16 @@
           "https://github.com/tamird/hermetic-llvm/actions/runs/42429302127/artifacts/13597315831",
           "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
         ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "533981c365e8ee683926bd465efcc81bc31158bf",
+        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6722445873",
+        "title": "Reply to David about the module map generator revert",
+        "summary": "Post this follow-up on closed #908 linking the open #927?",
+        "body": "Yes. #927 reverts the module map generator change. With that revert, the generator uses the libc selected by the execution platform.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-08T14:08:27+00:00"
       }
     },
     {
