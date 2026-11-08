@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -174,6 +175,157 @@ func TestTCPMigration(t *testing.T) {
 				if got != want {
 					t.Fatalf("Unexpected restored endpoint state: want %v, got %v", want, got)
 				}
+			}
+		})
+	}
+}
+
+// TestTCPMigrationMTUAckCredit observes a cumulative ACK for data sent on
+// the original route. Both endpoints use ordinary IPv4 and TCP headers.
+func TestTCPMigrationMTUAckCredit(t *testing.T) {
+	const sourceMTU = 1500
+	const peerMSS = 1200
+	for _, tc := range []struct {
+		name    string
+		mtu     uint32
+		wantMSS int
+	}{
+		{"same", sourceMTU, peerMSS},
+		{"smaller", 1236, 1196},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := testcontext.NewWithOpts(t, testcontext.Options{
+				EnableV4: true, MTU: sourceMTU, Clock: faketime.NewManualClock(),
+			})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			var options [4]byte
+			header.EncodeMSSOption(peerMSS, options[:])
+			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, options[:])
+			checkRoute := func(s *stack.Stack, ep tcpip.Endpoint, mtu uint32) {
+				t.Helper()
+				r, err := s.FindRoute(1, testcontext.StackAddr, testcontext.TestAddr, ipv4.ProtocolNumber, false)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer r.Release()
+				nic, err := s.GetNICByID(r.OutgoingNIC())
+				if err != nil || nic.GetExperimentIPOptionEnabled() || ep.SocketOptions().GetExperimentOptionValue() != 0 ||
+					r.HasHostGSOCapability() || r.HasGVisorGSOCapability() || r.MTU() != mtu-header.IPv4MinimumSize {
+					t.Fatalf("expected a plain IPv4 route on the %d-byte NIC", mtu)
+				}
+			}
+			checkRoute(c.Stack(), c.EP, sourceMTU)
+			cc := tcpip.CongestionControlOption("reno")
+			if err := c.EP.SetSockOpt(&cc); err != nil {
+				t.Fatal(err)
+			}
+			send := func(ep tcpip.Endpoint, data []byte) {
+				t.Helper()
+				if n, err := ep.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+					t.Fatalf("Write = %d, %v", n, err)
+				}
+			}
+			var initial tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&initial); err != nil || initial.SndMss != peerMSS {
+				t.Fatalf("initial snd_mss = %d, %v", initial.SndMss, err)
+			}
+			data := bytes.Repeat([]byte{0xa7}, peerMSS)
+			send(c.EP, data)
+			oldPacket := c.GetPacket()
+			defer oldPacket.Release()
+			oldIP := header.IPv4(oldPacket.AsSlice())
+			oldTCP := header.TCP(oldIP.Payload())
+			if oldIP.HeaderLength() != header.IPv4MinimumSize || oldTCP.DataOffset() != header.TCPMinimumSize || !bytes.Equal(oldTCP.Payload(), data) {
+				t.Fatal("previous route did not emit one complete 1200-byte payload with base headers")
+			}
+			oldAck := seqnum.Value(oldTCP.SequenceNumber()).Add(peerMSS)
+
+			var image bytes.Buffer
+			if _, err := state.Save(context.Background(), &image, c.Stack()); err != nil {
+				t.Fatal(err)
+			}
+			c.Stack().Resume()
+			s := stack.New(stack.Options{
+				TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+				NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol},
+			})
+			defer s.Destroy()
+			s.SetAllowLiveTCPMigration(true)
+			if _, err := state.Load(context.Background(), &image, s); err != nil {
+				t.Fatal(err)
+			}
+			link := channel.New(1000, tc.mtu, "")
+			if err := s.CreateNIC(1, link); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.AddProtocolAddress(1, tcpip.ProtocolAddress{
+				Protocol: header.IPv4ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix,
+			}, stack.AddressProperties{}); err != nil {
+				t.Fatal(err)
+			}
+			s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+			s.Restore()
+			tcpip.AsyncLoading.Wait()
+			eps := s.RegisteredEndpoints()
+			if len(eps) != 1 {
+				t.Fatalf("restored %d registered endpoints", len(eps))
+			}
+			ep := eps[0].(tcpip.Endpoint)
+			checkRoute(s, ep, tc.mtu)
+			if state := tcp.EndpointState(ep.State()); state != tcp.StateEstablished {
+				t.Fatalf("restored state = %s", state)
+			}
+			var before, after tcpip.TCPInfoOption
+			if err := ep.GetSockOpt(&before); err != nil || int(before.SndMss) != tc.wantMSS {
+				t.Fatalf("restored snd_mss = %d, %v; want %d", before.SndMss, err, tc.wantMSS)
+			}
+			ack := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: c.BuildSegment([]byte{0x3c}, &testcontext.Headers{
+				SrcPort: testcontext.TestPort, DstPort: c.Port, SeqNum: testcontext.TestInitialSequenceNumber + 1,
+				AckNum: oldAck, Flags: header.TCPFlagAck | header.TCPFlagPsh, RcvWnd: 30000,
+			})})
+			link.InjectInbound(ipv4.ProtocolNumber, ack)
+			ack.DecRef()
+			deadline := time.Now().Add(5 * time.Second)
+			for ep.Readiness(waiter.ReadableEvents) == 0 && time.Now().Before(deadline) {
+				time.Sleep(time.Millisecond)
+			}
+			var marker bytes.Buffer
+			if _, err := ep.Read(&marker, tcpip.ReadOptions{}); err != nil || !bytes.Equal(marker.Bytes(), []byte{0x3c}) {
+				t.Fatalf("read the peer's ACK and marker: %x, %v", marker.Bytes(), err)
+			}
+			if err := ep.GetSockOpt(&after); err != nil || before.SndCwnd == 0 || before.SndCwnd+2 >= before.SndSsthresh || after.SndCwnd <= before.SndCwnd {
+				t.Fatalf("invalid slow-start observation: before %+v after %+v, %v", before, after, err)
+			}
+
+			fresh := bytes.Repeat([]byte{0x5a}, 2*peerMSS)
+			send(ep, fresh)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			for {
+				pkt := link.ReadContext(ctx)
+				if pkt == nil {
+					t.Fatal("restored route did not send fresh data")
+				}
+				v := pkt.ToView()
+				pkt.DecRef()
+				ip := header.IPv4(v.AsSlice())
+				tcph := header.TCP(ip.Payload())
+				if len(tcph.Payload()) == 0 {
+					v.Release()
+					continue
+				}
+				size := len(tcph.Payload())
+				ok := ip.HeaderLength() == header.IPv4MinimumSize && tcph.DataOffset() == header.TCPMinimumSize &&
+					tcph.SequenceNumber() == uint32(oldAck) && size == tc.wantMSS && bytes.Equal(tcph.Payload(), fresh[:size])
+				v.Release()
+				if !ok {
+					t.Fatalf("fresh TCP payload size/sequence/headers did not match the restored route (payload %d)", size)
+				}
+				t.Logf("MTU_ACK old_mtu=%d new_mtu=%d old_payload=%d fresh_payload=%d restored_mss=%d cwnd_before=%d cwnd_after=%d",
+					sourceMTU, tc.mtu, len(data), size, before.SndMss, before.SndCwnd, after.SndCwnd)
+				break
 			}
 		})
 	}
