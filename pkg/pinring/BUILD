@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -25,6 +25,8 @@ go_test(
     size = "medium",
     srcs = ["pinring_test.go"],
     embed = [":pinring"],
+    # The AF_PACKET release probe needs raw sockets and io_uring in the test VM.
+    exec_properties = namespace_test_exec_properties,
     deps = [
         "@org_golang_x_sys//unix:go_default_library",
     ],
