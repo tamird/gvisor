@@ -163,6 +163,16 @@ class ReleaseObservationTest(unittest.TestCase):
             "versions": ["0.8.26"], "yanked_versions": {"0.8.26": "regression"},
         })[0], None)
 
+    def test_optional_bcr_observation_does_not_offer_a_downgrade(self) -> None:
+        watch = {"module": "llvm", "checkedVersion": "0.8.26", "blocking": False}
+        metadata = {"versions": ["0.8.25", "0.8.26", "0.8.27"], "yanked_versions": {}}
+        self.assertEqual(self.observe(watch, metadata)[0], "0.8.27")
+        metadata["yanked_versions"] = {"0.8.27": "withdrawn"}
+        self.assertEqual(self.observe(watch, metadata)[0], "0.8.26")
+        metadata["yanked_versions"]["0.8.26"] = "withdrawn"
+        self.assertIsNone(self.observe(watch, metadata)[0])
+        self.assertIsNone(self.observe({**watch, "checkedVersion": "unknown"}, metadata)[0])
+
     def test_github_uses_published_latest_release(self) -> None:
         wait = {"repository": "docker/compose"}
         release = {"tagName": "v2.40.3", "isDraft": False, "isPrerelease": False}

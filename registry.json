@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T14:54:55+00:00",
+    "updatedAt": "2026-11-08T15:03:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29360,8 +29360,8 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T19:48:46.660Z",
-      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.",
+      "updatedAt": "2026-11-08T15:03:52+00:00",
+      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review.",
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
@@ -29392,6 +29392,22 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Published LLVM module versions in BCR",
+          "url": "https://registry.bazel.build/modules/llvm"
+        },
+        {
+          "label": "Root-module Linux header defaults, merged after 0.8.26",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/883"
+        },
+        {
+          "label": "Extra LLVM backends are development dependencies, merged after 0.8.26",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892"
+        },
+        {
+          "label": "gVisor parser backend selection",
+          "url": "https://github.com/google/gvisor/pull/15940"
+        },
         {
           "label": "All 34 installer checks failed certificate verification; offline updater passed 15 tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286"
@@ -29541,7 +29557,15 @@
           "note": "Opened the standalone NVIDIA parser source PR at the reviewed commit."
         }
       ],
-      "number": 17114
+      "number": 17114,
+      "releaseWait": {
+        "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+        "confirmedAt": "2026-11-08T15:03:52+00:00",
+        "module": "llvm",
+        "checkedVersion": "0.8.26",
+        "blocking": false,
+        "nextAction": "Inspect the published source for hermetic-llvm #883 (3dd710dd9) and #892 (17f6a3008). If both are present, evaluate removing the local Linux header backport and verify that the parser still builds only the X86 and AArch64 backends selected by gVisor #15940."
+      }
     },
     {
       "id": "branch:licensecheck-go-digest-notices",

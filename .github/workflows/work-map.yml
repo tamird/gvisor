@@ -1,0 +1,113 @@
+name: Verify the nonblocking BCR watch for gVisor
+on:
+  push:
+    branches: [qualification/work-map-bcr-opportunity]
+permissions: {}
+jobs:
+  suites:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify original public records and the source under test
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 24f16ee6cff9ef1d669f63427a7c0f59af678092
+          test "$(git rev-parse HEAD^:registry.json)" = 0392470e84b89d30f974bd1e17cbfcaa5d0532fd
+          test "$(git rev-parse HEAD:github-status.json)" = 5e9c0aa1983bd3c634276457d0377e7e2776d011
+          printf '%s\n' .github/workflows/work-map.yml README.md app.js app_test.mjs registry.json update-status.py update_status_test.py | diff - <(git diff --name-only HEAD^ HEAD)
+          out="$RUNNER_TEMP/suite-results"; mkdir "$out"
+          sha256sum app.js app_test.mjs update-status.py update_status_test.py registry.json github-status.json > "$out/files.sha256"
+          git show HEAD^:registry.json > "$RUNNER_TEMP/old-registry.json"
+          python3 -B - <<'PY'
+          import json,os
+          from pathlib import Path
+          a=json.loads((Path(os.environ['RUNNER_TEMP'])/'old-registry.json').read_text())
+          b=json.load(open('registry.json'))
+          assert a.keys()==b.keys()
+          assert [k for k in a if a[k]!=b[k]]==['meta','nodes']
+          before={n['id']:n for n in a['nodes']}; after={n['id']:n for n in b['nodes']}
+          assert before.keys()==after.keys()
+          assert [i for i in before if before[i]!=after[i]]==['pr:17114']
+          n=after['pr:17114']; assert n['head']==before[n['id']]['head']==n['releaseWait']['head']
+          assert n['releaseWait']['blocking'] is False
+          PY
+      - name: Reject the original behavior that suppresses normal review
+        run: |
+          set -euo pipefail
+          trap 'git restore --worktree -- app.js registry.json' EXIT
+          git show HEAD^:app.js > app.js
+          git show HEAD^:registry.json > registry.json
+          log="$RUNNER_TEMP/suite-results/old-frontend.tap"; rc=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test --test-name-pattern='a BCR release opportunity preserves independent upstream review' app_test.mjs > "$log" 2>&1 || rc=$?
+          test "$rc" -eq 1
+          grep -F 'agent-release-check' "$log"
+          grep -F 'maintainer-review' "$log"
+      - name: Observe the real BCR entry and compare review and attention for the public PR
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/suite-results"
+          git diff --quiet HEAD -- app.js
+          python3 -B - <<'PY' > "$out/bcr.json"
+          from importlib import import_module
+          import json
+          c=import_module('update-status')
+          n,=[n for n in c.REGISTRY['nodes'] if n['id']=='pr:17114']
+          v=c.release_version(n['releaseWait'])
+          assert v and isinstance(v,str)
+          print(json.dumps({'module':'llvm','checkedVersion':n['releaseWait']['checkedVersion'],'observedVersion':v}))
+          PY
+          node --input-type=module - "$out/bcr.json" <<'JS' > "$out/public-review.json"
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import vm from 'node:vm';
+          const read = n => JSON.parse(readFileSync(n));
+          const src=readFileSync('app.js','utf8');
+          assert.ok(src.endsWith('start();\n'));
+          const ctx=vm.createContext({URL,r:read('registry.json'),s:read('github-status.json'),bcr:read(process.argv[2])});
+          vm.runInContext(src.slice(0,-'start();\n'.length),ctx);
+          const result=vm.runInContext(`validateRegistry(r); registry=r; liveSnapshot=s; model={...r,nodes:registryNodes(r)};
+            const owner=r.nodes.find(n=>n.id==='pr:17114'),raw=s.prs.find(p=>p.url===owner.url);
+            const original=withConflictResult(raw);
+            function readCase(watch, version) {
+              const pr={...original,releaseVersion:version}, card={...owner,github:pr};
+              if(!watch)delete card.releaseWait;
+              const reasons=attentionReasons(card,r.meta.owner);
+              return {ordinary:reasons.filter(x=>x.id!=='agent-release-opportunity').map(x=>x.id),
+                secondary:reasons.filter(x=>x.id==='agent-release-opportunity').map(x=>x.owner),
+                primary:primaryAttention(reasons)?.id, review:reviewInfo(pr,card), states:Object.keys(stateRecords(s,card)).sort()};
+            }
+            ({head:original.head,baseline:readCase(false,null),checked:readCase(true,bcr.checkedVersion),
+              actual:readCase(true,bcr.observedVersion),future:readCase(true,'0.8.27-test-fixture')})`,ctx);
+          assert.equal(result.head,'7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63');
+          for (const probe of [result.checked,result.actual,result.future]) {
+            for(const key of ['ordinary','primary','review','states']) assert.equal(JSON.stringify(probe[key]),JSON.stringify(result.baseline[key]));
+          }
+          assert.equal(result.checked.secondary.length,0);
+          assert.equal(result.actual.secondary.length,ctx.bcr.observedVersion===ctx.bcr.checkedVersion?0:1);
+          assert.equal(result.future.secondary.join(','),'agent');
+          console.log(JSON.stringify(result));
+          JS
+      - name: Run existing Python and frontend suites
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/suite-results"
+          # The published data pair belongs to the original registry timestamp.
+          trap 'git restore --worktree -- registry.json' EXIT
+          git show HEAD^:registry.json > registry.json
+          a=0; b=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest discover -p '*_test.py' -v > "$out/python.log" 2>&1 || a=$?
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test app_test.mjs > "$out/frontend.tap" 2>&1 || b=$?
+          tail -n 4 "$out/python.log"
+          tail -n 8 "$out/frontend.tap"
+          test "$a" -eq 0 && test "$b" -eq 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: work-map-bcr-opportunity
+          path: ${{ runner.temp }}/suite-results/
+          if-no-files-found: error
+          retention-days: 14
