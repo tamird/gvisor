@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 import re
 import subprocess
-import urllib.parse
+import sys
+import tarfile
 
 TEMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TEMP / "recvbuf"
@@ -64,62 +65,134 @@ def acquire(module, version, *, wanted_url=None, pinned=None, asset_id=None):
                 asset_id=asset_id, bytes=len(blob), sha256=actual)
 
 
-def main():
-    report={"verified":False,"assets":[],"attempts":[],"registry":REGISTRY}
-    def save():
-        (OUT / "dependencies.json").write_text(json.dumps(report,indent=2)+"\n")
-    try:
-        DIST.mkdir()
-        for module,version,digest,asset in KNOWN:
-            report["stage"]=[module,version]
-            report["assets"].append(acquire(module,version,pinned=digest,asset_id=asset))
-            save()
-        args=[str(TEMP/"bazel"),"--nosystem_rc","--nohome_rc","--host_jvm_args=-Xmx4g",
-              "build","--config=x86_64","--jobs=3","--keep_going","--remote_executor=","--remote_cache=",
-              "--bes_backend=","--distdir="+str(DIST),*LABELS]
-        for attempt in range(5):
-            report["stage"]=["prepare",attempt+1]
-            log=OUT/"prepare.log"
-            with log.open("wb") as stream:
-                rc=subprocess.run(args,stdout=stream,stderr=subprocess.STDOUT).returncode
-            text=log.read_text(errors="replace")
-            row={"exit":rc,"log_sha256":hashlib.sha256(log.read_bytes()).hexdigest()}
-            report["attempts"].append(row)
-            save()
-            if rc==0:
-                report["verified"]=True
-                break
-            seen=set()
-            for line in text.splitlines():
-                if "Error downloading" not in line: continue
-                modules=set(DIR.findall(line))
-                matches=list(URL.finditer(line))
-                urls={m.group(0) for m in matches}
-                if len(modules)==len(urls)==1:
-                    seen.add((next(iter(modules)),next(iter(urls))))
-            row["missing"] = sorted(seen)
-            row["errors"]=[line[:700] for line in text.splitlines() if line.startswith("ERROR:")][:6]
-            progress=False
-            for module,url in sorted(seen):
-                # A tag-derived version is only a lookup hint; the pinned BCR record
-                # must name the byte-for-byte identical URL and content digest.
-                match=URL.fullmatch(url)
-                version=match.group(3).removeprefix("v")
-                if attempt==4 or len(report["assets"])>=10: break
-                report["stage"]=["recover",module,version,url]
-                info=acquire(module,version,wanted_url=url)
+# These are the module versions actually requested in the first two original
+# attempts. Each optional distfile still has to match the immutable registry.
+OBSERVED = (
+    ("rules_python", "2.4.5"), ("toml.bzl", "0.4.1"),
+    ("bazel_lib", "3.4.0"), ("gazelle", "0.51.3"),
+    ("package_metadata", "0.0.10"), ("rules_cc", "0.2.25"),
+    ("rules_pkg", "1.0.1"), ("rules_proto", "7.1.0"), ("rules_shell", "0.8.0"),
+)
+
+
+def save(report):
+    (OUT / "dependencies.json").write_text(json.dumps(report, indent=2) + "\n")
+
+
+def seed():
+    DIST.mkdir()
+    report = {"verified": False, "registry": REGISTRY, "assets": [], "attempts": []}
+    for module, version, digest, asset in [*KNOWN, *((m, v, None, None) for m, v in OBSERVED)]:
+        try:
+            info = acquire(module, version, pinned=digest, asset_id=asset)
+            report["assets"].append(info)
+        except Exception as exc:
+            report.setdefault("unavailable_seeds", []).append([module, version, type(exc).__name__])
+        save(report)
+
+
+def tool_asset(url):
+    """Admit these non-module distfiles only after this build requested them."""
+    owner, repo, tag, name = URL.fullmatch(url).groups()
+    if url == "https://github.com/protocolbuffers/protobuf/releases/download/v35.1/protoc-35.1-linux-x86_64.zip":
+        source = DIST / "protobuf-35.1.bazel.tar.gz"
+        assert hashlib.sha256(source.read_bytes()).hexdigest() == KNOWN[0][2]
+        with tarfile.open(source) as tar:
+            metadata = tar.extractfile("protobuf-35.1/bazel/private/oss/toolchains/prebuilt/tool_integrity.bzl").read().decode()
+        (digest,) = re.findall(r'^  "protoc-35[.]1-linux-x86_64[.]zip": "([0-9a-f]{64})",?$', metadata, re.M)
+        asset, size = 445060247, 3633928
+    elif url == "https://github.com/cerisier/kernel-headers/releases/download/6.18.33-20260526/6.18.33-arm64.tar.zst":
+        assert 'bazel_dep(name = "llvm", version = "0.8.24")' in Path("MODULE.bazel").read_text()
+        index = fetch("https://raw.githubusercontent.com/hermeticbuild/hermetic-llvm/v0.8.24/kernel/extension/kernel_headers_index.json", 4 << 20)
+        assert re.search(r'\{\s*"url": "' + re.escape(url) + r'",\s*"sha256": "b00c090507fe0ace68f322894822fc27379fc872f10eaa71525adcc18a6c56c9"\s*\}', index.decode())
+        digest, asset, size = "b00c090507fe0ace68f322894822fc27379fc872f10eaa71525adcc18a6c56c9", 430265983, 1500852
+    else:
+        return None
+    output = DIST / name
+    if output.exists():
+        assert hashlib.sha256(output.read_bytes()).hexdigest() == digest
+        return None
+    blob = fetch(f"https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset}", size, asset=True)
+    assert len(blob) == size and hashlib.sha256(blob).hexdigest() == digest
+    output.write_bytes(blob)
+    return dict(source=url, via="supplier-index-and-public-asset", asset_id=asset, bytes=size, sha256=digest)
+
+
+def prepare():
+    # Only the Bazel server receives the private rc. The TestRunner starts in
+    # the following workflow step after shutdown and removal of the private rc.
+    private = OUT / "auth"
+    report = json.loads((OUT / "dependencies.json").read_text())
+    report.update(remote_downloader="grpcs://remote.buildbuddy.io", remote_execution=False)
+    args = [str(TEMP / "bazel"), "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Xmx4g",
+            "--bazelrc=" + str(private / "service.rc"), "build", "--config=x86_64", "--jobs=3",
+            "--keep_going", "--remote_executor=", "--bes_backend=", "--distdir=" + str(DIST),
+            "--noremote_upload_local_results", "--noremote_accept_cached", *LABELS]
+    recovered = set()
+    while True:
+        log = private / "build.log"
+        with log.open("wb") as stream:
+            rc = subprocess.run(args, stdout=stream, stderr=subprocess.STDOUT).returncode
+        row = {"exit": rc, "labels": LABELS}
+        report["attempts"].append(row)
+        if rc == 0:
+            report["verified"] = True
+            save(report)
+            return 0
+        # Only public module release coordinates and fixed diagnostic classes
+        # can pass from the private build log to the qualification attachment.
+        seen = set()
+        classes = set()
+        tools_requested = set()
+        failed_owners = set()
+        for line in log.read_text(errors="replace").splitlines():
+            for signal in ("PERMISSION_DENIED", "UNAUTHENTICATED", "UNAVAILABLE",
+                           "DEADLINE_EXCEEDED", "HTTP 504", "Error downloading",
+                           "error executing", "No space left", "OutOfMemoryError"):
+                if signal in line:
+                    classes.add(signal)
+            if line.startswith("ERROR:"):
+                failed_owners.update(re.findall(r"(?<![A-Za-z0-9/_])//([A-Za-z0-9_/.-]+:[A-Za-z0-9_.+-]+)", line))
+            if "Error downloading" not in line:
+                continue
+            modules = set(DIR.findall(line))
+            urls = {m.group(0) for m in URL.finditer(line)}
+            tools_requested.update(urls)
+            if len(modules) == len(urls) == 1:
+                seen.add((next(iter(modules)), next(iter(urls))))
+        row.update(diagnostics=sorted(classes), missing_bcr=[])
+        row["failed_owners"] = sorted(failed_owners)[:12]
+        progress = False
+        for url in sorted(tools_requested):
+            try:
+                info = tool_asset(url)
                 if info:
                     report["assets"].append(info)
-                    progress=True
-                save()
-            if not progress: break
-        assert report["verified"], "targets did not finish building; inspect the original errors"
-    except Exception as e:
-        report["error"]=type(e).__name__+" "+str(e)[:600]
-        raise
-    finally:
-        save()
+                    progress = True
+            except Exception as exc:
+                row.setdefault("unavailable_tools", []).append([URL.fullmatch(url).group(4), type(exc).__name__])
+        for module, url in sorted(seen - recovered):
+            recovered.add((module, url))
+            version = URL.fullmatch(url).group(3).removeprefix("v")
+            try:
+                # acquire verifies the public URL and checksum from BCR
+                # before admitting either the archive or URL to our report.
+                info = acquire(module, version, wanted_url=url)
+                if info:
+                    report["assets"].append(info)
+                    row["missing_bcr"].append([module, version])
+                    progress = True
+            except Exception:
+                row.setdefault("unverified_module", []).append(module)
+        save(report)
+        if not progress:
+            return rc
 
 
-if __name__=="__main__":
-    main()
+if __name__ == "__main__":
+    if sys.argv[1:] == ["seed"]:
+        seed()
+    elif sys.argv[1:] == ["prepare"]:
+        raise SystemExit(prepare())
+    else:
+        raise SystemExit("expected seed or prepare")
