@@ -303,8 +303,6 @@ func (es *graphEncodeState) absorb(parent, obj int32) {
 	off := o.addr - p.addr
 	o.parent = parent
 	o.parentOff = off
-	px := p.extra()
-	px.children = append(px.children, obj)
 	count := uintptr(1)
 	if o.isArray {
 		count = o.n
@@ -367,10 +365,14 @@ func (es *graphEncodeState) containsRange(obj int32, addr, end uintptr, ti *type
 
 // newContainer adds an object that absorbs the live objects in ov.
 func (es *graphEncodeState) newContainer(base unsafe.Pointer, end uintptr, ti *typeInfo, n uintptr, isArray bool, ov []int32) int32 {
-	ov = append(es.absorbBuf[:0], ov...)
-	es.absorbBuf = ov
 	obj := es.newObject(base, end, ti, n, isArray)
-	for _, c := range ov {
+	o := es.obj(obj)
+	if len(ov) == 1 {
+		o.child[0], o.hasChild = ov[0], true
+	} else if len(ov) > 1 {
+		o.extra().children = slices.Clone(ov)
+	}
+	for _, c := range o.childList() {
 		es.absorb(obj, c)
 	}
 	es.index(obj)
@@ -483,10 +485,7 @@ func (es *graphEncodeState) ptrTarget(p unsafe.Pointer, ti *typeInfo) int32 {
 		// Zero-sized values may share addresses with other values, so they
 		// are not objects. They are resolved once all objects are known.
 		tid = es.newTarget(-1, 0, ti)
-		t := es.target(tid)
-		t.ptr = p
-		t.addr = addr
-		es.zeroTargets = append(es.zeroTargets, tid)
+		es.zeroTargets = append(es.zeroTargets, zeroTarget{ptr: p, id: tid})
 	} else {
 		end := addr + ti.size
 		ov := es.query(addr, end)
