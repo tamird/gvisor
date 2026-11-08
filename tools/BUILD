@@ -79,6 +79,7 @@ exports_files([
     "llvm-linux-header-default.patch",
     "protobuf_authenticity.patch",
     "rules_go_bootstrap_shell.patch",
+    "rules_go_output_temp.patch",
 ])
 
 py_test(
