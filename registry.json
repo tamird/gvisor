@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T15:10:52+00:00",
+    "updatedAt": "2026-11-08T15:28:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -62565,8 +62565,8 @@
       "url": "https://github.com/google/gvisor/pull/17209",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T00:06:53+00:00",
-      "summary": "The four safecopy files in this standalone change are byte-identical to those already on #15181. On AMD64 CPUs with ERMS, large clears use REP STOSQ inside the existing fault handler. The standalone diff contains only safecopy code and tests. If it lands first, those files drop out on the next #15181 rebase. If #15181 lands first, it delivers the same files.\n\nOn one AMD EPYC 9V45 core, clearing a resident 64 MiB shared ext4 mapping took 1,826.2 µs ±4% on stock and 907.1 µs ±5% with ERMS (−50.33%, p=0.000, 12 samples per arm). Both arms passed 71 named fault-handling and unaligned-clear controls. The measured candidate used the same three runtime files and the same test file as this revision. After measurement, the job failed while building benchstat because a package-metadata dependency was missing. The official benchstat tool subsequently processed the 24 original sample rows without rebuilding the workload. No end-to-end overlay allocation timing was collected.",
+      "updatedAt": "2026-11-08T15:28:03+00:00",
+      "summary": "The four safecopy files in this standalone change are byte-identical to those already on #15181. On AMD64 CPUs with ERMS, large clears use REP STOSQ inside the existing fault handler. The standalone diff contains only safecopy code and tests. Ayush requested review of his alternative on #17214. Tamir reviewed it and prefers it for the protected clear. #17209 remains open.\n\nOn one AMD EPYC 9V45 core, clearing a resident 64 MiB shared ext4 mapping took 1,826.2 µs ±4% on stock and 907.1 µs ±5% with ERMS (−50.33%, p=0.000, 12 samples per arm). Both arms passed 71 named fault-handling and unaligned-clear controls. The measured candidate used the same three runtime files and the same test file as this revision. After measurement, the job failed while building benchstat because a package-metadata dependency was missing. The official benchstat tool subsequently processed the 24 original sample rows without rebuilding the workload. No end-to-end overlay allocation timing was collected.",
       "evidence": [
         {
           "label": "Standalone commit and benchstat table",
@@ -62587,6 +62587,14 @@
         {
           "label": "Published single-commit PR #17209",
           "url": "https://github.com/google/gvisor/pull/17209"
+        },
+        {
+          "label": "Ayush requested review of #17214",
+          "url": "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370"
+        },
+        {
+          "label": "Tamir reviewed #17214 and prefers it to #17209",
+          "url": "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
         }
       ],
       "settledReviews": [
@@ -62604,16 +62612,24 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream author",
         "sourceHead": "d20802a06d38ffc13ffcc17bc175d047eee232d9",
-        "observedAt": "2026-11-08T00:06:53+00:00",
-        "disposition": "Published the exact approved change as #17209.",
-        "nextAction": "Follow #17209 for maintainer review and import.",
+        "observedAt": "2026-11-08T12:54:33Z",
+        "disposition": "Tamir reviewed Ayush’s alternative and prefers #17214 for the protected clear. #17209 remains open.",
+        "nextAction": "Ayush’s response is tracked on #17214. Revisit #17209 if that alternative changes course.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17209",
-          "https://github.com/tamird/gvisor/commit/d20802a06d38ffc13ffcc17bc175d047eee232d9"
+          "https://github.com/tamird/gvisor/commit/d20802a06d38ffc13ffcc17bc175d047eee232d9",
+          "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
+          "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
         ]
-      }
+      },
+      "links": [
+        {
+          "label": "Ayush’s alternative and the outstanding test changes",
+          "url": "https://github.com/google/gvisor/pull/17214"
+        }
+      ]
     },
     {
       "id": "pr:17210",
@@ -62850,7 +62866,7 @@
       "url": "https://github.com/google/gvisor/pull/17214",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T12:56:37+00:00",
+      "updatedAt": "2026-11-08T15:28:03+00:00",
       "summary": "Ayush requested review from Tamir on #17209. His protected clear and the #15181 allocator changes passed together on native AMD64 and ARM64. On an ARM64 guest with 64 KiB pages, 58 of 90 fault cases failed at the proposed head. Using the host page size in the test fixture made all 74 applicable cases pass, including SIGBUS and SIGSEGV at 128 KiB.",
       "evidence": [
         {
@@ -62905,14 +62921,20 @@
         "sourceHead": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
         "observedAt": "2026-11-08T12:54:33Z",
         "disposition": "Tamir reviewed #17214 in response to Ayush’s request on #17209. The two inline comments cover fault boundaries on 64 KiB pages and MADV_NOHUGEPAGE on kernels without transparent huge pages.",
-        "nextAction": "Follow the author’s response.",
+        "nextAction": "Await Ayush’s response on #17214 about using the host page size for fault boundaries and handling MADV_NOHUGEPAGE returning EINVAL on kernels without transparent huge pages.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
           "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900",
           "https://github.com/google/gvisor/pull/17214#discussion_r4506286421",
           "https://github.com/google/gvisor/pull/17214#discussion_r4506286423"
         ]
-      }
+      },
+      "links": [
+        {
+          "label": "Original standalone protected clear",
+          "url": "https://github.com/google/gvisor/pull/17209"
+        }
+      ]
     },
     {
       "id": "branch:checkpoint-dir-without-docker",
@@ -77506,7 +77528,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-08T14:54:55+00:00",
+      "updatedAt": "2026-11-08T15:22:57+00:00",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -78660,7 +78682,7 @@
               "−4.14% (p=.035, n=16)"
             ]
           ],
-          "note": "Both rows measure the three changes together. The archive size, CPU time and memory phases showed no statistically significant change in this comparison.",
+          "note": "Both rows measure the three changes together. The archive size, CPU time and memory phases showed no statistically significant change in this comparison. Across 16 Nginx pairs, neither checkpoint time nor time to the first HTTP response differed detectably, and all 34 restores returned the expected payload with the same five process IDs.",
           "evidence": [
             {
               "label": "Benchstat and original samples",
@@ -78669,6 +78691,10 @@
             {
               "label": "Combined encoder source",
               "url": "https://github.com/tamird/gvisor/commit/6e9777262"
+            },
+            {
+              "label": "Four-worker Nginx checkpoint and restored HTTP measurements",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42493334828/artifacts/13622378135"
             }
           ]
         },
