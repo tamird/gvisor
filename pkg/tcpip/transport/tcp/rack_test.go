@@ -566,3 +566,52 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 		t.Fatalf("last fragment lost its fully SACKed original unit: %d", last.sackCredit)
 	}
 }
+
+// A cumulative ACK retires a wire packet when it crosses its final byte,
+// even when the write queue has since been split or the route has changed.
+func TestCumulativeACKPacketBoundaries(t *testing.T) {
+	clock := faketime.NewManualClock()
+	ctx := newRACKTestContext(clock, 0)
+	defer ctx.cleanup()
+	s := &ctx.snd
+	s.ep.mu.Lock()
+	defer s.ep.mu.Unlock()
+	s.ep.SACKPermitted = true
+	// Exercise sequence-number wrap as well as a short final GSO packet.
+	start := seqnum.Value(0xfffffb50)
+	s.ep.scoreboard = NewSACKScoreboard(1196, start)
+	seg := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(2404)), 0)
+	seg.sequenceNumber, seg.gsoStart, seg.gsoMSS, seg.xmitCount = start, start, 1200, 1
+	s.writeList.PushBack(seg)
+	s.MaxPayloadSize = 1196
+	s.splitSeg(seg, 1196)
+	tail := seg.Next()
+	ctx.segs = append(ctx.segs, seg, tail)
+	sack := header.SACKBlock{Start: start.Add(1200), End: start.Add(2400)}
+	s.ep.scoreboard.Insert(sack)
+	s.updateSACKCredit(tail, sack)
+	if got := tail.sackCredit; got != 1 {
+		t.Fatalf("selectively acknowledged packets = %d, want 1", got)
+	}
+	for _, tc := range []struct {
+		end                seqnum.Size
+		ordinary, recovery int
+	}{
+		{4, 0, 0}, {1196, 0, 0}, {1199, 0, 0}, {1200, 1, 1},
+		{2399, 1, 1}, {2400, 2, 1}, {2404, 3, 2},
+	} {
+		ack := start.Add(tc.end)
+		check := func(inRecovery bool, want int) {
+			t.Helper()
+			got := s.cumulativeACKPackets(seg, start, ack, inRecovery)
+			if tail.sequenceNumber.LessThan(ack) {
+				got += s.cumulativeACKPackets(tail, start, ack, inRecovery)
+			}
+			if got != want {
+				t.Errorf("ACK of %d bytes, SACK recovery %t: got %d packets, want %d", tc.end, inRecovery, got, want)
+			}
+		}
+		check(false, tc.ordinary)
+		check(true, tc.recovery)
+	}
+}

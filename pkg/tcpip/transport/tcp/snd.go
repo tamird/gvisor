@@ -539,7 +539,8 @@ func (s *sender) resendSegment() {
 		// to the highest sequence number in the retransmitted segment.
 		s.FastRecovery.HighRxt = seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize())) - 1
 		s.FastRecovery.RescueRxt = seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize())) - 1
-		s.sendSegment(seg)
+		// The original is already included in the flight estimate.
+		s.Outstanding += s.sendSegment(seg)
 		// An RTO can rewind writeNext to this segment. It has now been
 		// retransmitted, so sendData must not immediately send it again.
 		if s.writeNext == seg {
@@ -870,7 +871,7 @@ func (s *sender) NextSeg(nextSegHint *segment) (nextSeg, hint *segment, rescueRt
 // lower of the specified limit value or the receivers window size specified by
 // end.
 // +checklocks:s.ep.mu
-func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (sent bool) {
+func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (sent bool, packetDelta int) {
 	// We abuse the flags field to determine if we have already
 	// assigned a sequence number to this segment.
 	newData := !s.isAssignedSequenceNumber(seg)
@@ -923,7 +924,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 						// Preserve the exception for a short segment that fills
 						// the available window, and Nagle's precedence over CORK.
 						if nagle {
-							return false
+							return false, 0
 						}
 						if !s.startCork {
 							s.startCork = true
@@ -932,7 +933,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 							// the segments are drained.
 							s.corkTimer.enable(MinRTO)
 						}
-						return false
+						return false, 0
 					}
 				}
 			}
@@ -960,12 +961,12 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		}
 
 		if !seg.sequenceNumber.LessThan(end) {
-			return false
+			return false, 0
 		}
 
 		available := int(seg.sequenceNumber.Size(end))
 		if available == 0 {
-			return false
+			return false, 0
 		}
 
 		// If the whole segment or at least 1MSS sized segment cannot
@@ -993,7 +994,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 				// OK to send, at least 1 MSS sized segment fits
 				// in the receiver's advertised window.
 			default:
-				return false
+				return false, 0
 			}
 		}
 
@@ -1034,7 +1035,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		panic("attempted to send segment not in write list")
 	}
 
-	s.sendSegment(seg)
+	packetDelta = s.sendSegment(seg)
 
 	// Update sndNxt if we actually sent new data (as opposed to
 	// retransmitting some previously sent data).
@@ -1045,7 +1046,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		}
 	}
 
-	return true
+	return true, packetDelta
 }
 
 // zeroProbeJunk is data sent during zero window probes. Its value is
@@ -1163,7 +1164,7 @@ func (s *sender) sendData() {
 			s.updateWriteNext(seg.Next())
 			continue
 		}
-		if sent := s.maybeSendSegment(seg, limit, end); !sent {
+		if sent, _ := s.maybeSendSegment(seg, limit, end); !sent {
 			break
 		}
 		dataSent = true
@@ -1390,6 +1391,33 @@ func (s *sender) updateSACKCredit(seg *segment, known header.SACKBlock) {
 	n := s.ep.scoreboard.sackedPackets(seg.sackPackets(), s.SndUna, known)
 	s.SackedOut += n - int(seg.sackCredit)
 	seg.sackCredit = uint32(n)
+}
+
+// cumulativeACKPackets counts transmitted packet ends crossed by this ACK.
+// A queue split can leave a fragment with no packet end. During SACK
+// recovery SetPipe has already discounted selectively acknowledged units.
+//
+// +checklocks:s.ep.mu
+func (s *sender) cumulativeACKPackets(seg *segment, una, ack seqnum.Value, sackRecovery bool) int {
+	if seg.gsoMSS == 0 {
+		// No transmission has succeeded.
+		return 0
+	}
+	p := seg.sackPackets()
+	if !ack.LessThan(p.block.End) {
+		if sackRecovery {
+			return p.count - int(seg.sackCredit)
+		}
+		return p.count
+	}
+	// The final (possibly short) packet has not been acknowledged. All
+	// packet ends in the acknowledged prefix are on the transmission grid.
+	p.count = int(p.block.Start.Size(ack) / p.mss)
+	if p.count == 0 || !sackRecovery || seg.sackCredit == 0 {
+		return p.count
+	}
+	p.block.End = p.block.Start.Add(seqnum.Size(p.count) * p.mss)
+	return p.count - s.ep.scoreboard.sackedPackets(p, una, header.SACKBlock{})
 }
 
 // recordSACK updates packet ownership and, for a fully reported queue entry,
@@ -1666,6 +1694,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 	}
 
 	ack := rcvdSeg.ackNumber
+	sackRecovery := s.ep.SACKPermitted && s.FastRecovery.Active
 	fastRetransmit := false
 	// Do not leave fast recovery, if the ACK is out of range.
 	if s.FastRecovery.Active {
@@ -1742,10 +1771,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		}
 
 		// Remove all acknowledged data from the write list.
-		acked := s.SndUna.Size(ack)
+		una := s.SndUna
+		acked := una.Size(ack)
 		s.SndUna = ack
 		ackLeft := acked
-		originalOutstanding := s.Outstanding
+		var packetsAcked int
 		for ackLeft > 0 {
 			// We use logicalLen here because we can have FIN
 			// segments (which are always at the end of list) that
@@ -1756,12 +1786,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 					"TCPSenderState: %+v\nsender: %+v\nendpoint: %+v", ackLeft, s.TCPSenderState, s, s.ep))
 			}
 
+			packetsAcked += s.cumulativeACKPackets(seg, una, ack, sackRecovery)
 			datalen := seg.logicalLen()
 			if datalen > ackLeft {
-				prevCount := s.pCount(seg, s.MaxPayloadSize)
 				seg.TrimFront(ackLeft)
 				seg.sequenceNumber.UpdateForward(ackLeft)
-				s.Outstanding -= prevCount - s.pCount(seg, s.MaxPayloadSize)
 				break
 			}
 
@@ -1777,15 +1806,25 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 			s.writeList.Remove(seg)
 
-			// If SACK is enabled then only reduce outstanding if
-			// the segment was not previously SACKED as these have
-			// already been accounted for in SetPipe().
-			if !s.ep.SACKPermitted || !s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
-				s.Outstanding -= s.pCount(seg, s.MaxPayloadSize)
-			}
 			s.SackedOut -= int(seg.sackCredit)
 			seg.DecRef()
 			ackLeft -= datalen
+		}
+
+		// On leaving SACK recovery, the ordinary flight includes packets
+		// selectively reported while recovery was active. SetPipe's last
+		// estimate may also include retransmissions or exclude lost data.
+		if sackRecovery && !s.FastRecovery.Active {
+			s.Outstanding = 0
+			for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+				if seg.gsoMSS != 0 {
+					s.Outstanding += seg.sackPackets().count
+				}
+			}
+		} else {
+			// A timeout resets the pipe estimate. The peer may still
+			// acknowledge more packets than are currently in flight.
+			s.Outstanding = max(0, s.Outstanding-packetsAcked)
 		}
 
 		// Clear SACK information for all acked data.
@@ -1816,7 +1855,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// If we are not in fast recovery then update the congestion
 		// window based on the number of acknowledged packets.
 		if !s.FastRecovery.Active {
-			s.cc.Update(originalOutstanding-s.Outstanding, bestRTT, rcvdSeg.rcvdTime)
+			s.cc.Update(packetsAcked, bestRTT, rcvdSeg.rcvdTime)
 			if s.FastRecovery.Last.LessThan(s.SndUna) {
 				s.state = tcpip.Open
 				// Update RACK when we are exiting fast or RTO
@@ -1831,13 +1870,6 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 		// Update the send buffer usage and notify potential waiters.
 		s.ep.updateSndBufferUsage(int(acked))
-
-		// It is possible for s.outstanding to drop below zero if we get
-		// a retransmit timeout, reset outstanding to zero but later
-		// get an ack that cover previously sent data.
-		if s.Outstanding < 0 {
-			s.Outstanding = 0
-		}
 
 		s.SetPipe()
 
@@ -1895,9 +1927,14 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 	s.sendData()
 }
 
-// sendSegment sends the specified segment.
+// sendSegment sends the specified segment and returns the change in the
+// number of unacknowledged packet ends when retransmitting an existing
+// packet with different boundaries. A caller retaining the original pipe
+// charge applies the difference. A caller charging the whole transmission
+// (for example, after a retransmit timeout) already accounts for it.
+//
 // +checklocks:s.ep.mu
-func (s *sender) sendSegment(seg *segment) tcpip.Error {
+func (s *sender) sendSegment(seg *segment) (packetDelta int) {
 	if seg.xmitCount > 0 {
 		// Karn's algorithm excludes ambiguous RTT samples after a
 		// retransmission, including a tail loss probe (RFC 6298, section 3).
@@ -1921,9 +1958,16 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 			mss = min(mss, seqnum.Size(s.ep.gso.MSS))
 		}
 		if mss != 0 && (seg.gsoMSS != uint16(mss) || seg.gsoStart != seg.sequenceNumber || seg.truncatedTail) {
+			hadTransmission := seg.gsoMSS != 0
+			if hadTransmission {
+				packetDelta = -seg.sackPackets().count
+			}
 			seg.gsoStart, seg.gsoMSS, seg.truncatedTail = seg.sequenceNumber, uint16(mss), false
 			if s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
 				s.updateSACKCredit(seg, header.SACKBlock{})
+			}
+			if hadTransmission {
+				packetDelta += seg.sackPackets().count
 			}
 		}
 	}
@@ -1943,7 +1987,7 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 		}
 	}
 
-	return err
+	return packetDelta
 }
 
 // sendSegmentFromPacketBuffer sends a new segment containing the given payload,
