@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -175,6 +176,207 @@ func TestTCPMigration(t *testing.T) {
 					t.Fatalf("Unexpected restored endpoint state: want %v, got %v", want, got)
 				}
 			}
+		})
+	}
+}
+
+// TestTCPMigrationMTUAckCredit observes a cumulative ACK for data sent on
+// the original route. Both endpoints use ordinary IPv4 and TCP headers.
+func TestTCPMigrationMTUAckCredit(t *testing.T) {
+	const sourceMTU = 1500
+	const peerMSS = 1200
+	for _, tc := range []struct {
+		name        string
+		mtu         uint32
+		wantMSS     int
+		two, repair bool
+		acks        []int
+	}{
+		{"same", sourceMTU, peerMSS, false, false, []int{1200}},
+		{"smaller", 1236, 1196, false, false, []int{1200}},
+		{"partial", 1236, 1196, false, false, []int{4, 1196, 1196, 1200, 1200}},
+		{"two", 1236, 1196, true, false, []int{1204, 1204}},
+		{"repair", 1236, 1196, false, true, []int{1196, 1200, 1200}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := testcontext.NewWithOpts(t, testcontext.Options{
+				EnableV4: true, MTU: sourceMTU, Clock: faketime.NewManualClock(),
+			})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			var options [4]byte
+			header.EncodeMSSOption(peerMSS, options[:])
+			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, options[:])
+			checkRoute := func(s *stack.Stack, ep tcpip.Endpoint, mtu uint32) {
+				t.Helper()
+				r, err := s.FindRoute(1, testcontext.StackAddr, testcontext.TestAddr, ipv4.ProtocolNumber, false)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer r.Release()
+				nic, err := s.GetNICByID(r.OutgoingNIC())
+				if err != nil || nic.GetExperimentIPOptionEnabled() || ep.SocketOptions().GetExperimentOptionValue() != 0 ||
+					r.HasHostGSOCapability() || r.HasGVisorGSOCapability() || r.MTU() != mtu-header.IPv4MinimumSize {
+					t.Fatalf("expected a plain IPv4 route on the %d-byte NIC", mtu)
+				}
+			}
+			checkRoute(c.Stack(), c.EP, sourceMTU)
+			cc := tcpip.CongestionControlOption("reno")
+			if err := c.EP.SetSockOpt(&cc); err != nil {
+				t.Fatal(err)
+			}
+			send := func(ep tcpip.Endpoint, data []byte) {
+				t.Helper()
+				if n, err := ep.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+					t.Fatalf("Write = %d, %v", n, err)
+				}
+			}
+			var initial tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&initial); err != nil || initial.SndMss != peerMSS {
+				t.Fatalf("initial snd_mss = %d, %v", initial.SndMss, err)
+			}
+			data := bytes.Repeat([]byte{0xa7}, peerMSS)
+			send(c.EP, data)
+			oldPacket := c.GetPacket()
+			defer oldPacket.Release()
+			oldIP := header.IPv4(oldPacket.AsSlice())
+			oldTCP := header.TCP(oldIP.Payload())
+			if oldIP.HeaderLength() != header.IPv4MinimumSize || oldTCP.DataOffset() != header.TCPMinimumSize || !bytes.Equal(oldTCP.Payload(), data) {
+				t.Fatal("previous route did not emit one complete 1200-byte payload with base headers")
+			}
+			first := seqnum.Value(oldTCP.SequenceNumber())
+			if tc.two {
+				c.EP.SocketOptions().SetDelayOption(false)
+				tail := []byte{1, 2, 3, 4}
+				send(c.EP, tail)
+				p := c.GetPacket()
+				defer p.Release()
+				h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+				if h.SequenceNumber() != uint32(first.Add(peerMSS)) || !bytes.Equal(h.Payload(), tail) {
+					t.Fatal("second original transmission missing")
+				}
+			}
+
+			var image bytes.Buffer
+			if _, err := state.Save(context.Background(), &image, c.Stack()); err != nil {
+				t.Fatal(err)
+			}
+			c.Stack().Resume()
+			s := stack.New(stack.Options{
+				TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+				NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol},
+			})
+			defer s.Destroy()
+			s.SetAllowLiveTCPMigration(true)
+			if _, err := state.Load(context.Background(), &image, s); err != nil {
+				t.Fatal(err)
+			}
+			link := channel.New(1000, tc.mtu, "")
+			if err := s.CreateNIC(1, link); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.AddProtocolAddress(1, tcpip.ProtocolAddress{
+				Protocol: header.IPv4ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix,
+			}, stack.AddressProperties{}); err != nil {
+				t.Fatal(err)
+			}
+			s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+			s.Restore()
+			tcpip.AsyncLoading.Wait()
+			eps := s.RegisteredEndpoints()
+			if len(eps) != 1 {
+				t.Fatalf("restored %d registered endpoints", len(eps))
+			}
+			ep := eps[0].(tcpip.Endpoint)
+			checkRoute(s, ep, tc.mtu)
+			if state := tcp.EndpointState(ep.State()); state != tcp.StateEstablished {
+				t.Fatalf("restored state = %s", state)
+			}
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var x tcpip.TCPInfoOption
+				if err := ep.GetSockOpt(&x); err != nil || int(x.SndMss) != tc.wantMSS {
+					t.Fatalf("TCP_INFO: %+v %v", x, err)
+				}
+				return x
+			}
+			readData := func(want []byte, offset int) {
+				t.Helper()
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				for {
+					p := link.ReadContext(ctx)
+					if p == nil {
+						t.Fatalf("no data at %d", offset)
+					}
+					v := p.ToView()
+					p.DecRef()
+					ip := header.IPv4(v.AsSlice())
+					h := header.TCP(ip.Payload())
+					n := len(h.Payload())
+					ok := h.SequenceNumber() == uint32(first.Add(seqnum.Size(offset))) &&
+						ip.HeaderLength() == header.IPv4MinimumSize && h.DataOffset() == header.TCPMinimumSize &&
+						bytes.Equal(h.Payload(), want)
+					v.Release()
+					if n == 0 {
+						continue
+					}
+					if !ok {
+						t.Fatalf("unexpected %d-byte data packet, wanted %d bytes at %d", n, len(want), offset)
+					}
+					return
+				}
+			}
+			before := info()
+			total := peerMSS
+			if tc.two {
+				total += 4
+			}
+			if before.SndCwnd == 0 || before.SndCwnd+3 >= before.SndSsthresh || before.SACKPermitted {
+				t.Fatalf("unexpected initial Reno state %+v", before)
+			}
+			if tc.repair {
+				clock := s.Clock().(*faketime.ManualClock)
+				// Only the old packet has left the sender. Withhold its ACK
+				// until a real resend is seen on the smaller restored route.
+				if before.RTO <= 0 || before.RTO > 10*time.Second {
+					t.Fatalf("unexpected RTO: %s", before.RTO)
+				}
+				clock.Advance(before.RTO)
+				readData(data[:tc.wantMSS], 0)
+				now := info()
+				if now.TotalRetrans <= before.TotalRetrans || now.SndCwnd != 1 || s.Stats().TCP.Timeouts.Value() != 1 {
+					t.Fatalf("first retransmission did not follow one RTO: %+v", now)
+				}
+			}
+			for i, offset := range tc.acks {
+				if tc.repair && i == 1 {
+					readData(data[tc.wantMSS:], tc.wantMSS)
+				}
+				prior := info()
+				mark := []byte{byte(0x31 + i)}
+				p := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: c.BuildSegment(mark, &testcontext.Headers{
+					SrcPort: testcontext.TestPort, DstPort: c.Port, SeqNum: testcontext.TestInitialSequenceNumber + seqnum.Value(1+i),
+					AckNum: first.Add(seqnum.Size(offset)), Flags: header.TCPFlagAck | header.TCPFlagPsh, RcvWnd: 30000,
+				})})
+				link.InjectInbound(ipv4.ProtocolNumber, p)
+				p.DecRef()
+				deadline := time.Now().Add(5 * time.Second)
+				for ep.Readiness(waiter.ReadableEvents) == 0 && time.Now().Before(deadline) {
+					time.Sleep(time.Millisecond)
+				}
+				var got bytes.Buffer
+				if _, err := ep.Read(&got, tcpip.ReadOptions{}); err != nil || !bytes.Equal(got.Bytes(), mark) {
+					t.Fatalf("ACK %d: peer marker %x, %v", offset, got.Bytes(), err)
+				}
+				now := info()
+				t.Logf("ACK_STEP case=%s index=%d offset=%d before=%d after=%d retrans=%d", tc.name, i, offset, prior.SndCwnd, now.SndCwnd, now.TotalRetrans)
+			}
+			fresh := bytes.Repeat([]byte{0x5a}, 2*peerMSS)
+			send(ep, fresh)
+			readData(fresh[:tc.wantMSS], total)
+			t.Logf("ACK_WIRE case=%s source_mtu=1500 mtu=%d first=1200 second=%t repair=%t fresh=%d timeouts=%d", tc.name, tc.mtu, tc.two, tc.repair, tc.wantMSS, s.Stats().TCP.Timeouts.Value())
 		})
 	}
 }
@@ -634,4 +836,70 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 	if got := restoredStack2.CheckLocalAddress(preservedNICID, header.IPv6ProtocolNumber, preservedIPv6Addr.Address); got != preservedNICID {
 		t.Fatalf("restoredStack2.CheckLocalAddress(IPv6) = %d, want %d", got, preservedNICID)
 	}
+}
+
+func TestSACKBeforeRecoveryCumulativeCredit(t *testing.T) {
+	snapshots := make(chan tcp.TCPSenderState, 32)
+	c := testcontext.NewWithOpts(t, testcontext.Options{
+		EnableV4: true, MTU: 1500, Clock: faketime.NewManualClock(),
+		Probe: func(x *tcp.TCPEndpointState) { snapshots <- x.Sender },
+	})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, 0)
+	peer := e2e.CreateConnectedWithSACKPermittedOption(c)
+	if !peer.SACKPermitted {
+		t.Fatal("SACK not negotiated")
+	}
+	cc := tcpip.CongestionControlOption("reno")
+	if err := c.EP.SetSockOpt(&cc); err != nil {
+		t.Fatal(err)
+	}
+	var before tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&before); err != nil || !before.SACKPermitted {
+		t.Fatalf("TCP_INFO = %+v, %v", before, err)
+	}
+	first := peer.AckNum
+	for i := 0; i < 4; i++ {
+		data := bytes.Repeat([]byte{byte(i + 1)}, 100)
+		if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != 100 {
+			t.Fatalf("write %d = %d, %v", i, n, err)
+		}
+		p := c.GetPacket()
+		h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+		ok := h.SequenceNumber() == uint32(first.Add(seqnum.Size(i*100))) && bytes.Equal(h.Payload(), data)
+		p.Release()
+		if !ok {
+			t.Fatalf("wrong data packet %d", i)
+		}
+	}
+	observe := func(una seqnum.Value, sacked int) tcp.TCPSenderState {
+		t.Helper()
+		timeout := time.After(5 * time.Second)
+		for {
+			select {
+			case x := <-snapshots:
+				if x.SndUna == una && x.SndNxt == first.Add(400) && x.SackedOut == sacked {
+					if x.FastRecovery.Active {
+						t.Fatal("unexpected SACK recovery")
+					}
+					return x
+				}
+			case <-timeout:
+				t.Fatal("missing post-ACK sender snapshot")
+			}
+		}
+	}
+	opts := [12]byte{header.TCPOptionNOP, header.TCPOptionNOP}
+	header.EncodeSACKBlocks([]header.SACKBlock{{Start: first.Add(100), End: first.Add(200)}}, opts[2:])
+	peer.SendPacket(nil, opts[:])
+	reported := observe(first, 1)
+	peer.AckNum = first.Add(200)
+	peer.SendPacket(nil, nil)
+	partial := observe(peer.AckNum, 0)
+	peer.AckNum = first.Add(400)
+	peer.SendPacket(nil, nil)
+	done := observe(peer.AckNum, 0)
+	t.Logf("SACK_WIRE initial=%d selective=%d,%d partial=%d,%d final=%d,%d", before.SndCwnd,
+		reported.SndCwnd, reported.Outstanding, partial.SndCwnd, partial.Outstanding, done.SndCwnd, done.Outstanding)
 }
