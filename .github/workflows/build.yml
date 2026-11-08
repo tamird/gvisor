@@ -1,35 +1,71 @@
-name: CI
-
-"on":
+name: Verify governance selection and the native license job
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-governance-in-unit-steps]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  selection:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 38
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the existing native license checker and Buildkite renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/governance-selection"
+          mkdir -p "$work/bin" "$work/result"
+          echo '{"status":"SETUP"}' >"$work/result/selection.json"
+          product=bb16ce17359ed91e9306138d3ac75fbaff367958
+          previous=c68b01cd010e8cf58be88f51012ac2ee5351a46b
+          original=896acc45666c609ab05f92160f322f976a86cea1
+          reader=05cf00d9d26a5beb8a9af8011375644b8b37a086
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse HEAD^^)" = 471d6dff5229b99208bf6fec985601067f1f9d69
+          test "$(git rev-parse "$product^{tree}")" = dbe10b59a6e0192be4e386a4b058fda577bcc64d
+          git diff --exit-code "$product" HEAD -- . ':!.github/qualification/governance_selection.py' ':!.github/workflows/build.yml'
+          cp .github/qualification/governance_selection.py "$work/"
+          git fetch --no-auto-maintenance --depth=2 --no-tags origin "$previous" "$original" "$reader"
+          git diff --exit-code "$previous" "$product" -- . ':!.buildkite/pipeline.yaml' ':!.buildkite/first-pass.yaml' ':!tools/bazel.mk'
+          git diff --exit-code "$original" "$product" -- Makefile tools/licensecheck .bazelversion images/default/bazelversion
+          for module in qualify_licenses qualification_report unit_matrix; do
+            git show "$reader:test/rbe/$module.py" >"$work/$module.py"
+          done
+          git checkout --quiet --detach "$product"
+          for pipeline in pipeline.yaml first-pass.yaml; do
+            git show "$previous:.buildkite/$pipeline" >"$work/$pipeline"
+          done
+          curl -fsSL --retry 2 --max-time 120 https://github.com/buildkite/agent/releases/download/v4.10.1/buildkite-agent-linux-amd64-4.10.1.tar.gz -o "$work/agent.tar.gz"
+          curl -fsSL --retry 2 --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.30.0/bazelisk-linux-amd64 -o "$work/bin/bazel"
+          (
+            cd "$work"
+            sha256sum -c <<'SUMS'
+          f7ecf75a3be41a786f25e9cdbff332dc49b7f18ef63a1fd73bf77056fd4d7fe0  agent.tar.gz
+          a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8  bin/bazel
+          SUMS
+            python3 -IB - <<'PY'
+          import pathlib, tarfile
+          with tarfile.open("agent.tar.gz") as archive:
+              member, = [entry for entry in archive if entry.isfile() and pathlib.PurePosixPath(entry.name).name == "buildkite-agent"]
+              pathlib.Path("bin/agent").write_bytes(archive.extractfile(member).read())
+          PY
+          )
+          chmod 755 "$work/bin/"{agent,bazel}
+      - name: Compare both expanded pipelines and run the verified license entry point
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/governance-selection"
+          export PATH="$work/bin:$PATH"
+          export USE_BAZEL_VERSION="$(<.bazelversion)" USE_BAZEL_FALLBACK_VERSION=error:
+          test "$(bazel --version)" = 'bazel 8.8.1'
+          python3 -B "$work/governance_selection.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: governance-selection-and-native-licenses
+          path: ${{ runner.temp }}/governance-selection/result/selection.json
+          if-no-files-found: warn
+          retention-days: 14
