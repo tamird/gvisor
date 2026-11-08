@@ -1725,7 +1725,8 @@ func (k *Kernel) pauseTimeLocked(ctx context.Context) {
 	for t := range k.tasks.Root.tids {
 		if t == t.tg.leader {
 			t.tg.itimerRealTimer.Pause()
-			for _, it := range t.tg.timers {
+			// All task goroutines are stopped, so none can add or delete a timer.
+			for _, it := range t.tg.timers { // +checklocksignore
 				it.PauseTimer()
 			}
 		}
@@ -1758,7 +1759,8 @@ func (k *Kernel) resumeTimeLocked(ctx context.Context) {
 	for t := range k.tasks.Root.tids {
 		if t == t.tg.leader {
 			t.tg.itimerRealTimer.Resume()
-			for _, it := range t.tg.timers {
+			// All task goroutines are still stopped until resumeTimeLocked returns.
+			for _, it := range t.tg.timers { // +checklocksignore
 				it.ResumeTimer()
 			}
 		}
