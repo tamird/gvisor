@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T17:09:37+00:00",
+    "updatedAt": "2026-11-08T17:21:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51094,7 +51094,7 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T07:01:44+00:00",
+      "updatedAt": "2026-11-08T17:16:53+00:00",
       "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers. With only gVisor declared downstream, this change removes the unsupported header-tag diagnostic. The header query and ARM64 vDSO build still fail because Gazelle rejects gVisor’s non-root go_deps.gazelle_override tags. No compiler action ran. The same restriction was reproduced before the compiler migration.",
       "evidence": [
         {
@@ -51124,6 +51124,10 @@
         {
           "label": "Gazelle query on stock and corrected master with Bazel 8.2.1",
           "url": "https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743"
+        },
+        {
+          "label": "Upstream Gazelle small-bug-fix PR instructions",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/blob/8b89ee9f6/.github/PULL_REQUEST_TEMPLATE.md"
         }
       ],
       "settledReviews": [
@@ -51138,18 +51142,36 @@
           "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
           "outcome": "approved",
           "at": "2026-11-02T16:20:02.085486+00:00"
+        },
+        {
+          "kind": "issue",
+          "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
+          "title": "Querying a Gazelle target loads the Go environment",
+          "requestedAt": "2026-11-07T07:01:44+00:00",
+          "summary": "Review the proposed Gazelle report. Opening a public tamird/bazel-gazelle fork would also allow the tested change to be prepared as a single upstream commit.",
+          "body": "Loading `def.bzl` reads `GO_ENV` at the top level. In a WORKSPACE build, `bazel query //:gazelle` fails if the Go repository configuration is unavailable, before Bazel can return the target label. With Bzlmod, building the ARM64 vDSO from gVisor’s LLVM integration as a downstream dependency evaluates a root-only go_deps override before compiling any C. [Query regression](https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743)\n\nI propose reading the generated environment through a private label attribute on the Gazelle runner. In a prototype against Gazelle master, the query succeeded and the downstream vDSO linked. The runner scripts stayed byte-identical to their originals in both Bzlmod and WORKSPACE, including the precedence of per-target environment overrides. [Build and runner comparison](https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819)\n\nFiled by Codex on behalf of @tamird.",
+          "outcome": "superseded",
+          "at": "2026-11-08T17:16:03+00:00"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "issue",
-        "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
-        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
-        "title": "Querying a Gazelle target loads the Go environment",
-        "requestedAt": "2026-11-07T07:01:44+00:00",
-        "summary": "Review the proposed Gazelle report. Opening a public tamird/bazel-gazelle fork would also allow the tested change to be prepared as a single upstream commit.",
-        "body": "Loading `def.bzl` reads `GO_ENV` at the top level. In a WORKSPACE build, `bazel query //:gazelle` fails if the Go repository configuration is unavailable, before Bazel can return the target label. With Bzlmod, building the ARM64 vDSO from gVisor’s LLVM integration as a downstream dependency evaluates a root-only go_deps override before compiling any C. [Query regression](https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743)\n\nI propose reading the generated environment through a private label attribute on the Gazelle runner. In a prototype against Gazelle master, the query succeeded and the downstream vDSO linked. The runner scripts stayed byte-identical to their originals in both Bzlmod and WORKSPACE, including the precedence of per-target environment overrides. [Build and runner comparison](https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819)\n\nFiled by Codex on behalf of @tamird."
-      }
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+        "observedAt": "2026-11-08T17:16:53+00:00",
+        "disposition": "The issue draft was withdrawn. The signed Gazelle bug-fix proposal is on its own card.",
+        "nextAction": "Follow the supplier proposal at 82ccd8794. The separate Bazel 7 hold on #2499 remains in place.",
+        "evidence": [
+          "https://github.com/bazel-contrib/bazel-gazelle/blob/8b89ee9f6/.github/PULL_REQUEST_TEMPLATE.md",
+          "https://github.com/tamird/bazel-gazelle/commit/82ccd8794"
+        ]
+      },
+      "links": [
+        {
+          "label": "Gazelle proposal for deferred environment loading",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794"
+        }
+      ]
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11518",
@@ -62527,13 +62549,13 @@
       "repo": "google/gvisor",
       "number": 17208,
       "ref": "proposal/checkpoint-inspector-format-tests",
-      "head": "ebcea451de61a61957c82527fa94241827267cde",
+      "head": "912702589414e631909e449f5926b66fa6d5a2c1",
       "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T17:07:54+00:00",
-      "summary": "The published head still requires -checkpoint to inspect a Sentry image. The pending amendment removes the flag because the autosave runner uses the ordinary command. It selects checkpoint decoding only for the CPUID FeatureSet and Kernel in the first two frames. Other roots retain generic text and HTML rendering. A stream deliberately using both checkpoint roots has the same discriminator. On native ARM64 the ordinary command matched the published explicit text and HTML for a wire and graph checkpoint, and both images restored PID 1 and two files of 8,192 bytes. The autosave consumer comparison is pending.",
+      "updatedAt": "2026-11-08T17:19:18+00:00",
+      "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.",
       "evidence": [
         {
           "label": "Revised native ARM64 test suites and four mutations rejected for their expected failures",
@@ -62578,6 +62600,14 @@
         {
           "label": "Native ARM64 default CLI, restored wire/graph images and generic controls; autosave outstanding",
           "url": "https://github.com/tamird/gvisor/actions/runs/42501078883/artifacts/13625508398"
+        },
+        {
+          "label": "Original native guest and actual autosave test logs/XML and all four output hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42502900602/artifacts/13626871767"
+        },
+        {
+          "label": "Published reply to Ayush on the original thread",
+          "url": "https://github.com/google/gvisor/pull/17208#discussion_r4507076013"
         }
       ],
       "settledReviews": [
@@ -62615,20 +62645,21 @@
           "summary": "Publish the amendment and reply to Ayush after the actual autosave formatter writes matching text and HTML. Both native ARM64 guest tests passed: the revised default matched the published explicit mode and the independent layout for the same wire and graph images that restored successfully. The generic command controls and 13 layout cases passed. A fork reporting assertion stopped before the autosave consumer.\n\nProposed inline reply\n\nYes for the files runsc writes. The autosave test runner calls `runsc statefile` without a flag, so it was still using the generic decoder. I removed `-checkpoint`. The command now recognizes the CPUID FeatureSet and Kernel in the first two frames of a Sentry checkpoint. Other root types still use the generic printer.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff ebcea451d^! 912702589^!",
           "requestedAt": "2026-11-08T16:58:17+00:00",
           "at": "2026-11-08T17:07:54+00:00",
-          "outcome": "approved"
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17208#discussion_r4507076013"
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "ebcea451de61a61957c82527fa94241827267cde",
-        "observedAt": "2026-11-08T17:07:54+00:00",
-        "disposition": "Tamir approved the one-commit amendment and inline reply after the native autosave outputs match.",
-        "nextAction": "Verify both native autosave formats for both restored images before updating the live PR and replying to Ayush.",
+        "owner": "Upstream review",
+        "sourceHead": "912702589414e631909e449f5926b66fa6d5a2c1",
+        "observedAt": "2026-11-08T17:19:18+00:00",
+        "disposition": "The approved amendment is live as one commit and the answer was posted on Ayush’s original thread.",
+        "nextAction": "Follow upstream review and public checks on the updated head.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17208#discussion_r4506794124",
+          "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
-          "https://github.com/tamird/gvisor/actions/runs/42501078883/artifacts/13625508398",
-          "https://github.com/tamird/gvisor/actions/runs/42499334480/artifacts/13624733452"
+          "https://github.com/google/gvisor/pull/17208#discussion_r4507076013",
+          "https://github.com/tamird/gvisor/actions/runs/42502900602/artifacts/13626871767"
         ]
       },
       "refinement": {
@@ -63402,12 +63433,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fixes/netgofer-shutdown-pipes",
-      "head": "06a606a324af88250a2e1be16679479d09f3b0c8",
+      "head": "a412fc982b122590975cf4f1257fa52294bc0751",
       "title": "Exercise netgofer shutdown with the test binary",
-      "url": "https://github.com/tamird/gvisor/commit/06a606a32",
+      "url": "https://github.com/tamird/gvisor/commit/a412fc982",
       "group": "tests",
-      "status": "Contributor review requested",
-      "summary": "With cat and sleep hidden, both uncached native tests reached the sandbox reaper. wait4 reported exit 0 for the graceful child and SIGKILL for the forced child. Both PIDs then returned ESRCH. The earlier missing-executable controls are retained separately.",
+      "status": "Awaiting contributor review",
+      "summary": "The revision at a412fc982 uses Cmd.StdinPipe. The preceding 06a606a32 passed both native shutdown cases with cat and sleep hidden: wait4 reported exit 0 in the graceful case and SIGKILL in the forced case, then both PIDs returned ESRCH. The amended source has its own two-test qualification.",
       "evidence": [
         {
           "label": "Original missing executables and both Linux child exit statuses",
@@ -63436,38 +63467,62 @@
         {
           "label": "Native graceful and forced child exit statuses with cat and sleep hidden",
           "url": "https://github.com/tamird/gvisor/actions/runs/42485997744/artifacts/13619507760"
+        },
+        {
+          "label": "Revised single commit using Cmd.StdinPipe",
+          "url": "https://github.com/tamird/gvisor/commit/a412fc982"
+        },
+        {
+          "label": "Linux comparison for the revised graceful and forced stops",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42504226748"
         }
       ],
-      "updatedAt": "2026-11-08T13:46:37+00:00",
+      "updatedAt": "2026-11-08T17:21:01+00:00",
       "refinement": {
         "before": {
-          "head": "68343a66b827123e407712b7e9fbccf426dc385a"
+          "head": "06a606a324af88250a2e1be16679479d09f3b0c8",
+          "base": "975fb172241c7946a9f67b4f52e0349d9240589a"
         },
         "after": {
-          "head": "06a606a324af88250a2e1be16679479d09f3b0c8"
+          "head": "a412fc982b122590975cf4f1257fa52294bc0751",
+          "base": "975fb172241c7946a9f67b4f52e0349d9240589a"
         }
       },
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "06a606a324af88250a2e1be16679479d09f3b0c8",
-        "observedAt": "2026-11-08T13:46:37+00:00",
-        "disposition": "Native exit-status verification complete",
-        "nextAction": "Review the single proposed commit.",
+        "sourceHead": "a412fc982b122590975cf4f1257fa52294bc0751",
+        "observedAt": "2026-11-08T17:19:18+00:00",
+        "disposition": "The revised source uses Cmd.StdinPipe and preserves the actual wait4 exit-status checks.",
+        "nextAction": "Approve opening the revised PR after both owning tests pass.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/06a606a32",
-          "https://github.com/tamird/gvisor/actions/runs/42485997744/artifacts/13619507760"
+          "https://github.com/tamird/gvisor/commit/a412fc982",
+          "https://github.com/tamird/gvisor/actions/runs/42504226748"
         ]
       },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "06a606a324af88250a2e1be16679479d09f3b0c8",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/06a606a32",
+          "title": "Exercise netgofer shutdown with the test binary",
+          "body": "451b92800 added two shutdown tests that depend on /bin/cat and /bin/sleep. If either program is missing, its test fails before stopNetgofer runs. A PID check alone also accepts a force-killed child in the graceful case.\n\nRun the test binary as the child and wait for it to announce readiness. Closing stdin lets the child exit normally. Leaving stdin open keeps the child blocked until the sandbox kills it after the grace period.\n\nReturn the status from the reaper's existing wait4 so both tests can check how the child exited. The production caller still reaps in the background and signals completion after clearing the PID.",
+          "summary": "Open the single-commit gVisor PR?",
+          "requestedAt": "2026-11-08T13:46:37+00:00",
+          "outcome": "changes-requested",
+          "at": "2026-11-08T17:16:53+00:00"
+        }
+      ],
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "06a606a324af88250a2e1be16679479d09f3b0c8",
+        "head": "a412fc982b122590975cf4f1257fa52294bc0751",
         "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/06a606a32",
         "title": "Exercise netgofer shutdown with the test binary",
         "body": "451b92800 added two shutdown tests that depend on /bin/cat and /bin/sleep. If either program is missing, its test fails before stopNetgofer runs. A PID check alone also accepts a force-killed child in the graceful case.\n\nRun the test binary as the child and wait for it to announce readiness. Closing stdin lets the child exit normally. Leaving stdin open keeps the child blocked until the sandbox kills it after the grace period.\n\nReturn the status from the reaper's existing wait4 so both tests can check how the child exited. The production caller still reaps in the background and signals completion after clearing the PID.",
-        "summary": "Open the single-commit gVisor PR?",
-        "requestedAt": "2026-11-08T13:46:37+00:00"
+        "url": "https://github.com/tamird/gvisor/commit/a412fc982",
+        "summary": "Approve opening this revised single-commit proposal after both genuine netgofer shutdown tests pass. The child uses Cmd.StdinPipe.\n\ngit range-diff 06a606a32^! a412fc982^!",
+        "requestedAt": "2026-11-08T17:19:18+00:00"
       }
     },
     {
@@ -63539,7 +63594,7 @@
       "title": "Compare generated Go files with go-cmp",
       "url": "https://github.com/tamird/gvisor/commit/957b1bd2d",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Published as #17237",
       "summary": "All seven generated Go tests passed on native AMD64 and under ARM64 QEMU. On each architecture the Go comparator matched GNU diff on nine cases. Changing an inline annotation failed the real simple_test. The saved log showed both changed words and factored out their common suffix. The qualifier expected contiguous strings and stopped before copying the negative XML. The earlier GNU diff remains the approved fallback if native Go proves unsuitable.",
       "evidence": [
         {
@@ -63553,30 +63608,23 @@
         {
           "label": "Seven actual owners per architecture, nine comparison controls and the original mutation log",
           "url": "https://github.com/tamird/gvisor/actions/runs/42487498230/artifacts/13620565162"
+        },
+        {
+          "label": "Published single-commit PR #17237",
+          "url": "https://github.com/google/gvisor/pull/17237"
         }
       ],
-      "updatedAt": "2026-11-08T14:03:23+00:00",
+      "updatedAt": "2026-11-08T17:13:19Z",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
-        "observedAt": "2026-11-08T14:03:23+00:00",
-        "disposition": "Native Go comparison verified",
-        "nextAction": "Review the single native Go comparison change.",
+        "observedAt": "2026-11-08T17:13:19Z",
+        "disposition": "The approved change was published as #17237.",
+        "nextAction": "Follow upstream review on #17237.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/957b1bd2d",
-          "https://github.com/tamird/gvisor/actions/runs/42487498230/artifacts/13620565162"
+          "https://github.com/google/gvisor/pull/17237",
+          "https://github.com/tamird/gvisor/commit/957b1bd2d"
         ]
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/957b1bd2d",
-        "title": "Compare generated Go files with go-cmp",
-        "body": "ab0262bd9 defined the go_generics checks as Bash scripts that look up GNU diff on PATH. A worker without these programs fails before it can compare the generated file with its golden file.\n\nRun the seven existing tests with a shared Go comparison tool. Ignore empty lines and full-line // comments while keeping trailing annotations and line endings in the comparison. On a mismatch, show the two paths and the differing lines.",
-        "summary": "Open the single-commit gVisor PR for the native Go comparator?",
-        "requestedAt": "2026-11-08T14:03:23+00:00"
       },
       "refinement": {
         "before": {
@@ -63585,7 +63633,22 @@
         "after": {
           "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/957b1bd2d",
+          "title": "Compare generated Go files with go-cmp",
+          "body": "ab0262bd9 defined the go_generics checks as Bash scripts that look up GNU diff on PATH. A worker without these programs fails before it can compare the generated file with its golden file.\n\nRun the seven existing tests with a shared Go comparison tool. Ignore empty lines and full-line // comments while keeping trailing annotations and line endings in the comparison. On a mismatch, show the two paths and the differing lines.",
+          "summary": "Open the single-commit gVisor PR for the native Go comparator?",
+          "requestedAt": "2026-11-08T14:03:23+00:00",
+          "at": "2026-11-08T17:13:19Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17237"
+        }
+      ]
     },
     {
       "id": "branch:tcp-persist-state-lock",
@@ -63747,7 +63810,7 @@
       "title": "Re-enable three Java multicast tests",
       "url": "https://github.com/tamird/gvisor/commit/564f11ca4",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "Contributor approved; waiting for prerequisites",
       "summary": "All five Java 21 cases failed on the interface-flags import. With the IPv6 multicast options applied, DatagramSocketMulticasting, AdaptorMulticasting and Loopback passed in both JVM modes. MulticastSendReceiveTests and Promiscuous still failed. The three exclusions can be removed once both parent changes reach master.",
       "evidence": [
         {
@@ -63767,18 +63830,7 @@
           "url": "https://github.com/tamird/gvisor/commit/564f11ca4"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "564f11ca4362b1d65da1198863839a5a368fbdfd",
-        "baseHead": "ee65347df7d5a70b00dfde90d81d9d7a98b0df2b",
-        "title": "Re-enable three Java multicast tests",
-        "url": "https://github.com/tamird/gvisor/commit/564f11ca4",
-        "summary": "Approve opening the three-line exclusion removal after the interface-flags and IPv6 multicast socket-option changes land?",
-        "body": "The interface-flags change makes eth0 advertise multicast support and excludes five Java 21 cases. With IPv6 multicast hop and loopback options implemented, DatagramSocketMulticasting, AdaptorMulticasting and Loopback exchange packets on eth0 in the default and IPv4-only JVM modes.\n\nRemove those three exclusions. Keep MulticastSendReceiveTests and Promiscuous excluded: the former still receives packets from a blocked source and the latter receives on the socket joined to a different group.",
-        "requestedAt": "2026-11-08T12:41:39+00:00"
-      },
-      "updatedAt": "2026-11-08T14:03:23+00:00",
+      "updatedAt": "2026-11-08T17:16:03+00:00",
       "refinement": {
         "before": {
           "head": "bbf2fa40eb7d8cce39cca5abefde7883c262c490"
@@ -63786,6 +63838,33 @@
         "after": {
           "head": "564f11ca4362b1d65da1198863839a5a368fbdfd"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "564f11ca4362b1d65da1198863839a5a368fbdfd",
+          "baseHead": "ee65347df7d5a70b00dfde90d81d9d7a98b0df2b",
+          "title": "Re-enable three Java multicast tests",
+          "url": "https://github.com/tamird/gvisor/commit/564f11ca4",
+          "summary": "Approve opening the three-line exclusion removal after the interface-flags and IPv6 multicast socket-option changes land?",
+          "body": "The interface-flags change makes eth0 advertise multicast support and excludes five Java 21 cases. With IPv6 multicast hop and loopback options implemented, DatagramSocketMulticasting, AdaptorMulticasting and Loopback exchange packets on eth0 in the default and IPv4-only JVM modes.\n\nRemove those three exclusions. Keep MulticastSendReceiveTests and Promiscuous excluded: the former still receives packets from a blocked source and the latter receives on the socket joined to a different group.",
+          "requestedAt": "2026-11-08T12:41:39+00:00",
+          "outcome": "approved",
+          "at": "2026-11-08T17:16:03+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "564f11ca4362b1d65da1198863839a5a368fbdfd",
+        "observedAt": "2026-11-08T17:16:03+00:00",
+        "disposition": "Tamir approved the three Java 21 exclusion removals at 564f11ca4.",
+        "nextAction": "Open the approved PR after the interface-flags change in #16059 (import #17217) and the IPv6 multicast options in #16875 land.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16059",
+          "https://github.com/google/gvisor/pull/17217",
+          "https://github.com/google/gvisor/pull/16875",
+          "https://github.com/tamird/gvisor/actions/runs/42454656540/artifacts/13607680713"
+        ]
       }
     },
     {
@@ -64727,8 +64806,8 @@
       "title": "Guard POSIX timer teardown and checkpoint walks",
       "url": "https://github.com/tamird/gvisor/commit/5b9d447ba",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-08T14:54:55+00:00",
+      "status": "Published as #17239",
+      "updatedAt": "2026-11-08T17:13:51Z",
       "summary": "The timer syscalls, exec and final exit use timerMu for the interval timer table. Checkpoint takes the same lock when pausing and resuming the timers. The analyzer passed on AMD64 and ARM64. Removing the checkpoint pause lock reported the same unguarded read twice per architecture. The fork job recorded a failure because its result reader expected one diagnostic. Its original Linux and lockdep systrap tests passed, including save/restore with two pending timer IDs, their invalidation after exec, and exit with a newly armed timer. The syscall fixture is fork-only.",
       "evidence": [
         {
@@ -64738,30 +64817,38 @@
         {
           "label": "Original lock analysis, Linux syscall and lockdep systrap save/restore results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42485063170/artifacts/13621319306"
+        },
+        {
+          "label": "Published single-commit PR #17239",
+          "url": "https://github.com/google/gvisor/pull/17239"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/5b9d447ba",
-        "title": "Guard POSIX timer teardown and checkpoint walks",
-        "body": "Timer syscalls use the thread group's timerMu to look up timers and allocate IDs. Exec and final exit instead copied the table into a slice under the signal mutex, then released that mutex to destroy the timers.\n\nHold timerMu while destroying the timers, as timer_delete already does. Drop the TaskSet and signal locks before destruction so a timer can finish delivering its signal. Clear the existing map for reuse after exec, without allocating a temporary slice.\n\nGuard the table and next timer ID with checklocks. Take the same mutex when checkpoint pauses and resumes the group's timers.",
-        "summary": "Open the single signed timer-lock change against gVisor master.",
-        "requestedAt": "2026-11-08T14:54:55+00:00"
-      },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
-        "observedAt": "2026-11-08T14:54:55+00:00",
-        "disposition": "The timer-lock change is ready for contributor review.",
-        "nextAction": "Review 5b9d447ba for submission to gVisor.",
+        "observedAt": "2026-11-08T17:13:51Z",
+        "disposition": "The approved change was published as #17239.",
+        "nextAction": "Follow upstream review on #17239.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/5b9d447ba",
-          "https://github.com/tamird/gvisor/actions/runs/42485063170/artifacts/13621319306"
+          "https://github.com/google/gvisor/pull/17239",
+          "https://github.com/tamird/gvisor/commit/5b9d447ba"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/5b9d447ba",
+          "title": "Guard POSIX timer teardown and checkpoint walks",
+          "body": "Timer syscalls use the thread group's timerMu to look up timers and allocate IDs. Exec and final exit instead copied the table into a slice under the signal mutex, then released that mutex to destroy the timers.\n\nHold timerMu while destroying the timers, as timer_delete already does. Drop the TaskSet and signal locks before destruction so a timer can finish delivering its signal. Clear the existing map for reuse after exec, without allocating a temporary slice.\n\nGuard the table and next timer ID with checklocks. Take the same mutex when checkpoint pauses and resumes the group's timers.",
+          "summary": "Open the single signed timer-lock change against gVisor master.",
+          "requestedAt": "2026-11-08T14:54:55+00:00",
+          "at": "2026-11-08T17:13:51Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17239"
+        }
+      ]
     },
     {
       "id": "branch:skylib-build-test-native-tools",
@@ -64867,8 +64954,8 @@
       "title": "Export the netgofer command to the Go branch",
       "url": "https://github.com/tamird/gvisor/commit/bf7b1290b",
       "group": "release",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-08T16:42:07+00:00",
+      "status": "Published as #17238",
+      "updatedAt": "2026-11-08T17:13:23Z",
       "summary": "The published Go branch at 849c51487 could not build ./runsc/cmd/netgofer because that directory was absent. The ordinary exporter on bf7b1290b included the command and 14 proxy source files. Go 1.27.3 built the static Linux AMD64 sidecar from the generated module and ran its help netgofer command, including the -uds-fd option. The check covered the executable and command registration.",
       "evidence": [
         {
@@ -64878,30 +64965,38 @@
         {
           "label": "Published Go branch negative and regenerated native sidecar build and help",
           "url": "https://github.com/tamird/gvisor/actions/runs/42499957100/artifacts/13625092477"
+        },
+        {
+          "label": "Published single-commit PR #17238",
+          "url": "https://github.com/google/gvisor/pull/17238"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/bf7b1290b",
-        "title": "Export the netgofer command to the Go branch",
-        "body": "runsc starts runsc-netgofer when proxy networking is enabled. The Go branch carries runsc and the other sidecar sources, but the netgofer command and its implementation are missing. Building all packages in the exported module therefore overlooks the missing executable.\n\nInclude the implementation in the gopath archive and copy the command entrypoint alongside the other Go sidecars. Let only the root package add the library to the export, as for the metric server.",
-        "summary": "Approve opening the one-commit gVisor PR to include the proxy-network sidecar in the Go export.",
-        "requestedAt": "2026-11-08T16:42:07+00:00"
-      },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
-        "observedAt": "2026-11-08T16:42:07+00:00",
-        "disposition": "The ordinary Go exporter now carries runsc-netgofer. The regenerated executable built and printed its command help on Linux AMD64.",
-        "nextAction": "Approve opening the proposed gVisor PR.",
+        "observedAt": "2026-11-08T17:13:23Z",
+        "disposition": "The approved change was published as #17238.",
+        "nextAction": "Follow upstream review on #17238.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/bf7b1290b",
-          "https://github.com/tamird/gvisor/actions/runs/42499957100/artifacts/13625092477"
+          "https://github.com/google/gvisor/pull/17238",
+          "https://github.com/tamird/gvisor/commit/bf7b1290b"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/bf7b1290b",
+          "title": "Export the netgofer command to the Go branch",
+          "body": "runsc starts runsc-netgofer when proxy networking is enabled. The Go branch carries runsc and the other sidecar sources, but the netgofer command and its implementation are missing. Building all packages in the exported module therefore overlooks the missing executable.\n\nInclude the implementation in the gopath archive and copy the command entrypoint alongside the other Go sidecars. Let only the root package add the library to the export, as for the metric server.",
+          "summary": "Approve opening the one-commit gVisor PR to include the proxy-network sidecar in the Go export.",
+          "requestedAt": "2026-11-08T16:42:07+00:00",
+          "at": "2026-11-08T17:13:23Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17238"
+        }
+      ]
     },
     {
       "id": "branch:tcp-ordinary-ack-wire-ends",
@@ -64959,6 +65054,273 @@
           "outcome": "approved"
         }
       ]
+    },
+    {
+      "id": "pr:17237",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17237,
+      "ref": "fixes/go-generics-go-comparison",
+      "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
+      "title": "Compare generated Go files with go-cmp",
+      "url": "https://github.com/google/gvisor/pull/17237",
+      "status": "open",
+      "group": "bazel",
+      "updatedAt": "2026-11-08T17:13:19Z",
+      "summary": "All seven generated Go tests passed on native AMD64 and under ARM64 QEMU. On each architecture the Go comparator matched GNU diff on nine cases. Changing an inline annotation failed the real simple_test. The saved log showed both changed words and factored out their common suffix. The qualifier expected contiguous strings and stopped before copying the negative XML. The earlier GNU diff remains the approved fallback if native Go proves unsuitable.",
+      "evidence": [
+        {
+          "label": "AMD64 tests, deliberately changed inputs and ARM64 QEMU control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42445955978/artifacts/13603821980"
+        },
+        {
+          "label": "Native ARM64 tests and license checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42446630830/artifacts/13604186336"
+        },
+        {
+          "label": "Seven actual owners per architecture, nine comparison controls and the original mutation log",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42487498230/artifacts/13620565162"
+        },
+        {
+          "label": "Published single-commit PR #17237",
+          "url": "https://github.com/google/gvisor/pull/17237"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/957b1bd2d",
+          "title": "Compare generated Go files with go-cmp",
+          "body": "ab0262bd9 defined the go_generics checks as Bash scripts that look up GNU diff on PATH. A worker without these programs fails before it can compare the generated file with its golden file.\n\nRun the seven existing tests with a shared Go comparison tool. Ignore empty lines and full-line // comments while keeping trailing annotations and line endings in the comparison. On a mismatch, show the two paths and the differing lines.",
+          "summary": "Open the single-commit gVisor PR for the native Go comparator?",
+          "requestedAt": "2026-11-08T14:03:23+00:00",
+          "at": "2026-11-08T17:13:19Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17237"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
+        "observedAt": "2026-11-08T17:13:19Z",
+        "disposition": "The approved change was published as #17237.",
+        "nextAction": "Follow upstream review on #17237.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17237",
+          "https://github.com/tamird/gvisor/commit/957b1bd2d"
+        ]
+      }
+    },
+    {
+      "id": "pr:17238",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17238,
+      "ref": "research/go-branch-netgofer",
+      "head": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
+      "title": "Export the netgofer command to the Go branch",
+      "url": "https://github.com/google/gvisor/pull/17238",
+      "status": "open",
+      "group": "release",
+      "updatedAt": "2026-11-08T17:13:23Z",
+      "summary": "The published Go branch at 849c51487 could not build ./runsc/cmd/netgofer because that directory was absent. The ordinary exporter on bf7b1290b included the command and 14 proxy source files. Go 1.27.3 built the static Linux AMD64 sidecar from the generated module and ran its help netgofer command, including the -uds-fd option. The check covered the executable and command registration.",
+      "evidence": [
+        {
+          "label": "Single fork commit on master 975fb1722",
+          "url": "https://github.com/tamird/gvisor/commit/bf7b1290b"
+        },
+        {
+          "label": "Published Go branch negative and regenerated native sidecar build and help",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42499957100/artifacts/13625092477"
+        },
+        {
+          "label": "Published single-commit PR #17238",
+          "url": "https://github.com/google/gvisor/pull/17238"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/bf7b1290b",
+          "title": "Export the netgofer command to the Go branch",
+          "body": "runsc starts runsc-netgofer when proxy networking is enabled. The Go branch carries runsc and the other sidecar sources, but the netgofer command and its implementation are missing. Building all packages in the exported module therefore overlooks the missing executable.\n\nInclude the implementation in the gopath archive and copy the command entrypoint alongside the other Go sidecars. Let only the root package add the library to the export, as for the metric server.",
+          "summary": "Approve opening the one-commit gVisor PR to include the proxy-network sidecar in the Go export.",
+          "requestedAt": "2026-11-08T16:42:07+00:00",
+          "at": "2026-11-08T17:13:23Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17238"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
+        "observedAt": "2026-11-08T17:13:23Z",
+        "disposition": "The approved change was published as #17238.",
+        "nextAction": "Follow upstream review on #17238.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17238",
+          "https://github.com/tamird/gvisor/commit/bf7b1290b"
+        ]
+      }
+    },
+    {
+      "id": "pr:17239",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17239,
+      "ref": "research/posix-timer-checkpoint-lock",
+      "head": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
+      "title": "Guard POSIX timer teardown and checkpoint walks",
+      "url": "https://github.com/google/gvisor/pull/17239",
+      "status": "open",
+      "group": "runtime",
+      "updatedAt": "2026-11-08T17:13:51Z",
+      "summary": "The timer syscalls, exec and final exit use timerMu for the interval timer table. Checkpoint takes the same lock when pausing and resuming the timers. The analyzer passed on AMD64 and ARM64. Removing the checkpoint pause lock reported the same unguarded read twice per architecture. The fork job recorded a failure because its result reader expected one diagnostic. Its original Linux and lockdep systrap tests passed, including save/restore with two pending timer IDs, their invalidation after exec, and exit with a newly armed timer. The syscall fixture is fork-only.",
+      "evidence": [
+        {
+          "label": "Signed timer-lock proposal",
+          "url": "https://github.com/tamird/gvisor/commit/5b9d447ba"
+        },
+        {
+          "label": "Original lock analysis, Linux syscall and lockdep systrap save/restore results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42485063170/artifacts/13621319306"
+        },
+        {
+          "label": "Published single-commit PR #17239",
+          "url": "https://github.com/google/gvisor/pull/17239"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/5b9d447ba",
+          "title": "Guard POSIX timer teardown and checkpoint walks",
+          "body": "Timer syscalls use the thread group's timerMu to look up timers and allocate IDs. Exec and final exit instead copied the table into a slice under the signal mutex, then released that mutex to destroy the timers.\n\nHold timerMu while destroying the timers, as timer_delete already does. Drop the TaskSet and signal locks before destruction so a timer can finish delivering its signal. Clear the existing map for reuse after exec, without allocating a temporary slice.\n\nGuard the table and next timer ID with checklocks. Take the same mutex when checkpoint pauses and resumes the group's timers.",
+          "summary": "Open the single signed timer-lock change against gVisor master.",
+          "requestedAt": "2026-11-08T14:54:55+00:00",
+          "at": "2026-11-08T17:13:51Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17239"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
+        "observedAt": "2026-11-08T17:13:51Z",
+        "disposition": "The approved change was published as #17239.",
+        "nextAction": "Follow upstream review on #17239.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17239",
+          "https://github.com/tamird/gvisor/commit/5b9d447ba"
+        ]
+      }
+    },
+    {
+      "id": "branch:gazelle-defer-runner-go-env",
+      "type": "branch",
+      "repo": "tamird/bazel-gazelle",
+      "ref": "fix/defer-gazelle-runner-go-env",
+      "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+      "title": "Load the Go environment when analyzing a runner",
+      "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-11-08T17:16:53+00:00",
+      "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
+      "evidence": [
+        {
+          "label": "Signed single-commit fork proposal",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794"
+        },
+        {
+          "label": "Original query failure and corrected query",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743"
+        },
+        {
+          "label": "Bzlmod and WORKSPACE runner script comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+        "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
+        "title": "Load the Go environment when analyzing a runner",
+        "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
+        "body": "Since 1deae95ac, loading def.bzl also loads GO_ENV from the Go repository configuration. If that repository cannot supply go_env.bzl, even bazel query //:gazelle fails while loading the package. The query only needs the target declaration [1].\n\nExpose GO_ENV through a target in the generated configuration repository for both Bzlmod and WORKSPACE. Make that target a private dependency of the runner rules so Bazel resolves it during analysis. Read the environment from its provider and apply the runner's env overrides as before.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
+        "summary": "Approve opening the single-commit upstream PR.",
+        "requestedAt": "2026-11-08T17:16:53+00:00"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "observedAt": "2026-11-08T17:16:53+00:00",
+        "sourceHead": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+        "disposition": "The qualified fork source awaits contributor review.",
+        "nextAction": "Approve opening the upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
+          "https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
+          "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819"
+        ]
+      },
+      "links": [
+        {
+          "label": "gVisor kernel-header root policy context",
+          "url": "https://github.com/google/gvisor/pull/16804"
+        }
+      ]
+    },
+    {
+      "id": "branch:state-index-object-ranges",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/state-index-object-ranges",
+      "head": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
+      "title": "Store each checkpoint object's address range once",
+      "url": "https://github.com/tamird/gvisor/commit/26a561422",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-11-08T17:16:53+00:00",
+      "summary": "Direct encoding of the 50,000-file kernel graph took 138.8 ms versus 144.8 ms and allocated 105.5 MiB versus 118.9 MiB over 12 samples per revision. All 34 Nginx checkpoints restored and served the verified response. The live checkpoint and HTTP comparison detected no latency difference.",
+      "evidence": [
+        {
+          "label": "Signed single-commit fork proposal",
+          "url": "https://github.com/tamird/gvisor/commit/26a561422"
+        },
+        {
+          "label": "Native graph benchmark, restored Nginx checks and original samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "title": "Store each checkpoint object's address range once",
+        "url": "https://github.com/tamird/gvisor/commit/26a561422",
+        "body": "The graph encoder indexes each object in every 512-byte block it\noverlaps. Each index entry copies the object's start and end addresses.\n\nRead the range from the object table when checking for overlap. On\n64-bit targets this reduces each index entry from 24 to 8 bytes. A\nlookup now reads the object even for a candidate it rejects on address\nalone.\n\nBenchmarkCheckpointFile encodes a kernel from a checkpoint containing\n50,000 empty tmpfs files. [1] An allocation profile of this workload\nattributed 16.6 MiB to growing the original index. [2]\n\n                      │    stock    │               fixed                │\n                      │   sec/op    │   sec/op     vs base               │\nCheckpointFile/Encode   144.8m ± 1%   138.8m ± 1%  -4.16% (p=0.000 n=12)\n\n                      │    stock     │                fixed                 │\n                      │     B/op     │     B/op      vs base                │\nCheckpointFile/Encode   118.9Mi ± 0%   105.5Mi ± 0%  -11.23% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278\n[2]: https://github.com/tamird/gvisor/actions/runs/42436004230/artifacts/13600305258",
+        "summary": "Approve opening the single-commit upstream PR.",
+        "requestedAt": "2026-11-08T17:16:53+00:00"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "observedAt": "2026-11-08T17:16:53+00:00",
+        "sourceHead": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
+        "disposition": "The qualified fork source awaits contributor review.",
+        "nextAction": "Approve opening the upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/26a561422",
+          "https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278"
+        ]
+      }
     }
   ],
   "edges": [
@@ -88726,7 +89088,7 @@
       "title": "Printing inline checkpoint memory",
       "status": "concluded",
       "owner": "Agent",
-      "updatedAt": "2026-11-08T16:53:59+00:00",
+      "updatedAt": "2026-11-08T17:19:18+00:00",
       "summary": "The contributor approved the opt-in reader for historical inline checkpoints. The final reader and revised tests are under upstream review in #17208 at ebcea451d. The existing generic command keeps its original text and HTML behavior. The earlier corpus covered 59 and 56 regions; fresh checkpoints verified 64 and 62, all on the same bytes subsequently restored.",
       "findings": [
         {
@@ -88825,7 +89187,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the autosave comparison and Ayush’s question on #17208. If #17236 lands, preserve its split-restore version checks when reconciling pgalloc.LoadFrom.",
+      "nextStep": "Follow the published default reader on #17208. If #17236 lands, preserve its separate split-restore version checks when reconciling pgalloc.LoadFrom.",
       "evidence": [
         {
           "label": "Inspect existing inline checkpoints",
