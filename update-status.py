@@ -644,8 +644,6 @@ def open_inventory(repo: str = REPO) -> dict[int, str | None]:
         cursor = next_cursor
     if len(numbers) != total:
         raise RuntimeError("Open PR inventory is incomplete")
-    if sum(author == OWNER for author in numbers.values()) > 200:
-        raise RuntimeError("Author's open PR inventory exceeds the documented 200-PR bound")
     return numbers
 
 
@@ -1211,7 +1209,7 @@ def main() -> None:
                 "checkFailures": report["checkFailures"],
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
-                           "nestedPageSize": 100, "maxOpenPRs": 200, "repositories": inventories,
+                           "nestedPageSize": 100, "requestLimit": REQUEST_LIMIT, "repositories": inventories,
                            **{key: sum(item[key] for item in inventories.values() if item[key] is not None)
                               for key in ("openInventoryTotal", "retainedSources", "retainedImports")}}}
     if sweep := feedback_sweep(REGISTRY, [*prs, *review_prs], previous, checked_at):

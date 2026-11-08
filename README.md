@@ -205,8 +205,8 @@ queries use batches of eight to limit the combined check, review and timeline
 payload. Registered-only repositories share these batches, keyed by repository
 and PR number. The collector logs each requested inventory page and detail batch
 so growth can be distinguished from transport retries. A complete refresh has
-used 51 requests. The 64-attempt ceiling leaves room for retries and optional
-mergeability checks; the 200-open-PR bound still applies.
+used 51 requests. The same 64-attempt ceiling covers all open inventory pages,
+detail queries, retries and optional mergeability checks.
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
 unchanged.
 

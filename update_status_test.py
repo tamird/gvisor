@@ -468,6 +468,14 @@ class MergeabilityBatchTest(unittest.TestCase):
 
 
 class CollectorHistoryTest(unittest.TestCase):
+    def test_open_inventory_keeps_more_than_200_authored_prs(self) -> None:
+        expected = dict.fromkeys(range(1, 202), updater.OWNER)
+        expected[202] = "other"
+        self.open_rows = [{"number": number, "author": {"login": author}} for number, author in expected.items()]
+        with mock.patch.object(updater, "requests", 0), mock.patch.object(updater, "graphql", side_effect=self.graphql):
+            self.assertEqual(updater.open_inventory(), expected)
+        self.assertEqual(self.inventory_pages, 3)
+
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
