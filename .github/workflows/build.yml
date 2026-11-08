@@ -1,7 +1,7 @@
 name: Build and exercise the Make-installed LLVM TLDK runtime
 on:
   push:
-    branches: [qualification/tldk-installed-verified-inputs]
+    branches: [qualification/tldk-installed-bcr-archives]
 permissions: {}
 jobs:
   plugin:
@@ -10,39 +10,35 @@ jobs:
     timeout-minutes: 125
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 5}
+        with: {persist-credentials: false, fetch-depth: 6}
       - name: Bind the integrated compiler, plugin, installed traffic test and public inputs
         run: |
           set -euo pipefail
           src=b2c944f33f8e85be86e3ae9c95f3a141ea57cbc2
           tools=5d2fe309d11bb2af1e5ffdb02326f4b1d5f6bfaf
-          old=349ad53210153c2d2266b4db43e87a77ddbba8c7
           transport=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
-          seeds=a7cc851b17555ce6daec1391e6e3591270342bdc
           wire=442ed51f7e10ba007f686cddc12824c47867dabe
           reports=fb60e127516defd6aab633f80be09a03022f0737
           d="$RUNNER_TEMP/tldk-llvm"
           dist="$RUNNER_TEMP/recvbuf/dist"
           mkdir -p "$d" "$dist" "$RUNNER_TEMP/plugin-evidence"
           echo '{"status":"INCOMPLETE","phase":"setup"}' > "$d/receipt.json"
-          prior=a650efbdaf6218cbc9a6db1f651abd603bb17003
+          prior=69a23ba46af2e723a1e5ba90ff5b2cbc466b2151
           test "$(git rev-parse HEAD^)" = "$prior"
-          test "$(git rev-parse "$prior^")" = "$src"
-          git diff --exit-code "$prior" HEAD -- . ':!.github/workflows/build.yml'
+          test "$(git rev-parse "$prior^")" = a650efbdaf6218cbc9a6db1f651abd603bb17003
+          test "$(git rev-parse "$prior^^")" = "$src"
+          git diff --exit-code "$prior" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/tldk_installed.py' ':!.github/qualification/tldk_installed_inputs.json' ':!.github/qualification/tldk_public_inputs.py'
           test "$(git rev-parse "$src^{tree}")" = 58910b2bae612062e2a4c07f0986b95fd7159b87
           test "$(git rev-parse "$src^1")" = 4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
           test "$(git rev-parse "$src^2")" = 1b1d83bf439fc40c4850277ffdae7a8831acd214
-          git diff --exit-code "$src" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/tldk_installed.py' ':!test/rbe/plugin_programs/BUILD' ':!test/rbe/plugin_programs/external_traffic.py'
-          cp .github/qualification/tldk_installed.py "$d/"
-          git fetch -q --no-auto-maintenance --depth=1 --no-tags https://github.com/tamird/gvisor.git "$old" "$tools" "$transport" "$seeds" "$wire" "$reports"
+          git diff --exit-code "$src" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/tldk_installed.py' ':!.github/qualification/tldk_installed_inputs.json' ':!.github/qualification/tldk_public_inputs.py' ':!test/rbe/plugin_programs/BUILD' ':!test/rbe/plugin_programs/external_traffic.py'
+          cp .github/qualification/tldk_installed.py .github/qualification/tldk_installed_inputs.json .github/qualification/tldk_public_inputs.py "$d/"
+          git fetch -q --no-auto-maintenance --depth=1 --no-tags https://github.com/tamird/gvisor.git "$tools" "$transport" "$wire" "$reports"
           for f in BUILD external_traffic.py; do
             test "$(git rev-parse "HEAD:test/rbe/plugin_programs/$f")" = "$(git rev-parse "$wire:test/rbe/plugin_programs/$f")"
           done
           for f in consumer qualify; do git show "$wire:test/rbe/plugin_programs/$f.py" > "$d/$f.py"; done
           for f in qualification_report unit_matrix; do git show "$reports:test/rbe/$f.py" > "$d/$f.py"; done
-          git show "$seeds:.github/qualification/tldk_queue.py" > "$d/tldk_queue.py"
-          git show "$seeds:.github/qualification/tldk_queue_seeds.json" > "$d/tldk_queue_seeds.json"
-          git show "$old:.github/qualification/tldk_musl.py" > "$d/tldk_musl.py"
           git show "$tools:test/rbe/native_cross_inputs.py" > "$d/native_cross_inputs.py"
           test "$(git rev-parse "$transport:.github/qualification/recvbuf_deps.py")" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
           git show "$transport:.github/qualification/recvbuf_deps.py" > "$d/public_assets.py"
@@ -83,9 +79,8 @@ jobs:
           get_input "$dist/v18.11.tar.gz" 14423675 0026a9bc67f37f07969101bdf72fd5921169b4744f765118e5db57cace645bee \
             https://codeload.github.com/DPDK/dpdk/tar.gz/refs/tags/v18.11
           sha256sum -c <<SUMS
-          feddd4d2b69546c2a422c4aa221fd1ab23e0e51ccdbe94c3bcb33aea1aae8470  tldk_musl.py
           b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  native_cross_inputs.py
-          1898c68adc3e66fee2a00566ff138c2fecb0a33667e0934d0ff26beea932254a  tldk_queue_seeds.json
+          95e5a5ce63bf883f17fee14a7f0c677932967f23fc82aa47089c89888cea052a  tldk_installed_inputs.json
           SUMS
           chmod 755 bazel
           if ! test -x /usr/bin/aarch64-linux-gnu-g++; then

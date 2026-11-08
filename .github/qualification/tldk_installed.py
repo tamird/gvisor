@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import struct
 from urllib.parse import unquote, urlsplit
@@ -13,9 +14,10 @@ import consumer
 import native_cross_inputs as evidence
 
 import public_assets as assets
-import tldk_queue as inputs
+import tldk_public_inputs as distfiles
 
 SOURCE = "b2c944f33f8e85be86e3ae9c95f3a141ea57cbc2"
+QUEUE_HEADER = "8b284031772b1ba2035d9b05b24f2cb9b23e7bd324bcccb5e3fcc57d34aafa48"
 LAYOUT = sorted({"runsc", "containerd-shim-runsc-v1"} | {
     "gvisor-bin/" + name for name in ("checkpointgofer", "gvisor_sentry", "gvisor_sentry_plugin_stack",
         "runsc-metric-server", "runsc-netgofer", "runsc-fd-parking", "gvisor-sentry-prewarmer",
@@ -32,6 +34,9 @@ TEST = "//test/rbe/plugin_programs:external_traffic"
 R = {"status": "INCOMPLETE", "source": SOURCE, "carrier": os.environ["CARRIER"],
      "prior_static_gnu": 13474526238, "prior_musl_vdso_failure": 13504744022,
      "prior_header_and_backtrace": 13613757783, "preparation": {}, "receipts": {}}
+
+
+module_versions = {}
 
 
 def save():
@@ -85,35 +90,44 @@ def build_inputs(phase_name, mode, targets):
         if rc == 0:
             return bep
         errors = [line for line in text.splitlines() if "Error downloading" in line or "Download from " in line and "failed:" in line]
-        urls = sorted({m.group() for line in errors for m in assets.URL.finditer(line)})
-        row["failed_release_urls"] = urls[:40]
+        urls = sorted({m.group() for line in errors for m in distfiles.FAILED_URL.finditer(line)
+                       if assets.URL.fullmatch(m.group()) or distfiles.ARCHIVE.fullmatch(m.group())})
+        row["failed_public_urls"] = urls[:48]
         rows = R["receipts"]
         for url in urls:
-            if url in rows or len(rows) >= 48:
+            if url in rows or len(rows) >= 80:
                 continue
-            mods = {m for line in errors if url in line for m in assets.DIR.findall(line)}
+            remaining = distfiles.LIMIT - sum(entry["bytes"] for entry in rows.values())
+            owners = {m for line in errors if url in line for m in assets.DIR.findall(line)}
             record = None
-            if len(mods) == 1:
-                try:
-                    record = assets.acquire(mods.pop(), assets.URL.fullmatch(url)[3].removeprefix("v"), wanted_url=url)
-                except (OSError, AssertionError, ValueError, KeyError):
-                    pass
+            # Resolve only a registry record whose URL matches this actual
+            # download. Handles released archives and full-commit archive URLs.
+            if len(owners) == 1:
+                module, = owners
+                ref = distfiles.components(url)[3].removeprefix("refs/tags/").removeprefix("v")
+                for version in dict.fromkeys([module_versions.get(module), ref]):
+                    if not version:
+                        continue
+                    try:
+                        directory, record = distfiles.materialize(module, version, url, None, None, None, remaining)
+                    except (OSError, AssertionError, ValueError, KeyError):
+                        continue
+                    break
             try:
                 if not record:
-                    remaining = (1 << 30) - sum(entry.get("bytes", 0) for entry in rows.values())
                     directory, record = assets.release_distfile(url, assets.DIST, remaining_bytes=remaining)
-                    flag = "--distdir=" + str(directory)
-                    if flag not in FLAGS:
-                        FLAGS.append(flag)
-                    elif not record["acquired"]:
-                        continue
+                flag = "--distdir=" + str(directory)
+                if flag not in FLAGS:
+                    FLAGS.append(flag)
+                else:
+                    continue
             except (ValueError, OSError, KeyError):
                 continue
             rows[url] = record
             row["recovered"].append(url)
         save()
         if not row["recovered"]:
-            raise RuntimeError((phase_name, rc, row["failed_owners"] if bep.exists() else [], row["failed_release_urls"]))
+            raise RuntimeError((phase_name, rc, row["failed_owners"] if bep.exists() else [], row["failed_public_urls"]))
     raise RuntimeError("dependency preparation limit")
 
 
@@ -148,8 +162,8 @@ def link_evidence(bep):
     copy, = checked("bazel", "cquery", *FLAGS, "--config=plugin-tldk", "--output=files",
                     "@libpluginstack//:queue_header").decode().splitlines()
     raw = Path(copy).read_bytes()
-    assert len(raw) == 19539 and hashlib.sha256(raw).hexdigest() == inputs.HEADER
-    R["header"] = {"sha256": inputs.HEADER, "bytes": len(raw), "path": copy}
+    assert len(raw) == 19539 and hashlib.sha256(raw).hexdigest() == QUEUE_HEADER
+    R["header"] = {"sha256": QUEUE_HEADER, "bytes": len(raw), "path": copy}
     save()
 
 
@@ -157,9 +171,20 @@ def prepare():
     assert checked("git", "rev-parse", "HEAD").decode().strip() == SOURCE
     assert checked("bazel", "--version").strip() == b"bazel 9.3.1"
     phase("public dependency preparation")
-    inputs.seed()
-    R["seeds"] = inputs.REPORT["seeds"]
-    save()
+    declared = re.findall(r'bazel_dep\(\s*name\s*=\s*"([^"]+)",\s*version\s*=\s*"([^"]+)"', Path("MODULE.bazel").read_text())
+    module_versions.update(declared)
+    seeds = json.loads((DIR / "tldk_installed_inputs.json").read_text())
+    module_versions.update((r[0], r[1]) for r in seeds if r[0])
+    R["unavailable_seeds"] = []
+    for directory, entry in distfiles.seed(seeds):
+        if directory is None:
+            R["unavailable_seeds"].append(entry)
+        else:
+            flag = "--distdir=" + str(directory)
+            if flag not in FLAGS:
+                FLAGS.append(flag)
+            R["receipts"][entry["source"]] = entry
+        save()
     # Prep only the real selections. The Make targets below must independently
     # succeed, and the two installed plugin ELFs must equal these build defaults.
     plugin_bep = build_inputs("plugin", ["--config=plugin-tldk"], [consumer.RUNSC, consumer.SENTRY])
