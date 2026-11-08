@@ -1,7 +1,7 @@
 name: Compare counterbalanced checkpoint and restore times
 on:
   push:
-    branches: [qualification/state-balanced-checkpoint-capture]
+    branches: [qualification/state-balanced-checkpoint-asset-prepare]
 permissions: {}
 jobs:
   measure:
@@ -17,14 +17,16 @@ jobs:
         echo '{"build_verified":false,"stage":"setup"}' > "$w/results/build.json"
         cd "$w/src"
         git init -q
-        git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+        git -c gc.auto=0 fetch -q --no-auto-maintenance --no-tags --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA" 5f053b59eb17f9736242f20e950eaed8ec6cad85
         s=451b92800b9cb82262dc8a735388f7cf4d17d895
-        test "$(git rev-parse "$GITHUB_SHA^")" = 1c518b5f027b8e4aa9009486ebba3c4bab3c3f26
-        test "$(git rev-parse "$GITHUB_SHA^^")" = "$s"
+        test "$(git rev-parse "$GITHUB_SHA^")" = b01cf43615497a49ebe7ba4c2e58a32b11c6451c
+        test "$(git rev-parse "$GITHUB_SHA^^")" = 1c518b5f027b8e4aa9009486ebba3c4bab3c3f26
+        test "$(git rev-parse "$GITHUB_SHA~3")" = "$s"
+        git diff --exit-code "$GITHUB_SHA^" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set/build.py'
         git diff --exit-code "$s" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set' ':!test/rbe/restore_advice'
         test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/guest.go")" = fa8722188274a32ffecd31a55da785c613585fc8
         test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/BUILD")" = 41436c5859495ec8d2c95d66289a3ba51d149c3a
-        test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/build.py")" = 28e66a4f1f46bd431014566229915a983931af13
+        test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/build.py")" = 1b2e8eb5bb28dd2961cb9d6c66f15b0a1d84e353
         test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/benchstat.module")" = e379c4293704632cc1f1e192a49fe73427a457d1
         git checkout -q --detach "$s"
         for f in build.py measure.py isolate.sh benchstat.module; do
@@ -44,24 +46,102 @@ jobs:
         sudo -n systemd-run --wait --pipe --collect --service-type=exec --unit="$unit" -p Delegate=yes \
           /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root RUNNER_TEMP="$RUNNER_TEMP" UNIT="$unit" \
           /bin/bash "$w/isolate.sh" preflight
-    - name: Build the original release, guest and pinned benchstat
+    - name: Verify the public BCR distfiles
       run: |
         set -euo pipefail
         w="$RUNNER_TEMP/state-working-set"
         cd "$w/src"
-        # Use the same digest-checked public archives as the native packet
-        # build of this source. Bazel verifies each archive it takes from dist.
         helper=5f053b59eb17f9736242f20e950eaed8ec6cad85
-        git -c gc.auto=0 fetch -q --depth=1 https://github.com/tamird/gvisor.git "$helper"
         test "$(git rev-parse "$helper:.github/qualification/recvbuf_deps.py")" = b21dd4268b19aa0d2f39b2a87105657e5eca9727
         git show "$helper:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
         mkdir "$RUNNER_TEMP/recvbuf"
-        python3 -IB "$w/public_assets.py" seed
+        env -i HOME="$HOME" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB - <<'PYSEED'
+        import json, os, sys
+        from pathlib import Path
+        work = Path(os.environ["RUNNER_TEMP"]) / "state-working-set"
+        sys.path.insert(0, str(work))
+        import public_assets as assets
+        assets.seed()
+        report = json.loads((assets.OUT / "dependencies.json").read_bytes())
+        # Prior local license receipt 13612101725 obtained these additional
+        # module archives. They are optional, and Bazel validates every one it
+        # consumes against this checkout's selected module integrity.
+        for module, version in (
+            ("rules_go", "0.63.0"), ("platforms", "1.1.0"), ("rules_java", "9.3.0"),
+            ("hermetic_launcher", "0.0.16"), ("rules_m4", "0.3.1"), ("rules_swift", "3.1.2"),
+            ("tar.bzl", "0.10.4"), ("aspect_bazel_lib", "2.22.5"), ("rules_kotlin", "2.3.20"),
+            ("buildozer", "7.1.2"), ("googleapis-rules-registry", "1.0.0"), ("llvm", "0.8.24"),
+            ("rules_robolectric", "4.14.1.2"), ("windows_support", "0.4.1"),
+        ):
+            try:
+                entry = assets.acquire(module, version)
+                if entry:
+                    report["assets"].append(entry)
+            except (ValueError, KeyError, AssertionError, OSError) as error:
+                report.setdefault("unavailable_seeds", []).append([module, version, type(error).__name__])
+        (work / "results" / "public-seeds.json").write_text(json.dumps(report, indent=2) + "\n")
+        PYSEED
         mv "$RUNNER_TEMP/recvbuf/dist" "$w/dist"
-        python3 -B "$w/build.py"
+    - name: Build the original release, guest and pinned benchstat locally using Remote Asset
+      env:
+        REMOTE_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        w="$RUNNER_TEMP/state-working-set"
+        cd "$w/src"
+        auth="$w/asset-prepare"
+        mkdir -m 700 "$auth"
+        clean=(env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP")
+        cleanup() {
+          original=$?
+          trap - EXIT
+          set +e
+          "${clean[@]}" "$w/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g shutdown >"$auth/shutdown.log" 2>&1
+          stopped=$?
+          "${clean[@]}" python3 -IB - <<'PYREPORT'
+        import json, os, re
+        from pathlib import Path
+        work = Path(os.environ["RUNNER_TEMP"]) / "state-working-set"
+        private = work / "asset-prepare"
+        key, = re.findall(rb"(?m)^build --remote_header=x-buildbuddy-api-key=([^\r\n]+)$", (private / "service.rc").read_bytes())
+        outputs = {}
+        for name in ("assets.json", "build.json"):
+            src = private / name
+            if not src.exists():
+                continue
+            data = src.read_bytes()
+            assert src.is_file() and not src.is_symlink() and 0 < len(data) <= 220000
+            assert key not in data and not re.search(rb"(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[a-z0-9]{20,}", data)
+            assert isinstance(json.loads(data), dict)
+            outputs[name] = data
+        for name, data in outputs.items():
+            (work / "results" / name).write_bytes(data)
+        PYREPORT
+          screened=$?
+          rm -f -- "$auth/service.rc" "$auth/bazel.log" "$auth/build.bep" "$auth/prepare.log" "$auth/shutdown.log" "$auth/assets.json" "$auth/build.json"
+          removed=$?
+          rmdir "$auth"
+          empty=$?
+          for status in "$original" "$stopped" "$screened" "$removed" "$empty"; do
+            if [ "$status" -ne 0 ]; then exit "$status"; fi
+          done
+          exit 0
+        }
+        trap cleanup EXIT
+        test -n "$REMOTE_KEY"
+        (umask 077
+          {
+            echo 'build --remote_cache=grpcs://remote.buildbuddy.io'
+            echo 'build --experimental_remote_downloader=grpcs://remote.buildbuddy.io --noexperimental_remote_downloader_propagate_credentials --experimental_remote_downloader_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$REMOTE_KEY"
+          } > "$auth/service.rc"
+        )
+        unset REMOTE_KEY
+        "${clean[@]}" python3 -B "$w/build.py" >"$auth/prepare.log" 2>&1
     - name: Compare foreground restores and verify restored bytes
       run: |
         w="$RUNNER_TEMP/state-working-set"
+        test ! -e "$w/asset-prepare"
         unit="state-quarter-measure-$GITHUB_RUN_ID"
         sudo -n systemd-run --wait --pipe --collect --service-type=exec --unit="$unit" -p Delegate=yes \
           /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root RUNNER_TEMP="$RUNNER_TEMP" UNIT="$unit" \
@@ -90,6 +170,8 @@ jobs:
         path: |
           ${{ runner.temp }}/state-working-set/results/ancestors-*.json
           ${{ runner.temp }}/state-working-set/results/delegation.json
+          ${{ runner.temp }}/state-working-set/results/assets.json
+          ${{ runner.temp }}/state-working-set/results/public-seeds.json
           ${{ runner.temp }}/state-working-set/results/build.json
           ${{ runner.temp }}/state-working-set/results/measurements.json
           ${{ runner.temp }}/state-working-set/results/wire.txt
