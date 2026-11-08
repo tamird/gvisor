@@ -1,4 +1,6 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@bazel_skylib//rules/directory:glob.bzl", "directory_glob")
 load("@io_bazel_rules_go//go:def.bzl", "go_test")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "make")
@@ -34,9 +36,24 @@ config_setting(
     constraint_values = ["@llvm//constraints/libc:musl"],
 )
 
+# The BSD queue macros in LLVM's GNU sysroot have no libc dependencies.
+# Select that header under GNU while keeping the plugin on musl.
+directory_glob(
+    name = "gnu_queue_header",
+    directory = "@llvm//runtimes/glibc:glibc_headers_include_search_directory",
+    srcs = ["sys/queue.h"],
+    tags = ["manual"],  # Select through the GNU transition below.
+)
+
+platform_transition_filegroup(
+    name = "amd64_queue_header",
+    srcs = [":gnu_queue_header"],
+    target_platform = "@llvm//platforms:linux_x86_64",
+)
+
 copy_file(
     name = "queue_header",
-    src = "@plugin_bsd_queue//file",
+    src = ":amd64_queue_header",
     out = "include/sys/queue.h",
 )
 

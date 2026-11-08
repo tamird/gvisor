@@ -148,14 +148,6 @@ http_archive(
     urls = ["https://github.com/DPDK/dpdk/archive/refs/tags/v18.11.tar.gz"],
 )
 
-# DPDK and TLDK both include <sys/queue.h>, which musl does not ship.
-http_file(
-    name = "plugin_bsd_queue",
-    downloaded_file_path = "queue.h",
-    sha256 = "c13407edd0e33be73cae72514cb234f8612e1c0e54401c9448daffd3a240158b",
-    urls = ["https://raw.githubusercontent.com/alpinelinux/aports/988f183cc9d6699930c3e18ccf4a9e36010afb56/main/libc-dev/sys-queue.h"],
-)
-
 # Build Make with the execution toolchain rather than using a worker's tools.
 foreign_cc_tools = use_extension("@rules_foreign_cc//foreign_cc:extensions.bzl", "tools")
 foreign_cc_tools.explicit()
