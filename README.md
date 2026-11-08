@@ -926,6 +926,13 @@ A human-only submission uses an explicit `humanAction` on its existing item:
 head, `title`, `summary`, full actionable `body`, public context `url`, and
 `policyURL`. It appears under **Human-only submissions**, separately from
 the filters for reviewing code and approving messages.
+A branch that needs permission to run a workload uses `kind: execution`.
+Its `head` binds the tracked revision. Its `sourceHead` and public commit
+`url` identify the exact workload source, which can differ from the tracked
+branch. The title, summary and body describe what the contributor would
+authorize. It appears under **Authorize workload runs**. Remove the action
+when the grant is settled.
+
 This field and `contributorReview` are mutually exclusive. Remove the action
 when settled; changing its head requires explicit reconciliation. The same
 request-to-visible-item invariant applies, without creating another history or
