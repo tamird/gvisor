@@ -324,11 +324,11 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 		ep.snd.SndWndScale = uint8(sndWndScale)
 	}
 
-	ep.snd.resendTimer.init(ep.snd.ep.stack.Clock(), timerHandler(ep.snd.ep, ep.snd.retransmitTimerExpired))
-	ep.snd.reorderTimer.init(ep.snd.ep.stack.Clock(), timerHandler(ep.snd.ep, ep.snd.rc.reorderTimerExpired))
-	ep.snd.probeTimer.init(ep.snd.ep.stack.Clock(), timerHandler(ep.snd.ep, ep.snd.probeTimerExpired))
-	ep.snd.corkTimer.init(ep.snd.ep.stack.Clock(), timerHandler(ep.snd.ep, ep.snd.corkTimerExpired))
-	ep.snd.ackTimer.init(ep.snd.ep.stack.Clock(), timerHandler(ep.snd.ep, ep.snd.ackTimerExpired))
+	ep.snd.resendTimer.init(ep.snd.ep, ep.snd.retransmitTimerExpired)
+	ep.snd.reorderTimer.init(ep.snd.ep, ep.snd.rc.reorderTimerExpired)
+	ep.snd.probeTimer.init(ep.snd.ep, ep.snd.probeTimerExpired)
+	ep.snd.corkTimer.init(ep.snd.ep, ep.snd.corkTimerExpired)
+	ep.snd.ackTimer.init(ep.snd.ep, ep.snd.ackTimerExpired)
 
 	ep.snd.updateMaxPayloadSize(int(ep.snd.ep.route.MTU()), 0)
 	// Initialize SACK Scoreboard after updating max payload size as we use
@@ -579,12 +579,6 @@ func (s *sender) resendSegment() {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) retransmitTimerExpired() tcpip.Error {
-	// Check if the timer actually expired or if it's a spurious wake due
-	// to a previously orphaned runtime timer.
-	if s.resendTimer.isUninitialized() || !s.resendTimer.checkExpiration() {
-		return nil
-	}
-
 	// TODO(b/147297758): Band-aid fix, retransmitTimer can fire in some edge cases
 	// when writeList is empty. Remove this once we have a proper fix for this
 	// issue.
@@ -1959,9 +1953,6 @@ func (s *sender) updateWriteNext(seg *segment) {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) ackTimerExpired() tcpip.Error {
-	if s.ackTimer.isUninitialized() || !s.ackTimer.checkExpiration() {
-		return nil
-	}
 	if s.ep.EndpointState().connected() && s.ep.rcv.RcvNxt != s.MaxSentAck {
 		// No response carried the ACK in time, so the connection is not
 		// interactive (Linux tcp_delack_timer_handler()).
@@ -1976,12 +1967,6 @@ func (s *sender) ackTimerExpired() tcpip.Error {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) corkTimerExpired() tcpip.Error {
-	// Check if the timer actually expired or if it's a spurious wake due
-	// to a previously orphaned runtime timer.
-	if s.corkTimer.isUninitialized() || !s.corkTimer.checkExpiration() {
-		return nil
-	}
-
 	// Assign sequence number and flags to the segment.
 	seg := s.writeNext
 	if seg == nil {
