@@ -1193,6 +1193,57 @@ function attentionNode(number = 1) {
 function attentionImport(node, number = 2) {
   return { ...attentionNode(number).github, head: 'b'.repeat(40), headOwner: 'google', sourceHead: node.github.head, matchesSourceHead: true };
 }
+
+test('an author’s endorsed alternative routes review attention while both PRs remain open', () => {
+  const context = client(), run = code => vm.runInContext(code, context);
+  const source = attentionNode(1), alternative = attentionNode(2);
+  source.repo = alternative.repo = 'google/gvisor';
+  Object.assign(source.github, {authorLogin: 'tamird', approvedHead: null, approvedAt: null, reviewDecision: null,
+    reviewRequestsComplete: true, reviewRequests: [{__typename: 'User', login: 'reviewer'}]});
+  Object.assign(alternative.github, {head: 'b'.repeat(40), authorLogin: 'other', headOwner: 'other'});
+  const endorsement = {kind: 'review', id: 'review', url: alternative.url + '#pullrequestreview-22',
+    state: 'COMMENTED', author: {__typename: 'User', login: 'tamird'}, commit: {oid: alternative.github.head},
+    body: 'I prefer this implementation to #1.', updatedAt: '2026-11-08T12:54:33Z'};
+  alternative.github.feedback.items.push(endorsement);
+  context.rows = [source, alternative]; run('model = {nodes: rows}');
+  const group = () => run('attentionGroups([rows[0]], "tamird")[0].id');
+  const reasons = () => [...run('attentionReasons(rows[0], "tamird").map(item => item.id)')];
+  assert.equal(group(), 'maintainer-review');
+  const record = {reason: 'maintainer-review', action: 'prefer-alternative', replacement: alternative.id,
+    title: 'Author prefers the alternative', nextAction: 'Follow the response on #2.', evidence: [endorsement.url]};
+  source.followup = {attentionDispositions: [record]};
+  record.binding = JSON.parse(run('JSON.stringify(attentionDispositionEvidence(rows[0], "maintainer-review", rows[1].id))'));
+  assert.equal(group(), 'other', 'the original PR no longer requests a separate maintainer review');
+  assert.equal(source.github.status, 'open');
+  assert.deepEqual(source.github.reviewRequests.map(item => item.login), ['reviewer']);
+  for (const change of [
+    ([s]) => { s.github.reviewRequests.push({__typename: 'User', login: 'new-reviewer'}); },
+    ([s]) => { s.github.feedback.items.push({kind: 'comment', id: 'new-comment'}); },
+    ([, a]) => { a.github.status = 'merged'; },
+    ([, a]) => { a.github.status = 'closed'; },
+    ([, a]) => { a.github.head = 'c'.repeat(40); },
+    ([, a]) => { a.github.repo = 'other/repo'; },
+    ([, a]) => { a.github.feedback.items[0].body = 'I no longer prefer this change.'; },
+    ([, a]) => { a.github.feedback.items[0].author.login = 'someone-else'; },
+    ([, a]) => { a.github.feedback.items = []; },
+    ([, a]) => { delete a.github.feedback.items; },
+  ]) {
+    context.rows = structuredClone([source, alternative]); change(context.rows); run('model = {nodes: rows}');
+    assert.equal(group(), 'agent-refresh', change.toString());
+  }
+  context.rows = [source, alternative]; run('model = {nodes: rows}');
+  source.incomingReviewRequests = [{author: 'reviewer'}];
+  source.github.checks.state = 'FAILURE';
+  Object.assign(source.github.checks.contexts[0], {id: 'lint', state: 'FAILURE'});
+  const imported = attentionImport(source, 3);
+  imported.checks.state = 'FAILURE';
+  Object.assign(imported.checks.contexts[0], {id: 'import-lint', state: 'FAILURE'});
+  source.github.imports.push(imported);
+  assert.ok(reasons().includes('author-public-checks'));
+  assert.ok(reasons().includes('maintainer-import-checks'));
+  assert.ok(reasons().includes('agent-requested-review'));
+});
+
 function reasonsFor(node) {
   const context = client(); context.nodeInput = node;
   return JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));

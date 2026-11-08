@@ -1,0 +1,94 @@
+name: Verify the live review handoff between safecopy alternatives
+on:
+  push:
+    branches: [qualification/work-map-endorsed-alternative]
+permissions: {}
+jobs:
+  suites:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify the original public records and candidate
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 924f38ac0f57fa39d8bc988f29ced742c1438784
+          test "$(git rev-parse HEAD^:registry.json)" = a2faddaf96cd4e62cf524ebecad4fbb0d88f5320
+          test "$(git rev-parse HEAD:github-status.json)" = 593abcd64f1db74d20876c156e4b08ec46a04199
+          printf '%s\n' .github/workflows/work-map.yml app.js app_test.mjs registry.json | diff - <(git diff --name-only HEAD^ HEAD)
+          out="$RUNNER_TEMP/suite-results"
+          mkdir "$out"
+          sha256sum app.js app_test.mjs registry.json github-status.json > "$out/files.sha256"
+      - name: Reproduce the open fallback's original maintainer prompt
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/suite-results"
+          trap 'git restore --worktree -- app.js' EXIT
+          git show HEAD^:app.js > app.js
+          status=0
+          node --test --test-name-pattern='an author’s endorsed alternative' app_test.mjs > "$out/old.tap" 2>&1 || status=$?
+          test "$status" -eq 1
+          grep -Fq 'the original PR no longer requests a separate maintainer review' "$out/old.tap"
+          grep -Fq 'maintainer-review' "$out/old.tap"
+      - name: Read the two real PRs through the site attention groups
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS' > "$RUNNER_TEMP/suite-results/public-review.json"
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import vm from 'node:vm';
+          const json = p => JSON.parse(readFileSync(p));
+          const registry = json('registry.json'), snapshot = json('github-status.json');
+          const dom = {scrollTo() {}, querySelectorAll() { return []; }};
+          const ctx = vm.createContext({URL, document: {getElementById() {return dom;}}, registryInput: registry, snapshotInput: snapshot});
+          const src = readFileSync('app.js','utf8');
+          assert.ok(src.endsWith('start();\n'));
+          vm.runInContext(src.slice(0,-'start();\n'.length),ctx);
+          const run = code => vm.runInContext(code,ctx);
+          run('updateRegistryControls=()=>{};render=()=>{};setFreshness=()=>{};validateRegistry(registryInput);applyLive(snapshotInput,registryInput);');
+          const result = run(`(() => {
+            const source=model.nodes.find(n=>n.id==='pr:17209'), alternative=model.nodes.find(n=>n.id==='pr:17214');
+            const observe=()=>({group:attentionGroups([source],'tamird')[0].id,states:Object.keys(states(source))});
+            const record=attentionDisposition(source,'maintainer-review');
+            const live=observe();
+            delete source.followup.attentionDispositions;
+            const unbound=observe();
+            source.followup.attentionDispositions=[record];
+            alternative.github.status='closed';
+            return {sourceHead:source.github.head,alternativeHead:alternative.github.head,reviewers:source.github.reviewRequests,
+              endorsement:record.binding.replacement.endorsement.url,request:record.evidence[0],live,unbound,closed:observe()};
+          })()`);
+          assert.equal(result.sourceHead,'d20802a06d38ffc13ffcc17bc175d047eee232d9');
+          assert.equal(result.alternativeHead,'4f94a055b5566bc22a529e2cc00bf7471d46810c');
+          assert.equal(result.request,'https://github.com/google/gvisor/pull/17209#issuecomment-6719850370');
+          assert.equal(result.endorsement,'https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900');
+          assert.deepEqual(Array.from(result.reviewers,x=>x.login).sort(),['relkochta','trantoji']);
+          assert.equal(result.unbound.group,'maintainer-review');
+          assert.equal(result.live.group,'other');
+          assert.equal(result.closed.group,'agent-refresh');
+          assert.ok(result.live.states.includes('maintainer-review'));
+          console.log(JSON.stringify(result));
+          JS
+      - name: Run the site Python and frontend suites
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/suite-results"
+          trap 'git restore --worktree -- registry.json' EXIT
+          git show HEAD^:registry.json > registry.json
+          a=0; b=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest discover -p '*_test.py' -v > "$out/python.log" 2>&1 || a=$?
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test app_test.mjs > "$out/frontend.tap" 2>&1 || b=$?
+          tail -n 4 "$out/python.log"
+          tail -n 8 "$out/frontend.tap"
+          test "$a" -eq 0 && test "$b" -eq 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: work-map-endorsed-alternative
+          path: ${{ runner.temp }}/suite-results/
+          if-no-files-found: error
+          retention-days: 14

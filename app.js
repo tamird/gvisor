@@ -400,7 +400,7 @@ function sourceFixRecovery(node, nodes = model?.nodes || []) {
   return { state: "ready", remedy: recovery.remedy, mergedAt: remedy.mergedAt, sourceHead: pr.head,
     detail: `CI remedy #${remedy.number} merged as ${recovery.fixCommit.slice(0, 9)}. Verified ancestry shows ${pr.head.slice(0, 9)} lacks it; rebase this source branch and verify its new checks. Existing failures and review holds remain visible.` };
 }
-const TRIAGED_REASONS = new Set(["author-feedback", "maintainer-import-checks", "author-conflicts"]);
+const TRIAGED_REASONS = new Set(["author-feedback", "maintainer-import-checks", "author-conflicts", "maintainer-review"]);
 function evidenceJSON(value) {
   // Object key order is not evidence; array order is retained from the snapshot.
   if (Array.isArray(value)) return `[${value.map(evidenceJSON).join(",")}]`;
@@ -428,9 +428,24 @@ function attentionDispositionEvidence(node, reason, replacementId, nodes = model
   }
   if (replacementId !== undefined) {
     const replacement = nodes.find(item => item.id === replacementId)?.github;
-    if (reason !== "author-conflicts" || !replacement || replacement.revisionChanged
+    if (!["author-conflicts", "maintainer-review"].includes(reason) || !replacement || replacement.revisionChanged
         || prRepo(replacement) !== prRepo(pr) || replacement.status !== "open" || !replacement.head) return null;
     evidence.replacement = { id: replacementId, head: replacement.head, status: replacement.status };
+    if (reason === "maintainer-review") {
+      const record = node.followup?.attentionDispositions?.find(item => item.reason === reason);
+      if (replacementId === node.id || !pr.authorLogin || !pr.reviewRequestsComplete || !Array.isArray(pr.reviewRequests)
+          || pr.branchHead && pr.branchHead !== pr.head
+          || replacement.branchHead && replacement.branchHead !== replacement.head
+          || !replacement.feedback?.complete || !Array.isArray(replacement.feedback.items) || !replacement.reviewsComplete) return null;
+      const endorsement = replacement.feedback.items.find(item => item.kind === "review"
+        && ["COMMENTED", "APPROVED"].includes(item.state) && item.author?.__typename === "User"
+        && item.author.login === pr.authorLogin && item.commit?.oid === replacement.head
+        && item.body?.trim() && record?.evidence.includes(item.url));
+      if (!endorsement) return null;
+      evidence.reviewRequests = [...pr.reviewRequests].sort((a, b) => evidenceJSON(a).localeCompare(evidenceJSON(b)));
+      evidence.replacement.endorsement = endorsement;
+      evidence.replacement.feedback = replacement.feedback.items.map(item => [item.id, item.updatedAt]);
+    }
   }
   return evidence;
 }
@@ -548,7 +563,7 @@ function attentionReasons(node, owner) {
     if (disposition) {
       // The separate cleanup record owns this suggestion. Other reasons,
       // including the import's normal merge state, still belong to this PR.
-      if (disposition.action === "batch-cleanup") return;
+      if (disposition.action === "batch-cleanup" || disposition.action === "prefer-alternative") return;
       const dispositionId = disposition.action === "ci-infrastructure-retry" ? "maintainer-ci-infrastructure" : "maintainer-triaged";
       const existing = reasons.find(item => item.id === dispositionId);
       const triage = `${disposition.title}. ${disposition.nextAction}`;
@@ -587,6 +602,9 @@ function attentionReasons(node, owner) {
     add("agent-refresh", "Current source revision or its review/check evidence needs a public snapshot refresh.");
     return reasons;
   }
+  const alternative = node.followup?.attentionDispositions?.find(item => item.action === "prefer-alternative");
+  if (alternative && !landed && !attentionDisposition(node, alternative.reason))
+    add("agent-refresh", "Reassess the author’s preference for the alternative PR. The review evidence or one of the two revisions has changed or is unavailable.");
   const contexts = pr.checks?.contexts || [];
   const sourceFix = sourceFixRecovery(node);
   if (!landed && ["inspect", "ready"].includes(sourceFix?.state)) add("author-ci-remedy", sourceFix.detail);
@@ -1993,10 +2011,13 @@ function validateRegistry(candidate) {
           || typeof item.nextAction !== "string" || !item.nextAction.trim()
           || !Array.isArray(item.evidence) || !item.evidence.length || !item.evidence.every(safeURL)
           || !item.binding || !/^[a-f0-9]{40}$/.test(item.binding.sourceHead)
+          || item.reason === "maintainer-review" && !(item.action === "prefer-alternative" && item.replacement
+            && item.binding.replacement?.id === item.replacement && item.evidence.includes(item.binding.replacement?.endorsement?.url))
           || item.action !== undefined && !(item.action === "ci-infrastructure-retry" && item.reason === "maintainer-import-checks"
+            || item.action === "prefer-alternative" && item.reason === "maintainer-review"
             || item.action === "batch-cleanup" && item.reason === "author-feedback" && item.binding.reviewDecision === "APPROVED"
             && item.binding.approvedHead === item.binding.sourceHead)
-          || item.replacement !== undefined && (item.reason !== "author-conflicts"
+          || item.replacement !== undefined && (!["author-conflicts", "maintainer-review"].includes(item.reason)
             || !candidate.nodes.some(other => other.id === item.replacement && other.type === "pr" && other.repo === node.repo && other.id !== node.id)))))
       throw new Error("Invalid attention disposition");
     const comment = node.followup?.actionableComment;
