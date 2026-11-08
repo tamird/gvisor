@@ -1,35 +1,71 @@
-name: CI
-
-"on":
+name: Run the GPU installer test on both native empty workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/gpu-driver-empty-workers]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native-build-test:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Verify the product and previously built native Bazel test wrapper
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 56be21cd4260332c866fb42d5852072cf6d37619
+          test "$(git rev-parse HEAD^^)" = 61ff148f0df0efa29c9f500914477525c5debe62
+          test "$(git rev-parse 'HEAD~1^{tree}')" = 708e11cbf4ae28c801e4f5e9b1585ac45f080451
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/gpu_workers.py' ':!.github/workflows/build.yml' ':!test/rbe/release_prewarmer/BUILD'
+          test "$(git diff HEAD^^ HEAD^ | git patch-id --stable | cut -d' ' -f1)" = d03bef59d7318388972124eb4e1ce5ac8001f066
+          test "$(git rev-parse HEAD:tools/gpu/drivers/install_driver_test.go)" = fa36c08d15522768de7352d039a6844ed91d7d23
+          work="$RUNNER_TEMP/source-build-test"
+          mkdir -m 700 "$work"
+          gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$work/native.zip"
+          echo '{"verified":false,"stage":"setup"}' > "$work/result.json"
+          unset GH_TOKEN
+          donor=2cd50f70624119290a3b345ea516e0448f532848
+          git fetch --no-tags --no-auto-maintenance --depth=1 https://github.com/tamird/gvisor.git "$donor"
+          git show "$donor:.github/qualification/build_test.py" > "$work/build_test.py"
+          test "$(git hash-object "$work/build_test.py")" = db50fdce7b8033802b31448b6eb1a034b6b269ff
+          cd "$work"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o bb
+          sha256sum -c <<'SUMS'
+          993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619  native.zip
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          SUMS
+          unzip -p native.zip bazel-candidate > native
+          test "$(unzip -p native.zip native-package-evidence/supplier.json | jq -r '[.status,.source]|join(" ")')" = 'PASS c2f5f79dce24877679cede14b85666b7ca65c6de'
+          echo '556164c2874fc66cdac3a32b53f862e705e9b9643c0ad3dea12880c97687d250  native' | sha256sum -c -
+          chmod 700 native bb
+          cd "$GITHUB_WORKSPACE"
+          echo 'ae1f23a11f3cb747fbec49a34c510c5ab9dcb75d06d94bfd4d9a49d50c629271  test/rbe/release_prewarmer/BUILD' | sha256sum -c -
+      - name: Test the downloaded native driver fixture on AMD64 and ARM64
+        timeout-minutes: 44
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          rc="$RUNNER_TEMP/source-build-test/remote.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          : "${BUILDBUDDY_API_KEY:?missing existing fork key}"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -B .github/qualification/gpu_workers.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: gpu-installer-worker-results
+          path: ${{ runner.temp }}/source-build-test/result.json
+          if-no-files-found: error
+          retention-days: 14
