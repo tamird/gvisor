@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T18:25:51+00:00",
+    "updatedAt": "2026-11-08T18:38:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5226,8 +5226,8 @@
       "url": "https://github.com/tamird/gvisor/commit/4bee07965",
       "group": "bazel",
       "status": "Contributor review requested",
-      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.\n\nA subsequent run on this exact proposal booted source-built Sentries on native AMD64 and ARM64 Firecracker workers. Each execution verified the nine release ELFs, ran TestProcessDocuments_BasicTransform uncached, and checked the guest-written output HELLO FROM UNTRUSTED INPUT.\n\nOn c115840f8, an AMD64 Ubuntu builder without Debian’s ARM64 GCC or binutils cross-compiled the nine ARM64 release files. A separate native ARM64 worker verified their hashes and booted the transferred runsc and Sentry under rootless systrap. The guest’s uname -m returned aarch64 and it exited 0.\n\nA second client built both nine-file releases on c115840f8 without installing any packages. All 18 executable hashes matched the compiler-free client, including the nine previously booted on ARM64. The base image supplied shell utilities. Bazel, Git and the public CA bundle were supplied separately.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.",
-      "updatedAt": "2026-11-07T12:17:12+00:00",
+      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.\n\nA subsequent run on this exact proposal booted source-built Sentries on native AMD64 and ARM64 Firecracker workers. Each execution verified the nine release ELFs, ran TestProcessDocuments_BasicTransform uncached, and checked the guest-written output HELLO FROM UNTRUSTED INPUT.\n\nOn c115840f8, an AMD64 Ubuntu builder without Debian’s ARM64 GCC or binutils cross-compiled the nine ARM64 release files. A separate native ARM64 worker verified their hashes and booted the transferred runsc and Sentry under rootless systrap. The guest’s uname -m returned aarch64 and it exited 0.\n\nA second client built both nine-file releases on c115840f8 without installing any packages. All 18 executable hashes matched the compiler-free client, including the nine previously booted on ARM64. The base image supplied shell utilities. Bazel, Git and the public CA bundle were supplied separately.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.\n\nA separate integration at 61ff148f0 supplied the declared shell tools and SDK inputs for a complete local //:release build with empty /bin and /usr/bin. One AMD64 Bazel 9.3.1 client built all nine optimized ELF executables for each target architecture; all 18 SHA-256 digests matched their original remote outputs. The AMD64 build started with an empty repository cache. The ARM64 build reused those repository downloads with a fresh Bazel home. The installed AMD64 runsc and netgofer reported the development version. The client supplied Bazel, its runtime libraries and CA certificates. This qualifies the integrated release executable build; the standalone compiler proposal 4bee07965, packaging, and other builder jobs retain their own evidence and prerequisites.",
+      "updatedAt": "2026-11-08T18:38:35+00:00",
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
         {
@@ -5877,6 +5877,18 @@
         {
           "label": "Native AMD64 and ARM64 Sentry boots and original guest-output checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42351465462/artifacts/13565368025"
+        },
+        {
+          "label": "Separate integration for the declared-tool local release build",
+          "url": "https://github.com/tamird/gvisor/commit/61ff148f0"
+        },
+        {
+          "label": "Two local nine-ELF release builds, original remote hashes and installed AMD64 version receipts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42391653387/artifacts/13581779546"
+        },
+        {
+          "label": "Per-architecture build loop and repository reuse",
+          "url": "https://github.com/tamird/gvisor/blob/27a12d5ab/.github/qualification/lean_release_client.py#L411-L448"
         }
       ],
       "refinement": {
@@ -30091,14 +30103,14 @@
       "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-08T12:45:32+00:00",
-      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The LLVM build selected only sys/queue.h from its declared GNU sysroot. Its 19,539 bytes matched the supplier’s header.\n\nThe tested musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.\n\nOn the reviewed stub changes, all 10 AMD64 and 11 ARM64 offsets matched their ELF symbols and the musl CLI linked. The Sentry then stopped in the old //vdso:vdso rule when /bin/ld could not emit AArch64. This optional plugin port remains under investigation. Alpine packages sys/queue.h in bsd-compat-headers, separately from musl-dev.\n\nThe declared LLVM compiler built and installed static AMD64 runsc and plugin Sentry binaries through make runsc-plugin-stack and make refresh. The installed plugin initialized and exchanged TCP and UDP payloads across the bridge. Both architectures’ vDSOs linked. The test ran once on AMD64 with no skips. The workflow’s final XML-copy step failed on an omitted size field after the test passed. The repaired exporter recovered the exact 85-byte XML and rejected all four size and digest mismatches.\n\nMake ran TestDumpStack uncached on Linux AMD64. With the same musl target in both flag orders, Bazel 9.3.1 selected the caller’s scratch_build_amd64 worker for the test, Go link and archive. These mixed-worker checks ran analysis only. Bazel 8.8.1 rejects the inherited test execution group when it loads the optional plugin package.",
+      "updatedAt": "2026-11-08T18:38:35+00:00",
+      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The LLVM build selected only sys/queue.h from its declared GNU sysroot. Its 19,539 bytes matched the supplier’s header.\n\nThe tested musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.\n\nOn the reviewed stub changes, all 10 AMD64 and 11 ARM64 offsets matched their ELF symbols and the musl CLI linked. The Sentry then stopped in the old //vdso:vdso rule when /bin/ld could not emit AArch64. This optional plugin port remains under investigation. Alpine packages sys/queue.h in bsd-compat-headers, separately from musl-dev.\n\nThe declared LLVM compiler built and installed static AMD64 runsc and plugin Sentry binaries through make runsc-plugin-stack and make refresh. The installed plugin initialized and exchanged TCP and UDP payloads across the bridge. Both architectures’ vDSOs linked. The test ran once on AMD64 with no skips. The workflow’s final XML-copy step failed on an omitted size field after the test passed. The repaired exporter recovered the exact 85-byte XML and rejected all four size and digest mismatches.\n\nMake ran TestDumpStack uncached on Linux AMD64. With the same musl target in both flag orders, Bazel 9.3.1 selected the caller’s scratch_build_amd64 worker for the test, Go link and archive. These mixed-worker checks ran analysis only. Bazel 8.8.1 rejects the inherited test execution group when it loads the optional plugin package.\n\nThe in-tree AMD64 plugin compile and network-test jobs both invoke Make. Its Bazel command runs the client installed by the default builder from the repository pin, 9.3.1. No in-tree plugin job selects Bazel 8.8.1. Explicitly loading the optional plugin package on proposed source 8aaa1cb43 with Bazel 8.8.1 did crash with a duplicate test execution group. Whether downstream callers require that client remains unknown.\n\nThe pinned alipay/tldk revision cec8ff773 is the head of main. The repository advertises no tags, and its two other branch heads, 84493034e and 78c896b3b, are respectively two and six commits behind main. Updating to a newer published TLDK release cannot supply the missing DPDK port. The plugin patch still applies only to the tested DPDK 18.11 base.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "dd63198c66946d7a38279478369bf269243a6ef4",
-        "observedAt": "2026-11-08T12:45:32+00:00",
+        "observedAt": "2026-11-08T18:38:35+00:00",
         "disposition": "Native execution and mixed-worker selection verified on Bazel 9.3.1. Bazel 8.8.1 cannot load the optional test rule.",
-        "nextAction": "Establish which plugin callers need Bazel 8.8.1 before submitting the DPDK and NUMA changes. The ordinary compiler migration can proceed independently.",
+        "nextAction": "Keep the optional port on hold. Establish downstream requirements for Bazel 8.8.1 before changing compatibility, and assess the TLDK source changes needed for newer DPDK. The in-tree plugin jobs select 9.3.1. The ordinary compiler migration is independent.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153",
@@ -30250,6 +30262,38 @@
         {
           "label": "Bazel 8.8.1 optional-package load failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/42479825183/artifacts/13617351319"
+        },
+        {
+          "label": "In-tree AMD64 plugin compile job",
+          "url": "https://github.com/tamird/gvisor/blob/8aaa1cb43/.buildkite/pipeline.yaml#L120-L124"
+        },
+        {
+          "label": "In-tree AMD64 plugin network-test job",
+          "url": "https://github.com/tamird/gvisor/blob/8aaa1cb43/.buildkite/pipeline.yaml#L580-L586"
+        },
+        {
+          "label": "Make’s Bazel client selection",
+          "url": "https://github.com/tamird/gvisor/blob/8aaa1cb43/tools/bazel.mk#L121"
+        },
+        {
+          "label": "Builder installs the repository’s Bazel version",
+          "url": "https://github.com/tamird/gvisor/blob/8aaa1cb43/images/default/Dockerfile#L49-L54"
+        },
+        {
+          "label": "Repository Bazel 9.3.1 pin",
+          "url": "https://github.com/google/gvisor/commit/514a1ce4f"
+        },
+        {
+          "label": "Optional plugin’s TLDK source pin",
+          "url": "https://github.com/tamird/gvisor/blob/8aaa1cb43/MODULE.bazel#L122-L123"
+        },
+        {
+          "label": "TLDK main and published branch history",
+          "url": "https://github.com/alipay/tldk/branches"
+        },
+        {
+          "label": "Pinned TLDK main revision",
+          "url": "https://github.com/alipay/tldk/commit/cec8ff773"
         }
       ],
       "refinement": {
