@@ -1,35 +1,44 @@
-name: CI
-
-"on":
+name: Compare TCP software-GSO header reservations
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-gso-header-reservation]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind source and native Bazel
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/gso"
+          mkdir -m 700 "$work" "$work/out"
+          echo '{"verified":false,"stage":"setup"}' > "$work/out/result.json"
+          git init -q
+          git fetch --no-tags --no-auto-maintenance --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git switch -q --detach "$GITHUB_SHA"
+          product=e45857ee5044d16ec88eab54f9f9dfa793940712
+          base=7d1b049f5d541992b47cc38cf564025908a9ed7b
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse "$product^")" = "$base"
+          test "$(git rev-parse "$product^{tree}")" = d839fd588009c85174b10a78f8a31d956fdb3295
+          git diff --exit-code "$product" HEAD -- . ':!.github/qualification/gso_reservation' ':!.github/workflows/build.yml'
+          git diff --exit-code "$base" "$product" -- . ':!pkg/tcpip/transport/tcp/connect.go'
+          cp .github/qualification/gso_reservation/* "$work/"
+          git switch -q --detach "$product"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$work/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $work/bazel" | sha256sum -c -
+          chmod 700 "$work/bazel"
+      - name: Observe the real sender and socket and compare allocations on one CPU
+        run: |
+          set -eu
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" python3 -B "$RUNNER_TEMP/gso/compare.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tcp-gso-header-reservation
+          path: ${{ runner.temp }}/gso/out
+          if-no-files-found: error
+          retention-days: 14
