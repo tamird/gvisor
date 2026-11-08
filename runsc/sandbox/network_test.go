@@ -17,6 +17,7 @@ package sandbox
 import (
 	"bytes"
 	"errors"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -777,83 +778,94 @@ func TestStopNetgoferNonChildRecycledPID(t *testing.T) {
 	}
 }
 
-// startFakeNetgofer starts a child process standing in for netgofer and wires
-// up the Sandbox bookkeeping exactly as startProxy() does.
-func startFakeNetgofer(t *testing.T, s *Sandbox, args ...string) *exec.Cmd {
-	t.Helper()
-	cmd := exec.Command(args[0], args[1:]...)
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("starting fake netgofer %v: %v", args, err)
+const fakeNetgofer = "fake-netgofer"
+
+func TestMain(m *testing.M) {
+	if os.Args[0] == fakeNetgofer {
+		// Model a netgofer that exits when its peer closes the connection.
+		if _, err := os.Stdout.WriteString("ready"); err != nil {
+			panic(err)
+		}
+		if _, err := io.Copy(io.Discard, os.Stdin); err != nil {
+			panic(err)
+		}
+		if _, err := os.Stdout.WriteString("EOF"); err != nil {
+			panic(err)
+		}
+		os.Exit(0)
 	}
+	os.Exit(m.Run())
+}
+
+func testStopNetgoferChild(t *testing.T, closeInput bool) {
+	t.Helper()
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	peer := os.NewFile(uintptr(fds[0]), "sandbox")
+	t.Cleanup(func() {
+		if err := peer.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	child := os.NewFile(uintptr(fds[1]), "netgofer")
+	cmd := exec.Command("/proc/self/exe")
+	cmd.Args[0] = fakeNetgofer
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = child, child, os.Stderr
+	err = cmd.Start()
+	if err := child.Close(); err != nil {
+		t.Error(err)
+	}
+	if err != nil {
+		t.Fatalf("starting fake netgofer: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := cmd.Process.Release(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	pid := cmd.Process.Pid
 	stopped := make(chan struct{})
-	s.netgoferMu.Lock()
-	s.NetgoferPid.Store(cmd.Process.Pid)
-	s.netgoferIsChild = true
-	s.netgoferStopped = stopped
-	s.netgoferMu.Unlock()
-	s.reapNetgoferBackground(cmd.Process.Pid, stopped)
-	return cmd
+	s := &Sandbox{ID: "test-sandbox-id", netgoferIsChild: true, netgoferStopped: stopped}
+	s.NetgoferPid.Store(pid)
+	s.reapNetgoferBackground(pid, stopped)
+	t.Cleanup(s.stopNetgofer)
+
+	var ready [len("ready")]byte
+	if _, err := io.ReadFull(peer, ready[:]); err != nil || string(ready[:]) != "ready" {
+		t.Fatalf("fake netgofer readiness: got %q, err %v", ready, err)
+	}
+	want := ""
+	if closeInput {
+		if err := unix.Shutdown(int(peer.Fd()), unix.SHUT_WR); err != nil {
+			t.Fatal(err)
+		}
+		want = "EOF"
+	}
+	start := time.Now()
+	s.stopNetgofer()
+	if elapsed := time.Since(start); !closeInput && elapsed < netgoferGracePeriod {
+		t.Errorf("stopNetgofer returned after %v, want at least %v", elapsed, netgoferGracePeriod)
+	}
+	if got := s.NetgoferPid.Load(); got != 0 {
+		t.Fatalf("s.NetgoferPid.Load() = %d, want 0", got)
+	}
+	if err := unix.Kill(pid, 0); err != unix.ESRCH {
+		t.Fatalf("unix.Kill(%d, 0) = %v, want ESRCH (process should be reaped)", pid, err)
+	}
+	if got, err := io.ReadAll(peer); err != nil || string(got) != want {
+		t.Errorf("fake netgofer reply after stop = %q, %v, want %q, nil", got, err, want)
+	}
 }
 
 func TestStopNetgoferChildExitsWithinGracePeriod(t *testing.T) {
-	s := &Sandbox{ID: "test-sandbox-id"}
-	// Hold stdin open so the child stays alive until stopNetgofer() is
-	// waiting on <-stopped, then close stdin to simulate netgofer observing its
-	// UDS peer closing and exiting on its own.
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("os.Pipe(): %v", err)
-	}
-	defer r.Close()
-	defer w.Close()
-
-	cmd := exec.Command("/bin/cat")
-	cmd.Stdin = r
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("starting fake netgofer: %v", err)
-	}
-	_ = r.Close()
-	pid := cmd.Process.Pid
-
-	stopped := make(chan struct{})
-	s.netgoferMu.Lock()
-	s.NetgoferPid.Store(pid)
-	s.netgoferIsChild = true
-	s.netgoferStopped = stopped
-	s.netgoferMu.Unlock()
-	s.reapNetgoferBackground(pid, stopped)
-
-	// Close the pipe shortly after stopNetgofer() starts waiting, well within
-	// netgoferGracePeriod (100ms), so stopNetgofer() deterministically enters
-	// the `select { case <-stopped: ... }` block while NetgoferPid != 0.
-	go func() {
-		time.Sleep(10 * time.Millisecond)
-		_ = w.Close()
-	}()
-	s.stopNetgofer()
-
-	if got := s.NetgoferPid.Load(); got != 0 {
-		t.Errorf("s.NetgoferPid.Load() = %d, want 0", got)
-	}
-	if err := unix.Kill(pid, 0); err != unix.ESRCH {
-		t.Errorf("unix.Kill(%d, 0) = %v, want ESRCH (process should be reaped)", pid, err)
-	}
+	testStopNetgoferChild(t, true /* closeInput */)
 }
 
 func TestStopNetgoferChildKilledAfterGracePeriod(t *testing.T) {
-	s := &Sandbox{ID: "test-sandbox-id"}
-	// A netgofer that never exits on its own must be SIGKILLed.
-	cmd := startFakeNetgofer(t, s, "/bin/sleep", "600")
-	pid := cmd.Process.Pid
-
-	s.stopNetgofer()
-
-	if got := s.NetgoferPid.Load(); got != 0 {
-		t.Errorf("s.NetgoferPid.Load() = %d, want 0", got)
-	}
-	if err := unix.Kill(pid, 0); err != unix.ESRCH {
-		t.Errorf("unix.Kill(%d, 0) = %v, want ESRCH (process should have been killed and reaped)", pid, err)
-	}
+	testStopNetgoferChild(t, false /* closeInput */)
 }
 
 func TestDialExternalUDS(t *testing.T) {
