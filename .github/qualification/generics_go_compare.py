@@ -107,14 +107,18 @@ def owners(row, arch, negative=False):
             assert 0 < len(data) < 65536 and f.get("digest", sha(data)) == sha(data)
             (OUT / (phase + "." + label.rsplit(":", 1)[1] + "." + name)).write_bytes(data)
             r[name] = sha(data)
-            if name == "test.xml":
-                ET.fromstring(data)
-            elif negative:
-                assert b"unexpected annotation." in data and b"escapes: test annotation." in data
     assert set(tests) == set(labels) and row["bazel_exit"] == (3 if negative else 0)
     for label, r in tests.items():
         assert r["status"] == ("FAILED" if negative else "PASSED") and r["strategy"] == "local" and not r["cached"]
         assert r.get("test.log") and r.get("test.xml") and complete[label][0] == r["config"]
+        prefix = phase + "." + label.rsplit(":", 1)[1]
+        ET.parse(OUT / (prefix + ".test.xml"))
+        if negative:
+            log = (OUT / (prefix + ".test.log")).read_text()
+            # go-cmp may factor the common suffix out of both changed lines.
+            assert any(line.startswith("-") and "unexpected" in line for line in log.splitlines())
+            assert any(line.startswith("+") and "escapes: test" in line for line in log.splitlines())
+            assert " annotation." in log
     if negative:
         return
     outputs = row["default_sha256"] = {}
