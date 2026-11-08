@@ -1,35 +1,104 @@
-name: CI
-
-"on":
+name: Measure the checkpoint encoder block index
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-index-object-ranges]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 115
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the source pair and original four-worker Nginx fixture
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/state-working-set"
+          mkdir -p "$w/src" "$w/results" "$w/bundle/rootfs" "$w/runtime"
+          cd "$w/src"
+          git init -q
+          prior=6bd21891a1915c9f62150bb55e58ff0f88515aa0
+          pair_recipe=cd11d578ef864fe37b3e54e44dc2776dac9c1ab6
+          git -c gc.auto=0 fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prior" "$pair_recipe"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = aed67b42bf0fb4e1f14cd7bfddaecd5f2e1d9a1d
+          test "$(git rev-parse HEAD^^)" = 975fb172241c7946a9f67b4f52e0349d9240589a
+          test "$(git rev-parse HEAD^^{tree})" = 15bcd0ceda6f0c193e347ed3d1503dcfde4ea69d
+          test "$(git rev-parse HEAD^^^{tree})" = 8fb4809aa2f5e9dbb90c2983bf5aabf6f1c72ce3
+          printf '%s\n' pkg/state/graph_encode_objects_unsafe.go pkg/state/graph_encode_unsafe.go | diff - <(git diff --name-only HEAD^^ HEAD^)
+          printf '%s\n' .github/qualification/graph_block/nginx_args.py .github/qualification/graph_block/tmpfs.py .github/workflows/build.yml | diff - <(git diff --name-only HEAD^ HEAD)
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(git rev-parse "$pair_recipe:.github/qualification/nginx_source_pair.py")" = ca6a9e62adaefae8d209d5258f542f01c706e665
+          git show "$pair_recipe:.github/qualification/nginx_source_pair.py" > "$w/pair.py"
+          cp .github/qualification/graph_block/nginx_args.py "$w/measure.py"
+          tmp="$RUNNER_TEMP/graph-size"
+          mkdir -m 700 "$tmp" "$tmp/results"
+          cp .github/qualification/graph_block/tmpfs.py "$tmp/run.py"
+          ln -s "$w/bazel" "$tmp/bazel"
+          dir=.github/qualification/state_working_set
+          test "$(git rev-parse "$prior:$dir/measure.py")" = 8439bf7c04c664d233d7713f44e375ba6d82ee01
+          test "$(git rev-parse "$prior:$dir/isolate.sh")" = 121907a4f27638459ebdcec46a0d7ff09c648d9d
+          git show "$prior:$dir/measure.py" > "$w/nginx.py"
+          git show "$prior:$dir/isolate.sh" > "$w/isolate.sh"
+          git show "$prior:$dir/benchstat.module" > "$w/benchstat.module"
+          cd "$w"
+          curl -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o bazel
+          sha256sum -c <<'DIGESTS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          373bba0a70f04c2a39a30a45b4acd23f3bfa884e05a5e27cce1ce7010c406cd5  benchstat.module
+          DIGESTS
+          chmod 755 bazel
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > jammy.list
+          opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+          sudo -n apt-get "${opts[@]}" update -qq
+          sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends build-essential crossbuild-essential-arm64 libnuma-dev
+      - name: Build both Bazel releases and the independent reporter locally
+        run: |
+          w="$RUNNER_TEMP/state-working-set"
+          cd "$w/src"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$w/measure.py" build
+      - name: Run the state suites and build the two checkpoint encoders
+        run: |
+          cd "$RUNNER_TEMP/state-working-set/src"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/graph-size/run.py" build
+      - name: Capture and restore a 50000-file tmpfs tree
+        run: |
+          sudo -n env -i HOME=/root PATH=/usr/sbin:/usr/bin:/sbin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/graph-size/run.py" guest
+      - name: Compare encoding the same kernel in twelve alternating pairs
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/graph-size/run.py" measure
+      - name: Export the pinned public gVisor Nginx image
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/state-working-set"
+          src=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+          mkdir "$w/docker"
+          export DOCKER_CONFIG="$w/docker"
+          docker pull "$src"
+          docker image inspect --format='{{.Id}}' "$src" > "$w/image-config"
+          test "$(cat "$w/image-config")" = sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5
+          container="$(docker create "$src")"
+          trap 'docker rm "$container" >/dev/null' EXIT
+          docker export "$container" | sudo -n tar --numeric-owner -xf - -C "$w/bundle/rootfs"
+      - name: Capture sixteen alternating pairs and verify HTTP on every restored image
+        timeout-minutes: 22
+        run: |
+          w="$RUNNER_TEMP/state-working-set"
+          unit="state-block-index-$GITHUB_RUN_ID"
+          sudo -n systemd-run --wait --pipe --collect --service-type=exec --unit="$unit" -p Delegate=yes \
+            /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root RUNNER_TEMP="$RUNNER_TEMP" UNIT="$unit" \
+            /bin/bash "$w/isolate.sh" measure
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: graph-index-checkpoints
+          path: |
+            ${{ runner.temp }}/state-working-set/results/
+            ${{ runner.temp }}/graph-size/results/
+            ${{ runner.temp }}/state-working-set/src/bazel-testlogs/pkg/state/state_test/test.log
+            ${{ runner.temp }}/state-working-set/src/bazel-testlogs/pkg/state/state_test/test.xml
+            ${{ runner.temp }}/state-working-set/src/bazel-testlogs/pkg/state/tests/tests_test/test.log
+            ${{ runner.temp }}/state-working-set/src/bazel-testlogs/pkg/state/tests/tests_test/test.xml
+          if-no-files-found: error
+          retention-days: 14
