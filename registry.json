@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T20:58:46+00:00",
+    "updatedAt": "2026-11-08T21:48:58+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50470,14 +50470,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/goimports-bazel-diff",
-      "head": "8858bbb350e274b58fdb4be8cd1057dd3d9a3ddc",
-      "title": "Run the Go formatting check as a Bazel action",
-      "url": "https://github.com/tamird/gvisor/commit/8858bbb35",
+      "head": "1954485c9a50945b0189fba1ed6bb3852cc016ea",
+      "title": "Run GitHub source lint as one Bazel build",
+      "url": "https://github.com/tamird/gvisor/commit/1954485c9",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T07:06:48+00:00",
-      "summary": "The check preserves the unified diff and the formatter updates both changed files. With the two supplier changes applied during qualification, the scratch worker handled dirty and invalid inputs and the restored action selected all 2,685 intended Go files. The product commit contains neither supplier patch.",
+      "updatedAt": "2026-11-08T21:45:51+00:00",
+      "summary": "The proposed GitHub lint step calls bazel build --keep_going //tools/lint:check. On hosted Ubuntu with Docker unavailable, Bazel 9.3.1 ran six actions for all five default linters. With a formatting error and a spelling mistake in the same checkout, both checks reported the affected files and the build failed.\n\nThe earlier six-action scratch run used a filename-only goimports check. On 8858bbb35, the scratch-worker check produced a unified diff that applied and reversed cleanly with both x/tools changes in place. The restored action selected all 2,685 intended Go files.",
       "evidence": [
+        {
+          "label": "Hosted GitHub lint command, six clean actions and two simultaneous failure diagnostics",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42526339234/artifacts/13635502591"
+        },
         {
           "label": "Original hunk headers, forward and reverse patch application, and syntax controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41403301559/artifacts/13122616373"
@@ -50487,21 +50491,42 @@
           "url": "https://github.com/tamird/gvisor/commit/80c4e2158"
         },
         {
-          "label": "All six Bazel lint actions and the goimports executable recovered from its scratch worker",
+          "label": "Earlier filename-only goimports check within the six-action lint run",
           "url": "https://github.com/tamird/gvisor/actions/runs/41399910347/artifacts/13120089067"
         },
         {
           "label": "Formatting, syntax, filename and golden-file controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41398915499/artifacts/13120871828"
+        },
+        {
+          "label": "x/tools parent corrects unified diff hunk lengths",
+          "url": "https://go-review.googlesource.com/c/tools/+/858481"
+        },
+        {
+          "label": "x/tools child prints goimports diffs without invoking another program",
+          "url": "https://go-review.googlesource.com/c/tools/+/858482"
         }
       ],
       "refinement": {
         "before": {
-          "head": "80c4e21583bedbc99d1ff253fe02612df4e6e21d"
+          "head": "8858bbb350e274b58fdb4be8cd1057dd3d9a3ddc"
         },
         "after": {
-          "head": "8858bbb350e274b58fdb4be8cd1057dd3d9a3ddc"
+          "head": "1954485c9a50945b0189fba1ed6bb3852cc016ea"
         }
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "1954485c9a50945b0189fba1ed6bb3852cc016ea",
+        "observedAt": "2026-11-08T21:44:52+00:00",
+        "disposition": "The hosted workflow passed on the proposal. The x/tools hunk-length change and its goimports child both have Code-Review +2 and remain open. The gVisor proposal carries neither patch.",
+        "nextAction": "After the shared source inventory lands and a released x/tools contains both changes, rebase the single proposal and verify the full-diff lint build with that release on the empty worker.",
+        "evidence": [
+          "https://go-review.googlesource.com/c/tools/+/858481",
+          "https://go-review.googlesource.com/c/tools/+/858482",
+          "https://github.com/tamird/gvisor/actions/runs/42526339234/artifacts/13635502591",
+          "https://github.com/tamird/gvisor/actions/runs/41403301559/artifacts/13122616373"
+        ]
       }
     },
     {
@@ -65933,7 +65958,7 @@
       "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T19:57:20+00:00",
+      "updatedAt": "2026-11-08T21:48:58+00:00",
       "summary": "Create the keepalive timer when an established sender needs it. In 12 alternating AMD64 pairs, wildcard bind/close fell from 26 allocations to 24, and dial/accept from 168 to 162 with keepalive disabled and 171 to 169 with it enabled. Bytes allocated fell in all three workloads. Elapsed time showed no statistically significant change.\n\nBoth revisions gave the same six packet observations. Accepted, post-connect and explicitly rearmed restored sockets sent their idle probe. The pre-connect, re-enabled and untouched restored sockets missed the observed deadline on both revisions. The TCP analyzer passed for AMD64 and ARM64. The reviewed commit has the same tree and parent as measured 2808320e8.",
       "evidence": [
         {
@@ -65958,13 +65983,15 @@
       "followup": {
         "owner": "Contributor",
         "sourceHead": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
-        "observedAt": "2026-11-08T19:57:20+00:00",
+        "observedAt": "2026-11-08T21:48:58+00:00",
         "disposition": "The single fork commit and its source-matched qualification are available for review.",
-        "nextAction": "Review the proposal before opening a gVisor pull request.",
+        "nextAction": "Review the proposal before opening a gVisor pull request. Before publishing it on a tree with the restore fix, move the saved timer state and deadline onto the sender timer, preserve the re-enable fix’s expiry check before SO_KEEPALIVE, and rerun the restore and toggle controls.",
         "evidence": [
           "https://github.com/google/gvisor/issues/7493",
           "https://github.com/tamird/gvisor/commit/2808320e8",
-          "https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379"
+          "https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379",
+          "https://github.com/tamird/gvisor/commit/38b1dd1da",
+          "https://github.com/tamird/gvisor/commit/ba00452d5"
         ]
       },
       "contributorReview": {
@@ -66181,6 +66208,103 @@
         "summary": "Open the single-commit gVisor PR?",
         "body": "A wildcard bind reserves a port without selecting a source address. When two interfaces have routes to the peer, connect can then send its SYN through the other interface because it looks up the route without the device selected by SO_BINDTODEVICE.\n\nUse the socket's current device for the route lookup, as Linux does [1]. Reject a conflicting destination scope [2]. Keep the saved device used by the port reservation and endpoint registration. Restore an established connection with the NIC selected for its saved route.\n\nCheck the selected source address on two interfaces with overlapping prefixes. Both can reach the peer, so failure to honor the socket's device is visible before the handshake completes.\n\n[1]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv4/tcp_ipv4.c#L233-L235\n[2]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv6/tcp_ipv6.c#L188-L197\n\nFixes #8276",
         "requestedAt": "2026-11-08T20:58:46+00:00"
+      }
+    },
+    {
+      "id": "branch:bwrap-without-docker-registration",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/bwrap-without-docker-registration",
+      "head": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+      "title": "Skip Docker runtime setup for bwrap tests",
+      "url": "https://github.com/tamird/gvisor/commit/28ed2e5fb",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T21:45:32+00:00",
+      "summary": "Both Buildkite bwrap jobs use the staged runsc directly. Each reported 56 passes and one intentional TestUserns skip. On hosted AMD64 Linux, the privileged Bazel test produced the same 56 passes and one skip with only the default Docker runtimes registered. The ordinary unprivileged run had eight failures and the Linux sandbox with fake root had 55. The proposed change removes only Docker runtime registration from the AMD64 and ARM64 jobs. Both keep their existing privileged Make test.",
+      "evidence": [
+        {
+          "label": "AMD64 Buildkite test on the existing pipeline",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53913#01a1b9e5-b615-4779-b629-a998e2bc8f64"
+        },
+        {
+          "label": "ARM64 Buildkite test on the existing pipeline",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53913#01a1b9e5-b615-46c3-a98b-68165e7261da"
+        },
+        {
+          "label": "Original ordinary, sandbox fake-root and privileged AMD64 tests with logs and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+        "observedAt": "2026-11-08T21:45:32+00:00",
+        "disposition": "The privileged integration test passed without registering runsc with Docker.",
+        "nextAction": "Review the two-line Buildkite change for one independent gVisor pull request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/28ed2e5fb",
+          "https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+        "url": "https://github.com/tamird/gvisor/commit/28ed2e5fb",
+        "title": "Skip Docker runtime setup for bwrap tests",
+        "summary": "Open the single-commit gVisor PR?",
+        "body": "Both Buildkite bwrap jobs register runsc with Docker. The pre-command hook calls Make to run runsc install, then reloads or restarts Docker. The post-command hook removes the registered runtimes and reloads the daemon again.\n\nThe bwrap test invokes the staged runsc executable directly. Drop the Docker setup from the AMD64 and ARM64 jobs. On a Linux host with only the default runc runtimes registered, the privileged Bazel test reported 56 passes and one existing skip. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233",
+        "requestedAt": "2026-11-08T21:45:32+00:00"
+      }
+    },
+    {
+      "id": "branch:tcp-restore-keepalive-deadline",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/restore-tcp-keepalive-deadline",
+      "head": "38b1dd1dac75b1fcbbe718d33db05237ce849182",
+      "title": "Resume TCP keepalive at its saved deadline",
+      "url": "https://github.com/tamird/gvisor/commit/38b1dd1da",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T21:48:58+00:00",
+      "summary": "A restored TCP socket could have SO_KEEPALIVE enabled and never send its next probe. On the send-deadline prerequisite, the idle and between-probe tests both failed. The proposed change passed both packet tests and kept a disabled timer quiet. The failed-route test passed on the proposal and failed when terminal timer cleanup was removed.\n\nThe first Linux run also exposed a separate reset-socket fixture error. After the fixture deregistered the closed endpoint, changing TCP_KEEPIDLE queued one timer on the previous draft and zero on the proposal. The corrected run exercised only that terminal case.",
+      "evidence": [
+        {
+          "label": "Send-deadline prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/12bdd02c2"
+        },
+        {
+          "label": "Original idle, between-probe, disabled and failed-route tests with controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42525477772/artifacts/13635765481"
+        },
+        {
+          "label": "Reset-socket correction and independent final-versus-previous timer control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42526430689/artifacts/13636125398"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "38b1dd1dac75b1fcbbe718d33db05237ce849182",
+        "observedAt": "2026-11-08T21:48:58+00:00",
+        "disposition": "The fork commit builds on the approved send-deadline change. The original packet, failed-route and reset-socket tests cover its timer behavior.",
+        "nextAction": "Review opening this one-commit pull request after its send-deadline prerequisite lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/38b1dd1da",
+          "https://github.com/tamird/gvisor/actions/runs/42525477772/artifacts/13635765481",
+          "https://github.com/tamird/gvisor/actions/runs/42526430689/artifacts/13636125398"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "38b1dd1dac75b1fcbbe718d33db05237ce849182",
+        "url": "https://github.com/tamird/gvisor/commit/38b1dd1da",
+        "title": "Resume TCP keepalive at its saved deadline",
+        "summary": "Open this gVisor PR after the send-deadline prerequisite lands?",
+        "body": "An idle TCP connection can resume from a checkpoint with SO_KEEPALIVE enabled and never send another probe. Restoring the endpoint initialized a disabled timer. Setting TCP_KEEPIDLE again restarted it.\n\nSave the active timer's stack-clock deadline and bind its callback after the connected endpoint has a route. This preserves both the remaining idle period and the shorter interval between unanswered probes. Clear the saved timer state if the connection closes before it can be armed.\n\nCheck the remaining time and packets across a stack save and restore. Also cover a disabled timer and the configured probe count.",
+        "requestedAt": "2026-11-08T21:48:58+00:00"
       }
     }
   ],
@@ -70014,6 +70138,16 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/15181#issuecomment-6725025012",
         "https://github.com/google/gvisor/pull/17209#issuecomment-6723886420"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-restore-send-deadlines",
+      "to": "branch:tcp-restore-keepalive-deadline",
+      "reason": "Keepalive restore reuses the send-timer deadline and callback binding supplied by the approved prerequisite.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/38b1dd1da",
+        "https://github.com/tamird/gvisor/commit/12bdd02c2"
       ]
     }
   ],
@@ -90152,5 +90286,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T20:58:46+00:00"
+  "updatedAt": "2026-11-08T21:48:58+00:00"
 }
