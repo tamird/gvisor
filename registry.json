@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T16:58:17+00:00",
+    "updatedAt": "2026-11-08T17:09:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52908,7 +52908,7 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "closed",
-      "updatedAt": "2026-11-08T14:08:27+00:00",
+      "updatedAt": "2026-11-08T17:09:37+00:00",
       "summary": "Tamir replied to David and closed #908 after all six stock LLVM helpers ran in empty Linux roots with @llvm//constraints/libc:musl on the execution platform. Without that constraint, five helpers failed on AMD64 at f9abea4c9 and all six failed on ARM64 at LLVM 0.8.24. The GNU target executable remained byte-identical in each comparison. The gVisor fork declares musl on both scratch execution platforms. The with_cfg prepend change in #275 has its own use case in with_cfg #151.",
       "evidence": [
         {
@@ -53034,6 +53034,10 @@
         {
           "label": "David asks whether to revert the earlier generator change",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6722445873"
+        },
+        {
+          "label": "Tamir’s direct answer to David’s question",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6723182462"
         }
       ],
       "settledReviews": [
@@ -53051,29 +53055,32 @@
           "outcome": "approved",
           "at": "2026-11-08T13:00:37+00:00",
           "postedURL": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
+        },
+        {
+          "kind": "reply",
+          "head": "533981c365e8ee683926bd465efcc81bc31158bf",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6722445873",
+          "title": "Reply to David about the module map generator revert",
+          "summary": "Post this follow-up on closed #908 linking the open #927?",
+          "body": "Yes. #927 reverts the module map generator change. With that revert, the generator uses the libc selected by the execution platform.\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-08T14:08:27+00:00",
+          "outcome": "answered-separately",
+          "at": "2026-11-08T15:12:25Z",
+          "postedURL": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6723182462"
         }
       ],
       "followup": {
         "owner": "Agent",
         "sourceHead": "533981c365e8ee683926bd465efcc81bc31158bf",
-        "observedAt": "2026-11-08T13:00:39+00:00",
-        "disposition": "The approved reply was posted and #908 was closed without merging at 533981c36.",
-        "nextAction": "No further action on #908.",
+        "observedAt": "2026-11-08T17:09:37+00:00",
+        "disposition": "Tamir answered David’s later question directly at 15:12 UTC. The first delegated reply remains posted, and upstream merged the separate generator change in #927.",
+        "nextAction": "No further reply is needed on #908.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6714807658",
           "https://github.com/tamird/hermetic-llvm/actions/runs/42429302127/artifacts/13597315831",
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969",
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6723182462"
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "533981c365e8ee683926bd465efcc81bc31158bf",
-        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6722445873",
-        "title": "Reply to David about the module map generator revert",
-        "summary": "Post this follow-up on closed #908 linking the open #927?",
-        "body": "Yes. #927 reverts the module map generator change. With that revert, the generator uses the libc selected by the execution platform.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-08T14:08:27+00:00"
       }
     },
     {
@@ -62525,7 +62532,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T16:58:17+00:00",
+      "updatedAt": "2026-11-08T17:07:54+00:00",
       "summary": "The published head still requires -checkpoint to inspect a Sentry image. The pending amendment removes the flag because the autosave runner uses the ordinary command. It selects checkpoint decoding only for the CPUID FeatureSet and Kernel in the first two frames. Other roots retain generic text and HTML rendering. A stream deliberately using both checkpoint roots has the same discriminator. On native ARM64 the ordinary command matched the published explicit text and HTML for a wire and graph checkpoint, and both images restored PID 1 and two files of 8,192 bytes. The autosave consumer comparison is pending.",
       "evidence": [
         {
@@ -62597,14 +62604,26 @@
           "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed\nprotobuf. A generic statefile dump can skip later objects or print\nincorrect page boundaries while reporting success.\n\nAdd a -checkpoint mode for existing Sentry files. The historical\nenvelope has no payload tag, and ordinary state streams can contain\nthe same roots. Keep their default text and HTML rendering intact.\n\nUse the shared graph printer and pgalloc metadata reader to display\nthe application MemoryFile and its committed ranges. Read one private\nMemoryFile per saved owner and reject missing or trailing data. Retain\nthe earlier object-framed layout and the separate split-page layout.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")",
           "at": "2026-11-08T00:04:48+00:00",
           "outcome": "approved"
+        },
+        {
+          "kind": "amendment",
+          "head": "912702589414e631909e449f5926b66fa6d5a2c1",
+          "baseHead": "ebcea451de61a61957c82527fa94241827267cde",
+          "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
+          "url": "https://github.com/tamird/gvisor/commit/912702589",
+          "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed protobuf. A generic statefile dump can skip later objects or print incorrect page boundaries while reporting success. The autosave test runner uses this dump for its text and HTML artifacts.\n\nRecognize the CPUID FeatureSet and Kernel in the first two frames of a Sentry checkpoint. Read the application MemoryFile and one private MemoryFile per saved owner, and reject missing or trailing data. Preserve the earlier object-framed layout, split-page files and generic state streams with other roots.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")",
+          "summary": "Publish the amendment and reply to Ayush after the actual autosave formatter writes matching text and HTML. Both native ARM64 guest tests passed: the revised default matched the published explicit mode and the independent layout for the same wire and graph images that restored successfully. The generic command controls and 13 layout cases passed. A fork reporting assertion stopped before the autosave consumer.\n\nProposed inline reply\n\nYes for the files runsc writes. The autosave test runner calls `runsc statefile` without a flag, so it was still using the generic decoder. I removed `-checkpoint`. The command now recognizes the CPUID FeatureSet and Kernel in the first two frames of a Sentry checkpoint. Other root types still use the generic printer.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff ebcea451d^! 912702589^!",
+          "requestedAt": "2026-11-08T16:58:17+00:00",
+          "at": "2026-11-08T17:07:54+00:00",
+          "outcome": "approved"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "ebcea451de61a61957c82527fa94241827267cde",
-        "observedAt": "2026-11-08T16:58:17+00:00",
-        "disposition": "Ayush asked about requiring a flag for the checkpoint files runsc produces. The revision matches the first two frame types and preserves generic formats for other roots. The command and two restored images passed; native autosave output remains to be checked.",
-        "nextAction": "Approve publishing this amendment and replying on the original thread after the autosave text and HTML comparisons pass.",
+        "observedAt": "2026-11-08T17:07:54+00:00",
+        "disposition": "Tamir approved the one-commit amendment and inline reply after the native autosave outputs match.",
+        "nextAction": "Verify both native autosave formats for both restored images before updating the live PR and replying to Ayush.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208#discussion_r4506794124",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -62621,17 +62640,6 @@
           "head": "912702589414e631909e449f5926b66fa6d5a2c1",
           "base": "9ee2906f518e1d0f9fd109e9e1feb2812096418b"
         }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "912702589414e631909e449f5926b66fa6d5a2c1",
-        "baseHead": "ebcea451de61a61957c82527fa94241827267cde",
-        "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
-        "url": "https://github.com/tamird/gvisor/commit/912702589",
-        "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed protobuf. A generic statefile dump can skip later objects or print incorrect page boundaries while reporting success. The autosave test runner uses this dump for its text and HTML artifacts.\n\nRecognize the CPUID FeatureSet and Kernel in the first two frames of a Sentry checkpoint. Read the application MemoryFile and one private MemoryFile per saved owner, and reject missing or trailing data. Preserve the earlier object-framed layout, split-page files and generic state streams with other roots.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")",
-        "summary": "Publish the amendment and reply to Ayush after the actual autosave formatter writes matching text and HTML. Both native ARM64 guest tests passed: the revised default matched the published explicit mode and the independent layout for the same wire and graph images that restored successfully. The generic command controls and 13 layout cases passed. A fork reporting assertion stopped before the autosave consumer.\n\nProposed inline reply\n\nYes for the files runsc writes. The autosave test runner calls `runsc statefile` without a flag, so it was still using the generic decoder. I removed `-checkpoint`. The command now recognizes the CPUID FeatureSet and Kernel in the first two frames of a Sentry checkpoint. Other root types still use the generic printer.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff ebcea451d^! 912702589^!",
-        "requestedAt": "2026-11-08T16:58:17+00:00"
       }
     },
     {
@@ -64894,6 +64902,63 @@
           "https://github.com/tamird/gvisor/actions/runs/42499957100/artifacts/13625092477"
         ]
       }
+    },
+    {
+      "id": "branch:tcp-ordinary-ack-wire-ends",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-ordinary-ack-wire-ends",
+      "head": "b64ce83201bc89cc9d52186a15ba982b02b4266e",
+      "title": "Use transmitted packet boundaries when processing TCP ACKs",
+      "url": "https://github.com/tamird/gvisor/commit/b64ce8320",
+      "group": "runtime",
+      "status": "Contributor approved; waiting for #15634",
+      "updatedAt": "2026-11-08T17:08:40+00:00",
+      "summary": "With an ordinary IPv4 route, one ACK for a pre-restore 1,200-byte packet grew Reno’s congestion window from 10 to 12 on #15634 after the new route limited payloads to 1,196 bytes. The follow-up counts recorded packet ends for data sent once outside recovery and credited the packet once, growing the window to 11. Three other native cases passed on both sources. A message-only revision preserves the measured source tree.",
+      "evidence": [
+        {
+          "label": "One commit on the current #15634 head",
+          "url": "https://github.com/tamird/gvisor/commit/b64ce8320"
+        },
+        {
+          "label": "Qualified prior wording, identical tree and direct parent",
+          "url": "https://github.com/tamird/gvisor/commit/74ce2c6b4"
+        },
+        {
+          "label": "Native stock and candidate logs/XML for all four cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42502020892/artifacts/13626101046"
+        },
+        {
+          "label": "TCP performance and recovery guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "b64ce83201bc89cc9d52186a15ba982b02b4266e",
+        "observedAt": "2026-11-08T17:08:40+00:00",
+        "disposition": "Tamir approved the proposal and the guide row. The migration result is now published in #16670.",
+        "nextAction": "Open the approved single commit after #15634 lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b64ce8320",
+          "https://github.com/tamird/gvisor/actions/runs/42502020892/artifacts/13626101046",
+          "https://github.com/google/gvisor/issues/16670"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b64ce83201bc89cc9d52186a15ba982b02b4266e",
+          "baseHead": "679d14eed77a4ce6029065d88248c8ce0902c270",
+          "url": "https://github.com/tamird/gvisor/commit/b64ce8320",
+          "title": "Use transmitted packet boundaries when processing TCP ACKs",
+          "body": "The sender transmitted a 1,200-byte TCP packet before checkpoint. After restore, the route allowed 1,196-byte payloads. The sender divided the old packet's length by the new MSS and rounded up, so its cumulative ACK grew Reno's congestion window from 10 to 12.\n\nFor data sent once outside loss recovery, count the packet ends recorded at transmission. A queue split preserves those ends, so a partial ACK earns credit only when it crosses one. After a retransmission the recorded boundaries describe the latest copy, and during loss recovery the sender estimates how many copies remain in flight. Keep the existing estimate in those cases.\n\nWith this change, acknowledging the original packet grew Reno's window from 10 to 11 in the migration test [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42502020892/artifacts/13626101046",
+          "summary": "Approve opening the standalone PR after #15634 lands and adding this single migration row to the existing #16670 guide.\n\n| One ACK grows Reno’s window by two after migration | #15634 → [ordinary ACK follow-up](https://github.com/tamird/gvisor/commit/b64ce8320) · [migration test output](https://github.com/tamird/gvisor/actions/runs/42502020892/artifacts/13626101046) | Restoring onto an IPv4 route with MTU 1,236 lowered the payload limit from 1,200 to 1,196 bytes. Acknowledging one 1,200-byte packet sent before restore grew the window from 10 to 12 on #15634 and from 10 to 11 with the follow-up. |",
+          "requestedAt": "2026-11-08T17:05:17+00:00",
+          "at": "2026-11-08T17:07:54+00:00",
+          "outcome": "approved"
+        }
+      ]
     }
   ],
   "edges": [
@@ -68703,6 +68768,16 @@
       "type": "depends_on",
       "reason": "IPv6 multicast hop and loopback options let these three tests complete in both JVM modes.",
       "evidence": "https://github.com/google/gvisor/pull/16875"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:15634",
+      "to": "branch:tcp-ordinary-ack-wire-ends",
+      "reason": "The ACK fix uses #15634’s transmitted packet boundaries. Open this one-commit follow-up after #15634 lands.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/b64ce8320",
+        "https://github.com/google/gvisor/pull/15634"
+      ]
     }
   ],
   "investigations": [
