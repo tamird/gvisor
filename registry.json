@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T23:04:47+00:00",
+    "updatedAt": "2026-11-08T23:23:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2225,7 +2225,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42388512100/artifacts/13582280090"
         }
       ],
-      "updatedAt": "2026-11-08T22:27:41+00:00",
+      "updatedAt": "2026-11-08T23:23:55+00:00",
       "head": "c115840f8a85010111fa5d72b611d7d9ab1df34b",
       "contributorReview": {
         "status": "pending",
@@ -2235,7 +2235,7 @@
         "url": "https://github.com/tamird/gvisor/commit/c115840f8",
         "title": "Drop Ubuntu's cross compilers from the builder",
         "requestedAt": "2026-11-07T04:07:52+00:00",
-        "summary": "Open after the default LLVM compiler lands. The proposed Dockerfile deletions were tested at c115840f8 on Ubuntu 22.04. A separate integration, 61ff148f0, built the nine release executables for each of AMD64 and ARM64 on one local AMD64 client with empty /bin and /usr/bin. Packaging and signing were outside that run.",
+        "summary": "Open after the default LLVM compiler lands? The Dockerfile deletions were tested on Ubuntu 22.04. In the LLVM integration, native AMD64 and ARM64 clients each built all nine release executables for both targets with empty /bin and /usr/bin. All 18 file digests matched across clients. Packaging and signing were outside this comparison.",
         "body": "The ARM smoke test added a cross compiler to the Ubuntu builder in\n8de562b79. Bazel now selects LLVM and the target sysroot when an AMD64\nbuilder compiles and links ARM64 code. The systrap rules use LLVM\nobjcopy for the raw signal handler and read its offsets directly from\nthe linked ELF.\n\nDrop crossbuild-essential-arm64 and crossbuild-essential-amd64 from\nthe default image. Keep build-essential for native Make builds."
       },
       "settledReviews": [
@@ -41468,24 +41468,94 @@
       }
     },
     {
-      "id": "branch:mutable-overlay-poll-waiter",
+      "id": "branch:poll-successful-entry-ownership",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/overlay-overlap-waiters",
-      "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654",
-      "title": "Unregister overlay poll waiters from their original backing file",
-      "url": "https://github.com/tamird/gvisor/commit/424cb3f06",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-07T03:42:00+00:00",
-      "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap.",
+      "ref": "research/poll-successful-entry-ownership",
+      "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
+      "url": "https://github.com/tamird/gvisor/commit/e39e7d78e",
+      "title": "Unregister only successful poll waiters",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T23:18:04+00:00",
+      "summary": "On master, poll called EventUnregister once after the file rejected the waiter with EIO. The proposed change returned EIO, made zero unregister calls and left the file’s reference count unchanged. The permanent regression runs pollBlock in the gVisor Linux syscall package.",
+      "refinement": {
+        "before": {
+          "head": "85cb9f489f4242d4313e8e2ab4c36cd0344d59e6"
+        },
+        "after": {
+          "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f"
+        },
+        "command": "git -C ~/code/gvisor range-diff 85cb9f489^! e39e7d78e^!"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "url": "https://github.com/tamird/gvisor/commit/e39e7d78e",
+        "title": "Unregister only successful poll waiters",
+        "body": "poll defers cleanup of each registered waiter. It records the file before EventRegister returns, so a failure causes cleanup to call EventUnregister on the entry that was just rejected. Unix sockets already undo their own registration on a host error (ed3929b26).\n\nKeep the file reference in pollState only after registration succeeds. On failure, release the reference and return the registration error.",
+        "summary": "Open this single-commit gVisor PR now that the Unix socket rollback in #16739 has landed?",
+        "requestedAt": "2026-11-08T23:18:04+00:00"
+      },
       "evidence": [
         {
-          "label": "The overlay change uses poll registrations only after they succeed. Review the preceding unregister correction separately.",
+          "label": "Merged Unix socket waiter rollback (#16739)",
+          "url": "https://github.com/google/gvisor/pull/16739"
+        },
+        {
+          "label": "Earlier standalone poll correction",
           "url": "https://github.com/tamird/gvisor/commit/85cb9f489"
         },
         {
-          "label": "Compare this source with its previously reviewed base",
+          "label": "Native AMD64 poll regression on master and on this revision; Linux syscall package Nogo passed for AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
+        "observedAt": "2026-11-08T23:18:04+00:00",
+        "disposition": "The Unix socket registration rollback has landed. The poll source is one commit on master 975fb1722.",
+        "nextAction": "Review opening the poll correction now.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e39e7d78e",
+          "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+        ]
+      }
+    },
+    {
+      "id": "branch:mutable-overlay-poll-waiter",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/overlay-poll-backing-ownership",
+      "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
+      "title": "Remove overlay waiters from their original file",
+      "url": "https://github.com/tamird/gvisor/commit/488b298b8",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T23:18:04+00:00",
+      "summary": "With the poll correction alone, unregistering a waiter after copy-up left the original lower file delivering hostname notifications to it. On this revision the removed waiter stayed quiet and the active hostname waiter was notified. The permanent regression uses gVisor’s VFS notification interface on native AMD64. Both package Nogo owners passed for AMD64 and ARM64.\n\nThe earlier nested-overlay, save/restore, race and benchmark results below were obtained on previous revisions.",
+      "evidence": [
+        {
+          "label": "Standalone poll prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/e39e7d78e"
+        },
+        {
+          "label": "Original VFS test on the poll parent and overlay revision; AMD64 and ARM64 Nogo reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+        },
+        {
+          "label": "Earlier overlay refinement before the split",
+          "url": "https://github.com/tamird/gvisor/compare/215b93439...424cb3f06"
+        },
+        {
+          "label": "Earlier poll correction from the combined proposal",
+          "url": "https://github.com/tamird/gvisor/commit/85cb9f489"
+        },
+        {
+          "label": "Earlier combined poll and overlay submission range",
           "url": "https://github.com/tamird/gvisor/compare/85d46891e...424cb3f06"
         },
         {
@@ -41579,21 +41649,49 @@
       ],
       "refinement": {
         "before": {
-          "head": "215b9343911736fac960834eedb5cb92fe4e1b3c"
+          "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654"
         },
         "after": {
-          "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654"
-        }
+          "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935"
+        },
+        "command": "git -C ~/code/gvisor range-diff 424cb3f06^! 488b298b8^!"
       },
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654",
-        "baseHead": "85d46891e97cf43c1e30935dc56f77b2ec5a5bf7",
-        "url": "https://github.com/tamird/gvisor/commit/424cb3f06",
-        "title": "Unregister overlay poll waiters from their original backing file",
-        "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap. The overlay change uses poll registrations only after they succeed. Review the preceding unregister correction separately. [Prerequisite commit](https://github.com/tamird/gvisor/commit/85cb9f489).",
-        "body": "This series follows the Unix waiter rollback. The first commit makes poll unregister only entries it successfully registered. The second keeps the lower overlay file until its last waiter is removed after copy-up. The checkpoint test restores registrations on both backing files in the same build. This changes the checkpoint representation of regular overlay file descriptions.\n\nEach benchmark operation registers and removes one or eight waiters on a warmed overlay file. Both versions measured zero allocations per operation for all overlay and direct-file cases. The table shows the overlay timings for tmpfs and proc, with 20 samples per version. [1]\n\n```\n                               │ stock.bench  │            fixed.bench             │\n                               │    sec/op    │   sec/op     vs base               │\nOverlayPoll/tmpfs/live1          48.50n ± 20%   45.65n ± 6%  -5.87% (p=0.045 n=20)\nOverlayPoll/tmpfs/live8          350.9n ±  0%   343.1n ± 0%  -2.21% (p=0.000 n=20)\nOverlayPoll/proc/live1           105.0n ±  0%   106.0n ± 0%  +0.93% (p=0.000 n=20)\nOverlayPoll/proc/live8           830.3n ±  1%   839.0n ± 0%  +1.05% (p=0.000 n=20)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41007120186/artifacts/12956227771\n"
+        "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
+        "baseHead": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
+        "url": "https://github.com/tamird/gvisor/commit/488b298b8",
+        "title": "Remove overlay waiters from their original file",
+        "body": "A mutable overlay file description can switch from its lower file to its upper file after copy-up. A waiter registered before the switch still belongs to the lower file. Removing it from the current upper file leaves it receiving notifications after cancellation.\n\nKeep the lower reference until its last registration is removed. Track which entries belong to the upper file only while the two sets of registrations overlap. This preserves the backing file across nested overlays and same-version checkpoint and restore.",
+        "summary": "Open this single-commit gVisor PR after the poll registration correction lands?",
+        "requestedAt": "2026-11-08T23:18:04+00:00"
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654",
+          "baseHead": "85d46891e97cf43c1e30935dc56f77b2ec5a5bf7",
+          "url": "https://github.com/tamird/gvisor/commit/424cb3f06",
+          "title": "Unregister overlay poll waiters from their original backing file",
+          "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap. The overlay change uses poll registrations only after they succeed. Review the preceding unregister correction separately. [Prerequisite commit](https://github.com/tamird/gvisor/commit/85cb9f489).",
+          "body": "This series follows the Unix waiter rollback. The first commit makes poll unregister only entries it successfully registered. The second keeps the lower overlay file until its last waiter is removed after copy-up. The checkpoint test restores registrations on both backing files in the same build. This changes the checkpoint representation of regular overlay file descriptions.\n\nEach benchmark operation registers and removes one or eight waiters on a warmed overlay file. Both versions measured zero allocations per operation for all overlay and direct-file cases. The table shows the overlay timings for tmpfs and proc, with 20 samples per version. [1]\n\n```\n                               │ stock.bench  │            fixed.bench             │\n                               │    sec/op    │   sec/op     vs base               │\nOverlayPoll/tmpfs/live1          48.50n ± 20%   45.65n ± 6%  -5.87% (p=0.045 n=20)\nOverlayPoll/tmpfs/live8          350.9n ±  0%   343.1n ± 0%  -2.21% (p=0.000 n=20)\nOverlayPoll/proc/live1           105.0n ±  0%   106.0n ± 0%  +0.93% (p=0.000 n=20)\nOverlayPoll/proc/live8           830.3n ±  1%   839.0n ± 0%  +1.05% (p=0.000 n=20)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41007120186/artifacts/12956227771\n",
+          "outcome": "superseded",
+          "at": "2026-11-08T23:18:04+00:00",
+          "note": "The two-commit submission was split into a standalone poll proposal and an overlay change that follows it."
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
+        "observedAt": "2026-11-08T23:18:04+00:00",
+        "disposition": "The overlay fix is one commit on the separate poll proposal and retains the cache locking that landed on master.",
+        "nextAction": "Review the overlay change now for submission after the poll parent lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/488b298b8",
+          "https://github.com/tamird/gvisor/commit/e39e7d78e",
+          "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+        ]
       }
     },
     {
@@ -45527,9 +45625,9 @@
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T17:47:05.918366+00:00",
+      "updatedAt": "2026-11-08T23:23:55+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
-      "summary": "The iperf3 benchmark uses the same Ubuntu Jammy runtime as iperf2. The AMD64 and ARM64 packages at 67601a14c contain the dynamic GNU binary and both upstream license notices. OpenSSL’s export is released. The iperf export was tested from its pending BCR change.",
+      "summary": "The iperf3 benchmark uses the same Ubuntu Jammy runtime as iperf2. The AMD64 and ARM64 packages at 67601a14c contain the dynamic GNU binary and both upstream license notices. OpenSSL’s export is released. The iperf export was tested from its pending BCR change. Parallel iperf2 results measured the first matching numbered stream. iperf3 reports aggregate sender bandwidth under the same benchmark name. Start a separate baseline for the aggregate results.",
       "followup": {
         "owner": "Build and release",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
@@ -65055,8 +65153,8 @@
       "head": "fe04aebd118f84df78dc0173e515f854d1809347",
       "title": "Start TCP checksum offload after the serialized IP header",
       "group": "runtime",
-      "updatedAt": "2026-11-08T15:35:23+00:00",
-      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Recording the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth. Full-size IPv6 writes at the route MSS still exceeded the MTU.\n\nA separate native Linux study ran 144 transfers to measure packet sizing with the experiment option. With the published checksum fix, four 10,153-byte writes at the route MSS delivered no data on option-capable NICs: IPv4 software segmentation and IPv6 with software, host or no GSO. A fork prototype that reserves option space delivered all 72 transfers on that build. With the socket option off on a capable NIC, each full packet carried 4 fewer data bytes on IPv4 and 8 fewer on IPv6. Restore across NICs with different option capabilities remains under investigation. This study exercised explicit netstack options outside #16393’s default configuration.",
+      "updatedAt": "2026-11-08T23:20:59+00:00",
+      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Recording the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth. Full-size IPv6 writes at the route MSS still exceeded the MTU.\n\nTwo Netstack TCP endpoints on a native Linux veth ran 144 transfers to measure packet sizing with the experiment option. With the published checksum fix, four 10,153-byte writes at the route MSS delivered no data on option-capable NICs: IPv4 software segmentation and IPv6 with software, host or no GSO. A fork prototype that reserves option space delivered all 72 transfers on that build. With the socket option off on a capable NIC, each full packet carried 4 fewer data bytes on IPv4 and 8 fewer on IPv6. The first prototype failed IPv4 restore from an incapable NIC to an option-capable NIC. The revised prototype passed that transition, repeated restore and the three other capability combinations. IPv6 restore remains unverified. A separate change corrects how Reno counts acknowledged packets when restore reduces MSS. This study exercised explicit netstack options outside #16393’s default configuration.",
       "evidence": [
         {
           "label": "Original peer and checksum-offset observations",
@@ -65077,6 +65175,10 @@
         {
           "label": "Native TCP packet sizing and delivery across 144 transfers",
           "url": "https://github.com/tamird/gvisor/actions/runs/42494393630/artifacts/13622937557"
+        },
+        {
+          "label": "IPv4 checkpoint restore across NIC capability changes and independent Reno accounting observation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42495751919/artifacts/13623572555"
         }
       ],
       "settledReviews": [
@@ -66338,6 +66440,78 @@
         "body": "An idle TCP connection can resume from a checkpoint with SO_KEEPALIVE enabled and never send another probe. Restoring the endpoint initialized a disabled timer. Setting TCP_KEEPIDLE again restarted it.\n\nSave the active timer's stack-clock deadline and bind its callback after the connected endpoint has a route. This preserves both the remaining idle period and the shorter interval between unanswered probes. Clear the saved timer state if the connection closes before it can be armed.\n\nCheck the remaining time and packets across a stack save and restore. Also cover a disabled timer and the configured probe count.",
         "requestedAt": "2026-11-08T21:48:58+00:00"
       }
+    },
+    {
+      "id": "branch:tcp-checklocks-paragraphs",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "runtime",
+      "ref": "research/tcp-checklocks-paragraphs",
+      "head": "3171566a54776598ea3f9ced5b96e5f399b2f31e",
+      "url": "https://github.com/tamird/gvisor/commit/3171566a5",
+      "title": "Separate TCP lock annotations from their descriptions",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T23:20:59+00:00",
+      "summary": "Two merged TCP changes left four lock annotations in the same paragraph as their descriptions. Four empty comment lines separate them. Every original source line and checklocks directive is identical. gofmt reports no changes.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "head": "3171566a54776598ea3f9ced5b96e5f399b2f31e",
+        "url": "https://github.com/tamird/gvisor/commit/3171566a5",
+        "title": "Separate TCP lock annotations from their descriptions",
+        "body": "Give the lock requirements on the TCP endpoint errors and SACK helpers\ntheir own paragraph in the Go documentation.",
+        "summary": "Include these four comment separators in the next post-merge cleanup?",
+        "requestedAt": "2026-11-08T23:20:59+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Four comment separators",
+          "url": "https://github.com/tamird/gvisor/commit/3171566a5"
+        },
+        {
+          "label": "D-SACK helpers",
+          "url": "https://github.com/google/gvisor/pull/16403"
+        },
+        {
+          "label": "Endpoint error guards",
+          "url": "https://github.com/google/gvisor/pull/16667"
+        }
+      ]
+    },
+    {
+      "id": "branch:fuse-release-directory-handle",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "runtime",
+      "ref": "research/fuse-release-directory-handle",
+      "head": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
+      "url": "https://github.com/tamird/gvisor/commit/beaf6a362",
+      "title": "Release FUSE directory handles after unsupported file opens",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T23:23:39+00:00",
+      "summary": "A FUSE server can reject regular file OPEN and still return a directory handle from OPENDIR. On close, native Linux sent RELEASEDIR for handle 305419896. Both stock gVisor configurations timed out waiting for it. With the fix, ptrace and systrap returned the same handle. The syscall ran on AMD64. The FUSE analyzer passed for AMD64 and ARM64.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "head": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
+        "url": "https://github.com/tamird/gvisor/commit/beaf6a362",
+        "title": "Release FUSE directory handles after unsupported file opens",
+        "body": "A server can return ENOSYS for OPEN and still implement OPENDIR. The\nregular-file fallback then suppresses RELEASEDIR when the directory\ncloses, leaving the server with an open directory handle.\n\nApply that fallback only to regular-file releases. Record the OPEN\ncapability atomically since file descriptions on different inodes\nshare the connection. Exercise the fallback and check the handle\nreturned to the server in RELEASEDIR.",
+        "summary": "Open this one-commit FUSE release fix?",
+        "requestedAt": "2026-11-08T23:23:39+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Native Linux, stock and fixed gVisor syscall logs, plus both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533671518/artifacts/13639230782"
+        },
+        {
+          "label": "Proposed implementation and permanent syscall test",
+          "url": "https://github.com/tamird/gvisor/commit/beaf6a362"
+        }
+      ]
     }
   ],
   "edges": [
@@ -69310,11 +69484,22 @@
     {
       "type": "depends_on",
       "from": "pr:16739",
-      "to": "branch:mutable-overlay-poll-waiter",
-      "reason": "Poll releases only entries whose registration succeeds. Unix sockets must first unlink a rejected waiter so skipping cleanup cannot leave it registered.",
+      "to": "branch:poll-successful-entry-ownership",
+      "reason": "The merged Unix socket change removes a rejected waiter before returning the host error. The poll change can therefore skip unregistering that entry.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16739",
         "https://github.com/tamird/gvisor/commit/ed3929b26"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:poll-successful-entry-ownership",
+      "to": "branch:mutable-overlay-poll-waiter",
+      "reason": "The overlay file counts successful registrations and relies on poll releasing only entries that were accepted. Submit the overlay change after the poll fix lands.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/e39e7d78e",
+        "https://github.com/tamird/gvisor/commit/488b298b8",
+        "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
       ]
     },
     {
@@ -87234,7 +87419,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T14:54:55+00:00",
+      "updatedAt": "2026-11-08T23:23:39+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -87516,6 +87701,19 @@
             {
               "label": "Lock the concrete soft-error read in TestConnectICMPError",
               "url": "https://tamird.github.io/gvisor/#branch:tcp-soft-error-test-lock"
+            }
+          ]
+        },
+        {
+          "text": "FUSE shares the OPEN fallback across inodes. An inode lock cannot serialize those accesses. The proposed fix records the flag atomically and continues to release successful directory opens. Native Linux and both corrected gVisor configurations returned the directory handle to the server. Stock timed out on both configurations.",
+          "evidence": [
+            {
+              "label": "Single-commit FUSE fix",
+              "url": "https://github.com/tamird/gvisor/commit/beaf6a362"
+            },
+            {
+              "label": "Original server observations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42533671518/artifacts/13639230782"
             }
           ]
         }
@@ -89419,8 +89617,8 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-08T23:06:48+00:00",
-      "lastReviewedAt": "2026-11-02T08:31:43+00:00",
+      "updatedAt": "2026-11-08T23:23:55+00:00",
+      "lastReviewedAt": "2026-11-08T23:07:51.974386+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
         {
@@ -89676,6 +89874,66 @@
             {
               "label": "Upstream range covered by the lock audit",
               "url": "https://github.com/google/gvisor/compare/aa767e4c4...975fb1722"
+            }
+          ]
+        },
+        {
+          "text": "Screened 456 distinct gVisor commits, including all 217 open authored PRs, 43 authored PRs merged in the changed-work set, and 196 other fork revisions. Two merged TCP changes still had four adjacent prose and checklocks lines on master. The cleanup separates all four. The six other historical matches no longer occur on master. The four errno assertions screened here already print strerror(err). The old clang-tidy shell action and YAML kwargs.pop calls are absent from their live replacements.",
+          "evidence": [
+            {
+              "label": "Proposed TCP comment cleanup",
+              "url": "https://github.com/tamird/gvisor/commit/3171566a5"
+            },
+            {
+              "label": "Current clang-tidy proposal",
+              "url": "https://github.com/tamird/gvisor/commit/49c4a3a92"
+            }
+          ]
+        },
+        {
+          "text": "Of 260 open or recently merged authored PRs, 118 touched a Go test file. Across 65 PRs that added ordinary Go tests, 33 tested a syscall, guest, host API or packet path, 15 tested internal state or lifetimes, and 17 tested tooling or serialization. Thirteen more PRs added only PacketImpact tests. These counts describe tests in source. Native Linux execution is recorded separately for each case. All 20 performance claims flagged in the 217 open PR bodies and 39 proposal or amendment bodies included a results table. The gsutil match referred only to the downloaded fixture size.",
+          "evidence": [
+            {
+              "label": "TCP checksum experiment",
+              "url": "https://github.com/google/gvisor/pull/17234"
+            },
+            {
+              "label": "Native poll and overlay regression receipts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+            }
+          ]
+        },
+        {
+          "text": "Rechecked 36 inline threads with external reviewer activity since November 2. Tamir posted the latest reply on 35. The remaining thread on #14343 already has a qualified amendment and reply awaiting his decision. Lucas also asked about First Pass on #17104 and the AMD64 syscall job on #17105. GitHub exposes only an overall failure for #732, the Buildkite job list is private, and Ryan has asked contributors to ignore this pipeline. The separate AMD64 eventfd runs on #17105 passed both partitions. The upstream job that failed is unknown.",
+          "evidence": [
+            {
+              "label": "Existing TMPFS amendment",
+              "url": "https://github.com/tamird/gvisor/commit/cfdbe9edf"
+            },
+            {
+              "label": "AMD64 syscall review question",
+              "url": "https://github.com/google/gvisor/pull/17105#pullrequestreview-5805785906"
+            },
+            {
+              "label": "First Pass maintainer guidance",
+              "url": "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255"
+            }
+          ]
+        },
+        {
+          "text": "The November 8 sweep reconciled all 593 changed-work URLs from the 23:07 UTC snapshot. Of those, 244 were gVisor PRs, 312 were fork commits, comparisons or branch URLs, and 37 concerned suppliers. The 25 fork comparison or tree URLs included 17 historical records mapping to 13 upstream PRs. All ten still open contained one commit. The separate poll and overlay decisions replace the old two-commit proposal. On the supplier side, all four live authored PRs directly represented in the set contained one commit. The builder decision now includes both native clients, and the iperf proposal identifies its change in the meaning of parallel bandwidth. New work after the audited snapshot remains in the next sweep.",
+          "evidence": [
+            {
+              "label": "Both native clients produced the same 18 release digests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42529199061/artifacts/13637052197"
+            },
+            {
+              "label": "Iperf3 aggregate sender result",
+              "url": "https://github.com/tamird/gvisor/blob/67601a14c/test/benchmarks/tools/iperf.go#L44-L77"
+            },
+            {
+              "label": "Independent poll and overlay Linux results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
             }
           ]
         }
@@ -90391,5 +90649,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T23:04:47+00:00"
+  "updatedAt": "2026-11-08T23:23:55+00:00"
 }
