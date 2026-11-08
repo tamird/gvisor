@@ -14,6 +14,10 @@
 
 package main
 
+import "math"
+
+const PiNew = 3
+
 type FooNew struct {
 	Q
 	Bar map[string]Q `json:"bar,omitempty"`
@@ -39,4 +43,12 @@ func foobarNew() {
 
 	b := otherpkg.UnrelatedType{}
 	b.Q = 0 // should not be renamed, this is a limitation
+}
+
+func importedSelectorNew() float64 {
+	return math.Pi
+}
+
+func shadowedImportNew(math FooNew) Q {
+	return math.Q
 }

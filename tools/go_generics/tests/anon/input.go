@@ -14,6 +14,10 @@
 
 package tests
 
+import "math"
+
+const Pi = 3
+
 type T interface {
 	Apply(T) T
 }
@@ -43,4 +47,12 @@ func foobar() {
 
 	b := otherpkg.UnrelatedType{}
 	b.T = 0 // should not be renamed, this is a limitation
+}
+
+func importedSelector() float64 {
+	return math.Pi
+}
+
+func shadowedImport(math Foo) T {
+	return math.T
 }

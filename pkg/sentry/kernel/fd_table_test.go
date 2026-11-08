@@ -84,9 +84,18 @@ func runTest(t testing.TB, fn func(ctx context.Context, fdTable *FDTable, fd *vf
 // one and add one that works too.
 func TestFDTableMany(t *testing.T) {
 	runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, _ *limits.LimitSet) {
+		var firstBucket *descriptorBucket
 		for i := 0; i < maxFD; i++ {
 			if _, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 				t.Fatalf("Allocated %v FDs but wanted to allocate %v", i, maxFD)
+			}
+			if i == 0 {
+				firstBucket = (*fdTable.slice.Load())[0].Load()
+			}
+		}
+		for i := int32(0); i < maxFD; i++ {
+			if got, flags, ok := fdTable.get(i); !ok || got != fd || flags != (FDFlags{}) {
+				t.Fatalf("After growth, get(%d) = (%p, %+v, %t), want (%p, %+v, true)", i, got, flags, ok, fd, FDFlags{})
 			}
 		}
 
@@ -94,14 +103,20 @@ func TestFDTableMany(t *testing.T) {
 			t.Fatalf("fdTable.NewFDs(0, r) in full map: got nil, wanted error")
 		}
 
-		df, err := fdTable.NewFDAt(ctx, 1, fd, FDFlags{})
+		flags := FDFlags{CloseOnExec: true}
+		df, err := fdTable.NewFDAt(ctx, 1, fd, flags)
 		if err != nil {
-			t.Fatalf("fdTable.NewFDAt(1, r, FDFlags{}): got %v, wanted nil", err)
+			t.Fatalf("fdTable.NewFDAt(1, r, %+v): got %v, wanted nil", flags, err)
 		}
 		if got, want := df, fd; got != want {
-			t.Fatalf("fdTable.NewFDAt(1, r, FDFlags{}): got %v, want %v", got, want)
+			t.Fatalf("fdTable.NewFDAt(1, r, %+v): got %v, want %v", flags, got, want)
 		}
 		df.DecRef(ctx)
+		// A reader that loaded a bucket before growth must still observe
+		// descriptor replacements made through the newly published slice.
+		if got := firstBucket[1].Load(); got == nil || got.file != fd || !got.flags.CloseOnExec {
+			t.Fatalf("Pre-growth bucket did not observe descriptor replacement: %+v", got)
+		}
 
 		i := int32(2)
 		fdTable.Remove(ctx, i)

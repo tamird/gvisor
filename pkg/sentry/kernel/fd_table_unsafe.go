@@ -121,7 +121,10 @@ func (f *FDTable) swap(fd int32, file *vfs.FileDescription, flags FDFlags) *vfs.
 				newLen = int(MaxFdLimit)
 			}
 		}
-		newSlice := append(*slicePtr, make([]descriptorBucketAtomicPtr, newLen-length)...)
+		newSlice := make(descriptorBucketSlice, newLen)
+		for i := 0; i < length; i++ {
+			newSlice[i].Store((*slicePtr)[i].Load())
+		}
 		slicePtr = &newSlice
 		f.slice.Store(slicePtr)
 	}
