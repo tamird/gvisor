@@ -481,7 +481,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 // +checklocksexclude:rc.snd.rtt.rttMutex
 func (rc *rackControl) recover(retransmitHead bool) {
 	snd := rc.snd
-	if !snd.FastRecovery.Active {
+	if !snd.FastRecovery.Active && !snd.sackRecoveryInterrupted {
 		// An RTO rewinds writeNext to replay outstanding data. RACK
 		// selects individual repairs from that flight. Leave sendData
 		// at the first unsent segment when RACK takes over.
@@ -521,16 +521,24 @@ func (rc *rackControl) recover(retransmitHead bool) {
 			continue
 		}
 
-		// Check the congestion window after entering recovery.
-		if snd.Outstanding >= snd.SndCwnd {
+		limit := int(snd.ep.scoreboard.SMSS())
+		outstanding := snd.Outstanding
+		if snd.sackRecoveryInterrupted {
+			// After an RTO, sendData charged the transmission before
+			// advancing writeNext. Replace one lost packet from that
+			// transmission without charging its replacement twice.
+			outstanding = max(0, outstanding-1)
+			limit = min(limit, snd.MaxPayloadSize)
+		}
+		if outstanding >= snd.SndCwnd {
 			break
 		}
 
-		if sent := snd.maybeSendSegment(seg, int(snd.ep.scoreboard.SMSS()), snd.SndUna.Add(snd.SndWnd)); !sent {
+		if sent := snd.maybeSendSegment(seg, limit, snd.SndUna.Add(snd.SndWnd)); !sent {
 			break
 		}
 		dataSent = true
-		snd.Outstanding += snd.pCount(seg, snd.MaxPayloadSize)
+		snd.Outstanding = outstanding + snd.pCount(seg, snd.MaxPayloadSize)
 	}
 
 	snd.postXmit(dataSent, true /* shouldScheduleProbe */)
