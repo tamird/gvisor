@@ -2812,6 +2812,38 @@ test('branchless graph endpoints reuse investigation records and reject missing 
 });
 
 
+test('the agent queue shows one project feedback review only when its current sweep is due', () => {
+  const context = client();
+  context.document = { getElementById: () => ({ value: '', checked: false }) };
+  const cutoff = '2026-11-02T08:31:43+00:00';
+  const investigation = { id: 'investigation:project-feedback', group: 'tests', status: 'active', lastReviewedAt: cutoff };
+  context.registryInput.nodes = [];
+  context.registryInput.investigations = [investigation];
+  function queue(owner, sweep) {
+    context.sweepInput = sweep;
+    context.queueInput = 'queue-' + owner;
+    return JSON.parse(vm.runInContext(`
+      liveSnapshot = { projectFeedbackReview: sweepInput };
+      model = { nodes: registryNodes(registry) };
+      reasonFilters = new Set([queueInput]);
+      JSON.stringify(attentionGroups(tableNodes(), registry.meta.owner).flatMap(group =>
+        group.entries.map(entry => [group.id, entry.node.id, entry.copyURL])))
+    `, context));
+  }
+  const due = { lastReviewed: cutoff, dailyReviewDue: true, changedWork: {} };
+  const expected = [['agent-feedback-sweep', investigation.id, null]];
+  assert.deepEqual(queue('agent', due), expected);
+  assert.deepEqual(queue('agent', { ...due, changedWork: { first: {}, second: {} } }), expected);
+  assert.deepEqual(queue('user', due), []);
+  assert.deepEqual(queue('agent', null), []);
+  investigation.lastReviewedAt = '2026-11-08T12:00:00+00:00';
+  assert.deepEqual(queue('agent', due), []);
+  const fresh = { lastReviewed: investigation.lastReviewedAt, dailyReviewDue: false, changedWork: {} };
+  assert.deepEqual(queue('agent', fresh), []);
+  investigation.status = 'concluded';
+  assert.deepEqual(queue('agent', { ...fresh, dailyReviewDue: true }), []);
+});
+
 test('BuildBuddy approval gates retain ERROR without claiming executed failure or green checks', () => {
   const node = attentionNode(); node.github.repo = 'buildbuddy-io/buildbuddy'; node.github.importPolicy = 'none';
   const gate = { ...serviceStatus('Test (darwin_arm64)', 'ERROR'),
