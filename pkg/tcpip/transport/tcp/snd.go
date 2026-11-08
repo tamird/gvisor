@@ -112,6 +112,12 @@ type sender struct {
 
 	ep *Endpoint
 
+	// payloadLimit is the smallest peer or path payload limit seen before
+	// reserving space for IP and TCP options.
+	//
+	// +checklocks:ep.mu
+	payloadLimit int
+
 	// finSent is set when the FIN segment is actually transmitted.
 	// The endpoint may be in FIN_WAIT1/LAST_ACK while the FIN is still
 	// queued behind blocked data; finSent guards closing ACK completions.
@@ -267,20 +273,16 @@ type rtt struct {
 //
 // +checklocks:ep.mu
 func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uint16, sndWndScale int) {
-	// The sender MUST reduce the TCP data length to account for any IP or
-	// TCP options that it is including in the packets that it sends.
-	// See: https://tools.ietf.org/html/rfc6691#section-2
-	maxPayloadSize := max(1, int(mss)-ep.maxOptionSize())
-
 	ep.snd = &sender{
-		ep: ep,
+		ep:           ep,
+		payloadLimit: int(mss),
 		TCPSenderState: TCPSenderState{
 			SndWnd:           sndWnd,
 			SndUna:           iss + 1,
 			SndNxt:           iss + 1,
 			RTTMeasureSeqNum: iss + 1,
 			LastSendTime:     ep.stack.Clock().NowMonotonic(),
-			MaxPayloadSize:   maxPayloadSize,
+			MaxPayloadSize:   max(1, int(mss)),
 			MaxSentAck:       irs + 1,
 			FastRecovery: TCPFastRecoveryState{
 				// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 1.
@@ -295,10 +297,6 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 		writeList: protectedWriteList{
 			set: make(map[*segment]struct{}),
 		},
-	}
-
-	if ep.snd.gso {
-		ep.snd.ep.gso.MSS = uint16(maxPayloadSize)
 	}
 
 	ep.snd.cc = ep.snd.initCongestionControl(ep.cc)
@@ -378,35 +376,22 @@ func (s *sender) initLossRecovery() lossRecovery {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) updateMaxPayloadSize(mtu, count int) {
-	m := mtu - header.TCPMinimumSize
-
-	m -= s.ep.maxOptionSize()
-
-	// We don't adjust up for now.
-	if m >= s.MaxPayloadSize {
-		return
-	}
-
-	// Make sure we can transmit at least one byte.
-	if m <= 0 {
-		m = 1
-	}
-
+	// RFC 9293 section 3.7.1 deducts options after taking the smaller of
+	// the peer MSS and the path limit. On restore a different outgoing NIC
+	// may require more space even when the peer limit still wins.
+	s.payloadLimit = min(s.payloadLimit, mtu-header.TCPMinimumSize)
 	oldMSS := s.MaxPayloadSize
+	m := min(oldMSS, max(1, s.payloadLimit-s.ep.maxOptionSize()))
 	s.MaxPayloadSize = m
 	if s.gso {
 		s.ep.gso.MSS = uint16(m)
 	}
-
-	if count == 0 {
-		// updateMaxPayloadSize is also called when the sender is created.
-		// and there is no data to send in such cases. Return immediately.
+	if s.ep.scoreboard != nil {
+		s.ep.scoreboard.smss = uint16(m)
+	}
+	if m == oldMSS || count == 0 {
 		return
 	}
-
-	// Update the scoreboard's smss to reflect the new lowered
-	// maxPayloadSize.
-	s.ep.scoreboard.smss = uint16(m)
 
 	s.Outstanding -= count
 	if s.Outstanding < 0 {
