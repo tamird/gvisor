@@ -180,7 +180,9 @@ func (e *Endpoint) closeEndpointAtRestore() {
 // +checklocksexclude:e.segmentQueue.mu
 // +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) Restore(s *stack.Stack) {
-	if !e.EndpointState().closed() {
+	epState := EndpointState(e.origEndpointState)
+	if !epState.connected() {
+		// Keepalive options can be set before the endpoint connects.
 		e.keepalive.timer.init(s.Clock(), timerHandler(e, e.keepaliveTimerExpired))
 	}
 	if snd := e.snd; snd != nil {
@@ -209,7 +211,6 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		return
 	}
 
-	epState := EndpointState(e.origEndpointState)
 	switch {
 	case epState.connected():
 		if e.stack.AllowLiveTCPMigration() {
@@ -274,6 +275,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 
 		// The callbacks take e.mu and need the restored route. An overdue
 		// timer can run as soon as this endpoint is unlocked.
+		e.keepalive.timer.restore(s.Clock(), timerHandler(e, e.keepaliveTimerExpired))
 		e.snd.resendTimer.restore(s.Clock(), timerHandler(e, e.snd.retransmitTimerExpired))
 		e.snd.probeTimer.restore(s.Clock(), timerHandler(e, e.snd.probeTimerExpired))
 		if e.ops.GetCorkOption() {

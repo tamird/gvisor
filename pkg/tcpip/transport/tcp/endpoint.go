@@ -848,7 +848,7 @@ type keepalive struct {
 	count          int
 	unacked        int
 	// should never be a zero timer if the endpoint is not closed.
-	timer timer       `state:"nosave"`
+	timer timer
 	waker sleep.Waker `state:"nosave"`
 }
 
