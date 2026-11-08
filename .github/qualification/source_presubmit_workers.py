@@ -1,5 +1,6 @@
 """Read original actions for one native test per worker architecture and class."""
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -8,7 +9,6 @@ import uuid
 
 import exec_cas as cas
 
-SOURCE = "f6d6788e84731673a155c9fff6f28b8624e34c50"
 CPU = {"amd64", "arm64"}
 IMAGE = "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
 SAMPLES = {
@@ -35,10 +35,14 @@ def main():
     root = Path(os.environ["RUNNER_TEMP"])
     path = root / "source-presubmit-results" / "receipt.json"
     receipt = json.loads(path.read_bytes())
-    plan = json.loads((root / "llvm-source-selection.json").read_bytes())
-    assert subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip()==SOURCE
-    assert receipt["source"] == plan["source"] == SOURCE
-    assert plan["oracle_sha256"] == "f1e20338b9009d0e3f98d54e84d5a86c9eece75c62002daa3aa271439362c047"
+    data = (root / "llvm-source-selection.json").read_bytes()
+    plan = json.loads(data)
+    source = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    assert source in ("f6d6788e84731673a155c9fff6f28b8624e34c50", "55e7265abbd508e773fa259c1ddd6e3182d5296e")
+    assert receipt["source"] == plan["source"] == source
+    assert plan["eligible"] and SAMPLES.keys() <= plan["tests"].keys()
+    assert receipt["selection_digest"] == hashlib.sha256(data).hexdigest() == (root / "submitted-selection.sha256").read_text()
+    assert receipt["invocation"] == plan["invocation"]
     cas.INV = str(uuid.UUID(receipt["invocation"]))
     r = {"workers": {}, "diagnostics": {}}
     for label, (cpu, isolation) in SAMPLES.items():

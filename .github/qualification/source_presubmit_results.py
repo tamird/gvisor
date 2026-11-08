@@ -10,9 +10,8 @@ import uuid
 from urllib.parse import unquote, urlparse
 import xml.etree.ElementTree as ET
 
-PRODUCT = "f6d6788e84731673a155c9fff6f28b8624e34c50"
+PRODUCT = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 COMPILER = "llvm@0.8.24"
-BASELINE = "1dfd7e45f54fbeb7a93d801bd04d893b43bb0100"
 LABEL = re.compile(r"//[A-Za-z0-9_.+/-]*:[A-Za-z0-9_.+/-]+")
 CONTROL = "//test/syscalls:uname_test_native"
 TMP = Path(os.environ["RUNNER_TEMP"])
@@ -115,32 +114,36 @@ def publish(name, result):
 
 
 def main():
-    assert subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip() == PRODUCT
+    assert PRODUCT in ("f6d6788e84731673a155c9fff6f28b8624e34c50", "55e7265abbd508e773fa259c1ddd6e3182d5296e")
     SEP.mkdir(exist_ok=True)
     sel_path=TMP/"llvm-source-selection.json"
-    selection=json.loads(sel_path.read_text()) if sel_path.is_file() else {}
+    data = sel_path.read_bytes() if sel_path.is_file() else b""
+    selection = json.loads(data) if data else {}
+    plan_digest = hashlib.sha256(data).hexdigest() if data else None
+    marker = TMP / "submitted-selection.sha256"
     assert not selection or selection["source"]==PRODUCT
     full=selection.get("all",{}); tests=selection.get("tests",{})
     assert all(LABEL.fullmatch(k) and cfg(v) for table in (full,tests) for k,v in table.items())
-    exact=bool(selection.get("eligible") and full and tests and tests.keys()<=full.keys())
+    exact=bool(selection.get("eligible") and full and tests and tests.keys()<=full.keys()
+               and marker.is_file() and marker.read_text() == plan_digest)
     roots={k:("run" if k in tests else "build") for k in full} if exact else {}
-    expected_shards=selection.get("shards",{})
-    assert all(k in tests and isinstance(n,int) and 1<=n<=256 for k,n in expected_shards.items())
+    expected_ids = set()
     runnable=sum(v=="run" for v in roots.values())
-    result={"source":PRODUCT,"compiler":COMPILER,"baseline":BASELINE,"analysis_baseline_artifact":13571137111,
+    result={"source":PRODUCT,"compiler":COMPILER,"baseline":selection.get("historical_source"),"historical_artifact":selection.get("historical_artifact"),
+            "historical_mode":selection.get("historical_mode"),
             "expected":{"runnable":runnable,"build_only":len(roots)-runnable},"command":selection.get("command"),
             "complete_source_selection":exact,"public_patterns":selection.get("public_patterns",[]),
-            "selection_phases":selection.get("phases",{}),"shard_oracle":bool(expected_shards),
+            "selection_phases":selection.get("phases",{}),"historical_changes":selection.get("historical_changes", {}),
             "jobs":64,"keep_going":True,"requested_fresh_tests":True,"target_results":{},"shards":[],
             "test_summaries":{},"failed_actions":[],"aborts":[],"console_signals":[],"unexpected_terminals":[]}
-    result["expected_per_owner_shards"]=expected_shards
     result["configured_firecracker_owners"]=selection.get("firecracker_owners",[])
     workers = selection.get("test_workers", {})
     assert all(k in tests and v in ("amd64", "arm64") for k,v in workers.items())
     result["configured_test_workers"]=workers
     result["configured_test_checksums"]={}
+    result["unbound_test_plans"] = []
     result["complete_pass"]=False
-    result["selection_digest"]=selection.get("oracle_sha256")
+    result["selection_digest"] = plan_digest
     suites=set(selection.get("suites", []))
     locations_by_row=[]
     rcfile=TMP/"source-presubmit-exit"
@@ -180,6 +183,20 @@ def main():
                     else:
                         status=enums(event.get("aborted",{}).get("reason","UNKNOWN"),REASONS)
                     result["target_results"][label]=[status,cfg(completed.get("configuration",{}).get("id")),roots[label]]
+                    # TargetCompleteEvent announces each planned run/shard before any retry.
+                    for child in event.get("children", []):
+                        planned = child.get("testResult")
+                        if not planned:
+                            continue
+                        child_label = planned["label"]
+                        if (not exact or label not in tests or child_label != label
+                                or planned["configuration"] != completed["configuration"]
+                                or int(planned.get("attempt", 1)) != 1):
+                            # Bazel may declare an alias's children under the actual label.
+                            if len(result["unbound_test_plans"]) < 16:
+                                result["unbound_test_plans"].append([label, public_label(child_label, roots)])
+                            continue
+                        expected_ids.add((label, int(planned.get("run", 1)), int(planned.get("shard", 1))))
                 if "testResult" in event:
                     rid=ident["testResult"]
                     label=rid["label"]
@@ -255,6 +272,12 @@ def main():
     checksums={label: row[1] for label,row in result["target_results"].items() if label in tests}
     result["configured_test_checksums"]=checksums
     result["matching_shard_configurations"]=sum(bool(checksums.get(r["owner"])) and r["config"]==checksums[r["owner"]] for r in result["shards"])
+    expected_shards = collections.Counter(owner for owner, _, _ in expected_ids)
+    result["expected_per_owner_shards"] = dict(expected_shards)
+    result["missing_test_plans"] = sorted(tests.keys() - expected_shards.keys())
+    result["historical_shard_counts_changed"] = {
+        owner: [count, expected_shards[owner]] for owner, count in selection.get("historical_shards", {}).items()
+        if owner in expected_shards and expected_shards[owner] != count}
     collect_outputs(result, locations_by_row)
     result["expected_shards"]=sum(expected_shards.values()) if expected_shards else None
     result["missing_shards"]={l:n-by_owner[l] for l,n in expected_shards.items() if n!=by_owner[l]}
@@ -267,18 +290,18 @@ def main():
     result["all_fresh_remote"]=bool(result["shards"]) and all(
         s["strategy"]=="remote" and not s["cached_locally"] and not s["cached_remotely"] for s in result["shards"])
     result["all_shard_configs_joined"]=bool(result["shards"]) and result["matching_shard_configurations"]==len(result["shards"])
-    expected_ids={(owner,1,i) for owner,n in expected_shards.items() for i in range(1,n+1)}
     result["missing_shard_ids"] = sorted(expected_ids - seen_shards)
-    result["unexpected_shard_ids"] = sorted(seen_shards - expected_ids) if expected_ids else []
+    result["unexpected_shard_ids"] = sorted(seen_shards - expected_ids)
     result["duplicate_test_results"] = len(result["shards"]) - len(seen_shards)
     result["configuration_mismatches"] = [s["owner"] for s in result["shards"] if not s["config"] or s["config"] != checksums.get(s["owner"])]
     result["native_attempts"] = sum(s.get("native", {}).get("matches", False) for s in result["shards"])
     result["complete_xml"] = (len(result["shards"]) == result["shards_with_verified_xml"]
                               and all("counts" in s.get("xml_case_counts", {}) for s in result["shards"]))
     result["complete_execution_receipts"] = bool(exact and tests.keys() == expected_shards.keys() == workers.keys()
-        and len(tests)==728 and len(roots)-len(tests)==2887 and len(expected_ids)==748 and seen_shards==expected_ids
+        and result.get("invocation") == selection.get("invocation") and seen_shards == expected_ids
+        and not result["unbound_test_plans"]
         and result["all_shard_configs_joined"] and result["all_fresh_remote"]
-        and result["native_attempts"]==748 and result["duplicate_test_results"]==0 and all(s["attempt"]==1 for s in result["shards"])
+        and result["native_attempts"]==len(expected_ids) and result["duplicate_test_results"]==0 and all(s["attempt"]==1 for s in result["shards"])
         and not result["configuration_mismatches"] and not result["missing_target_count"]
         and not result.get("incomplete_bep_line") and "bazel_exit" in result)
     # These legacy case-level controls have their own outcome; the full suite
@@ -290,8 +313,13 @@ def main():
         and all(v[0]=="PASSED" for v in result["test_summaries"].values())
         and all(v[0]=="built" for v in result["target_results"].values()) and len(seen_shards)==len(result["shards"])
         and all(s["status"]=="PASSED" and s["strategy"]=="remote" and not s["cached_locally"] and not s["cached_remotely"] for s in result["shards"]))
+    result["coverage_counts"] = {
+        name: {change: len(labels) for change, labels in changes.items()}
+        for name, changes in result["historical_changes"].items()}
+    result["coverage_counts"]["changed_historical_shard_counts"] = len(result["historical_shard_counts_changed"])
+    result["passed_xml_shard_counts"] = {name: len(ids) for name, ids in result["passed_xml_shards"].items()}
     publish("receipt.json", result)
-    print(json.dumps({k:result.get(k) for k in ("source","invocation","bazel_exit","target_counts","result_counts","owners_with_test_result","missing_target_count","selected_cases_verified","complete_pass")},sort_keys=True))
+    print(json.dumps({k:result.get(k) for k in ("source","invocation","bazel_exit","target_counts","result_counts","owners_with_test_result","missing_target_count","selected_cases_verified","coverage_counts","passed_xml_shard_counts","complete_pass")},sort_keys=True))
 
 
 def failure_codes(data):
@@ -347,6 +375,7 @@ def collect_outputs(result, locations_by_row):
     budget = {"failed": 96000, "skipped": 300000}
     named = {}
     xml_rows = 0
+    strata = result["passed_xml_shards"] = {"zero_named_cases": [], "all_named_cases_skipped": []}
 
     def original(row, locations, name, limit):
         expected_digest = row["xml" if name == "test.xml" else "log"]
@@ -398,6 +427,7 @@ def collect_outputs(result, locations_by_row):
             else:
                 counts = collections.Counter()
                 names = {"failed": [], "skipped": []}
+                named_counts = collections.Counter()
                 for case in document.iter("testcase"):
                     state = "passed"
                     if case.find("error") is not None:
@@ -409,6 +439,8 @@ def collect_outputs(result, locations_by_row):
                         state = "skipped"
                     counts[state] += 1
                     name = case.get("name", "")
+                    if name:
+                        named_counts[state] += 1
                     class_name = case.get("classname", "")
                     if state != "passed":
                         bucket = "skipped" if state == "skipped" else "failed"
@@ -432,6 +464,12 @@ def collect_outputs(result, locations_by_row):
                             continue
                     if short in expected.get(base, {}):
                         observed[short] = status
+                if row["status"] == "PASSED":
+                    shard = [owner, row["run"], row["shard"], row["attempt"]]
+                    if not named_counts:
+                        strata["zero_named_cases"].append(shard)
+                    elif set(named_counts) == {"skipped"}:
+                        strata["all_named_cases_skipped"].append(shard)
                 xml_rows += 1
                 row["xml_case_counts"] = {
                     "original_digest_matched": True, "counts": dict(counts),

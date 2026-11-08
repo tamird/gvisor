@@ -10,22 +10,21 @@ import subprocess
 import sys
 import uuid
 
-SOURCE = "f6d6788e84731673a155c9fff6f28b8624e34c50"
+HISTORICAL_SOURCE = "f6d6788e84731673a155c9fff6f28b8624e34c50"
+SOURCE = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 CONTROL = "//test/syscalls:uname_test_native"
 TMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TMP / "llvm-source-selection.json"
 RESULTS = TMP / "source-presubmit-results"
 LABEL = re.compile(r"//[A-Za-z0-9_.+/-]*:[A-Za-z0-9_.+/-]+")
-# Immutable graph from 13571137111, whose source tree matches this checkout.
-ORACLE = "f1e20338b9009d0e3f98d54e84d5a86c9eece75c62002daa3aa271439362c047"
+# Member receipt.json from tamird/gvisor Actions artifact 13572296525.
+HISTORICAL_RECEIPT_SHA256 = "5b82f00dc28b768fd4129813f6e82f852c0a204b1b04d0051b7eec975edb0fbd"
 SUFFIX = "_presubmit_arm64"
-MULTIPLE = {"//pkg/tcpip/stack:stack_x_test": 8, "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": 4}
 FIRECRACKER = {
     "//examples/sandboxexec/go/docprocessor:docprocessor_test", "//runsc/cmd:cmd_test",
     "//runsc/sandbox:sandbox_test", "//sandboxexec/sandbox/python:sandbox_py_test",
     "//sandboxexec/sandbox:sandbox_test", CONTROL,
 }
-UNPRIVILEGED = "//runsc/cmd:statefile_output_permissions_test"
 PROBE = '''set -eu
 machine=$(/bin/uname -m)
 case "$TEST_TARGET" in
@@ -97,8 +96,24 @@ def select(name, opts, tests_only):
     return rows
 
 
-def owner_digest(labels):
-    return hashlib.sha256(("\n".join(sorted(labels)) + "\n").encode()).hexdigest()
+def historical_selection(roots, tests):
+    path = TMP / "13572296525-receipt.json"
+    if path.is_file():
+        data = path.read_bytes()
+        assert hashlib.sha256(data).hexdigest() == HISTORICAL_RECEIPT_SHA256
+        return json.loads(data), "original_receipt"
+
+    # The original coordinator passed no receipt. Reuse these original labels
+    # only when both independently selected owner sets match exactly.
+    def owner_digest(labels):
+        return hashlib.sha256(("\n".join(sorted(labels)) + "\n").encode()).hexdigest()
+
+    if (owner_digest(roots.keys() - tests.keys()) != "9e31ff09dacc4269ef991f6ef7267445134a77f0bc0cd196539f9f2fd1cd1ecd"
+            or owner_digest(tests) != "121d63098403b87a32a48205a8d6150a493b2ad6e05df418cb26172197009b65"):
+        raise ValueError(f"Owner inventory changed; supply artifact 13572296525 member receipt.json at {path}")
+    multiple = {"//pkg/tcpip/stack:stack_x_test": 8, "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": 4}
+    shards = {label: multiple.get(label.removesuffix(SUFFIX), 1) for label in tests}
+    return {"source": HISTORICAL_SOURCE, "target_results": roots, "expected_per_owner_shards": shards}, "original_owner_digests"
 
 
 def analyze():
@@ -111,33 +126,32 @@ def analyze():
     roots = select("all", opts, False)
     tests = select("tests", opts, True)
     assert tests.keys() <= roots.keys()
-    build_only = roots.keys() - tests.keys()
-    assert len(build_only) == 2887 and owner_digest(build_only) == "9e31ff09dacc4269ef991f6ef7267445134a77f0bc0cd196539f9f2fd1cd1ecd"
-    assert len(tests) == 728 and owner_digest(tests) == "121d63098403b87a32a48205a8d6150a493b2ad6e05df418cb26172197009b65"
-    workers, shards, rows, fc = {}, {}, [], []
-    for label in sorted(tests):
-        base = label.removesuffix(SUFFIX)
-        cpu = "arm64" if label.endswith(SUFFIX) else "amd64"
-        count = MULTIPLE.get(base, 1)
-        isolation = "firecracker" if base in FIRECRACKER else "oci"
-        user = "root" if base in FIRECRACKER else "65534:65534" if base == UNPRIVILEGED else ""
-        if base in FIRECRACKER:
-            fc.append(label)
-        workers[label], shards[label] = cpu, count
-        rows.extend((label, 1, i, cpu, isolation, user) for i in range(1, count + 1))
-    digest = hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest()
-    assert digest == ORACLE and len(rows) == 748
-    stage.update(shards=shards, test_workers=workers, firecracker_owners=fc, oracle_sha256=digest, eligible=True)
+    assert tests and roots and CONTROL + SUFFIX in tests
+    workers = {label: "arm64" if label.endswith(SUFFIX) else "amd64" for label in tests}
+    old, provenance = historical_selection(roots, tests)
+    old_tests = old["expected_per_owner_shards"]
+    old_builds = old["target_results"].keys() - old_tests.keys()
+    builds = roots.keys() - tests.keys()
+    drift = {}
+    for name, previous, current in (("build_only", old_builds, builds), ("tests", old_tests.keys(), tests.keys())):
+        drift[name] = {"missing": sorted(previous - current), "added": sorted(current - previous)}
+    stage.update(test_workers=workers, firecracker_owners=sorted(label for label in tests if label.removesuffix(SUFFIX) in FIRECRACKER),
+                 historical_artifact=13572296525, historical_source=old["source"], historical_mode=provenance, historical_changes=drift,
+                 historical_shards=old_tests, invocation=str(uuid.uuid4()), eligible=True)
     save()
-    print("Bound 728 test owners, 748 shards and 2,887 build-only roots", flush=True)
+    print(f"Selected {len(tests)} test owners and {len(builds)} build-only roots", flush=True)
 
 
 def execute():
-    assert json.loads(OUT.read_text())["eligible"]
+    data = OUT.read_bytes()
+    plan = json.loads(data)
+    assert plan["eligible"] and plan["source"] == SOURCE
+    with (TMP / "submitted-selection.sha256").open("x") as marker:
+        marker.write(hashlib.sha256(data).hexdigest())
     RESULTS.mkdir(exist_ok=True)
     wrapper = TMP / "full-mixed-bazel"
     argv = ["bazelisk", "--bazelrc=" + str(TMP / "source-presubmit.bazelrc")]
-    wrapper.write_text("#!/bin/sh\nset -eu\n" + shlex.join(["exec", *argv]) + ' "$@" ' + shlex.quote(RUN_UNDER) + "\n")
+    wrapper.write_text("#!/bin/sh\nset -eu\n" + shlex.join(["exec", *argv]) + ' "$@" ' + shlex.quote(RUN_UNDER) + " --invocation_id=" + str(uuid.UUID(plan["invocation"])) + "\n")
     wrapper.chmod(0o700)
     cmd = ["timeout", "--signal=INT", "--kill-after=60s", "90m", "/bin/bash", "-eu", "-c", canonical_step()["command"]]
     edge = TMP / "source-presubmit.bep"
@@ -178,5 +192,5 @@ def execute():
 
 
 if __name__ == "__main__":
-    assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == SOURCE
+    assert SOURCE in (HISTORICAL_SOURCE, "55e7265abbd508e773fa259c1ddd6e3182d5296e")
     {"analyze": analyze, "execute": execute}[sys.argv[1]]()
