@@ -184,7 +184,7 @@ def main():
         cmd=[str(OUT.parent/"bazel"),"--nosystem_rc","--nohome_rc","--host_jvm_args=-Xmx4g","test","--config=x86_64",
              "--jobs=3","--strategy=TestRunner=local","--test_env=GO_TEST_WRAP_TESTV=1","--nocache_test_results",
              "--test_sharding_strategy=disabled","--runs_per_test=1","--flaky_test_attempts=1","--test_timeout=360",
-             "--keep_going","--remote_executor=","--remote_cache=","--bes_backend=","--zip_undeclared_test_outputs",
+             "--keep_going","--distdir="+str(OUT/"dist"),"--remote_executor=","--remote_cache=","--bes_backend=","--zip_undeclared_test_outputs",
              "--test_filter=^"+case+"$","--build_event_json_file="+str(bep),"--build_event_json_file_path_conversion=false",*TARGETS]
         scope=report["arms"][typ]={"test_results":{}}
         with (OUT/(typ+".log")).open("w") as log:
