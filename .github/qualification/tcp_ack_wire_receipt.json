@@ -1,0 +1,199 @@
+{
+  "archive_sha256": "a5c6933ee65aa98cff9ce106c66cdd1da6a2a52e96e1ed569f92e02e7183826a",
+  "artifact": 13625114355,
+  "carrier": "1e1143dfd97de03e5ee0c40f5c9c40574509c9be",
+  "original_conclusion": "failure",
+  "outputs": {
+    "candidate-unit": {
+      "config": "035afb42a97961f7e888842143164a4d04d0f72a450676fdd9f0776a8afeb5b1",
+      "exit": 0,
+      "files": {
+        "test.log": {
+          "bytes": 279,
+          "sha256": "c558787659265767255191f93358e70ac4077f2a3a1f102cd643858a6eeb3526"
+        },
+        "test.xml": {
+          "bytes": 326,
+          "sha256": "082c5358ead1946718f7e0e8ad8ec0f1f67c23fc5e987202ae360add341d2989"
+        }
+      },
+      "status": "PASSED",
+      "strategy": "local",
+      "terminals": {
+        "TestCumulativeACKPacketBoundaries": "PASS"
+      },
+      "verified": true
+    },
+    "candidate-wire": {
+      "armed_cwnd": 10,
+      "config": "660ad80cbbfed231273fb18949bed7e463cbb913e6663403edb4f26b48ff899a",
+      "exit": 0,
+      "files": {
+        "test.log": {
+          "bytes": 8609,
+          "sha256": "dd35527fac91527f5a4fe233190fabc689e69b313c15ba8633548030cab79970"
+        },
+        "test.xml": {
+          "bytes": 1126,
+          "sha256": "6ed1464c32e91e4d362165e3dc3524daa7d4594adb975a20b43167a2f1897977"
+        }
+      },
+      "rto_ns": 1000000000,
+      "status": "PASSED",
+      "steps": {
+        "partial": [
+          [
+            0,
+            4,
+            10,
+            10,
+            0
+          ],
+          [
+            1,
+            1196,
+            10,
+            10,
+            0
+          ],
+          [
+            2,
+            1196,
+            10,
+            10,
+            0
+          ],
+          [
+            3,
+            1200,
+            10,
+            11,
+            0
+          ],
+          [
+            4,
+            1200,
+            11,
+            11,
+            0
+          ]
+        ],
+        "repair": [
+          [
+            0,
+            1196,
+            1,
+            2,
+            2
+          ],
+          [
+            1,
+            1200,
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            1200,
+            2,
+            2,
+            2
+          ]
+        ],
+        "smaller": [
+          [
+            0,
+            1200,
+            10,
+            11,
+            0
+          ]
+        ],
+        "two": [
+          [
+            0,
+            1204,
+            10,
+            12,
+            0
+          ],
+          [
+            1,
+            1204,
+            12,
+            12,
+            0
+          ]
+        ]
+      },
+      "strategy": "local",
+      "terminals": {
+        "TestTCPMigration": "PASS",
+        "TestTCPMigration/MigrationAllowed_SmallerMTUWithOutstandingPacket": "PASS",
+        "TestTCPMigrationMTUAckCredit": "PASS",
+        "TestTCPMigrationMTUAckCredit/partial": "PASS",
+        "TestTCPMigrationMTUAckCredit/repair": "PASS",
+        "TestTCPMigrationMTUAckCredit/smaller": "PASS",
+        "TestTCPMigrationMTUAckCredit/two": "PASS"
+      },
+      "verified": true
+    },
+    "stock-wire": {
+      "armed_cwnd": 10,
+      "config": "19b53ec9aaa39edc53a74921bfe819bc7f17ad9f87b8619186af1f8df1d534a2",
+      "exit": 3,
+      "files": {
+        "test.log": {
+          "bytes": 3708,
+          "sha256": "5b57473f23f508cd7be687b1c6f525d8d780474df5993245ba27ea90e6cf585c"
+        },
+        "test.xml": {
+          "bytes": 2728,
+          "sha256": "306d30a118f32a4f3d67e45195004060e48dea899a46385b4a13aa83a9cc9023"
+        }
+      },
+      "rto_ns": 1000000000,
+      "status": "FAILED",
+      "steps": {
+        "repair": [
+          [
+            0,
+            1196,
+            1,
+            2,
+            2
+          ],
+          [
+            1,
+            1200,
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            1200,
+            2,
+            2,
+            2
+          ]
+        ]
+      },
+      "strategy": "local",
+      "terminals": {
+        "TestTCPMigration": "FAIL",
+        "TestTCPMigration/MigrationAllowed_SmallerMTUWithOutstandingPacket": "FAIL",
+        "TestTCPMigrationMTUAckCredit": "PASS",
+        "TestTCPMigrationMTUAckCredit/repair": "PASS"
+      },
+      "verified": true
+    }
+  },
+  "replay_verified": true,
+  "run": 42500887360,
+  "sources": {
+    "candidate": "71bf32380060634e1ec689aceca8e4baae8e14c3",
+    "stock": "679d14eed77a4ce6029065d88248c8ce0902c270"
+  }
+}

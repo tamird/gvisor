@@ -1,11 +1,14 @@
 """Compare actual cumulative ACK and repair observations on two TCP senders."""
 
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
+import sys
+import zipfile
 import xml.etree.ElementTree as ET
 from urllib.parse import unquote, urlsplit
 
@@ -82,6 +85,10 @@ def observe(arm, head, row, fixture, owner):
         (OUT / (prefix + "-" + name)).write_bytes(data)
         row["files"][name] = {"sha256": digest, "bytes": len(data)}
         docs[name] = data
+    check_outputs(arm, owner, row, docs, leaves)
+
+
+def check_outputs(arm, owner, row, docs, leaves):
     text = docs["test.log"].decode()
     xml = ET.fromstring(docs["test.xml"])
     terminals = re.findall(r"(?m)^\s*--- (PASS|FAIL|SKIP): (Test\S+) \(", text)
@@ -115,7 +122,9 @@ def observe(arm, head, row, fixture, owner):
             assert text.count(marker) == 1, (case, marker)
             assert all(b > 0 and a > 0 for _, _, b, a, _ in seq)
             if repair:
-                assert seq[0][4] == 1 and seq[1][4] == 2 and seq[2][4] == 2
+                # The snapshot follows processing the prefix ACK. It opens
+                # the window for the already queued four-byte retransmission.
+                assert [sample[4] for sample in seq] == [2, 2, 2]
                 assert seq[0][2:4] == [1, 2] and seq[2][2] == seq[2][3]
             else:
                 assert all(x[4] == 0 for x in seq)
@@ -147,5 +156,35 @@ def main():
     assert report["verified"]
 
 
+def replay(data):
+    digest = hashlib.sha256(data).hexdigest()
+    assert digest == "a5c6933ee65aa98cff9ce106c66cdd1da6a2a52e96e1ed569f92e02e7183826a"
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        saved = json.loads(archive.read("result.json"))
+        assert saved["carrier"] == "1e1143dfd97de03e5ee0c40f5c9c40574509c9be"
+        assert saved["stock"] == BASE and saved["candidate"] == FIX and not saved["verified"]
+        receipt = {"artifact": 13625114355, "run": 42500887360, "original_conclusion": "failure",
+                   "archive_sha256": digest, "carrier": saved["carrier"], "sources": {"stock": BASE, "candidate": FIX}, "outputs": {}}
+        for arm, owners in (("stock", [WIRE]), ("candidate", [WIRE, UNIT])):
+            for owner in owners:
+                old = saved["arms"][arm][owner]
+                prefix = arm + ("-wire" if owner == WIRE else "-unit")
+                docs = {}
+                for name in ("test.log", "test.xml"):
+                    member = archive.read(prefix + "-" + name)
+                    assert len(member) == old["files"][name]["bytes"]
+                    assert hashlib.sha256(member).hexdigest() == old["files"][name]["sha256"]
+                    docs[name] = member
+                row = {k:old[k] for k in ("exit", "status", "strategy", "config", "files")}
+                assert row["strategy"] in ("local", "standalone")
+                check_outputs(arm, owner, row, docs, ["repair"] if arm == "stock" else list(STEPS))
+                receipt["outputs"][prefix] = row
+    receipt["replay_verified"] = True
+    return receipt
+
+
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["--replay"]:
+        print(json.dumps(replay(sys.stdin.buffer.read()), indent=2, sort_keys=True))
+    else:
+        main()
