@@ -6,27 +6,29 @@
 
 #include "textflag.h"
 
-// handleMemclrFault returns (the value stored in R0, the value stored in R1).
-// Control is transferred to it when memclr below receives SIGSEGV or SIGBUS,
-// with the faulting address stored in R0 and the signal number stored in R1.
+// handleMemclrFault returns (the value stored in R0, the value stored in R0,
+// the value stored in R1). Control is transferred to it when memclr below
+// receives SIGSEGV or SIGBUS, with the faulting address stored in R0 and the
+// signal number stored in R1.
 //
 // It must have the same frame configuration as memclr so that it can undo any
 // potential call frame set up by the assembler.
-TEXT handleMemclrFault(SB), NOSPLIT, $0-28
+TEXT handleMemclrFault(SB), NOSPLIT, $0-36
 	MOVD R0, addr+16(FP)
-	MOVW R1, sig+24(FP)
+	MOVD R0, written+24(FP)
+	MOVW R1, sig+32(FP)
 	RET
 
 // See the corresponding doc in safecopy_unsafe.go
 //
 // The code is derived from runtime.memclrNoHeapPointers.
 //
-// func memclr(ptr unsafe.Pointer, n uintptr) (fault unsafe.Pointer, sig int32)
-TEXT ·memclr(SB), NOSPLIT, $0-28
+// func memclr(ptr unsafe.Pointer, n uintptr) (fault unsafe.Pointer, written unsafe.Pointer, sig int32)
+TEXT ·memclr(SB), NOSPLIT, $0-36
 	// Store 0 as the returned signal number. If we run to completion,
 	// this is the value the caller will see; if a signal is received,
 	// handleMemclrFault will store a different value in this address.
-	MOVW $0, sig+24(FP)
+	MOVW $0, sig+32(FP)
 	MOVD ptr+0(FP), R0
 	MOVD n+8(FP), R1
 

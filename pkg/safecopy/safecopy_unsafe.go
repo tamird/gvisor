@@ -41,15 +41,14 @@ func memcpy(dst, src uintptr, n uintptr) (fault uintptr, sig int32)
 
 // memclr sets the n bytes following ptr to zeroes. If a SIGSEGV or SIGBUS
 // signal is received during the write, it returns the address that caused the
-// fault and the number of the signal that was received. Otherwise, it returns
-// an unspecified address and a signal number of 0.
+// fault, an address written, and the number of the signal that was received.
+// Otherwise, it returns unspecified addresses and a signal number of 0.
 //
-// Data is written in order, such that if a fault happens at address p, it is
-// safe to assume that all data before p-maxRegisterSize has already been
-// successfully written.
+// If a fault happens at address p, it is safe to assume that all data before
+// min(p-maxRegisterSize, written) has already been successfully written.
 //
 //go:noescape
-func memclr(ptr uintptr, n uintptr) (fault uintptr, sig int32)
+func memclr(ptr uintptr, n uintptr) (fault uintptr, written uintptr, sig int32)
 
 // swapUint32 atomically stores new into *ptr and returns (the previous *ptr
 // value, 0). If a SIGSEGV or SIGBUS signal is received during the swap, the
@@ -250,7 +249,7 @@ func zeroOut(dst uintptr, toZero uintptr) (uintptr, error) {
 		return 0, nil
 	}
 
-	fault, sig := memclr(dst, toZero)
+	fault, written, sig := memclr(dst, toZero)
 	if sig == 0 {
 		return toZero, nil
 	}
@@ -261,10 +260,14 @@ func zeroOut(dst uintptr, toZero uintptr) (uintptr, error) {
 
 	// memclr might have ended the write up to maxRegisterSize bytes before
 	// fault, if an instruction caused a memory access that straddled two
-	// pages, and the second one faulted. Try to write up to the fault.
+	// pages, and the second one faulted, or at written, if a string
+	// instruction stopped there. Try to write up to the fault.
 	var done uintptr
 	if fault-dst > maxRegisterSize {
 		done = fault - dst - maxRegisterSize
+	}
+	if written >= dst && written-dst < done {
+		done = written - dst
 	}
 	n, err := zeroOut(dst+done, fault-dst-done)
 	done += n
