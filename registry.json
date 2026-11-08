@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T22:39:15+00:00",
+    "updatedAt": "2026-11-08T23:04:47+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -61573,14 +61573,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/release-staging-standalone",
-      "head": "8a31f637817a7bece72b26e45b8a14e2e80ddedd",
+      "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76",
       "title": "Stage release downloads and checksums with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/8a31f6378",
+      "url": "https://github.com/tamird/gvisor/commit/2306ebce4",
       "group": "release",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T18:40:14+00:00",
-      "summary": "Bazel already knows each archive’s target architecture. This revision stages the Debian package and both download archives for AMD64 and ARM64, with one SHA512 checkfile per archive. Tagged builds add the wheel and source distribution. Debian signing and APT index generation stay on the trusted release host. The earlier shell publisher a7e84cf82 was withdrawn after review.\n\nThe tested commit 3432ab916 has the same source tree as the proposal. Bazel configured four native archive checksums in both modes, one Flit action for a tagged release and none for an untagged one. The local staging fixture reproduced a failure when a declared wheel appeared as a symlink. The corrected stager checked the opened file, copied both distributions, and replaced them with an empty directory on the next untagged build. Default and prebuilt Make paths rejected an incomplete release before signing. The default archive build was suppressed for that control.\n\nOn the separate integration d6f54c947, twelve fresh remote actions produced eight payloads and six SHA512 checkfiles. The offline stock and candidate publishers agreed for head, nightly, tagged, older-tag, ignored-tag and prebuilt-input releases. Tagged host checksum calls fell from 16 to zero. A disposable key signed the APT outputs. The test intercepted Twine and performed no cloud publication.\n\nThe immediate parent bb565d846 combines the #16490 architecture split and the Flit prerequisites. Buildkite activation also needs the host Bazel bootstrap from #16904 and a working toolchain for both target architectures. The deployed release queue remains unverified.",
+      "updatedAt": "2026-11-08T23:04:47+00:00",
+      "summary": "Bazel already knows each archive’s target architecture. This revision stages the Debian package and both download archives for AMD64 and ARM64, with one SHA512 checkfile per archive. Tagged builds add the wheel and source distribution. Debian signing and APT index generation stay on the trusted release host. The earlier shell publisher a7e84cf82 was withdrawn after review.\n\nThe tested commit 3432ab916 has the same source tree as the proposal. Bazel configured four native archive checksums in both modes, one Flit action for a tagged release and none for an untagged one. The local staging fixture reproduced a failure when a declared wheel appeared as a symlink. The corrected stager checked the opened file, copied both distributions, and replaced them with an empty directory on the next untagged build. Default and prebuilt Make paths rejected an incomplete release before signing. The default archive build was suppressed for that control.\n\nOn the separate integration d6f54c947, twelve fresh remote actions produced eight payloads and six SHA512 checkfiles. The offline stock and candidate publishers agreed for head, nightly, tagged, older-tag, ignored-tag and prebuilt-input releases. Tagged host checksum calls fell from 16 to zero. A disposable key signed the APT outputs. The test intercepted Twine and performed no cloud publication.\n\nThe immediate parent bb565d846 combines the #16490 architecture split and the Flit prerequisites. Buildkite activation also needs the host Bazel bootstrap from #16904 and a working toolchain for both target architectures. The deployed release queue remains unverified. Both release jobs forward the worker’s Bazel cache and execution options. With the options unset, both invocations matched their previous arguments.",
       "evidence": [
+        {
+          "label": "Eight Linux observations of the actual Bazel arguments with and without worker options",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42532731429/artifacts/13638022199"
+        },
         {
           "label": "Standalone proposal and permanent description",
           "url": "https://github.com/tamird/gvisor/commit/8a31f6378"
@@ -61639,7 +61643,7 @@
           "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320"
         },
         "after": {
-          "head": "8a31f637817a7bece72b26e45b8a14e2e80ddedd"
+          "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76"
         }
       },
       "settledReviews": [
@@ -61658,8 +61662,8 @@
       ],
       "followup": {
         "owner": "Release workstream owner",
-        "sourceHead": "8a31f637817a7bece72b26e45b8a14e2e80ddedd",
-        "observedAt": "2026-11-07T18:40:14+00:00",
+        "sourceHead": "2306ebce48ca1fa926651eaa58ff07a6da0cef76",
+        "observedAt": "2026-11-08T23:04:47+00:00",
         "disposition": "The contributor requested a broader design with less release logic in shell. The earlier a7e84cf82 proposal remains withdrawn. The replacement moves unsigned staging and per-archive checksums to Bazel and keeps signing on the release host.",
         "nextAction": "Review the standalone staging commit. Coordinate submission with the architecture split and Flit prerequisites, and verify the native host Bazel and compiler before enabling the release queue.",
         "evidence": [
@@ -61672,9 +61676,9 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "8a31f637817a7bece72b26e45b8a14e2e80ddedd",
+        "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76",
         "baseHead": "bb565d84650bd92fd525d05f934aeea8ac058dec",
-        "url": "https://github.com/tamird/gvisor/commit/8a31f6378",
+        "url": "https://github.com/tamird/gvisor/commit/2306ebce4",
         "title": "Stage release downloads and checksums with Bazel",
         "requestedAt": "2026-11-07T18:40:14+00:00",
         "summary": "Open this standalone PR after the architecture split and Flit prerequisites land? It moves archive layout and checksums into Bazel and keeps Debian signing on the trusted host. Activation requires host Bazel and a working compiler for both targets.",
@@ -70176,6 +70180,26 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/38b1dd1da",
         "https://github.com/tamird/gvisor/commit/12bdd02c2"
+      ]
+    },
+    {
+      "from": "pr:16490",
+      "to": "branch:staged-release-publication",
+      "type": "depends_on",
+      "reason": "The architecture split supplies //debian:release-packages, which the staging rule consumes.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16490",
+        "https://github.com/tamird/gvisor/commit/2306ebce4"
+      ]
+    },
+    {
+      "from": "branch:bazel-python-release",
+      "to": "branch:staged-release-publication",
+      "type": "depends_on",
+      "reason": "Tagged publication stages the wheel and source distribution produced by the declared Flit target //sandboxexec/sandbox/python:dist.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/6650e2f29",
+        "https://github.com/tamird/gvisor/commit/2306ebce4"
       ]
     }
   ],
@@ -89395,7 +89419,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-08T22:38:00+00:00",
+      "updatedAt": "2026-11-08T23:06:48+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -89630,6 +89654,28 @@
             {
               "label": "Marshal proposal without empty examples",
               "url": "https://github.com/tamird/gvisor/commit/580909068"
+            }
+          ]
+        },
+        {
+          "text": "Checked the 217 open gVisor PRs authored by Tamir and their 217 commit messages on November 8. Every PR contained one commit. None of the descriptions or commit messages had inline Markdown links to URLs, long GitHub commit or file permalinks, or the delegated submitter line. A separate source review examined 22 pending build and supplier heads. Two release jobs lost their worker options when they stopped using Make. Both now forward the same options, and the staged-release card shows its two source prerequisites.",
+          "evidence": [
+            {
+              "label": "Eight Linux observations of the actual Bazel arguments with and without worker options",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42532731429/artifacts/13638022199"
+            },
+            {
+              "label": "Native release staging proposal",
+              "url": "https://github.com/tamird/gvisor/commit/2306ebce4"
+            }
+          ]
+        },
+        {
+          "text": "The lock audit covered 98 first-parent changes through 975fb1722 and 252 distinct open PR or pending proposal heads. Of those heads, 131 touched the selected kernel, networking, lisafs or runsc paths. Following a connection flag across two FUSE inodes found that an unsupported regular-file OPEN could suppress RELEASEDIR for a successfully opened directory. A separate mounted-filesystem comparison is in progress.",
+          "evidence": [
+            {
+              "label": "Upstream range covered by the lock audit",
+              "url": "https://github.com/google/gvisor/compare/aa767e4c4...975fb1722"
             }
           ]
         }
@@ -90345,5 +90391,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T22:39:15+00:00"
+  "updatedAt": "2026-11-08T23:04:47+00:00"
 }
