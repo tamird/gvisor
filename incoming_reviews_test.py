@@ -1,5 +1,6 @@
 import unittest
 
+import incoming_reviews
 from incoming_reviews import addressed, discover
 
 EARLY = "2026-11-06T14:00:00Z"
@@ -8,6 +9,8 @@ LATER = "2026-11-06T17:28:00Z"
 REPO = "google/gvisor"
 URL = "https://github.com/google/gvisor/pull/17082"
 OWNER = "tamird"
+LINKED_URL = "https://github.com/google/gvisor/pull/17214"
+LINKED_BODY = f"@tamird I think I have a more robust approach in {LINKED_URL}. Please take a look!"
 
 
 def message(kind, name, body, time=ASK, author="ayushr2", **fields):
@@ -39,6 +42,64 @@ def observe(messages, previous=None, complete=True):
 
 
 class IncomingReviewsTest(unittest.TestCase):
+    def test_linked_reference_spellings(self):
+        target_url, body = LINKED_URL, LINKED_BODY
+        for text in (f"@tamird thanks for your help. See {target_url}", f"@other please review {target_url}. cc @tamird",
+                     f"@tamird please review my document. Unrelated: {target_url}",
+                     body.replace("17214", "2147483648"), body.replace("17214", "9" * 5000),
+                     body.replace(target_url, "upstream/other#17214"), body + "\n\nAlso see #123.",
+                     body.replace(target_url, "#17214 and google/gvisor#16999"),
+                     body.replace("google/gvisor", "other/gvisor"), f"> {body}", f"`{body}`"):
+            with self.subTest(text=text):
+                self.assertIsNone(incoming_reviews.linked_target(text, OWNER))
+        self.assertEqual(incoming_reviews.linked_target(body.replace("17214", "2147483647"), OWNER), 2147483647)
+        for shorthand in ("#17214", "google/gvisor#17214"):
+            self.assertEqual(incoming_reviews.linked_target(body.replace(target_url, shorthand), OWNER), 17214)
+
+    def test_linked_request_on_an_authored_pr(self):
+        source_url = "https://github.com/google/gvisor/pull/17209"
+        target_url = LINKED_URL
+        comment_url = source_url + "#issuecomment-6719850370"
+        source = dict(repo=REPO, number=17209, title="Protected clear", head="a" * 40, url=source_url,
+                      status="open", authorLogin=OWNER,
+                      feedback={"complete": True, "items": [dict(message("comment", "IC_1", LINKED_BODY), url=comment_url)]})
+        page = {"nodes": [], "pageInfo": {"hasNextPage": False, "endCursor": None}}
+        target = dict(number=17214, title="Zero memory like the runtime", state="OPEN", headRefOid="b" * 40,
+                      repository={"nameWithOwner": REPO, "isPrivate": False}, url=target_url,
+                      author={"__typename": "User", "login": "ayushr2"}, reviews={"nodes": []})
+
+        def fetch(previous=None, available=2, rows=None):
+            def api(query):
+                repo = {"latest": page, "backfill": page}
+                response = {"formal": page, "mentioned": page, "repository": repo}
+                if f'p17214:resource(url:"{target_url}")' in query:
+                    self.assertIn('reviews(author:"tamird"', query)
+                    response["p17214"] = target
+                return response
+            requests, scan = discover(previous or {}, rows or [source], OWNER, api, LATER, available)
+            return {"incomingReviewRequests": requests, "incomingReviewScan": scan}
+
+        delayed = fetch(available=0)
+        self.assertEqual(delayed["incomingReviewRequests"], [])
+        current = fetch(delayed)
+        self.assertEqual(len(current["incomingReviewRequests"]), 1, "missing source-comment review request")
+        [request] = current["incomingReviewRequests"]
+        self.assertEqual((request["number"], request["url"], request["head"], request["sourceURL"], request["id"]),
+                         (17214, target_url, target["headRefOid"], comment_url, "IC_1"))
+        closed = dict(source, number=17214, url=target_url, authorLogin="ayushr2", status="closed", feedback={})
+        self.assertEqual(fetch(current, available=0, rows=[source, closed])["incomingReviewRequests"], [])
+        for status in ("CLOSED", "MERGED"):
+            target["state"] = status
+            self.assertEqual(fetch(current)["incomingReviewRequests"], [])
+        target["state"] = "OPEN"
+        target["reviews"]["nodes"] = [{"submittedAt": EARLY}]
+        self.assertEqual(fetch(current)["incomingReviewRequests"], [request])
+        target["reviews"]["nodes"] = [{"submittedAt": LATER}]
+        self.assertEqual(fetch(current)["incomingReviewRequests"], [])
+        target["reviews"]["nodes"] = []
+        source["feedback"]["items"] = []
+        self.assertEqual(fetch(current)["incomingReviewRequests"], [])
+
     def test_request_language(self):
         for text in (
             "@tamird PTAL",

@@ -1,0 +1,54 @@
+name: Check the linked gVisor review request on Linux
+on:
+  push:
+    branches: [qualification/work-map-linked-review-linux]
+permissions: {}
+jobs:
+  suites:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the published snapshot and four source files
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 314cdc2ad107ddc7dc01bd1db411942d270830a1
+          test "$(git rev-parse HEAD:registry.json)" = fec61006b2c5fb769e99bb3e16bb0260ea24bf79
+          test "$(git rev-parse HEAD:github-status.json)" = ecd5ba49825c6b86db782a95e1172c16b93beaf7
+          printf '%s\n' .github/workflows/work-map.yml app.js app_test.mjs incoming_reviews.py incoming_reviews_test.py \
+            | diff - <(git diff --name-only HEAD^ HEAD)
+          mkdir "$RUNNER_TEMP/old-collector" "$RUNNER_TEMP/suite-results"
+          sha256sum app.js app_test.mjs incoming_reviews.py incoming_reviews_test.py registry.json github-status.json > "$RUNNER_TEMP/suite-results/files.sha256"
+          git show HEAD^:incoming_reviews.py > "$RUNNER_TEMP/old-collector/incoming_reviews.py"
+          cp incoming_reviews_test.py "$RUNNER_TEMP/old-collector"
+      - name: Compare the exact old collector with the new request fixture
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/old-collector"
+          log="$RUNNER_TEMP/suite-results/old-control.log"
+          rc=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest \
+            incoming_reviews_test.IncomingReviewsTest.test_linked_request_on_an_authored_pr > "$log" 2>&1 || rc=$?
+          test "$rc" -eq 1
+          grep -F '0 != 1 : missing source-comment review request' "$log"
+      - name: Run all existing Python and JavaScript tests
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          a=0
+          b=0
+          out="$RUNNER_TEMP/suite-results"
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest discover -p '*_test.py' -v > "$out/python.log" 2>&1 || a=$?
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test app_test.mjs > "$out/frontend.tap" 2>&1 || b=$?
+          tail -n 4 "$out/python.log"
+          tail -n 8 "$out/frontend.tap"
+          test "$a" -eq 0 && test "$b" -eq 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: work-map-linked-review-tests
+          path: ${{ runner.temp }}/suite-results/
+          if-no-files-found: error
+          retention-days: 14

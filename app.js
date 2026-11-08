@@ -1626,7 +1626,7 @@ function drawDetails() {
     for (const request of node.incomingReviewRequests) {
       const who = request.author ? `@${request.author}` : "GitHub review request";
       const row = element("p", "detail-meta");
-      row.append(link(`${who} · ${date(request.updatedAt)} ↗`, request.url));
+      row.append(link(`${who} · ${date(request.updatedAt)} ↗`, request.sourceURL || request.url));
       section.append(row);
     }
     details.append(section);
@@ -2150,6 +2150,8 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     if (!Array.isArray(snapshot.incomingReviewRequests) || snapshot.incomingReviewRequests.some(item => {
       if (!item || !/^[\w.-]+\/[\w.-]+$/.test(item.repo) || !Number.isSafeInteger(item.number) || item.number < 1) return true;
       const prURL = `https://github.com/${item.repo}/pull/${item.number}`;
+      if (item.sourceURL !== undefined && (item.repo !== "google/gvisor" || item.kind !== "comment" || item.url !== prURL
+          || !/^https:\/\/github\.com\/google\/gvisor\/pull\/[1-9]\d*#issuecomment-[1-9]\d*$/.test(item.sourceURL))) return true;
       return item.prURL !== prURL || typeof item.url !== "string" || item.url.split("#")[0] !== prURL
         || !["formal", "description", "comment", "review", "inline"].includes(item.kind)
         || typeof item.id !== "string" || !item.id || typeof item.title !== "string" || !item.title
