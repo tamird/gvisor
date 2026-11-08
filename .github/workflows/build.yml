@@ -1,35 +1,62 @@
-name: CI
-
-"on":
+name: Compare live tmpfs checkpoints with sparse graph targets
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-sparse-live-save-phases]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the source, original timed fixture and unprivileged guest
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          umask 022
+          git init -q
+          git fetch --no-auto-maintenance --no-tags --depth=4 --quiet https://github.com/tamird/gvisor.git "$GITHUB_SHA" 28941a7dd43d1103db628a698841953663f9fdc1 d280d49cf180e6443fdba49d57260c3bfd471ff5 aa767e4c43d011121271551fe24da501a56f729d 631e08f3b1687c026e09566d0f3d61654f5e1f1e 8d980b39ad21950f42c5aeec48935d52c3e50b85
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 2910f8cc0188709d442b3e1865ab03805e8d9d1a
+          test "$(git rev-parse HEAD:.github/qualification/live_child/BUILD)" = eaf658d1c6eebfc298bfaf3fbb62455ef100d41e
+          test "$(git rev-parse HEAD:.github/qualification/live_child/native.sh)" = 1c7869dec88b920a34ac6117565bb340f82e0e47
+          git diff --exit-code HEAD^ 28941a7dd43d1103db628a698841953663f9fdc1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/live_child/BUILD' ':!.github/qualification/live_child/native.sh' ':!.github/qualification/live_child/run.py'
+          w="$RUNNER_TEMP/live-child"
+          mkdir -m 700 "$w" "$w/results"
+          cp .github/qualification/live_child/run.py "$w/"
+          curl -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel9"
+          curl -fsSL --retry 2 https://raw.githubusercontent.com/tamird/gvisor/f948a2221d2329e8e0897eb8b562c859da77468a/.github/qualification/state_working_set/benchstat.module -o "$w/benchstat.module"
+          source=pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_amd64.deb
+          curl -fsSL --retry 2 --max-time 60 "https://archive.ubuntu.com/ubuntu/$source" -o "$w/guest.deb" ||
+            curl -fsSL --retry 2 --max-time 60 "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/$source" -o "$w/guest.deb"
+          echo "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed  $w/guest.deb" | sha256sum -c
+          dpkg-deb --fsys-tarfile "$w/guest.deb" | tar -xO ./usr/bin/busybox > "$w/busybox"
+          chmod 755 "$w/busybox"
+          env -i PATH="$PATH" RUNNER_TEMP="$w" /usr/bin/python3 -IB "$w/run.py" preflight
+          cd "$w"
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel9
+          373bba0a70f04c2a39a30a45b4acd23f3bfa884e05a5e27cce1ce7010c406cd5  benchstat.module
+          SUMS
+          chmod 700 bazel9
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > jammy.list
+          opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+          sudo -n apt-get "${opts[@]}" update -qq
+          sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends build-essential crossbuild-essential-arm64 libnuma-dev
+      - name: Build the two native container test owners and their release runfiles
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP/live-child" GITHUB_SHA="$GITHUB_SHA" python3 -IB "$RUNNER_TEMP/live-child/run.py" build
+      - name: Time sixteen alternating pairs in the ordinary runner UID namespace
+        run: |
+          set -euo pipefail
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP/live-child" GITHUB_SHA="$GITHUB_SHA" python3 -IB "$RUNNER_TEMP/live-child/run.py" measure
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: sparse-target-live-checkpoint-phases
+          path: ${{ runner.temp }}/live-child/results/
+          if-no-files-found: error
+          retention-days: 14
