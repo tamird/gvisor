@@ -22,9 +22,11 @@ import (
 	"time"
 	"unsafe"
 
+	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -179,11 +181,11 @@ func TestTCPMigration(t *testing.T) {
 	}
 }
 
-// TestTCPMigrationPayloadSize checks what reaches the peer after restoring the
+// TestIPv6MigrationPayloadSize checks what reaches the peer after restoring the
 // same connected socket onto NICs with different packet header requirements.
-func TestTCPMigrationPayloadSize(t *testing.T) {
+func TestIPv6MigrationPayloadSize(t *testing.T) {
 	const peerMSS = 1200
-	const withOption = peerMSS - header.IPv4OptionExperimentLength
+	const withOption = peerMSS - header.IPv6ExperimentHdrLength
 	for _, tc := range []struct {
 		name     string
 		initial  bool
@@ -195,47 +197,90 @@ func TestTCPMigrationPayloadSize(t *testing.T) {
 		{"capable_to_capable_twice", true, []bool{true, true}, withOption},
 		{"incapable_to_incapable_twice", false, []bool{false, false}, peerMSS},
 		{"capable_to_incapable", true, []bool{false}, withOption},
+		{"inflight_ack_credit", false, []bool{true}, withOption},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			oldFlight := tc.name == "inflight_ack_credit"
+			var clock tcpip.Clock
+			if oldFlight {
+				clock = faketime.NewManualClock()
+			}
 			c := testcontext.NewWithOpts(t, testcontext.Options{
-				EnableV4: true, MTU: e2e.DefaultMTU, EnableExperimentIPOption: tc.initial,
+				EnableV6: true, MTU: 1500, EnableExperimentIPOption: tc.initial, Clock: clock,
 			})
 			defer c.Cleanup()
 			var synOpts [4]byte
 			header.EncodeMSSOption(peerMSS, synOpts[:])
-			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, synOpts[:])
+			c.CreateV6Endpoint(true)
+			err := c.EP.Connect(tcpip.FullAddress{Addr: testcontext.TestV6Addr, Port: testcontext.TestPort})
+			if _, ok := err.(*tcpip.ErrConnectStarted); !ok {
+				t.Fatalf("Connect: %v", err)
+			}
+			syn := c.GetV6Packet()
+			checker.IPv6(t, syn, checker.TCP(checker.TCPFlags(header.TCPFlagSyn), checker.DstPort(testcontext.TestPort)))
+			sh := header.TCP(header.IPv6(syn.AsSlice()).Payload())
+			port, first := sh.SourcePort(), seqnum.Value(sh.SequenceNumber()).Add(1)
+			syn.Release()
+			c.SendV6Packet(nil, &testcontext.Headers{SrcPort: testcontext.TestPort, DstPort: port,
+				Flags: header.TCPFlagSyn | header.TCPFlagAck, SeqNum: testcontext.TestInitialSequenceNumber,
+				AckNum: first, RcvWnd: 30000, TCPOpts: synOpts[:]})
+			finalACK := c.GetV6Packet()
+			checker.IPv6(t, finalACK, checker.TCP(checker.TCPFlags(header.TCPFlagAck), checker.TCPSeqNum(uint32(first)),
+				checker.TCPAckNum(testcontext.TestInitialSequenceNumber+1)))
+			finalACK.Release()
 			c.EP.SocketOptions().SetExperimentOptionValue(99)
+			c.EP.SocketOptions().SetDelayOption(false)
+			var oldAck seqnum.Value
+			if oldFlight {
+				cc := tcpip.CongestionControlOption("reno")
+				if err := c.EP.SetSockOpt(&cc); err != nil {
+					t.Fatal(err)
+				}
+				body := bytes.Repeat([]byte{0xa7}, peerMSS)
+				if n, err := c.EP.Write(bytes.NewReader(body), tcpip.WriteOptions{}); err != nil || n != peerMSS {
+					t.Fatalf("pre-restore write = %d, %v", n, err)
+				}
+				packet := c.GetV6Packet()
+				tcpHeader := ipv6MigrationSegment(t, packet.AsSlice(), false, port, first)
+				if !bytes.Equal(tcpHeader.Payload(), body) {
+					t.Fatal("the peer did not receive the complete previous-MSS packet")
+				}
+				oldAck = seqnum.Value(tcpHeader.SequenceNumber()).Add(peerMSS)
+				packet.Release()
+			}
 			s := c.Stack()
 			var link *channel.Endpoint
-			for _, capable := range tc.restores {
+			for generation, capable := range tc.restores {
 				s.SetAllowLiveTCPMigration(true)
 				s.SetRemoveConf(true)
 				var image bytes.Buffer
 				if _, err := state.Save(context.Background(), &image, s); err != nil {
 					t.Fatal(err)
 				}
+				imageSize := image.Len()
 				s.Resume()
 				s = stack.New(stack.Options{
-					TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
-					NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol},
+					Clock: clock, TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+					NetworkProtocols: []stack.NetworkProtocolFactory{ipv6.NewProtocol},
 				})
 				t.Cleanup(s.Destroy)
 				s.SetAllowLiveTCPMigration(true)
 				if _, err := state.Load(context.Background(), &image, s); err != nil {
 					t.Fatal(err)
 				}
-				link = channel.New(1000, e2e.DefaultMTU, "")
+				link = channel.New(1000, 1500, "")
 				if err := s.CreateNICWithOptions(1, link, stack.NICOptions{EnableExperimentIPOption: capable}); err != nil {
 					t.Fatal(err)
 				}
 				if err := s.AddProtocolAddress(1, tcpip.ProtocolAddress{
-					Protocol: header.IPv4ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix,
+					Protocol: header.IPv6ProtocolNumber, AddressWithPrefix: testcontext.StackV6AddrWithPrefix,
 				}, stack.AddressProperties{}); err != nil {
 					t.Fatal(err)
 				}
-				s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+				s.SetRouteTable([]tcpip.Route{{Destination: header.IPv6EmptySubnet, NIC: 1}})
 				s.Restore()
 				tcpip.AsyncLoading.Wait()
+				t.Logf("V6_RESTORE case=%s index=%d capable=%t bytes=%d", tc.name, generation+1, capable, imageSize)
 			}
 
 			endpoints := s.RegisteredEndpoints()
@@ -246,31 +291,113 @@ func TestTCPMigrationPayloadSize(t *testing.T) {
 			if got := tcp.EndpointState(ep.State()); got != tcp.StateEstablished {
 				t.Fatalf("restored TCP state = %s, want established", got)
 			}
-			data := bytes.Repeat([]byte{0x5a}, 2*peerMSS)
+			if oldFlight {
+				var before, after tcpip.TCPInfoOption
+				if err := ep.GetSockOpt(&before); err != nil {
+					t.Fatal(err)
+				}
+				ackIPv6MigrationData(t, link, ep, port, oldAck)
+				if err := ep.GetSockOpt(&after); err != nil {
+					t.Fatal(err)
+				}
+				if before.SndCwnd == 0 || before.SndCwnd+2 >= before.SndSsthresh || after.SndCwnd <= before.SndCwnd {
+					t.Fatalf("expected a positive slow-start ACK increment: before %+v after %+v", before, after)
+				}
+				t.Logf("MSS_CREDIT sent_packets=1 sent_bytes=%d restored_mss=%d cwnd_before=%d cwnd_after=%d",
+					peerMSS, before.SndMss, before.SndCwnd, after.SndCwnd)
+				return
+			}
+			data := make([]byte, 2*peerMSS)
+			for i := range data {
+				data[i] = byte(31*i + 17)
+			}
 			if n, err := ep.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
 				t.Fatalf("Write = %d, %v", n, err)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			pkt := link.ReadContext(ctx)
-			if pkt == nil {
-				t.Fatal("restored endpoint did not send data")
+			capable := tc.restores[len(tc.restores)-1]
+			total, payloadSize, count := 0, 0, 0
+			for total < len(data) {
+				packet := link.ReadContext(ctx)
+				if packet == nil {
+					t.Fatalf("received %d of %d bytes", total, len(data))
+				}
+				view := packet.ToView()
+				packet.DecRef()
+				wire := ipv6MigrationSegment(t, view.AsSlice(), capable, port, first.Add(seqnum.Size(total))).Payload()
+				n := len(wire)
+				if n == 0 || n > len(data)-total || !bytes.Equal(wire, data[total:total+n]) {
+					view.Release()
+					t.Fatalf("bad TCP payload of %d bytes at %d", n, total)
+				}
+				view.Release()
+				if count == 0 {
+					payloadSize = n
+				}
+				if n > payloadSize {
+					t.Fatalf("larger segment after first: %d, %d", payloadSize, n)
+				}
+				count++
+				total += n
 			}
-			defer pkt.DecRef()
-			view := pkt.ToView()
-			defer view.Release()
-			var options header.IPv4Options
-			if tc.restores[len(tc.restores)-1] {
-				options = header.IPv4Options{byte(header.IPv4OptionExperimentType), header.IPv4OptionExperimentLength, 0, 99}
+			ack := first.Add(seqnum.Size(total))
+			ackIPv6MigrationData(t, link, ep, port, ack)
+			var info tcpip.TCPInfoOption
+			if err := ep.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
 			}
-			checker.IPv4(t, view, checker.IPv4Options(options))
-			wire := header.TCP(header.IPv4(view.AsSlice()).Payload()).Payload()
-			if got := len(wire); got != tc.want {
-				t.Errorf("restored TCP payload = %d, want %d", got, tc.want)
-			} else if !bytes.Equal(wire, data[:tc.want]) {
-				t.Error("restored TCP payload differs from the queued data")
+			t.Logf("V6_DATA case=%s segments=%d bytes=%d first=%d snd_mss=%d start=%d ack=%d read=1", tc.name, count, total, payloadSize, info.SndMss, first, ack)
+			if payloadSize != tc.want || int(info.SndMss) != payloadSize {
+				t.Errorf("restored IPv6 TCP payload = %d, TCP_INFO=%d, want %d", payloadSize, info.SndMss, tc.want)
 			}
 		})
+	}
+}
+
+func ipv6MigrationSegment(t *testing.T, raw []byte, capable bool, port uint16, seq seqnum.Value) header.TCP {
+	t.Helper()
+	ip := header.IPv6(raw)
+	if !ip.IsValid(len(raw)) || int(ip.PayloadLength())+header.IPv6MinimumSize != len(raw) || ip.SourceAddress() != testcontext.StackV6Addr || ip.DestinationAddress() != testcontext.TestV6Addr {
+		t.Fatalf("unexpected IPv6 frame of %d bytes", len(raw))
+	}
+	body := ip.Payload()
+	if capable {
+		if ip.NextHeader() != uint8(header.IPv6ExperimentExtHdrIdentifier) || len(body) < header.IPv6ExperimentHdrLength || !bytes.Equal(body[:header.IPv6ExperimentHdrLength], []byte{byte(tcp.ProtocolNumber), 0, 0, 99, 0, 0, 0, 0}) {
+			t.Fatal("missing complete IPv6 experiment header, value 99")
+		}
+		body = body[header.IPv6ExperimentHdrLength:]
+	} else if ip.NextHeader() != uint8(tcp.ProtocolNumber) {
+		t.Fatalf("unexpected next header %d", ip.NextHeader())
+	}
+	t.Logf("V6_FRAME case=%s direction=data raw=%x", t.Name(), raw)
+	h := header.TCP(body)
+	if len(h) < header.TCPMinimumSize || int(h.DataOffset()) < header.TCPMinimumSize || int(h.DataOffset()) > len(h) || h.SourcePort() != port || h.DestinationPort() != testcontext.TestPort || h.SequenceNumber() != uint32(seq) || h.AckNumber() != testcontext.TestInitialSequenceNumber+1 || !h.Flags().Contains(header.TCPFlagAck) {
+		t.Fatalf("unexpected TCP segment at sequence %d", seq)
+	}
+	return h
+}
+
+// The returned application byte witnesses processing of its carrying cumulative ACK.
+func ackIPv6MigrationData(t *testing.T, link *channel.Endpoint, ep tcpip.Endpoint, port uint16, ack seqnum.Value) {
+	t.Helper()
+	raw := make([]byte, header.IPv6MinimumSize+header.TCPMinimumSize+1)
+	header.IPv6(raw).Encode(&header.IPv6Fields{PayloadLength: header.TCPMinimumSize + 1, TransportProtocol: tcp.ProtocolNumber, HopLimit: 64, SrcAddr: testcontext.TestV6Addr, DstAddr: testcontext.StackV6Addr})
+	h := header.TCP(raw[header.IPv6MinimumSize:])
+	h.Encode(&header.TCPFields{SrcPort: testcontext.TestPort, DstPort: port, SeqNum: testcontext.TestInitialSequenceNumber + 1, AckNum: uint32(ack), DataOffset: header.TCPMinimumSize, Flags: header.TCPFlagAck | header.TCPFlagPsh, WindowSize: 30000})
+	// The single zero application byte contributes zero to the payload checksum.
+	h.SetChecksum(^h.CalculateChecksum(header.PseudoHeaderChecksum(tcp.ProtocolNumber, testcontext.TestV6Addr, testcontext.StackV6Addr, uint16(len(h)))))
+	t.Logf("V6_FRAME case=%s direction=ack raw=%x", t.Name(), raw)
+	packet := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buffer.MakeWithData(raw)})
+	link.InjectInbound(ipv6.ProtocolNumber, packet)
+	packet.DecRef()
+	deadline := time.Now().Add(5 * time.Second)
+	for ep.Readiness(waiter.ReadableEvents) == 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	var got bytes.Buffer
+	if _, err := ep.Read(&got, tcpip.ReadOptions{}); err != nil || !bytes.Equal(got.Bytes(), []byte{0}) {
+		t.Fatalf("read after peer ACK = %x, %v", got.Bytes(), err)
 	}
 }
 
