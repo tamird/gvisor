@@ -1,0 +1,89 @@
+name: Check source validation handoff on Linux
+on:
+  push:
+    branches: [qualification/work-map-source-failure-handoff]
+permissions: {}
+jobs:
+  suites:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the original published site and changed files
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 3359fae1d46e371fb5621f938d9a09a11ddc9b8e
+          test "$(git rev-parse HEAD:registry.json)" = 3e1ce933f237463702b3475665b2065956b5c236
+          test "$(git rev-parse HEAD:github-status.json)" = 735e69eef1f09d3ac2977545b0466e3d48772a9a
+          printf '%s\n' .github/workflows/work-map.yml README.md update-status.py update_status_test.py | diff - <(git diff --name-only HEAD^ HEAD)
+          mkdir "$RUNNER_TEMP/old-collector" "$RUNNER_TEMP/suite-results"
+          sha256sum README.md update-status.py update_status_test.py app.js registry.json github-status.json > "$RUNNER_TEMP/suite-results/files.sha256"
+          git show HEAD^:update-status.py > "$RUNNER_TEMP/old-collector/update-status.py"
+          cp registry.json work_states.py reapproval.py incoming_reviews.py update_status_test.py "$RUNNER_TEMP/old-collector/"
+      - name: Show the missing current check action on the old collector
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/old-collector"
+          log="$RUNNER_TEMP/suite-results/old-control.log"
+          rc=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest update_status_test.CheckReportTest.test_failed_source_check_after_recorded_review_wait > "$log" 2>&1 || rc=$?
+          test "$rc" -eq 1
+          grep -F "KeyError: 'actionCheckIds'" "$log"
+      - name: Render the original check and read the corrected collector handoff
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS' > "$RUNNER_TEMP/suite-results/public-render.json"
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import vm from 'node:vm';
+          const read = name => JSON.parse(readFileSync(name));
+          const src = readFileSync('app.js', 'utf8');
+          assert.ok(src.endsWith('start();\n'));
+          const c = vm.createContext({URL, r:read('registry.json'), s:read('github-status.json')});
+          vm.runInContext(src.slice(0,-'start();\n'.length), c);
+          const result = vm.runInContext(`registry=r; liveSnapshot=s; model={...r,nodes:registryNodes(r)};
+            const node=r.nodes.find(n=>n.id==='pr:17181');
+            const pr=withConflictResult(s.prs.find(p=>p.url===node.url));
+            const card={...node,github:pr,workStates:stateRecords(s,{...node,github:pr})};
+            ({head:pr.head, states:Object.keys(states(card)), reasons:attentionReasons(card,r.meta.owner)})`,c);
+          assert.equal(result.head,'31d5b49f3eb2ea920ace2b94425761720ca449e5');
+          assert.ok(result.states.includes('failing') && result.states.includes('maintainer-review'));
+          assert.ok(result.reasons.some(r=>r.id==='author-public-checks' && r.owner==='agent' && r.detail.includes('lint: FAILURE')));
+          assert.ok(!result.reasons.some(r=>r.id==='maintainer-review'));
+          console.log(JSON.stringify(result));
+          JS
+          python3 -B - <<'PY' > "$RUNNER_TEMP/suite-results/public-handoff.json"
+          from importlib import import_module
+          import json
+          c=import_module('update-status')
+          snapshot=json.load(open('github-status.json'))
+          pr,=[p for p in snapshot['prs'] if p['url']=='https://github.com/google/gvisor/pull/17181']
+          original,=[f for f in snapshot['checkFailures'] if f['url']==pr['url']]
+          assert original['followup']['owner']=='Upstream review'
+          current,=c.check_report([pr],snapshot)['checkFailures']
+          lint,=[f for f in current['failedChecks'] if f['id']=='CR_kwDOB9IlXs8AAAAd5Q4r2g']
+          assert current['actionCheckIds']==[lint['id']] and current['recordedFollowup']==original['followup']
+          assert lint['url']=='https://github.com/google/gvisor/actions/runs/42370336532/job/128396962778'
+          print(json.dumps(current))
+          PY
+      - name: Run both existing site suites
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          a=0
+          b=0
+          out="$RUNNER_TEMP/suite-results"
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest discover -p '*_test.py' -v > "$out/python.log" 2>&1 || a=$?
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test app_test.mjs > "$out/frontend.tap" 2>&1 || b=$?
+          tail -n 4 "$out/python.log"
+          tail -n 8 "$out/frontend.tap"
+          test "$a" -eq 0 && test "$b" -eq 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: work-map-source-check-handoff
+          path: ${{ runner.temp }}/suite-results/
+          if-no-files-found: error
+          retention-days: 14
