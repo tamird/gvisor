@@ -1,35 +1,73 @@
-name: CI
-
-"on":
+name: Check generated marshal tests without an empty example
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/marshal-no-empty-example]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  marshal:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 88
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the source, original case reader and public Linux tools
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/marshal-cases"
+          mkdir -m 700 "$w" "$w/receipt"
+          mkdir -p "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"verified":false,"stage":"setup"}' > "$w/receipt/summary.json"
+          prior=0769c67656eae3aacb543caebce58e8d3a9d3339
+          reader=aa8c789dcd281b22920edeec5e1a6bb4d87e90f4
+          prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q
+          git fetch -q --no-tags --no-auto-maintenance --depth=3 https://github.com/tamird/gvisor.git \
+            "$GITHUB_SHA" "$prior" "$reader" "$prep" "$assets" "$inputs"
+          test "$(git rev-parse "$GITHUB_SHA^")" = ba161b63861b408e4f9ff1a7e43690570b2eaf55
+          git diff --exit-code "$GITHUB_SHA^" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/marshal_without_example.py' ':!.github/qualification/marshal_oracle.json'
+          git show "$GITHUB_SHA:.github/qualification/marshal_without_example.py" > "$w/check.py"
+          git show "$GITHUB_SHA:.github/qualification/marshal_oracle.json" > "$w/oracle.json"
+          git show "$prior:.github/qualification/marshal_cases.py" > "$w/marshal_cases.py"
+          git show "$reader:test/rbe/qualification_report.py" > "$w/qualification_report.py"
+          git show "$reader:test/rbe/unit_matrix.py" > "$w/unit_matrix.py"
+          git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$inputs:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          git checkout -q --detach "$GITHUB_SHA^"
+          cd "$w"
+          test "$(git hash-object marshal_cases.py)" = 3aedb3c6d57e2e3f5d3eab52b440c801622ea057
+          test "$(git hash-object qualification_report.py)" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+          test "$(git hash-object unit_matrix.py)" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          test "$(git hash-object previous.py)" = 0c1db7071558c5f9c8de45b60ba625183bd8a400
+          test "$(git hash-object public_assets.py)" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          test "$(git hash-object tldk_public_inputs.py)" = 1f3f7d4d75810ad60941772776e01f3b71b3b171
+          cp marshal_cases.py probe
+          chmod +x probe
+          curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o bazel
+          echo '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel' | sha256sum -c -
+          chmod +x bazel
+          if ! curl -qfsSL --retry 1 --max-time 90 https://github.com/hermeticbuild/qemu-prebuilt/releases/download/11.0.0.1/qemu-user-linux-amd64-aarch64-11.0.0.1.tar.zst -o qemu.tar.zst; then
+            curl -qfsSL --retry 2 --max-time 90 -H 'Accept: application/octet-stream' https://api.github.com/repos/hermeticbuild/qemu-prebuilt/releases/assets/446684475 -o qemu.tar.zst
+          fi
+          echo 'cc3bf42da8f219cd314a7806053c73cca166bf14c288daf5b6105e66590a6dee  qemu.tar.zst' | sha256sum -c -
+          tar --zstd -xf qemu.tar.zst ./qemu-user-linux-amd64-aarch64
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > jammy.list
+          opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+          sudo -n apt-get "${opts[@]}" update -qq
+          sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends build-essential crossbuild-essential-arm64 libnuma-dev
+      - name: Run native AMD64 and QEMU ARM64 tests and compare generated sources
+        timeout-minutes: 71
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            python3 -B "$RUNNER_TEMP/marshal-cases/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: marshal-no-empty-example
+          path: ${{ runner.temp }}/marshal-cases/receipt/
+          if-no-files-found: error
+          retention-days: 14

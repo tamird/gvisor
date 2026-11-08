@@ -1,0 +1,228 @@
+{
+ "generators": [
+  "//pkg/abi/gasket:gasket_abi_autogen",
+  "//pkg/abi/ib:ib_abi_autogen",
+  "//pkg/abi/linux:linux_abi_autogen",
+  "//pkg/abi/linux:linux_amd64_abi_autogen",
+  "//pkg/abi/linux:linux_arm64_abi_autogen",
+  "//pkg/abi/nvgpu:nvgpu_abi_autogen",
+  "//pkg/abi/nvgpu:nvgpu_unsafe_abi_autogen",
+  "//pkg/erofs:erofs_abi_autogen",
+  "//pkg/erofs:erofs_unsafe_abi_autogen",
+  "//pkg/lisafs:lisafs_abi_autogen",
+  "//pkg/marshal/primitive:primitive_abi_autogen",
+  "//pkg/sentry/arch/fpu:fpu_abi_autogen",
+  "//pkg/sentry/arch/fpu:fpu_amd64_abi_autogen",
+  "//pkg/sentry/arch/fpu:fpu_amd64_unsafe_abi_autogen",
+  "//pkg/sentry/arch/fpu:fpu_arm64_abi_autogen",
+  "//pkg/sentry/arch/fpu:fpu_unsafe_abi_autogen",
+  "//pkg/sentry/arch:arch_aarch64_abi_autogen",
+  "//pkg/sentry/arch:arch_abi_autogen",
+  "//pkg/sentry/arch:arch_amd64_abi_autogen",
+  "//pkg/sentry/arch:arch_arm64_abi_autogen",
+  "//pkg/sentry/arch:arch_unsafe_abi_autogen",
+  "//pkg/sentry/arch:arch_x86_abi_autogen",
+  "//pkg/sentry/arch:arch_x86_impl_abi_autogen",
+  "//pkg/sentry/fsimpl/fuse:fuse_abi_autogen",
+  "//pkg/sentry/fsimpl/fuse:fuse_unsafe_abi_autogen",
+  "//pkg/sentry/fsimpl/tmpfs:tmpfs_abi_autogen",
+  "//pkg/sentry/kernel/auth:auth_abi_autogen",
+  "//pkg/sentry/kernel/auth:auth_unsafe_abi_autogen",
+  "//pkg/sentry/kernel:kernel_abi_autogen",
+  "//pkg/sentry/kernel:kernel_amd64_abi_autogen",
+  "//pkg/sentry/kernel:kernel_arm64_abi_autogen",
+  "//pkg/sentry/kernel:kernel_impl_abi_autogen",
+  "//pkg/sentry/kernel:kernel_opts_abi_autogen",
+  "//pkg/sentry/kernel:kernel_unsafe_abi_autogen",
+  "//pkg/sentry/loader:loader_abi_autogen",
+  "//pkg/sentry/platform/systrap/usertrap:usertrap_abi_autogen",
+  "//pkg/sentry/platform/systrap/usertrap:usertrap_amd64_abi_autogen",
+  "//pkg/sentry/platform/systrap/usertrap:usertrap_amd64_unsafe_abi_autogen",
+  "//pkg/sentry/platform/systrap/usertrap:usertrap_arm64_abi_autogen",
+  "//pkg/sentry/seccheck/sinks/remote/wire:wire_abi_autogen",
+  "//pkg/sentry/socket/netfilter:netfilter_abi_autogen",
+  "//pkg/sentry/syscalls/linux:linux_abi_autogen",
+  "//pkg/sentry/syscalls/linux:linux_amd64_abi_autogen",
+  "//pkg/sentry/syscalls/linux:linux_arm64_abi_autogen",
+  "//tools/go_marshal/test/external:external_abi_autogen",
+  "//tools/go_marshal/test:test_abi_autogen"
+ ],
+ "baseline": {
+  "amd64": {
+   "artifact": 13609192012,
+   "member": "stock-amd64.json",
+   "member_sha256": "efb7028979e178b2e869bb834db2922ed45c6ab426f7ad07d53b120d1d14726a",
+   "per_library": {
+    "//pkg/abi/gasket:gasket": [
+     20,
+     "067a4c06573eb2aec5f756e2f73e0965553ff4e4299c5c9ada269160090fb5e2"
+    ],
+    "//pkg/abi/ib:ib": [
+     31,
+     "ce991c02340f15c4f6bf0ff12c6cda0e3d23ed8a308d43e696fab470bb1c7336"
+    ],
+    "//pkg/abi/linux:linux": [
+     960,
+     "953dd31d90e0754e2a0ba4c3db2ed8e1cae17a57dc74af48c772b319c0083a19"
+    ],
+    "//pkg/abi/nvgpu:nvgpu": [
+     830,
+     "ff5542e3bd35c9a7e2b3601423d4ad561d6291757be681e8622385d3aa7b5e2a"
+    ],
+    "//pkg/erofs:erofs": [
+     25,
+     "9476ffa90e3442f602a2bd8f097e7441c46be47b8414a4aa095c7992ccbc7b54"
+    ],
+    "//pkg/lisafs:lisafs": [
+     218,
+     "b936fd67b40fc5b93f9ab479de2c00f51772350241d063f3af338a37828c8028"
+    ],
+    "//pkg/marshal/primitive:primitive": [
+     56,
+     "e0efb3e59f6f63b0d89bfb4c49490591f2f2033711440600edeae10b9ce690f5"
+    ],
+    "//pkg/sentry/arch/fpu:fpu": [
+     5,
+     "547007ce8f76eba6d178aeb83e79d2f0a72bb19d49842db1ef4e2e4a905e3511"
+    ],
+    "//pkg/sentry/arch:arch": [
+     10,
+     "ca14779fdb2c486fec55fb20bba1fe2b4f09beac91e805ec026fcf5b545edac3"
+    ],
+    "//pkg/sentry/fsimpl/fuse:fuse": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/fsimpl/tmpfs:tmpfs": [
+     6,
+     "4309a45797cd23de3611ac581122a1a5f8b93cbac2faa0f7516b146cc2773aa8"
+    ],
+    "//pkg/sentry/kernel/auth:auth": [
+     11,
+     "b0521df729f35da45403a55e47326956a762eff5d649025bb80e4ed1df0d4130"
+    ],
+    "//pkg/sentry/kernel:kernel": [
+     10,
+     "457c62bb1d6154d42f420775c8d93b6e1ffd18e91e1cb6f4b010707a81302988"
+    ],
+    "//pkg/sentry/loader:loader": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/platform/systrap/usertrap:usertrap": [
+     5,
+     "53d596899e2263c649cb3bc1381c57236484d21c9bff3d49ce46ff2262d0f027"
+    ],
+    "//pkg/sentry/seccheck/sinks/remote/wire:wire": [
+     5,
+     "53d596899e2263c649cb3bc1381c57236484d21c9bff3d49ce46ff2262d0f027"
+    ],
+    "//pkg/sentry/socket/netfilter:netfilter": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/syscalls/linux:linux": [
+     30,
+     "460f632afe2d7f02e8c3f54aa26e2aeea0cbbe9b74d0289d8c7f2f021d2ee7b8"
+    ],
+    "//tools/go_marshal/test/external:external": [
+     10,
+     "00d04d1c111da8ab3883b29f29fb9d57841d46de840b40374d3f988371f8402d"
+    ],
+    "//tools/go_marshal/test:test": [
+     108,
+     "5dbc15caee39eb00be8d58d00d385c414eb1d5d5e995737846124e555cf9a513"
+    ]
+   },
+   "sha256": "aff1679d2f351f7902e29bda50a5173f85bb56681ae44f427996cb7b7f7a65da"
+  },
+  "arm64": {
+   "artifact": 13608887823,
+   "member": "stock-arm64.json",
+   "member_sha256": "e00dacaa87ae31e599767f401bc3c7f6934b21fde88edfe3353b98f22ff7aca0",
+   "per_library": {
+    "//pkg/abi/gasket:gasket": [
+     20,
+     "067a4c06573eb2aec5f756e2f73e0965553ff4e4299c5c9ada269160090fb5e2"
+    ],
+    "//pkg/abi/ib:ib": [
+     31,
+     "ce991c02340f15c4f6bf0ff12c6cda0e3d23ed8a308d43e696fab470bb1c7336"
+    ],
+    "//pkg/abi/linux:linux": [
+     960,
+     "953dd31d90e0754e2a0ba4c3db2ed8e1cae17a57dc74af48c772b319c0083a19"
+    ],
+    "//pkg/abi/nvgpu:nvgpu": [
+     830,
+     "ff5542e3bd35c9a7e2b3601423d4ad561d6291757be681e8622385d3aa7b5e2a"
+    ],
+    "//pkg/erofs:erofs": [
+     25,
+     "9476ffa90e3442f602a2bd8f097e7441c46be47b8414a4aa095c7992ccbc7b54"
+    ],
+    "//pkg/lisafs:lisafs": [
+     218,
+     "b936fd67b40fc5b93f9ab479de2c00f51772350241d063f3af338a37828c8028"
+    ],
+    "//pkg/marshal/primitive:primitive": [
+     56,
+     "e0efb3e59f6f63b0d89bfb4c49490591f2f2033711440600edeae10b9ce690f5"
+    ],
+    "//pkg/sentry/arch/fpu:fpu": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/arch:arch": [
+     20,
+     "72567a9ddc05dfb3dac69246bdd46e39e7e49f77d230110cfbadb659b87eb0ca"
+    ],
+    "//pkg/sentry/fsimpl/fuse:fuse": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/fsimpl/tmpfs:tmpfs": [
+     6,
+     "4309a45797cd23de3611ac581122a1a5f8b93cbac2faa0f7516b146cc2773aa8"
+    ],
+    "//pkg/sentry/kernel/auth:auth": [
+     11,
+     "b0521df729f35da45403a55e47326956a762eff5d649025bb80e4ed1df0d4130"
+    ],
+    "//pkg/sentry/kernel:kernel": [
+     10,
+     "457c62bb1d6154d42f420775c8d93b6e1ffd18e91e1cb6f4b010707a81302988"
+    ],
+    "//pkg/sentry/loader:loader": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/platform/systrap/usertrap:usertrap": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/seccheck/sinks/remote/wire:wire": [
+     5,
+     "53d596899e2263c649cb3bc1381c57236484d21c9bff3d49ce46ff2262d0f027"
+    ],
+    "//pkg/sentry/socket/netfilter:netfilter": [
+     0,
+     "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    ],
+    "//pkg/sentry/syscalls/linux:linux": [
+     30,
+     "460f632afe2d7f02e8c3f54aa26e2aeea0cbbe9b74d0289d8c7f2f021d2ee7b8"
+    ],
+    "//tools/go_marshal/test/external:external": [
+     10,
+     "00d04d1c111da8ab3883b29f29fb9d57841d46de840b40374d3f988371f8402d"
+    ],
+    "//tools/go_marshal/test:test": [
+     108,
+     "5dbc15caee39eb00be8d58d00d385c414eb1d5d5e995737846124e555cf9a513"
+    ]
+   },
+   "sha256": "9ab90c318f891e72a6e9b0abc2f85e56079e2775452a50c887e458b88a4cc2fd"
+  }
+ }
+}
