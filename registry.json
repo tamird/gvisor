@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T23:23:55+00:00",
+    "updatedAt": "2026-11-08T23:40:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57468,8 +57468,8 @@
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T01:14:58+00:00",
-      "summary": "The delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.",
+      "updatedAt": "2026-11-08T23:40:10+00:00",
+      "summary": "The delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nAfter 24 individually acknowledged segments, Linux ACKed a pushed 1,460-byte segment within 0.33–0.75 ms of starting the read that drained the socket. The PR waited 29.84–30.85 ms. Leaving one byte queued or omitting PSH kept both stacks near 40 ms from packet arrival. Each case ran on four fresh connections per stack. All four Linux test runs and all four netstack runs passed on AMD64. The workflow reported failure because its capture reader required all 1,514 Ethernet bytes. The capture retained 1,500 bytes, including every TCP header. The corrected reader verified the original packet lengths, sequence numbers and timestamps.",
       "evidence": [
         {
           "label": "Both smaller-segment cases failed previously; all 11 passed on the current revision",
@@ -57514,6 +57514,22 @@
         {
           "label": "TCP reviewer guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Eight original tests with XML, application reads and packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533462232/artifacts/13638899172"
+        },
+        {
+          "label": "Reader for the original snapshot-limited captures",
+          "url": "https://github.com/tamird/gvisor/commit/135ff0eaa"
+        },
+        {
+          "label": "Reviewer identified the missing ACK on drain",
+          "url": "https://github.com/google/gvisor/pull/17082#discussion_r4507717527"
+        },
+        {
+          "label": "Measured case added to the living TCP guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
       "settledReviews": [
@@ -57532,7 +57548,7 @@
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8",
-        "observedAt": "2026-11-06T20:40:05.864Z",
+        "observedAt": "2026-11-08T23:40:10+00:00",
         "disposition": "The current source passed its earlier and new packet tests. The author’s update contains no new question.",
         "nextAction": "Follow upstream review and any new substantive request.",
         "evidence": [
@@ -88461,7 +88477,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-08T15:56:16+00:00",
+      "updatedAt": "2026-11-08T23:40:10+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -89362,6 +89378,23 @@
             {
               "label": "Related transmitted packet boundaries on #15634",
               "url": "https://github.com/google/gvisor/pull/15634"
+            }
+          ]
+        },
+        {
+          "text": "On #17082, a full read of a pushed segment waited for the delayed-ACK timer after the startup quick ACKs ran out. Native Linux ACKed during the read. Leaving one byte queued and draining a segment without PSH kept both receivers on the timer. All 24 physical observations are in the original captures. The living review guide now links Botir’s existing thread and those captures.",
+          "evidence": [
+            {
+              "label": "Original native and gVisor packet traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42533462232/artifacts/13638899172"
+            },
+            {
+              "label": "Corrected capture reader",
+              "url": "https://github.com/tamird/gvisor/commit/135ff0eaa"
+            },
+            {
+              "label": "TCP reviewer guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
         }
@@ -90649,5 +90682,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T23:23:55+00:00"
+  "updatedAt": "2026-11-08T23:40:10+00:00"
 }
