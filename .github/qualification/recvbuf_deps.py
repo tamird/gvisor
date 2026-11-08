@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import tempfile
 
 TEMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TEMP / "recvbuf"
@@ -24,11 +25,59 @@ LABELS = ["//test/packetimpact/tests:tcp_rcv_buf_space_" + name + "_test" for na
 
 
 def fetch(url, limit, *, asset=False):
-    args = ["curl", "-fsSL", "--max-time", "80", "--retry", "1", "--max-filesize", str(limit)]
+    # Do not load curlrc or inherit proxy/authorization variables.
+    args = ["/usr/bin/curl", "-q", "-fsSL", "--proto", "=https", "--proto-redir", "=https",
+            "--max-time", "80", "--retry", "1", "--max-filesize", str(limit)]
     if asset:
         args += ["-H", "Accept: application/octet-stream"]
-    cmd = subprocess.run([*args, url], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    cmd = subprocess.run([*args, url], env={"PATH": "/usr/bin:/bin", "LANG": "C"},
+                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     return cmd.stdout if cmd.returncode == 0 and len(cmd.stdout) <= limit else b""
+
+
+def release_distfile(url, distdir, *, remaining_bytes):
+    """Mirror an observed public release URL for Bazel's checksum-checked --distdir.
+
+    Pass the returned directory as an additional --distdir. Separate digest
+    directories allow independent archives to use the same basename. Bazel
+    only uses a distfile when it matches the checksum from the requesting rule.
+    """
+    match = URL.fullmatch(url)
+    if not match or any(part in (".", "..") or len(part) > 160 for part in match.groups()):
+        raise ValueError("expected an exact public GitHub release URL")
+    owner, repo, tag, name = match.groups()
+    api = f"https://api.github.com/repos/{owner}/{repo}/releases"
+    release = json.loads(fetch(f"{api}/tags/{tag}", 8 << 20) or b"{}")
+    if release.get("tag_name") != tag or release.get("draft") is not False:
+        raise ValueError("public release metadata unavailable or tag mismatch")
+    matches = [a for a in release.get("assets", []) if a.get("name") == name and a.get("browser_download_url") == url]
+    if len(matches) != 1:
+        raise ValueError("expected one exact public asset name and download URL")
+    item = matches[0]
+    identity, size = item.get("id"), item.get("size")
+    integrity = re.fullmatch(r"sha256:([0-9a-f]{64})", item.get("digest") or "")
+    if type(identity) is not int or identity <= 0 or item.get("url") != f"{api}/assets/{identity}":
+        raise ValueError("official asset identity mismatch")
+    if item.get("state") != "uploaded" or type(size) is not int or not 0 < size <= 256 << 20 or not integrity:
+        raise ValueError("official asset lacks a bounded size or SHA-256")
+    digest = integrity.group(1)
+    directory = distdir / "github-release" / digest
+    dest = directory / name
+    row = dict(source=url, asset_id=identity, bytes=size, sha256=digest)
+    for existing in (dest, distdir / name):
+        if existing.is_file() and existing.stat().st_size == size and hashlib.sha256(existing.read_bytes()).hexdigest() == digest:
+            return existing.parent, dict(row, acquired=False)
+    if size > remaining_bytes:
+        raise ValueError("remaining public asset byte budget exceeded")
+    blob = fetch(item["url"], size, asset=True)
+    if len(blob) != size or hashlib.sha256(blob).hexdigest() != digest:
+        raise ValueError("public release did not match its stated size and SHA-256")
+    directory.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=directory) as tmp:
+        staged = Path(tmp) / name
+        staged.write_bytes(blob)
+        os.replace(staged, dest)
+    return directory, dict(row, acquired=True)
 
 
 def acquire(module, version, *, wanted_url=None, pinned=None, asset_id=None):
