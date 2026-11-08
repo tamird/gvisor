@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T16:42:07+00:00",
+    "updatedAt": "2026-11-08T16:58:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1661,18 +1661,19 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-08T16:24:02+00:00",
+      "updatedAt": "2026-11-08T16:53:59+00:00",
       "summary": "The November 4 rebase onto master 183a39d1b is published at e438da4be. GitHub reports the head is mergeable. All four Nogo targets passed on AMD64 and ARM64. On native AMD64, 171 TMPFS and 40 VFS cases passed, including both new SIGBUS cases. No cases were skipped. The earlier changes-requested review remains on the PR.\n\nOn October 25 the 12:53 provider snapshot reported e1e9c4ea0 mergeable. That source preserved the device-file credential callback with the landed Filesystem identity accessors. Its reconciliation did not include a runtime replay or fresh approval.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
       "followup": {
         "owner": "Contributor",
         "sourceHead": "c84ba767743ce2c96109a89f234d234485b3a230",
-        "observedAt": "2026-11-08T16:24:02+00:00",
+        "observedAt": "2026-11-08T16:53:59+00:00",
         "disposition": "Ayush asked about removing lock pairs during private VFS initialization. The fork amendment confines the existing checklocks exception to the helper that initializes the guarded fields.",
-        "nextAction": "Approve publishing the amendment and replying on the original thread after the owning suites and Nogo controls pass.",
+        "nextAction": "Approve publishing the qualified amendment and replying on the original thread.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14343#discussion_r4506829771",
           "https://github.com/tamird/gvisor/commit/cfdbe9edf",
-          "https://github.com/tamird/gvisor/actions/runs/42499650984"
+          "https://github.com/tamird/gvisor/actions/runs/42499650984",
+          "https://github.com/tamird/gvisor/actions/runs/42499650984/artifacts/13625797683"
         ]
       },
       "head": "c84ba767743ce2c96109a89f234d234485b3a230",
@@ -1712,6 +1713,10 @@
         {
           "label": "Fork qualification of the owning suites and Nogo controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42499650984"
+        },
+        {
+          "label": "Native VFS/TMPFS suites and guarded versus whole-method Nogo controls on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42499650984/artifacts/13625797683"
         }
       ],
       "refinement": {
@@ -1747,7 +1752,7 @@
         "url": "https://github.com/tamird/gvisor/commit/cfdbe9edf",
         "title": "Check TMPFS and VFS locking contracts",
         "body": "Make checklocks enforce the existing guards for TMPFS file data and VFS registries, mount state, dentries, and epoll state. Express shared filesystem ownership where the checker can follow it, and document the remaining collection and callback boundaries.\n\nUse filesystem receivers for TMPFS path traversal so callers can prove which mutex they hold. Initialize the VFS registries before the VFS is shared, and keep the construction of its anonymous mount checked. Detach the filesystem registry before releasing its entries so release callbacks run outside the registry lock. Read file offsets through Seek in the existing TMPFS test.",
-        "summary": "Publish the amended commit and reply to Ayush after both owning suites and the Nogo controls pass. The fork qualification is running.\n\nProposed inline reply\n\nYes, those lock pairs aren't needed while this VFS is private. Checklocks already supports `// +checklocksignore` on a function. I confined it to the helper that initializes the guarded fields so the rest of `Init`, including construction of its anonymous mount, stays checked. For a general annotation I'd want to name the exclusively owned receiver or parameter and check that precondition at call sites.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff c84ba7677^! cfdbe9edf^!",
+        "summary": "Publish the qualified amendment and reply to Ayush. All 40 VFS and 171 TMPFS tests passed on native AMD64 with no skips. Nogo passed for AMD64 and ARM64. On each architecture it detected the same unguarded vfs.devices write with the exception confined to the helper. Suppressing the entire Init function hid that write.\n\nProposed inline reply\n\nYes, those lock pairs aren't needed while this VFS is private. Checklocks already supports `// +checklocksignore` on a function. I confined it to the helper that initializes the guarded fields so the rest of `Init`, including construction of its anonymous mount, stays checked. For a general annotation I'd want to name the exclusively owned receiver or parameter and check that precondition at call sites.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff c84ba7677^! cfdbe9edf^!",
         "requestedAt": "2026-11-08T16:24:02+00:00"
       }
     },
@@ -62520,8 +62525,8 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T16:42:07+00:00",
-      "summary": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings.\n\nThe revised tests remove 70 net lines relative to approved 2d112a931. Across ten files the full change adds 535 lines and removes 76. Tests account for 187 added and two removed lines. The 348 other additions include 29 BUILD lines. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context.",
+      "updatedAt": "2026-11-08T16:58:17+00:00",
+      "summary": "The published head still requires -checkpoint to inspect a Sentry image. The pending amendment removes the flag because the autosave runner uses the ordinary command. It selects checkpoint decoding only for the CPUID FeatureSet and Kernel in the first two frames. Other roots retain generic text and HTML rendering. A stream deliberately using both checkpoint roots has the same discriminator. On native ARM64 the ordinary command matched the published explicit text and HTML for a wire and graph checkpoint, and both images restored PID 1 and two files of 8,192 bytes. The autosave consumer comparison is pending.",
       "evidence": [
         {
           "label": "Revised native ARM64 test suites and four mutations rejected for their expected failures",
@@ -62562,6 +62567,10 @@
         {
           "label": "Native ARM64 CLI and live autosave comparison with the donor test-app visibility",
           "url": "https://github.com/tamird/gvisor/actions/runs/42501078883"
+        },
+        {
+          "label": "Native ARM64 default CLI, restored wire/graph images and generic controls; autosave outstanding",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42501078883/artifacts/13625508398"
         }
       ],
       "settledReviews": [
@@ -62591,20 +62600,38 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "ebcea451de61a61957c82527fa94241827267cde",
-        "observedAt": "2026-11-08T16:42:07+00:00",
-        "disposition": "The 13 permanent reader layout cases passed on native ARM64. The first run never executed the command or autosave fixtures: its fork-only data edge lacked test-app package visibility. A recovery on unchanged proposed source 912702589 restores the declaration from the previously passing guest fixture.",
-        "nextAction": "Verify the default command and the actual autosave formatter on the same wire and graph checkpoints. Bring the in-place amendment and proposed inline reply to the contributor after qualification.",
+        "observedAt": "2026-11-08T16:58:17+00:00",
+        "disposition": "Ayush asked about requiring a flag for the checkpoint files runsc produces. The revision matches the first two frame types and preserves generic formats for other roots. The command and two restored images passed; native autosave output remains to be checked.",
+        "nextAction": "Approve publishing this amendment and replying on the original thread after the autosave text and HTML comparisons pass.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17208",
-          "https://github.com/tamird/gvisor/commit/ebcea451d",
           "https://github.com/google/gvisor/pull/17208#discussion_r4506794124",
           "https://github.com/tamird/gvisor/commit/912702589",
-          "https://github.com/tamird/gvisor/actions/runs/42499334480",
-          "https://github.com/tamird/gvisor/actions/runs/42499334480/artifacts/13624733452",
-          "https://github.com/tamird/gvisor/actions/runs/42501078883"
+          "https://github.com/tamird/gvisor/actions/runs/42501078883/artifacts/13625508398",
+          "https://github.com/tamird/gvisor/actions/runs/42499334480/artifacts/13624733452"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "ebcea451de61a61957c82527fa94241827267cde",
+          "base": "9ee2906f518e1d0f9fd109e9e1feb2812096418b"
+        },
+        "after": {
+          "head": "912702589414e631909e449f5926b66fa6d5a2c1",
+          "base": "9ee2906f518e1d0f9fd109e9e1feb2812096418b"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "912702589414e631909e449f5926b66fa6d5a2c1",
+        "baseHead": "ebcea451de61a61957c82527fa94241827267cde",
+        "title": "Inspect inline MemoryFiles in Sentry checkpoint dumps",
+        "url": "https://github.com/tamird/gvisor/commit/912702589",
+        "body": "6acfb4158 replaced the saved MemoryFile object with a length-prefixed protobuf. A generic statefile dump can skip later objects or print incorrect page boundaries while reporting success. The autosave test runner uses this dump for its text and HTML artifacts.\n\nRecognize the CPUID FeatureSet and Kernel in the first two frames of a Sentry checkpoint. Read the application MemoryFile and one private MemoryFile per saved owner, and reject missing or trailing data. Preserve the earlier object-framed layout, split-page files and generic state streams with other roots.\n\nFixes: 6acfb4158 (\"Convert memoryFileSaved to MemoryFileMetadataProto.\")",
+        "summary": "Publish the amendment and reply to Ayush after the actual autosave formatter writes matching text and HTML. Both native ARM64 guest tests passed: the revised default matched the published explicit mode and the independent layout for the same wire and graph images that restored successfully. The generic command controls and 13 layout cases passed. A fork reporting assertion stopped before the autosave consumer.\n\nProposed inline reply\n\nYes for the files runsc writes. The autosave test runner calls `runsc statefile` without a flag, so it was still using the generic decoder. I removed `-checkpoint`. The command now recognizes the CPUID FeatureSet and Kernel in the first two frames of a Sentry checkpoint. Other root types still use the generic printer.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff ebcea451d^! 912702589^!",
+        "requestedAt": "2026-11-08T16:58:17+00:00"
       }
     },
     {
@@ -88624,7 +88651,7 @@
       "title": "Printing inline checkpoint memory",
       "status": "concluded",
       "owner": "Agent",
-      "updatedAt": "2026-11-08T00:43:46+00:00",
+      "updatedAt": "2026-11-08T16:53:59+00:00",
       "summary": "The contributor approved the opt-in reader for historical inline checkpoints. The final reader and revised tests are under upstream review in #17208 at ebcea451d. The existing generic command keeps its original text and HTML behavior. The earlier corpus covered 59 and 56 regions; fresh checkpoints verified 64 and 62, all on the same bytes subsequently restored.",
       "findings": [
         {
@@ -88704,9 +88731,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42365642428/artifacts/13572575742"
             }
           ]
+        },
+        {
+          "text": "In #17236 at d7c3cc07c, sparse version-2 MemoryFile metadata is written only for disk-backed files with a separate pages file. A split checkpoint.img ends after the CPUID and Kernel graphs; an inline checkpoint still writes version 1 and full segment lengths. Combining the two proposals requires resolving pgalloc.LoadFrom so split restore accepts #17236’s checked version 2 while inline inspection continues to require version 1. This comparison is from source.",
+          "evidence": [
+            {
+              "label": "Sparse writer gate",
+              "url": "https://github.com/google/gvisor/blob/d7c3cc07c/pkg/sentry/pgalloc/save_restore.go#L279-L282"
+            },
+            {
+              "label": "Split MemoryFile destination",
+              "url": "https://github.com/google/gvisor/blob/d7c3cc07c/pkg/sentry/kernel/kernel.go#L878-L891"
+            },
+            {
+              "label": "Inline metadata decoder",
+              "url": "https://github.com/tamird/gvisor/blob/912702589/pkg/sentry/pgalloc/metadata/metadata.go#L44-L53"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow maintainer review and the import on #17208. The producer-side framing experiment remains separate.",
+      "nextStep": "Follow the autosave comparison and Ayush’s question on #17208. If #17236 lands, preserve its split-restore version checks when reconciling pgalloc.LoadFrom.",
       "evidence": [
         {
           "label": "Inspect existing inline checkpoints",
