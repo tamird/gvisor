@@ -1,8 +1,32 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "platforms")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+sh_test(
+    name = "checkpoint_dir_without_docker",
+    size = "large",
+    srcs = ["checkpoint_dir.sh"],
+    args = [
+        "$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)",
+        "$(rootpath //test/cmd/test_app)",
+        "$(rootpath :checkpoint_dir_stock)",
+        "$(rootpath :checkpoint_dir_busybox)",
+        "$(rootpath :checkpoint_dir_namespace.sh)",
+    ],
+    data = [
+        ":checkpoint_dir_busybox",
+        ":checkpoint_dir_namespace.sh",
+        ":checkpoint_dir_stock",
+        "//:release",
+        "//test/benchmarks/checkpointfile:checkpointfile_test",
+        "//test/cmd/test_app",
+    ],
+    local = True,
+    tags = ["manual"],
 )
 
 go_library(
