@@ -1,0 +1,45 @@
+name: Verify the daily project feedback handoff
+on:
+  push:
+    branches: [qualification/work-map-project-feedback]
+permissions: {}
+jobs:
+  suites:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Compare the agent queue on the deployed snapshot
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/suite-results"
+          mkdir "$out"
+          test "$(git rev-parse HEAD^^)" = 7e108f35927bf70795bcd6e8344b6dcfcf84c2ea
+          test "$(git rev-parse HEAD^)" = 602388e809c3ad2de7009887cc5b2819583f9456
+          test "$(git rev-parse 'HEAD~1^{tree}')" = 5e336c7f07101ee9a9cb87d0812f730c2baf339b
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/feedback-queue.mjs .github/workflows/work-map.yml)"
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' app.js app_test.mjs registry.json)"
+          node .github/qualification/feedback-queue.mjs | tee "$out/queue.json"
+      - name: Run the site Python and frontend suites
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/suite-results"
+          mkdir -p "$out"
+          a=0; b=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest discover -p '*_test.py' -v > "$out/python.log" 2>&1 || a=$?
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test --test-reporter=tap app_test.mjs > "$out/frontend.tap" 2>&1 || b=$?
+          tail -n 4 "$out/python.log"
+          tail -n 8 "$out/frontend.tap"
+          grep -F 'test_old_commit_force_push_and_merge_stay_queued_until_reviewed' "$out/python.log" | grep -E ' \.\.\. ok$'
+          grep -E '^ok [0-9]+ - the agent queue shows one project feedback review only when its current sweep is due$' "$out/frontend.tap"
+          test "$a" -eq 0 && test "$b" -eq 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: work-map-project-feedback
+          path: ${{ runner.temp }}/suite-results/
+          if-no-files-found: error
+          retention-days: 14
