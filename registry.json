@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T21:48:58+00:00",
+    "updatedAt": "2026-11-08T22:27:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2158,8 +2158,12 @@
       "url": "https://github.com/tamird/gvisor/commit/c115840f8",
       "group": "bazel",
       "status": "Contributor review requested",
-      "summary": "On source c115840f8, one AMD64 Bazel client built all nine release executables for AMD64 and all nine for ARM64. The client used stock Ubuntu 22.04 with a pinned Bazel, Git and public CA bundle. It installed no packages. Both sets of file hashes matched a build without system compilers, binutils, Make or Docker.\n\nA native ARM64 worker verified the nine transferred files and booted the Sentry under rootless systrap. The guest reported aarch64 and exited 0. The build trace still saw host shell utilities and Git. Other builder jobs need separate qualification.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.\n\nOn the separate integration 61ff148f0, one AMD64 Bazel 9.3.1 client built optimized //:release for AMD64 and ARM64 locally with empty /bin and /usr/bin. All nine ELF files per target matched the earlier remote builds by SHA-256. The client supplied Bazel, its runtime libraries and CA certificates. The integration declared its shell tools and used the rules_go #4774 fix to give Nogo the SDK sources matching the compiled archives. This run covered the release executables. Packaging, signing and other builder jobs have separate requirements.",
+      "summary": "Native Linux AMD64 and ARM64 clients each built the nine optimized //:release executables for both architectures from LLVM integration 61ff148f0. All 18 SHA-256 digests matched across clients and against the earlier remote builds. Both clients had empty /bin and /usr/bin. Bazel used its declared compiler and shell. On ARM64, the execution log identifies native ARM64 Clang, the vDSO link wrapper and Nogo for both target architectures.\n\nThe integration includes the rules_go #4774 SDK source fix for Nogo. The clients supplied Bazel 9.3.1, its runtime libraries and CA certificates. On the earlier reduced Ubuntu builder, a native ARM64 worker also booted the AMD64-built Sentry under rootless systrap. Packaging, signing and other builder jobs have separate requirements.",
       "evidence": [
+        {
+          "label": "All 18 executables built on ARM64 match the AMD64 client’s release hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42529199061/artifacts/13637052197"
+        },
         {
           "label": "Optimized release from a Git-free source export with registry LLVM 0.8.24",
           "url": "https://github.com/tamird/gvisor/actions/runs/42361840401/artifacts/13571015047"
@@ -2221,7 +2225,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42388512100/artifacts/13582280090"
         }
       ],
-      "updatedAt": "2026-11-08T13:12:21+00:00",
+      "updatedAt": "2026-11-08T22:27:41+00:00",
       "head": "c115840f8a85010111fa5d72b611d7d9ab1df34b",
       "contributorReview": {
         "status": "pending",
@@ -90286,5 +90290,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T21:48:58+00:00"
+  "updatedAt": "2026-11-08T22:27:41+00:00"
 }
