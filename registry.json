@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T12:56:37+00:00",
+    "updatedAt": "2026-11-08T13:03:39+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52732,9 +52732,9 @@
       "title": "Link Linux-hosted toolchain helpers with musl",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-08T01:50:44+00:00",
-      "summary": "David asked whether gVisor could select musl on the execution platform. In empty Linux roots, that constraint let all six stock LLVM helpers run on AMD64 and ARM64. Without it, five failed to start on AMD64 at f9abea4c9 and all six failed on ARM64 at LLVM 0.8.24. Each comparison preserved the bytes of its GNU target executable. gVisor’s fork release-prewarmer already declares musl on both distroless execution platforms. The pending decision is whether to reply to David and close #908. The with_cfg prepend operation in #275 remains independently motivated by with_cfg #151.",
+      "status": "closed",
+      "updatedAt": "2026-11-08T13:00:39+00:00",
+      "summary": "Tamir replied to David and closed #908 after all six stock LLVM helpers ran in empty Linux roots with @llvm//constraints/libc:musl on the execution platform. Without that constraint, five helpers failed on AMD64 at f9abea4c9 and all six failed on ARM64 at LLVM 0.8.24. The GNU target executable remained byte-identical in each comparison. The gVisor fork declares musl on both scratch execution platforms. The with_cfg prepend change in #275 has its own use case in with_cfg #151.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52851,6 +52851,10 @@
         {
           "label": "gVisor’s fork declares musl on both distroless release-prewarmer execution platforms",
           "url": "https://github.com/tamird/gvisor/blob/e89646dda/test/rbe/release_prewarmer/BUILD#L5"
+        },
+        {
+          "label": "Posted reply to David before closing the PR",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
         }
       ],
       "settledReviews": [
@@ -52859,28 +52863,28 @@
           "head": "ed1ed5105e6cd8b638b1e55d4c32e28b7511541d",
           "at": "2026-11-02T19:41:01.662487+00:00",
           "outcome": "approved"
+        },
+        {
+          "kind": "reply",
+          "head": "533981c365e8ee683926bd465efcc81bc31158bf",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6714807658",
+          "body": "@dzbarsky, you were right. With stock hermetic-llvm, five of the six helpers failed to start in an empty AMD64 root when the execution platform specified only Linux and x86_64. Adding `@llvm//constraints/libc:musl` let all six run. The glibc target executable was byte-identical in both runs. We can declare musl on gVisor’s scratch workers and close this change. [Paired results](https://github.com/tamird/hermetic-llvm/actions/runs/42429302127/artifacts/13597315831).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-08T13:00:37+00:00",
+          "postedURL": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "533981c365e8ee683926bd465efcc81bc31158bf",
-        "observedAt": "2026-11-08T00:25:45+00:00",
-        "disposition": "The stock toolchain passed David’s proposed execution-platform comparison on AMD64.",
-        "nextAction": "Review the proposed reply to David and closure of #908.",
+        "observedAt": "2026-11-08T13:00:39+00:00",
+        "disposition": "The approved reply was posted and #908 was closed without merging at 533981c36.",
+        "nextAction": "No further action on #908.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6714807658",
-          "https://github.com/tamird/hermetic-llvm/actions/runs/42429302127/artifacts/13597315831"
+          "https://github.com/tamird/hermetic-llvm/actions/runs/42429302127/artifacts/13597315831",
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "533981c365e8ee683926bd465efcc81bc31158bf",
-        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6714807658",
-        "title": "Reply to David and close #908",
-        "requestedAt": "2026-11-08T00:25:45+00:00",
-        "summary": "Post this reply to David and close #908? The stock execution-platform approach supports the gVisor scratch-worker case.",
-        "body": "@dzbarsky, you were right. With stock hermetic-llvm, five of the six helpers failed to start in an empty AMD64 root when the execution platform specified only Linux and x86_64. Adding `@llvm//constraints/libc:musl` let all six run. The glibc target executable was byte-identical in both runs. We can declare musl on gVisor’s scratch workers and close this change. [Paired results](https://github.com/tamird/hermetic-llvm/actions/runs/42429302127/artifacts/13597315831).\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -63265,6 +63269,48 @@
           "https://github.com/google/gvisor/pull/17221",
           "https://github.com/tamird/gvisor/commit/cba5d1b3f"
         ]
+      }
+    },
+    {
+      "id": "branch:module-map-exec-libc",
+      "type": "branch",
+      "repo": "tamird/hermetic-llvm",
+      "ref": "proposal/module-map-exec-libc",
+      "head": "bb990fc8fd34475910cc2ae58a2809c70743e793",
+      "title": "Use the exec platform for the module map generator",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/bb990fc8f",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T13:03:39+00:00",
+      "summary": "The proposed revert removes #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. LLVM 0.8.26 predates #899.",
+      "evidence": [
+        {
+          "label": "Restore the generator’s original executable label and implementation",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/bb990fc8f"
+        },
+        {
+          "label": "GNU and musl execution on AMD64, configured action counts and module map bytes",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42430088604/artifacts/13597530149"
+        },
+        {
+          "label": "Merged change that forced musl for Linux generators",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        },
+        {
+          "label": "Conclusion of the separate six-helper proposal",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "bb990fc8fd34475910cc2ae58a2809c70743e793",
+        "baseHead": "f9abea4c99d6d4a779488463419b2b0486497cbc",
+        "title": "Use the exec platform for the module map generator",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/bb990fc8f",
+        "summary": "Open this single-commit hermetic-llvm PR to revert #899?",
+        "body": "eb198127b forces the module map generator to use musl on Linux, even when the execution platform selects glibc. On an x86-64 GNU worker this puts 1,352 musl compile actions in the generator's build graph. [1]\n\nBuild the public module-map-generator target directly. The module map rule already requests its executable in the execution configuration, so the worker's libc determines how the generator is linked. A GNU worker can use its glibc loader and libraries. Linux workers without them must declare @llvm//constraints/libc:musl to get a static generator.\n\nWith the same GNU target, the GNU worker's generator had no musl compile actions. The musl worker's generator ran in a chroot without a C runtime. Both produced the same module map, including the sizes of its textual headers. [1]\n\n[1]: https://github.com/tamird/hermetic-llvm/actions/runs/42430088604/artifacts/13597530149",
+        "requestedAt": "2026-11-08T13:03:39+00:00"
       }
     }
   ],
