@@ -1392,6 +1392,19 @@ func (s *sender) updateSACKCredit(seg *segment, known header.SACKBlock) {
 	seg.sackCredit = uint32(n)
 }
 
+// cumulativePacketCount counts the transmitted packet ends owned by a
+// queue entry for an ordinary cumulative ACK. An MSS change or a queue
+// split does not change the packets already sent. During loss recovery or
+// after retransmission, the outstanding estimate can include other copies.
+//
+// +checklocks:s.ep.mu
+func (s *sender) cumulativePacketCount(seg *segment) int {
+	if !s.inRecovery() && seg.xmitCount == 1 && seg.gsoMSS != 0 {
+		return seg.sackPackets().count
+	}
+	return s.pCount(seg, s.MaxPayloadSize)
+}
+
 // recordSACK updates packet ownership and, for a fully reported queue entry,
 // supplies the acknowledgment to RACK only once.
 //
@@ -1758,10 +1771,10 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 			datalen := seg.logicalLen()
 			if datalen > ackLeft {
-				prevCount := s.pCount(seg, s.MaxPayloadSize)
+				prevCount := s.cumulativePacketCount(seg)
 				seg.TrimFront(ackLeft)
 				seg.sequenceNumber.UpdateForward(ackLeft)
-				s.Outstanding -= prevCount - s.pCount(seg, s.MaxPayloadSize)
+				s.Outstanding -= prevCount - s.cumulativePacketCount(seg)
 				break
 			}
 
@@ -1781,7 +1794,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// the segment was not previously SACKED as these have
 			// already been accounted for in SetPipe().
 			if !s.ep.SACKPermitted || !s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
-				s.Outstanding -= s.pCount(seg, s.MaxPayloadSize)
+				s.Outstanding -= s.cumulativePacketCount(seg)
 			}
 			s.SackedOut -= int(seg.sackCredit)
 			seg.DecRef()

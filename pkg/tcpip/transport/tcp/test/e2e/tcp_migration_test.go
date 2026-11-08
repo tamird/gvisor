@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -81,7 +82,7 @@ func TestTCPMigration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create stack.
 			c := testcontext.New(t, e2e.DefaultMTU)
-			defer c.Cleanup()
+			t.Cleanup(c.Cleanup)
 
 			c.Stack().SetAllowLiveTCPMigration(tc.allowMigration)
 			c.Stack().SetRemoveConf(tc.removeConf)
@@ -105,39 +106,11 @@ func TestTCPMigration(t *testing.T) {
 				t.Fatalf("Unexpected original endpoint state after save: want %v, got %v", want, got)
 			}
 
-			// Restore the stack.
-			restoredStack := stack.New(stack.Options{
-				TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
-				NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
-			})
-			restoredStack.SetAllowLiveTCPMigration(tc.allowMigration)
-			defer restoredStack.Destroy()
-
-			loadStats, err := state.Load(context.Background(), bytes.NewReader(buf.Bytes()), restoredStack)
-			if err != nil {
-				t.Fatalf("Load failed: %v", err)
-			}
-			t.Logf("Load stats:\n%s", loadStats.String())
-
+			var linkMTU uint32
 			if tc.hasRouteAfterRestore {
-				// Recreate the NIC 1 with same IP.
-				ep := channel.New(1000, e2e.DefaultMTU, "")
-				if err := restoredStack.CreateNIC(1, ep); err != nil {
-					t.Fatalf("CreateNIC failed: %v", err)
-				}
-				if err := restoredStack.AddProtocolAddress(1, tcpip.ProtocolAddress{
-					Protocol:          header.IPv4ProtocolNumber,
-					AddressWithPrefix: testcontext.StackAddrWithPrefix,
-				}, stack.AddressProperties{}); err != nil {
-					t.Fatalf("AddProtocolAddress failed: %v", err)
-				}
-				restoredStack.SetRouteTable([]tcpip.Route{
-					{
-						Destination: header.IPv4EmptySubnet,
-						NIC:         1,
-					},
-				})
+				linkMTU = e2e.DefaultMTU
 			}
+			restoredStack, _ := loadTCPMigrationStack(t, buf.Bytes(), tc.allowMigration, linkMTU)
 
 			stackType := reflect.TypeOf(restoredStack).Elem()
 			sf, ok := stackType.FieldByName("restoredEndpoints")
@@ -176,6 +149,97 @@ func TestTCPMigration(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// loadTCPMigrationStack loads the saved stack before endpoint restoration.
+// A nonzero linkMTU recreates NIC 1 at the original IP address.
+func loadTCPMigrationStack(t *testing.T, image []byte, allowMigration bool, linkMTU uint32) (*stack.Stack, *channel.Endpoint) {
+	t.Helper()
+	s := stack.New(stack.Options{
+		TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+		NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
+	})
+	t.Cleanup(s.Destroy)
+	s.SetAllowLiveTCPMigration(allowMigration)
+	loadStats, err := state.Load(context.Background(), bytes.NewReader(image), s)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	t.Logf("Load stats:\n%s", loadStats.String())
+	if linkMTU == 0 {
+		return s, nil
+	}
+	link := channel.New(1000, linkMTU, "")
+	if err := s.CreateNIC(1, link); err != nil {
+		t.Fatalf("CreateNIC failed: %v", err)
+	}
+	if err := s.AddProtocolAddress(1, tcpip.ProtocolAddress{
+		Protocol:          header.IPv4ProtocolNumber,
+		AddressWithPrefix: testcontext.StackAddrWithPrefix,
+	}, stack.AddressProperties{}); err != nil {
+		t.Fatalf("AddProtocolAddress failed: %v", err)
+	}
+	s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+	return s, link
+}
+
+func TestTCPMigrationACKAfterMTUReduction(t *testing.T) {
+	const peerMSS = 1200
+	c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, EnableV6: true, MTU: e2e.DefaultMTU, Clock: faketime.NewManualClock()})
+	t.Cleanup(c.Cleanup)
+	c.Stack().SetAllowLiveTCPMigration(true)
+	c.Stack().SetRemoveConf(true)
+	var options [4]byte
+	header.EncodeMSSOption(peerMSS, options[:])
+	c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1 /* epRcvBuf */, options[:])
+	data := bytes.Repeat([]byte{0x42}, peerMSS)
+	if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != peerMSS {
+		t.Fatalf("Write = %d, %v", n, err)
+	}
+	old := c.GetPacket()
+	defer old.Release()
+	h := header.TCP(header.IPv4(old.AsSlice()).Payload())
+	if !bytes.Equal(h.Payload(), data) {
+		t.Fatal("old route did not send the entire payload in one packet")
+	}
+	var image bytes.Buffer
+	if _, err := state.Save(context.Background(), &image, c.Stack()); err != nil {
+		t.Fatal(err)
+	}
+	const mtu = header.IPv4MinimumSize + header.TCPMinimumSize + peerMSS - 4
+	s, link := loadTCPMigrationStack(t, image.Bytes(), true, mtu)
+	s.Restore()
+	eps := s.RegisteredEndpoints()
+	if len(eps) != 1 {
+		t.Fatalf("got %d restored endpoints, want 1", len(eps))
+	}
+	ep := eps[0].(tcpip.Endpoint)
+	var before, after tcpip.TCPInfoOption
+	if err := ep.GetSockOpt(&before); err != nil || before.SndMss != peerMSS-4 || before.SndCwnd+2 >= before.SndSsthresh {
+		t.Fatalf("unexpected restored TCP_INFO: %+v, %v", before, err)
+	}
+	// Read the byte accompanying the ACK before observing its window effect.
+	ack := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: c.BuildSegment([]byte{1}, &testcontext.Headers{
+		SrcPort: testcontext.TestPort, DstPort: c.Port, SeqNum: testcontext.TestInitialSequenceNumber + 1,
+		AckNum: seqnum.Value(h.SequenceNumber()).Add(peerMSS), Flags: header.TCPFlagAck | header.TCPFlagPsh, RcvWnd: 30000,
+	})})
+	link.InjectInbound(ipv4.ProtocolNumber, ack)
+	ack.DecRef()
+	deadline := time.Now().Add(5 * time.Second)
+	for ep.Readiness(waiter.ReadableEvents) == 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	var got bytes.Buffer
+	if _, err := ep.Read(&got, tcpip.ReadOptions{}); err != nil || !bytes.Equal(got.Bytes(), []byte{1}) {
+		t.Fatalf("read ACK's data = %v, %v", got.Bytes(), err)
+	}
+	if err := ep.GetSockOpt(&after); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("ACK of %d-byte packet at MSS %d: cwnd %d -> %d", len(data), before.SndMss, before.SndCwnd, after.SndCwnd)
+	if want := before.SndCwnd + 1; after.SndCwnd != want {
+		t.Errorf("ACK of one old packet: got cwnd %d, want %d", after.SndCwnd, want)
 	}
 }
 
