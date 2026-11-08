@@ -102,6 +102,7 @@ go_test(
     srcs = [
         "bootposture_test.go",
         "capability_test.go",
+        "checkpoint_format_compat_test.go",
         "delete_test.go",
         "do_test.go",
         "exec_test.go",
@@ -122,14 +123,17 @@ go_test(
     data = [
         "//:release",  # keep
         "//runsc",  # keep
+        "//test/cmd/test_app",
     ],
     embed = [":cmd"],
+    env = {"GVISOR_CMD_TEST_APP": "$(rootpath //test/cmd/test_app)"},
     deps = [
         "//pkg/abi/linux",
         "//pkg/control/server",
         "//pkg/log",
         "//pkg/sentry/control/controlapi",
         "//pkg/sentry/kernel/auth",
+        "//pkg/sentry/pgalloc/metadata",
         "//pkg/sentry/state/checkpointfiles",
         "//pkg/state",
         "//pkg/state/statefile",
