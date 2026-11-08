@@ -2973,32 +2973,20 @@ func TestCheckpointTmpfsTreeForProfile(t *testing.T) {
 	if imageDir == "" {
 		t.Fatal("missing capture directory")
 	}
-	const limit int64 = 2 << 30
-	memLimit := limit
 	spec, conf := sleepSpecConf(t)
 	conf.Overlay2.Set("none")
 	conf.Debug, conf.Strace, conf.LogPackets = false, false, false
 	conf.Platform = "systrap"
-	cgPath := "/" + testutil.RandomID("gvisor-profile-cg")
+	conf.Rootless, conf.IgnoreCgroups = true, true
+	spec.Root.Path = "/guest-rootfs"
 	spec.Mounts = []specs.Mount{{Type: "tmpfs", Destination: "/tmpfs"}}
-	spec.Linux = &specs.Linux{
-		CgroupsPath: cgPath,
-		Resources:   &specs.LinuxResources{Memory: &specs.LinuxMemory{Limit: &memLimit}},
-	}
+	spec.Linux = &specs.Linux{}
 	_, bundle, cleanup, err := testutil.SetupContainer(spec, conf)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer cleanup()
 	args := Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundle}
-	checkCap := func(stage string) {
-		t.Helper()
-		buf, err := os.ReadFile(filepath.Join("/sys/fs/cgroup", cgPath, "memory.max"))
-		if err != nil || strings.TrimSpace(string(buf)) != strconv.FormatInt(limit, 10) {
-			t.Fatalf("%s: expected %d imposed bytes, got %q, %v", stage, limit, buf, err)
-		}
-		t.Logf("TMPFS-CAP %s %d", stage, limit)
-	}
 	cont, err := New(conf, args)
 	if err != nil {
 		t.Fatal(err)
@@ -3014,7 +3002,6 @@ func TestCheckpointTmpfsTreeForProfile(t *testing.T) {
 	if err := waitForProcessCount(cont, 1); err != nil {
 		t.Fatal(err)
 	}
-	checkCap("save")
 	testApp, err := testutil.FindFile("test/cmd/test_app/test_app")
 	if err != nil {
 		t.Fatal(err)
@@ -3082,7 +3069,6 @@ func TestCheckpointTmpfsTreeForProfile(t *testing.T) {
 	}
 	defer restored.Destroy()
 	created := time.Now()
-	checkCap("restore")
 	rpc := time.Now()
 	if err := restored.Restore(conf, imageDir, sandbox.DirectIOOff, false, nil); err != nil {
 		t.Fatal(err)

@@ -401,6 +401,7 @@ func (ds *graphDecodeState) decodeElems(elem *typeInfo, p unsafe.Pointer, n uint
 		ds.in.raw(p, elem.size*n)
 		return
 	}
+	ds.reserveBatch(int(n), elem)
 	queued := 0
 	esz := elem.size
 	for i := uintptr(0); i < n; i++ {
@@ -520,6 +521,7 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 	// Callbacks and the StateLoad methods of structs with hooks may retain
 	// the addresses of keys and values. Entries get fresh storage after
 	// those run; other entries reuse the storage of the previous entry.
+	ds.reserveBatch(n, kt, et)
 	queued := 0
 	fresh := true
 	for i := 0; i < n; i++ {

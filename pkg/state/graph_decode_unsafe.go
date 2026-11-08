@@ -76,10 +76,17 @@ type graphObjectDecodeState struct {
 
 // graphDecodeState is the state of Load.
 type graphDecodeState struct {
-	census  map[callbackCensusKey]int
-	batches map[callbackBatchKey]int
-	ctx     context.Context
-	in      decBuf
+	census           map[callbackCensusKey]int
+	batches          map[callbackBatchKey]int
+	distribution     []callbackFans
+	actualGrowth     callbackGrowth
+	batched          callbackModel[decodeCallback]
+	hooked           callbackModel[decodeCallback]
+	plain            callbackModel[struct{ waiter, next int32 }]
+	reservedSlots    int
+	reservationCalls int
+	ctx              context.Context
+	in               decBuf
 
 	types []*typeInfo
 	// typeNames are the names of named types, which may not be registered.
@@ -434,7 +441,17 @@ func (ds *graphDecodeState) appendCallback(head, tail *int32, cb decodeCallback)
 		ds.deferred++
 	}
 	cb.next = -1
+	before := cap(ds.cbs)
 	ds.cbs = append(ds.cbs, cb)
+	if callbackCensusEnabled {
+		ds.actualGrowth.observe(len(ds.cbs)-1, before, cap(ds.cbs))
+		ds.batched.add()
+		if cb.user() {
+			ds.hooked.add()
+		} else {
+			ds.plain.add()
+		}
+	}
 	i := int32(len(ds.cbs) - 1)
 	if *tail < 0 {
 		*head = i
@@ -503,6 +520,90 @@ type callbackBatchKey struct {
 	Dependencies int
 }
 
+// Start each shadow frame with the same full-record spare capacity as the
+// actual pooled graph. Compact split tables model fresh allocation per frame.
+func (ds *graphDecodeState) startCallbackModels() {
+	if callbackCensusEnabled && cap(ds.cbs) != 0 {
+		ds.batched.slots = make([]decodeCallback, 0, cap(ds.cbs))
+	}
+}
+
+// callbackGrowth counts backing-store slots, not heap profile samples or time.
+type callbackGrowth struct {
+	AllocatedSlots, CopiedSlots, Allocations int
+}
+
+func (g *callbackGrowth) observe(length, before, after int) {
+	if after != before {
+		g.AllocatedSlots += after
+		g.CopiedSlots += length
+		g.Allocations++
+	}
+}
+
+// The modeled tables hold zero values. Use the real Go runtime's allocation
+// classes for each element type and the actual order of registrations.
+type callbackModel[T any] struct {
+	slots  []T
+	Growth callbackGrowth
+}
+
+func (m *callbackModel[T]) add() {
+	before := cap(m.slots)
+	var zero T
+	m.slots = append(m.slots, zero)
+	m.Growth.observe(len(m.slots)-1, before, cap(m.slots))
+}
+
+func (ds *graphDecodeState) reserveBatch(elements int, types ...*typeInfo) {
+	if !callbackCensusEnabled {
+		return
+	}
+	slots := 0
+	for _, t := range types {
+		if t.kind == reflect.Pointer {
+			slots += elements
+		}
+	}
+	if slots == 0 {
+		return
+	}
+	ds.reservedSlots += slots
+	ds.reservationCalls++
+	m := &ds.batched
+	before := cap(m.slots)
+	m.slots = slices.Grow(m.slots, slots)
+	m.Growth.observe(before, before, cap(m.slots))
+}
+
+type callbackFans struct{ Plain, Hooked, Objects int }
+
+// Count incoming edges before runCallbacks splices in the object's own hooks.
+func (ds *graphDecodeState) countIncoming() {
+	if !callbackCensusEnabled {
+		return
+	}
+	counts := make(map[[2]int]int)
+	for _, obj := range ds.ods {
+		var fan [2]int
+		for i := obj.waitHead; i >= 0; i = ds.cbs[i].next {
+			cb := &ds.cbs[i]
+			if cb.waiter < 0 {
+				panic("waiting list entry lacks a waiting object")
+			}
+			if cb.user() {
+				fan[1]++
+			} else {
+				fan[0]++
+			}
+		}
+		counts[fan]++
+	}
+	for fan, n := range counts {
+		ds.distribution = append(ds.distribution, callbackFans{fan[0], fan[1], n})
+	}
+}
+
 func (ds *graphDecodeState) countCallback(origin string, cb decodeCallback) {
 	if ds.census == nil {
 		ds.census = make(map[callbackCensusKey]int)
@@ -563,10 +664,18 @@ func (ds *graphDecodeState) reportCallbackCensus() {
 		batches = append(batches, batchRow{key, count})
 	}
 	row := struct {
-		Callbacks                           []callbackRow
-		Batches                             []batchRow
-		Records, Capacity, Objects, Targets int
-	}{callbacks, batches, len(ds.cbs), cap(ds.cbs), len(ds.objs), len(ds.targets)}
+		Callbacks                                                                                              []callbackRow
+		Batches                                                                                                []batchRow
+		Records, Capacity, Objects, Targets                                                                    int
+		Incoming                                                                                               []callbackFans
+		RecordBytes, ObjectStateBytes, CompactBytes                                                            uintptr
+		Actual, Batched, FullHooks, CompactPlain                                                               callbackGrowth
+		HookRecords, PlainRecords, BatchCapacity, HookCapacity, PlainCapacity, ReservedSlots, ReservationCalls int
+	}{callbacks, batches, len(ds.cbs), cap(ds.cbs), len(ds.objs), len(ds.targets), ds.distribution,
+		unsafe.Sizeof(decodeCallback{}), unsafe.Sizeof(graphObjectDecodeState{}), unsafe.Sizeof(struct{ waiter, next int32 }{}),
+		ds.actualGrowth, ds.batched.Growth, ds.hooked.Growth, ds.plain.Growth,
+		len(ds.hooked.slots), len(ds.plain.slots), cap(ds.batched.slots), cap(ds.hooked.slots), cap(ds.plain.slots),
+		ds.reservedSlots, ds.reservationCalls}
 	data, err := json.Marshal(row)
 	if err != nil {
 		panic(err)

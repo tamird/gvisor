@@ -34,6 +34,7 @@ func (ds *graphDecodeState) load(root unsafe.Pointer, ti *typeInfo) {
 	if f := d.uint64(); f != schemaFingerprint() {
 		Failf("the state was saved by a binary with different types (fingerprint %#x, want %#x)", f, schemaFingerprint())
 	}
+	ds.startCallbackModels()
 	ds.readTypes()
 	ds.readObjects(root, ti)
 	ds.readTargets()
@@ -197,6 +198,7 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 
 // runCallbacks runs the callbacks of objects as they become complete.
 func (ds *graphDecodeState) runCallbacks() {
+	ds.countIncoming()
 	leaves := ds.leaves[:0]
 	defer func() { ds.leaves = leaves }()
 	for i := range ds.ods {
