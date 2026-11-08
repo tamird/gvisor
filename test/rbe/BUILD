@@ -45,13 +45,13 @@ _UBUNTU_WORKER = {
         name = "scratch_build_" + arch,
         constraint_values = ["@llvm//constraints/libc:musl"],
         exec_properties = {
-            "container-image": "docker://gcr.io/distroless/static-debian13@sha256:" + digest,
+            "container-image": "docker://docker.io/tianon/scratch@sha256:" + digest,
             "test.container-image": _UBUNTU_WORKER["container-image"],
         },
         parents = [":ubuntu_" + arch],
     )
     for arch, digest in [
-        ("amd64", "d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18"),
-        ("arm64", "b0aca6ddfad947e66782a29534647936d4d645a1b96d9c8a97e4f53b1607d428"),
+        ("amd64", "3d455195f1141b05cb8cc6deb07ea96b617e5436c7a259d9f3e7b1985f4d3f51"),
+        ("arm64", "0fe9f0d1914ac271ceffe2ff90d691c5a4dfcc2859928cdcf3561381a21ac5be"),
     ]
 ]
