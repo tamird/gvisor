@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T13:49:13+00:00",
+    "updatedAt": "2026-11-08T14:03:23+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60448,12 +60448,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/tcp-atomic-queue-membership",
-      "head": "1eae09b6e23cfa3e4f433cdd5ea30478317a7817",
-      "url": "https://github.com/tamird/gvisor/commit/1eae09b6e",
+      "head": "a8e54633f47fda892caa896ab37f3200b662cccf",
+      "url": "https://github.com/tamird/gvisor/commit/a8e54633f",
       "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T11:35:54+00:00",
+      "updatedAt": "2026-11-08T14:03:23+00:00",
       "summary": "Two peer queues can contend for the same TCP listener. Replacing the membership mutex with one atomic claim removed 63 net lines. On two AMD64 CPUs, rejected duplicate queue operations fell from 20.24 to 12.01 ns and a successful dequeue/requeue from 25.20 to 17.24 ns. The 16-pair benchmark measures queue operations. The ordinary and race TCP suites, both architecture analyzers and both single-processor scheduling controls passed.",
       "evidence": [
         {
@@ -60463,22 +60463,26 @@
         {
           "label": "Queue handoff, race checks and paired benchmarks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42366670610"
+        },
+        {
+          "label": "Correct reference-definition punctuation; same parent and source tree",
+          "url": "https://github.com/tamird/gvisor/commit/a8e54633f"
         }
       ],
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "1eae09b6e23cfa3e4f433cdd5ea30478317a7817",
+        "head": "a8e54633f47fda892caa896ab37f3200b662cccf",
         "baseHead": "77f1abcbe2ea642642a13317b2fd8c37cbb7ad08",
-        "url": "https://github.com/tamird/gvisor/commit/1eae09b6e",
+        "url": "https://github.com/tamird/gvisor/commit/a8e54633f",
         "title": "Claim TCP processor queue membership atomically",
-        "body": "Peers of a listening socket can hash to different TCP processors. An\nendpoint has only one pair of queue links. Each processor takes a\nsecond mutex on the endpoint to test or clear its queue membership\nwhile holding its own queue mutex.\n\nClaim membership before inserting the endpoint and release it after\nunlinking it. Each processor still protects its own list. Removing the\nmembership mutex also removes its lock-order annotations.\n\nBenchstat for ProcessorQueueMembership on two AMD64 CPUs [1].\n\n                   │ 77f1abcbe.txt │            01da93c33.txt          │\n                   │    sec/op     │   sec/op     vs base              │\nDuplicateEnqueue-2     20.24n ± 0%   12.01n ± 0%  -40.66% (p=0.000 n=16)\nDequeueRequeue-2       25.20n ± 0%   17.24n ± 0%  -31.60% (p=0.000 n=16)\n\nDuplicateEnqueue times two queues concurrently trying to enqueue the\nsame already queued endpoint. DequeueRequeue moves the endpoint from\none queue to the other.\n\n[1] https://github.com/tamird/gvisor/actions/runs/42366670610",
+        "body": "Peers of a listening socket can hash to different TCP processors. An\nendpoint has only one pair of queue links. Each processor takes a\nsecond mutex on the endpoint to test or clear its queue membership\nwhile holding its own queue mutex.\n\nClaim membership before inserting the endpoint and release it after\nunlinking it. Each processor still protects its own list. Removing the\nmembership mutex also removes its lock-order annotations.\n\nBenchstat for ProcessorQueueMembership on two AMD64 CPUs [1].\n\n                   │ 77f1abcbe.txt │            01da93c33.txt          │\n                   │    sec/op     │   sec/op     vs base              │\nDuplicateEnqueue-2     20.24n ± 0%   12.01n ± 0%  -40.66% (p=0.000 n=16)\nDequeueRequeue-2       25.20n ± 0%   17.24n ± 0%  -31.60% (p=0.000 n=16)\n\nDuplicateEnqueue times two queues concurrently trying to enqueue the\nsame already queued endpoint. DequeueRequeue moves the endpoint from\none queue to the other.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42366670610",
         "summary": "Open the single-commit TCP PR after #17045 lands. The existing fairness behavior and the two-queue handoff passed on both implementations.",
         "requestedAt": "2026-11-07T11:35:54+00:00"
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "1eae09b6e23cfa3e4f433cdd5ea30478317a7817",
+        "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
         "observedAt": "2026-11-07T11:35:54+00:00",
         "disposition": "Contributor review requested for a tested standalone change",
         "nextAction": "After contributor approval and #17045 landing, submit the change with the queue-operation benchstat.",
@@ -60487,6 +60491,14 @@
           "https://github.com/tamird/gvisor/actions/runs/42366670610/artifacts/13573320005",
           "https://github.com/google/gvisor/pull/17045"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "1eae09b6e23cfa3e4f433cdd5ea30478317a7817"
+        },
+        "after": {
+          "head": "a8e54633f47fda892caa896ab37f3200b662cccf"
+        }
       }
     },
     {
@@ -63321,13 +63333,13 @@
       "id": "branch:go-generics-native-golden",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/go-generics-native-golden",
-      "head": "2eb1ff0ea9827799310648339efb644cb99eca86",
-      "title": "Run the Go generics tests with a declared diff",
-      "url": "https://github.com/tamird/gvisor/commit/2eb1ff0ea",
+      "ref": "fixes/go-generics-go-comparison",
+      "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
+      "title": "Compare generated Go files with go-cmp",
+      "url": "https://github.com/tamird/gvisor/commit/957b1bd2d",
       "group": "bazel",
-      "status": "Agent work",
-      "summary": "All seven generator comparisons passed on native AMD64 and ARM64 with Bash and diff absent from the isolated root. Deliberately changed Go output still failed. The isolated ARM64 executable faulted under QEMU and passed on native hardware. The final revision differs from the tested source only in MODULE.bazel whitespace.",
+      "status": "Contributor review requested",
+      "summary": "All seven generated Go tests passed on native AMD64 and under ARM64 QEMU. On each architecture the Go comparator matched GNU diff on nine cases. Changing an inline annotation failed the real simple_test. The saved log showed both changed words and factored out their common suffix. The qualifier expected contiguous strings and stopped before copying the negative XML. The earlier GNU diff remains the approved fallback if native Go proves unsuitable.",
       "evidence": [
         {
           "label": "AMD64 tests, deliberately changed inputs and ARM64 QEMU control",
@@ -63336,18 +63348,42 @@
         {
           "label": "Native ARM64 tests and license checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42446630830/artifacts/13604186336"
+        },
+        {
+          "label": "Seven actual owners per architecture, nine comparison controls and the original mutation log",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42487498230/artifacts/13620565162"
         }
       ],
-      "updatedAt": "2026-11-08T13:46:37+00:00",
+      "updatedAt": "2026-11-08T14:03:23+00:00",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "2eb1ff0ea9827799310648339efb644cb99eca86",
-        "observedAt": "2026-11-08T13:46:37+00:00",
-        "disposition": "Investigating a native Go comparison",
-        "nextAction": "Check a native Go comparison for the golden files before proposing a change.",
+        "owner": "Contributor",
+        "sourceHead": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
+        "observedAt": "2026-11-08T14:03:23+00:00",
+        "disposition": "Native Go comparison verified",
+        "nextAction": "Review the single native Go comparison change.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2eb1ff0ea"
+          "https://github.com/tamird/gvisor/commit/957b1bd2d",
+          "https://github.com/tamird/gvisor/actions/runs/42487498230/artifacts/13620565162"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "url": "https://github.com/tamird/gvisor/commit/957b1bd2d",
+        "title": "Compare generated Go files with go-cmp",
+        "body": "ab0262bd9 defined the go_generics checks as Bash scripts that look up GNU diff on PATH. A worker without these programs fails before it can compare the generated file with its golden file.\n\nRun the seven existing tests with a shared Go comparison tool. Ignore empty lines and full-line // comments while keeping trailing annotations and line endings in the comparison. On a mismatch, show the two paths and the differing lines.",
+        "summary": "Open the single-commit gVisor PR for the native Go comparator?",
+        "requestedAt": "2026-11-08T14:03:23+00:00"
+      },
+      "refinement": {
+        "before": {
+          "head": "2eb1ff0ea9827799310648339efb644cb99eca86"
+        },
+        "after": {
+          "head": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67"
+        }
       }
     },
     {
@@ -63506,9 +63542,9 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/java21-multicast-exclusions",
-      "head": "bbf2fa40eb7d8cce39cca5abefde7883c262c490",
+      "head": "564f11ca4362b1d65da1198863839a5a368fbdfd",
       "title": "Re-enable three Java multicast tests",
-      "url": "https://github.com/tamird/gvisor/commit/bbf2fa40e",
+      "url": "https://github.com/tamird/gvisor/commit/564f11ca4",
       "group": "tests",
       "status": "Contributor review requested",
       "summary": "All five Java 21 cases failed on the interface-flags import. With the IPv6 multicast options applied, DatagramSocketMulticasting, AdaptorMulticasting and Loopback passed in both JVM modes. MulticastSendReceiveTests and Promiscuous still failed. The three exclusions can be removed once both parent changes reach master.",
@@ -63524,20 +63560,32 @@
         {
           "label": "IPv6 multicast hop and loopback options",
           "url": "https://github.com/google/gvisor/pull/16875"
+        },
+        {
+          "label": "Correct reference-definition punctuation; same parent and source tree",
+          "url": "https://github.com/tamird/gvisor/commit/564f11ca4"
         }
       ],
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "bbf2fa40eb7d8cce39cca5abefde7883c262c490",
+        "head": "564f11ca4362b1d65da1198863839a5a368fbdfd",
         "baseHead": "ee65347df7d5a70b00dfde90d81d9d7a98b0df2b",
         "title": "Re-enable three Java multicast tests",
-        "url": "https://github.com/tamird/gvisor/commit/bbf2fa40e",
+        "url": "https://github.com/tamird/gvisor/commit/564f11ca4",
         "summary": "Approve opening the three-line exclusion removal after the interface-flags and IPv6 multicast socket-option changes land?",
         "body": "The interface-flags change makes eth0 advertise multicast support and excludes five Java 21 cases. With IPv6 multicast hop and loopback options implemented, DatagramSocketMulticasting, AdaptorMulticasting and Loopback exchange packets on eth0 in the default and IPv4-only JVM modes.\n\nRemove those three exclusions. Keep MulticastSendReceiveTests and Promiscuous excluded: the former still receives packets from a blocked source and the latter receives on the socket joined to a different group.",
         "requestedAt": "2026-11-08T12:41:39+00:00"
       },
-      "updatedAt": "2026-11-08T12:41:39+00:00"
+      "updatedAt": "2026-11-08T14:03:23+00:00",
+      "refinement": {
+        "before": {
+          "head": "bbf2fa40eb7d8cce39cca5abefde7883c262c490"
+        },
+        "after": {
+          "head": "564f11ca4362b1d65da1198863839a5a368fbdfd"
+        }
+      }
     },
     {
       "id": "branch:packetimpact-recvbuf-read-after-ack",
