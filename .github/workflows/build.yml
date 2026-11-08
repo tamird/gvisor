@@ -1,35 +1,66 @@
-name: CI
-
-"on":
+name: Test TIME_WAIT ownership with and without timestamps
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/timewait-timestamp-owned-port]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  timewait:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the production delta, both original test shapes and public distribution helpers
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/timewait"
+          mkdir -m 700 "$w" "$w/results"
+          echo '{"verified":false,"stage":"checkout"}' > "$w/results/result.json"
+          fix=64ba857aaadc2f18781a1b7f998fe5a4836bc6e4
+          base=451b92800b9cb82262dc8a735388f7cf4d17d895
+          helper=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          registry=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$helper" "$registry"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$fix"
+          test "$(git rev-parse "$fix^")" = "$base"
+          test "$(git rev-parse "$fix^{tree}")" = b55f63df1b3ec28562b0c06fc63d44c64b303c2d
+          git diff --exit-code "$fix" "$GITHUB_SHA" -- . ':!.github/qualification/timewait_owned.py' ':!.github/workflows/build.yml'
+          git diff --exit-code "$base" "$fix" -- . ':!pkg/tcpip/transport/tcp/endpoint.go' ':!pkg/tcpip/transport/tcp/test/e2e/tcp_test.go'
+          test "$(git rev-parse "$helper:.github/qualification/recvbuf_deps.py")" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          test "$(git rev-parse "$registry:.github/qualification/tldk_public_inputs.py")" = 1f3f7d4d75810ad60941772776e01f3b71b3b171
+          test "$(git rev-parse "$registry:.github/qualification/tldk_installed_inputs.json")" = 6a2bd5d2ea15eb2adc2cab7695db1de719503d87
+          git show "$helper:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$registry:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          git show "$registry:.github/qualification/tldk_installed_inputs.json" > "$w/inputs.json"
+          git show "$GITHUB_SHA:.github/qualification/timewait_owned.py" > "$w/check.py"
+          git checkout -q --detach "$fix"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --max-time 120 --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          chmod 755 "$w/bazel"
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+            done > "$w/jammy.list"
+            opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+      - name: Compare the original and corrected owner and verify all stress cases
+        run: |
+          w="$RUNNER_TEMP/timewait"
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$w/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: timewait-timestamp-owned-port
+          path: |
+            ${{ runner.temp }}/timewait/results/result.json
+            ${{ runner.temp }}/timewait/results/stock.log
+            ${{ runner.temp }}/timewait/results/stock.xml
+            ${{ runner.temp }}/timewait/results/normal.log
+            ${{ runner.temp }}/timewait/results/normal.xml
+            ${{ runner.temp }}/timewait/results/race.log
+            ${{ runner.temp }}/timewait/results/race.xml
+          if-no-files-found: error
+          retention-days: 14
