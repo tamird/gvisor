@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -74,6 +74,7 @@ go_test(
         "sandbox_test.go",
     ],
     embed = [":sandbox"],
+    exec_properties = namespace_test_exec_properties,
     deps = [
         "//pkg/control/server",
         "//pkg/prometheus",

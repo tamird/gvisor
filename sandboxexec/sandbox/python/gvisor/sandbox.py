@@ -294,6 +294,7 @@ class Sandbox:
       env: Optional[Union[List[str], Dict[str, str]]] = None,
       mounts: Optional[Sequence[Union[Mount, Dict[str, Any]]]] = None,
       working_dir: str = "/",
+      shared_root: Optional[str] = None,
   ):
     """Initializes and starts a new sandbox.
 
@@ -308,13 +309,18 @@ class Sandbox:
       mounts: Optional sequence of Mount objects or dicts defining mounts.
       working_dir: The initial working directory inside the sandbox. Relative
         paths are normalized relative to container root ('/'). Defaults to "/".
+      shared_root: An existing directory for sharing the gofers' empty network
+        namespace across sandboxes. The caller owns the directory and must
+        unmount its null-netns file before removing it.
 
     Raises:
       Error: If sandbox creation fails.
-      ValueError: If an invalid network mode, working_dir, mount, or environment
-        variable format is provided.
+      ValueError: If shared_root is empty or an invalid network mode,
+        working_dir, mount, or environment variable format is provided.
       TypeError: If env, mounts, or network has an invalid type.
     """
+    if shared_root == "":
+      raise ValueError("shared_root must not be empty")
     if isinstance(network, NetworkMode):
       self._network = network.value
     elif isinstance(network, str):
@@ -383,6 +389,11 @@ class Sandbox:
 
       # Launch the sandbox in detached mode.
       args = ["--root", self._state_dir]
+      if shared_root is None:
+        # A pinned namespace would keep the runtime directory busy after close.
+        args.append("--gofer-network-namespace=new")
+      else:
+        args.extend(["--shared-root", shared_root])
       if os.geteuid() != 0:
         args.append("--ignore-cgroups")
 

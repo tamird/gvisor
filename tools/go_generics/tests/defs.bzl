@@ -1,5 +1,6 @@
 """Generics tests."""
 
+load("//tools/bazeldefs:test_architectures.bzl", "with_presubmit_variant", "with_test_architecture")
 load("//tools/go_generics:defs.bzl", "go_template", "go_template_instance")
 
 def _go_generics_test_impl(ctx):
@@ -31,6 +32,9 @@ _go_generics_test = rule(
     test = True,
 )
 
+_arm64_generics_test, _arm64_transition = with_test_architecture(_go_generics_test, "arm64").build()
+_presubmit_generics_test = with_presubmit_variant(_go_generics_test, _arm64_generics_test)
+
 def go_generics_test(name, inputs, output, types = None, consts = None, **kwargs):
     """Instantiates a generics test.
 
@@ -60,7 +64,7 @@ def go_generics_test(name, inputs, output, types = None, consts = None, **kwargs
         consts = consts,
         **kwargs
     )
-    _go_generics_test(
+    _presubmit_generics_test(
         name = name + "_test",
         template_output = name + "_output.go",
         expected_output = output,

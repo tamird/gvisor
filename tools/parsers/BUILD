@@ -1,3 +1,4 @@
+load("//runsc/version:defs.bzl", "VERSION_X_DEFS")
 load("//tools:defs.bzl", "go_binary", "go_library", "go_test")
 
 package(
@@ -34,15 +35,13 @@ go_library(
 go_binary(
     name = "parser",
     testonly = 1,
-    srcs = [
-        "parser_main.go",
-        "version.go",
-    ],
+    srcs = ["parser_main.go"],
     nogo = False,
-    x_defs = {"main.version": "{STABLE_VERSION}"},
+    x_defs = VERSION_X_DEFS,
     deps = [
         ":parsers",
         "//runsc/flag",
+        "//runsc/version",
         "//tools/bigquery",
     ],
 )

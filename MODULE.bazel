@@ -1,9 +1,10 @@
 module(
     name = "gvisor",
     version = "0.0.1",
+    bazel_compatibility = [">=8.0.0"],
 )
 
-bazel_dep(name = "rules_go", version = "0.63.0", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "rules_go", version = "0.65.0", repo_name = "io_bazel_rules_go")
 bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
@@ -17,6 +18,7 @@ bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
+bazel_dep(name = "with_cfg.bzl", version = "1.0.2")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
 
 # gRPC's older minimum imports a removed Google APIs extension repository.
@@ -37,20 +39,32 @@ governance = use_extension("//governance/tools/maintainers:repositories.bzl", "g
 use_repo(governance, "governance_areas")
 
 single_version_override(
+    module_name = "gazelle",
+    patch_strip = 1,
+    patches = ["//tools:gazelle-native-environment.patch"],
+)
+
+single_version_override(
     module_name = "rules_go",
     patch_strip = 1,
     patches = [
-        "//tools:rules_go_symbols.patch",
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
+        "//tools:rules_go_bootstrap_shell.patch",
     ],
-    version = "0.63.0",
+    version = "0.65.0",
 )
 
 single_version_override(
     module_name = "google_benchmark",
     patch_strip = 1,
     patches = ["//tools:benchmark-umbrella-exports.patch"],
+)
+
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//tools:protobuf_authenticity.patch"],
 )
 
 # Drop the backport when the llvm module includes kernel_headers.configure.
@@ -61,22 +75,10 @@ single_version_override(
 )
 
 ### LLVM
-# TODO: try using "llvm-raw" from BCR
+llvm_source = use_extension("@llvm//extensions:llvm.bzl", "llvm")
+use_repo(llvm_source, "llvm-project")
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-http_archive(
-    name = "llvm-raw",
-    build_file_content = "# empty",
-    patch_args = ["-p1"],
-    patches = ["//tools:llvm-bazel9.patch"],
-    sha256 = "e8ece380fdb57dc6f8e42df9db872a1ade5056c5379075e3e2f99c89200aea69",
-    strip_prefix = "llvm-project-cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f",
-    urls = ["https://github.com/llvm/llvm-project/archive/{commit}.tar.gz".format(commit = "cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f")],
-)
-
-llvm_configure = use_repo_rule("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
-
-llvm_configure(name = "llvm-project")
 
 http_archive(
     name = "kythe_release",
@@ -97,11 +99,6 @@ python.toolchain(python_version = "3.11")
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
 kernel_headers.configure(default_version = "6.18")
 use_repo(kernel_headers, "kernel_headers")
-
-### zlib-ng
-# TODO: try using "zlib-ng" from BCR
-llvm_zlib = use_extension("//tools/bazeldefs:extensions/llvm_zlib.bzl", "llvm_zlib_extension")
-use_repo(llvm_zlib, "llvm_zlib")
 
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
@@ -967,4 +964,60 @@ go_deps.gazelle_override(
         "gazelle:proto disable_global",
     ],
     path = "k8s.io/apimachinery",
+)
+
+driver_sources = use_extension(
+    "//tools/nvidia_driver_differ:driver_sources.bzl",
+    "driver_sources",
+    dev_dependency = True,
+)
+use_repo(
+    driver_sources,
+    "nvidia_driver_535_129_03",
+    "nvidia_driver_535_183_06",
+    "nvidia_driver_535_247_01",
+    "nvidia_driver_535_261_03",
+    "nvidia_driver_535_274_02",
+    "nvidia_driver_535_288_01",
+    "nvidia_driver_535_309_01",
+    "nvidia_driver_550_90_12",
+    "nvidia_driver_570_124_06",
+    "nvidia_driver_570_133_20",
+    "nvidia_driver_570_172_08",
+    "nvidia_driver_570_195_03",
+    "nvidia_driver_580_105_08",
+    "nvidia_driver_580_126_09",
+    "nvidia_driver_580_126_20",
+    "nvidia_driver_580_159_03",
+    "nvidia_driver_580_159_04",
+    "nvidia_driver_580_167_08",
+    "nvidia_driver_580_173_02",
+    "nvidia_driver_580_178_04",
+    "nvidia_driver_580_65_06",
+    "nvidia_driver_580_95_05",
+    "nvidia_driver_590_48_01",
+    "nvidia_driver_610_57_04",
+    "nvidia_driver_615_71_09",
+)
+
+# Exercise rules_shell#64's actual declared-executable API before its release.
+archive_override(
+    module_name = "rules_shell",
+    integrity = "sha256-AHBCSc0o+MbsCSaLoOgM+ouU7VcFldsTSdJT3q9+otU=",
+    strip_prefix = "rules_shell-aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+    urls = ["https://github.com/bazel-contrib/rules_shell/archive/aa4ad1622a8f755f38cae724ef3abc63aed171c3.tar.gz"],
+)
+
+bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
+bootstrap_busybox(
+    name = "bootstrap_busybox",
+    arch = "amd64",
+    mirror = "https://archive.ubuntu.com/ubuntu",
+    sha256 = "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed",
+)
+bootstrap_busybox(
+    name = "bootstrap_busybox_arm64",
+    arch = "arm64",
+    mirror = "https://ports.ubuntu.com/ubuntu-ports",
+    sha256 = "d96535e0402c011e0ee43449799df2f4504d44b842e4f2b3a6cbc845508eaafc",
 )

@@ -1,5 +1,5 @@
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "go_library")
+load("//tools/bazeldefs:presubmit_tests.bzl", "sh_test")
 load("//tools/nogo:defs.bzl", "nogo_config", "nogo_test")
 
 package(

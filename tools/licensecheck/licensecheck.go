@@ -95,6 +95,8 @@ const (
 	lgpl3       License = "LGPL-3.0-only"
 	mit         License = "MIT"
 	mpl2        License = "MPL-2.0"
+	ncsa        License = "NCSA"
+	spencer94   License = "Spencer-94"
 	unlicense   License = "Unlicense"
 	// noAssertion is the SPDX token for dependencies to which no software
 	// license applies, e.g. a certificate bundle.
@@ -116,6 +118,8 @@ var knownLicenses = map[License]bool{
 	lgpl3:       true,
 	mit:         true,
 	mpl2:        true,
+	ncsa:        true,
+	spencer94:   true,
 	unlicense:   true,
 	noAssertion: true,
 }
@@ -547,6 +551,8 @@ func (graph *modGraph) repoRefs() ([]repoRef, error) {
 			// http_archive/http_file declared directly in MODULE.bazel.
 		case u.Key == "@@llvm+//extensions:llvm.bzl%llvm":
 			// The public LLVM source extension supplies linked Clang libraries.
+		case u.Key == "@@//tools/nvidia_driver_differ:driver_sources.bzl%driver_sources":
+			// The ABI test parses a separate archive for each public driver version.
 		case strings.HasSuffix(u.Key, "%go_deps"):
 			// Go repos imported from the gazelle go_deps extension.
 		case strings.HasSuffix(u.Key, "//qemu/extension:qemu.bzl%qemu"):
@@ -571,7 +577,7 @@ func (graph *modGraph) repoRefs() ([]repoRef, error) {
 			refs = append(refs, qemuRefs...)
 			continue
 		default:
-			// Toolchain extensions (llvm_zlib, python, go_sdk, ...) are not audited.
+			// Toolchain extensions (python, go_sdk, ...) are not audited.
 			continue
 		}
 		for _, r := range u.UsedRepos {

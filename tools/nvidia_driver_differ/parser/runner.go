@@ -16,22 +16,35 @@ package parser
 
 import (
 	"bytes"
+	_ "embed" // Necessary to use go:embed.
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy/nvconf"
+	"gvisor.dev/gvisor/pkg/zip"
 )
+
+//go:embed builtin_headers.zip
+var builtinHeaders []byte
+
+// ErrDriverSourceNotFound means NVIDIA has not published sources for a
+// driver in the index. A missing index entry is an error in the build inputs.
+var ErrDriverSourceNotFound = errors.New("driver has no public source tag")
 
 // Runner is a helper for running the driver_ast_parser on a given set of structs.
 type Runner struct {
 	// Working directory for the runner.
-	dir        string
-	parserPath string
-	inputPath  string
+	dir         string
+	parserPath  string
+	inputPath   string
+	resourceDir string
+	sources     map[string]*string
 
 	nonUVMIoctls []nvproxy.IoctlName
 	uvmIoctls    []nvproxy.IoctlName
@@ -40,15 +53,30 @@ type Runner struct {
 
 // NewRunner creates a new Runner around a given parser file and a temporary working directory.
 func NewRunner(parserPath string) (*Runner, error) {
+	var sources map[string]*string
+	if err := json.Unmarshal([]byte(os.Getenv("NVIDIA_DRIVER_SOURCES")), &sources); err != nil {
+		return nil, fmt.Errorf("read NVIDIA driver source index: %w", err)
+	}
+	headers, err := zip.NewReader(bytes.NewReader(builtinHeaders), int64(len(builtinHeaders)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read builtin headers: %w", err)
+	}
+
 	// Create a temp directory for the runner.
 	dir, err := os.MkdirTemp(os.TempDir(), "run_differ_*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
 	}
+	resourceDir := filepath.Join(dir, "clang")
+	if err := os.CopyFS(resourceDir, headers); err != nil {
+		return nil, errors.Join(fmt.Errorf("failed to extract builtin headers: %w", err), os.RemoveAll(dir))
+	}
 
 	return &Runner{
-		dir:        dir,
-		parserPath: parserPath,
+		dir:         dir,
+		parserPath:  parserPath,
+		resourceDir: resourceDir,
+		sources:     sources,
 	}, nil
 }
 
@@ -123,7 +151,9 @@ func (r *Runner) parseSourceFile(sourcePath string) (*OutputJSON, error) {
 	}
 
 	// Run driver_ast_parser on the source file.
-	cmd := exec.Command(r.parserPath, "--input", r.inputPath, sourcePath)
+	cmd := exec.Command(r.parserPath, "--input", r.inputPath, sourcePath,
+		"--extra-arg=-resource-dir="+r.resourceDir,
+		"--extra-arg=-nostdlibinc", "--extra-arg=-nostdinc++")
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
@@ -166,23 +196,28 @@ func (r *Runner) runParserConfig(config []ClangASTConfig) (*OutputJSON, error) {
 	return allDefs, nil
 }
 
-// ParseDriver checks out the git repo for the given version, and runs the driver_ast_parser on the
-// source code.
+// ParseDriver runs driver_ast_parser on the declared headers for version.
 func (r *Runner) ParseDriver(version nvconf.DriverVersion) (*OutputJSON, error) {
-	// Create a temp directory to run the parser in.
-	// This is needed to set up compile_commands.json, since it needs to be named that exactly.
+	anchor, ok := r.sources[version.String()]
+	if !ok {
+		return nil, fmt.Errorf("driver %s is missing from the source index; run //tools/nvidia_driver_differ/sources:update for this version", version)
+	}
+	if anchor == nil {
+		return nil, fmt.Errorf("%w: %s", ErrDriverSourceNotFound, version)
+	}
+	// Clang reads paths in compile_commands.json from a temporary directory.
+	sourceDir, err := filepath.Abs(filepath.Dir(*anchor))
+	if err != nil {
+		return nil, err
+	}
+	// Each parse needs its own directory for compile_commands.json.
 	dir, err := os.MkdirTemp(r.dir, "run_differ_*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 	defer os.RemoveAll(dir)
 
-	source, err := CloneDriverSource(dir, version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to clone git repo: %w", err)
-	}
-
-	config, err := CreateIncludeFiles(dir, *source, r.nonUVMIoctls, r.uvmIoctls, r.uvmConstants)
+	config, err := CreateIncludeFiles(dir, DriverSourceDir{Directory: sourceDir}, r.nonUVMIoctls, r.uvmIoctls, r.uvmConstants)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create include files: %w", err)
 	}

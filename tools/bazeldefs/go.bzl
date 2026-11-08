@@ -1,17 +1,17 @@
 """Go rules."""
 
 load("@bazel_gazelle//:def.bzl", _gazelle = "gazelle")
-load("@bazel_skylib//lib:paths.bzl", "paths")
-load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_cross_binary = "go_cross_binary", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
+load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test")
+load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "test_architecture_variants")
 
 gazelle = _gazelle
 
 go_path = _go_path
 go_reset_target = _go_reset_target
-go_cov = native.genrule
 cov_available = True
 
 def _go_proto_or_grpc_library(go_library_func, name, **kwargs):
@@ -129,9 +129,34 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         **kwargs
     )
 
+go_cov, _go_cov_transition = with_cfg(
+    go_binary,
+    executable = True,
+    extra_providers = [GoLibrary, GoArchive],
+).set("collect_code_coverage", True).set(
+    "instrumentation_filter",
+    # Exclude the coverage runtime itself and low-level platform code. In
+    # sleep, sync, and syncevent, //go:norace doesn't stop coverage from
+    # inserting atomic counter updates. Under -race those atomics call
+    # into the race detector where it cannot safely run. Reconsider these
+    # exclusions when Go can suppress those calls:
+    # https://github.com/golang/go/issues/43007
+    #
+    # Race builds need different seccomp filters. They build them at
+    # startup so ordinary runsc binaries needn't embed race-only filters.
+    # bpf.Optimize restarts its passes after each change. Instrumenting
+    # that loop sends each block's atomic counter update through the race
+    # detector and can add tens of seconds to sandbox startup.
+    "^//,-//pkg/(sentry/platform|ring0|coverage|sleep|sync|syncevent|bpf)",
+).build()
+
 def go_importpath(target):
     """Returns the importpath for the target."""
     return target[GoLibrary].importpath
+
+def go_has_archive(target):
+    """Returns whether the target exposes a compiled Go archive."""
+    return GoArchive in target
 
 def go_source_files(target):
     """Returns the canonical source membership, including source-only embeds."""
@@ -184,7 +209,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = [], **kwargs):
     """Build a go test.
 
     Args:
@@ -192,6 +217,7 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
         static: build a static binary.
         pure: should it be built without cgo.
         library: the library to embed.
+        architectures: Additional explicitly selected native architecture variants.
         **kwargs: rest of the arguments to pass to _go_test.
     """
     if pure:
@@ -212,6 +238,13 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
     _go_test(
         name = name,
         **kwargs
+    )
+    arm64_presubmit_test(name, go_arm64_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": go_amd64_test, "arm64": go_arm64_test},
+        kwargs,
     )
 
 def go_rule(rule, implementation, **kwargs):
@@ -299,87 +332,6 @@ def select_goos():
 # Defined by rules_go.
 gotsan_values = None
 gotsan_flag_values = {"@io_bazel_rules_go//go/config:race": "true"}
-
-def _go_imports_impl(ctx):
-    """Hermetic wrapper around goimports.
-
-    `goimports` shells out to the `go` command (via golang.org/x/tools internal
-    helpers) and therefore requires a usable `go` binary during the action.
-
-    See:
-    - https://github.com/golang/tools/blob/master/internal/gocommand/invoke.go
-    - https://github.com/golang/tools/blob/master/internal/imports/fix.go
-    - https://go.dev/doc/go1.19#os-exec-path
-    """
-    go_ctx = go_context(ctx)
-
-    src = ctx.file.src
-    out = ctx.outputs.out
-
-    goimports_tool = ctx.attr._goimports[DefaultInfo].files_to_run
-
-    tools_path = paths.join(ctx.label.name + "_tools")
-
-    # Use a symlink to the `go` binary to avoid exposing undeclared dependencies
-    # on other binaries in the same directory in the toolchain.
-    go_symlink = ctx.actions.declare_file(paths.join(tools_path, "go"))
-    ctx.actions.symlink(
-        output = go_symlink,
-        target_file = go_ctx.go,
-        is_executable = True,
-    )
-
-    # Use a launcher script rather than ctx.actions.run(env=...) because we need
-    # to refer to the action's runtime working directory ($PWD) to build an
-    # absolute PATH entry. This matters because `goimports` locates `go` via
-    # os/exec.LookPath("go") and recent Go versions refuse to execute commands
-    # found via a relative PATH entry.
-    #
-    # See https://pkg.go.dev/os/exec#hdr-Executables_in_the_current_directory.
-    goimports_launcher = ctx.actions.declare_file(paths.join(tools_path, "goimports.sh"))
-    ctx.actions.write(
-        output = goimports_launcher,
-        is_executable = True,
-        content = "#!/bin/sh\nPATH=$PWD/{} exec {} {} > {}\n".format(
-            shell.quote(go_symlink.dirname),
-            shell.quote(goimports_tool.executable.path),
-            shell.quote(src.path),
-            shell.quote(out.path),
-        ),
-    )
-
-    ctx.actions.run(
-        inputs = [src],
-        tools = [goimports_tool, go_symlink, go_ctx.runfiles],
-        outputs = [out],
-        executable = goimports_launcher,
-        env = go_ctx.env,
-        mnemonic = "GoImports",
-        progress_message = "GoImports {}".format(src.short_path),
-    )
-
-    return DefaultInfo(files = depset([out]))
-
-_go_imports = go_rule(
-    rule,
-    implementation = _go_imports_impl,
-    attrs = {
-        "src": attr.label(mandatory = True, allow_single_file = [".go"]),
-        "out": attr.output(mandatory = True),
-        "_goimports": attr.label(
-            default = "@org_golang_x_tools//cmd/goimports:goimports",
-            executable = True,
-            cfg = "exec",
-        ),
-    },
-)
-
-def go_imports(name, src, out):
-    _go_imports(
-        name = name,
-        src = src,
-        out = out,
-    )
 
 def nogo_extra_proto_deps(target):  # buildifier: disable=unused-variable
     return []

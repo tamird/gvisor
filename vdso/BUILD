@@ -3,9 +3,9 @@
 #   normal system VDSO (time, gettimeofday, clock_gettimeofday) but which uses
 #   timekeeping parameters managed by the sandbox kernel.
 
-load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_binary")
+load("//tools:defs.bzl", "cc_binary", "cc_readelf")
+load("//tools/bazeldefs:py_test.bzl", "py_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -78,8 +78,12 @@ py_test(
     srcs = ["check_vdso.py"],
     args = [
         "--check-data",
+        "--readelf=$(location {})".format(cc_readelf),
         "--vdso=$(location :vdso)",
     ],
-    data = [":vdso"],
+    data = [
+        ":vdso",
+        cc_readelf,
+    ],
     main = "check_vdso.py",
 )

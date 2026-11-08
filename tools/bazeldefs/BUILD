@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("//tools:defs.bzl", "bzl_library", "string_flag")
 load(":cc.bzl", "using_llvm")
 
@@ -33,7 +34,29 @@ bzl_library(
     name = "go_bzl",
     srcs = ["go.bzl"],
     visibility = ["//visibility:private"],
-    deps = [":defs_bzl"],
+    deps = [
+        ":defs_bzl",
+        ":go_variants_bzl",
+        ":test_architectures_bzl",
+        "@with_cfg.bzl//:with_cfg",
+    ],
+)
+
+bzl_library(
+    name = "go_variants_bzl",
+    srcs = ["go_variants.bzl"],
+    visibility = ["//visibility:private"],
+    deps = [":test_architectures_bzl"],
+)
+
+bzl_library(
+    name = "test_architectures_bzl",
+    srcs = ["test_architectures.bzl"],
+    visibility = [
+        "//tools:__pkg__",
+        "//tools/go_generics/tests:__pkg__",
+    ],
+    deps = ["@with_cfg.bzl//:with_cfg"],
 )
 
 # Keep Go's pure/cgo mode in its build settings, not the target platform:
@@ -121,16 +144,18 @@ config_setting(
     ],
 )
 
-genrule(
+run_binary(
     name = "version",
     outs = ["version.txt"],
-    cmd = "cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
-    stamp = 1,
+    args = ["$@"],
+    mnemonic = "PackageVersion",
+    stamp = -1,
     tags = [
         "manual",
         "nobuilder",
         "notap",
     ],
+    tool = "//tools/package_version",
     visibility = ["//:sandbox"],
 )
 

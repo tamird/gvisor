@@ -16,18 +16,20 @@ traverses to get a comprehensive definition of every struct `nvproxy` relies on.
 
 ## Usage
 
-Everything is packaged for convenience inside `run_differ`. The differ accepts
-two version numbers as arguments: a `base` version which is currently supported
-in `nvproxy`, and a `next` version that is compared against `base`. For example,
-comparing versions `550.90.07` and `560.31.02` can be done like so:
+The differ compares the ioctls used by a supported base driver with their
+definitions in a second driver. It reads the same pinned NVIDIA source
+archives as the ABI test. To try a release before adding it to nvproxy's
+version tree, include its version when updating the pins:
 
 ```bash
-make run TARGETS=//tools/nvidia_driver_differ:run_differ ARGS="--base 550.90.07 --next 560.31.02"
+bazel run //tools/nvidia_driver_differ/sources:update -- 615.78.08
+bazel mod tidy
+bazel run //tools/nvidia_driver_differ:run_differ -- --base 615.71.09 --next 615.78.08
 ```
 
-This will fetch the corresponding source code from Github, parse it using Clang,
-and then compare the definitions that were found. Any differences will be
-printed to standard output. These differences can be additions of new fields to
+For two already pinned releases, only the last command is needed. Bazel
+provides the headers as runfiles. The differ reports changes to the
+definitions it finds. These differences can be additions of new fields to
 structs, or changes to the name or type of existing fields. For example:
 
 ```
@@ -57,3 +59,17 @@ struct MODIFIED_FIELD_EXAMPLE
 ```
 
 [A deeper dive into how this tool works can be found here.](https://github.com/google/gvisor/blob/master/g3doc/proposals/nvidia_driver_differ.md)
+
+## Keeping the source pins current
+
+Run the updater without a candidate to keep only supported driver versions.
+After adding support for a driver, run
+`bazel run //tools/nvidia_driver_differ/sources:update` to record its
+public source commit and archive checksum. Run `bazel mod tidy` to
+import any new archives into the root module. If NVIDIA has not published
+a matching tag, the ABI test reports that version as skipped.
+
+Run `//pkg/sentry/devices/nvproxy:nvproxy_driver_abi_test` to compare the
+native driver definitions with the Go types. The separate
+`//pkg/sentry/devices/nvproxy:nvproxy_driver_checksums_test` downloads the
+installers to verify their published checksums.

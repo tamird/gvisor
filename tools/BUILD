@@ -1,5 +1,5 @@
-load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
+load("//tools/bazeldefs:py_test.bzl", "py_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -53,6 +53,7 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+    deps = ["//tools/bazeldefs:test_architectures_bzl"],
 )
 
 bzl_library(
@@ -74,9 +75,10 @@ bzl_library(
 
 exports_files([
     "benchmark-umbrella-exports.patch",
-    "build_cover.sh",
-    "go-allow-internal.patch",
+    "gazelle-native-environment.patch",
     "llvm-linux-header-default.patch",
+    "protobuf_authenticity.patch",
+    "rules_go_bootstrap_shell.patch",
 ])
 
 py_test(
@@ -87,4 +89,5 @@ py_test(
         "lint.sh",
         "//:.clang-format",
     ],
+    main = "lint_test.py",
 )

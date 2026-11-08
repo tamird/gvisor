@@ -81,6 +81,21 @@ make release-tarball DESTINATION=bin/
 sudo tar -C /usr/local/bin -xf bin/gvisor.tar.bz2
 ```
 
+To build the amd64 and arm64 release packages from a source export, supply
+the release label once. Bazel uses it for the binaries, checkpoint identity
+and package versions:
+
+```sh
+make release-artifacts RELEASE_VERSION=release-20261029.0
+```
+
+Ordinary builds report `(devel)` and can restore checkpoints from the same
+linked sentry. Use `--embed_label` to allow checkpoint restores between
+compatible release builds. A custom workspace status command may supply
+`STABLE_VERSION` for the CLI and Debian package; that value does not
+identify a checkpoint release. An unstamped Debian package is versioned
+`0~devel`.
+
 To build specific libraries or binaries, you can specify the target:
 
 ```sh

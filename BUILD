@@ -1,12 +1,12 @@
-load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
-load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
-load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
+load("//governance/tools/maintainers:defs.bzl", "governance_source_files")
+load("//tools:defs.bzl", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools/bazeldefs:presubmit_tests.bzl", "build_test", "native_test")
 load("//tools/nogo:defs.bzl", "nogo_config")
-load("//tools/yamltest:defs.bzl", "yaml_test")
+load("//tools/yamltest:defs.bzl", yaml_test = "presubmit_yaml_test")
 load("//website:defs.bzl", "doc")
 
 package(
@@ -29,7 +29,7 @@ exports_files([
     "ADOPTERS.md",
 ])
 
-write_source_files(
+governance_source_files(
     name = "governance-regen",
     files = {
         "CODEOWNERS": "//governance:generated/CODEOWNERS",
