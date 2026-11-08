@@ -253,6 +253,7 @@ const DECISION_REASONS = [
 ];
 const ATTENTION_REASONS = [
   { id: "agent-requested-review", owner: "agent", title: "Incoming PR review requests" },
+  { id: "agent-feedback-sweep", owner: "agent", title: "Audit earlier work against contributor guidance" },
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
   { id: "author-ci-remedy", owner: "agent", title: "Merged CI fix needs action" },
   { id: "author-public-checks", owner: "agent", title: "Public source checks failing" },
@@ -587,6 +588,10 @@ function attentionReasons(node, owner) {
   const action = humanAction(node);
   if (action) add(action.kind === "execution" ? "approve-run" : "human-submission", action.summary);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
+  const sweep = liveSnapshot?.projectFeedbackReview;
+  if (node.id === "investigation:project-feedback" && node.status === "active" && sweep?.dailyReviewDue === true
+      && sweep.lastReviewed && sweep.lastReviewed === node.lastReviewedAt)
+    add("agent-feedback-sweep", "Review new proposals and recently landed changes against current project guidance.");
   if (node.type === "branch" && node.status === "Agent work" && node.repo?.split("/")[0] === owner
       && /^[a-f0-9]{40}$/.test(node.head) && node.followup?.sourceHead === node.head
       && typeof node.followup.owner === "string" && node.followup.owner.trim()

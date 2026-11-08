@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T22:27:41+00:00",
+    "updatedAt": "2026-11-08T22:39:15+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43803,20 +43803,24 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/website-deploy-native",
-      "head": "bb040106f370ea27c513a984a51995a08da69f26",
+      "head": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
-      "url": "https://github.com/tamird/gvisor/commit/bb040106f",
-      "updatedAt": "2026-11-07T04:08:00+00:00",
-      "summary": "The Website Deploy step now selects the native Bazel bootstrap and shutdown hooks. On Ubuntu 22.04 the release Make command loaded the AMD64 image and pushed it to a loopback registry. A failed push stopped deployment. The renderer also built both vDSOs and 278 site files without host ARM GNU tools.",
+      "url": "https://github.com/tamird/gvisor/commit/a5265547f",
+      "updatedAt": "2026-11-08T22:36:47+00:00",
+      "summary": "The proposed Buildkite release publishes the AMD64 site image with bazel run //website:push. The native publisher and the Docker publisher produced identical image config bytes, the same uncompressed layer, and the same 279 files. The OCI and Docker manifests and compressed layer digests differ. Both pushes used the same authenticated local registry. The native push ran with the Docker socket unavailable. A rejected login stopped deployment. The comparison recorded the Cloud Run arguments locally.",
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "bb040106f370ea27c513a984a51995a08da69f26",
-        "observedAt": "2026-11-07T04:08:00+00:00",
-        "disposition": "Native release job verified on a loopback registry",
+        "sourceHead": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
+        "observedAt": "2026-11-08T22:36:47+00:00",
+        "disposition": "Native publication and failed-login behavior verified on a loopback registry",
         "nextAction": "Land the shared native Bazelisk setup and full LLVM toolchain. Both recorded website builds used released hermetic-llvm 0.8.24. Reconcile the license catalog against the version selected for delivery. Keep the website profile viewer’s Google trust roots when making the image reproducible. The pinned gRPC bundle omits two of Google’s 21 roots and adds 96 others.",
         "evidence": [
+          {
+            "label": "Buildkite release with local registry authentication and a simulated Cloud Run deployment",
+            "url": "https://github.com/tamird/gvisor/actions/runs/42530260712/artifacts/13636568877"
+          },
           "https://github.com/tamird/gvisor/actions/runs/41622324026/artifacts/13224416963",
           "https://github.com/tamird/gvisor/actions/runs/41618830995/artifacts/13222892486",
           "https://buildkite.com/gvisor/pipeline/builds/53249",
@@ -43828,14 +43832,22 @@
       "refinement": {
         "before": {
           "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
-          "head": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7"
+          "head": "bb040106f370ea27c513a984a51995a08da69f26"
         },
         "after": {
           "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
-          "head": "bb040106f370ea27c513a984a51995a08da69f26"
+          "head": "a5265547f8c17b32b19021c4d8f9100c1012c2aa"
         }
       },
       "evidence": [
+        {
+          "label": "Buildkite release with local registry authentication and a simulated Cloud Run deployment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42530260712/artifacts/13636568877"
+        },
+        {
+          "label": "Cloud Run accepts OCI and Docker v2 images for Linux AMD64",
+          "url": "https://docs.cloud.google.com/run/docs/container-contract"
+        },
         {
           "label": "Release Make command, registry round trip, rejected push and native Bazel shutdown",
           "url": "https://github.com/tamird/gvisor/actions/runs/41622324026/artifacts/13224416963"
@@ -46438,14 +46450,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/native-gazelle-check",
-      "head": "3ddf8ba1ac660c9d8bd3e3b85df4b0e27ce60c58",
+      "head": "49d0bc55abb2e09059cb18d87eebf60f72caa12a",
       "title": "Review the revised Gazelle commit message",
-      "url": "https://github.com/tamird/gvisor/commit/3ddf8ba1a",
+      "url": "https://github.com/tamird/gvisor/commit/49d0bc55a",
       "group": "analysis",
-      "summary": "The code at 3ddf8ba1a matches de64c6b62. Review the new explanation of why presubmit needs a cacheable Gazelle check.",
-      "updatedAt": "2026-11-06T04:09:01.919534Z",
+      "summary": "Gazelle runs as a declared Bazel build action so presubmit can execute it remotely and reuse an earlier result. The Actions step shows how to apply reported diffs with bazel run //:gazelle_fix, matching #17223.",
+      "updatedAt": "2026-11-08T22:38:00+00:00",
       "status": "Contributor review requested",
       "evidence": [
+        {
+          "label": "Earlier proposal to current revision (step name and commit message)",
+          "url": "https://github.com/tamird/gvisor/compare/3ddf8ba1a...49d0bc55a"
+        },
+        {
+          "label": "Gazelle workflow change that supplies the direct Bazel repair command",
+          "url": "https://github.com/google/gvisor/pull/17223"
+        },
         {
           "label": "Clean Gazelle and Buildifier checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41214792711/artifacts/13047825010"
@@ -46464,7 +46484,7 @@
           "head": "de64c6b62428b11ae47240b753998fc28f43069e"
         },
         "after": {
-          "head": "3ddf8ba1ac660c9d8bd3e3b85df4b0e27ce60c58"
+          "head": "49d0bc55abb2e09059cb18d87eebf60f72caa12a"
         }
       },
       "settledReviews": [
@@ -46478,13 +46498,13 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "3ddf8ba1ac660c9d8bd3e3b85df4b0e27ce60c58",
+        "head": "49d0bc55abb2e09059cb18d87eebf60f72caa12a",
         "baseHead": "de64c6b62428b11ae47240b753998fc28f43069e",
-        "url": "https://github.com/tamird/gvisor/commit/3ddf8ba1a",
+        "url": "https://github.com/tamird/gvisor/commit/49d0bc55a",
         "title": "Let Bazel cache and remotely execute the Gazelle check",
         "requestedAt": "2026-11-02T16:20:02.085486+00:00",
-        "summary": "Does the revised commit message explain why presubmit needs a cacheable Gazelle check? The source patch matches de64c6b62.",
-        "body": "Presubmit checks whether the Go sources and their BUILD files agree.\nWith bazel run, Bazel builds the launcher, but the launcher scans the\ncheckout on the CI runner every time. A change outside the packages\nmanaged by Gazelle still pays for the scan, and a remote worker cannot\nrun it on the runner's behalf.\n\nRun Gazelle in diff mode as a build action. Its inputs include files\nmatched by go:embed and BUILD files containing inherited directives, so\na change to either invalidates the result. Use the same package list,\nflags and repository map as the in-place fixer so that make gazelle-fix\napplies the diff reported by presubmit."
+        "summary": "Review the motivation for running Gazelle as a Bazel build action and the direct Bazel command for applying reported diffs.",
+        "body": "Presubmit checks whether the Go sources and their BUILD files agree.\nWith bazel run, Bazel builds the launcher, but the launcher scans the\ncheckout on the CI runner every time. A change outside the packages\nmanaged by Gazelle still pays for the scan, and a remote worker cannot\nrun it on the runner's behalf.\n\nRun Gazelle in diff mode as a build action. Its inputs include files\nmatched by go:embed and BUILD files containing inherited directives, so\na change to either invalidates the result. Share the package list, flags\nand repository map with the fixer so that bazel run //:gazelle_fix\napplies the reported diff."
       }
     },
     {
@@ -48164,9 +48184,13 @@
       "url": "https://github.com/google/gvisor/pull/16860",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-08T22:38:49+00:00",
       "summary": "The decoder registers value delivery and a wakeup together when it discovers that one object needs another. Both can use one callback record. On a 50,000-file checkpoint that removes 50,108 records. In 16 paired runs it reduced DecodeStatefile time by 5.09% and allocated bytes by 11.42%.",
       "evidence": [
+        {
+          "label": "Waiter counts and observed callback table growth for a verified 50,000-file restore",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535"
+        },
         {
           "label": "Matched decodes, real guest restores and correctness suites",
           "url": "https://github.com/tamird/gvisor/actions/runs/41290099363/artifacts/13077381724"
@@ -73362,7 +73386,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-08T00:43:46+00:00",
+      "updatedAt": "2026-11-08T22:38:49+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -76627,6 +76651,15 @@
             {
               "label": "Check Docker only when capturing a checkpoint",
               "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f"
+            }
+          ]
+        },
+        {
+          "text": "A native systrap guest on instrumented #16860 restored and verified 50,000 files. Its kernel frame used 150,919 callback records for 101,361 objects. Of 50,525 dependency-only records, 50,364 were the sole incoming edge to their object. Reserving slots from map and array lengths in a model eliminated one table growth and reduced cumulative capacity allocation from 64.14 MB to 62.51 MB. A model using 8-byte dependency-only records used 42.43 MB. The alternate representations did not run a guest restore. Keep the sizing API on hold. A compact representation needs an end-to-end restore measurement before it merits a performance claim.",
+          "evidence": [
+            {
+              "label": "Waiter counts and observed callback table growth for a verified 50,000-file restore",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535"
             }
           ]
         }
@@ -89362,7 +89395,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-07T06:33:05+00:00",
+      "updatedAt": "2026-11-08T22:38:00+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -89578,6 +89611,27 @@
               "url": "https://github.com/tamird/gvisor/commit/6f2f1f4f7"
             }
           ]
+        },
+        {
+          "text": "The November 8 pass examined nine current proposals, five compiler prerequisites, the superseded Make lint change and #17223. The native Gazelle proposal still directed contributors to Make even though #17223 gives the direct Bazel repair command. Its workflow and commit message now use bazel run //:gazelle_fix. The netgofer change is published as #17242. The marshal revision removes every redundant untagged example and still awaits contributor review. The full sweep remains due.",
+          "evidence": [
+            {
+              "label": "Gazelle correction",
+              "url": "https://github.com/tamird/gvisor/commit/49d0bc55a"
+            },
+            {
+              "label": "Original Gazelle workflow change",
+              "url": "https://github.com/google/gvisor/pull/17223"
+            },
+            {
+              "label": "Published netgofer test",
+              "url": "https://github.com/google/gvisor/pull/17242"
+            },
+            {
+              "label": "Marshal proposal without empty examples",
+              "url": "https://github.com/tamird/gvisor/commit/580909068"
+            }
+          ]
         }
       ],
       "nextStep": "Check the current upstream head and merge state immediately before pushing. For Lucas’s cleanup requests, use a separate follow-up only if the original merged without the change. Honor existing explicit holds and review decisions; check the queue daily.",
@@ -89590,7 +89644,8 @@
           "label": "State design",
           "url": "https://github.com/google/gvisor/issues/16216"
         }
-      ]
+      ],
+      "group": "tests"
     },
     {
       "id": "investigation:repository-lint",
@@ -90290,5 +90345,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T22:27:41+00:00"
+  "updatedAt": "2026-11-08T22:39:15+00:00"
 }
