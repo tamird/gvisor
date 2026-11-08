@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -195,16 +196,40 @@ func TestTCPMigrationPayloadSize(t *testing.T) {
 		{"capable_to_capable_twice", true, []bool{true, true}, withOption},
 		{"incapable_to_incapable_twice", false, []bool{false, false}, peerMSS},
 		{"capable_to_incapable", true, []bool{false}, withOption},
+		{"inflight_ack_credit", false, []bool{true}, withOption},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			oldFlight := tc.name == "inflight_ack_credit"
+			var clock tcpip.Clock
+			if oldFlight {
+				clock = faketime.NewManualClock()
+			}
 			c := testcontext.NewWithOpts(t, testcontext.Options{
-				EnableV4: true, MTU: e2e.DefaultMTU, EnableExperimentIPOption: tc.initial,
+				EnableV4: true, MTU: e2e.DefaultMTU, EnableExperimentIPOption: tc.initial, Clock: clock,
 			})
 			defer c.Cleanup()
 			var synOpts [4]byte
 			header.EncodeMSSOption(peerMSS, synOpts[:])
 			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, synOpts[:])
 			c.EP.SocketOptions().SetExperimentOptionValue(99)
+			var oldAck seqnum.Value
+			if oldFlight {
+				cc := tcpip.CongestionControlOption("reno")
+				if err := c.EP.SetSockOpt(&cc); err != nil {
+					t.Fatal(err)
+				}
+				body := bytes.Repeat([]byte{0xa7}, peerMSS)
+				if n, err := c.EP.Write(bytes.NewReader(body), tcpip.WriteOptions{}); err != nil || n != peerMSS {
+					t.Fatalf("pre-restore write = %d, %v", n, err)
+				}
+				packet := c.GetPacket()
+				tcpHeader := header.TCP(header.IPv4(packet.AsSlice()).Payload())
+				if !bytes.Equal(tcpHeader.Payload(), body) {
+					t.Fatal("the peer did not receive the complete previous-MSS packet")
+				}
+				oldAck = seqnum.Value(tcpHeader.SequenceNumber()).Add(peerMSS)
+				packet.Release()
+			}
 			s := c.Stack()
 			var link *channel.Endpoint
 			for _, capable := range tc.restores {
@@ -245,6 +270,35 @@ func TestTCPMigrationPayloadSize(t *testing.T) {
 			ep := endpoints[0].(tcpip.Endpoint)
 			if got := tcp.EndpointState(ep.State()); got != tcp.StateEstablished {
 				t.Fatalf("restored TCP state = %s, want established", got)
+			}
+			if oldFlight {
+				var before, after tcpip.TCPInfoOption
+				if err := ep.GetSockOpt(&before); err != nil {
+					t.Fatal(err)
+				}
+				packet := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: c.BuildSegment([]byte{0x3c}, &testcontext.Headers{
+					SrcPort: testcontext.TestPort, DstPort: c.Port, SeqNum: testcontext.TestInitialSequenceNumber + 1,
+					AckNum: oldAck, Flags: header.TCPFlagAck | header.TCPFlagPsh, RcvWnd: 30000,
+				})})
+				link.InjectInbound(ipv4.ProtocolNumber, packet)
+				packet.DecRef()
+				deadline := time.Now().Add(5 * time.Second)
+				for ep.Readiness(waiter.ReadableEvents) == 0 && time.Now().Before(deadline) {
+					time.Sleep(time.Millisecond)
+				}
+				var body bytes.Buffer
+				if _, err := ep.Read(&body, tcpip.ReadOptions{}); err != nil || !bytes.Equal(body.Bytes(), []byte{0x3c}) {
+					t.Fatalf("read after peer ACK = %x, %v", body.Bytes(), err)
+				}
+				if err := ep.GetSockOpt(&after); err != nil {
+					t.Fatal(err)
+				}
+				if before.SndCwnd == 0 || before.SndCwnd+2 >= before.SndSsthresh || after.SndCwnd <= before.SndCwnd {
+					t.Fatalf("expected a positive slow-start ACK increment: before %+v after %+v", before, after)
+				}
+				t.Logf("MSS_CREDIT sent_packets=1 sent_bytes=%d restored_mss=%d cwnd_before=%d cwnd_after=%d",
+					peerMSS, before.SndMss, before.SndCwnd, after.SndCwnd)
+				return
 			}
 			data := bytes.Repeat([]byte{0x5a}, 2*peerMSS)
 			if n, err := ep.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
