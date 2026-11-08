@@ -38,15 +38,20 @@ def parse_pcap(data):
         need(size <= original and pos + size <= len(data), "truncated frame")
         fr = data[pos : pos + size]
         pos += size
-        if len(fr) < 34 or fr[12:14] != b"\x08\x00" or fr[23] != 6:
+        need(size >= 14, "short captured Ethernet header")
+        if fr[12:14] != b"\x08\x00":
+            continue
+        need(size >= 34 and fr[14] >> 4 == 4, "invalid captured IPv4 header")
+        if fr[23] != 6:
             continue
         iplen = struct.unpack_from("!H", fr, 16)[0]
         iph = (fr[14] & 15) * 4
         start = 14 + iph
-        need(
-            iph >= 20 and len(fr) >= 14 + iplen and iplen >= iph + 20,
-            "short IPv4 TCP frame",
-        )
+        need(iph >= 20 and iph + 20 <= iplen <= original - 14, "invalid IPv4 TCP wire length")
+        need(not struct.unpack_from("!H", fr, 20)[0] & 0x3fff, "fragmented TCP datagram")
+        need(size >= start + 20, "short captured IPv4 or TCP header")
+        # The capture may end in the payload. Keep the full headers and use
+        # the IPv4 length for TCP sequence space.
         tcp = fr[start : 14 + iplen]
         off = (tcp[12] >> 4) * 4
         need(20 <= off <= len(tcp), "invalid TCP data offset")
@@ -60,7 +65,7 @@ def parse_pcap(data):
                 ack=ack,
                 flags=tcp[13],
                 window=struct.unpack_from('!H', tcp, 14)[0],
-                payload=tcp[off:], options=tcp[20:off],
+                payload_len=iplen - iph - off, options=tcp[20:off],
                 ns=sec*1_000_000_000 + subsec*(1 if data[:4] in (b"\x4d\x3c\xb2\xa1", b"\xa1\xb2\x3c\x4d") else 1000),
             )
         )
@@ -85,8 +90,8 @@ def check_packets(frames, log):
         port, ack, mss, rcv_mss, sent, peeked, start, end = map(int, (port, ack, mss, rcv_mss, sent, peeked, start, end))
         need(name not in observations, "duplicate control")
         syn, = [p for p in frames if p["flags"] == 2 and p["dport"] == port]
-        offered = [p for p in frames if p["route"] == syn["route"] and p["sport"] == syn["sport"] and p["dport"] == port and p["payload"]]
-        need(len(offered) == 25 and all(len(p["payload"]) == mss for p in offered), "offered train")
+        offered = [p for p in frames if p["route"] == syn["route"] and p["sport"] == syn["sport"] and p["dport"] == port and p["payload_len"]]
+        need(len(offered) == 25 and all(p["payload_len"] == mss for p in offered), "offered train")
         need(all(p["seq"] == (syn["seq"] + 1 + i * mss) & MASK for i, p in enumerate(offered)), "sequence")
         last = offered[-1]
         need(bool(last["flags"] & 8) == (name != "no_push_drain"), "PSH control")
@@ -107,9 +112,9 @@ def check_packets(frames, log):
             opts = opts[opts[1]:]
         need(advertised == [mss], "test payload differs from advertised MSS")
         pure_acks = [p for p in frames if p["route"] == syn["route"][::-1] and
-                     p["sport"] == port and p["dport"] == syn["sport"] and p["flags"] == 0x10 and not p["payload"]]
+                     p["sport"] == port and p["dport"] == syn["sport"] and p["flags"] == 0x10 and not p["payload_len"]]
         for segment, following in zip(offered, offered[1:]):
-            milestone = (segment["seq"] + len(segment["payload"])) & MASK
+            milestone = (segment["seq"] + segment["payload_len"]) & MASK
             need(any(p["ack"] == milestone and segment["ns"] <= p["ns"] <= following["ns"] for p in pure_acks),
                  "warm ACK missing before next segment")
         replies = [p for p in pure_acks if p["ack"] == ack and p["ns"] >= last["ns"]]
@@ -152,14 +157,18 @@ def collect(row, event):
         assert 0 < archive.getinfo(name).file_size <= 8 << 20
         raw = archive.read(name)
     (OUT / (stem + ".pcap")).write_bytes(raw)
+    check_outputs(row, raw, docs["test.log"], docs["test.xml"])
+
+
+def check_outputs(row, raw, test_log, test_xml):
     row["pcap_sha256"] = hashlib.sha256(raw).hexdigest()
-    log = docs["test.log"].decode(errors="replace")
+    log = test_log.decode(errors="replace")
     row["go_cases"] = re.findall(r"--- (PASS|FAIL|SKIP): ([^ \r\n]+) [(]", log)
     row["go_diagnostics"] = [s.strip()[:440] for s in log.splitlines() if "tcp_rcv_buf_space_test.go:" in s][:20]
-    root = ET.fromstring(docs["test.xml"])
+    root = ET.fromstring(test_xml)
     row["xml_cases"] = [c.get("name") for c in root.iter("testcase")]
     row["drain_controls"] = check_packets(parse_pcap(raw), log)
-    assert result["status"] == "PASSED" and not row["cached"] and row["strategy"] in ("local","standalone")
+    assert row["status"] == "PASSED" and not row["cached"] and row["strategy"] in ("local","standalone")
     assert row["go_cases"] == [("PASS","TestACKOnDrain")] and row["xml_cases"] == ["TestACKOnDrain"]
     assert not any(c.tag in {"error","failure","skipped"} for c in root.iter())
 
