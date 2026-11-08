@@ -92,12 +92,17 @@ def original(name, label, event):
         for arch, section in zip(parts[1::2], parts[2::2]):
             lines = section.strip().splitlines()
             if name == "negative":
-                hit, = [line for line in lines if line.startswith("checklocks: ")]
-                assert f"pkg/sentry/kernel/kernel.go:{report['unguarded_line']}:" in hit
-                assert "invalid field access" in hit and "timerMu" in hit
-                assert re.search(r"(?:accessing|reading) timers \(", hit)
-                assert hit.endswith(f"(GOOARCH={arch}, GOOS=linux)")
-                row[arch] = hit
+                expected = (
+                    f"checklocks: pkg/sentry/kernel/kernel.go:{report['unguarded_line']}:28: "
+                    "invalid field access, timerMu (&({receiver}.timerMu)) must be locked "
+                    "when accessing timers (locks: &({param:k}.extMu) exclusively) "
+                    f"(GOOARCH={arch}, GOOS=linux)"
+                )
+                assert lines
+                for line in lines:
+                    normalized, receivers = re.subn(r"\{memory:\d+\}", "{receiver}", line)
+                    assert receivers == 1 and normalized == expected, line
+                row[arch] = lines
             else:
                 assert lines == ["PASS"]
                 row[arch] = "PASS"
