@@ -566,3 +566,47 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 		t.Fatalf("last fragment lost its fully SACKed original unit: %d", last.sackCredit)
 	}
 }
+
+func TestCumulativeACKPacketBoundaries(t *testing.T) {
+	clock := faketime.NewManualClock()
+	ctx := newRACKTestContext(clock, 0)
+	defer ctx.cleanup()
+	s := &ctx.snd
+	s.ep.mu.Lock()
+	defer s.ep.mu.Unlock()
+	start := seqnum.Value(0xfffffb50)
+	s.SndUna = start
+	s.MaxPayloadSize = 1196
+	s.ep.SACKPermitted = true
+	s.ep.scoreboard = NewSACKScoreboard(uint16(s.MaxPayloadSize), start)
+	seg := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(2404)), 0)
+	seg.sequenceNumber, seg.gsoStart, seg.gsoMSS, seg.xmitCount = start, start, 1200, 1
+	s.writeList.PushBack(seg)
+	s.splitSeg(seg, 1196)
+	tail := seg.Next()
+	ctx.segs = append(ctx.segs, seg, tail)
+	sack := header.SACKBlock{Start: start.Add(1200), End: start.Add(2400)}
+	s.ep.scoreboard.Insert(sack)
+	s.updateSACKCredit(tail, sack)
+	if got := tail.sackCredit; got != 1 {
+		t.Fatalf("selectively acknowledged packets = %d, want 1", got)
+	}
+	if got := s.cumulativePacketCount(seg); got != 0 {
+		t.Fatalf("left queue fragment owns %d packet ends, want 0", got)
+	}
+	// The right fragment owns the two original full packets and the short
+	// tail. Check which ends remain after a series of partial ACKs.
+	for _, tc := range []struct {
+		offset seqnum.Size
+		want   int
+	}{
+		{1196, 3}, {1199, 3}, {1200, 2}, {2399, 2}, {2400, 1}, {2403, 1},
+	} {
+		ack := start.Add(tc.offset)
+		tail.TrimFront(tail.sequenceNumber.Size(ack))
+		tail.sequenceNumber = ack
+		if got := s.cumulativePacketCount(tail); got != tc.want {
+			t.Errorf("after ACK of %d bytes: %d packet ends, want %d", tc.offset, got, tc.want)
+		}
+	}
+}
