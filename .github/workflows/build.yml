@@ -1,7 +1,7 @@
 name: Build and exercise the Make-installed LLVM TLDK runtime
 on:
   push:
-    branches: [qualification/tldk-declared-llvm-installed]
+    branches: [qualification/tldk-installed-verified-inputs]
 permissions: {}
 jobs:
   plugin:
@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 125
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 4}
+        with: {persist-credentials: false, fetch-depth: 5}
       - name: Bind the integrated compiler, plugin, installed traffic test and public inputs
         run: |
           set -euo pipefail
@@ -25,7 +25,10 @@ jobs:
           dist="$RUNNER_TEMP/recvbuf/dist"
           mkdir -p "$d" "$dist" "$RUNNER_TEMP/plugin-evidence"
           echo '{"status":"INCOMPLETE","phase":"setup"}' > "$d/receipt.json"
-          test "$(git rev-parse HEAD^)" = "$src"
+          prior=a650efbdaf6218cbc9a6db1f651abd603bb17003
+          test "$(git rev-parse HEAD^)" = "$prior"
+          test "$(git rev-parse "$prior^")" = "$src"
+          git diff --exit-code "$prior" HEAD -- . ':!.github/workflows/build.yml'
           test "$(git rev-parse "$src^{tree}")" = 58910b2bae612062e2a4c07f0986b95fd7159b87
           test "$(git rev-parse "$src^1")" = 4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
           test "$(git rev-parse "$src^2")" = 1b1d83bf439fc40c4850277ffdae7a8831acd214
@@ -48,17 +51,38 @@ jobs:
           test "$(id -u)" -ne 0
           test "$(cat .bazelversion)" = 9.3.1
           cd "$d"
-          api='https://api.github.com/repos'
-          fetch=(curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 --max-time 180)
-          "${fetch[@]}" -H 'Accept: application/octet-stream' "$api/bazelbuild/bazel/releases/assets/661108421" -o bazel
-          "${fetch[@]}" -H 'Accept: application/octet-stream' "$api/cerisier/glibc-headers/releases/assets/253918436" -o "$dist/x86_64-linux-gnu.2.28.tar.zst"
-          "${fetch[@]}" https://codeload.github.com/alipay/tldk/tar.gz/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88 -o "$dist/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88.tar.gz"
-          "${fetch[@]}" https://codeload.github.com/DPDK/dpdk/tar.gz/refs/tags/v18.11 -o "$dist/v18.11.tar.gz"
+          get_input() {
+            local dest="$1" bytes="$2" sha="$3" url rc actual
+            shift 3
+            for url in "$@"; do
+              printf '%s %s started\n' "${dest##*/}" "$url" >> inputs.txt
+              if curl -q --proto '=https' --proto-redir '=https' -fsSL --retry 1 --max-time 180 \
+                  -H 'Accept: application/octet-stream' --max-filesize "$bytes" -o "$dest.part" "$url"; then
+                actual=$(sha256sum "$dest.part")
+                if test "$(stat -c %s "$dest.part")" = "$bytes" && test "${actual%% *}" = "$sha"; then
+                  mv "$dest.part" "$dest"
+                  printf '%s %s %s %s verified\n' "${dest##*/}" "$url" "$bytes" "$sha" >> inputs.txt
+                  return 0
+                fi
+                rc=checksum
+              else
+                rc=$?
+              fi
+              printf '%s %s failure=%s\n' "${dest##*/}" "$url" "$rc" >> inputs.txt
+            done
+            return 1
+          }
+          get_input bazel 77022209 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c \
+            https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 \
+            'https://api.github.com/repos/bazelbuild/bazel/releases/assets/661108421?download=1'
+          get_input "$dist/x86_64-linux-gnu.2.28.tar.zst" 350783 8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3 \
+            https://mirror.bazel.build/github.com/cerisier/glibc-headers/releases/download/2.28-20250512/x86_64-linux-gnu.2.28.tar.zst \
+            'https://api.github.com/repos/cerisier/glibc-headers/releases/assets/253918436?download=1'
+          get_input "$dist/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88.tar.gz" 1495443 00bc2824cbc3024c4e5514ebac7ecab6598dd60e444af9dfeece079bc5b96980 \
+            https://codeload.github.com/alipay/tldk/tar.gz/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88
+          get_input "$dist/v18.11.tar.gz" 14423675 0026a9bc67f37f07969101bdf72fd5921169b4744f765118e5db57cace645bee \
+            https://codeload.github.com/DPDK/dpdk/tar.gz/refs/tags/v18.11
           sha256sum -c <<SUMS
-          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
-          8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3  $dist/x86_64-linux-gnu.2.28.tar.zst
-          00bc2824cbc3024c4e5514ebac7ecab6598dd60e444af9dfeece079bc5b96980  $dist/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88.tar.gz
-          0026a9bc67f37f07969101bdf72fd5921169b4744f765118e5db57cace645bee  $dist/v18.11.tar.gz
           feddd4d2b69546c2a422c4aa221fd1ab23e0e51ccdbe94c3bcb33aea1aae8470  tldk_musl.py
           b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  native_cross_inputs.py
           1898c68adc3e66fee2a00566ff138c2fecb0a33667e0934d0ff26beea932254a  tldk_queue_seeds.json
@@ -81,6 +105,7 @@ jobs:
         with:
           name: tldk-declared-llvm-installed
           path: |
+            ${{ runner.temp }}/tldk-llvm/inputs.txt
             ${{ runner.temp }}/tldk-llvm/receipt.json
             ${{ runner.temp }}/tldk-llvm/test.xml
           if-no-files-found: error
