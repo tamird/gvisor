@@ -1,7 +1,7 @@
 name: Check a real checkpoint directory without Docker
 on:
   push:
-    branches: [qualification/checkpoint-dir-no-docker]
+    branches: [qualification/checkpoint-dir-namespace-restore]
 permissions: {}
 jobs:
   checkpoint:
@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 100
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
+        with: {persist-credentials: false, fetch-depth: 4}
       - name: Bind the original sources and the local test tools
         timeout-minutes: 14
         run: |
@@ -18,8 +18,9 @@ jobs:
           dir="$RUNNER_TEMP/checkpoint-dir"
           mkdir -p "$dir"
           echo '{"verified":false,"phase":"setup"}' > "$dir/receipt.json"
-          test "$(git rev-parse HEAD^)" = cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e
-          test "$(git rev-parse HEAD^^)" = 451b92800b9cb82262dc8a735388f7cf4d17d895
+          test "$(git rev-parse HEAD^)" = 0bd1d5810f10b22eb30389046a8139f265c5a475
+          test "$(git rev-parse HEAD^^)" = cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e
+          test "$(git rev-parse HEAD~3)" = 451b92800b9cb82262dc8a735388f7cf4d17d895
           test "$(uname -m)" = x86_64
           test "$(cat .bazelversion)" = 9.3.1
           cp .github/qualification/checkpoint_dir.py "$dir/"

@@ -1,47 +1,17 @@
 #!/bin/sh
 # The guest arm is run by the pinned static BusyBox after pivot_root.
 set -eu
-if [ "${1:-}" = guest ]; then
-    export PATH=/bin HOME=/tmp GO_TEST_WRAP=0 GOMAXPROCS=2
-    export DOCKER_HOST=unix:///run/docker.sock
-    test ! -e /run/docker.sock
-    test ! -e /var/run/docker.sock
-    if command -v docker; then exit 1; fi
-    /busybox grep -Eq '^NoNewPrivs:[[:space:]]+1$' /proc/self/status
-
-    runsc() {
-        /release/runsc --root=/run/state --rootless --platform=systrap --network=none \
-            --overlay2=none --host-settings=ignore --ignore-cgroups "$@"
-    }
-    tree() {
-        runsc exec captured /test_app "$1" --target-dir=/tmpfs --depth=2 --file-per-level=4 --file-size=64
-    }
-    trap 'runsc delete --force captured >/dev/null 2>&1 || :' EXIT
-    runsc run --detach --bundle=/bundle captured
-    tree fsTreeCreate
-    tree fsTreeVerify
-    runsc checkpoint --leave-running --compression=none --state-engine=graph --image-path=/media captured
-    runsc delete --force captured
-    runsc restore --detach --bundle=/bundle --image-path=/media captured
-    tree fsTreeVerify
-    echo VERIFIED_REAL_RESTORE
-    runsc delete --force captured
-    trap - EXIT
-
-    echo '{"names":["__no_name_0"],"mounts":["/","/tmpfs"]}' > /media/spec.json
-    cd /media
-    for f in checkpoint.img pages_meta.img pages.img spec.json; do test -f "$f"; done
-    test -s checkpoint.img
-    /busybox sha256sum checkpoint.img pages_meta.img pages.img spec.json > /media_before
-    /busybox cat /media_before
-    cd /
+case "${1:-}" in
+  help)
     for exe in /stock /fixed; do
         "$exe" -help > /help 2>&1
         /busybox grep -q '^Usage:' /help
         /busybox grep -q -- '-checkpoint-dir' /help
     done
     echo VERIFIED_HELP_BOTH
-
+    exit 0
+    ;;
+  stock-directory|fixed-live)
     reject_docker() {
         name=$1
         shift
@@ -52,9 +22,14 @@ if [ "${1:-}" = guest ]; then
         if /busybox grep -q '^=== RUN ' /case.log; then return 1; fi
         echo "VERIFIED_DOCKER_ERROR $name"
     }
-    reject_docker stock-directory /stock -checkpoint-dir=/media -test.v -test.run='^TestCheckpointFileRoundTrip$'
-    reject_docker fixed-live /fixed -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^EncodeStatefile$' -test.benchtime=1x
-
+    if [ "$1" = stock-directory ]; then
+        reject_docker stock-directory /stock -checkpoint-dir=/media -test.v -test.run='^TestCheckpointFileRoundTrip$'
+    else
+        reject_docker fixed-live /fixed -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^EncodeStatefile$' -test.benchtime=1x
+    fi
+    exit 0
+    ;;
+  fixed-directory)
     /fixed -checkpoint-dir=/media -test.v -test.run='^TestCheckpointFileRoundTrip$' \
         -test.bench='^BenchmarkCheckpointFile$/^EncodeStatefile$' -test.benchtime=1x > /case.log 2>&1 || {
             /busybox cat /case.log
@@ -68,6 +43,59 @@ if [ "${1:-}" = guest ]; then
     /busybox sha256sum -c /media_before
     echo VERIFIED_CHECKPOINT_DIRECTORY
     exit 0
+    ;;
+esac
+
+if [ "${1:-}" = guest ]; then
+    export PATH=/bin HOME=/tmp GO_TEST_WRAP=0 GOMAXPROCS=2
+    export DOCKER_HOST=unix:///run/docker.sock
+    test ! -e /run/docker.sock
+    test ! -e /var/run/docker.sock
+    if command -v docker; then exit 1; fi
+    /busybox grep -Eq '^NoNewPrivs:[[:space:]]+1$' /proc/self/status
+
+    runsc() {
+        # Restore rejects the CLI --rootless flag. The process is already mapped
+        # to UID 0 inside the same private user namespace for every subcommand.
+        if [ "$1" != restore ]; then set -- --rootless "$@"; fi
+        /release/runsc --root=/run/state --platform=systrap --network=none \
+            --overlay2=none --host-settings=ignore --ignore-cgroups "$@"
+    }
+    tree() {
+        runsc exec captured /test_app "$1" --target-dir=/tmpfs --depth=2 --file-per-level=4 --file-size=64
+    }
+    trap 'runsc delete --force captured >/dev/null 2>&1 || :' EXIT
+    runsc run --detach --bundle=/bundle captured
+    tree fsTreeCreate
+    tree fsTreeVerify
+    runsc checkpoint --leave-running --compression=none --state-engine=graph --image-path=/media captured
+    runsc delete --force captured
+    echo VERIFIED_REAL_CAPTURE
+
+    echo '{"names":["__no_name_0"],"mounts":["/","/tmpfs"]}' > /media/spec.json
+    cd /media
+    for f in checkpoint.img pages_meta.img pages.img spec.json; do test -f "$f"; done
+    test -s checkpoint.img
+    /busybox sha256sum checkpoint.img pages_meta.img pages.img spec.json > /media_before
+    /busybox cat /media_before
+    cd /
+    status=0
+    for arm in help stock-directory fixed-live fixed-directory; do
+        # Each child evaluates the original assertions with its own errexit.
+        if /busybox sh /case.sh "$arm"; then
+            echo "CHECKPOINT_CONTROL $arm PASS"
+        else
+            echo "CHECKPOINT_CONTROL $arm FAIL $?"
+            status=1
+        fi
+    done
+    if runsc restore --detach --background=false --bundle=/bundle --image-path=/media captured && tree fsTreeVerify; then
+        echo VERIFIED_REAL_RESTORE
+    else
+        echo "CHECKPOINT_CONTROL guest-restore FAIL $?"
+        status=1
+    fi
+    exit "$status"
 fi
 
 root="$TEST_TMPDIR/root"

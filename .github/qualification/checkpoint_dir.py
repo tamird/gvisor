@@ -17,6 +17,7 @@ import tldk_public_inputs as inputs
 
 BASE = "451b92800b9cb82262dc8a735388f7cf4d17d895"
 FIX = "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e"
+PREVIOUS = "0bd1d5810f10b22eb30389046a8139f265c5a475"
 CARRIER = os.environ["GITHUB_SHA"]
 PACKAGE = Path("runsc/container")
 BENCH = "//test/benchmarks/checkpointfile:checkpointfile_test"
@@ -25,7 +26,9 @@ OWNER = "//runsc/container:checkpoint_dir_without_docker"
 WORK = Path(os.environ["RUNNER_TEMP"]) / "checkpoint-dir"
 DEADLINE = time.monotonic() + 72 * 60
 DIRS = {assets.DIST}
-RECORD = {"base": BASE, "product": FIX, "carrier": CARRIER, "public_inputs": {}, "phases": {}}
+RECORD = {"base": BASE, "product": FIX, "carrier": CARRIER, "previous_artifact": 13615413609,
+          "previous_zip_sha256": "c1f656b5f70b9af4335419ebbc4afbcef481a91d173596d035fcdcc43e733f06",
+          "public_inputs": {}, "phases": {}}
 KNOWN = {}
 
 
@@ -118,6 +121,12 @@ def preserve_failure(bep):
                 path = Path(unquote(uri.path))
                 if path.is_file():
                     shutil.copy2(path, WORK / out["name"])
+                    if out["name"] == "test.log":
+                        lines = path.read_text(errors="replace").splitlines()
+                        RECORD["failed_test"]["observations"] = [
+                            s[:350] for s in lines if s.startswith(("CHECKPOINT_CONTROL ", "VERIFIED_", "--- PASS: TestCheckpointFileRoundTrip ",
+                                                                 "BenchmarkCheckpointFile/EncodeStatefile")) or "State file sizes: original " in s
+                        ][:24]
 
 
 def test_result():
@@ -147,9 +156,12 @@ def test_result():
             assert root.findall(".//testcase") and all(not root.findall(".//" + tag) for tag in ("failure", "error", "skipped"))
         else:
             text = path.read_text(errors="replace")
-            markers = ["NATIVE_GUEST_PRIVATE_ROOT", "VERIFIED_REAL_RESTORE", "VERIFIED_HELP_BOTH",
+            markers = ["NATIVE_GUEST_PRIVATE_ROOT", "VERIFIED_REAL_CAPTURE", "VERIFIED_REAL_RESTORE", "VERIFIED_HELP_BOTH",
                        "VERIFIED_DOCKER_ERROR stock-directory", "VERIFIED_DOCKER_ERROR fixed-live", "VERIFIED_CHECKPOINT_DIRECTORY"]
             assert all(text.splitlines().count(s) == 1 for s in markers)
+            controls = [s for s in text.splitlines() if s.startswith("CHECKPOINT_CONTROL ")]
+            assert controls == [f"CHECKPOINT_CONTROL {arm} PASS" for arm in ("help", "stock-directory", "fixed-live", "fixed-directory")]
+            assert text.splitlines().index(controls[-1]) < text.splitlines().index("VERIFIED_REAL_RESTORE")
             sizes, = re.findall(r'State file sizes: original (\d+), re-encoded \[(\d+) (\d+) (\d+)\]', text)
             row, = [s for s in text.splitlines() if re.match(r'^BenchmarkCheckpointFile/EncodeStatefile(?:-\d+)?\s+1\s', s)]
             assert all(int(n) > 0 for n in sizes) and re.search(r'\s[1-9]\d*\s+encoded-kernel-B', row)
@@ -166,7 +178,8 @@ def test_result():
 
 def main():
     assert platform.machine() == "x86_64" and os.getuid() != 0
-    assert git("rev-parse", CARRIER + "^").decode().strip() == FIX
+    assert git("rev-parse", CARRIER + "^").decode().strip() == PREVIOUS
+    assert git("rev-parse", PREVIOUS + "^").decode().strip() == FIX
     assert git("rev-parse", FIX + "^{tree}").decode().strip() == "6e81d267bbee82ffe68f23ee2e5724c47863686e"
     assert git("rev-parse", FIX + "^").decode().strip() == BASE
     allowed = {".github/workflows/build.yml", ".github/qualification/checkpoint_dir.py", "runsc/container/BUILD", "runsc/container/checkpoint_dir.sh"}
