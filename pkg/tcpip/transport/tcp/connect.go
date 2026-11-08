@@ -904,7 +904,6 @@ func buildTCPHdr(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stac
 }
 
 func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO, owner tcpip.PacketOwner) tcpip.Error {
-	optLen := len(tf.opts)
 	if tf.rcvWnd > math.MaxUint16 {
 		tf.rcvWnd = math.MaxUint16
 	}
@@ -913,7 +912,6 @@ func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso sta
 	n := (pkt.Data().Size() + mss - 1) / mss
 
 	size := pkt.Data().Size()
-	hdrSize := header.TCPMinimumSize + int(r.MaxHeaderLength()) + optLen
 	for i := 0; i < n; i++ {
 		packetSize := mss
 		if packetSize > size {
@@ -926,12 +924,8 @@ func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso sta
 		// packet already has the truncated data.
 		shouldSplitPacket := i != n-1
 		if shouldSplitPacket {
-			if r.NetProto() == header.IPv6ProtocolNumber && tf.expOptVal != 0 {
-				// Reserve extra bytes for the experiment option.
-				hdrSize += header.IPv6ExperimentHdrLength
-			}
 			splitPkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
-				ReserveHeaderBytes: hdrSize,
+				ReserveHeaderBytes: pkt.ReservedHeaderBytes(),
 				Mark:               pkt.Mark,
 			})
 			splitPkt.Data().ReadFromPacketData(pkt.Data(), packetSize)
