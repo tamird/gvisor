@@ -126,7 +126,7 @@ def prepare():
     report.update(remote_downloader="grpcs://remote.buildbuddy.io", remote_execution=False)
     args = [str(TEMP / "bazel"), "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Xmx4g",
             "--bazelrc=" + str(private / "service.rc"), "build", "--config=x86_64", "--jobs=3",
-            "--keep_going", "--remote_executor=", "--bes_backend=", "--distdir=" + str(DIST),
+            "--@io_bazel_rules_go//go/config:pure", "--keep_going", "--remote_executor=", "--bes_backend=", "--distdir=" + str(DIST),
             "--noremote_upload_local_results", "--noremote_accept_cached", *LABELS]
     recovered = set()
     while True:

@@ -101,7 +101,7 @@ func admissionBoundary(t *testing.T, mode string) {
 	// so its unique DSACK identifies a response to this post-train packet.
 	tag := base + 1
 	frame := conn.CreateFrame(t, testbench.Layers{&testbench.TCP{
-		Flags: testbench.TCPFlags(header.TCPFlagFin | header.TCPFlagAck), SeqNum: &tag}}, nil)
+		Flags: testbench.TCPFlags(header.TCPFlagFin | header.TCPFlagAck), SeqNum: &tag}})
 	conn.SendFrameStateless(t, frame)
 	attempt := 1
 	frontier := -1

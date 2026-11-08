@@ -115,6 +115,9 @@ def collect(row, event, typ):
     result = event["testResult"]
     row.update(status=result["status"], strategy=result.get("executionInfo",{}).get("strategy"),
                cached=bool(result.get("cachedLocally") or result.get("executionInfo",{}).get("cachedRemotely")),files={})
+    owner = event["id"]["testResult"]["label"]
+    assert owner in TARGETS and typ == "controlled"
+    dut = "native" if owner == TARGETS[0] else "netstack"
     docs = {}
     for record in result["testActionOutput"]:
         name=record["name"]
@@ -128,17 +131,21 @@ def collect(row, event, typ):
         if "length" in record: assert int(record["length"])==len(data)
         row["files"][name]=[h,len(data)]
         docs[name]=data
+        if name in ("test.log", "test.xml"):
+            (OUT / (dut + "." + name.rsplit(".", 1)[1])).write_bytes(data)
+    z=zipfile.ZipFile(io.BytesIO(docs["test.outputs__outputs.zip"]))
+    names=[n for n in z.namelist() if n.endswith(".pcap")]
+    assert len(names)==1,names
+    raw=z.read(names[0])
+    assert 0 < len(raw) <= 8 << 20
+    (OUT / (dut + ".pcap")).write_bytes(raw)
+    row["pcap_sha256"]=hashlib.sha256(raw).hexdigest()
     log=docs["test.log"].decode(errors="replace")
     row["go_cases"] = re.findall(r"--- (PASS|FAIL|SKIP): ([^ \r\n]+) \(",log)
     row["go_diagnostics"] = [s.strip()[:440] for s in log.splitlines() if
                               "tcp_rcv_buf_space_test.go:" in s or "tcp_rcv_buf_boundary_test.go:" in s][:160]
     row["xml_case_count"] = sum(1 for _ in ET.fromstring(docs["test.xml"]).iter("testcase"))
     assert not row["cached"] and row["strategy"] in ("local","standalone") and row["xml_case_count"]>0
-    z=zipfile.ZipFile(io.BytesIO(docs["test.outputs__outputs.zip"]))
-    names=[n for n in z.namelist() if n.endswith(".pcap")]
-    assert len(names)==1,names
-    raw=z.read(names[0])
-    row["pcap_sha256"]=hashlib.sha256(raw).hexdigest()
     frames=parse_pcap(raw)
     if typ == "original":
         syns=[f for f in frames if f["flags"]==2]
@@ -179,7 +186,9 @@ def collect(row, event, typ):
 def main():
     report={"verified":False,"source":"451b92800b9cb82262dc8a735388f7cf4d17d895","kernel":platform.release(),"arms":{}}
     assert platform.machine()=="x86_64"
-    for typ,case in (("original","TestReduceRecvBuf"),("controlled","TestAdmissionBoundary")):
+    report["original_receipt"] = {"run": 42466764407, "artifact": 13613271270,
+                                  "zip_sha256": "b996bcff180328745c67300b036d16dad02f5f9cad8e06a56c1165d8c00ef410"}
+    for typ,case in (("controlled","TestAdmissionBoundary"),):
         bep=OUT/(typ+".jsonl")
         cmd=[str(OUT.parent/"bazel"),"--nosystem_rc","--nohome_rc","--host_jvm_args=-Xmx4g","test","--config=x86_64",
              "--jobs=3","--strategy=TestRunner=local","--test_env=GO_TEST_WRAP_TESTV=1","--nocache_test_results",

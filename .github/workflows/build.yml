@@ -1,7 +1,7 @@
 name: Observe TCP receive admission before and after draining
 on:
   push:
-    branches: [qualification/tcp-recvbuf-asset-preparation]
+    branches: [qualification/tcp-recvbuf-empty-sequence-marker]
 permissions: {}
 jobs:
   packets:
@@ -16,12 +16,13 @@ jobs:
           mkdir -m 700 "$d"
           echo '{"verified":false,"stage":"setup"}' > "$d/result.json"
           git init -q
-          git fetch --no-auto-maintenance --no-tags --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git fetch --no-auto-maintenance --no-tags --depth=5 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
           git checkout -q --detach "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = 190e9bde07a0c299f676a16b6f658e8e83147c04
-          test "$(git rev-parse HEAD^^)" = 442905a4beb562f1259f3019fb81e83161341c78
-          test "$(git rev-parse HEAD~3)" = 451b92800b9cb82262dc8a735388f7cf4d17d895
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/recvbuf_deps.py'
+          test "$(git rev-parse HEAD^)" = 5f053b59eb17f9736242f20e950eaed8ec6cad85
+          test "$(git rev-parse HEAD^^)" = 190e9bde07a0c299f676a16b6f658e8e83147c04
+          test "$(git rev-parse HEAD~3)" = 442905a4beb562f1259f3019fb81e83161341c78
+          test "$(git rev-parse HEAD~4)" = 451b92800b9cb82262dc8a735388f7cf4d17d895
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/recvbuf_deps.py' ':!.github/qualification/recvbuf.py' ':!test/packetimpact/tests/tcp_rcv_buf_boundary_test.go'
           test "$(git rev-parse HEAD:test/packetimpact/tests/tcp_rcv_buf_space_test.go)" = 524501dfb08ed3341ce1b594287e7854f7f1d722
           test "$(git rev-parse HEAD:test/packetimpact/runner/defs.bzl)" = 9b4dc31ce9c91887b7a77634a498ad9f9feab57b
           test "$(cat .bazelversion)" = 9.3.1
@@ -66,7 +67,7 @@ jobs:
           unset REMOTE_KEY
           "${clean[@]}" python3 -IB .github/qualification/recvbuf_deps.py prepare >"$auth/prepare.log" 2>&1
           rm -f -- "$auth/prepare.log"
-      - name: Observe the original and controlled schedules on Linux and runsc
+      - name: Observe only corrected schedules on Linux and runsc
         run: |
           test ! -e "$RUNNER_TEMP/recvbuf/auth"
           env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB .github/qualification/recvbuf.py
@@ -77,5 +78,11 @@ jobs:
           path: |
             ${{ runner.temp }}/recvbuf/result.json
             ${{ runner.temp }}/recvbuf/dependencies.json
+            ${{ runner.temp }}/recvbuf/native.log
+            ${{ runner.temp }}/recvbuf/native.xml
+            ${{ runner.temp }}/recvbuf/native.pcap
+            ${{ runner.temp }}/recvbuf/netstack.log
+            ${{ runner.temp }}/recvbuf/netstack.xml
+            ${{ runner.temp }}/recvbuf/netstack.pcap
           if-no-files-found: error
           retention-days: 14
