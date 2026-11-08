@@ -14,6 +14,7 @@ from measure import BUNDLE, INSTALL, OUT, SOURCE, WORK, digest
 GUEST = "//test/rbe/restore_advice:guest"
 BENCHSTAT = "@org_golang_x_perf//cmd/benchstat:benchstat"
 FLAGS = ["--config=x86_64", "-c", "opt", "--jobs=4", "--lockfile_mode=off",
+         "--distdir=" + str(WORK / "dist"),
          "--remote_cache=", "--remote_executor=", "--bes_backend=", "--spawn_strategy=linux-sandbox",
          "--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox",
          "--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox"]

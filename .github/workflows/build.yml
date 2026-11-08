@@ -1,7 +1,7 @@
-name: Compare verified restore time at stock and capped CPU quotas
+name: Compare counterbalanced checkpoint and restore times
 on:
   push:
-    branches: [qualification/state-quarter-cpu-bind]
+    branches: [qualification/state-balanced-checkpoint-capture]
 permissions: {}
 jobs:
   measure:
@@ -17,13 +17,14 @@ jobs:
         echo '{"build_verified":false,"stage":"setup"}' > "$w/results/build.json"
         cd "$w/src"
         git init -q
-        git -c gc.auto=0 fetch -q --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+        git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
         s=451b92800b9cb82262dc8a735388f7cf4d17d895
-        test "$(git rev-parse "$GITHUB_SHA^")" = "$s"
+        test "$(git rev-parse "$GITHUB_SHA^")" = 1c518b5f027b8e4aa9009486ebba3c4bab3c3f26
+        test "$(git rev-parse "$GITHUB_SHA^^")" = "$s"
         git diff --exit-code "$s" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set' ':!test/rbe/restore_advice'
         test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/guest.go")" = fa8722188274a32ffecd31a55da785c613585fc8
         test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/BUILD")" = 41436c5859495ec8d2c95d66289a3ba51d149c3a
-        test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/build.py")" = 63473580d47de29c9ed24e03688445701695b719
+        test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/build.py")" = 28e66a4f1f46bd431014566229915a983931af13
         test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/benchstat.module")" = e379c4293704632cc1f1e192a49fe73427a457d1
         git checkout -q --detach "$s"
         for f in build.py measure.py isolate.sh benchstat.module; do
@@ -45,8 +46,18 @@ jobs:
           /bin/bash "$w/isolate.sh" preflight
     - name: Build the original release, guest and pinned benchstat
       run: |
+        set -euo pipefail
         w="$RUNNER_TEMP/state-working-set"
         cd "$w/src"
+        # Use the same digest-checked public archives as the native packet
+        # build of this source. Bazel verifies each archive it takes from dist.
+        helper=5f053b59eb17f9736242f20e950eaed8ec6cad85
+        git -c gc.auto=0 fetch -q --depth=1 https://github.com/tamird/gvisor.git "$helper"
+        test "$(git rev-parse "$helper:.github/qualification/recvbuf_deps.py")" = b21dd4268b19aa0d2f39b2a87105657e5eca9727
+        git show "$helper:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+        mkdir "$RUNNER_TEMP/recvbuf"
+        python3 -IB "$w/public_assets.py" seed
+        mv "$RUNNER_TEMP/recvbuf/dist" "$w/dist"
         python3 -B "$w/build.py"
     - name: Compare foreground restores and verify restored bytes
       run: |
@@ -61,6 +72,11 @@ jobs:
         w="$RUNNER_TEMP/state-working-set"
         cd "$w/results"
         "$w/benchstat" wire.txt graph.txt > benchstat.txt
+        for c in unlimited oci-quarter; do
+          for m in command sandbox_cpu; do
+            grep -q "Checkpoint/$c/$m " benchstat.txt
+          done
+        done
         for c in unlimited oci-quarter ancestor-quarter; do
           for m in restore_command through_cached_ready through_verified_read ready_to_verified restore_group_cpu; do
             grep -q "Restore/$c/$m " benchstat.txt
@@ -70,7 +86,7 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && !cancelled()
       with:
-        name: state-quarter-cpu-restore
+        name: state-balanced-checkpoint-and-restore
         path: |
           ${{ runner.temp }}/state-working-set/results/ancestors-*.json
           ${{ runner.temp }}/state-working-set/results/delegation.json

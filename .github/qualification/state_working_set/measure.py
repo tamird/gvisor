@@ -1,6 +1,7 @@
 """Verify whole working-set restores with both shipping state engines at three CPU policies."""
 
 import ctypes
+from collections import Counter
 import hashlib
 import io
 import itertools
@@ -335,17 +336,35 @@ def restore(policy, engine, path, expected, row):
                              through_verified_read=verified-start, ready_to_verified=verified-accepted,
                              restore_group_cpu=1000*(charge["returned"]["usage_usec"]-charge["before"]["usage_usec"]))
     assert all(value > 0 for value in row["metrics_ns"].values())
+
+
 def write_bench(blocks):
+    measured = [block for block in blocks if block["pair"] >= 0]
+    for config in ("unlimited", "oci-quarter"):
+        # A second checkpoint can benefit from work done by the first. Check
+        # the order actually captured on each live guest, at both quotas.
+        orders = Counter()
+        for block in measured:
+            sources = block["sources"]
+            first = next(engine for engine in sources[config] if engine in ENGINES)
+            orders[tuple(sources).index(config), first] += 1
+        expected = {(position, engine): PAIRS // 4 for position in (0, 1) for engine in ENGINES}
+        assert orders == expected, (config, orders, expected)
     for engine in ENGINES:
         lines = []
-        for block in blocks:
-            if block["pair"] < 0:
-                continue
+        for block in measured:
+            for config, source in block["sources"].items():
+                capture = source[engine]
+                elapsed = capture["save_command_ns"]
+                leaf_cpu = capture["cpu_stat_delta"]["usage_usec"] * 1000
+                assert elapsed > 0 and leaf_cpu > 0, (config, engine, capture)
+                lines.append(f"BenchmarkCheckpoint/{config}/command 1 {elapsed} ns/op")
+                lines.append(f"BenchmarkCheckpoint/{config}/sandbox_cpu 1 {leaf_cpu} ns/op")
             for row in block["cells"]:
                 if row["engine"] == engine:
                     for name, value in row["metrics_ns"].items():
                         lines.append(f"BenchmarkRestore/{row['policy']}/{name} 1 {value} ns/op")
-        assert len(lines) == PAIRS * len(POLICIES) * len(METRICS)
+        assert len(lines) == PAIRS * (4 + len(POLICIES) * len(METRICS)), len(lines)
         (OUT / (engine + ".txt")).write_text("\n".join(lines) + "\n")
     for block in blocks:
         samples = {(r["policy"], r["engine"]): r["metrics_ns"] for r in block["cells"]}
@@ -379,7 +398,9 @@ def run():
             for i, config in enumerate(configs):
                 report["stage"] = [pair, "source", config]
                 block["sources"][config] = src = {}
-                engines = ENGINES if (pair+i) % 2 else tuple(reversed(ENGINES))
+                # Guest order changes every block. Change which engine runs
+                # first on the first guest every two blocks to cross both orders.
+                engines = ENGINES if (pair // 2 + i) % 2 else ENGINES[::-1]
                 expected = capture_both(config, engines, template, expected, src)
                 persist(report)
             report["expected_digests"] = expected.split()
