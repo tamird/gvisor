@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T16:30:55+00:00",
+    "updatedAt": "2026-11-08T16:42:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -783,8 +783,8 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "The maintainer approved b61651f93, and the PR has the ready to pull label. The separate Go archive assembler follow-up leaves that head intact.",
+      "updatedAt": "2026-11-08T16:42:07+00:00",
+      "summary": "The maintainer approved b61651f93, and the PR has the ready to pull label. The separate Go archive assembler follow-up leaves that head intact. When its Bazel archive exporter is next updated, go_export_sources also needs the netgofer command, along with its implementation. The existing approved head stays in review.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "b61651f9371f514411dbb4fc2bd367f860204546",
@@ -835,6 +835,10 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d"
+        },
+        {
+          "label": "Go-branch netgofer inputs required by the alternative exporter",
+          "url": "https://github.com/tamird/gvisor/commit/bf7b1290b"
         }
       ],
       "ciRecovery": {
@@ -62516,7 +62520,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T16:24:22+00:00",
+      "updatedAt": "2026-11-08T16:42:07+00:00",
       "summary": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings.\n\nThe revised tests remove 70 net lines relative to approved 2d112a931. Across ten files the full change adds 535 lines and removes 76. Tests account for 187 added and two removed lines. The 348 other additions include 29 BUILD lines. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context.",
       "evidence": [
         {
@@ -62550,6 +62554,14 @@
         {
           "label": "Native ARM64 autosave and same-image checkpoint comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42499334480"
+        },
+        {
+          "label": "First ARM64 run: 13 layout cases passed and guest fixture visibility blocked the CLI target",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42499334480/artifacts/13624733452"
+        },
+        {
+          "label": "Native ARM64 CLI and live autosave comparison with the donor test-app visibility",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42501078883"
         }
       ],
       "settledReviews": [
@@ -62581,15 +62593,17 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "ebcea451de61a61957c82527fa94241827267cde",
-        "observedAt": "2026-11-08T16:18:57+00:00",
-        "disposition": "Ayush asked why Sentry statefile dumps need a -checkpoint flag. The autosave test runner invokes the plain command. A single-commit fork amendment selects the Sentry layout from the first two frames and preserves generic text and HTML for other roots.",
+        "observedAt": "2026-11-08T16:42:07+00:00",
+        "disposition": "The 13 permanent reader layout cases passed on native ARM64. The first run never executed the command or autosave fixtures: its fork-only data edge lacked test-app package visibility. A recovery on unchanged proposed source 912702589 restores the declaration from the previously passing guest fixture.",
         "nextAction": "Verify the default command and the actual autosave formatter on the same wire and graph checkpoints. Bring the in-place amendment and proposed inline reply to the contributor after qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/ebcea451d",
           "https://github.com/google/gvisor/pull/17208#discussion_r4506794124",
           "https://github.com/tamird/gvisor/commit/912702589",
-          "https://github.com/tamird/gvisor/actions/runs/42499334480"
+          "https://github.com/tamird/gvisor/actions/runs/42499334480",
+          "https://github.com/tamird/gvisor/actions/runs/42499334480/artifacts/13624733452",
+          "https://github.com/tamird/gvisor/actions/runs/42501078883"
         ]
       }
     },
@@ -64808,6 +64822,51 @@
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Ascratch-build-actions"
         }
       ]
+    },
+    {
+      "id": "branch:go-branch-netgofer",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/go-branch-netgofer",
+      "head": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
+      "title": "Export the netgofer command to the Go branch",
+      "url": "https://github.com/tamird/gvisor/commit/bf7b1290b",
+      "group": "release",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-11-08T16:42:07+00:00",
+      "summary": "The published Go branch at 849c51487 could not build ./runsc/cmd/netgofer because that directory was absent. The ordinary exporter on bf7b1290b included the command and 14 proxy source files. Go 1.27.3 built the static Linux AMD64 sidecar from the generated module and ran its help netgofer command, including the -uds-fd option. The check covered the executable and command registration.",
+      "evidence": [
+        {
+          "label": "Single fork commit on master 975fb1722",
+          "url": "https://github.com/tamird/gvisor/commit/bf7b1290b"
+        },
+        {
+          "label": "Published Go branch negative and regenerated native sidecar build and help",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42499957100/artifacts/13625092477"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "url": "https://github.com/tamird/gvisor/commit/bf7b1290b",
+        "title": "Export the netgofer command to the Go branch",
+        "body": "runsc starts runsc-netgofer when proxy networking is enabled. The Go branch carries runsc and the other sidecar sources, but the netgofer command and its implementation are missing. Building all packages in the exported module therefore overlooks the missing executable.\n\nInclude the implementation in the gopath archive and copy the command entrypoint alongside the other Go sidecars. Let only the root package add the library to the export, as for the metric server.",
+        "summary": "Approve opening the one-commit gVisor PR to include the proxy-network sidecar in the Go export.",
+        "requestedAt": "2026-11-08T16:42:07+00:00"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
+        "observedAt": "2026-11-08T16:42:07+00:00",
+        "disposition": "The ordinary Go exporter now carries runsc-netgofer. The regenerated executable built and printed its command help on Linux AMD64.",
+        "nextAction": "Approve opening the proposed gVisor PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/bf7b1290b",
+          "https://github.com/tamird/gvisor/actions/runs/42499957100/artifacts/13625092477"
+        ]
+      }
     }
   ],
   "edges": [
