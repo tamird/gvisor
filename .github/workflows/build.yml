@@ -1,35 +1,109 @@
-name: CI
-
-"on":
+name: Verify the marked TCP reply before draining the receive buffer
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-recvbuf-window-barrier]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packets:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind stock Linux and gVisor packet targets and the original test
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/recvbuf"
+          mkdir -m 700 "$d"
+          echo '{"verified":false,"stage":"setup"}' > "$d/result.json"
+          git init -q
+          git fetch --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = f0e4f9b4e0f820684f8a7a5b9ef145b658138efa
+          test "$(git rev-parse HEAD~1^{tree})" = 3a6b8bd62f0eebe1be782bc53d8fdd292d355663
+          test "$(git rev-parse HEAD~2)" = 451b92800b9cb82262dc8a735388f7cf4d17d895
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/recvbuf_deps.py' ':!.github/qualification/recvbuf.py'
+          test "$(git rev-parse HEAD:test/packetimpact/tests/tcp_rcv_buf_space_test.go)" = b5eb9f276a8772a996df6ce2f40071460a759e04
+          test "$(git rev-parse HEAD:test/packetimpact/runner/defs.bzl)" = 9b4dc31ce9c91887b7a77634a498ad9f9feab57b
+          test "$(cat .bazelversion)" = 9.3.1
+          /usr/bin/unshare --user --map-root-user --net -- /usr/bin/test -e /sys/class/net/lo
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=-)
+            sudo apt-get "${opts[@]}" update -qq
+            sudo apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+          curl -fsSL --max-time 90 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/bazel" | sha256sum -c -
+          chmod 755 "$RUNNER_TEMP/bazel"
+      - name: Stage the public archive mirrors seen in the original failures
+        timeout-minutes: 5
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB .github/qualification/recvbuf_deps.py seed
+      - name: Resolve only the two test configurations using the Remote Asset service
+        timeout-minutes: 24
+        env:
+          REMOTE_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          auth="$RUNNER_TEMP/recvbuf/auth"
+          mkdir -m 700 "$auth"
+          clean=(env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP")
+          cleanup() {
+            "${clean[@]}" timeout -k 5s 45s "$RUNNER_TEMP/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g shutdown >"$auth/shutdown.log" 2>&1
+            status=$?
+            rm -f -- "$auth/service.rc" "$auth/build.log" "$auth/shutdown.log" "$auth/prepare.log"
+            rmdir "$auth"
+            return "$status"
+          }
+          trap 'rc=$?; set +e; cleanup; cleanup_rc=$?; (( rc == 0 )) && rc=$cleanup_rc; exit "$rc"' EXIT
+          test -n "$REMOTE_KEY"
+          {
+            echo 'build --remote_cache=grpcs://remote.buildbuddy.io'
+            echo 'build --experimental_remote_downloader=grpcs://remote.buildbuddy.io --noexperimental_remote_downloader_propagate_credentials --experimental_remote_downloader_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$REMOTE_KEY"
+          } > "$auth/service.rc"
+          unset REMOTE_KEY
+          "${clean[@]}" timeout -k 5s 21m python3 -IB .github/qualification/recvbuf_deps.py prepare >"$auth/prepare.log" 2>&1
+          rm -f -- "$auth/prepare.log"
+      - name: Compile both owners and preserve each completed packet test
+        timeout-minutes: 52
+        run: |
+          test ! -e "$RUNNER_TEMP/recvbuf/auth"
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB .github/qualification/recvbuf.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: receive-buffer-window-barrier
+          path: |
+            ${{ runner.temp }}/recvbuf/result.json
+            ${{ runner.temp }}/recvbuf/dependencies.json
+            ${{ runner.temp }}/recvbuf/native-1.log
+            ${{ runner.temp }}/recvbuf/native-1.xml
+            ${{ runner.temp }}/recvbuf/native-1.pcap
+            ${{ runner.temp }}/recvbuf/native-2.log
+            ${{ runner.temp }}/recvbuf/native-2.xml
+            ${{ runner.temp }}/recvbuf/native-2.pcap
+            ${{ runner.temp }}/recvbuf/native-3.log
+            ${{ runner.temp }}/recvbuf/native-3.xml
+            ${{ runner.temp }}/recvbuf/native-3.pcap
+            ${{ runner.temp }}/recvbuf/native-4.log
+            ${{ runner.temp }}/recvbuf/native-4.xml
+            ${{ runner.temp }}/recvbuf/native-4.pcap
+            ${{ runner.temp }}/recvbuf/netstack-1.log
+            ${{ runner.temp }}/recvbuf/netstack-1.xml
+            ${{ runner.temp }}/recvbuf/netstack-1.pcap
+            ${{ runner.temp }}/recvbuf/netstack-2.log
+            ${{ runner.temp }}/recvbuf/netstack-2.xml
+            ${{ runner.temp }}/recvbuf/netstack-2.pcap
+            ${{ runner.temp }}/recvbuf/netstack-3.log
+            ${{ runner.temp }}/recvbuf/netstack-3.xml
+            ${{ runner.temp }}/recvbuf/netstack-3.pcap
+            ${{ runner.temp }}/recvbuf/netstack-4.log
+            ${{ runner.temp }}/recvbuf/netstack-4.xml
+            ${{ runner.temp }}/recvbuf/netstack-4.pcap
+          if-no-files-found: error
+          retention-days: 14
