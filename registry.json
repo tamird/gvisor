@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T15:58:09+00:00",
+    "updatedAt": "2026-11-08T16:30:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1657,17 +1657,18 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-07T12:02:13+00:00",
+      "updatedAt": "2026-11-08T16:24:02+00:00",
       "summary": "The November 4 rebase onto master 183a39d1b is published at e438da4be. GitHub reports the head is mergeable. All four Nogo targets passed on AMD64 and ARM64. On native AMD64, 171 TMPFS and 40 VFS cases passed, including both new SIGBUS cases. No cases were skipped. The earlier changes-requested review remains on the PR.\n\nOn October 25 the 12:53 provider snapshot reported e1e9c4ea0 mergeable. That source preserved the device-file credential callback with the landed Filesystem identity accessors. Its reconciliation did not include a runtime replay or fresh approval.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor",
         "sourceHead": "c84ba767743ce2c96109a89f234d234485b3a230",
-        "observedAt": "2026-11-07T12:02:13+00:00",
-        "disposition": "The reviewed change is on #14343 at c84ba7677.",
-        "nextAction": "Follow #14343 for maintainer review and import.",
+        "observedAt": "2026-11-08T16:24:02+00:00",
+        "disposition": "Ayush asked about removing lock pairs during private VFS initialization. The fork amendment confines the existing checklocks exception to the helper that initializes the guarded fields.",
+        "nextAction": "Approve publishing the amendment and replying on the original thread after the owning suites and Nogo controls pass.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14343",
-          "https://github.com/tamird/gvisor/commit/c84ba7677"
+          "https://github.com/google/gvisor/pull/14343#discussion_r4506829771",
+          "https://github.com/tamird/gvisor/commit/cfdbe9edf",
+          "https://github.com/tamird/gvisor/actions/runs/42499650984"
         ]
       },
       "head": "c84ba767743ce2c96109a89f234d234485b3a230",
@@ -1695,15 +1696,27 @@
         {
           "label": "Reviewed change published upstream",
           "url": "https://github.com/google/gvisor/pull/14343"
+        },
+        {
+          "label": "Ayush’s question about private VFS initialization",
+          "url": "https://github.com/google/gvisor/pull/14343#discussion_r4506829771"
+        },
+        {
+          "label": "Proposed single-commit amendment",
+          "url": "https://github.com/tamird/gvisor/commit/cfdbe9edf"
+        },
+        {
+          "label": "Fork qualification of the owning suites and Nogo controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42499650984"
         }
       ],
       "refinement": {
         "before": {
-          "head": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
+          "head": "c84ba767743ce2c96109a89f234d234485b3a230",
           "base": "183a39d1b2aff9e8e2219171940001749a2b5db0"
         },
         "after": {
-          "head": "c84ba767743ce2c96109a89f234d234485b3a230",
+          "head": "cfdbe9edf497581ae3340e184806b5e3d39b7dbf",
           "base": "183a39d1b2aff9e8e2219171940001749a2b5db0"
         }
       },
@@ -1721,7 +1734,18 @@
           "at": "2026-11-07T12:02:13+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/14343"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "c84ba767743ce2c96109a89f234d234485b3a230",
+        "head": "cfdbe9edf497581ae3340e184806b5e3d39b7dbf",
+        "url": "https://github.com/tamird/gvisor/commit/cfdbe9edf",
+        "title": "Check TMPFS and VFS locking contracts",
+        "body": "Make checklocks enforce the existing guards for TMPFS file data and VFS registries, mount state, dentries, and epoll state. Express shared filesystem ownership where the checker can follow it, and document the remaining collection and callback boundaries.\n\nUse filesystem receivers for TMPFS path traversal so callers can prove which mutex they hold. Initialize the VFS registries before the VFS is shared, and keep the construction of its anonymous mount checked. Detach the filesystem registry before releasing its entries so release callbacks run outside the registry lock. Read file offsets through Seek in the existing TMPFS test.",
+        "summary": "Publish the amended commit and reply to Ayush after both owning suites and the Nogo controls pass. The fork qualification is running.\n\nProposed inline reply\n\nYes, those lock pairs aren't needed while this VFS is private. Checklocks already supports `// +checklocksignore` on a function. I confined it to the helper that initializes the guarded fields so the rest of `Init`, including construction of its anonymous mount, stays checked. For a general annotation I'd want to name the exclusively owned receiver or parameter and check that precondition at call sites.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff c84ba7677^! cfdbe9edf^!",
+        "requestedAt": "2026-11-08T16:24:02+00:00"
+      }
     },
     {
       "id": "pr:14338",
@@ -62492,7 +62516,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T00:06:53+00:00",
+      "updatedAt": "2026-11-08T16:24:22+00:00",
       "summary": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings.\n\nThe revised tests remove 70 net lines relative to approved 2d112a931. Across ten files the full change adds 535 lines and removes 76. Tests account for 187 added and two removed lines. The 348 other additions include 29 BUILD lines. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context.",
       "evidence": [
         {
@@ -62514,6 +62538,18 @@
         {
           "label": "Published single-commit PR #17208",
           "url": "https://github.com/google/gvisor/pull/17208"
+        },
+        {
+          "label": "Ayush’s question about the default command",
+          "url": "https://github.com/google/gvisor/pull/17208#discussion_r4506794124"
+        },
+        {
+          "label": "Fork amendment in native validation",
+          "url": "https://github.com/tamird/gvisor/commit/912702589"
+        },
+        {
+          "label": "Native ARM64 autosave and same-image checkpoint comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42499334480"
         }
       ],
       "settledReviews": [
@@ -62543,14 +62579,17 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent",
         "sourceHead": "ebcea451de61a61957c82527fa94241827267cde",
-        "observedAt": "2026-11-08T00:06:53+00:00",
-        "disposition": "Published the exact approved change as #17208.",
-        "nextAction": "Follow #17208 for maintainer review and import.",
+        "observedAt": "2026-11-08T16:18:57+00:00",
+        "disposition": "Ayush asked why Sentry statefile dumps need a -checkpoint flag. The autosave test runner invokes the plain command. A single-commit fork amendment selects the Sentry layout from the first two frames and preserves generic text and HTML for other roots.",
+        "nextAction": "Verify the default command and the actual autosave formatter on the same wire and graph checkpoints. Bring the in-place amendment and proposed inline reply to the contributor after qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
-          "https://github.com/tamird/gvisor/commit/ebcea451d"
+          "https://github.com/tamird/gvisor/commit/ebcea451d",
+          "https://github.com/google/gvisor/pull/17208#discussion_r4506794124",
+          "https://github.com/tamird/gvisor/commit/912702589",
+          "https://github.com/tamird/gvisor/actions/runs/42499334480"
         ]
       }
     },
@@ -62564,9 +62603,9 @@
       "title": "Use REP STOSQ for protected amd64 clears",
       "url": "https://github.com/google/gvisor/pull/17209",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-08T15:35:23+00:00",
-      "summary": "The four safecopy files in this standalone change are byte-identical to those already on #15181. On AMD64 CPUs with ERMS, large clears use REP STOSQ inside the existing fault handler. The standalone diff contains only safecopy code and tests. Ayush requested review of his alternative on #17214. Tamir reviewed it and prefers it for the protected clear. #17209 remains open.\n\nOn one AMD EPYC 9V45 core, clearing a resident 64 MiB shared ext4 mapping took 1,826.2 µs ±4% on stock and 907.1 µs ±5% with ERMS (−50.33%, p=0.000, 12 samples per arm). Both arms passed 71 named fault-handling and unaligned-clear controls. The measured candidate used the same three runtime files and the same test file as this revision. After measurement, the job failed while building benchstat because a package-metadata dependency was missing. The official benchstat tool subsequently processed the 24 original sample rows without rebuilding the workload. No end-to-end overlay allocation timing was collected.",
+      "status": "closed",
+      "updatedAt": "2026-11-08T16:30:55+00:00",
+      "summary": "Ayush closed #17209 in favor of #17214 on November 8. The four safecopy files in this standalone change are byte-identical to those already on #15181. On AMD64 CPUs with ERMS, large clears use REP STOSQ inside the existing fault handler. The standalone diff contains only safecopy code and tests. Ayush requested review of his alternative on #17214. Tamir reviewed it and prefers it for the protected clear.",
       "evidence": [
         {
           "label": "Standalone commit and benchstat table",
@@ -62595,6 +62634,10 @@
         {
           "label": "Tamir reviewed #17214 and prefers it to #17209",
           "url": "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
+        },
+        {
+          "label": "Ayush closed #17209 in favor of #17214",
+          "url": "https://github.com/google/gvisor/pull/17209#issuecomment-6723886420"
         }
       ],
       "settledReviews": [
@@ -62612,111 +62655,19 @@
         }
       ],
       "followup": {
-        "owner": "Upstream author",
+        "owner": "Complete",
         "sourceHead": "d20802a06d38ffc13ffcc17bc175d047eee232d9",
-        "observedAt": "2026-11-08T12:54:33Z",
-        "disposition": "Tamir reviewed Ayush’s alternative and prefers #17214 for the protected clear. #17209 remains open.",
-        "nextAction": "Ayush’s response is tracked on #17214. Revisit #17209 if that alternative changes course.",
+        "observedAt": "2026-11-08T16:30:55+00:00",
+        "disposition": "Ayush closed #17209 unmerged at d20802a06 in favor of #17214.",
+        "nextAction": "The outstanding replies concern #17214. No review or import action remains on #17209.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17209",
-          "https://github.com/tamird/gvisor/commit/d20802a06d38ffc13ffcc17bc175d047eee232d9",
-          "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
-          "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
-        ],
-        "attentionDispositions": [
-          {
-            "reason": "maintainer-review",
-            "action": "prefer-alternative",
-            "replacement": "pr:17214",
-            "title": "The author prefers #17214",
-            "nextAction": "Follow the author’s response to the two test comments on #17214.",
-            "evidence": [
-              "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
-              "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
-            ],
-            "binding": {
-              "sourceHead": "d20802a06d38ffc13ffcc17bc175d047eee232d9",
-              "reviewDecision": null,
-              "approvedHead": null,
-              "approvedAt": null,
-              "headCommittedAt": "2026-11-07T22:27:02Z",
-              "headIntroducedAt": null,
-              "headHistoryComplete": true,
-              "threads": {
-                "unresolved": 0,
-                "total": 0,
-                "complete": true
-              },
-              "feedback": {
-                "complete": true,
-                "items": [
-                  {
-                    "kind": "comment",
-                    "id": "IC_kwDOB9IlXs8AAAABkIjHgg",
-                    "url": "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
-                    "body": "@tamird I think I have a more robust approach in https://github.com/google/gvisor/pull/17214. Please take a look!",
-                    "createdAt": "2026-11-08T09:32:18Z",
-                    "updatedAt": "2026-11-08T09:32:18Z",
-                    "author": {
-                      "login": "ayushr2",
-                      "__typename": "User"
-                    }
-                  }
-                ]
-              },
-              "replacement": {
-                "id": "pr:17214",
-                "head": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
-                "status": "open",
-                "endorsement": {
-                  "kind": "review",
-                  "id": "PRR_kwDOB9IlXs8AAAABWscRlA",
-                  "url": "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900",
-                  "body": "The protected clear and the allocator changes from #15181 passed together on native AMD64 and ARM64. I’d use this implementation in place of #17209.\n\nPosted by Codex on behalf of @tamird.",
-                  "state": "COMMENTED",
-                  "submittedAt": "2026-11-08T12:54:33Z",
-                  "updatedAt": "2026-11-08T12:54:33Z",
-                  "authorAssociation": "CONTRIBUTOR",
-                  "author": {
-                    "login": "tamird",
-                    "__typename": "User"
-                  },
-                  "commit": {
-                    "oid": "4f94a055b5566bc22a529e2cc00bf7471d46810c"
-                  }
-                },
-                "feedback": [
-                  [
-                    "PRR_kwDOB9IlXs8AAAABWscRlA",
-                    "2026-11-08T12:54:33Z"
-                  ],
-                  [
-                    "PRRC_kwDOB9IlXs8AAAABDJh5VQ",
-                    "2026-11-08T12:54:33Z"
-                  ],
-                  [
-                    "PRRC_kwDOB9IlXs8AAAABDJh5Vw",
-                    "2026-11-08T12:54:33Z"
-                  ]
-                ]
-              },
-              "reviewRequests": [
-                {
-                  "__typename": "User",
-                  "login": "relkochta"
-                },
-                {
-                  "__typename": "User",
-                  "login": "trantoji"
-                }
-              ]
-            }
-          }
+          "https://github.com/google/gvisor/pull/17209#issuecomment-6723886420",
+          "https://github.com/google/gvisor/pull/17214"
         ]
       },
       "links": [
         {
-          "label": "Ayush’s alternative and the outstanding test changes",
+          "label": "Ayush’s revised alternative and the two review replies",
           "url": "https://github.com/google/gvisor/pull/17214"
         }
       ]
@@ -62951,13 +62902,13 @@
       "repo": "google/gvisor",
       "number": 17214,
       "ref": "safecopy-memclr-nt",
-      "head": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
+      "head": "58f1ae5efa1675e7b0dc2b7812f4ddfb71886e49",
       "title": "safecopy: zero memory like the runtime in memclr",
       "url": "https://github.com/google/gvisor/pull/17214",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T15:28:03+00:00",
-      "summary": "Ayush requested review from Tamir on #17209. His protected clear and the #15181 allocator changes passed together on native AMD64 and ARM64. On an ARM64 guest with 64 KiB pages, 58 of 90 fault cases failed at the proposed head. Using the host page size in the test fixture made all 74 applicable cases pass, including SIGBUS and SIGSEGV at 128 KiB.",
+      "updatedAt": "2026-11-08T16:22:42+00:00",
+      "summary": "Ayush updated the fault tests after Tamir reviewed #17214 as an alternative to #17209. On 58f1ae5ef, a full-system ARM64 Linux guest with 64 KiB pages passed all 86 fault cases, 43 each for SIGSEGV and SIGBUS. The revised test accepts EINVAL only for MADV_NOHUGEPAGE. The guest had THP enabled, so handling that error was checked in the source. The preceding 4f94a055b and an earlier fixture correction have separate results.",
       "evidence": [
         {
           "label": "Ayush’s review request",
@@ -62990,6 +62941,22 @@
         {
           "label": "Handle MADV_NOHUGEPAGE on kernels without THP (line 576)",
           "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506286423"
+        },
+        {
+          "label": "Revised fault test at 58f1ae5ef",
+          "url": "https://github.com/google/gvisor/commit/58f1ae5ef"
+        },
+        {
+          "label": "Ayush’s page-size response",
+          "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506778760"
+        },
+        {
+          "label": "Ayush’s MADV_NOHUGEPAGE response",
+          "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506778864"
+        },
+        {
+          "label": "Full-system 64 KiB ARM64 guest, 86 fault cases and original XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886"
         }
       ],
       "settledReviews": [
@@ -63007,16 +62974,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream author",
-        "sourceHead": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
-        "observedAt": "2026-11-08T12:54:33Z",
-        "disposition": "Tamir reviewed #17214 in response to Ayush’s request on #17209. The two inline comments cover fault boundaries on 64 KiB pages and MADV_NOHUGEPAGE on kernels without transparent huge pages.",
-        "nextAction": "Await Ayush’s response on #17214 about using the host page size for fault boundaries and handling MADV_NOHUGEPAGE returning EINVAL on kernels without transparent huge pages.",
+        "owner": "Contributor",
+        "sourceHead": "58f1ae5efa1675e7b0dc2b7812f4ddfb71886e49",
+        "observedAt": "2026-11-08T16:22:42+00:00",
+        "disposition": "Ayush addressed both comments. The completed 64 KiB ARM64 guest run and the source inspection support one decision on two replies.",
+        "nextAction": "Approve the two replies on the original review threads.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
-          "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900",
-          "https://github.com/google/gvisor/pull/17214#discussion_r4506286421",
-          "https://github.com/google/gvisor/pull/17214#discussion_r4506286423"
+          "https://github.com/google/gvisor/pull/17214#discussion_r4506778760",
+          "https://github.com/google/gvisor/pull/17214#discussion_r4506778864",
+          "https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886"
         ]
       },
       "links": [
@@ -63024,7 +62990,17 @@
           "label": "Original standalone protected clear",
           "url": "https://github.com/google/gvisor/pull/17209"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "58f1ae5efa1675e7b0dc2b7812f4ddfb71886e49",
+        "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506778760",
+        "title": "Reply to Ayush’s two safecopy test updates",
+        "summary": "Approve both replies for the original #17214 review threads. The first reports the 64 KiB guest run. The second confirms the EINVAL change by source inspection.",
+        "body": "https://github.com/google/gvisor/pull/17214#discussion_r4506778760\n\nThanks, Ayush. On 58f1ae5ef all 86 `TestZeroOutLengthsFault` cases passed in a 64 KiB ARM64 Linux guest, 43 for SIGSEGV and 43 for SIGBUS. [Test log and XML](https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886).\n\nPosted by Codex on behalf of @tamird.\n\nhttps://github.com/google/gvisor/pull/17214#discussion_r4506778864\n\nThis addresses my second comment too. The test now accepts `EINVAL` from `MADV_NOHUGEPAGE` and still fails on other errors. The guest I tested had transparent huge pages enabled, so I verified this branch by reading the change.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-08T16:22:42+00:00"
+      }
     },
     {
       "id": "branch:checkpoint-dir-without-docker",
@@ -63880,7 +63856,7 @@
       "url": "https://github.com/tamird/hermetic-llvm/commit/bb990fc8f",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-11-08T13:14:01+00:00",
+      "updatedAt": "2026-11-08T16:27:35+00:00",
       "summary": "The proposed revert removes #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. LLVM 0.8.26 predates #899.",
       "evidence": [
         {
@@ -63902,6 +63878,10 @@
         {
           "label": "Conclusion of the separate six-helper proposal",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
+        },
+        {
+          "label": "Upstream merge at 8c66cda18",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/8c66cda18"
         }
       ],
       "settledReviews": [
@@ -63920,13 +63900,14 @@
       ],
       "inactive": true,
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Complete",
         "sourceHead": "bb990fc8fd34475910cc2ae58a2809c70743e793",
-        "observedAt": "2026-11-08T13:14:01+00:00",
-        "disposition": "The approved one-commit proposal was opened as hermetic-llvm #927.",
-        "nextAction": "Follow upstream review on #927.",
+        "observedAt": "2026-11-08T16:27:35+00:00",
+        "disposition": "Upstream merged the approved proposal as 8c66cda18.",
+        "nextAction": "No further review action on #927.",
         "evidence": [
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/927"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/927",
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/8c66cda18"
         ]
       }
     },
@@ -63940,9 +63921,9 @@
       "title": "Use the exec platform for the module map generator",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/927",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-08T13:14:01+00:00",
-      "summary": "The proposed revert removes #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. LLVM 0.8.26 predates #899.",
+      "status": "merged",
+      "updatedAt": "2026-11-08T16:27:35+00:00",
+      "summary": "The proposed revert removes #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. LLVM 0.8.26 predates #899. Upstream merged bb990fc8f as 8c66cda18 on November 8. The current gVisor compiler integration still pins BCR 0.8.24.",
       "evidence": [
         {
           "label": "Restore the generator’s original executable label and implementation",
@@ -63959,6 +63940,10 @@
         {
           "label": "Conclusion of the separate six-helper proposal",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6721806969"
+        },
+        {
+          "label": "Upstream merge at 8c66cda18",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/8c66cda18"
         }
       ]
     },
