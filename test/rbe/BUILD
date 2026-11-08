@@ -37,3 +37,21 @@ _UBUNTU_WORKER = {
     )
     for arch in ["amd64", "arm64"]
 ]
+
+# Keep the namespace TestRunner on its original image. The same platform
+# requests the shell- and loader-free image for ordinary producer actions.
+[
+    platform(
+        name = "scratch_build_" + arch,
+        constraint_values = ["@llvm//constraints/libc:musl"],
+        exec_properties = {
+            "container-image": "docker://gcr.io/distroless/static-debian13@sha256:" + digest,
+            "test.container-image": _UBUNTU_WORKER["container-image"],
+        },
+        parents = [":ubuntu_" + arch],
+    )
+    for arch, digest in [
+        ("amd64", "d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18"),
+        ("arm64", "b0aca6ddfad947e66782a29534647936d4d645a1b96d9c8a97e4f53b1607d428"),
+    ]
+]

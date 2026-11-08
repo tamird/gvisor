@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package main_test
 
 import (
 	"os/exec"
@@ -27,13 +27,13 @@ func TestVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := exec.Command(runsc, "--version").Output()
+	out, err := exec.Command(runsc, "--version").CombinedOutput()
 	if err != nil {
-		t.Fatalf("runsc --version: %v", err)
+		t.Fatalf("runsc --version: %v: %s", err, out)
 	}
 	line, _, _ := strings.Cut(string(out), "\n")
-	value, ok := strings.CutPrefix(line, "runsc version ")
-	if !ok || value == "" || value == "VERSION_MISSING" {
-		t.Errorf("first line of runsc --version = %q, want a stamped runsc version", line)
+	label, ok := strings.CutPrefix(line, "runsc version ")
+	if !ok || label == "" || label == "VERSION_MISSING" {
+		t.Errorf("runsc --version reported no build label on its first line: %q", line)
 	}
 }

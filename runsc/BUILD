@@ -1,3 +1,4 @@
+load("//runsc/version:defs.bzl", "VERSION_X_DEFS")
 load("//tools:defs.bzl", "go_binary", "go_cov", "go_test")
 load("//tools:deps.bzl", deps_test = "presubmit_deps_test")
 
@@ -23,7 +24,7 @@ go_binary(
     # Users should depend on the gVisor release fileset,
     # not on this target directly.
     visibility = ["//:__subpackages__"],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = VERSION_X_DEFS,
     deps = MAIN_DEPS,
 )
 
@@ -38,7 +39,7 @@ go_binary(
     visibility = [
         "//visibility:public",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = VERSION_X_DEFS,
     deps = [
         "//pkg/sentry/socket/plugin/cgo",
         "//runsc/cli/maincli",
@@ -70,7 +71,7 @@ go_binary(
     visibility = [
         "//visibility:public",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = VERSION_X_DEFS,
     deps = MAIN_DEPS,
 )
 

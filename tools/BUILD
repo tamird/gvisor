@@ -75,7 +75,10 @@ bzl_library(
 
 exports_files([
     "benchmark-umbrella-exports.patch",
+    "gazelle-native-environment.patch",
     "llvm-linux-header-default.patch",
+    "protobuf_authenticity.patch",
+    "rules_go_bootstrap_shell.patch",
 ])
 
 py_test(

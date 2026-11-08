@@ -1,9 +1,10 @@
 module(
     name = "gvisor",
     version = "0.0.1",
+    bazel_compatibility = [">=8.0.0"],
 )
 
-bazel_dep(name = "rules_go", version = "0.63.0", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "rules_go", version = "0.65.0", repo_name = "io_bazel_rules_go")
 bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
@@ -38,20 +39,32 @@ governance = use_extension("//governance/tools/maintainers:repositories.bzl", "g
 use_repo(governance, "governance_areas")
 
 single_version_override(
+    module_name = "gazelle",
+    patch_strip = 1,
+    patches = ["//tools:gazelle-native-environment.patch"],
+)
+
+single_version_override(
     module_name = "rules_go",
     patch_strip = 1,
     patches = [
-        "//tools:rules_go_symbols.patch",
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
+        "//tools:rules_go_bootstrap_shell.patch",
     ],
-    version = "0.63.0",
+    version = "0.65.0",
 )
 
 single_version_override(
     module_name = "google_benchmark",
     patch_strip = 1,
     patches = ["//tools:benchmark-umbrella-exports.patch"],
+)
+
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//tools:protobuf_authenticity.patch"],
 )
 
 # Drop the backport when the llvm module includes kernel_headers.configure.
@@ -977,4 +990,26 @@ use_repo(
     "nvidia_driver_590_48_01",
     "nvidia_driver_610_57_04",
     "nvidia_driver_615_71_09",
+)
+
+# Exercise rules_shell#64's actual declared-executable API before its release.
+archive_override(
+    module_name = "rules_shell",
+    integrity = "sha256-AHBCSc0o+MbsCSaLoOgM+ouU7VcFldsTSdJT3q9+otU=",
+    strip_prefix = "rules_shell-aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+    urls = ["https://github.com/bazel-contrib/rules_shell/archive/aa4ad1622a8f755f38cae724ef3abc63aed171c3.tar.gz"],
+)
+
+bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
+bootstrap_busybox(
+    name = "bootstrap_busybox",
+    arch = "amd64",
+    mirror = "https://archive.ubuntu.com/ubuntu",
+    sha256 = "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed",
+)
+bootstrap_busybox(
+    name = "bootstrap_busybox_arm64",
+    arch = "arm64",
+    mirror = "https://ports.ubuntu.com/ubuntu-ports",
+    sha256 = "d96535e0402c011e0ee43449799df2f4504d44b842e4f2b3a6cbc845508eaafc",
 )
