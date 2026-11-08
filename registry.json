@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T17:21:01+00:00",
+    "updatedAt": "2026-11-08T17:26:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63438,7 +63438,7 @@
       "url": "https://github.com/tamird/gvisor/commit/a412fc982",
       "group": "tests",
       "status": "Awaiting contributor review",
-      "summary": "The revision at a412fc982 uses Cmd.StdinPipe. The preceding 06a606a32 passed both native shutdown cases with cat and sleep hidden: wait4 reported exit 0 in the graceful case and SIGKILL in the forced case, then both PIDs returned ESRCH. The amended source has its own two-test qualification.",
+      "summary": "The revised fixture uses Cmd.StdinPipe to keep the child running. Both native tests on a412fc982 reached stopNetgofer with cat and sleep hidden. The original wait4 reported exit 0 for the graceful child and SIGKILL for the forced child. Both PIDs returned ESRCH afterward.",
       "evidence": [
         {
           "label": "Original missing executables and both Linux child exit statuses",
@@ -63475,9 +63475,13 @@
         {
           "label": "Linux comparison for the revised graceful and forced stops",
           "url": "https://github.com/tamird/gvisor/actions/runs/42504226748"
+        },
+        {
+          "label": "Original graceful and forced TestRunner XML/log with wait4 and ESRCH checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42504226748/artifacts/13626599266"
         }
       ],
-      "updatedAt": "2026-11-08T17:21:01+00:00",
+      "updatedAt": "2026-11-08T17:26:55+00:00",
       "refinement": {
         "before": {
           "head": "06a606a324af88250a2e1be16679479d09f3b0c8",
@@ -63491,12 +63495,13 @@
       "followup": {
         "owner": "Contributor",
         "sourceHead": "a412fc982b122590975cf4f1257fa52294bc0751",
-        "observedAt": "2026-11-08T17:19:18+00:00",
-        "disposition": "The revised source uses Cmd.StdinPipe and preserves the actual wait4 exit-status checks.",
-        "nextAction": "Approve opening the revised PR after both owning tests pass.",
+        "observedAt": "2026-11-08T17:26:55+00:00",
+        "disposition": "Both owning Linux tests passed on the revised StdinPipe source.",
+        "nextAction": "Approve opening the revised single-commit PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a412fc982",
-          "https://github.com/tamird/gvisor/actions/runs/42504226748"
+          "https://github.com/tamird/gvisor/actions/runs/42504226748",
+          "https://github.com/tamird/gvisor/actions/runs/42504226748/artifacts/13626599266"
         ]
       },
       "settledReviews": [
@@ -63521,7 +63526,7 @@
         "title": "Exercise netgofer shutdown with the test binary",
         "body": "451b92800 added two shutdown tests that depend on /bin/cat and /bin/sleep. If either program is missing, its test fails before stopNetgofer runs. A PID check alone also accepts a force-killed child in the graceful case.\n\nRun the test binary as the child and wait for it to announce readiness. Closing stdin lets the child exit normally. Leaving stdin open keeps the child blocked until the sandbox kills it after the grace period.\n\nReturn the status from the reaper's existing wait4 so both tests can check how the child exited. The production caller still reaps in the background and signals completion after clearing the PID.",
         "url": "https://github.com/tamird/gvisor/commit/a412fc982",
-        "summary": "Approve opening this revised single-commit proposal after both genuine netgofer shutdown tests pass. The child uses Cmd.StdinPipe.\n\ngit range-diff 06a606a32^! a412fc982^!",
+        "summary": "Approve opening the single-commit shutdown-test PR. Both native tests passed on a412fc982 with cat and sleep hidden: the actual reaper observed exit 0 for the graceful stop and SIGKILL for the forced stop, and both PIDs returned ESRCH.\n\ngit range-diff 06a606a32^! a412fc982^!",
         "requestedAt": "2026-11-08T17:19:18+00:00"
       }
     },
