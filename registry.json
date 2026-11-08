@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T18:03:33+00:00",
+    "updatedAt": "2026-11-08T18:17:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3537,16 +3537,22 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. Fresh advised and shmem allocations are also covered by #15181.\n\nAyush closed #17204 without merging it. On copy-on-write filesystems such as Btrfs, a write to a mapped page can still fault after fallocate succeeds. The plain clear in #17204 and fork integration 5b93713ad would reintroduce the SIGBUS addressed by #17086. The integration is unsuitable. The published #15181 head 61470ea41 keeps fault-protected clearing and separately reserves storage for strict disk-backed allocations.\n\nThe native AMD64 comparison exercised reservation errors and syscall count. With a read-only descriptor and a writable mapping, #17204 returned all 12,288 bytes with no error. The fork integration returned an empty range and EBADF. With a writable descriptor, the integration reserved the same range once and returned all 12,288 bytes. The 84 pgalloc, 356 safecopy and two selected tmpfs cases passed. These tests did not exercise a copy-on-write fault after a successful reservation.\n\nAll four pkg/safecopy file blobs are identical in the standalone protected-clear PR #17209 and in this PR at 61470ea41. If #17209 lands first, rebasing #15181 can drop those four changes. If #15181 lands first, the standalone patch is redundant. The allocator retains fault-protected clearing.",
+      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. Fresh advised and shmem allocations are also covered by #15181.\n\nAyush closed #17204 without merging it. On copy-on-write filesystems such as Btrfs, a write to a mapped page can still fault after fallocate succeeds. The plain clear in #17204 and fork integration 5b93713ad would reintroduce the SIGBUS addressed by #17086. The integration is unsuitable. The published #15181 head 61470ea41 keeps fault-protected clearing and separately reserves storage for strict disk-backed allocations.\n\nThe native AMD64 comparison exercised reservation errors and syscall count. With a read-only descriptor and a writable mapping, #17204 returned all 12,288 bytes with no error. The fork integration returned an empty range and EBADF. With a writable descriptor, the integration reserved the same range once and returned all 12,288 bytes. The 84 pgalloc, 356 safecopy and two selected tmpfs cases passed. These tests did not exercise a copy-on-write fault after a successful reservation.\n\nAyush closed #17209 in favor of #17214 and asked for #15181 to be submitted after #17214 lands. The tested composition, 71ad75002, applies only the three pgalloc files to #17214 at 4f94a055b. On native AMD64 and ARM64, 83 allocator and 609 safecopy records passed per architecture. That comparison did not measure timings. Current #17214 at 58f1ae5ef changes only safecopy_test.go relative to the tested safecopy tree.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent after #17214 lands",
         "sourceHead": "61470ea4162137e6871edd94e369f1c03592c163",
-        "observedAt": "2026-11-07T22:03:54+00:00",
-        "disposition": "61470ea41 retains the fault protection from #17086. Retired fork integration 5b93713ad after Ayush closed #17204 over the copy-on-write SIGBUS risk.",
-        "nextAction": "Await upstream review of 61470ea41.",
+        "observedAt": "2026-11-08T18:13:11+00:00",
+        "disposition": "Ayush requests #17214 land before #15181. The allocator PR remains open at 61470ea41.",
+        "nextAction": "Wait for #17214 to land. Compare its landed safecopy implementation with the tested combination, then rebase the allocator-only changes and requalify the protected clear and disk reservation before submitting #15181.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15181#issuecomment-6725025012",
+          "https://github.com/google/gvisor/pull/17209#issuecomment-6723886420",
+          "https://github.com/google/gvisor/pull/17214",
+          "https://github.com/tamird/gvisor/commit/71ad75002",
+          "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610727093",
+          "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610579330",
           "https://github.com/google/gvisor/pull/17086",
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/google/gvisor/pull/17204",
@@ -3556,7 +3562,7 @@
           "https://github.com/google/gvisor/pull/17204#issuecomment-6713531237"
         ]
       },
-      "updatedAt": "2026-11-08T00:06:53+00:00",
+      "updatedAt": "2026-11-08T18:13:11+00:00",
       "head": "61470ea4162137e6871edd94e369f1c03592c163",
       "evidence": [
         {
@@ -3594,6 +3600,30 @@
         {
           "label": "Standalone protected clear with the same four file blobs",
           "url": "https://github.com/google/gvisor/pull/17209"
+        },
+        {
+          "label": "Ayush specifies the submission order for #15181",
+          "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6725025012"
+        },
+        {
+          "label": "Ayush closes #17209 in favor of #17214",
+          "url": "https://github.com/google/gvisor/pull/17209#issuecomment-6723886420"
+        },
+        {
+          "label": "Protected clear prerequisite",
+          "url": "https://github.com/google/gvisor/pull/17214"
+        },
+        {
+          "label": "Three allocator files on the tested protected clear",
+          "url": "https://github.com/tamird/gvisor/commit/71ad75002"
+        },
+        {
+          "label": "Native AMD64 allocator and safecopy receipt",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610727093"
+        },
+        {
+          "label": "Native ARM64 allocator and safecopy receipt",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610579330"
         }
       ],
       "refinement": {
@@ -26694,27 +26724,47 @@
       "type": "issue",
       "repo": "google/gvisor",
       "number": 16216,
-      "title": "Reply to the state-codec prototype investigation",
+      "title": "Make pkg/state cheap and fast",
       "url": "https://github.com/google/gvisor/issues/16216",
       "group": "runtime",
-      "status": "Reply posted; external lead invited",
-      "summary": "Authorized reply posted; Parth invited to lead. Follow Parth’s response; the rewrite is not our primary workstream. Offer review and focused refinements without taking over its implementation.\n\nPreserved proposal and evidence:\n\nThe posted issue reply reports the initialized zero-array bug and the measured out-of-line varint code-size reduction. It does not commit to adopting the prototype or leading the rewrite.",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "status": "Contributor approval requested for a performance handoff",
+      "summary": "Parth was invited to lead the rewrite in the posted Oct 24 reply. A new proposed comment reports a four-worker Nginx measurement of the shipping graph and wire codecs. All 78 warm restores served the expected bytes. Time from starting restore through a curl inside the guest was 4.12% shorter uncapped and 12.56% shorter with a quarter-CPU parent cap. With the ordinary OCI quarter-CPU limit, the restore command was 4.90% shorter and the first-response timing was inconclusive.",
+      "updatedAt": "2026-11-08T18:17:00+00:00",
       "followup": {
-        "owner": "root",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Authorized reply posted; Parth invited to lead",
-        "nextAction": "Follow Parth’s response; the rewrite is not our primary workstream. Offer review and focused refinements without taking over its implementation.",
+        "owner": "Contributor",
+        "observedAt": "2026-11-08T18:17:00+00:00",
+        "disposition": "The initial reply was delivered. The Nginx performance handoff is awaiting permission to post.",
+        "nextAction": "Review the proposed comment on #16216. Keep the production restore and first guest HTTP response as separate measurements.",
         "evidence": [
-          "https://github.com/google/gvisor/issues/16216#issuecomment-6383590232"
+          "https://github.com/google/gvisor/issues/16216#issuecomment-6383590232",
+          "https://github.com/tamird/gvisor/blob/6bd21891a/.github/qualification/state_working_set/measure.py#L307-L367",
+          "https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367"
         ]
       },
       "evidence": [
         {
           "label": "Authorized reply delivered",
           "url": "https://github.com/google/gvisor/issues/16216#issuecomment-6383590232"
+        },
+        {
+          "label": "Same-binary Nginx restore and first guest HTTP response measurement",
+          "url": "https://github.com/tamird/gvisor/blob/6bd21891a/.github/qualification/state_working_set/measure.py#L307-L367"
+        },
+        {
+          "label": "Original Nginx benchstat and individual samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+        "url": "https://github.com/google/gvisor/issues/16216",
+        "title": "Post the Nginx restore and first guest response measurements",
+        "summary": "Post this measured handoff for the pkg/state rewrite?",
+        "body": "@parth-opensrc, I measured how soon Nginx could serve a request with the [default graph codec](https://github.com/google/gvisor/commit/6e6276344) and the wire codec in the same runsc binary. The timer started before `runsc restore` and stopped after `runsc exec curl` read a 1 KiB response from the restored server. All 78 restores preserved the four workers and returned the expected bytes.\n\nWith the ordinary OCI ¼-CPU limit, the graph codec shortened the restore command. The first HTTP response was too variable to distinguish the codecs (p=0.219). The last row adds the same limit to the parent cgroup, so the parent stays capped when runsc raises the sandbox’s startup quota.\n\n```text\n                                                     │  wire.txt   │              graph.txt              │\n                                                     │   sec/op    │   sec/op     vs base                │\nRestore/unlimited/through_first_http_response          85.52m ±  5%   81.99m ±  4%   -4.12% (p=0.010 n=12)\nRestore/oci-quarter/restore_command                    48.97m ± 10%   46.57m ±  7%   -4.90% (p=0.045 n=12)\nRestore/ancestor-quarter/through_first_http_response   346.3m ±  7%   302.8m ± 16%  -12.56% (p=0.017 n=12)\n```\n\nThese were warm, uncompressed checkpoints. I’d keep both the restore command and first guest response in comparisons of future decoder changes. [Benchmark source](https://github.com/tamird/gvisor/blob/6bd21891a/.github/qualification/state_working_set/measure.py#L307-L367) · [Full benchstat and samples](https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367)\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-08T18:17:00+00:00"
+      }
     },
     {
       "id": "branch:sample-tcp-port-bounds",
@@ -69548,6 +69598,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/b64ce8320",
         "https://github.com/google/gvisor/pull/15634"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:17214",
+      "to": "pr:15181",
+      "reason": "Ayush requested that #15181 be submitted after the protected-clear implementation in #17214 lands.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15181#issuecomment-6725025012",
+        "https://github.com/google/gvisor/pull/17209#issuecomment-6723886420"
       ]
     }
   ],
