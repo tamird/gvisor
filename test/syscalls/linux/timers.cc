@@ -16,8 +16,11 @@
 #include <poll.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <sys/resource.h>
+#include <sys/signalfd.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <syscall.h>
@@ -619,6 +622,75 @@ TEST(IntervalTimerTest, AlreadyPendingSignal) {
   sigtimedwait(&mask, &si, &zero_ts);
 }
 
+// These cases use kernel timer IDs across exec, before libc can translate them.
+int ArmSignalTimer(int signo) {
+  sigset_t mask;
+  TEST_CHECK(sigemptyset(&mask) == 0);
+  TEST_CHECK(sigaddset(&mask, signo) == 0);
+  TEST_CHECK(sigprocmask(SIG_BLOCK, &mask, nullptr) == 0);
+  const int signal_fd = signalfd(-1, &mask, SFD_CLOEXEC);
+  TEST_CHECK(signal_fd >= 0);
+  struct sigevent sev = {};
+  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_signo = signo;
+  int id = -1;
+  TEST_CHECK(syscall(SYS_timer_create, CLOCK_MONOTONIC, &sev, &id) == 0);
+  struct itimerspec setting = {};
+  setting.it_value.tv_nsec = 1000000;
+  setting.it_interval = setting.it_value;
+  TEST_CHECK(syscall(SYS_timer_settime, id, 0, &setting, nullptr) == 0);
+  struct pollfd event = {signal_fd, POLLIN, 0};
+  TEST_CHECK(poll(&event, 1, 5000) == 1 && (event.revents & POLLIN));
+  sigset_t pending;
+  TEST_CHECK(sigpending(&pending) == 0 && sigismember(&pending, signo) == 1);
+  TEST_CHECK(close(signal_fd) == 0);
+  return id;
+}
+
+int AfterTimerExec(int first, int second) {
+  struct itimerspec value;
+  TEST_CHECK(syscall(SYS_timer_gettime, first, &value) == -1 && errno == EINVAL);
+  TEST_CHECK(syscall(SYS_timer_gettime, second, &value) == -1 && errno == EINVAL);
+  const int live = ArmSignalTimer(SIGUSR2);
+  TEST_CHECK(syscall(SYS_timer_gettime, live, &value) == 0 && value.it_interval.tv_nsec > 0);
+  dprintf(STDOUT_FILENO, "TIMER_EXEC pid=%d signal_id=%d silent_id=%d old_errors=EINVAL,EINVAL live_id=%d exit_pending=1\n",
+          getpid(), first, second, live);
+  return 0;
+}
+
+TEST(IntervalTimerTest, ExecAndExitWithPendingTimer) {
+  const pid_t child = fork();
+  ASSERT_GE(child, 0);
+  if (child == 0) {
+    const int first = ArmSignalTimer(SIGUSR1);
+    struct sigevent sev = {};
+    sev.sigev_notify = SIGEV_NONE;
+    int second = -1;
+    TEST_CHECK(syscall(SYS_timer_create, CLOCK_MONOTONIC, &sev, &second) == 0);
+    TEST_CHECK(first != second);
+    char a[32], b[32];
+    snprintf(a, sizeof(a), "%d", first);
+    snprintf(b, sizeof(b), "%d", second);
+    dprintf(STDOUT_FILENO, "TIMER_PENDING pid=%d signal_id=%d silent_id=%d\n", getpid(), first, second);
+    if (IsRunningWithSaveRestore()) {
+      MaybeSave();
+      struct itimerspec setting = {};
+      TEST_CHECK(syscall(SYS_timer_gettime, first, &setting) == 0);
+      TEST_CHECK(setting.it_interval.tv_nsec == 1000000);
+      TEST_CHECK(syscall(SYS_timer_gettime, second, &setting) == 0);
+      TEST_CHECK(setting.it_value.tv_sec == 0 && setting.it_value.tv_nsec == 0);
+      dprintf(STDOUT_FILENO, "TIMER_RESUMED pid=%d signal_id=%d silent_id=%d\n",
+              getpid(), first, second);
+    }
+    execl("/proc/self/exe", "timers_test", "--verify-exec-timers", a, b, nullptr);
+    _exit(127);
+  }
+  int status = 0;
+  ASSERT_EQ(waitpid(child, &status, 0), child);
+  ASSERT_TRUE(WIFEXITED(status));
+  EXPECT_EQ(WEXITSTATUS(status), 0);
+}
+
 TEST(IntervalTimerTest, NegativeInterval) {
   struct sigevent sev = {};
   sev.sigev_notify = SIGEV_NONE;
@@ -636,6 +708,9 @@ TEST(IntervalTimerTest, NegativeInterval) {
 }  // namespace gvisor
 
 int main(int argc, char** argv) {
+  if (argc == 4 && strcmp(argv[1], "--verify-exec-timers") == 0) {
+    return gvisor::testing::AfterTimerExec(atoi(argv[2]), atoi(argv[3]));
+  }
   gvisor::testing::TestInit(&argc, &argv);
 
   if (absl::GetFlag(FLAGS_timers_test_sleep)) {
