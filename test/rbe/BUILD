@@ -38,17 +38,24 @@ _UBUNTU_WORKER = {
     for arch in ["amd64", "arm64"]
 ]
 
-# Keep the namespace TestRunner on its original image. The same platform
-# requests the shell- and loader-free image for ordinary producer actions.
+# The zero-layer image has no /tmp. BuildBuddy mounts the action workspace
+# here, including for tools that supply their own action environment.
+# Keep the test group's Ubuntu image and its ordinary temporary directory.
+# Use the target platform as parent: a parent with execution properties
+# would remove the empty test overrides before Bazel selects the exec group.
 [
     platform(
         name = "scratch_build_" + arch,
         constraint_values = ["@llvm//constraints/libc:musl"],
-        exec_properties = {
+        exec_properties = dict(_UBUNTU_WORKER, Arch = arch) | {
             "container-image": "docker://docker.io/tianon/scratch@sha256:" + digest,
+            "env-overrides": "TMPDIR=/buildbuddy-execroot",
+            "execroot-path": "/buildbuddy-execroot",
             "test.container-image": _UBUNTU_WORKER["container-image"],
+            "test.env-overrides": "",
+            "test.execroot-path": "",
         },
-        parents = [":ubuntu_" + arch],
+        parents = ["//tools/bazeldefs:linux_" + arch],
     )
     for arch, digest in [
         ("amd64", "3d455195f1141b05cb8cc6deb07ea96b617e5436c7a259d9f3e7b1985f4d3f51"),

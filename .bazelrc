@@ -111,5 +111,7 @@ build:source-presubmit-mixed --remote_default_exec_properties=OSFamily=linux
 build:source-presubmit-mixed --remote_default_exec_properties=Arch=amd64
 build:source-presubmit-mixed --remote_default_exec_properties=workload-isolation-type=oci
 build:source-presubmit-mixed --remote_default_exec_properties=container-image=docker://docker.io/tianon/scratch@sha256:3d455195f1141b05cb8cc6deb07ea96b617e5436c7a259d9f3e7b1985f4d3f51
+build:source-presubmit-mixed --remote_default_exec_properties=execroot-path=/buildbuddy-execroot
+build:source-presubmit-mixed --remote_default_exec_properties=env-overrides=TMPDIR=/buildbuddy-execroot
 build:source-presubmit-mixed --define=mixed_native_tests=true
 test:source-presubmit-mixed --keep_going --test_output=errors --verbose_failures
