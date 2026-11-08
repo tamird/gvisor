@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T17:26:55+00:00",
+    "updatedAt": "2026-11-08T17:36:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31023,9 +31023,9 @@
       "title": "Keep timed-out SACK recovery from restarting",
       "url": "https://github.com/google/gvisor/pull/16495",
       "group": "runtime",
-      "status": "draft",
-      "summary": "The draft includes both the interrupted SACK recovery fix and prompt replacement when a fresh SACK identifies a lost repair. A repeated SACK alone does not trigger another retransmission.",
-      "updatedAt": "2026-11-08T13:23:10Z",
+      "status": "open",
+      "summary": "The published repair keeps the original SACK recovery boundary and promptly replaces a lost repair when a fresh SACK identifies it. A repeated SACK alone does not trigger a retransmission. Tamir marked the qualified single-commit head ready for review on November 8.",
+      "updatedAt": "2026-11-08T17:35:07+00:00",
       "refinement": {
         "before": {
           "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
@@ -31111,6 +31111,14 @@
         {
           "label": "Published as one commit on 990581308, with the same tree as 5fd5532c1",
           "url": "https://github.com/tamird/gvisor/commit/ffac28a03"
+        },
+        {
+          "label": "Recorded reason for the draft and restoration of prompt retransmission",
+          "url": "https://github.com/tamird/gvisor/commit/be9275a3d"
+        },
+        {
+          "label": "Tamir marked ffac28a03 ready for review",
+          "url": "https://github.com/google/gvisor/pull/16495#event-35504395605"
         }
       ],
       "links": [
@@ -31127,7 +31135,20 @@
           "outcome": "approved",
           "at": "2026-11-02T16:25:23.256481+00:00"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "ffac28a03554b62419747c41f389bdc9bfe303d9",
+        "observedAt": "2026-11-08T17:34:54Z",
+        "disposition": "After the 400-to-800 ms fresh-SACK regression was repaired, Tamir approved marking ffac28a03 ready. The draft-to-ready transition is recorded on GitHub, with fvoznika and nybidari still requested.",
+        "nextAction": "Follow maintainer review on #16495.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16495",
+          "https://github.com/google/gvisor/pull/16495#event-35504395605",
+          "https://github.com/tamird/gvisor/actions/runs/41186013306/artifacts/13037271126",
+          "https://github.com/google/gvisor/issues/16670"
+        ]
+      }
     },
     {
       "id": "pr:16499",
@@ -51094,7 +51115,7 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T17:16:53+00:00",
+      "updatedAt": "2026-11-08T17:35:43Z",
       "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers. With only gVisor declared downstream, this change removes the unsupported header-tag diagnostic. The header query and ARM64 vDSO build still fail because Gazelle rejects gVisor’s non-root go_deps.gazelle_override tags. No compiler action ran. The same restriction was reproduced before the compiler migration.",
       "evidence": [
         {
@@ -51128,6 +51149,10 @@
         {
           "label": "Upstream Gazelle small-bug-fix PR instructions",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/blob/8b89ee9f6/.github/PULL_REQUEST_TEMPLATE.md"
+        },
+        {
+          "label": "Published upstream Gazelle PR",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
         }
       ],
       "settledReviews": [
@@ -51156,14 +51181,15 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
-        "observedAt": "2026-11-08T17:16:53+00:00",
-        "disposition": "The issue draft was withdrawn. The signed Gazelle bug-fix proposal is on its own card.",
-        "nextAction": "Follow the supplier proposal at 82ccd8794. The separate Bazel 7 hold on #2499 remains in place.",
+        "observedAt": "2026-11-08T17:35:43Z",
+        "disposition": "The standalone Gazelle bug fix was approved and opened as bazel-contrib/bazel-gazelle#2510.",
+        "nextAction": "Follow bazel-contrib/bazel-gazelle#2510. The separate Bazel 7 maintainer hold on #2499 remains in place.",
         "evidence": [
           "https://github.com/bazel-contrib/bazel-gazelle/blob/8b89ee9f6/.github/PULL_REQUEST_TEMPLATE.md",
-          "https://github.com/tamird/bazel-gazelle/commit/82ccd8794"
+          "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
         ]
       },
       "links": [
@@ -63437,7 +63463,7 @@
       "title": "Exercise netgofer shutdown with the test binary",
       "url": "https://github.com/tamird/gvisor/commit/a412fc982",
       "group": "tests",
-      "status": "Awaiting contributor review",
+      "status": "Agent work",
       "summary": "The revised fixture uses Cmd.StdinPipe to keep the child running. Both native tests on a412fc982 reached stopNetgofer with cat and sleep hidden. The original wait4 reported exit 0 for the graceful child and SIGKILL for the forced child. Both PIDs returned ESRCH afterward.",
       "evidence": [
         {
@@ -63481,7 +63507,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42504226748/artifacts/13626599266"
         }
       ],
-      "updatedAt": "2026-11-08T17:26:55+00:00",
+      "updatedAt": "2026-11-08T17:35:07+00:00",
       "refinement": {
         "before": {
           "head": "06a606a324af88250a2e1be16679479d09f3b0c8",
@@ -63493,11 +63519,11 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "a412fc982b122590975cf4f1257fa52294bc0751",
-        "observedAt": "2026-11-08T17:26:55+00:00",
-        "disposition": "Both owning Linux tests passed on the revised StdinPipe source.",
-        "nextAction": "Approve opening the revised single-commit PR.",
+        "observedAt": "2026-11-08T17:35:07+00:00",
+        "disposition": "The StdinPipe tests passed, and Tamir requested a simpler child command and reaper ownership before submission.",
+        "nextAction": "Use a --fake-netgofer flag, close stdout to signal readiness, and keep the wait results inside the goroutine. Validate the revised source before returning for contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a412fc982",
           "https://github.com/tamird/gvisor/actions/runs/42504226748",
@@ -63516,18 +63542,23 @@
           "requestedAt": "2026-11-08T13:46:37+00:00",
           "outcome": "changes-requested",
           "at": "2026-11-08T17:16:53+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "a412fc982b122590975cf4f1257fa52294bc0751",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "title": "Exercise netgofer shutdown with the test binary",
+          "body": "451b92800 added two shutdown tests that depend on /bin/cat and /bin/sleep. If either program is missing, its test fails before stopNetgofer runs. A PID check alone also accepts a force-killed child in the graceful case.\n\nRun the test binary as the child and wait for it to announce readiness. Closing stdin lets the child exit normally. Leaving stdin open keeps the child blocked until the sandbox kills it after the grace period.\n\nReturn the status from the reaper's existing wait4 so both tests can check how the child exited. The production caller still reaps in the background and signals completion after clearing the PID.",
+          "url": "https://github.com/tamird/gvisor/commit/a412fc982",
+          "summary": "Approve opening the single-commit shutdown-test PR. Both native tests passed on a412fc982 with cat and sleep hidden: the actual reaper observed exit 0 for the graceful stop and SIGKILL for the forced stop, and both PIDs returned ESRCH.\n\ngit range-diff 06a606a32^! a412fc982^!",
+          "requestedAt": "2026-11-08T17:19:18+00:00",
+          "at": "2026-11-08T17:35:07+00:00",
+          "outcome": "changes-requested"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "a412fc982b122590975cf4f1257fa52294bc0751",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "title": "Exercise netgofer shutdown with the test binary",
-        "body": "451b92800 added two shutdown tests that depend on /bin/cat and /bin/sleep. If either program is missing, its test fails before stopNetgofer runs. A PID check alone also accepts a force-killed child in the graceful case.\n\nRun the test binary as the child and wait for it to announce readiness. Closing stdin lets the child exit normally. Leaving stdin open keeps the child blocked until the sandbox kills it after the grace period.\n\nReturn the status from the reaper's existing wait4 so both tests can check how the child exited. The production caller still reaps in the background and signals completion after clearing the PID.",
-        "url": "https://github.com/tamird/gvisor/commit/a412fc982",
-        "summary": "Approve opening the single-commit shutdown-test PR. Both native tests passed on a412fc982 with cat and sleep hidden: the actual reaper observed exit 0 for the graceful stop and SIGKILL for the forced stop, and both PIDs returned ESRCH.\n\ngit range-diff 06a606a32^! a412fc982^!",
-        "requestedAt": "2026-11-08T17:19:18+00:00"
+        "url": "https://github.com/tamird/gvisor/commit/a412fc982"
       }
     },
     {
@@ -65235,8 +65266,8 @@
       "title": "Load the Go environment when analyzing a runner",
       "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
       "group": "bazel",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-08T17:16:53+00:00",
+      "status": "Published as #2510",
+      "updatedAt": "2026-11-08T17:35:43Z",
       "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
       "evidence": [
         {
@@ -65250,35 +65281,42 @@
         {
           "label": "Bzlmod and WORKSPACE runner script comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819"
+        },
+        {
+          "label": "Published upstream PR, one exact commit",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
-        "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
-        "title": "Load the Go environment when analyzing a runner",
-        "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
-        "body": "Since 1deae95ac, loading def.bzl also loads GO_ENV from the Go repository configuration. If that repository cannot supply go_env.bzl, even bazel query //:gazelle fails while loading the package. The query only needs the target declaration [1].\n\nExpose GO_ENV through a target in the generated configuration repository for both Bzlmod and WORKSPACE. Make that target a private dependency of the runner rules so Bazel resolves it during analysis. Read the environment from its provider and apply the runner's env overrides as before.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
-        "summary": "Approve opening the single-commit upstream PR.",
-        "requestedAt": "2026-11-08T17:16:53+00:00"
-      },
       "followup": {
-        "owner": "Contributor",
-        "observedAt": "2026-11-08T17:16:53+00:00",
+        "owner": "Upstream review",
         "sourceHead": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
-        "disposition": "The qualified fork source awaits contributor review.",
-        "nextAction": "Approve opening the upstream PR.",
+        "observedAt": "2026-11-08T17:35:43Z",
+        "disposition": "The approved one-commit change is published at bazel-contrib/bazel-gazelle#2510.",
+        "nextAction": "Follow upstream review and checks.",
         "evidence": [
           "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
-          "https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
-          "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819"
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
         ]
       },
       "links": [
         {
           "label": "gVisor kernel-header root policy context",
           "url": "https://github.com/google/gvisor/pull/16804"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+          "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
+          "title": "Load the Go environment when analyzing a runner",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
+          "body": "Since 1deae95ac, loading def.bzl also loads GO_ENV from the Go repository configuration. If that repository cannot supply go_env.bzl, even bazel query //:gazelle fails while loading the package. The query only needs the target declaration [1].\n\nExpose GO_ENV through a target in the generated configuration repository for both Bzlmod and WORKSPACE. Make that target a private dependency of the runner rules so Bazel resolves it during analysis. Read the environment from its provider and apply the runner's env overrides as before.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
+          "summary": "Approve opening the single-commit upstream PR.",
+          "requestedAt": "2026-11-08T17:16:53+00:00",
+          "at": "2026-11-08T17:35:07+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
         }
       ]
     },
@@ -65291,8 +65329,8 @@
       "title": "Store each checkpoint object's address range once",
       "url": "https://github.com/tamird/gvisor/commit/26a561422",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-08T17:16:53+00:00",
+      "status": "Published as #17240",
+      "updatedAt": "2026-11-08T17:35:03Z",
       "summary": "Direct encoding of the 50,000-file kernel graph took 138.8 ms versus 144.8 ms and allocated 105.5 MiB versus 118.9 MiB over 12 samples per revision. All 34 Nginx checkpoints restored and served the verified response. The live checkpoint and HTTP comparison detected no latency difference.",
       "evidence": [
         {
@@ -65302,28 +65340,148 @@
         {
           "label": "Native graph benchmark, restored Nginx checks and original samples",
           "url": "https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278"
+        },
+        {
+          "label": "Published upstream PR, one exact commit",
+          "url": "https://github.com/google/gvisor/pull/17240"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "title": "Store each checkpoint object's address range once",
-        "url": "https://github.com/tamird/gvisor/commit/26a561422",
-        "body": "The graph encoder indexes each object in every 512-byte block it\noverlaps. Each index entry copies the object's start and end addresses.\n\nRead the range from the object table when checking for overlap. On\n64-bit targets this reduces each index entry from 24 to 8 bytes. A\nlookup now reads the object even for a candidate it rejects on address\nalone.\n\nBenchmarkCheckpointFile encodes a kernel from a checkpoint containing\n50,000 empty tmpfs files. [1] An allocation profile of this workload\nattributed 16.6 MiB to growing the original index. [2]\n\n                      │    stock    │               fixed                │\n                      │   sec/op    │   sec/op     vs base               │\nCheckpointFile/Encode   144.8m ± 1%   138.8m ± 1%  -4.16% (p=0.000 n=12)\n\n                      │    stock     │                fixed                 │\n                      │     B/op     │     B/op      vs base                │\nCheckpointFile/Encode   118.9Mi ± 0%   105.5Mi ± 0%  -11.23% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278\n[2]: https://github.com/tamird/gvisor/actions/runs/42436004230/artifacts/13600305258",
-        "summary": "Approve opening the single-commit upstream PR.",
-        "requestedAt": "2026-11-08T17:16:53+00:00"
-      },
       "followup": {
-        "owner": "Contributor",
-        "observedAt": "2026-11-08T17:16:53+00:00",
+        "owner": "Upstream review",
         "sourceHead": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
-        "disposition": "The qualified fork source awaits contributor review.",
-        "nextAction": "Approve opening the upstream PR.",
+        "observedAt": "2026-11-08T17:35:03Z",
+        "disposition": "The approved one-commit change is published at google/gvisor#17240.",
+        "nextAction": "Follow upstream review and checks.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/26a561422",
-          "https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278"
+          "https://github.com/google/gvisor/pull/17240"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "title": "Store each checkpoint object's address range once",
+          "url": "https://github.com/tamird/gvisor/commit/26a561422",
+          "body": "The graph encoder indexes each object in every 512-byte block it\noverlaps. Each index entry copies the object's start and end addresses.\n\nRead the range from the object table when checking for overlap. On\n64-bit targets this reduces each index entry from 24 to 8 bytes. A\nlookup now reads the object even for a candidate it rejects on address\nalone.\n\nBenchmarkCheckpointFile encodes a kernel from a checkpoint containing\n50,000 empty tmpfs files. [1] An allocation profile of this workload\nattributed 16.6 MiB to growing the original index. [2]\n\n                      │    stock    │               fixed                │\n                      │   sec/op    │   sec/op     vs base               │\nCheckpointFile/Encode   144.8m ± 1%   138.8m ± 1%  -4.16% (p=0.000 n=12)\n\n                      │    stock     │                fixed                 │\n                      │     B/op     │     B/op      vs base                │\nCheckpointFile/Encode   118.9Mi ± 0%   105.5Mi ± 0%  -11.23% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278\n[2]: https://github.com/tamird/gvisor/actions/runs/42436004230/artifacts/13600305258",
+          "summary": "Approve opening the single-commit upstream PR.",
+          "requestedAt": "2026-11-08T17:16:53+00:00",
+          "at": "2026-11-08T17:35:07+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17240"
+        }
+      ]
+    },
+    {
+      "id": "pr:17240",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17240,
+      "ref": "research/state-index-object-ranges",
+      "head": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
+      "title": "Store each checkpoint object's address range once",
+      "url": "https://github.com/google/gvisor/pull/17240",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-08T17:35:03Z",
+      "summary": "Direct encoding of the 50,000-file kernel graph took 138.8 ms versus 144.8 ms and allocated 105.5 MiB versus 118.9 MiB over 12 samples per revision. All 34 Nginx checkpoints restored and served the verified response. The live checkpoint and HTTP comparison detected no latency difference.",
+      "evidence": [
+        {
+          "label": "Signed single-commit fork proposal",
+          "url": "https://github.com/tamird/gvisor/commit/26a561422"
+        },
+        {
+          "label": "Native graph benchmark, restored Nginx checks and original samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278"
+        },
+        {
+          "label": "Published upstream PR, one exact commit",
+          "url": "https://github.com/google/gvisor/pull/17240"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "title": "Store each checkpoint object's address range once",
+          "url": "https://github.com/tamird/gvisor/commit/26a561422",
+          "body": "The graph encoder indexes each object in every 512-byte block it\noverlaps. Each index entry copies the object's start and end addresses.\n\nRead the range from the object table when checking for overlap. On\n64-bit targets this reduces each index entry from 24 to 8 bytes. A\nlookup now reads the object even for a candidate it rejects on address\nalone.\n\nBenchmarkCheckpointFile encodes a kernel from a checkpoint containing\n50,000 empty tmpfs files. [1] An allocation profile of this workload\nattributed 16.6 MiB to growing the original index. [2]\n\n                      │    stock    │               fixed                │\n                      │   sec/op    │   sec/op     vs base               │\nCheckpointFile/Encode   144.8m ± 1%   138.8m ± 1%  -4.16% (p=0.000 n=12)\n\n                      │    stock     │                fixed                 │\n                      │     B/op     │     B/op      vs base                │\nCheckpointFile/Encode   118.9Mi ± 0%   105.5Mi ± 0%  -11.23% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42502482408/artifacts/13626701278\n[2]: https://github.com/tamird/gvisor/actions/runs/42436004230/artifacts/13600305258",
+          "summary": "Approve opening the single-commit upstream PR.",
+          "requestedAt": "2026-11-08T17:16:53+00:00",
+          "at": "2026-11-08T17:35:07+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17240"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
+        "observedAt": "2026-11-08T17:35:03Z",
+        "disposition": "The approved one-commit change is published at google/gvisor#17240.",
+        "nextAction": "Follow upstream review and checks.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/26a561422",
+          "https://github.com/google/gvisor/pull/17240"
+        ]
+      }
+    },
+    {
+      "id": "pr:bazel-contrib/bazel-gazelle:2510",
+      "type": "pr",
+      "repo": "bazel-contrib/bazel-gazelle",
+      "number": 2510,
+      "ref": "fix/defer-gazelle-runner-go-env",
+      "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+      "title": "Load the Go environment when analyzing a runner",
+      "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-08T17:35:43Z",
+      "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
+      "evidence": [
+        {
+          "label": "Signed single-commit fork proposal",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794"
+        },
+        {
+          "label": "Original query failure and corrected query",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743"
+        },
+        {
+          "label": "Bzlmod and WORKSPACE runner script comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819"
+        },
+        {
+          "label": "Published upstream PR, one exact commit",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+          "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
+          "title": "Load the Go environment when analyzing a runner",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
+          "body": "Since 1deae95ac, loading def.bzl also loads GO_ENV from the Go repository configuration. If that repository cannot supply go_env.bzl, even bazel query //:gazelle fails while loading the package. The query only needs the target declaration [1].\n\nExpose GO_ENV through a target in the generated configuration repository for both Bzlmod and WORKSPACE. Make that target a private dependency of the runner rules so Bazel resolves it during analysis. Read the environment from its provider and apply the runner's env overrides as before.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
+          "summary": "Approve opening the single-commit upstream PR.",
+          "requestedAt": "2026-11-08T17:16:53+00:00",
+          "at": "2026-11-08T17:35:07+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+        "observedAt": "2026-11-08T17:35:43Z",
+        "disposition": "The approved one-commit change is published at bazel-contrib/bazel-gazelle#2510.",
+        "nextAction": "Follow upstream review and checks.",
+        "evidence": [
+          "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
         ]
       }
     }
