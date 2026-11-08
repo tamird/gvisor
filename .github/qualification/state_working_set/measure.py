@@ -1,4 +1,4 @@
-"""Verify whole working-set restores with both shipping state engines at three CPU policies."""
+"""Measure a four-worker Nginx service with both shipping state engines at three CPU policies."""
 
 import ctypes
 from collections import Counter
@@ -26,7 +26,7 @@ WORK = Path(os.environ["RUNNER_TEMP"]) / "state-working-set"
 OUT = WORK / "results"
 BUNDLE = WORK / "bundle"
 INSTALL = WORK / "install"
-CID = "state-working-set"
+CID = "state-nginx"
 ENGINES = ("wire", "graph")
 FILES = ("checkpoint.img", "pages_meta.img", "pages.img")
 POLICIES = ("unlimited", "oci-quarter", "ancestor-quarter")
@@ -39,8 +39,7 @@ LEAF = GROUP / "sandbox"
 QUARTER = "25000 100000"
 UNLIMITED = "max 100000"
 BOOST = "100000 100000"
-METRICS = ("restore_command", "through_cached_ready", "through_verified_read",
-           "ready_to_verified", "restore_group_cpu")
+METRICS = ("restore_command", "through_first_http_response", "restore_group_cpu")
 PAIRS = 12
 PAGE = os.sysconf("SC_PAGE_SIZE")
 LIBC = ctypes.CDLL(None, use_errno=True)
@@ -154,13 +153,43 @@ def persist(report):
     staged.replace(p)
 
 
+def read_http(check=True):
+    body, ended, status = call("exec", CID, "/usr/bin/curl", "--silent", "--show-error",
+                               "--fail", "--max-time", "4", "--noproxy", "*", "--write-out",
+                               "%{http_code}", "http://127.0.0.1/latin1k.txt", check=check)
+    if status:
+        return None, ended
+    assert body == "\x00" * 1024 + "200", (len(body), body[-3:])
+    return hashlib.sha256(body[:-3].encode()).hexdigest(), ended
+
+
 def ready_guest():
     for _ in range(80):
-        ready, _, status = call("exec", CID, "/probe", "ready", check=False)
-        if status == 0 and re.fullmatch(r"[a-f0-9]{64} [a-f0-9]{64}", ready):
-            return ready
+        digest, _ = read_http(check=False)
+        if digest is not None:
+            return digest
         time.sleep(0.15)
-    raise RuntimeError("guest did not populate both data sets")
+    raise RuntimeError("nginx did not serve the benchmark file")
+
+
+def nginx_pids():
+    pids = sorted(json.loads(call("ps", "--format=json", CID)[0]))
+    assert len(pids) == 5 and pids[0] == 1, pids
+    return pids
+
+
+def wait_quiescent():
+    # checkpointfile/checkpointfile.go takes four 500 ms samples below 0.5% CPU.
+    quiet = 0
+    deadline = time.monotonic() + 60
+    while quiet < 4:
+        start = time.monotonic_ns()
+        before = stats(LEAF)["usage_usec"]
+        time.sleep(0.5)
+        used_ns = 1000 * (stats(LEAF)["usage_usec"] - before)
+        quiet = quiet + 1 if used_ns < (time.monotonic_ns() - start) * 0.005 else 0
+        if time.monotonic() >= deadline:
+            raise RuntimeError("nginx did not quiesce")
 
 
 def capture(cell, path, source_pid):
@@ -184,7 +213,7 @@ def capture(cell, path, source_pid):
     assert media_engine(path / "checkpoint.img", compression) == engine
     files = {name: {"bytes": (path / name).stat().st_size, "sha256": digest(path / name)} for name in names}
     total = sum(f["bytes"] for f in files.values())
-    assert total >= 500 << 20, total  # The identical random application payload is 512 MiB.
+    assert all(f["bytes"] > 0 for f in files.values()), files
     return {"save_command_ns": ended - start, "media_bytes": total, "files": files,
             "observed_leaf_limits": limits, "cpu_stat_delta": {k: after[k]-v for k, v in before.items()}}
 
@@ -267,15 +296,17 @@ def capture_both(config, engines, template, expected, row):
     assert expected is None or ready == expected
     row["source_guest"] = bind_sentry(config)
     row["parent_cpu_max"] = quota(GROUP)
-    row["source_digests"] = ready.split()
+    row["response_sha256"] = ready
+    row["pids"] = nginx_pids()
     for engine in engines:
+        wait_quiescent()
         row[engine] = capture(("none", engine), WORK / (config + "-" + engine), row["source_guest"]["pid"])
-    assert call("exec", CID, "/probe", "verify")[0] == ready
+    assert read_http()[0] == ready
     delete()
     return ready
 
 
-def restore(policy, engine, path, expected, row):
+def restore(policy, engine, path, expected, expected_pids, row):
     config = "unlimited" if policy == "unlimited" else "oci-quarter"
     assert not LEAF.exists(), "runsc must create a fresh leaf"
     cap = QUARTER if policy == "ancestor-quarter" else UNLIMITED
@@ -312,28 +343,26 @@ def restore(policy, engine, path, expected, row):
     charge["returned"] = stats(GROUP)
     # The leaf is newly created by this restore; its counters started at zero.
     leaf = row["fresh_leaf_cpu_stat"] = {"returned": stats(LEAF)}
-    ready, accepted, _ = call("exec", CID, "/probe", "ready")
-    charge["ready"] = stats(GROUP)
-    leaf["ready"] = stats(LEAF)
-    actual, verified, _ = call("exec", CID, "/probe", "verify")
+    actual, verified = read_http()
     charge["verified"] = stats(GROUP)
     leaf["verified"] = stats(LEAF)
-    assert ready == actual == expected and start < restored < accepted < verified
-    row["digests"] = actual.split()
+    assert actual == expected and start < restored < verified
+    row["response_sha256"] = actual
+    row["pids"] = nginx_pids()
+    assert row["pids"] == expected_pids, (row["pids"], expected_pids)
     row["sentry"] = identity = bind_sentry(config)
-    assert identity["pid"] == known_pid and quota(GROUP) == cap, (identity, known_pid, cap)
-    row["boost_observed_on_sentry"] = any(v == BOOST and pid == known_pid for _, v, pid in observed)
+    assert known_pid is None or identity["pid"] == known_pid, (identity, known_pid)
+    assert quota(GROUP) == cap
+    row["sentry_observed_during_restore"] = known_pid is not None
+    row["boost_observed_on_sentry"] = any(v == BOOST and pid == identity["pid"] for _, v, pid in observed)
     for key in charge["before"]:
-        assert charge["before"][key] <= charge["returned"][key] <= charge["ready"][key] <= charge["verified"][key]
+        assert charge["before"][key] <= charge["returned"][key] <= charge["verified"][key]
     assert leaf["returned"]["usage_usec"] > 0
     for key in leaf["returned"]:
-        assert leaf["returned"][key] <= leaf["ready"][key] <= leaf["verified"][key]
-    if config == "oci-quarter":
-        assert leaf["verified"]["nr_throttled"] > 0 or cap == QUARTER, leaf
-    if policy == "ancestor-quarter":
-        assert charge["returned"]["nr_throttled"] > charge["before"]["nr_throttled"], charge
-    row["metrics_ns"] = dict(restore_command=restored-start, through_cached_ready=accepted-start,
-                             through_verified_read=verified-start, ready_to_verified=verified-accepted,
+        assert leaf["returned"][key] <= leaf["verified"][key]
+    # A small service can finish within its current quota period. Preserve
+    # the throttle counters even when the correctly applied limit never binds.
+    row["metrics_ns"] = dict(restore_command=restored-start, through_first_http_response=verified-start,
                              restore_group_cpu=1000*(charge["returned"]["usage_usec"]-charge["before"]["usage_usec"]))
     assert all(value > 0 for value in row["metrics_ns"].values())
 
@@ -378,11 +407,13 @@ def run():
     env = json.loads((OUT / "build.json").read_text())
     assert env["build_verified"] and env["source"] == SOURCE and platform.machine() == "x86_64"
     assert all(digest(INSTALL / n) == h for n, h in env["release"].items())
-    assert digest(BUNDLE / "rootfs/probe") == env["guest"]
+    assert env["image_config"] == "sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5"
     cpus = sorted(os.sched_getaffinity(0))[:4]
     assert len(cpus) == 4, cpus
     os.sched_setaffinity(0, cpus)
-    report = {"source": SOURCE, "cpu_affinity": cpus, "kernel": platform.release(), "background": False,
+    report = {"source": SOURCE, "image_config": env["image_config"],
+              "image_manifest": "sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163",
+              "cpu_affinity": cpus, "kernel": platform.release(), "background": False,
               "compression": "none", "blocks": [], "stage": "delegation", "verified": False}
     expected = None
     try:
@@ -403,7 +434,7 @@ def run():
                 engines = ENGINES if (pair // 2 + i) % 2 else ENGINES[::-1]
                 expected = capture_both(config, engines, template, expected, src)
                 persist(report)
-            report["expected_digests"] = expected.split()
+            report["expected_response_sha256"] = expected
             for pos in ORDER:
                 policy, engine = CELLS[(pos + pair) % len(CELLS)]
                 config = "unlimited" if policy == "unlimited" else "oci-quarter"
@@ -411,7 +442,7 @@ def run():
                 set_spec(config, template)
                 row = {}
                 block["cells"].append(row)
-                restore(policy, engine, WORK / (config+"-"+engine), expected, row)
+                restore(policy, engine, WORK / (config+"-"+engine), expected, block["sources"][config]["pids"], row)
                 delete()
                 persist(report)
             for config in block["sources"]:

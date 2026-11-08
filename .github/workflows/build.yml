@@ -1,7 +1,7 @@
-name: Compare counterbalanced checkpoint and restore times
+name: Compare wire and graph checkpoints of four Nginx workers
 on:
   push:
-    branches: [qualification/state-balanced-checkpoint-asset-prepare]
+    branches: [qualification/state-nginx-live-checkpoint]
 permissions: {}
 jobs:
   measure:
@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 85
     steps:
-    - name: Bind master, guest, and native GNU tools
+    - name: Bind the gVisor release source, benchmark harness, and public dependencies
       run: |
         set -euo pipefail
         w="$RUNNER_TEMP/state-working-set"
@@ -17,22 +17,21 @@ jobs:
         echo '{"build_verified":false,"stage":"setup"}' > "$w/results/build.json"
         cd "$w/src"
         git init -q
-        git -c gc.auto=0 fetch -q --no-auto-maintenance --no-tags --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA" 5f053b59eb17f9736242f20e950eaed8ec6cad85
+        helper=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+        seeds=a7cc851b17555ce6daec1391e6e3591270342bdc
         s=451b92800b9cb82262dc8a735388f7cf4d17d895
-        test "$(git rev-parse "$GITHUB_SHA^")" = b01cf43615497a49ebe7ba4c2e58a32b11c6451c
-        test "$(git rev-parse "$GITHUB_SHA^^")" = 1c518b5f027b8e4aa9009486ebba3c4bab3c3f26
-        test "$(git rev-parse "$GITHUB_SHA~3")" = "$s"
-        git diff --exit-code "$GITHUB_SHA^" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set/build.py'
-        git diff --exit-code "$s" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set' ':!test/rbe/restore_advice'
-        test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/guest.go")" = fa8722188274a32ffecd31a55da785c613585fc8
-        test "$(git rev-parse "$GITHUB_SHA:test/rbe/restore_advice/BUILD")" = 41436c5859495ec8d2c95d66289a3ba51d149c3a
-        test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/build.py")" = 1b2e8eb5bb28dd2961cb9d6c66f15b0a1d84e353
-        test "$(git rev-parse "$GITHUB_SHA:.github/qualification/state_working_set/benchstat.module")" = e379c4293704632cc1f1e192a49fe73427a457d1
-        git checkout -q --detach "$s"
+        parent=c6010aa935b53b01499c65e333a88975e8066259
+        git -c gc.auto=0 fetch -q --no-auto-maintenance --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$s" "$helper" "$seeds"
+        test "$(git rev-parse "$GITHUB_SHA^")" = "$parent"
+        git diff --exit-code "$parent" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_working_set/build.py' ':!.github/qualification/state_working_set/measure.py'
+        test "$(git rev-parse "$seeds:.github/qualification/tldk_queue_seeds.json")" = b8f4e0994d4a51afa05ee61162a9eeddb7dcecee
+        git show "$seeds:.github/qualification/tldk_queue_seeds.json" > "$w/seeds.json"
+        test "$(git rev-parse "$helper:.github/qualification/recvbuf_deps.py")" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+        git show "$helper:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
         for f in build.py measure.py isolate.sh benchstat.module; do
           git show "$GITHUB_SHA:.github/qualification/state_working_set/$f" > "$w/$f"
         done
-        git restore --source="$GITHUB_SHA" --worktree -- test/rbe/restore_advice/guest.go test/rbe/restore_advice/BUILD
+        git checkout -q --detach "$s"
         test "$(cat .bazelversion)" = 9.3.1
         sudo -n apt-get -qq update
         sudo -n apt-get -qq install --no-install-recommends -y build-essential crossbuild-essential-arm64 libnuma-dev
@@ -46,102 +45,47 @@ jobs:
         sudo -n systemd-run --wait --pipe --collect --service-type=exec --unit="$unit" -p Delegate=yes \
           /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root RUNNER_TEMP="$RUNNER_TEMP" UNIT="$unit" \
           /bin/bash "$w/isolate.sh" preflight
-    - name: Verify the public BCR distfiles
+    - name: Export gVisor's pinned benchmark image
+      run: |
+        set -euo pipefail
+        w="$RUNNER_TEMP/state-working-set"
+        src=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+        docker pull "$src"
+        docker image inspect --format='{{.Id}}' "$src" > "$w/image-config"
+        test "$(cat "$w/image-config")" = sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5
+        id="$(docker create "$src")"
+        trap 'docker rm "$id" >/dev/null' EXIT
+        mkdir -p "$w/bundle/rootfs"
+        docker export "$id" | sudo -n tar --numeric-owner -xf - -C "$w/bundle/rootfs"
+    - name: Build the original release and pinned benchstat on Linux
       run: |
         set -euo pipefail
         w="$RUNNER_TEMP/state-working-set"
         cd "$w/src"
-        helper=5f053b59eb17f9736242f20e950eaed8ec6cad85
-        test "$(git rev-parse "$helper:.github/qualification/recvbuf_deps.py")" = b21dd4268b19aa0d2f39b2a87105657e5eca9727
-        git show "$helper:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
-        mkdir "$RUNNER_TEMP/recvbuf"
-        env -i HOME="$HOME" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB - <<'PYSEED'
+        env -i HOME="$HOME" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB - <<'PYBUILD'
         import json, os, sys
         from pathlib import Path
         work = Path(os.environ["RUNNER_TEMP"]) / "state-working-set"
         sys.path.insert(0, str(work))
         import public_assets as assets
-        assets.seed()
-        report = json.loads((assets.OUT / "dependencies.json").read_bytes())
-        # Prior local license receipt 13612101725 obtained these additional
-        # module archives. They are optional, and Bazel validates every one it
-        # consumes against this checkout's selected module integrity.
-        for module, version in (
-            ("rules_go", "0.63.0"), ("platforms", "1.1.0"), ("rules_java", "9.3.0"),
-            ("hermetic_launcher", "0.0.16"), ("rules_m4", "0.3.1"), ("rules_swift", "3.1.2"),
-            ("tar.bzl", "0.10.4"), ("aspect_bazel_lib", "2.22.5"), ("rules_kotlin", "2.3.20"),
-            ("buildozer", "7.1.2"), ("googleapis-rules-registry", "1.0.0"), ("llvm", "0.8.24"),
-            ("rules_robolectric", "4.14.1.2"), ("windows_support", "0.4.1"),
-        ):
+        import build
+        assets.DIST = work / "dist"
+        assets.DIST.mkdir()
+        report = {"registry": assets.REGISTRY, "assets": [], "unavailable": []}
+        for module, version, sha, asset_id in json.loads((work / "seeds.json").read_bytes()):
             try:
-                entry = assets.acquire(module, version)
-                if entry:
-                    report["assets"].append(entry)
-            except (ValueError, KeyError, AssertionError, OSError) as error:
-                report.setdefault("unavailable_seeds", []).append([module, version, type(error).__name__])
-        (work / "results" / "public-seeds.json").write_text(json.dumps(report, indent=2) + "\n")
-        PYSEED
-        mv "$RUNNER_TEMP/recvbuf/dist" "$w/dist"
-    - name: Build the original release, guest and pinned benchstat locally using Remote Asset
-      env:
-        REMOTE_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        set -euo pipefail
-        w="$RUNNER_TEMP/state-working-set"
-        cd "$w/src"
-        auth="$w/asset-prepare"
-        mkdir -m 700 "$auth"
-        clean=(env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP")
-        cleanup() {
-          original=$?
-          trap - EXIT
-          set +e
-          "${clean[@]}" "$w/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g shutdown >"$auth/shutdown.log" 2>&1
-          stopped=$?
-          "${clean[@]}" python3 -IB - <<'PYREPORT'
-        import json, os, re
-        from pathlib import Path
-        work = Path(os.environ["RUNNER_TEMP"]) / "state-working-set"
-        private = work / "asset-prepare"
-        key, = re.findall(rb"(?m)^build --remote_header=x-buildbuddy-api-key=([^\r\n]+)$", (private / "service.rc").read_bytes())
-        outputs = {}
-        for name in ("assets.json", "build.json"):
-            src = private / name
-            if not src.exists():
-                continue
-            data = src.read_bytes()
-            assert src.is_file() and not src.is_symlink() and 0 < len(data) <= 220000
-            assert key not in data and not re.search(rb"(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[a-z0-9]{20,}", data)
-            assert isinstance(json.loads(data), dict)
-            outputs[name] = data
-        for name, data in outputs.items():
-            (work / "results" / name).write_bytes(data)
-        PYREPORT
-          screened=$?
-          rm -f -- "$auth/service.rc" "$auth/bazel.log" "$auth/build.bep" "$auth/prepare.log" "$auth/shutdown.log" "$auth/assets.json" "$auth/build.json"
-          removed=$?
-          rmdir "$auth"
-          empty=$?
-          for status in "$original" "$stopped" "$screened" "$removed" "$empty"; do
-            if [ "$status" -ne 0 ]; then exit "$status"; fi
-          done
-          exit 0
-        }
-        trap cleanup EXIT
-        test -n "$REMOTE_KEY"
-        (umask 077
-          {
-            echo 'build --remote_cache=grpcs://remote.buildbuddy.io'
-            echo 'build --experimental_remote_downloader=grpcs://remote.buildbuddy.io --noexperimental_remote_downloader_propagate_credentials --experimental_remote_downloader_local_fallback'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$REMOTE_KEY"
-          } > "$auth/service.rc"
-        )
-        unset REMOTE_KEY
-        "${clean[@]}" python3 -B "$w/build.py" >"$auth/prepare.log" 2>&1
-    - name: Compare foreground restores and verify restored bytes
+                info = assets.acquire(module, version, pinned=sha, asset_id=asset_id)
+                if info:
+                    report["assets"].append(info)
+            except (OSError, ValueError, KeyError, AssertionError) as error:
+                report["unavailable"].append([module, version, type(error).__name__])
+        (work / "results/public-seeds.json").write_text(json.dumps(report))
+        build.build()
+        PYBUILD
+        "$w/bazel" --nosystem_rc --nohome_rc shutdown
+    - name: Measure checkpoint, restore, and the first complete HTTP response
       run: |
         w="$RUNNER_TEMP/state-working-set"
-        test ! -e "$w/asset-prepare"
         unit="state-quarter-measure-$GITHUB_RUN_ID"
         sudo -n systemd-run --wait --pipe --collect --service-type=exec --unit="$unit" -p Delegate=yes \
           /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root RUNNER_TEMP="$RUNNER_TEMP" UNIT="$unit" \
@@ -158,7 +102,7 @@ jobs:
           done
         done
         for c in unlimited oci-quarter ancestor-quarter; do
-          for m in restore_command through_cached_ready through_verified_read ready_to_verified restore_group_cpu; do
+          for m in restore_command through_first_http_response restore_group_cpu; do
             grep -q "Restore/$c/$m " benchstat.txt
           done
         done
@@ -166,7 +110,7 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && !cancelled()
       with:
-        name: state-balanced-checkpoint-and-restore
+        name: state-nginx-checkpoint-and-first-response
         path: |
           ${{ runner.temp }}/state-working-set/results/ancestors-*.json
           ${{ runner.temp }}/state-working-set/results/delegation.json
