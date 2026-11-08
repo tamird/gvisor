@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T11:54:36+00:00",
+    "updatedAt": "2026-11-08T12:22:22+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -62552,6 +62552,52 @@
           "https://github.com/tamird/gvisor/actions/runs/41367508644/artifacts/13107777937",
           "https://github.com/tamird/gvisor/actions/runs/42476425825/artifacts/13615539468"
         ]
+      }
+    },
+    {
+      "id": "pr:17214",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17214,
+      "ref": "safecopy-memclr-nt",
+      "head": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
+      "title": "safecopy: zero memory like the runtime in memclr",
+      "url": "https://github.com/google/gvisor/pull/17214",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-08T12:15:08+00:00",
+      "summary": "Ayush requested review from Tamir on #17209. His protected clear and the #15181 allocator changes passed together on native AMD64 and ARM64. On an ARM64 guest with 64 KiB pages, 58 of 90 fault cases failed at the proposed head. Using the host page size in the test fixture made all 74 applicable cases pass, including SIGBUS and SIGSEGV at 128 KiB.",
+      "evidence": [
+        {
+          "label": "Ayush’s review request",
+          "url": "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370"
+        },
+        {
+          "label": "Native AMD64 allocator and safecopy suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610727093"
+        },
+        {
+          "label": "Native ARM64 allocator and safecopy suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610579330"
+        },
+        {
+          "label": "64 KiB ARM64 guest: 58 original fault cases failed; all 74 page-aligned cases passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42477798171/artifacts/13616837011"
+        },
+        {
+          "label": "Linux gates MADV_NOHUGEPAGE on CONFIG_TRANSPARENT_HUGEPAGE",
+          "url": "https://github.com/torvalds/linux/blob/e8f897f4a/mm/madvise.c#L1178-L1182"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
+        "title": "Run the protected-clear fault tests with native page boundaries",
+        "summary": "Post two inline comments on fault boundaries and MADV_NOHUGEPAGE?",
+        "body": "The protected clear and the allocator changes from #15181 passed together on native AMD64 and ARM64. I’d use this implementation in place of #17209.\n\nhttps://github.com/google/gvisor/blob/4f94a055b/pkg/safecopy/safecopy_test.go#L506\nCould the fault setup use unix.Getpagesize() for its offsets and mapping length? On ARM64 with 64 KiB pages, mprotect rejected the 4 KiB and 32 KiB offsets. A memfd truncated inside a page stayed accessible past the expected fault. With page-aligned boundaries, all 74 applicable cases passed, including SIGSEGV and SIGBUS at 128 KiB.\nhttps://github.com/tamird/gvisor/actions/runs/42477798171/artifacts/13616837011\n\nhttps://github.com/google/gvisor/blob/4f94a055b/pkg/safecopy/safecopy_test.go#L576\nCould the test continue on EINVAL from MADV_NOHUGEPAGE? Linux rejects that advice when built without CONFIG_TRANSPARENT_HUGEPAGE. Ordinary pages already give this test the boundary it needs.\nhttps://github.com/torvalds/linux/blob/e8f897f4a/mm/madvise.c#L1178-L1182\n\nPosted by Codex on behalf of @tamird.",
+        "url": "https://github.com/google/gvisor/pull/17214/files#diff-65f5a078e3d8d8eee700ccfe1c465c00dc02e78074649e882867ba3949f5ffd0R506",
+        "requestedAt": "2026-11-08T09:39:38+00:00"
       }
     }
   ],

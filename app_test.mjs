@@ -865,6 +865,11 @@ test('incoming requests on a PR share one agent card and link to the original me
   assert.equal(run('existing[0].summary'), 'Earlier review');
   context.snapshotInput.incomingReviewRequests = [{ ...request, url: 'https://github.com/google/gvisor/pull/1#discussion_r1' }];
   assert.throws(() => run('validateSnapshot(snapshotInput)'), /Invalid incoming PR review request/);
+  const linked = { ...request, url: prURL, sourceURL: 'https://github.com/google/gvisor/pull/17209#issuecomment-6719850370' };
+  context.snapshotInput.incomingReviewRequests = [linked];
+  run('validateSnapshot(snapshotInput)');
+  linked.sourceURL = foreignURL + '#issuecomment-123';
+  assert.throws(() => run('validateSnapshot(snapshotInput)'), /Invalid incoming PR review request/);
 });
 
 test('outgoing reviews return to the agent when the public head changes', () => {

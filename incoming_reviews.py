@@ -21,11 +21,15 @@ BACKFILL_BATCH = 10
 DETAIL_BATCH = 8
 
 
-def addressed(text: str | None, owner: str) -> bool:
-    """Require both a direct addressee and a request to examine the change."""
+def prose(text: str | None) -> str:
     text = re.sub(r"(?ms)^\s*(```|~~~).*?^\s*\1[^\n]*", "", text or "")
     text = re.sub(r"(?m)^\s*>[^\n]*", "", text)
-    text = re.sub(r"`[^`\n]*`|https?://[^\s)]+", "", text)
+    return re.sub(r"`[^`\n]*`", "", text)
+
+
+def addressed(text: str | None, owner: str) -> bool:
+    """Require both a direct addressee and a request to examine the change."""
+    text = re.sub(r"https?://[^\s)]+", "", prose(text))
     tag = r"(?<![\w-])@" + re.escape(owner) + r"(?![\w-]|['’]s\b)"
     ask = (
         r"(?:ptal\b|(?:could|would|can|will)\s+you\s+(?:(?:please|kindly|also)\s+)*"
@@ -42,6 +46,35 @@ def addressed(text: str | None, owner: str) -> bool:
         + tag
     )
     return bool(re.search(direct, text, re.I) or re.search(end, text, re.I))
+
+
+def linked_target(body: str | None, owner: str) -> int | None:
+    """An addressed request for one explicit PR in the same paragraph."""
+    link = (r"(?<![\w./#-])(?:https://github\.com/([\w.-]+/[\w.-]+)/pull/|(?:([\w.-]+/[\w.-]+))?#)"
+            r"([1-9][0-9]{0,9})\b")
+    text = prose(body)
+    references = re.findall(link, text)
+    if len(references) != 1:
+        return None
+    full_repo, short_repo, digits = references[0]
+    number = int(digits)
+    if (full_repo or short_repo or REPOSITORY).lower() != REPOSITORY or number > 2**31 - 1:
+        return None
+    for paragraph in re.split(r"\n\s*\n", re.sub(link, "LINKED_PR", text)):
+        if {login.lower() for login in re.findall(r"(?<![\w-])@([\w-]+)", paragraph)} != {owner.lower()}:
+            continue
+        sentences = re.split(r"(?<=[.!?])\s+", paragraph.strip())
+        for i, sentence in enumerate(sentences):
+            if "LINKED_PR" not in sentence:
+                continue
+            # A direct address can introduce the link, with "Please take a
+            # look" immediately following it, as on gVisor #17209.
+            if addressed(sentence, owner) or (
+                re.match(r"@" + re.escape(owner) + r"\b", sentence, re.I) and i + 1 < len(sentences)
+                and addressed(f"@{owner} {sentences[i + 1]}", owner)
+            ):
+                return number
+    return None
 
 
 def connection(kind: str, before: str | None = None) -> str:
@@ -79,13 +112,16 @@ def discover(
     pending = {
         (r["repo"], r["number"], r["kind"], r["id"]): dict(r)
         for r in previous.get("incomingReviewRequests", [])
-        if r["repo"] == REPOSITORY
+        if r["repo"] == REPOSITORY and "sourceURL" not in r
     }
+    linked = {key: dict(value) for key, value in old.get("linkedComments", {}).items()}
     owner_lower = owner.lower()
 
     def persist():
-        state.update(queue=queue, pages=pages)
-        return sorted(pending.values(), key=lambda r: (r["updatedAt"], r["url"], r["id"])), state
+        state.update(queue=queue, pages=pages, linkedComments=linked)
+        records = [*pending.values(), *(r for r in linked.values() if r.get("head")
+                                        and r["updatedAt"] > state["reviewedThrough"].get(str(r["number"]), ""))]
+        return sorted(records, key=lambda r: (r["updatedAt"], r["url"], r["id"])), state
 
     def intake(meta, items, timestamp, complete=(), formal=None):
         repo, num = meta.get("repo", REPOSITORY), meta["number"]
@@ -97,9 +133,30 @@ def discover(
             return
         prkey = str(num)
         outstanding = {k for k in pending if k[:2] == (repo, num)}
-        if meta.get("status") not in ("open", "draft") or (meta.get("authorLogin") or "").lower() == owner_lower:
+        if meta["authorLogin"].lower() == owner_lower:
+            comments = {m["id"]: m for m in items if m["kind"] == "comment"}
+            active_links = set()
+            for key, item in comments.items():
+                author = item.get("author") or {}
+                if (author.get("__typename") != "User" or author["login"].lower() == owner_lower
+                        or not re.fullmatch(re.escape(meta["url"]) + r"#issuecomment-[0-9]+", item["url"])):
+                    continue
+                target = linked_target(item["body"], owner)
+                stamp = item.get("updatedAt") or item["createdAt"]
+                if target and target != num and stamp > state["reviewedThrough"].get(str(target), ""):
+                    active_links.add(key)
+                    request = dict(number=target, updatedAt=stamp, author=author["login"], sourceURL=item["url"])
+                    if any(linked.get(key, {}).get(k) != v for k, v in request.items()):
+                        linked[key] = request
+            for key, request in list(linked.items()):
+                if (request["sourceURL"].split("#")[0] == meta["url"] and key not in active_links
+                        and (key in comments or "comment" in complete)):
+                    del linked[key]
+        if meta.get("status") not in ("open", "draft") or meta["authorLogin"].lower() == owner_lower:
             for k in outstanding:
                 pending.pop(k)
+            for key in [key for key, request in linked.items() if request["number"] == num]:
+                del linked[key]
             return
         active = set()
         seen_ids = {(m["kind"], m["id"]) for m in items}
@@ -199,13 +256,24 @@ def discover(
         return f",after:{json.dumps(cursor)}" if cursor else ""
 
     def search(stream: str, term: str) -> str:
-        spec = f"repo:{REPOSITORY} is:pr is:open -author:{owner} {term} sort:updated-desc"
+        exclude = f" -author:{owner}" if stream == "formal" else ""
+        spec = f"repo:{REPOSITORY} is:pr is:open{exclude} {term} sort:updated-desc"
         return f"{stream}:search(type:ISSUE,first:24,query:{json.dumps(spec)}{after(stream)}){{{index_fields}}}"
 
     index_fields = "pageInfo{hasNextPage endCursor} nodes{... on PullRequest{" + IDENTITY + "}}"
     order = "orderBy:{field:%s,direction:DESC}"
     latest = f"latest:pullRequests(states:OPEN,first:8,{order % 'UPDATED_AT'}){{{index_fields}}}"
     backfill = f"backfill:pullRequests(states:OPEN,first:{BACKFILL_BATCH},{order % 'CREATED_AT'}{after('backfill')}){{{index_fields}}}"
+    numbers = sorted({r["number"] for r in linked.values()})
+    last = old.get("linkedAfter", 0)
+    group = ([n for n in numbers if n > last] + [n for n in numbers if n <= last])[:DETAIL_BATCH]
+    reviews = ('reviews(author:' + json.dumps(owner)
+               + ',states:[APPROVED,CHANGES_REQUESTED,COMMENTED,DISMISSED],last:1){nodes{submittedAt}}')
+    # resource() returns null for issues and nonexistent PR URLs. Unlike
+    # pullRequest(number:), those inputs do not fail the shared index query.
+    linked_fields = " ".join(
+        f'p{n}:resource(url:"https://github.com/{REPOSITORY}/pull/{n}"){{... on PullRequest{{{IDENTITY} {reviews}}}}}'
+        for n in group)
     index = query(
         "{"
         + search("formal", "review-requested:" + owner)
@@ -215,8 +283,31 @@ def discover(
         + latest
         + " "
         + backfill
-        + "}}"
+        + "} "
+        + linked_fields
+        + "}"
     )
+    if group:
+        state["linkedAfter"] = group[-1]
+    for key, request in list(linked.items()):
+        num = request["number"]
+        if num not in group:
+            continue
+        raw = index[f"p{num}"]
+        if (not raw or raw["state"] != "OPEN" or raw["repository"]["isPrivate"]
+                or raw["url"] != f"https://github.com/{REPOSITORY}/pull/{num}"
+                or raw["repository"]["nameWithOwner"] != REPOSITORY or raw["number"] != num
+                or (raw.get("author") or {}).get("__typename") != "User" or raw["author"]["login"].lower() == owner_lower):
+            del linked[key]
+            continue
+        last_review = max((r["submittedAt"] for r in raw["reviews"]["nodes"] if r["submittedAt"]), default="")
+        if last_review:
+            state["reviewedThrough"][str(num)] = max(last_review, state["reviewedThrough"].get(str(num), ""))
+        if request["updatedAt"] <= state["reviewedThrough"].get(str(num), ""):
+            del linked[key]
+            continue
+        request.update(repo=REPOSITORY, title=raw["title"], prURL=raw["url"], url=raw["url"],
+                       head=raw["headRefOid"], kind="comment", id=key)
     candidates = {}
     urgent = set()
     for stream in ("formal", "mentioned", "latest", "backfill"):
@@ -229,7 +320,7 @@ def discover(
                 not raw
                 or raw["repository"]["isPrivate"]
                 or raw["repository"]["nameWithOwner"] != REPOSITORY
-                or (raw.get("author") or {}).get("login", "").lower() == owner_lower
+                or (stream != "mentioned" and (raw.get("author") or {}).get("login", "").lower() == owner_lower)
             ):
                 continue
             pk = str(raw["number"])
