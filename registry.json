@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T17:36:01+00:00",
+    "updatedAt": "2026-11-08T17:42:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -783,14 +783,14 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-08T16:42:07+00:00",
+      "updatedAt": "2026-11-08T17:42:17+00:00",
       "summary": "The maintainer approved b61651f93, and the PR has the ready to pull label. The separate Go archive assembler follow-up leaves that head intact. When its Bazel archive exporter is next updated, go_export_sources also needs the netgofer command, along with its implementation. The existing approved head stays in review.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "Agent",
         "sourceHead": "b61651f9371f514411dbb4fc2bd367f860204546",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Maintainer approved the published head",
-        "nextAction": "Follow the matching import and public checks. No reapproval reminder is due for this head.",
+        "observedAt": "2026-11-08T17:42:17+00:00",
+        "disposition": "The projected #15106 archive dropped the library and command, and the downstream Go build failed. The archive-specific fix and the approved direct assembler exported identical 2,564-entry ZIPs. The independently built Linux AMD64 executables both ran help netgofer.",
+        "nextAction": "If #17238 lands first, preserve its netgofer implementation and command in go_export_sources; the current upstream head remains under review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15106",
           "https://github.com/tamird/gvisor/commit/56ceeb1a04062a78e72d94737b22fceb513ef3ea",
@@ -799,7 +799,9 @@
           "https://github.com/google/gvisor/pull/15598",
           "https://github.com/google/gvisor/pull/16048",
           "https://github.com/google/gvisor/pull/15106#issuecomment-6302575449",
-          "https://github.com/tamird/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d"
+          "https://github.com/tamird/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d",
+          "https://github.com/tamird/gvisor/commit/e48e4d899",
+          "https://github.com/tamird/gvisor/actions/runs/42505014580/artifacts/13627089013"
         ]
       },
       "head": "b61651f9371f514411dbb4fc2bd367f860204546",
@@ -839,6 +841,14 @@
         {
           "label": "Go-branch netgofer inputs required by the alternative exporter",
           "url": "https://github.com/tamird/gvisor/commit/bf7b1290b"
+        },
+        {
+          "label": "Netgofer adaptation for the Bazel Go archive",
+          "url": "https://github.com/tamird/gvisor/commit/e48e4d899"
+        },
+        {
+          "label": "Original projected archive failure, direct/repair ZIP equality and sidecar command tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42505014580/artifacts/13627089013"
         }
       ],
       "ciRecovery": {
@@ -63399,7 +63409,7 @@
       "title": "Abort FUSE requests under the connection mutex",
       "url": "https://github.com/tamird/gvisor/commit/cd9d815dc",
       "group": "runtime",
-      "status": "Contributor review requested",
+      "status": "Published as #17241",
       "summary": "Both FUSE transports already update background request limits under connection.mu. Holding that mutex through Abort closes the interval in which a host reply can claim a pending request after disconnect. All 33 runtime cases and both architecture lock analyses passed. Removing the nosave mutex changes the graph checkpoint layout fingerprint.",
       "evidence": [
         {
@@ -63409,20 +63419,39 @@
         {
           "label": "Saved field layout and unlocked-access controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42445513667/artifacts/13603742034"
+        },
+        {
+          "label": "Published single-commit PR #17241",
+          "url": "https://github.com/google/gvisor/pull/17241"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "cd9d815dcc6558cc8d5a9b0afcd118d0718c3ef1",
-        "baseHead": "7d1b049f5d541992b47cc38cf564025908a9ed7b",
-        "title": "Abort FUSE requests under the connection mutex",
-        "url": "https://github.com/tamird/gvisor/commit/cd9d815dc",
-        "summary": "Open this single-commit gVisor PR?",
-        "body": "Both FUSE transports hold connection.mu when INIT updates the background request limits. Abort takes asyncMu under the same lock without accessing those limits. It then releases connection.mu between marking the connection disconnected and canceling outstanding requests. A host reply can claim a pending request in that interval.\n\nGuard the background fields with connection.mu and keep it held through Abort. Wake callers waiting for INIT, cancel each pending request in place, then close the full-queue channel after its last notification.\n\nThe saved fields and their order stay the same. Removing the nosave mutex changes the graph checkpoint layout fingerprint.",
-        "requestedAt": "2026-11-08T12:41:39+00:00"
-      },
-      "updatedAt": "2026-11-08T12:41:39+00:00"
+      "updatedAt": "2026-11-08T17:37:40Z",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cd9d815dcc6558cc8d5a9b0afcd118d0718c3ef1",
+          "baseHead": "7d1b049f5d541992b47cc38cf564025908a9ed7b",
+          "title": "Abort FUSE requests under the connection mutex",
+          "url": "https://github.com/tamird/gvisor/commit/cd9d815dc",
+          "summary": "Open this single-commit gVisor PR?",
+          "body": "Both FUSE transports hold connection.mu when INIT updates the background request limits. Abort takes asyncMu under the same lock without accessing those limits. It then releases connection.mu between marking the connection disconnected and canceling outstanding requests. A host reply can claim a pending request in that interval.\n\nGuard the background fields with connection.mu and keep it held through Abort. Wake callers waiting for INIT, cancel each pending request in place, then close the full-queue channel after its last notification.\n\nThe saved fields and their order stay the same. Removing the nosave mutex changes the graph checkpoint layout fingerprint.",
+          "requestedAt": "2026-11-08T12:41:39+00:00",
+          "at": "2026-11-08T17:37:40Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17241"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "cd9d815dcc6558cc8d5a9b0afcd118d0718c3ef1",
+        "observedAt": "2026-11-08T17:37:40Z",
+        "disposition": "The approved change was published as #17241.",
+        "nextAction": "Follow upstream review on #17241.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17241",
+          "https://github.com/tamird/gvisor/commit/cd9d815dc"
+        ]
+      }
     },
     {
       "id": "branch:shim-wedged-runtime-tests",
@@ -63570,7 +63599,7 @@
       "title": "Build one marshal test binary per Go library",
       "url": "https://github.com/tamird/gvisor/commit/75a946b54",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Agent work",
       "summary": "Grouping the generated tests removes 26 Bazel test actions on each architecture. Across the same 20 libraries, the AMD64 test executables fell from 460 to 176 MiB and the ARM64 executables from 395 to 156 MiB. The same 2,340 named cases ran on each architecture. AMD64 ran natively and ARM64 under QEMU. Common and architecture-specific tests in a library now rerun together.",
       "evidence": [
         {
@@ -63590,7 +63619,7 @@
           "url": "https://github.com/tamird/gvisor/commit/75a946b54"
         }
       ],
-      "updatedAt": "2026-11-08T13:49:13+00:00",
+      "updatedAt": "2026-11-08T17:42:17+00:00",
       "refinement": {
         "before": {
           "head": "fe913ba6c3b8b39320241686ba4efe963d17e68f"
@@ -63600,25 +63629,32 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "75a946b540c92de35f0d3d3f3cec09b4b892cb67",
-        "observedAt": "2026-11-08T13:49:13+00:00",
-        "disposition": "Revised the change record to quantify the reduction in test actions and executable bytes",
-        "nextAction": "Review the existing proposal.",
+        "observedAt": "2026-11-08T17:42:17+00:00",
+        "disposition": "The current generator still emits one identical unconditional test file per suffix. The consolidated test keeps only the first.",
+        "nextAction": "Change the producer to emit one unconditional file per library, then compare the original AMD64 and ARM64 cases and outcomes before returning the revised source for review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/75a946b54"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "75a946b540c92de35f0d3d3f3cec09b4b892cb67",
+          "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+          "url": "https://github.com/tamird/gvisor/commit/75a946b54",
+          "title": "Build one marshal test binary per Go library",
+          "body": "A two-architecture presubmit ran 92 generated marshal test binaries. Of those, 58 ran no test cases. Each still needed a linked Go executable and a test action on a remote worker. [1]\n\nFor example, on AMD64 the pkg/abi/linux tests for common types and AMD64 types run in separate binaries. Bazel also links and runs a 4.2 MiB binary for the ARM64 types, even though Go excludes every one of its tests. [2]\n\nGive each library one go_test containing all its generated test files. Their Go build constraints already select the cases for the target architecture. Use //pkg/abi/linux:linux_abi_autogen_test to run all 960 applicable cases on either architecture. The common and architecture-specific cases in each library now rerun together.\n\nAcross the 20 libraries this removes 26 test actions per architecture. The AMD64 test executables total 176 MiB instead of 460 MiB, and the ARM64 executables total 156 MiB instead of 395 MiB. Each architecture ran the same 2,340 named cases. [2] [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525\n[2]: https://github.com/tamird/gvisor/actions/runs/42458854682/artifacts/13609192012\n[3]: https://github.com/tamird/gvisor/actions/runs/42459715024/artifacts/13608887823",
+          "summary": "Open the single-commit gVisor PR?",
+          "requestedAt": "2026-11-08T13:49:13+00:00",
+          "outcome": "changes-requested",
+          "at": "2026-11-08T17:42:17+00:00"
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "75a946b540c92de35f0d3d3f3cec09b4b892cb67",
-        "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
-        "url": "https://github.com/tamird/gvisor/commit/75a946b54",
-        "title": "Build one marshal test binary per Go library",
-        "body": "A two-architecture presubmit ran 92 generated marshal test binaries. Of those, 58 ran no test cases. Each still needed a linked Go executable and a test action on a remote worker. [1]\n\nFor example, on AMD64 the pkg/abi/linux tests for common types and AMD64 types run in separate binaries. Bazel also links and runs a 4.2 MiB binary for the ARM64 types, even though Go excludes every one of its tests. [2]\n\nGive each library one go_test containing all its generated test files. Their Go build constraints already select the cases for the target architecture. Use //pkg/abi/linux:linux_abi_autogen_test to run all 960 applicable cases on either architecture. The common and architecture-specific cases in each library now rerun together.\n\nAcross the 20 libraries this removes 26 test actions per architecture. The AMD64 test executables total 176 MiB instead of 460 MiB, and the ARM64 executables total 156 MiB instead of 395 MiB. Each architecture ran the same 2,340 named cases. [2] [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525\n[2]: https://github.com/tamird/gvisor/actions/runs/42458854682/artifacts/13609192012\n[3]: https://github.com/tamird/gvisor/actions/runs/42459715024/artifacts/13608887823",
-        "summary": "Open the single-commit gVisor PR?",
-        "requestedAt": "2026-11-08T13:49:13+00:00"
+        "url": "https://github.com/tamird/gvisor/commit/75a946b54"
       }
     },
     {
@@ -65160,7 +65196,7 @@
       "url": "https://github.com/google/gvisor/pull/17238",
       "status": "open",
       "group": "release",
-      "updatedAt": "2026-11-08T17:13:23Z",
+      "updatedAt": "2026-11-08T17:42:17+00:00",
       "summary": "The published Go branch at 849c51487 could not build ./runsc/cmd/netgofer because that directory was absent. The ordinary exporter on bf7b1290b included the command and 14 proxy source files. Go 1.27.3 built the static Linux AMD64 sidecar from the generated module and ran its help netgofer command, including the -uds-fd option. The check covered the executable and command registration.",
       "evidence": [
         {
@@ -65174,6 +65210,14 @@
         {
           "label": "Published single-commit PR #17238",
           "url": "https://github.com/google/gvisor/pull/17238"
+        },
+        {
+          "label": "Netgofer adaptation for the Bazel Go archive",
+          "url": "https://github.com/tamird/gvisor/commit/e48e4d899"
+        },
+        {
+          "label": "Original projected archive failure, direct/repair ZIP equality and sidecar command tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42505014580/artifacts/13627089013"
         }
       ],
       "settledReviews": [
@@ -65192,14 +65236,16 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent",
         "sourceHead": "bf7b1290b9d9d087f1a26e1a5a9248a6990095a7",
-        "observedAt": "2026-11-08T17:13:23Z",
-        "disposition": "The approved change was published as #17238.",
-        "nextAction": "Follow upstream review on #17238.",
+        "observedAt": "2026-11-08T17:42:17+00:00",
+        "disposition": "The projected #15106 archive dropped the library and command, and the downstream Go build failed. The archive-specific fix and the approved direct assembler exported identical 2,564-entry ZIPs. The independently built Linux AMD64 executables both ran help netgofer.",
+        "nextAction": "If #15106 lands first, rebase #17238 with the verified archive adaptation at e48e4d899. If #17238 lands first, preserve the same files in #15106.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17238",
-          "https://github.com/tamird/gvisor/commit/bf7b1290b"
+          "https://github.com/tamird/gvisor/commit/bf7b1290b",
+          "https://github.com/tamird/gvisor/commit/e48e4d899",
+          "https://github.com/tamird/gvisor/actions/runs/42505014580/artifacts/13627089013"
         ]
       }
     },
@@ -65482,6 +65528,60 @@
         "evidence": [
           "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        ]
+      }
+    },
+    {
+      "id": "pr:17241",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17241,
+      "ref": "research/fuse-background-request-lock",
+      "head": "cd9d815dcc6558cc8d5a9b0afcd118d0718c3ef1",
+      "title": "Abort FUSE requests under the connection mutex",
+      "url": "https://github.com/google/gvisor/pull/17241",
+      "status": "open",
+      "group": "runtime",
+      "updatedAt": "2026-11-08T17:37:40Z",
+      "summary": "Both FUSE transports already update background request limits under connection.mu. Holding that mutex through Abort closes the interval in which a host reply can claim a pending request after disconnect. All 33 runtime cases and both architecture lock analyses passed. Removing the nosave mutex changes the graph checkpoint layout fingerprint.",
+      "evidence": [
+        {
+          "label": "Abort, pending requests, restore and both analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42446359621/artifacts/13604400370"
+        },
+        {
+          "label": "Saved field layout and unlocked-access controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42445513667/artifacts/13603742034"
+        },
+        {
+          "label": "Published single-commit PR #17241",
+          "url": "https://github.com/google/gvisor/pull/17241"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cd9d815dcc6558cc8d5a9b0afcd118d0718c3ef1",
+          "baseHead": "7d1b049f5d541992b47cc38cf564025908a9ed7b",
+          "title": "Abort FUSE requests under the connection mutex",
+          "url": "https://github.com/tamird/gvisor/commit/cd9d815dc",
+          "summary": "Open this single-commit gVisor PR?",
+          "body": "Both FUSE transports hold connection.mu when INIT updates the background request limits. Abort takes asyncMu under the same lock without accessing those limits. It then releases connection.mu between marking the connection disconnected and canceling outstanding requests. A host reply can claim a pending request in that interval.\n\nGuard the background fields with connection.mu and keep it held through Abort. Wake callers waiting for INIT, cancel each pending request in place, then close the full-queue channel after its last notification.\n\nThe saved fields and their order stay the same. Removing the nosave mutex changes the graph checkpoint layout fingerprint.",
+          "requestedAt": "2026-11-08T12:41:39+00:00",
+          "at": "2026-11-08T17:37:40Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17241"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "cd9d815dcc6558cc8d5a9b0afcd118d0718c3ef1",
+        "observedAt": "2026-11-08T17:37:40Z",
+        "disposition": "The approved change was published as #17241.",
+        "nextAction": "Follow upstream review on #17241.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17241",
+          "https://github.com/tamird/gvisor/commit/cd9d815dc"
         ]
       }
     }
