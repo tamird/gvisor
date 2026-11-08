@@ -1,35 +1,59 @@
-name: CI
-
-"on":
+name: Compare native language test entry points
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/native-runtime-test-runner]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the source, compiler, and public release inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 022
+          git init .
+          git fetch --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 03aa2130e511fa58b81a6312b19d012e054e8bd9
+          test "$(git rev-parse HEAD^^)" = 7d1b049f5d541992b47cc38cf564025908a9ed7b
+          w="$RUNNER_TEMP/language-runner"
+          mkdir -m 755 "$w"
+          mkdir -m 700 "$w/docker"
+          cp .github/qualification/language_runner/{check,probe}.py "$w/"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://github.com/bazelbuild/buildtools/releases/download/v8.5.1/buildifier-linux-amd64 -o "$w/buildifier"
+          echo "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7  $w/buildifier" | sha256sum -c
+          chmod 755 "$w/bazel" "$w/buildifier"
+          sudo -n apt-get update -qq
+          sudo -n apt-get install -qy build-essential crossbuild-essential-arm64 libnuma-dev strace
+      - name: Check the five original entry points and run CPython through the native launcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 022
+          w="$RUNNER_TEMP/language-runner"
+          export DOCKER_CONFIG="$w/docker"
+          python3 -IB "$w/check.py"
+      - name: Check the limited receipt
+        id: check
+        if: always() && !cancelled()
+        shell: python
+        run: |
+          import json, os, re
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"]) / "language-runner/result.json"
+          assert p.is_file() and not p.is_symlink() and p.stat().st_size < 196608
+          s = p.read_text()
+          assert json.loads(s)["carrier"] == os.environ["GITHUB_SHA"]
+          assert not re.search(r"(?i)(authorization:|bearer |x-buildbuddy-api-key|ghp_|github_pat_|-----BEGIN [A-Z ]*PRIVATE KEY)", s)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.check.outcome == 'success'
+        with:
+          name: native-language-runner
+          path: ${{ runner.temp }}/language-runner/result.json
+          if-no-files-found: error
