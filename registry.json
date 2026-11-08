@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T01:51:11+00:00",
+    "updatedAt": "2026-11-08T11:54:36+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29886,14 +29886,14 @@
       "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T00:23:11.412Z",
-      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The separate question of who supplies queue.h remains open.\n\nThe tested musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.\n\nOn the reviewed stub changes, all 10 AMD64 and 11 ARM64 offsets matched their ELF symbols and the musl CLI linked. The Sentry then stopped in the old //vdso:vdso rule when /bin/ld could not emit AArch64. This optional plugin port remains under investigation. Alpine packages sys/queue.h in bsd-compat-headers, separately from musl-dev.",
+      "updatedAt": "2026-11-08T11:54:36+00:00",
+      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The LLVM build selected only sys/queue.h from its declared GNU sysroot. Its 19,539 bytes matched the supplier’s header.\n\nThe tested musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.\n\nOn the reviewed stub changes, all 10 AMD64 and 11 ARM64 offsets matched their ELF symbols and the musl CLI linked. The Sentry then stopped in the old //vdso:vdso rule when /bin/ld could not emit AArch64. This optional plugin port remains under investigation. Alpine packages sys/queue.h in bsd-compat-headers, separately from musl-dev.\n\nThe declared LLVM compiler built and installed static AMD64 runsc and plugin Sentry binaries through make runsc-plugin-stack and make refresh. The installed plugin initialized and exchanged TCP and UDP payloads across the bridge. Both architectures’ vDSOs linked. The test ran once on AMD64 with no skips. The workflow’s final XML-copy step failed on an omitted size field after the test passed. The repaired exporter recovered the exact 85-byte XML and rejected all four size and digest mismatches.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "dd63198c66946d7a38279478369bf269243a6ef4",
-        "observedAt": "2026-11-07T00:23:11.412Z",
-        "disposition": "The proposed musl port is on hold for a DPDK and toolchain investigation.",
-        "nextAction": "Keep the optional plugin off the compiler critical path. TLDK main is the exact pinned cec8ff773 and carries DPDK 18.11 patches. DPDK 25.11 on Linux still includes sys/queue.h. A DPDK upgrade alone does not supply that header.",
+        "observedAt": "2026-11-08T11:54:36+00:00",
+        "disposition": "The opt-in AMD64 plugin passed its installed traffic test on the declared LLVM/musl build.",
+        "nextAction": "Check that selecting the optional backtrace test preserves the execution platforms supplied by the mixed RBE configuration.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153",
@@ -29901,7 +29901,8 @@
           "https://github.com/tamird/gvisor/actions/runs/42155923250/artifacts/13474517191",
           "https://github.com/tamird/gvisor/actions/runs/42151189673/artifacts/13473036461",
           "https://github.com/tamird/gvisor/commit/dd63198c6",
-          "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258"
+          "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258",
+          "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038"
         ]
       },
       "evidence": [
@@ -30024,6 +30025,14 @@
         {
           "label": "TLDK patch application on original DPDK and three later versions",
           "url": "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258"
+        },
+        {
+          "label": "Installed binaries, bridge traffic and XML-copy error",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038"
+        },
+        {
+          "label": "Recovered original XML and four rejected inconsistent records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42477797039/artifacts/13616167226"
         }
       ],
       "refinement": {
@@ -62494,6 +62503,56 @@
         "summary": "Open this single-commit gVisor PR?",
         "body": "Passing `--test_arg` with a space in an exclusion CSV path makes the language runner try to open only the first word. The generated Bash launcher expands `$@` without quotes, even though Bazel already supplied the argument in one piece.\n\nUse Skylib’s `native_test` to pass each suite’s arguments and declared CSV directly to the existing Go runner. Keep the proctor and release in its runfiles."
       }
+    },
+    {
+      "id": "branch:tcp-timewait-reuse-negotiated-timestamps",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-timewait-reuse-negotiated-timestamps",
+      "head": "b6b0132b75b6d770a8977a7ef388d844550eb5a6",
+      "url": "https://github.com/tamird/gvisor/commit/b6b0132b7",
+      "title": "Require timestamps to reuse a TCP TIME_WAIT port",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T11:54:36+00:00",
+      "summary": "With one ephemeral port and no negotiated timestamps, Linux kept the old connection’s port in TIME_WAIT. Stock gVisor let the next connection reuse it. The fix checks whether the old handshake negotiated timestamps. All 25 timestamp-enabled takeover rounds also passed, normally and under the race detector.",
+      "evidence": [
+        {
+          "label": "Single commit for review",
+          "url": "https://github.com/tamird/gvisor/commit/b6b0132b7"
+        },
+        {
+          "label": "Native Linux socket comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41367508644/artifacts/13107777937"
+        },
+        {
+          "label": "Stock and corrected tests, including all race rounds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42476425825/artifacts/13615539468"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "b6b0132b75b6d770a8977a7ef388d844550eb5a6",
+        "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+        "url": "https://github.com/tamird/gvisor/commit/b6b0132b7",
+        "title": "Require timestamps to reuse a TCP TIME_WAIT port",
+        "body": "With only one ephemeral port, a new connection could displace the\nprevious connection in TIME_WAIT even if the peer had not negotiated\ntimestamps. Its last timestamp update was never initialized, so the\none-second age check passed. Linux keeps the port reserved in this\ncase [1].\n\nCheck that the old handshake negotiated timestamps before reusing\nits port. Exercise both outcomes after the reuse delay. In the takeover\ntest, late ACKs race Connect within each round. Finish each round\nbefore another stack's cleanup can abort its closing socket.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_ipv4.c#L164-L167",
+        "summary": "Open the standalone PR to require negotiated timestamps for TIME_WAIT port reuse?",
+        "requestedAt": "2026-11-08T11:54:36+00:00"
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "b6b0132b75b6d770a8977a7ef388d844550eb5a6",
+        "observedAt": "2026-11-08T11:54:36+00:00",
+        "disposition": "Ready for contributor review.",
+        "nextAction": "Open the standalone PR after contributor approval.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b6b0132b7",
+          "https://github.com/tamird/gvisor/actions/runs/41367508644/artifacts/13107777937",
+          "https://github.com/tamird/gvisor/actions/runs/42476425825/artifacts/13615539468"
+        ]
+      }
     }
   ],
   "edges": [
@@ -84235,7 +84294,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-07T19:29:25+00:00",
+      "updatedAt": "2026-11-08T11:54:36+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -85102,6 +85161,15 @@
             {
               "label": "Reviewable single commit",
               "url": "https://github.com/tamird/gvisor/commit/664d9fdb5"
+            }
+          ]
+        },
+        {
+          "text": "In four matched trials per stack, Linux and gVisor accepted 7,000 of 8,193 offered bytes when the application held its 4,200-byte prefix unread. Reading that prefix before the tail arrived let both stacks accept all 8,193. After shrinking a buffer that already held 12,288 bytes, Linux accepted another 1,400 and gVisor accepted none. Packet captures and application reads agreed. The historical Buildkite failure has no capture to identify which ordering occurred.",
+          "evidence": [
+            {
+              "label": "Forty named cases with both packet captures and readbacks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42474704019/artifacts/13615863442"
             }
           ]
         }
