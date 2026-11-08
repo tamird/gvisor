@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T12:48:07+00:00",
+    "updatedAt": "2026-11-08T12:56:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -62615,7 +62615,7 @@
       "url": "https://github.com/google/gvisor/pull/17214",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T12:15:08+00:00",
+      "updatedAt": "2026-11-08T12:56:37+00:00",
       "summary": "Ayush requested review from Tamir on #17209. His protected clear and the #15181 allocator changes passed together on native AMD64 and ARM64. On an ARM64 guest with 64 KiB pages, 58 of 90 fault cases failed at the proposed head. Using the host page size in the test fixture made all 74 applicable cases pass, including SIGBUS and SIGSEGV at 128 KiB.",
       "evidence": [
         {
@@ -62637,17 +62637,46 @@
         {
           "label": "Linux gates MADV_NOHUGEPAGE on CONFIG_TRANSPARENT_HUGEPAGE",
           "url": "https://github.com/torvalds/linux/blob/e8f897f4a/mm/madvise.c#L1178-L1182"
+        },
+        {
+          "label": "Published review on #17214 with both inline comments",
+          "url": "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
+        },
+        {
+          "label": "Use the host page size in fault cases (line 506)",
+          "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506286421"
+        },
+        {
+          "label": "Handle MADV_NOHUGEPAGE on kernels without THP (line 576)",
+          "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506286423"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
-        "title": "Run the protected-clear fault tests with native page boundaries",
-        "summary": "Post two inline comments on fault boundaries and MADV_NOHUGEPAGE?",
-        "body": "The protected clear and the allocator changes from #15181 passed together on native AMD64 and ARM64. I’d use this implementation in place of #17209.\n\nhttps://github.com/google/gvisor/blob/4f94a055b/pkg/safecopy/safecopy_test.go#L506\nCould the fault setup use unix.Getpagesize() for its offsets and mapping length? On ARM64 with 64 KiB pages, mprotect rejected the 4 KiB and 32 KiB offsets. A memfd truncated inside a page stayed accessible past the expected fault. With page-aligned boundaries, all 74 applicable cases passed, including SIGSEGV and SIGBUS at 128 KiB.\nhttps://github.com/tamird/gvisor/actions/runs/42477798171/artifacts/13616837011\n\nhttps://github.com/google/gvisor/blob/4f94a055b/pkg/safecopy/safecopy_test.go#L576\nCould the test continue on EINVAL from MADV_NOHUGEPAGE? Linux rejects that advice when built without CONFIG_TRANSPARENT_HUGEPAGE. Ordinary pages already give this test the boundary it needs.\nhttps://github.com/torvalds/linux/blob/e8f897f4a/mm/madvise.c#L1178-L1182\n\nPosted by Codex on behalf of @tamird.",
-        "url": "https://github.com/google/gvisor/pull/17214/files#diff-65f5a078e3d8d8eee700ccfe1c465c00dc02e78074649e882867ba3949f5ffd0R506",
-        "requestedAt": "2026-11-08T09:39:38+00:00"
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
+          "title": "Run the protected-clear fault tests with native page boundaries",
+          "summary": "Post two inline comments on fault boundaries and MADV_NOHUGEPAGE?",
+          "body": "The protected clear and the allocator changes from #15181 passed together on native AMD64 and ARM64. I’d use this implementation in place of #17209.\n\nhttps://github.com/google/gvisor/blob/4f94a055b/pkg/safecopy/safecopy_test.go#L506\nCould the fault setup use unix.Getpagesize() for its offsets and mapping length? On ARM64 with 64 KiB pages, mprotect rejected the 4 KiB and 32 KiB offsets. A memfd truncated inside a page stayed accessible past the expected fault. With page-aligned boundaries, all 74 applicable cases passed, including SIGSEGV and SIGBUS at 128 KiB.\nhttps://github.com/tamird/gvisor/actions/runs/42477798171/artifacts/13616837011\n\nhttps://github.com/google/gvisor/blob/4f94a055b/pkg/safecopy/safecopy_test.go#L576\nCould the test continue on EINVAL from MADV_NOHUGEPAGE? Linux rejects that advice when built without CONFIG_TRANSPARENT_HUGEPAGE. Ordinary pages already give this test the boundary it needs.\nhttps://github.com/torvalds/linux/blob/e8f897f4a/mm/madvise.c#L1178-L1182\n\nPosted by Codex on behalf of @tamird.",
+          "url": "https://github.com/google/gvisor/pull/17214/files#diff-65f5a078e3d8d8eee700ccfe1c465c00dc02e78074649e882867ba3949f5ffd0R506",
+          "requestedAt": "2026-11-08T09:39:38+00:00",
+          "outcome": "approved",
+          "at": "2026-11-08T12:54:33Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream author",
+        "sourceHead": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
+        "observedAt": "2026-11-08T12:54:33Z",
+        "disposition": "Tamir reviewed #17214 in response to Ayush’s request on #17209. The two inline comments cover fault boundaries on 64 KiB pages and MADV_NOHUGEPAGE on kernels without transparent huge pages.",
+        "nextAction": "Follow the author’s response.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
+          "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900",
+          "https://github.com/google/gvisor/pull/17214#discussion_r4506286421",
+          "https://github.com/google/gvisor/pull/17214#discussion_r4506286423"
+        ]
       }
     },
     {
@@ -62659,25 +62688,45 @@
       "title": "Check Docker only when capturing a checkpoint",
       "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T12:30:33+00:00",
+      "status": "Delivered",
+      "updatedAt": "2026-11-08T12:56:37+00:00",
       "summary": "Supplying -checkpoint-dir currently makes the reader query Docker before it opens the saved files. The fork checks Docker only for live capture. The existing round-trip test and EncodeStatefile ran on the same saved kernel without a Docker client or daemon.",
       "evidence": [
         {
           "label": "Native checkpoint capture, three round trips, EncodeStatefile and live Docker control",
           "url": "https://github.com/tamird/gvisor/actions/runs/42479453293/artifacts/13617351334"
+        },
+        {
+          "label": "Published single-commit PR #17221",
+          "url": "https://github.com/google/gvisor/pull/17221"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
-        "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
-        "title": "Check Docker only when capturing a checkpoint",
-        "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f",
-        "requestedAt": "2026-11-08T12:30:33+00:00",
-        "summary": "Open this single-commit gVisor PR?",
-        "body": "a9c4e2084 added -checkpoint-dir so the checkpoint benchmark could read a checkpoint from the same source tree. TestMain still runs docker version before opening those files, so a worker without Docker cannot decode a saved checkpoint.\n\nParse the benchmark flags in TestMain and check the Docker version when the benchmark needs to start nginx and capture a checkpoint."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+          "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+          "title": "Check Docker only when capturing a checkpoint",
+          "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f",
+          "requestedAt": "2026-11-08T12:30:33+00:00",
+          "summary": "Open this single-commit gVisor PR?",
+          "body": "a9c4e2084 added -checkpoint-dir so the checkpoint benchmark could read a checkpoint from the same source tree. TestMain still runs docker version before opening those files, so a worker without Docker cannot decode a saved checkpoint.\n\nParse the benchmark flags in TestMain and check the Docker version when the benchmark needs to start nginx and capture a checkpoint.",
+          "outcome": "approved",
+          "at": "2026-11-08T12:55:09Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17221"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+        "observedAt": "2026-11-08T12:55:09Z",
+        "disposition": "Published the approved change as #17221.",
+        "nextAction": "Follow #17221 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17221",
+          "https://github.com/tamird/gvisor/commit/cba5d1b3f"
+        ]
       }
     },
     {
@@ -63166,6 +63215,56 @@
         "requestedAt": "2026-11-08T12:47:42+00:00",
         "summary": "Open this single-commit gVisor PR?",
         "body": "TestReduceRecvBuf failed after reading all 8,193 bytes it offered [1]. The test can call recv while the TCP receiver is still processing the burst. That read frees buffer space for later segments.\n\nQueue a two-byte reply with the reverse TCP window closed. Open the window after sending the burst and wait for the second reply byte before draining the socket. Its ACK gives the accepted byte count. A one-byte zero-window probe cannot satisfy the wait.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53913#01a1b9e5-b60c-4642-adc2-60db34945a04"
+      }
+    },
+    {
+      "id": "pr:17221",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17221,
+      "ref": "research/checkpoint-dir-without-docker",
+      "head": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+      "title": "Check Docker only when capturing a checkpoint",
+      "url": "https://github.com/google/gvisor/pull/17221",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-08T12:56:37+00:00",
+      "summary": "Supplying -checkpoint-dir currently makes the reader query Docker before it opens the saved files. The fork checks Docker only for live capture. The existing round-trip test and EncodeStatefile ran on the same saved kernel without a Docker client or daemon.",
+      "evidence": [
+        {
+          "label": "Native checkpoint capture, three round trips, EncodeStatefile and live Docker control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42479453293/artifacts/13617351334"
+        },
+        {
+          "label": "Published single-commit PR #17221",
+          "url": "https://github.com/google/gvisor/pull/17221"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+          "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+          "title": "Check Docker only when capturing a checkpoint",
+          "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f",
+          "requestedAt": "2026-11-08T12:30:33+00:00",
+          "summary": "Open this single-commit gVisor PR?",
+          "body": "a9c4e2084 added -checkpoint-dir so the checkpoint benchmark could read a checkpoint from the same source tree. TestMain still runs docker version before opening those files, so a worker without Docker cannot decode a saved checkpoint.\n\nParse the benchmark flags in TestMain and check the Docker version when the benchmark needs to start nginx and capture a checkpoint.",
+          "outcome": "approved",
+          "at": "2026-11-08T12:55:09Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17221"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+        "observedAt": "2026-11-08T12:55:09Z",
+        "disposition": "Published the approved change as #17221.",
+        "nextAction": "Follow #17221 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17221",
+          "https://github.com/tamird/gvisor/commit/cba5d1b3f"
+        ]
       }
     }
   ],
