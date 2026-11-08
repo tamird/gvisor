@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T00:43:46+00:00",
+    "updatedAt": "2026-11-08T01:14:58+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52712,8 +52712,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T00:34:43+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The approved successor is open as with_cfg.bzl #275 and the author replied to David on #908. David then proposed adding the musl libc constraint to the execution platform. Stock hermetic-llvm passed all six helper operations in an empty AMD64 root when the execution platform specified musl. With only Linux and x86_64 specified, five helpers failed to start. The GNU target executable had the same bytes across both selections. gVisor’s scratch-worker path can use the execution-platform constraint with the released tools.",
+      "updatedAt": "2026-11-08T01:08:00+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The approved successor is open as with_cfg.bzl #275 and the author replied to David on #908. David then proposed adding the musl libc constraint to the execution platform. Stock hermetic-llvm passed all six helper operations in an empty AMD64 root when the execution platform specified musl. With only Linux and x86_64 specified, five helpers failed to start. The GNU target executable had the same bytes across both selections. gVisor’s scratch-worker path can use the execution-platform constraint with the released tools.\n\nOn native ARM64, the gVisor-pinned LLVM 0.8.24 release passed all six helper operations in an empty root with an explicitly musl execution platform. With libc unspecified, each helper required the absent AArch64 glibc loader and exited 127. Both settings produced the same runnable GNU ARM64 target. The musl ARM64 execution platform also compiled and linked a GNU AMD64 ELF, which the qualification inspected without executing.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52822,6 +52822,10 @@
         {
           "label": "GNU generator dependency count and identical GNU/musl module maps",
           "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42430088604/artifacts/13597530149"
+        },
+        {
+          "label": "LLVM 0.8.24 on native ARM64: six helper operations and an AMD64 GNU cross-build",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42432577638/artifacts/13597483989"
         }
       ],
       "settledReviews": [
@@ -54652,8 +54656,8 @@
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T23:05:49+00:00",
-      "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.",
+      "updatedAt": "2026-11-08T01:14:58+00:00",
+      "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.",
       "evidence": [
         {
           "label": "Exact submitted ACK decision, line 1993",
@@ -54698,6 +54702,18 @@
         {
           "label": "Tested fix with the same tree",
           "url": "https://github.com/tamird/gvisor/commit/0bb42c582"
+        },
+        {
+          "label": "Three TCP policies on loopback, original 36 sample runs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42431860272/artifacts/13598545998"
+        },
+        {
+          "label": "Request latency and segments per request, paired benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42433234507/artifacts/13598009223"
+        },
+        {
+          "label": "TCP reviewer guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
       "settledReviews": [
@@ -56842,8 +56858,8 @@
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T20:40:05.864Z",
-      "summary": "The delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.",
+      "updatedAt": "2026-11-08T01:14:58+00:00",
+      "summary": "The delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.",
       "evidence": [
         {
           "label": "Both smaller-segment cases failed previously; all 11 passed on the current revision",
@@ -56876,6 +56892,18 @@
         {
           "label": "Published inline review comment",
           "url": "https://github.com/google/gvisor/pull/17082#discussion_r4492765694"
+        },
+        {
+          "label": "Three TCP policies on loopback, original 36 sample runs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42431860272/artifacts/13598545998"
+        },
+        {
+          "label": "Request latency and segments per request, paired benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42433234507/artifacts/13598009223"
+        },
+        {
+          "label": "TCP reviewer guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
       "settledReviews": [
@@ -62397,6 +62425,36 @@
           "https://github.com/google/gvisor/pull/17210",
           "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311"
         ]
+      }
+    },
+    {
+      "id": "branch:state-size-exact-values",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/state-size-exact-values",
+      "head": "576430c42e0bb216b2611274a20d08463741c8a9",
+      "title": "Reserve graph prefixes for inexact values",
+      "url": "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T01:14:10+00:00",
+      "summary": "The graph encoder writes a length prefix for inexact values. On a real tmpfs checkpoint with 50,000 files, reserving prefixes only for those values reduced the final output buffer by 1,007,616 bytes. Across 12 paired encodes, allocated bytes fell from 118.9 MiB to 117.9 MiB (−0.81%). Allocation count stayed at 100,937 per encode, and the timing difference was inconclusive (p=.551).",
+      "evidence": [
+        {
+          "label": "50,000-file checkpoint, buffer capacities and original benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42431995900/artifacts/13598227954"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "576430c42e0bb216b2611274a20d08463741c8a9",
+        "baseHead": "7d1b049f5d541992b47cc38cf564025908a9ed7b",
+        "title": "Reserve graph prefixes for inexact values",
+        "url": "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9",
+        "requestedAt": "2026-11-08T01:14:10+00:00",
+        "summary": "Open this single-commit gVisor PR?",
+        "body": "Since 6fb2e9fe2, the graph encoder has reserved ten bytes for a length\nprefix on every value object when sizing its output buffer. It writes\nthat prefix only for inexact values. The decoder may need to skip their\ndata until a reference supplies the exact type.\n\nUse the object table's objInexact flag to reserve the prefix.\n\nEncoding a kernel restored from a checkpoint with 50,000 empty tmpfs\nfiles reserved space for 100,727 exact values' unused prefixes. The\noutput buffer shrank from 8,306,688 to 7,299,072 bytes. Both versions\nmade 100,937 allocations per encode. [1]\n\n                      │    stock     │                fixed                │\n                      │     B/op     │     B/op      vs base               │\nCheckpointFile/Encode   118.9Mi ± 0%   117.9Mi ± 0%  -0.81% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42431995900/artifacts/13598227954"
       }
     }
   ],
@@ -79851,7 +79909,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T00:34:43+00:00",
+      "updatedAt": "2026-11-08T01:08:00+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -82585,6 +82643,15 @@
               "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
             }
           ]
+        },
+        {
+          "text": "On a native ARM64 Ubuntu worker, all 370 published files in LLVM 0.8.24 matched the supplier tag. The BCR patch sets the module version. In an empty root, all six real helper operations exited 127 for a missing glibc loader when the execution platform specified Linux and ARM64 alone. Adding the musl constraint let all six complete. Both configurations ran the byte-identical 6,256-byte GNU ARM64 target. The musl ARM64 worker also compiled and linked a 5,336-byte GNU AMD64 ELF, verified by its machine type and x86-64 interpreter. The AMD64 file was inspected only.",
+          "evidence": [
+            {
+              "label": "LLVM 0.8.24 on native ARM64: six helper operations and an AMD64 GNU cross-build",
+              "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42432577638/artifacts/13597483989"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the rules_shell #64 toolchain API through upstream release and reconcile the qualified integrations with their separately tracked product prerequisites.",
@@ -83096,6 +83163,10 @@
         {
           "label": "GNU generator dependency count and identical GNU/musl module maps",
           "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42430088604/artifacts/13597530149"
+        },
+        {
+          "label": "LLVM 0.8.24 on native ARM64: six helper operations and an AMD64 GNU cross-build",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42432577638/artifacts/13597483989"
         }
       ],
       "group": "rbe"
@@ -86155,5 +86226,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T00:43:46+00:00"
+  "updatedAt": "2026-11-08T01:14:58+00:00"
 }
