@@ -1,35 +1,65 @@
-name: CI
-
-"on":
+name: Check TCP keepalive deadlines across restore
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/restore-tcp-keepalive-probes]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  consumer-tests:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the saved-timer changes and public Linux inputs
+        timeout-minutes: 13
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/keepalive-restore"
+          mkdir -m 700 "$w" "$w/receipt"
+          mkdir -p "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"verified":false,"stage":"setup"}' > "$w/receipt/result.json"
+          product=ed68627dfd278ac0ed0092b7b8370855769ed1ec
+          base=12bdd02c2061dea8d6a252db59bd5d4b11e99e5f
+          donor=4a4ff24e85a4bc8f74eb791c715553c8b1a2bec7
+          prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q .
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$donor" "$prep" "$assets" "$inputs"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$product"
+          test "$(git rev-parse "$product^{tree}")" = 9e9e4d457a5ace7054b95ba11fd2a9b90cd4f81d
+          test "$(git rev-parse "$product^")" = "$base"
+          git diff --exit-code "$product" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/tcp_keepalive_restore.py'
+          git show "$GITHUB_SHA:.github/qualification/tcp_keepalive_restore.py" > "$w/check.py"
+          git show "$donor:.github/qualification/netip_wildcard.py" > "$w/netip_wildcard.py"
+          git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$inputs:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          git checkout -q --detach "$product"
+          test "$(cat .bazelversion)" = 8.8.1
+          cd "$w"
+          test "$(git hash-object --no-filters netip_wildcard.py)" = 607ebe973b2650264838a69357da861c73e628ef
+          test "$(git hash-object --no-filters previous.py)" = 0c1db7071558c5f9c8de45b60ba625183bd8a400
+          test "$(git hash-object --no-filters public_assets.py)" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          test "$(git hash-object --no-filters tldk_public_inputs.py)" = 1f3f7d4d75810ad60941772776e01f3b71b3b171
+          curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o bazel
+          echo '5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  bazel' | sha256sum -c -
+          chmod +x bazel
+          /usr/bin/unshare --user --map-root-user --net -- /usr/bin/test -e /sys/class/net/lo
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > jammy.list
+          opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+          sudo -n apt-get "${opts[@]}" update -qq
+          sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu libnuma-dev
+      - name: Run the saved-deadline and failed-route controls
+        timeout-minutes: 57
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" FIX=ed68627dfd278ac0ed0092b7b8370855769ed1ec \
+            python3 -B "$RUNNER_TEMP/keepalive-restore/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tcp-keepalive-restore-results
+          path: ${{ runner.temp }}/keepalive-restore/receipt
+          if-no-files-found: error
+          retention-days: 14
