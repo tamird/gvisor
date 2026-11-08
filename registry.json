@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T20:00:21+00:00",
+    "updatedAt": "2026-11-08T20:33:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -66073,6 +66073,51 @@
         "body": "Bind, accept and cleanup hold the endpoint mutex when they record or release a port. Restore cleared the reservation flag without that mutex when returning a saved endpoint to StateClose.\n\nMark isPortReserved as guarded by the endpoint mutex. Record the port's reservation details after PickEphemeralPort returns successfully. Its callback accepts a port only after registering the endpoint.\n\nClear the flag and restore StateClose in the same critical section. Release the endpoint mutex before removing the endpoint from the stack's cleanup list.",
         "requestedAt": "2026-11-08T20:00:21+00:00"
       }
+    },
+    {
+      "id": "branch:tcp-keepalive-reenable",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-keepalive-reenable",
+      "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
+      "title": "Restart TCP keepalive after a disabled timer fires",
+      "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T20:33:01+00:00",
+      "summary": "An idle connection stopped sending TCP keepalive probes when its timer fired with SO_KEEPALIVE disabled and the application later re-enabled it. The callback now consumes the expired timer before checking the option.\n\nPacketimpact captured three connections per implementation. When keepalive was re-enabled after the old deadline, native Linux and the fix sent one new probe each, and stock gVisor sent none. Re-enabling before that deadline produced one probe on all three. When a probe had already been sent before disabling the option, Linux and the fix sent a second probe after re-enabling it. Stock sent only the first. All disabled intervals stayed quiet.\n\nThe separate allocation proposal afabfbaf9 touches the same callback. An integration needs to retain its sender and timer initialization guards, then consume expiration before checking SO_KEEPALIVE.",
+      "evidence": [
+        {
+          "label": "Native Linux, stock gVisor and corrected gVisor: original logs, XML and packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991"
+        }
+      ],
+      "links": [
+        {
+          "label": "Independent keepalive timer allocation proposal",
+          "url": "https://tamird.github.io/gvisor/#branch%3Atcp-keepalive-sender"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
+        "observedAt": "2026-11-08T20:33:01+00:00",
+        "disposition": "One fork commit includes the fix and the regression test. The packet captures reproduce the missed probe and verify resumption on the revised source.",
+        "nextAction": "Review the keepalive re-enable fix for a single upstream pull request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
+        "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
+        "title": "Restart TCP keepalive after a disabled timer fires",
+        "summary": "Open the single-commit gVisor PR?",
+        "body": "Disabling SO_KEEPALIVE leaves the clock timer running. If it fires while keepalive is disabled, the callback returns before consuming the orphaned timer. Re-enabling keepalive then records a new deadline but leaves an idle connection without a scheduled probe.\n\nConsume the clock wakeup before checking SO_KEEPALIVE. Check that an idle connection stays quiet while keepalive is disabled and resumes probing when the option is enabled again.",
+        "requestedAt": "2026-11-08T20:33:01+00:00"
+      }
     }
   ],
   "edges": [
@@ -90039,5 +90084,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T20:00:21+00:00"
+  "updatedAt": "2026-11-08T20:33:01+00:00"
 }
