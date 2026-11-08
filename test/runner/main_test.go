@@ -15,7 +15,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"os"
 	"path/filepath"
 	"strings"
@@ -105,6 +107,39 @@ func TestPrintCheckpointDir(t *testing.T) {
 				if _, err := os.Stat(emptyDir + ext); !os.IsNotExist(err) {
 					t.Errorf("unexpected %s created for empty checkpoint dir (err=%v)", emptyDir+ext, err)
 				}
+			}
+		})
+	}
+}
+
+// TestAutosaveLiveImages runs the production autosave dump on the images
+// independently parsed and restored by TestExistingCheckpointReader.
+func TestAutosaveLiveImages(t *testing.T) {
+	if err := testutil.ConfigureExePath(); err != nil {
+		t.Fatal(err)
+	}
+	for _, layout := range []string{"wire", "graph"} {
+		t.Run(layout, func(t *testing.T) {
+			dir := filepath.Join(os.Getenv("CHECKPOINT_TRANSFER"), layout)
+			data, err := os.ReadFile(filepath.Join(dir, checkpointFile))
+			if err != nil || len(data) == 0 {
+				t.Fatalf("read checkpoint: %v", err)
+			}
+			printCheckpointDir(dir)
+			for _, ext := range []string{"txt", "html"} {
+				out, err := os.ReadFile(dir + "." + ext)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if ext == "txt" {
+					// printOne writes one metadata line before the CLI's text.
+					var found bool
+					_, out, found = bytes.Cut(out, []byte{'\n'})
+					if !found {
+						t.Fatal("missing autosave metadata line")
+					}
+				}
+				t.Logf("AUTOSAVE layout=%s ext=%s image=%x rendered=%x", layout, ext, sha256.Sum256(data), sha256.Sum256(out))
 			}
 		})
 	}

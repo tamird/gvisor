@@ -1,35 +1,79 @@
-name: CI
-
-"on":
+name: Verify default checkpoint dumps and the autosave artifacts
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/autosave-checkpoint-default-consumer]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  checkpoint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 150
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Verify sources and stage the original native guest harness
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          old=ebcea451de61a61957c82527fa94241827267cde
+          donor=86293f7e139a0daf0914b0ad10e4819f440e6879
+          transport=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          bcr=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q
+          git -c gc.auto=0 fetch --quiet --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$old" "$donor" "$transport" "$bcr"
+          git switch -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 912702589414e631909e449f5926b66fa6d5a2c1
+          test "$(git rev-parse HEAD^^)" = "$(git rev-parse "$old^")"
+          test "$(git rev-parse 'HEAD^^{tree}')" = efed891d440103d67399d2ad003afe0a4c5c2a12
+          printf '%s\n' .github/qualification/autosave_checkpoint.py .github/workflows/build.yml runsc/cmd/BUILD runsc/cmd/checkpoint_format_compat_test.go runsc/cmd/spec_test.go test/cmd/test_app/BUILD test/runner/main_test.go | diff - <(git diff --name-only HEAD^ HEAD)
+          git diff --exit-code "$donor" HEAD -- runsc/cmd/BUILD runsc/cmd/spec_test.go test/cmd/test_app/BUILD
+          test "$(cat .bazelversion)" = 9.3.1
+          d="$RUNNER_TEMP/cmd-guest-fixture"
+          mkdir -m 0700 "$d"
+          cp .github/qualification/autosave_checkpoint.py "$d/"
+          for spec in             "$donor:.github/qualification/checkpoint_compat.py 5d3bfb4c8a7f4df7f58360d8fe7628c6cba7491b checkpoint_compat.py"             "$donor:.github/qualification/cmd_guest.py 3b0872f5551a117b94f2a69de089e65fb8677fa5 cmd_guest.py"             "$transport:.github/qualification/recvbuf_deps.py 9a3f571087a1438113a3a067c300e26fcb0ca9e8 public_assets.py"             "$bcr:.github/qualification/tldk_public_inputs.py 1f3f7d4d75810ad60941772776e01f3b71b3b171 tldk_public_inputs.py"             "$bcr:.github/qualification/tldk_installed_inputs.json 6a2bd5d2ea15eb2adc2cab7695db1de719503d87 inputs.json"; do
+            read -r source blob target <<< "$spec"
+            test "$(git rev-parse "$source")" = "$blob"
+            git show "$source" > "$d/$target"
+          done
+          # The two generated guest files stay on this worker. The other
+          # original namespace, identity and environment checks are unchanged.
+          python3 -B - "$d/cmd_guest.py" <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          src = path.read_text()
+          anchor = "def inside(relay, args):\n"
+          assert src.count(anchor) == 1
+          path.write_text(src.replace(anchor, anchor + '    os.environ["CHECKPOINT_TRANSFER"] = str(Path(__file__).resolve().parent / "transfer")\n'))
+          PY
+          if ! command -v x86_64-linux-gnu-g++ >/dev/null || ! dpkg -s libnuma-dev >/dev/null 2>&1; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://ports.ubuntu.com/ubuntu-ports $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=- -o Acquire::Retries=3)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends crossbuild-essential-amd64 libnuma-dev
+          fi
+          for url in https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-arm64 https://api.github.com/repos/bazelbuild/bazel/releases/assets/661108363; do
+            if curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 --max-time 150 -H 'Accept: application/octet-stream' "$url" -o "$d/bazel.part" &&
+               echo "10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366  $d/bazel.part" | sha256sum -c -; then
+              mv "$d/bazel.part" "$d/bazel"
+              break
+            fi
+          done
+          chmod 700 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Compare, restore and render the exact same stock images
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" python3 -IB "$RUNNER_TEMP/cmd-guest-fixture/autosave_checkpoint.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: autosave-checkpoint-default-arm64
+          path: |
+            ${{ runner.temp }}/cmd-guest-fixture/result.json
+            ${{ runner.temp }}/cmd-guest-fixture/original/guest-test.log
+            ${{ runner.temp }}/cmd-guest-fixture/original/guest-test.xml
+            ${{ runner.temp }}/cmd-guest-fixture/original/autosave-test.log
+            ${{ runner.temp }}/cmd-guest-fixture/original/autosave-test.xml
+          if-no-files-found: error
+          retention-days: 14
