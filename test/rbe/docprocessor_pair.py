@@ -15,8 +15,7 @@ import tempfile
 from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree
 
-BASE = "f6d6788e84731673a155c9fff6f28b8624e34c50"
-RELEASE = "dd2be7670c1baaacebfdcab31bb6145ebce39037"
+INTEGRATION = "2df313bd49a0d4d89a123d484ad425463ad4818a"
 OWNER = "//examples/sandboxexec/go/docprocessor:docprocessor_test"
 OWNERS = {OWNER: "amd64", OWNER + "_presubmit_arm64": "arm64"}
 PATTERNS = Path("test/rbe/docprocessor-pair.targets")
@@ -25,15 +24,7 @@ VDSO = "//vdso:vdso.so"
 UBUNTU = "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
 DISTROLESS = {"amd64": "d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18",
               "arm64": "b0aca6ddfad947e66782a29534647936d4d645a1b96d9c8a97e4f53b1607d428"}
-PLATFORMS = ",".join("//test/rbe:scratch_build_" + arch for arch in ("amd64", "arm64"))
-FLAGS = ["--config=buildbuddy_remote_executor", "--config=source-presubmit-mixed",
-         "--extra_execution_platforms=" + PLATFORMS, "--host_platform=//test/rbe:scratch_build_amd64",
-         "--remote_default_exec_properties=OSFamily=linux", "--remote_default_exec_properties=Arch=amd64",
-         "--remote_default_exec_properties=workload-isolation-type=oci",
-         "--remote_default_exec_properties=container-image=docker://gcr.io/distroless/static-debian13@sha256:" + DISTROLESS["amd64"],
-         "--extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash,//test/rbe/go_bootstrap:linux_arm64_ash",
-         "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
-         "--spawn_strategy=remote", "--noremote_local_fallback", "--remote_accept_cached",
+FLAGS = ["--config=buildbuddy_remote_executor", "--config=source-presubmit-mixed", "--remote_accept_cached",
          "--remote_download_outputs=minimal", "--lockfile_mode=off", "--jobs=32", "--keep_going"]
 CASES = set(re.findall(r"(?m)^func (TestProcessDocuments_\w+)\(", (PKG / "docprocessor_test.go").read_text()))
 CASES.update(("TestProcessDocuments_NetworkModes/host", "TestProcessDocuments_NetworkModes/none"))
@@ -278,11 +269,11 @@ if __name__ == "__main__":
     assert os.uname().sysname == "Linux" and os.uname().machine == "x86_64"
     ART.mkdir(parents=True, exist_ok=True)
     head = git("rev-parse", "HEAD")
-    assert git("rev-parse", "HEAD^1", "HEAD^2").splitlines() == [BASE, RELEASE]
+    assert git("rev-parse", "HEAD^") == INTEGRATION
     assert git("rev-parse", "HEAD:test/rbe/BUILD") == "61144a8540656ce79f975dc3694ff1c67524a282"
     assert not git("diff", "--name-only", "HEAD") and PATTERNS.read_text().splitlines() == list(OWNERS)
     assert len(CASES) == 9 and Path(".bazelversion").read_text().strip() == "9.3.1"
-    report = {"source": head, "parents": [BASE, RELEASE], "targets": list(OWNERS), "checks": {}}
+    report = {"source": head, "parent": INTEGRATION, "targets": list(OWNERS), "checks": {}}
     (ART / "docprocessor.json").write_text(json.dumps(report) + "\n")
     with tempfile.TemporaryDirectory(prefix="gvisor-mixed-docprocessor-") as work:
         tmp = Path(work)
@@ -294,7 +285,7 @@ if __name__ == "__main__":
         assert bazel and subprocess.check_output([bazel, "--version"], text=True).strip() == "bazel 9.3.1"
         bep = tmp / "test.bep"
         check_phase(report, "toolchain", tools_selected, bazel, tmp, report)
-        args = [bazel, "test", *FLAGS, "--target_pattern_file=" + str(PATTERNS), "--strategy=TestRunner=remote",
+        args = [bazel, "test", *FLAGS, "--target_pattern_file=" + str(PATTERNS),
                 "--nocache_test_results", "--flaky_test_attempts=1", "--test_env=GO_TEST_WRAP_TESTV=1", "--test_arg=-test.v",
                 "--modify_execution_info=^TestRunner$=+no-remote-cache", "--build_event_publish_all_actions",
                 "--remote_download_regex=.*testlogs/.*/test[.](log|xml)$",
