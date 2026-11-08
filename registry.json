@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T19:10:03+00:00",
+    "updatedAt": "2026-11-08T20:00:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -65913,6 +65913,166 @@
         "body": "The netstack, runsc and Sentry dependency tests cannot report a passing graph on a worker without /bin/bash. When a check fails, the generated script expands dollar signs in dependency labels.\n\nWrite the diagnostic next to the test executable and include it in the runfiles. Link each test to one target-native program that reads its own report, prints any forbidden edges and exits with failure. Keep the ordinary test rule so Bazel forwards the dependencies’ validation actions, including the prebuilt Protobuf compiler check.",
         "requestedAt": "2026-11-08T19:10:03+00:00"
       }
+    },
+    {
+      "id": "branch:tcp-keepalive-sender",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-keepalive-sender",
+      "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
+      "title": "Create the TCP keepalive callback when a connection needs a probe",
+      "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T19:57:20+00:00",
+      "summary": "Create the keepalive timer when an established sender needs it. In 12 alternating AMD64 pairs, wildcard bind/close fell from 26 allocations to 24, and dial/accept from 168 to 162 with keepalive disabled and 171 to 169 with it enabled. Bytes allocated fell in all three workloads. Elapsed time showed no statistically significant change.\n\nBoth revisions gave the same six packet observations. Accepted, post-connect and explicitly rearmed restored sockets sent their idle probe. The pre-connect, re-enabled and untouched restored sockets missed the observed deadline on both revisions. The TCP analyzer passed for AMD64 and ARM64. The reviewed commit has the same tree and parent as measured 2808320e8.",
+      "evidence": [
+        {
+          "label": "TCP timer lifetime issue #7493",
+          "url": "https://github.com/google/gvisor/issues/7493"
+        },
+        {
+          "label": "Measured source before the message-only revision",
+          "url": "https://github.com/tamird/gvisor/commit/2808320e8"
+        },
+        {
+          "label": "Native AMD64 benchstat, original wire observations and both Nogo architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379"
+        }
+      ],
+      "links": [
+        {
+          "label": "TCP issues and reviews",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Atcp-issues-and-reviews"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
+        "observedAt": "2026-11-08T19:57:20+00:00",
+        "disposition": "The single fork commit and its source-matched qualification are available for review.",
+        "nextAction": "Review the proposal before opening a gVisor pull request.",
+        "evidence": [
+          "https://github.com/google/gvisor/issues/7493",
+          "https://github.com/tamird/gvisor/commit/2808320e8",
+          "https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
+        "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
+        "title": "Create the TCP keepalive callback when a connection needs a probe",
+        "summary": "Open the single-commit gVisor PR?",
+        "body": "A socket that only binds, listens or connects with keepalive disabled sets up a keepalive callback that it never schedules. The endpoint also reserves space for the timer and an unused waker before a sender exists.\n\nKeep the timer with the sender and initialize it when SO_KEEPALIVE is enabled and no data is outstanding. Leave keepalive options on the endpoint so applications can set them before connecting or listening.\n\nOn AMD64, compare binding and closing a wildcard socket and completing a dial/accept handshake with keepalive disabled or enabled [1].\n\n```text\n                                   │    stock     │                fixed                │\n                                   │     B/op     │     B/op      vs base               │\nWildcardBindClose-2                  4.844Ki ± 0%   4.555Ki ± 0%  -5.97% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   18.05Ki ± 1%   17.43Ki ± 0%  -3.48% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    18.22Ki ± 0%   17.69Ki ± 0%  -2.89% (p=0.000 n=12)\n\n                                   │   stock    │               fixed               │\n                                   │ allocs/op  │ allocs/op   vs base               │\nWildcardBindClose-2                  26.00 ± 0%   24.00 ± 0%  -7.69% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   168.0 ± 1%   162.0 ± 1%  -3.57% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    171.0 ± 0%   169.0 ± 1%  -1.17% (p=0.000 n=12)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379\n\nFixes #7493",
+        "requestedAt": "2026-11-08T19:57:20+00:00"
+      }
+    },
+    {
+      "id": "branch:gpu-driver-installer-fixture",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/gpu-driver-installer-fixture",
+      "head": "f5d014239449fd5ce9a72af493c40d7c579e367b",
+      "title": "Use a native installer in GPU driver tests",
+      "url": "https://github.com/tamird/gvisor/commit/f5d014239",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T19:57:20+00:00",
+      "summary": "TestDriverInstalls executes the downloaded file before uninstalling the existing driver. On a native AMD64 worker with /bin/sh hidden, the original shell fixture failed at exec. The Go fixture passed all nine install cases. Removing execute permission still failed with EACCES, and a missing fixture failed when the test read it. All four runs were uncached.\n\nOn the separate compiler integration, the same patch passed all 35 package cases, including the nine installer cases, in one uncached remote TestRunner on each native AMD64 and ARM64 empty worker. These tests exercised the mock installer and its error paths without GPU hardware.",
+      "evidence": [
+        {
+          "label": "Original package and masked-shell, chmod and missing-input controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42516727608/artifacts/13631203699"
+        },
+        {
+          "label": "Patch-identical source on the compiler integration",
+          "url": "https://github.com/tamird/gvisor/commit/56be21cd4"
+        },
+        {
+          "label": "Both remote native workers and all 35 named cases on each",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42516812217/artifacts/13631452712"
+        }
+      ],
+      "links": [
+        {
+          "label": "Scratch build actions investigation",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Ascratch-build-actions"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "f5d014239449fd5ce9a72af493c40d7c579e367b",
+        "observedAt": "2026-11-08T19:57:20+00:00",
+        "disposition": "The single fork commit and its source-matched qualification are available for review.",
+        "nextAction": "Review the proposal before opening a gVisor pull request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42516727608/artifacts/13631203699",
+          "https://github.com/tamird/gvisor/commit/56be21cd4",
+          "https://github.com/tamird/gvisor/actions/runs/42516812217/artifacts/13631452712"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "f5d014239449fd5ce9a72af493c40d7c579e367b",
+        "url": "https://github.com/tamird/gvisor/commit/f5d014239",
+        "title": "Use a native installer in GPU driver tests",
+        "summary": "Open the single-commit gVisor PR?",
+        "body": "TestDriverInstalls checks that a downloaded replacement executable is ready to run before uninstalling the current driver. Its mock installer is a shell script, so executing it fails if the test environment lacks /bin/sh, even when the download, permissions and close all succeeded.\n\nUse a small test-only Go executable as the response body. Compute its checksum once and continue executing the prepared file before uninstall and at install time.",
+        "requestedAt": "2026-11-08T19:57:20+00:00"
+      }
+    },
+    {
+      "id": "branch:tcp-port-reservation-lock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-port-reservation-lock",
+      "head": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
+      "title": "Guard TCP port reservation ownership",
+      "url": "https://github.com/tamird/gvisor/commit/cc9a10f3a",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T20:00:21+00:00",
+      "summary": "Guard the endpoint’s port reservation flag with its mutex. Record all four reservation details after ephemeral port selection succeeds. The synchronous callback returns success only after it registers the endpoint. Restore clears the flag and restores the closed state in one critical section before stack cleanup.\n\nThe TCP analyzer reported zero findings on AMD64 and ARM64. Restoring the previous callback or the unlocked restore assignment independently produced diagnostics at the corresponding statement on both architectures. All 93 named native AMD64 XML cases passed across seven selected Go tests. A saved closed endpoint restored to StateClose and its port could be rebound. The evidence establishes the lock precondition and the observed runtime behavior.",
+      "evidence": [
+        {
+          "label": "Guarded source, two independent analyzer negatives and 93 native runtime cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42517144793/artifacts/13632092618"
+        },
+        {
+          "label": "Earlier restore-only change exposed the callback access",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42515998685/artifacts/13631252676"
+        }
+      ],
+      "links": [
+        {
+          "label": "Checklocks contracts investigation",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Achecklocks-contracts"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
+        "observedAt": "2026-11-08T20:00:21+00:00",
+        "disposition": "The single fork commit passed both analyzer architectures and the native close, connect and restore checks.",
+        "nextAction": "Review the proposal before opening a gVisor pull request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42517144793/artifacts/13632092618",
+          "https://github.com/tamird/gvisor/actions/runs/42515998685/artifacts/13631252676"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
+        "url": "https://github.com/tamird/gvisor/commit/cc9a10f3a",
+        "title": "Guard TCP port reservation ownership",
+        "summary": "Open the single-commit gVisor PR?",
+        "body": "Bind, accept and cleanup hold the endpoint mutex when they record or release a port. Restore cleared the reservation flag without that mutex when returning a saved endpoint to StateClose.\n\nMark isPortReserved as guarded by the endpoint mutex. Record the port's reservation details after PickEphemeralPort returns successfully. Its callback accepts a port only after registering the endpoint.\n\nClear the flag and restore StateClose in the same critical section. Release the endpoint mutex before removing the endpoint from the stack's cleanup list.",
+        "requestedAt": "2026-11-08T20:00:21+00:00"
+      }
     }
   ],
   "edges": [
@@ -89879,5 +90039,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T01:51:11+00:00"
+  "updatedAt": "2026-11-08T20:00:21+00:00"
 }
