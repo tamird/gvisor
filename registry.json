@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T18:38:35+00:00",
+    "updatedAt": "2026-11-08T19:10:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -65839,6 +65839,70 @@
           "https://github.com/tamird/gvisor/commit/4b33ee009"
         ]
       }
+    },
+    {
+      "id": "branch:native-dependency-checks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/native-dependency-checks",
+      "head": "5bc25951220fabd92bee33b5862da3271391ada8",
+      "title": "Run dependency checks without Bash",
+      "url": "https://github.com/tamird/gvisor/commit/5bc259512",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T19:10:03+00:00",
+      "summary": "The netstack, runsc and Sentry dependency tests traverse the configured dependency graph in an aspect. Their generated executables use Bash even for a passing graph, and the shell expands dollar signs in forbidden labels. Using Bazel’s AnalysisTestResultInfo still requires /bin/sh. It also drops transitive validation outputs: on both CPU configurations, the original netstack, runsc and Sentry owners exposed zero, one and two validation artifacts respectively. The runsc and Sentry validations cover prebuilt Protobuf tools. With an intentionally failing validation action, the original rule failed and the analysis-test replacement passed without running that action.\n\nThe single-commit change keeps the ordinary test rule and includes its diagnostic in the test runfiles. All three real TestRunners passed uncached on native AMD64 with /bin and /usr/bin masked for the test child. A forbidden edge printed the literal label price$usd and exited 1. The AMD64 and ARM64 executables also returned the expected statuses in empty roots, with ARM64 executed under QEMU on AMD64. With the executable and test label unchanged, a fresh pass was followed by a cached pass. Changing just the generated report produced a fresh failure. The deliberate transitive validation still failed.\n\nThe same patch on the compiler integration at 08ca50082 passed all three tests on each of the native AMD64 and ARM64 remote workers. Both Bazel invocations exited 0. The original receipt records six uncached remote TestResults and their XML and log digests. It binds the requested worker image and runtime wrapper to the netstack owner on both architectures. The reporter subsequently failed when it looked for private _validation outputs in ordinary target-completion events. The separate native/QEMU qualification verified validation propagation and the failing action directly.",
+      "evidence": [
+        {
+          "label": "Single-commit dependency checker",
+          "url": "https://github.com/tamird/gvisor/commit/5bc259512"
+        },
+        {
+          "label": "Stock, standard analysis test and native control. All 18 original log/XML pairs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42511362248/artifacts/13629068503"
+        },
+        {
+          "label": "Exact-source native AMD64 tests, direct AMD64 and ARM64 QEMU execution, cache and validation controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42512734678/artifacts/13629962697"
+        },
+        {
+          "label": "Same source patch on the compiler integration",
+          "url": "https://github.com/tamird/gvisor/commit/08ca50082"
+        },
+        {
+          "label": "Six remote TestResults and their original log and XML digests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42512950891/artifacts/13629718592"
+        }
+      ],
+      "links": [
+        {
+          "label": "Scratch build actions investigation",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Ascratch-build-actions"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "5bc25951220fabd92bee33b5862da3271391ada8",
+        "observedAt": "2026-11-08T19:10:03+00:00",
+        "disposition": "Exact-source controls and the two-architecture remote integration are verified.",
+        "nextAction": "Review the proposed single commit before opening a gVisor pull request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42511362248/artifacts/13629068503",
+          "https://github.com/tamird/gvisor/actions/runs/42512734678/artifacts/13629962697",
+          "https://github.com/tamird/gvisor/commit/08ca50082",
+          "https://github.com/tamird/gvisor/actions/runs/42512950891/artifacts/13629718592"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "5bc25951220fabd92bee33b5862da3271391ada8",
+        "url": "https://github.com/tamird/gvisor/commit/5bc259512",
+        "title": "Run dependency checks without Bash",
+        "summary": "Open the single-commit gVisor PR?",
+        "body": "The netstack, runsc and Sentry dependency tests cannot report a passing graph on a worker without /bin/bash. When a check fails, the generated script expands dollar signs in dependency labels.\n\nWrite the diagnostic next to the test executable and include it in the runfiles. Link each test to one target-native program that reads its own report, prints any forbidden edges and exits with failure. Keep the ordinary test rule so Bazel forwards the dependencies’ validation actions, including the prebuilt Protobuf compiler check.",
+        "requestedAt": "2026-11-08T19:10:03+00:00"
+      }
     }
   ],
   "edges": [
@@ -83378,7 +83442,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T15:58:09+00:00",
+      "updatedAt": "2026-11-08T19:10:03+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -86144,6 +86208,27 @@
             {
               "label": "Private runfiles fixture",
               "url": "https://github.com/tamird/bazel-skylib/actions/runs/42489087805/artifacts/13621086928"
+            }
+          ]
+        },
+        {
+          "text": "The netstack, runsc and Sentry policy tests can keep Bazel’s validation actions while running their test executables without Bash. The analysis-test alternative required /bin/sh and discarded one validation for runsc and two for Sentry; netstack had none. All three owners passed per native architecture on the compiler integration. The proposed source and its measured controls are tracked on the dependency-check card.",
+          "evidence": [
+            {
+              "label": "Dependency-check source and contributor decision",
+              "url": "https://tamird.github.io/gvisor/?view=table&reason=review-changes#branch%3Anative-dependency-checks"
+            },
+            {
+              "label": "Analysis-test comparison on the real owners",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42511362248/artifacts/13629068503"
+            },
+            {
+              "label": "Exact-source tests and controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42512734678/artifacts/13629962697"
+            },
+            {
+              "label": "Original native AMD64 and ARM64 remote TestResults",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42512950891/artifacts/13629718592"
             }
           ]
         }
