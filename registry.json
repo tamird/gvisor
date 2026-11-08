@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T15:35:23+00:00",
+    "updatedAt": "2026-11-08T15:58:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -64728,6 +64728,101 @@
           "https://github.com/tamird/gvisor/actions/runs/42485063170/artifacts/13621319306"
         ]
       }
+    },
+    {
+      "id": "branch:skylib-build-test-native-tools",
+      "type": "branch",
+      "repo": "tamird/bazel-skylib",
+      "targetRepo": "bazelbuild/bazel-skylib",
+      "ref": "research/skylib-build-test-native-tools",
+      "head": "b2d9986a40604f82df42c322122ad61313104cfa",
+      "title": "Allow build_test to run without a shell",
+      "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T15:58:09+00:00",
+      "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nOn the earlier supplier revision, each real gVisor build_test built 16 manual binaries and passed: AMD64 natively and ARM64 through QEMU on the same AMD64 host. The receipt retains both test results and 32 link-output/marker-input pairs. The collector failed while reading the action graph, so those two runs do not establish the physical consumer runfiles or payload digests. Both ran through Bazel’s standard POSIX test harness. Replacing Bazel’s own shell wrapper is tracked separately in #30837.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
+      "evidence": [
+        {
+          "label": "Single-commit supplier proposal",
+          "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4"
+        },
+        {
+          "label": "Tested source with the same tree",
+          "url": "https://github.com/tamird/bazel-skylib/commit/2cea96124"
+        },
+        {
+          "label": "Bazel’s separate POSIX test-wrapper work",
+          "url": "https://github.com/bazelbuild/bazel/pull/30837"
+        },
+        {
+          "label": "Earlier supplier revision",
+          "url": "https://github.com/tamird/bazel-skylib/commit/426072981"
+        },
+        {
+          "label": "Generated API reference on the final source",
+          "url": "https://github.com/tamird/bazel-skylib/blob/b2d9986a4/docs/build_test_doc.md"
+        },
+        {
+          "label": "Canonical docs update, uncached docs test and Buildifier",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42496238240/artifacts/13623870953"
+        },
+        {
+          "label": "Ten effective test sizes on the final source",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42497003818/artifacts/13623652091"
+        },
+        {
+          "label": "Direct argument, test runfiles and deliberately broken consumer controls",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42492450235/artifacts/13622013284"
+        },
+        {
+          "label": "Private fixture on Bazel 7.7.0, 8.5.0 and 9.3.1",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42489087805/artifacts/13621086928"
+        },
+        {
+          "label": "Two real gVisor owners: native AMD64 and emulated ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "426072981a3c79e5afcc069591fdd6551e0a6ff8",
+          "base": "a920cdfe02154b916b493b4ffdd08087f0498fc7"
+        },
+        "after": {
+          "head": "b2d9986a40604f82df42c322122ad61313104cfa",
+          "base": "a920cdfe02154b916b493b4ffdd08087f0498fc7"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "b2d9986a40604f82df42c322122ad61313104cfa",
+        "baseHead": "a920cdfe02154b916b493b4ffdd08087f0498fc7",
+        "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
+        "title": "Allow build_test to run without a shell",
+        "body": "build_test uses a genrule to create a marker for each batch of checked targets. Its test executable is also a shell script on POSIX. Both steps require a shell on the machine that runs them.\n\nLet callers provide a tool that creates an empty file on the execution platform and an executable that runs on the test’s target platform. Pass the marker path as a single argument, including when the target name contains shell metacharacters. The markers keep the checked targets in the build graph when another test inherits only the runfiles, without adding their binaries to that test’s runfiles.\n\nIn gVisor, both the AMD64 and ARM64 tests built all 16 selected binaries. The AMD64 test ran natively and the ARM64 test ran under QEMU on the same worker. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785",
+        "summary": "Open this single-commit pull request against bazelbuild/bazel-skylib?",
+        "requestedAt": "2026-11-08T15:58:09+00:00"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "b2d9986a40604f82df42c322122ad61313104cfa",
+        "observedAt": "2026-11-08T15:58:09+00:00",
+        "disposition": "The single Skylib fork commit is ready for contributor review.",
+        "nextAction": "Review the proposed Skylib change. The gVisor filegroup proposal has its own disposition.",
+        "evidence": [
+          "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
+          "https://github.com/tamird/bazel-skylib/actions/runs/42497003818/artifacts/13623652091",
+          "https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785"
+        ]
+      },
+      "links": [
+        {
+          "label": "Scratch build actions investigation",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Ascratch-build-actions"
+        }
+      ]
     }
   ],
   "edges": [
@@ -82247,7 +82342,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T01:50:44+00:00",
+      "updatedAt": "2026-11-08T15:58:09+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -84994,6 +85089,27 @@
               "url": "https://github.com/tamird/gvisor/blob/e89646dda/test/rbe/release_prewarmer/BUILD#L5"
             }
           ]
+        },
+        {
+          "text": "The Skylib supplier proposal lets build_test declare a marker tool and test runner. Two gVisor consumers each built 16 manual binaries and passed, one on native AMD64 and one under ARM64 QEMU. The separate private fixture verified which files reached its test runner. The supplier change is ready for contributor review.",
+          "evidence": [
+            {
+              "label": "Review the Skylib supplier proposal",
+              "url": "https://tamird.github.io/gvisor/?view=table#branch%3Askylib-build-test-native-tools"
+            },
+            {
+              "label": "Fork source",
+              "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4"
+            },
+            {
+              "label": "Both gVisor test owners",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785"
+            },
+            {
+              "label": "Private runfiles fixture",
+              "url": "https://github.com/tamird/bazel-skylib/actions/runs/42489087805/artifacts/13621086928"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the rules_shell #64 toolchain API through upstream release and reconcile the qualified integrations with their separately tracked product prerequisites.",
@@ -86548,7 +86664,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-08T11:54:36+00:00",
+      "updatedAt": "2026-11-08T15:56:16+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -87432,6 +87548,23 @@
             {
               "label": "Wait for the TCP burst before draining the socket",
               "url": "https://github.com/tamird/gvisor/commit/18e643629"
+            }
+          ]
+        },
+        {
+          "text": "On unmodified gVisor 975fb1722, one cumulative ACK for one 1,200-byte packet sent before a checkpoint increased the restored Reno congestion window from 10 to 11 segments when the route kept MTU 1,500. On a replacement route with MTU 1,236, the same ACK increased it from 10 to 12. Newly sent data used the expected 1,196-byte payload. Both IPv4 cases had GSO and experiment options disabled. The test covered an original packet that had never been retransmitted. How to account for retransmitted pieces remains under investigation alongside #15634.",
+          "evidence": [
+            {
+              "label": "Original local Linux TCP test, log, XML and congestion-window samples",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42496827471/artifacts/13623667178"
+            },
+            {
+              "label": "Unmodified upstream production source",
+              "url": "https://github.com/google/gvisor/commit/975fb1722"
+            },
+            {
+              "label": "Related transmitted packet boundaries on #15634",
+              "url": "https://github.com/google/gvisor/pull/15634"
             }
           ]
         }
