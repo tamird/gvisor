@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T13:14:01+00:00",
+    "updatedAt": "2026-11-08T13:31:51+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1784,7 +1784,7 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "updatedAt": "2026-11-08T13:23:11Z",
       "summary": "Measured reply posted; awaiting reviewer response. Follow the original reviewer thread. No contributor response authorization remains.\n\nPreserved proposal and evidence:\n\nEtienne’s request for inlining evidence now has a bounded, independently reviewed compiler result for the unchanged public proposal 9e17fdee. With pinned Go 1.27.2, selected old/new Load, Store and Swap probes have identical emitted bytes, relocations and stack frames on AMD64 and ARM64. The real KVM go:nosplit Load consumer has no AtomicPtr wrapper call on either CPU; deliberate noinline controls retain their calls. ARM64 linking and both AMD64 correctness tests passed. The original codegen job remains FAIL because two qualifier analyzer owners rejected a missing package comment. A separate comment-only follow-up passes both analyzer owners on both CPUs, without repeating codegen. These results do not establish a timing gain, full-runsc stack budget or future universal inlining guarantee. The measured reply is now posted in the original thread; the public source remains unchanged.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
       "followup": {
         "disposition": "Measured reply posted; awaiting reviewer response",
@@ -1803,7 +1803,7 @@
         "mergeable": "MERGEABLE",
         "observedAt": "2026-10-24T11:22:37.878012+00:00"
       },
-      "head": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
+      "head": "0e41dbbb0cf5ebe444b0461a4425ecfe5adeafb7",
       "evidence": [
         {
           "label": "Published post-16046 rebase",
@@ -1824,6 +1824,10 @@
         {
           "label": "Authorized reply delivered",
           "url": "https://github.com/google/gvisor/pull/12483#discussion_r4366968161"
+        },
+        {
+          "label": "Published as one commit on 7bffefa91, with the same tree as 3e6c29868",
+          "url": "https://github.com/tamird/gvisor/commit/0e41dbbb0"
         }
       ]
     },
@@ -2408,12 +2412,12 @@
       "group": "release",
       "repo": "google/gvisor",
       "ref": "research/python-release-staging-isolation",
-      "head": "04df6c244952232769db6b4123555354f9873e9b",
+      "head": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/google/gvisor/pull/16766",
       "status": "open",
-      "updatedAt": "2026-11-04T17:23:36.488704+00:00",
-      "summary": "Published the approved amendment: successive Python releases replace older gVisor archives while preserving unrelated packages and files from a previous successful build. Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed.",
+      "updatedAt": "2026-11-08T13:23:31Z",
+      "summary": "Published the approved amendment: successive Python releases replace older gVisor archives while preserving unrelated packages and files from a previous successful build. Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed. GitHub binds Carzh’s November 4 approval to the current one-commit submission. Its base and tree match the prior submission. The ready-to-pull label remains and no public export is visible.",
       "evidence": [
         {
           "label": "Remote verification for the submitted change",
@@ -2454,6 +2458,14 @@
         {
           "label": "Shared package staging directory — posted reply",
           "url": "https://github.com/google/gvisor/pull/16766#discussion_r4470803575"
+        },
+        {
+          "label": "Published as one commit on 89a7d2beb, with the same tree as 04df6c244",
+          "url": "https://github.com/tamird/gvisor/commit/f4b8a6bd2"
+        },
+        {
+          "label": "Carzh’s retained approval, now bound to f4b8a6bd2",
+          "url": "https://github.com/google/gvisor/pull/16766#pullrequestreview-5773282199"
         }
       ],
       "refinement": {
@@ -2494,16 +2506,25 @@
       "number": 16766,
       "followup": {
         "owner": "Agent",
-        "sourceHead": "04df6c244952232769db6b4123555354f9873e9b",
+        "sourceHead": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
         "providerHead": "04df6c244952232769db6b4123555354f9873e9b",
-        "observedAt": "2026-11-04T17:23:36.488704+00:00",
-        "disposition": "Approved amendment and replies published",
-        "nextAction": "Follow the upstream review.",
+        "observedAt": "2026-11-08T13:23:31Z",
+        "disposition": "Upstream approval retained on the published one-commit revision",
+        "nextAction": "Follow the public import for the approved source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16766",
           "https://github.com/tamird/gvisor/commit/04df6c244952232769db6b4123555354f9873e9b",
           "https://github.com/google/gvisor/pull/16766#discussion_r4470803575"
         ]
+      },
+      "reapproval": {
+        "kind": "patch-preserving-rebase",
+        "method": "reviewed-source-diff",
+        "head": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
+        "approvedHead": "04df6c244952232769db6b4123555354f9873e9b",
+        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "summary": "The published submission has the identical base and tree. GitHub retained Carzh’s approval and the ready-to-pull label.",
+        "evidence": "https://github.com/tamird/gvisor/compare/04df6c244...f4b8a6bd2"
       }
     },
     {
@@ -11844,12 +11865,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-sack-credit-accounting",
-      "head": "f96afe45777d10e02b6565b76dd255f0062503ec",
+      "head": "30bc8ce21de213711dd86da5cf607ec5487259ee",
       "title": "Count selectively acknowledged TCP packets on their transmit boundaries",
       "url": "https://github.com/google/gvisor/pull/15634",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T16:57:21.716977+00:00",
+      "updatedAt": "2026-11-08T13:23:10Z",
       "summary": "Count selectively acknowledged packets at their original transmit boundaries. Preserve RACK’s delivery history when a timeout or restore clears the SACK scoreboard. Earlier code double-counted packet credit or reported reordering on a repeated SACK.",
       "number": 15634,
       "reviewDecision": null,
@@ -11913,6 +11934,10 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/933263e71c97b0ae7bd0cb04489b2399fe4523f1"
+        },
+        {
+          "label": "Published as one commit on 757d67e79, with the same tree as f96afe457",
+          "url": "https://github.com/tamird/gvisor/commit/30bc8ce21"
         }
       ],
       "refinement": {
@@ -11921,8 +11946,7 @@
           "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4"
         },
         "after": {
-          "base": "757d67e79ca401d6d662c470d6470d13f9e23a45",
-          "head": "f96afe45777d10e02b6565b76dd255f0062503ec"
+          "head": "30bc8ce21de213711dd86da5cf607ec5487259ee"
         }
       },
       "settledReviews": [
@@ -11942,8 +11966,8 @@
       "followup": {
         "owner": "netstack owner",
         "disposition": "Published",
-        "sourceHead": "f96afe45777d10e02b6565b76dd255f0062503ec",
-        "observedAt": "2026-10-30T16:57:21.716977+00:00",
+        "sourceHead": "30bc8ce21de213711dd86da5cf607ec5487259ee",
+        "observedAt": "2026-11-08T13:23:10Z",
         "nextAction": "Follow upstream checks and maintainer review of the published amendment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
@@ -12046,17 +12070,17 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/state-wire-array-fixtures",
-      "head": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
+      "head": "0026a3c3f9233beb3f0288b06453d4ad8b77c330",
       "title": "Capture primitive state arrays in typed storage",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/e00f572e3",
+      "url": "https://github.com/tamird/gvisor/commit/0026a3c3f",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-05T14:49:32.851579Z",
+      "updatedAt": "2026-11-08T13:27:04+00:00",
       "summary": "The wire implementation was approved at 689706c88 and reparented at f76d229c0. The contributor also approved the test revision at e00f572e3. On current master with #16718 applied, the original float32 and complex64 tests each read a 38-byte graph frame as one wire object and failed. The revision selects wire for five codec-specific tests and exercises the ordinary round trips with both engines. All seven selected native AMD64 tests passed, with 1,659 passing records and zero skips. Each engine ran 204 array and 612 slice round trips.\n\nThese array buffers serve the wire codec. The Nginx measurements below apply to wire-format checkpoints.\n\nPrimitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
-        "observedAt": "2026-11-05T14:49:32.851579Z",
+        "sourceHead": "0026a3c3f9233beb3f0288b06453d4ad8b77c330",
+        "observedAt": "2026-11-08T13:27:04+00:00",
         "disposition": "Implementation and test revision approved",
         "nextAction": "Open the approved change after signed-zero PR #16718 lands.",
         "evidence": [
@@ -12096,14 +12120,19 @@
         {
           "label": "Exact stage normal qualification",
           "url": "https://app.buildbuddy.io/invocation/8da1f7ff-38b9-42fc-9863-673bb171a228"
+        },
+        {
+          "label": "Single submission commit on bdde73bde, with the same tree as e00f572e3",
+          "url": "https://github.com/tamird/gvisor/commit/0026a3c3f"
         }
       ],
       "refinement": {
         "before": {
-          "head": "689706c8805c86a0c79e0cf09de80d0245f0dc8b"
+          "base": "bdde73bde931f517a6949619b7c5a15e884b87a2",
+          "head": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359"
         },
         "after": {
-          "head": "f76d229c04d56c4a800f0e3561d36e75410f91a1"
+          "head": "0026a3c3f9233beb3f0288b06453d4ad8b77c330"
         }
       },
       "settledReviews": [
@@ -12555,17 +12584,17 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/state-wire-reference-fixtures",
-      "head": "e1ec0fd6a841da016483565d9f6548196c1c835b",
+      "head": "b6df34ebaeae02936ac59ea8f9cf802b8ba5fb96",
       "title": "Capture homogeneous state reference arrays",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/e1ec0fd6a",
+      "url": "https://github.com/tamird/gvisor/commit/b6df34eba",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-06T23:30:58.981Z",
+      "updatedAt": "2026-11-08T13:27:04+00:00",
       "summary": "The reference-array implementation was approved at 7b4e8579e. The contributor also approved the test revision at e1ec0fd6a. On the rebased implementation, the wire comparison and snapshot test passed using graph frames. The late-parent test failed before Load because its assertion expects the wire encoder to clear the unused slice tail during Save. All three tests passed on native AMD64 after selecting wire. Separate runs read all four output buffers and confirmed that the original tests wrote graph frames and the revised tests wrote wire frames.\n\nThe earlier qualification covered the approved implementation. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. Saving the slice and both array-adoption fixtures with the legacy wire encoder used 1,024 fewer allocations per save. Timing varied across workers.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. In the historical twelve-block comparison with the wire encoder, Slice Save time was -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "e1ec0fd6a841da016483565d9f6548196c1c835b",
-        "observedAt": "2026-11-05T14:49:32.851579Z",
+        "sourceHead": "b6df34ebaeae02936ac59ea8f9cf802b8ba5fb96",
+        "observedAt": "2026-11-08T13:27:04+00:00",
         "disposition": "Implementation and test revision approved",
         "nextAction": "Open the approved change after the primitive-array change lands.",
         "evidence": [
@@ -12593,6 +12622,10 @@
         {
           "label": "Exact stage normal qualification",
           "url": "https://app.buildbuddy.io/invocation/b1695ab9-c0b9-45ef-b6fe-39a1dd339fc1"
+        },
+        {
+          "label": "Single submission commit on 0026a3c3f, with the same tree as e1ec0fd6a",
+          "url": "https://github.com/tamird/gvisor/commit/b6df34eba"
         }
       ],
       "settledReviews": [
@@ -12608,7 +12641,16 @@
           "outcome": "approved",
           "at": "2026-11-05T14:49:32.851579Z"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "base": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
+          "head": "e1ec0fd6a841da016483565d9f6548196c1c835b"
+        },
+        "after": {
+          "head": "b6df34ebaeae02936ac59ea8f9cf802b8ba5fb96"
+        }
+      }
     },
     {
       "id": "pr:15650",
@@ -23560,12 +23602,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/state-destination-kind-current",
-      "head": "b3d4c616328d4b266091f465628cb074d4afaa2f",
+      "head": "e4c8bd1605791c5b9afd48ba81b7966a6bec5ca3",
       "title": "Validate restore kinds against destination types",
-      "url": "https://github.com/tamird/gvisor/commit/b3d4c6163",
+      "url": "https://github.com/tamird/gvisor/commit/e4c8bd160",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T03:42:00+00:00",
+      "updatedAt": "2026-11-08T13:27:04+00:00",
       "summary": "Three tests used the default encoder to create inputs for the legacy decoder. After graph became the default all three failed. Selecting wire makes Load exercise the intended array-to-slice and interface-to-scalar conversions. All three passed on native AMD64.\n\nThe implementation was approved at 6a5814d55. Only the test revision needs review. The implementation rejected incompatible empty wire values in normal and race tests. The 16-pair comparison detected no timing or allocation change.",
       "links": [
         {
@@ -23591,8 +23633,8 @@
       ],
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "b3d4c616328d4b266091f465628cb074d4afaa2f",
-        "observedAt": "2026-11-05T15:27:44.402237Z",
+        "sourceHead": "e4c8bd1605791c5b9afd48ba81b7966a6bec5ca3",
+        "observedAt": "2026-11-08T13:27:04+00:00",
         "disposition": "Test revision ready for contributor review",
         "nextAction": "Include the test revision b3d4c6163 in the approved change after the reference-array change lands?",
         "evidence": [
@@ -23612,18 +23654,22 @@
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "b3d4c616328d4b266091f465628cb074d4afaa2f",
+        "head": "e4c8bd1605791c5b9afd48ba81b7966a6bec5ca3",
         "baseHead": "b45fba8d8a303c438706d3c00b174f2736193731",
-        "title": "Test legacy destination conversions with wire checkpoints",
-        "url": "https://github.com/tamird/gvisor/commit/b3d4c6163",
+        "title": "Validate restore kinds against destination types",
+        "url": "https://github.com/tamird/gvisor/commit/e4c8bd160",
         "requestedAt": "2026-11-05T15:27:44.402237Z",
-        "summary": "Include the test revision b3d4c6163 in the approved change after the reference-array change lands?",
-        "body": "The legacy decoder accepts arrays in slices and unwraps interfaces into\nscalar destinations. Save these three inputs with the wire engine so\nLoad exercises those conversions when graph checkpoints are the default."
+        "summary": "Approve the revised tests in this single submission commit, and open the PR after the reference-array change lands?",
+        "body": "Empty arrays and maps could succeed against an incompatible destination\nbecause their element loops never attempted a store. Zero references\ncould likewise bypass destination validation.\n\nSelect the operation from the destination kind before validating its\nwire representation. Keep Nil as a no-op, retain interface delegation\nand manual array-to-slice loading, and use the existing reference\nresolver and collection decoders for the actual stores.\n\nLet Go type assertions validate each destination representation\ndirectly. The existing state error boundary wraps failed assertions with\nthe object context, without a generic helper call for each restored\nvalue.\n\nThe legacy decoder accepts arrays in slices and unwraps interfaces into\nscalar destinations. Save these three inputs with the wire engine so\nLoad exercises those conversions when graph checkpoints are the default."
       },
       "evidence": [
         {
           "label": "Compare this source with its previously reviewed base",
           "url": "https://github.com/tamird/gvisor/compare/b45fba8d8...b3d4c6163"
+        },
+        {
+          "label": "Single submission commit on b6df34eba, with the same tree as b3d4c6163",
+          "url": "https://github.com/tamird/gvisor/commit/e4c8bd160"
         }
       ],
       "refinement": {
@@ -23632,8 +23678,7 @@
           "base": "9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d"
         },
         "after": {
-          "head": "b3d4c616328d4b266091f465628cb074d4afaa2f",
-          "base": "e1ec0fd6a841da016483565d9f6548196c1c835b"
+          "head": "e4c8bd1605791c5b9afd48ba81b7966a6bec5ca3"
         }
       }
     },
@@ -24205,17 +24250,17 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/state-decoder-dependencies-current",
-      "head": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
+      "head": "5f6f4899cb40d9526c3f4a7caf6b7c17f4068555",
       "title": "Register restore dependencies during decoding",
-      "url": "https://github.com/tamird/gvisor/commit/27451d0c2",
+      "url": "https://github.com/tamird/gvisor/commit/5f6f4899c",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T03:42:00+00:00",
+      "updatedAt": "2026-11-08T13:27:04+00:00",
       "summary": "Two tests passed using graph checkpoints without reaching the legacy decoder being changed. The revised test loads both a value root and a pointer root on each engine. The four native AMD64 cases passed, and the recorded headers confirm which encoder wrote each input.\n\nThe implementation was approved at b9797d128. Only the test revision needs review. The implementation registers dependencies during decoding. Normal and race tests passed; the paired comparison found no timing or allocation change.",
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
-        "observedAt": "2026-11-05T15:27:44.402237Z",
+        "sourceHead": "5f6f4899cb40d9526c3f4a7caf6b7c17f4068555",
+        "observedAt": "2026-11-08T13:27:04+00:00",
         "disposition": "Test revision ready for contributor review",
         "nextAction": "Include the test revision 27451d0c2 in the approved change after the destination-type decoder change lands?",
         "evidence": [
@@ -24253,18 +24298,22 @@
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
+        "head": "5f6f4899cb40d9526c3f4a7caf6b7c17f4068555",
         "baseHead": "268638e5a85cbfe0f0c22e024be79a4e7087748f",
-        "title": "Test interface wait ordering on both checkpoint engines",
-        "url": "https://github.com/tamird/gvisor/commit/27451d0c2",
+        "title": "Register restore dependencies during decoding",
+        "url": "https://github.com/tamird/gvisor/commit/5f6f4899c",
         "requestedAt": "2026-11-05T15:27:44.402237Z",
-        "summary": "Include the test revision 27451d0c2 in the approved change after the destination-type decoder change lands?",
-        "body": "The post-load hook must see the initialized object behind a waiting\ninterface. Exercise that ordering for value and pointer roots with each\nengine, including the legacy decoder that registers the dependency."
+        "summary": "Approve the revised tests in this single submission commit, and open the PR after the destination-type decoder change lands?",
+        "body": "Wait-enabled loads previously inspected each wire value again after\ndecoding it to find its dependency root. Return that root from the\nexisting destination-type decoder and pass it to the dependency tracker.\n\nKeep roots at their full wire width until the tracker distinguishes nil\nfrom a reference. Preserve map dependency ordering and defer interface\nassignment before registering its wait.\n\nThe post-load hook must see the initialized object behind a waiting\ninterface. Exercise that ordering for value and pointer roots with each\nengine, including the legacy decoder that registers the dependency."
       },
       "evidence": [
         {
           "label": "Compare this source with its previously reviewed base",
           "url": "https://github.com/tamird/gvisor/compare/268638e5a...27451d0c2"
+        },
+        {
+          "label": "Single submission commit on e4c8bd160, with the same tree as 27451d0c2",
+          "url": "https://github.com/tamird/gvisor/commit/5f6f4899c"
         }
       ],
       "refinement": {
@@ -24273,8 +24322,7 @@
           "base": "6a5814d55aa2c2cefc256644c11de8598944c095"
         },
         "after": {
-          "head": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
-          "base": "b3d4c616328d4b266091f465628cb074d4afaa2f"
+          "head": "5f6f4899cb40d9526c3f4a7caf6b7c17f4068555"
         }
       }
     },
@@ -30901,21 +30949,20 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fixes/tcp-interrupted-sack-recovery",
-      "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f",
+      "head": "ffac28a03554b62419747c41f389bdc9bfe303d9",
       "title": "Keep timed-out SACK recovery from restarting",
       "url": "https://github.com/google/gvisor/pull/16495",
       "group": "runtime",
       "status": "draft",
       "summary": "The draft includes both the interrupted SACK recovery fix and prompt replacement when a fresh SACK identifies a lost repair. A repeated SACK alone does not trigger another retransmission.",
-      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "updatedAt": "2026-11-08T13:23:10Z",
       "refinement": {
         "before": {
           "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
           "head": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634"
         },
         "after": {
-          "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
-          "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f"
+          "head": "ffac28a03554b62419747c41f389bdc9bfe303d9"
         }
       },
       "evidence": [
@@ -30990,6 +31037,10 @@
         {
           "label": "RFC 6675 §5.1: retransmission timeout during recovery",
           "url": "https://www.rfc-editor.org/rfc/rfc6675.html#section-5.1"
+        },
+        {
+          "label": "Published as one commit on 990581308, with the same tree as 5fd5532c1",
+          "url": "https://github.com/tamird/gvisor/commit/ffac28a03"
         }
       ],
       "links": [
@@ -35651,13 +35702,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/secfuzz-bounded-coverage-generator",
-      "head": "de106f647e5e2157aa3d6ac91d09727f698daca4",
+      "head": "d6275511008e4970b13afec999be79bb8358fd1b",
       "title": "Generate bounded secfuzz coverage without a shell",
       "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-28T17:17:22.041+00:00",
-      "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The second commit splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
+      "updatedAt": "2026-11-08T13:23:10Z",
+      "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The generator splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -35690,12 +35741,16 @@
         {
           "label": "Linux AMD64: tagged filter corpus, boundary cases and 8,192 distinct coverage counters",
           "url": "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362"
+        },
+        {
+          "label": "Published as one commit on 509ad5337, with the same tree as de106f647",
+          "url": "https://github.com/tamird/gvisor/commit/d62755110"
         }
       ],
       "followup": {
         "owner": "lock_contract",
-        "sourceHead": "de106f647e5e2157aa3d6ac91d09727f698daca4",
-        "observedAt": "2026-10-28T17:17:22.041+00:00",
+        "sourceHead": "d6275511008e4970b13afec999be79bb8358fd1b",
+        "observedAt": "2026-11-08T13:23:10Z",
         "disposition": "Reviewed and opened upstream",
         "nextAction": "Follow upstream checks and maintainer review on #16604.",
         "evidence": [
@@ -35871,13 +35926,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/rack-multiplier-saturation",
-      "head": "3edf0c0d6fce34d9cf77c2391b4045f79c02ef24",
+      "head": "b214855fa038fd770d1dc3e3a3984ba922282104",
       "title": "Saturate the RACK reordering window multiplier",
       "url": "https://github.com/google/gvisor/pull/16605",
       "group": "runtime",
       "status": "Open; reviewer feedback applied",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
-      "summary": "On the 255th eligible duplicate SACK, stock wrapped its byte-sized multiplier to zero and eliminated the reordering window. The fix saturates the increment without changing which reports qualify. On native AMD64 the focused sender test retained 255 and a 100 ms window on rounds 255 and 256; three existing sequence-round controls passed on both revisions. Both Nogo owners passed AMD64 and ARM64 analysis. The combined run keeps its expected stock failure. No live Linux traffic, ARM runtime, or throughput was measured. A fresh duplicate SACK at saturation now has permanent test assertions for the round boundary and persistence. The TCP test is identical to the one in the prior 43-case passing suite.",
+      "updatedAt": "2026-11-08T13:23:11Z",
+      "summary": "On the 255th eligible duplicate SACK, stock wrapped its byte-sized multiplier to zero and eliminated the reordering window. The fix saturates the increment without changing which reports qualify. On native AMD64 the focused sender test retained 255 and a 100 ms window on rounds 255 and 256; three existing sequence-round controls passed on both revisions. Both Nogo owners passed AMD64 and ARM64 analysis. The combined run keeps its expected stock failure. No live Linux traffic, ARM runtime, or throughput was measured. A fresh duplicate SACK at saturation now has permanent test assertions for the round boundary and persistence. The TCP test is identical to the one in the prior 43-case passing suite. The new head has the same full patch as ba0eec12f. GitHub records the approval of that revision as dismissed.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -35934,15 +35989,19 @@
         {
           "label": "Rebased native TCP package: 46 passed, no failures or skips",
           "url": "https://github.com/tamird/gvisor/actions/runs/41893190903/artifacts/13353444358"
+        },
+        {
+          "label": "Published as one commit on 007bd6c1a, with the same tree as 3edf0c0d6",
+          "url": "https://github.com/tamird/gvisor/commit/b214855fa"
         }
       ],
       "number": 16605,
       "followup": {
         "owner": "Source PR owner",
-        "sourceHead": "3edf0c0d6fce34d9cf77c2391b4045f79c02ef24",
-        "observedAt": "2026-11-04T19:12:01.183060+00:00",
-        "disposition": "Open; approved patch mechanically rebased",
-        "nextAction": "Follow the source and its existing export through the ordinary revision-bound import checks. The retained maintainer approval predates this head; patch equivalence is not a fresh review.",
+        "sourceHead": "b214855fa038fd770d1dc3e3a3984ba922282104",
+        "observedAt": "2026-11-08T13:23:11Z",
+        "disposition": "Patch equivalence verified; earlier review dismissed",
+        "nextAction": "Follow the public source and its earlier export. GitHub marks the approval of ba0eec12f as dismissed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16605",
           "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
@@ -36467,12 +36526,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/epoll-modify-stable-backing",
-      "head": "82f0e4f38f65529f18851f196504957874ec56fa",
+      "head": "bf6e0e67074facccb06e1f64450e97140ca72bff",
       "title": "Keep an epoll watch intact when MOD fails",
-      "url": "https://github.com/tamird/gvisor/commit/82f0e4f38",
+      "url": "https://github.com/tamird/gvisor/commit/bf6e0e670",
       "group": "runtime",
       "status": "Contributor approved; waiting for provider prerequisites",
-      "updatedAt": "2026-10-30T13:00:10.813642+00:00",
+      "updatedAt": "2026-11-08T13:27:04+00:00",
       "summary": "A rejected MOD leaves the original watch registered. A rearm with the same mask still polls for readiness; changing its mask needs no extra waiter allocation. Stable overlay backing keeps its poll support.",
       "evidence": [
         {
@@ -36570,15 +36629,19 @@
         {
           "label": "Merged ADD fixture (satisfied)",
           "url": "https://github.com/google/gvisor/pull/16513"
+        },
+        {
+          "label": "Single submission commit on 3ded0a3d6, with the same tree as 82f0e4f38",
+          "url": "https://github.com/tamird/gvisor/commit/bf6e0e670"
         }
       ],
       "refinement": {
         "before": {
-          "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
-        },
-        "after": {
           "base": "3ded0a3d65f69fcabbb1b0361aff10e1b2230679",
           "head": "82f0e4f38f65529f18851f196504957874ec56fa"
+        },
+        "after": {
+          "head": "bf6e0e67074facccb06e1f64450e97140ca72bff"
         }
       },
       "settledReviews": [
@@ -36597,8 +36660,8 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "82f0e4f38f65529f18851f196504957874ec56fa",
-        "observedAt": "2026-10-30T13:00:10.813642+00:00",
+        "sourceHead": "bf6e0e67074facccb06e1f64450e97140ca72bff",
+        "observedAt": "2026-11-08T13:27:04+00:00",
         "disposition": "Final two commits approved",
         "nextAction": "Submit the approved two commits after the stable waiter/host notifier, plugin, VFIO, FUSE, gofer, and Unix provider changes. #16739 fixes rejected peer registration; bound host sockets still need correct error propagation. Remove the old overlay method when installing the approved stable replacement; do not publish a blanket rejection.",
         "evidence": [
@@ -46749,12 +46812,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposals/tcp-cookie-handshake-boundary",
-      "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58",
+      "head": "482746b1ef7a77982f3d4f0c043031b16833f5c0",
       "title": "Identify SYN cookies before testing how the listener handles an ACK",
       "url": "https://github.com/google/gvisor/pull/16841",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "updatedAt": "2026-11-08T13:23:10Z",
       "summary": "The old packet test accepted six unexpected Linux SYN-ACK retransmissions. The revised test identified the third SYN on Linux and the second on gVisor as the first cookie. Its 12 retransmission checks ran on each, and both suites passed all 31 cases.",
       "evidence": [
         {
@@ -46788,6 +46851,10 @@
         {
           "label": "Published amendment",
           "url": "https://github.com/tamird/gvisor/commit/f8ca88ad9"
+        },
+        {
+          "label": "Published as one commit on aa767e4c4, with the same tree as f8ca88ad9",
+          "url": "https://github.com/tamird/gvisor/commit/482746b1e"
         }
       ],
       "settledReviews": [
@@ -46812,14 +46879,13 @@
           "head": "e62e48e9a8ba9523323071f011c1390b7873852f"
         },
         "after": {
-          "base": "aa767e4c43d011121271551fe24da501a56f729d",
-          "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58"
+          "head": "482746b1ef7a77982f3d4f0c043031b16833f5c0"
         }
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "sourceHead": "482746b1ef7a77982f3d4f0c043031b16833f5c0",
+        "observedAt": "2026-11-08T13:23:10Z",
         "disposition": "Approved amendment published",
         "nextAction": "Follow the public checks and maintainer review on the published revision.",
         "evidence": [
@@ -48054,13 +48120,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/nogo-native-test-runner",
-      "head": "cfd4aa8454d0f2d95ac0e8538b6e4a17c0642b6e",
+      "head": "5a25e47ce2003fb203a9cfa90e0451cfbe054b43",
       "title": "Run Nogo tests with the analyzer executable",
       "url": "https://github.com/google/gvisor/pull/16856",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
-      "summary": "The published sanity test invokes the analyzer with its filter arguments. The analyzer reported the deliberate printf error and the sanity test passed. Carzh has been asked to re-approve.",
+      "updatedAt": "2026-11-08T13:23:30Z",
+      "summary": "The published sanity test invokes the analyzer with its filter arguments. The analyzer reported the deliberate printf error and the sanity test passed. Carzh has been asked to re-approve. Carzh approved 251159560, the revision exported by #16997. The current commit includes the later sanity-test correction.",
       "evidence": [
         {
           "label": "Public import #16997: sanity test failed on both architectures",
@@ -48081,6 +48147,18 @@
         {
           "label": "Published on #16856",
           "url": "https://github.com/google/gvisor/pull/16856"
+        },
+        {
+          "label": "Published as one commit on aa767e4c4, with the same tree as cfd4aa845",
+          "url": "https://github.com/tamird/gvisor/commit/5a25e47ce"
+        },
+        {
+          "label": "Export of the previously approved source",
+          "url": "https://github.com/google/gvisor/pull/16997"
+        },
+        {
+          "label": "Published request to reapprove the sanity-test correction",
+          "url": "https://github.com/google/gvisor/pull/16856#issuecomment-6663424436"
         }
       ],
       "settledReviews": [
@@ -48101,7 +48179,16 @@
           "postedURL": "https://github.com/google/gvisor/pull/16856"
         }
       ],
-      "number": 16856
+      "number": 16856,
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "5a25e47ce2003fb203a9cfa90e0451cfbe054b43",
+        "approvedHead": "25115956066576e83f5543c275d57b59d6578ed0",
+        "diffSha256": "b1a3d59df205651a8a5b1a44f0d056140d2c3f8ed47e517ab19cf0724ed9c8f1",
+        "summary": "The sanity test now runs the analyzer’s filter command and verifies that the intentional diagnostic is reported. The earlier export contains the approved revision without this correction.",
+        "evidence": "https://github.com/tamird/gvisor/compare/251159560...5a25e47ce"
+      }
     },
     {
       "id": "branch:semop-last-pid",
@@ -48278,12 +48365,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/tcp-rack-fresh-timeout-head",
-      "head": "85b67686f3cd61965db6393190969dab98c8d5c3",
+      "head": "5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
       "title": "Keep RACK from repeating a fresh timeout repair",
       "url": "https://github.com/google/gvisor/pull/16857",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T21:32:54.012083+00:00",
+      "updatedAt": "2026-11-08T13:23:10Z",
       "summary": "After a retransmission timeout, a SACK can reveal a hole beyond the freshly retransmitted head. The published amendment leaves ordinary sends at the first unsent segment so RACK can repair those holes without replaying the tail. The wire regression and separate controlled-clock check passed, and the approved reply is posted on the original review thread.",
       "evidence": [
         {
@@ -48341,6 +48428,10 @@
         {
           "label": "Automated review from @rexren-gif on retransmissions beyond the timeout repair",
           "url": "https://github.com/google/gvisor/pull/16857#discussion_r4459290531"
+        },
+        {
+          "label": "Published as one commit on aa767e4c4, with the same tree as 85b67686f",
+          "url": "https://github.com/tamird/gvisor/commit/5c2734f45"
         }
       ],
       "settledReviews": [
@@ -48372,9 +48463,9 @@
       "number": 16857,
       "followup": {
         "owner": "TCP workstream",
-        "sourceHead": "85b67686f3cd61965db6393190969dab98c8d5c3",
+        "sourceHead": "5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
         "providerHead": "85b67686f3cd61965db6393190969dab98c8d5c3",
-        "observedAt": "2026-11-03T21:32:54.012083+00:00",
+        "observedAt": "2026-11-08T13:23:10Z",
         "disposition": "Approved amendment and reviewer reply published",
         "nextAction": "Follow current-head checks and substantive reviewer responses. No contributor decision or outgoing reply remains.",
         "evidence": [
@@ -53000,13 +53091,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/go-helper-images",
-      "head": "99b9970fb29c9848816aac6cd1f6550c16ffa1d6",
+      "head": "0e306c458b4622a6d580ceb2252994cb3e005908",
       "title": "Build the Hey, Ollama client and profiling images with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/99b9970fb",
+      "url": "https://github.com/tamird/gvisor/commit/0e306c458",
       "group": "bazel",
       "status": "Published as #16871",
-      "updatedAt": "2026-11-06T18:50:14.461Z",
-      "summary": "The published PR is mergeable. The Ollama client, profiling helper and Hey image remain three separate commits. Removing their new Make entries restores the original PostgreSQL context mapping. The earlier six-image output and runtime checks remain tied to the measured source.",
+      "updatedAt": "2026-11-08T13:23:10Z",
+      "summary": "The Ollama client, profiling helper and Hey image are published together in one commit. Removing their new Make entries restores the original PostgreSQL context mapping. The earlier six-image output and runtime checks remain tied to the measured source.",
       "evidence": [
         {
           "label": "Rebase onto the PostgreSQL landing",
@@ -53035,6 +53126,10 @@
         {
           "label": "Hey benchmark and external BUILD owner",
           "url": "https://github.com/tamird/gvisor/commit/cea9b0192"
+        },
+        {
+          "label": "Published as one commit on f51a205a8, with the same tree as 99b9970fb",
+          "url": "https://github.com/tamird/gvisor/commit/0e306c458"
         }
       ],
       "settledReviews": [
@@ -53047,8 +53142,8 @@
       ],
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "99b9970fb29c9848816aac6cd1f6550c16ffa1d6",
-        "observedAt": "2026-11-06T18:50:14.461Z",
+        "sourceHead": "0e306c458b4622a6d580ceb2252994cb3e005908",
+        "observedAt": "2026-11-08T13:23:10Z",
         "disposition": "Published the reviewed changes on the current base. GitHub reports the source is mergeable.",
         "nextAction": "Follow the published source, its checks and import.",
         "evidence": [
@@ -53061,7 +53156,7 @@
           "head": "cea9b0192347cc0ec34ef72f51915ecdf07774c3"
         },
         "after": {
-          "head": "99b9970fb29c9848816aac6cd1f6550c16ffa1d6"
+          "head": "0e306c458b4622a6d580ceb2252994cb3e005908"
         }
       }
     },
@@ -53179,12 +53274,12 @@
       "repo": "tamird/gvisor",
       "targetRepo": "google/gvisor",
       "ref": "proposal/buildkite-license-native",
-      "head": "896acc45666c609ab05f92160f322f976a86cea1",
+      "head": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
       "title": "Run governance and license checks on the Buildkite agent",
-      "url": "https://github.com/tamird/gvisor/compare/471d6dff5...896acc456",
+      "url": "https://github.com/tamird/gvisor/commit/e0c3c48c8",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
+      "updatedAt": "2026-11-08T13:23:54+00:00",
       "summary": "The governance and license checks use the same native Bazelisk installation. The combined change is open as #16904.",
       "evidence": [
         {
@@ -53206,16 +53301,19 @@
         {
           "label": "Agent provides the remote cache before repository hooks",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Published as one commit with the previously reviewed tree",
+          "url": "https://github.com/tamird/gvisor/commit/e0c3c48c8"
         }
       ],
       "refinement": {
         "before": {
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-          "head": "75c04f42d5b7346e4a54a5991dfaf31b043b6769"
+          "head": "896acc45666c609ab05f92160f322f976a86cea1"
         },
         "after": {
-          "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-          "head": "896acc45666c609ab05f92160f322f976a86cea1"
+          "head": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8"
         }
       },
       "settledReviews": [
@@ -53292,13 +53390,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/buildkite-license-native",
-      "head": "896acc45666c609ab05f92160f322f976a86cea1",
+      "head": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
       "title": "Run governance and license checks on the Buildkite agent",
       "url": "https://github.com/google/gvisor/pull/16904",
       "group": "bazel",
       "status": "open",
       "summary": "Buildkite build 53913 ran the two governance comparisons in the dedicated job and all three unit jobs. The proposed revision keeps them in the unit jobs and runs license verification on the agent. Native Make verified all 220 entries and rejected a catalog missing abseil-cpp.",
-      "updatedAt": "2026-11-08T12:41:39+00:00",
+      "updatedAt": "2026-11-08T13:23:54+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -53343,10 +53441,10 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "896acc45666c609ab05f92160f322f976a86cea1",
-        "observedAt": "2026-11-08T12:41:39+00:00",
+        "sourceHead": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
+        "observedAt": "2026-11-08T13:23:54+00:00",
         "disposition": "The published PR runs both checks on the agent. The proposed revision removes the duplicate governance jobs and keeps the native license check.",
-        "nextAction": "Await contributor review of the replacement for the two published commits.",
+        "nextAction": "Await contributor review of the proposed replacement for the published commit.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42466456845/artifacts/13612101725",
           "https://github.com/tamird/gvisor/actions/runs/42462374395/artifacts/13609898731",
@@ -53357,20 +53455,18 @@
         "kind": "amendment",
         "status": "pending",
         "head": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac",
-        "baseHead": "896acc45666c609ab05f92160f322f976a86cea1",
+        "baseHead": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
         "title": "Run license CI natively and deduplicate governance",
         "url": "https://github.com/tamird/gvisor/commit/d51e6c370",
-        "summary": "Replace the two published commits in #16904 with this revision?",
+        "summary": "Replace the published commit on #16904 with this revision?",
         "body": "Buildkite runs the same two comparisons for CODEOWNERS and MAINTAINERS.md in the governance and unit jobs. In build 53913, the dedicated job and all three unit jobs reported both tests [1]. The first-pass unit job uses the same Make target, which includes //:all.\n\nRemove the dedicated governance job from both pipelines. Keep make governance-check available for running just those comparisons.\n\nThe license check builds the checker, then runs it to query the dependency graph through Make. Run that job on the agent in both pipelines. Let the nested queries use the selected Bazel installation and the agent's remote-cache options.\n\nBuildkite overlays hook exports on the agent's original environment. Unsetting USE_BAZEL_VERSION allowed an inherited 8.5.0 to reach Bazelisk on a checkout pinned to 8.8.1 [2]. Export the checkout's version and shut down the native server when the job finishes.\n\nThe shared failure hook calls Make to clean and shut down Bazel even when the job never used the builder. Those calls can start a builder on a cold agent [3]. Keep reporting failed test logs and let the existing container sweep stop running builders.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53913\n[2]: https://github.com/tamird/gvisor/actions/runs/42462374395/artifacts/13609898731\n[3]: https://github.com/tamird/gvisor/commit/7e2f75125",
         "requestedAt": "2026-11-08T12:41:39+00:00"
       },
       "refinement": {
         "before": {
-          "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-          "head": "896acc45666c609ab05f92160f322f976a86cea1"
+          "head": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8"
         },
         "after": {
-          "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
           "head": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac"
         }
       }
