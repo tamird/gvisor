@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T00:10:05+00:00",
+    "updatedAt": "2026-11-08T00:20:38+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52687,8 +52687,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T00:00:42+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The approved successor is open as with_cfg.bzl #275 and the author replied to David on #908. Updating LLVM now awaits a release of with_cfg containing prepend().",
+      "updatedAt": "2026-11-08T00:16:29+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The approved successor is open as with_cfg.bzl #275 and the author replied to David on #908. David then proposed adding the musl libc constraint to the execution platform. The author is checking whether the existing tools select musl there while ordinary glibc builds retain their current dependencies. The result will determine whether #908 needs a with_cfg release.",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52785,6 +52785,10 @@
         {
           "label": "Posted reply to David’s review on LLVM #908",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
+        },
+        {
+          "label": "David’s proposed execution-platform control",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6714807658"
         }
       ],
       "settledReviews": [
@@ -52795,23 +52799,15 @@
           "outcome": "approved"
         }
       ],
-      "releaseWait": {
-        "head": "533981c365e8ee683926bd465efcc81bc31158bf",
-        "confirmedAt": "2026-11-08T00:00:42+00:00",
-        "checkedVersion": "1.0.2",
-        "module": "with_cfg.bzl",
-        "nextAction": "Adopt a released with_cfg.bzl containing prepend() and update #908 to the verified single-binary transition."
-      },
       "followup": {
-        "owner": "Upstream release",
+        "owner": "Agent",
         "sourceHead": "533981c365e8ee683926bd465efcc81bc31158bf",
-        "observedAt": "2026-11-08T00:00:42+00:00",
-        "disposition": "The credited supplier PR is open and the author answered David’s review. The latest BCR release, 1.0.2, predates the operation.",
-        "nextAction": "Adopt a released with_cfg.bzl containing prepend() and update #908 to the verified single-binary transition.",
+        "observedAt": "2026-11-08T00:16:29+00:00",
+        "disposition": "David suggested that placing musl on the execution platform may select the intended tools using the current rules.",
+        "nextAction": "Compare the helper toolchain selected on the musl execution platform with ordinary glibc and Windows selections.",
         "evidence": [
-          "https://github.com/fmeum/with_cfg.bzl/pull/275",
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119",
-          "https://bcr.bazel.build/modules/with_cfg.bzl/metadata.json"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#issuecomment-6714807658",
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908"
         ]
       }
     },
@@ -61882,21 +61878,25 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/yamltest-native-validator",
-      "head": "9ce2163af9df139378f2bd972b897e556895424b",
+      "head": "e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
       "title": "Run YAML checks with the declared validator",
-      "url": "https://github.com/tamird/gvisor/commit/9ce2163af9df139378f2bd972b897e556895424b",
+      "url": "https://github.com/tamird/gvisor/commit/e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-08T00:10:05+00:00",
-      "summary": "The revised source removes custom escaping and passes each option separately. Bazel expands the configured schema and source filegroup after select() resolves. Five existing checks validated the same 22 files, and the fixed controls covered a filename and schema containing spaces, an apostrophe and a literal dollar expression. The empty group now fails during analysis, before running the validator. Bazel sorts and deduplicates the input paths; the previous validator reported results from a map keyed by unique file. Extra Bazel --test_arg values reach the validator as additional filenames; none of the five existing owners supplies any. Bazel’s outer setup ran on ordinary Ubuntu before hiding /bin and /usr/bin from the process.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T00:16:29+00:00",
+      "summary": "The macro now declares args, data and toolchains as keyword-only parameters and forwards the remaining test attributes unchanged. A configured caller passed all three through the macro. The revised source removes custom escaping and passes each option separately. Bazel expands the configured schema and source filegroup after select() resolves. Five existing checks validated the same 22 files, and the fixed controls covered a filename and schema containing spaces, an apostrophe and a literal dollar expression. The empty group now fails during analysis, before running the validator. Bazel sorts and deduplicates the input paths; the previous validator reported results from a map keyed by unique file. Extra Bazel --test_arg values reach the validator as additional filenames; none of the five existing owners supplies any. Bazel’s outer setup ran on ordinary Ubuntu before hiding /bin and /usr/bin from the process.",
       "evidence": [
+        {
+          "label": "Qualified keyword-only interface, all five existing checks and caller controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42428623884/artifacts/13596293961"
+        },
+        {
+          "label": "Standalone source with explicit keyword-only parameters",
+          "url": "https://github.com/tamird/gvisor/commit/e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf"
+        },
         {
           "label": "Revised Bazel argument expansion, five actual tests and configured controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42428024414/artifacts/13596223039"
-        },
-        {
-          "label": "Published standalone source on 7eda82e34",
-          "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c"
         },
         {
           "label": "Five stock and direct checks and five validator controls, on native AMD64",
@@ -61905,6 +61905,10 @@
         {
           "label": "Original qualified shell-escaping source",
           "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c"
+        },
+        {
+          "label": "Previous direct-argument revision",
+          "url": "https://github.com/tamird/gvisor/commit/9ce2163af9df139378f2bd972b897e556895424b"
         }
       ],
       "settledReviews": [
@@ -61935,26 +61939,33 @@
       ],
       "refinement": {
         "before": {
-          "head": "dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c"
+          "head": "9ce2163af9df139378f2bd972b897e556895424b"
         },
         "after": {
-          "head": "9ce2163af9df139378f2bd972b897e556895424b"
+          "head": "e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf"
         }
       },
-      "contributorChangesRequested": {
-        "head": "9ce2163af9df139378f2bd972b897e556895424b",
-        "url": "https://github.com/tamird/gvisor/commit/9ce2163af9df139378f2bd972b897e556895424b"
-      },
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "9ce2163af9df139378f2bd972b897e556895424b",
-        "observedAt": "2026-11-08T00:10:05+00:00",
-        "disposition": "The direct-argument revision was reviewed. Its args, data and toolchains attributes still come from kwargs.pop.",
-        "nextAction": "Promote args, data and toolchains to explicit yaml_test parameters, then validate the revised macro.",
+        "owner": "Contributor",
+        "sourceHead": "e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
+        "observedAt": "2026-11-08T00:16:29+00:00",
+        "disposition": "The requested keyword-only interface passed the original checks and the caller control.",
+        "nextAction": "Review the revised standalone PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/9ce2163af9df139378f2bd972b897e556895424b",
-          "https://github.com/tamird/gvisor/actions/runs/42428024414/artifacts/13596223039"
+          "https://github.com/tamird/gvisor/commit/e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
+          "https://github.com/tamird/gvisor/actions/runs/42428623884/artifacts/13596293961"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
+        "baseHead": "7eda82e34c64918d1f1b2a3d73a244d6979dbe44",
+        "url": "https://github.com/tamird/gvisor/commit/e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
+        "title": "Run YAML checks with the declared validator",
+        "requestedAt": "2026-11-08T00:16:29+00:00",
+        "summary": "Open the revised single-commit gVisor PR with explicit `args`, `data` and `toolchains`?\n\ngit -C ~/code/gvisor range-diff 9ce2163af^! e89aa6319^!",
+        "body": "The YAML checks for the Buildkite pipelines, GitHub workflows, Nogo configuration and two website datasets generate Bash scripts just to start the Go validator. Without `/bin/bash`, the test fails before it can read a YAML file.\n\nRun the existing target-platform validator as a Bazel `native_test`. Pass each option separately. Bazel expands the configured schema with `$(rootpath)` and the configured source filegroup with `$(rootpaths)`. A small rule supplies the two boolean values after `select()` resolves. Callers can supply `args`, `data` and `toolchains` as keyword-only parameters. The macro forwards other test attributes unchanged.\n\nOn Linux/AMD64 the five checks validated the same 22 files with `/bin` and `/usr/bin` hidden from the validator. Configured cases retained strict decoding, comment and schema diagnostics, and passed schema and source filenames containing spaces, an apostrophe and a literal dollar expression intact. A configured test supplied all three keyword-only parameters. An empty input group fails during Bazel analysis. [Revised original results](https://github.com/tamird/gvisor/actions/runs/42428623884/artifacts/13596293961)"
       }
     },
     {
@@ -62037,13 +62048,13 @@
       "repo": "fmeum/with_cfg.bzl",
       "number": 275,
       "ref": "research/prepend-list-setting",
-      "head": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+      "head": "6d3518de3f43b5e2018130b2dddf5df57afda4d6",
       "title": "Prepend to list-valued settings",
       "url": "https://github.com/fmeum/with_cfg.bzl/pull/275",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T00:00:42+00:00",
-      "summary": "The successor carries Nikolaus Wittenstein’s prepend implementation from #178 onto current with_cfg, shares the list-setting recorder, and adds the documentation and example requested by the maintainer. Repeated prefixes remain idempotent and an empty prefix preserves the caller’s list. The supplier tests passed on Bazel 7.7.1 and 9.2.0. With that same supplier tree and the LLVM consumer, the native static AMD64 helper wrote the expected module map for 20- and 24-byte headers. The custom Windows MSVC owner retained its original platform and a single generator .exe, and the real MSVC consumer passed analysis. No multiple-platform warnings were emitted. The contributor approved submission and the paired reply. Both are public in with_cfg.bzl #275 and David’s original #908 thread.",
+      "updatedAt": "2026-11-08T00:20:38+00:00",
+      "summary": "The successor carries Nikolaus Wittenstein’s prepend implementation from #178 onto current with_cfg, shares the list-setting recorder, and adds the documentation and example requested by the maintainer. Repeated prefixes remain idempotent and an empty prefix preserves the caller’s list. The supplier tests passed on Bazel 7.7.1 and 9.2.0. With that same supplier tree and the LLVM consumer, the native static AMD64 helper wrote the expected module map for 20- and 24-byte headers. The custom Windows MSVC owner retained its original platform and a single generator .exe, and the real MSVC consumer passed analysis. No multiple-platform warnings were emitted. The contributor approved submission and the paired reply. Both are public in with_cfg.bzl #275 and David’s original #908 thread. Supplier issue #151 independently requests prepending settings so a caller can override default options. The published revision forces LF for the expected example output. The original Windows checkout produced 25 bytes for a 22-byte expectation. Both order and empty-prefix cases passed with LF.",
       "evidence": [
         {
           "label": "Nikolaus Wittenstein’s original #178 and maintainer review",
@@ -62076,17 +62087,26 @@
         {
           "label": "Posted reply to David’s review on LLVM #908",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
+        },
+        {
+          "label": "Original supplier request for prepending settings",
+          "url": "https://github.com/fmeum/with_cfg.bzl/issues/151"
+        },
+        {
+          "label": "Native Windows checkout and both example tests",
+          "url": "https://github.com/tamird/with_cfg.bzl/actions/runs/42428735038/artifacts/13596317543"
         }
       ],
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
-        "observedAt": "2026-11-08T00:00:42+00:00",
-        "disposition": "Published #275 at the exact approved commit and posted the approved companion reply.",
+        "sourceHead": "6d3518de3f43b5e2018130b2dddf5df57afda4d6",
+        "observedAt": "2026-11-08T00:20:38+00:00",
+        "disposition": "The approved supplier PR and companion reply are public. A subsequent one-line attributes change fixes the expected example output on Windows.",
         "nextAction": "Follow the supplier PR through maintainer review and a released with_cfg containing prepend().",
         "evidence": [
           "https://github.com/fmeum/with_cfg.bzl/pull/275",
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119",
+          "https://github.com/tamird/with_cfg.bzl/actions/runs/42428735038/artifacts/13596317543"
         ]
       },
       "settledReviews": [
@@ -85962,5 +85982,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T00:10:05+00:00"
+  "updatedAt": "2026-11-08T00:20:38+00:00"
 }
