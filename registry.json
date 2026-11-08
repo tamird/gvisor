@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T12:22:22+00:00",
+    "updatedAt": "2026-11-08T12:32:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -62599,6 +62599,36 @@
         "url": "https://github.com/google/gvisor/pull/17214/files#diff-65f5a078e3d8d8eee700ccfe1c465c00dc02e78074649e882867ba3949f5ffd0R506",
         "requestedAt": "2026-11-08T09:39:38+00:00"
       }
+    },
+    {
+      "id": "branch:checkpoint-dir-without-docker",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/checkpoint-dir-without-docker",
+      "head": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+      "title": "Check Docker only when capturing a checkpoint",
+      "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T12:30:33+00:00",
+      "summary": "Supplying -checkpoint-dir currently makes the reader query Docker before it opens the saved files. The fork checks Docker only for live capture. The existing round-trip test and EncodeStatefile ran on the same saved kernel without a Docker client or daemon.",
+      "evidence": [
+        {
+          "label": "Native checkpoint capture, three round trips, EncodeStatefile and live Docker control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42479453293/artifacts/13617351334"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+        "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+        "title": "Check Docker only when capturing a checkpoint",
+        "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f",
+        "requestedAt": "2026-11-08T12:30:33+00:00",
+        "summary": "Open this single-commit gVisor PR?",
+        "body": "a9c4e2084 added -checkpoint-dir so the checkpoint benchmark could read a checkpoint from the same source tree. TestMain still runs docker version before opening those files, so a worker without Docker cannot decode a saved checkpoint.\n\nParse the benchmark flags in TestMain and check the Docker version when the benchmark needs to start nginx and capture a checkpoint."
+      }
     }
   ],
   "edges": [
@@ -72855,6 +72885,19 @@
             {
               "label": "All three observed frames on each native architecture",
               "url": "https://github.com/tamird/gvisor/actions/runs/42344764074/artifacts/13562139734"
+            }
+          ]
+        },
+        {
+          "text": "With -checkpoint-dir, the checkpoint benchmark reads an existing state file, but its test harness queried Docker first. Without Docker, the stock reader failed on that check. Checking Docker only for live capture let the existing test decode and re-encode the same systrap checkpoint three times.",
+          "evidence": [
+            {
+              "label": "Native checkpoint capture, three round trips, EncodeStatefile and live Docker control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42479453293/artifacts/13617351334"
+            },
+            {
+              "label": "Check Docker only when capturing a checkpoint",
+              "url": "https://github.com/tamird/gvisor/commit/cba5d1b3f"
             }
           ]
         }
