@@ -1,10 +1,9 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules/directory:glob.bzl", "directory_glob")
-load("@io_bazel_rules_go//go:def.bzl", "go_test")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "make")
-load("@//external/tools/plugin-stack:toolchain.bzl", "plugin_toolchain")
+load("@//external/tools/plugin-stack:toolchain.bzl", "plugin_backtrace_test", "plugin_toolchain")
 
 exports_files(glob(["dpdk/dpdk-v18.11_patches/*.patch"]))
 
@@ -146,7 +145,7 @@ cp -L libtldk.a $$INSTALLDIR/lib/libpluginstack.a
     }),
 )
 
-go_test(
+plugin_backtrace_test(
     name = "backtrace_test",
     size = "small",
     srcs = [

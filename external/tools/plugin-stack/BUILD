@@ -14,5 +14,8 @@ exports_files(glob([
 bzl_library(
     name = "toolchain_bzl",
     srcs = ["toolchain.bzl"],
-    deps = ["@rules_cc//cc:find_cc_toolchain_bzl"],
+    deps = [
+        "@io_bazel_rules_go//go:def",
+        "@rules_cc//cc:find_cc_toolchain_bzl",
+    ],
 )

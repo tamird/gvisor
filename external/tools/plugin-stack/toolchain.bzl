@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Additional selected C toolchain variables needed by the plugin's Make build."""
+"""Toolchain and execution requirements for the optional network plugin."""
 
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
 
 def _plugin_toolchain_impl(ctx):
@@ -36,4 +37,17 @@ plugin_toolchain = rule(
     implementation = _plugin_toolchain_impl,
     fragments = ["cpp"],
     toolchains = use_cc_toolchain(),
+)
+
+# The backtrace test is statically linked. Its runner needs the target OS and
+# CPU, but does not need the libc used to link the test binary.
+plugin_backtrace_test = rule(
+    implementation = lambda ctx: ctx.super(),
+    parent = go_test,
+    exec_groups = {
+        "test": exec_group(exec_compatible_with = [
+            "@platforms//cpu:x86_64",
+            "@platforms//os:linux",
+        ]),
+    },
 )
