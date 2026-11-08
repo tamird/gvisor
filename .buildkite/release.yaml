@@ -68,9 +68,17 @@ steps:
   - <<: *common
     label: ":ship: Website Deploy"
     if: build.branch == "master" && build.tag == null
+    env:
+      DOCKER_BUILD: "false"
     commands:
       # The built website image must be x86_64.
-      - make BAZEL_OPTIONS=--config=x86_64 website-deploy
+      - >-
+        bazel run $${BAZEL_REMOTE_CACHE:-} --config=x86_64
+        --//website:publication_time="$${WEBSITE_PUBLICATION_TIME-$$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+        //website:push
+      - >-
+        gcloud run deploy gvisordev --platform=managed --region=us-central1
+        --project=gvisordev --image=gcr.io/gvisordev/gvisordev --memory 1Gi
     agents:
       arch: "amd64"
       queue: "release"

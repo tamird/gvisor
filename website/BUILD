@@ -3,6 +3,7 @@ load("@rules_img//img:convert.bzl", "image_flatten")
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("@rules_img//img:load.bzl", "image_load")
+load("@rules_img//img:push.bzl", "image_push")
 load("@tar.bzl//tar:tar.bzl", "tar")
 load("//tools:defs.bzl", "bzl_library")
 load("//tools/yamltest:defs.bzl", "yaml_test")
@@ -40,6 +41,17 @@ image_load(
     build_settings = {"website_image": ":image_name"},
     image = ":site_image",
     tag = "{{.website_image}}",
+    tags = ["manual"],
+)
+
+image_push(
+    name = "push",
+    image = ":site_image",
+    push_at_build_time = "disabled",
+    registry = "gcr.io",
+    repository = "gvisordev/gvisordev",
+    strategy = "eager",
+    tag = "latest",
     tags = ["manual"],
 )
 
