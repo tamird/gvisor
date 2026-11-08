@@ -1,4 +1,4 @@
-"""Build the unchanged release, then the independent reporting tool."""
+"""Build the unchanged release and guest, then the independent reporting tool."""
 
 import hashlib
 import json
@@ -14,15 +14,15 @@ import public_assets as assets
 from measure import BUNDLE, INSTALL, OUT, SOURCE, WORK, digest
 
 
+GUEST = "//test/rbe/restore_advice:guest"
 BENCHSTAT = "@org_golang_x_perf//cmd/benchstat:benchstat"
-EXTRA_DISTDIRS = set()
-BUILD_LOGS = OUT
+PRIVATE = WORK / "asset-prepare"
 FLAGS = ["--config=x86_64", "-c", "opt", "--jobs=4", "--lockfile_mode=off",
          "--distdir=" + str(WORK / "dist"),
-         "--noremote_accept_cached", "--noremote_upload_local_results", "--remote_executor=", "--remote_cache=", "--bes_backend=", "--spawn_strategy=linux-sandbox",
+         "--noremote_accept_cached", "--noremote_upload_local_results", "--remote_executor=", "--bes_backend=", "--spawn_strategy=linux-sandbox",
          "--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox",
          "--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox"]
-BAZEL = [str(WORK / "bazel"), "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Xmx4g"]
+BAZEL = [str(WORK / "bazel"), "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Xmx4g", "--bazelrc=" + str(PRIVATE / "service.rc")]
 
 
 def wanted(text):
@@ -41,7 +41,7 @@ def wanted(text):
 def recover(urls, record):
     progress = False
     for url, owners in sorted(urls.items()):
-        if len(record["assets"]) >= 68 or sum(a["bytes"] for a in record["assets"]) >= 700 << 20:
+        if len(record["assets"]) >= 40 or sum(a["bytes"] for a in record["assets"]) >= 400 << 20:
             break
         try:
             result = assets.tool_asset(url)
@@ -54,29 +54,18 @@ def recover(urls, record):
         if result:
             record["assets"].append(result)
             progress = True
-            continue
-        try:
-            remaining = (700 << 20) - sum(a["bytes"] for a in record["assets"])
-            directory, receipt = assets.release_distfile(url, assets.DIST, remaining_bytes=remaining)
-        except (OSError, ValueError, KeyError):
-            continue
-        flag = "--distdir=" + str(directory)
-        if directory != assets.DIST and flag not in EXTRA_DISTDIRS:
-            EXTRA_DISTDIRS.add(flag)
-            record["assets"].append(receipt)
-            progress = True
     return progress
 
 
 def run(argv, phase, expected):
-    report_path = BUILD_LOGS / "assets.json"
+    report_path = PRIVATE / "assets.json"
     record = json.loads(report_path.read_bytes())
-    for index in range(1, 33):
-        log = BUILD_LOGS / "bazel.log"
-        bep = BUILD_LOGS / "build.bep"
+    for index in range(1, 25):
+        log = PRIVATE / "bazel.log"
+        bep = PRIVATE / "build.bep"
         bep.unlink(missing_ok=True)
         with log.open("wb") as dst:
-            rc = subprocess.run([*argv, *sorted(EXTRA_DISTDIRS), "--build_event_json_file=" + str(bep), *expected],
+            rc = subprocess.run([*argv, "--build_event_json_file=" + str(bep), *expected],
                                 stdout=dst, stderr=subprocess.STDOUT).returncode
         text = log.read_text(errors="replace")
         urls = wanted(text)
@@ -114,13 +103,13 @@ def run(argv, phase, expected):
             assert not any(n and "remote" in k.lower() for k, n in row.get("runners", {}).items()), row
             assert len(row.get("named_targets", [])) == len(expected) and all(t["success"] for t in row["named_targets"]), row
             return
-        if index == 32 or not recover(urls, record):
+        if index == 24 or not recover(urls, record):
             raise RuntimeError((phase, rc, row["error_classes"], row["log_sha256"]))
         report_path.write_text(json.dumps(record, indent=2) + "\n")
 
 
 def exe(target):
-    files = subprocess.check_output([*BAZEL, "cquery", *FLAGS, *sorted(EXTRA_DISTDIRS), "--output=files", target], text=True)
+    files = subprocess.check_output([*BAZEL, "cquery", *FLAGS, "--output=files", target], text=True)
     candidates = [Path(n) for n in files.splitlines() if Path(n).is_file() and os.access(n, os.X_OK)]
     assert len(candidates) == 1, target
     return candidates[0]
@@ -129,42 +118,39 @@ def exe(target):
 def build():
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == SOURCE
     subprocess.run(["git", "diff", "--quiet", "HEAD"], check=True)
+    original_guest = Path("test/rbe/restore_advice/guest.go")
+    assert subprocess.check_output(["git", "hash-object", original_guest], text=True).strip() == "fa8722188274a32ffecd31a55da785c613585fc8"
     doc = {"source": SOURCE, "build_verified": False}
-    out = BUILD_LOGS / "build.json"
+    out = PRIVATE / "build.json"
     assets.DIST = WORK / "dist"
     record = json.loads((OUT / "public-seeds.json").read_bytes())
     record.update(attempts=[], stored_source=SOURCE, remote_execution=False, remote_action_cache=False,
-                  remote_asset_endpoint=None)
-    (BUILD_LOGS / "assets.json").write_text(json.dumps(record, indent=2) + "\n")
+                  remote_asset_endpoint="grpcs://remote.buildbuddy.io")
+    (PRIVATE / "assets.json").write_text(json.dumps(record, indent=2) + "\n")
     try:
-        run([*BAZEL, "build", *FLAGS], "release", ["//:release"])
+        run([*BAZEL, "build", *FLAGS], "release and guest", ["//:release", GUEST])
         shutil.copytree("bazel-bin/release", INSTALL)
         root = BUNDLE / "rootfs"
-        assert (root / "local/latin1k.txt").read_bytes() == bytes(1024)
-        assert (root / "etc/nginx/nginx_gofer.conf").read_bytes() == Path("images/benchmarks/nginx/nginx_gofer.conf").read_bytes()
-        doc["image_config"] = (WORK / "image-config").read_text().strip()
-        assert (root / "usr/sbin/nginx").is_file() and (root / "usr/bin/curl").is_file()
+        root.mkdir(parents=True)
+        shutil.copy2(exe(GUEST), root / "probe")
         names = {"runsc", "containerd-shim-runsc-v1", *("gvisor-bin/" + n for n in
                  ("checkpointgofer","gvisor-proc-umounter","gvisor-sentry-prewarmer","gvisor_sentry",
                   "runsc-fd-parking","runsc-metric-server","runsc-netgofer"))}
         assert {str(p.relative_to(INSTALL)) for p in INSTALL.rglob("*") if p.is_file()} == names
         doc["release"] = {n: digest(INSTALL / n) for n in sorted(names)}
-        for path in [root / "usr/sbin/nginx", root / "usr/bin/curl", *(INSTALL / n for n in names)]:
+        for path in [root / "probe", *(INSTALL / n for n in names)]:
             with path.open("rb") as f:
                 h = f.read(20)
             assert h[:7] == b"\x7fELF\x02\x01\x01" and struct.unpack_from("<H", h, 18)[0] == 62
+        doc["guest"] = digest(root / "probe")
         version = subprocess.check_output([INSTALL / "runsc", "--version"], text=True)
         stamp = subprocess.check_output(["git", "describe", "--always", "--tags", "--exclude",
                                          "release-*-staging", "--abbrev=12", "--dirty"], text=True).strip()
         assert stamp != "0.0.0" and stamp in version
         doc["version"] = version.splitlines()[0]
-        caps = ["CAP_CHOWN", "CAP_DAC_OVERRIDE", "CAP_KILL", "CAP_NET_BIND_SERVICE", "CAP_SETGID", "CAP_SETUID"]
         spec = dict(ociVersion="1.0.2", root=dict(path="rootfs"), process=dict(terminal=False,
-                    user=dict(uid=0,gid=0), cwd="/", args=["/usr/sbin/nginx", "-c", "/etc/nginx/nginx_gofer.conf",
-                    "-g", "worker_processes 4;"], env=["PATH=/usr/sbin:/usr/bin:/sbin:/bin"],
-                    capabilities={name: caps for name in ("bounding","permitted","effective")}),
-                    mounts=[dict(type="proc",source="proc",destination="/proc"),
-                            dict(type="tmpfs",source="tmpfs",destination="/dev",options=["nosuid","mode=755"])],
+                    user=dict(uid=0,gid=0), cwd="/", args=["/probe"], env=["PATH=/","GOMAXPROCS=2"]),
+                    mounts=[dict(type="proc",source="proc",destination="/proc")],
                     linux=dict(namespaces=[dict(type=t) for t in ("pid","mount","ipc","uts","network")]))
         (BUNDLE / "config.json").write_text(json.dumps(spec))
         (WORK / "runtime").mkdir()
