@@ -1,35 +1,92 @@
-name: CI
-
-"on":
+name: Compare native zero-layer Go and systrap producers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/zero-layer-native-producer-comparison]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  producers:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/zero-layer-native-producer-comparison' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cpu: amd64
+            runner: ubuntu-24.04
+            binary: x86_64
+            bazel_sha: 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c
+            decoder_sha: bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224
+          - cpu: arm64
+            runner: ubuntu-24.04-arm
+            binary: arm64
+            bazel_sha: 10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366
+            decoder_sha: 5e8586e88d169395c2119a4143aa4d86d9b53d7abab3520acc735473f2bd2a90
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 105
+    env:
+      PRODUCER_CPU: ${{ matrix.cpu }}
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Bind the two product trees and original result tools
+        env:
+          BINARY: ${{ matrix.binary }}
+          BAZEL_SHA: ${{ matrix.bazel_sha }}
+          DECODER_SHA: ${{ matrix.decoder_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 960a5f77095b9ec423344e590b431ef60061d7ba
+          test "$(git rev-parse HEAD^^)" = 5cfff701fff1611c5cc265e7d43d0478f4b78e9b
+          test "$(git rev-parse HEAD^^^)" = 55e7265abbd508e773fa259c1ddd6e3182d5296e
+          test "$(git rev-parse 'HEAD^^{tree}')" = 1a28685c969f0e3482c6cf5fdb14ee28cf80bca2
+          test "$(git rev-parse 'HEAD^^^{tree}')" = 447d2e3a848735b243213ec0188671e0d6734af8
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/zero_layer'
+          work="$RUNNER_TEMP/zero-layer"
+          mkdir "$work"
+          cp test/rbe/zero_layer/readback.py "$work/"
+          fetch() { curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 --max-time 180 "$1" -o "$work/$2"; }
+          fetch "https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-$BINARY" bazel
+          fetch "https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-$BINARY" decoder
+          base=https://raw.githubusercontent.com/tamird/gvisor/aa8c789dcd281b22920edeec5e1a6bb4d87e90f4/test/rbe
+          fetch "$base/qualification_report.py" qualification_report.py
+          fetch "$base/unit_matrix.py" unit_matrix.py
+          cd "$work"
+          printf '%s  bazel\n%s  decoder\n' "$BAZEL_SHA" "$DECODER_SHA" | sha256sum -c -
+          echo '42b014da7fb7fd8f5fb885bcc28e183573912be1e146bb78714ec40b8d412dc6  qualification_report.py' | sha256sum -c -
+          echo '0ddcc589b2ba3e6027b08b88055c5dea533c2e0d376ceb7bac4c6a4768696f03  unit_matrix.py' | sha256sum -c -
+          chmod 700 bazel decoder
+          command -v jq objcopy nm
+      - name: Execute the two bounded product builds and screen the receipt
+        id: compare
+        env:
+          REMOTE_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          work="$RUNNER_TEMP/zero-layer"
+          test -n "$REMOTE_KEY"
+          trap 'rm -f -- "$work/remote.rc"' EXIT
+          {
+            echo 'build --remote_executor=grpcs://remote.buildbuddy.io'
+            echo 'build --remote_cache=grpcs://remote.buildbuddy.io'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$REMOTE_KEY"
+          } > "$work/remote.rc"
+          rc=0
+          env -u REMOTE_KEY python3 -EsB "$work/readback.py" || rc=$?
+          python3 -IB - <<'PY'
+          import json, os
+          from pathlib import Path
+          data = (Path(os.environ["RUNNER_TEMP"]) / "zero-layer/result.json").read_bytes()
+          assert 0 < len(data) < 180000 and os.environ["REMOTE_KEY"].encode() not in data
+          assert json.loads(data)["carrier"] == os.environ["GITHUB_SHA"]
+          PY
+          echo 'screened=true' >> "$GITHUB_OUTPUT"
+          exit "$rc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.compare.outputs.screened == 'true'
+        with:
+          name: zero-layer-native-producers-${{ matrix.cpu }}
+          path: ${{ runner.temp }}/zero-layer/result.json
+          if-no-files-found: error
+          retention-days: 14
