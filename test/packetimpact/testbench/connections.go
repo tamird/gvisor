@@ -1261,3 +1261,21 @@ func (conn *TCPIPv6) ExpectData(t *testing.T, tcp *TCP, payload *Payload, timeou
 	}
 	return conn.ExpectFrame(t, expected, timeout)
 }
+
+// NextTCPObservation returns the next TCP frame without assuming which sequence
+// the DUT accepted. This fork-only observer leaves the connection state alone.
+func (conn *TCPIPv4) NextTCPObservation(t *testing.T, timeout time.Duration) *TCP {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for {
+		frame := conn.recvFrame(t, time.Until(deadline))
+		if frame == nil {
+			return nil
+		}
+		if len(frame) > 2 {
+			if tcp, ok := frame[2].(*TCP); ok {
+				return tcp
+			}
+		}
+	}
+}

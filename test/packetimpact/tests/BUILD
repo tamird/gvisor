@@ -333,7 +333,7 @@ packetimpact_testbench(
 
 packetimpact_testbench(
     name = "tcp_rcv_buf_space",
-    srcs = ["tcp_rcv_buf_space_test.go"],
+    srcs = ["tcp_rcv_buf_space_test.go", "tcp_rcv_buf_boundary_test.go"],
     deps = [
         "//pkg/tcpip/header",
         "//test/packetimpact/testbench",
