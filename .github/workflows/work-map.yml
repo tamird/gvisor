@@ -1,0 +1,90 @@
+name: Verify the pending ARM64 build approval on the work map
+on:
+  push:
+    branches: [qualification/work-map-workload-grant]
+permissions: {}
+jobs:
+  suites:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind both original public data files and the candidate sources
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = ca0e51c6bea5c37028ff02125e0e61640312779c
+          test "$(git rev-parse HEAD^:registry.json)" = 0d7044095a18147e6eeb498013ce19961519f5ae
+          test "$(git rev-parse HEAD:github-status.json)" = 9c9e77a51d24b39160d39bfa364ab283e329e851
+          printf '%s\n' .github/workflows/work-map.yml README.md app.js app_test.mjs registry.json | diff - <(git diff --name-only HEAD^ HEAD)
+          mkdir "$RUNNER_TEMP/site-results"
+          sha256sum README.md app.js app_test.mjs registry.json github-status.json > "$RUNNER_TEMP/site-results/source.sha256"
+      - name: Reproduce the former agent-only handoff
+        run: |
+          set -euo pipefail
+          trap 'git restore --worktree -- app.js' EXIT
+          git show HEAD^:app.js > app.js
+          out="$RUNNER_TEMP/site-results/old.tap"
+          status=0
+          node --test --test-name-pattern='a workload grant' app_test.mjs > "$out" 2>&1 || status=$?
+          test "$status" -eq 1
+          grep -F 'an outstanding workload grant must reach the contributor' "$out"
+          grep -F 'agent-branch-work' "$out"
+      - name: Check the public branch against the same original snapshot
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS' > "$RUNNER_TEMP/site-results/grant.json"
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import vm from 'node:vm';
+          const original = path => execFileSync('git',['show','HEAD^:'+path],{encoding:'utf8',maxBuffer:32*1024*1024});
+          const snapshot = JSON.parse(readFileSync('github-status.json'));
+          function displayed(source, registry) {
+            const dom = {scrollTo() {}, querySelectorAll() {return [];}};
+            const ctx = vm.createContext({URL, location:{href:'https://tamird.github.io/gvisor/'}, document:{getElementById() {return dom;}}, r:registry,s:snapshot});
+            assert.ok(source.endsWith('start();\n'));
+            vm.runInContext(source.slice(0,-'start();\n'.length),ctx);
+            return vm.runInContext(`updateRegistryControls=()=>{};render=()=>{};setFreshness=()=>{};validateRegistry(r);applyLive(s,r);
+              (()=>{const n=model.nodes.find(n=>n.id==='branch:buildkite-source-syscalls');
+                const reasons=attentionReasons(n,'tamird'), group=attentionGroups([n],'tamird',true,new Set(['queue-user']))[0];
+                return {head:n.head,reason:group.id,owner:group.owner,link:group.entries[0].copyURL,
+                  reasons:reasons.map(r=>r.id),source:humanAction(n)?.sourceHead,url:humanAction(n)?.url,codeDecision:!!contributorDecision(n)};})()`,ctx);
+          }
+          const oldRegistry=JSON.parse(original('registry.json')), updated=JSON.parse(readFileSync('registry.json'));
+          const id='branch:buildkite-source-syscalls';
+          assert.deepEqual(oldRegistry.nodes.filter(n=>n.id!==id),updated.nodes.filter(n=>n.id!==id));
+          const old=displayed(original('app.js'),oldRegistry), live=displayed(readFileSync('app.js','utf8'),updated);
+          assert.equal(old.reason,'agent-branch-work');
+          assert.equal(old.owner,'agent');
+          assert.equal(live.owner,'user');
+          assert.equal(live.reason,'approve-run');
+          assert.equal(live.head,old.head);
+          assert.equal(live.source,'efaf79761adcb3e5ac2b6e5fc96249ac85d435b1');
+          assert.equal(live.url,'https://github.com/tamird/gvisor/commit/efaf79761');
+          assert.ok(live.reasons.includes('agent-branch-work'));
+          assert.equal(live.codeDecision,false);
+          assert.equal(live.link,'https://tamird.github.io/gvisor/?view=table&reason=approve-run#branch%3Abuildkite-source-syscalls');
+          console.log(JSON.stringify({old,live},null,2));
+          JS
+      - name: Run the current work-map suites on the original coherent registry and snapshot
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          trap 'git restore --worktree -- registry.json' EXIT
+          git show HEAD^:registry.json > registry.json
+          out="$RUNNER_TEMP/site-results"
+          a=0; b=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest discover -p '*_test.py' -v > "$out/python.log" 2>&1 || a=$?
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test app_test.mjs > "$out/frontend.tap" 2>&1 || b=$?
+          tail -4 "$out/python.log"
+          tail -8 "$out/frontend.tap"
+          test "$a" -eq 0 && test "$b" -eq 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: work-map-workload-grant
+          path: ${{ runner.temp }}/site-results/
+          if-no-files-found: error
+          retention-days: 14

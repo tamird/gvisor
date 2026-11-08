@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T17:49:43+00:00",
+    "updatedAt": "2026-11-08T17:56:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -58263,7 +58263,7 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-08T14:29:01+00:00",
+      "updatedAt": "2026-11-08T17:56:05+00:00",
       "summary": "One mixed Bazel invocation built the 2,887 top-level build-only labels in their selected configurations and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 6.8 run observed an extra pidfd on the fourth default Sentry repeat. A retained-helper control reproduced that observation on stock. Waiting through the proc umounter’s Go handle fixed it, and all ten original comparisons passed on the uninstrumented corrected runtime. The Linux 5.10 per-thread reporting failure remains open. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.\n\nThe separate native ARM64 wildcard selects //runsc:runsc_race_coverage, //runsc/cmd/sentry:gvisor_sentry_race_coverage and //pkg/metric:metric_cc_proto. Across all 11 mixed cquery partitions, encompassing 16,709 distinct pkg/runsc rows, those three targets and their generated output paths appeared only in AMD64 configurations. Both inventories used the same source tree, 4305e961c. Removing the separate ARM64 wildcard job would drop those ARM64 builds. The local Go standard-library analyzer could not run with processwrapper-sandbox, so the comparison produced no new binaries. The separate native wildcard projection also omitted some selected rows.\n\nA targeted build on x86_64 produced the three ARM64 defaults for //pkg/metric:metric_cc_proto: the generated C++ source, header and libmetric_proto.a. The archive contained an AArch64 ELF object. A separate analysis of coordinator change efaf79761 selected all 3,246 original ARM64 root labels (2,882 build-only labels and 364 existing test labels), with zero missing or extra. It checked 321 roots outside pkg and runsc, including four aliases. Eight shell controls checked propagation of build and test failures. The full ARM64 build on efaf79761 has no invocation. Approval to run it was requested. The 747 passing shards out of 748 belong to the earlier mixed test execution.\n\nThe frozen local qualifier (7b920f2cd) checks which labels belong to each of the six Bazel configuration groups across all 3,246 roots. It compares CPU, platform, mnemonic and tool-configuration flag, then inspects the metric archive and four runsc and Sentry ELF binaries. In the earlier mixed analysis and physical run, all 728 test labels kept their original group membership while every raw configuration checksum changed.",
       "evidence": [
         {
@@ -58771,9 +58771,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-08T14:29:01+00:00",
+        "observedAt": "2026-11-08T17:56:05+00:00",
         "disposition": "Full mixed presubmit completed with one failing ARM64 shard",
-        "nextAction": "Await the requested approval for the full ARM64 run on efaf79761. Keep the ARM64 wildcard job until the full ARM64 build on efaf79761 is run and its outputs are verified. When BuildBuddy deploys the corrected ARM64 guest kernel, rerun the original runsc/cmd shard with all posture assertions.",
+        "nextAction": "Keep the ARM64 wildcard job until the contributor authorizes the full build on efaf79761 and its outputs are verified. Separately, when BuildBuddy deploys the corrected ARM64 guest kernel, rerun the original runsc/cmd shard with all posture assertions.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42414811525/artifacts/13591670976",
           "https://github.com/tamird/gvisor/actions/runs/42369352419/artifacts/13572724151",
@@ -58802,6 +58802,16 @@
           "https://github.com/tamird/gvisor/actions/runs/42418735554/artifacts/13592219829",
           "https://github.com/tamird/gvisor/commit/efaf79761a"
         ]
+      },
+      "humanAction": {
+        "kind": "execution",
+        "status": "pending",
+        "head": "4eb27c4081e535d69c1257998a6c94256d9812e2",
+        "sourceHead": "efaf79761adcb3e5ac2b6e5fc96249ac85d435b1",
+        "url": "https://github.com/tamird/gvisor/commit/efaf79761",
+        "title": "Authorize the full ARM64 source-presubmit build",
+        "summary": "Authorize one BuildBuddy RBE build of the 3,246 ARM64 root targets on efaf79761.",
+        "body": "Build the default outputs of 2,882 build-only targets and 364 test targets. Check selection in all six Bazel configuration groups, then verify the metric archive and four runsc and Sentry ELF files. The full build has no invocation yet. The earlier 747/748 mixed test-shard result covers a different run."
       }
     },
     {
