@@ -1,35 +1,78 @@
-name: CI
-
-"on":
+name: Build netgofer from both Bazel source archives
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/go-archive-netgofer-pair]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  export:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 83
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind both public exporter changes, archive inputs and native tools
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/netgofer-export"
+          mkdir -p "$w/evidence" "$w/bin" "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"verified":false,"stage":"setup"}' > "$w/evidence/result.json"
+          prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          master=975fb172241c7946a9f67b4f52e0349d9240589a
+          reviewed=b61651f9371f514411dbb4fc2bd367f860204546
+          successor=bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d
+          base=10ebe13a71d7ee6b4c98e82839feebb08a2dd8ba
+          fix=e48e4d8990d5c6eb242e5c2ad4c9315a78771977
+          direct=2d9319c56e3831e43045cc6da9f3634c8a0e9b39
+          git init -q
+          git fetch -q --no-tags --no-auto-maintenance --depth=6 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prep" "$assets" "$inputs"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$direct"
+          test "$(git show -s --format=%P "$direct")" = "$fix $successor"
+          test "$(git rev-parse "$direct^{tree}")" = 73c5a26bb3de4d95d9b9371768e4bd7d138bd857
+          test "$(git rev-parse "$fix^{tree}")" = 285068d336de40032bec02c3ba4d128023dbb94f
+          test "$(git rev-parse "$fix^")" = "$base"
+          test "$(git show -s --format=%P "$base")" = "$master $reviewed"
+          test "$(git rev-parse "$base^{tree}")" = fc1938ccd83dd858cfcd65d408cd2399eac965ff
+          test "$(git rev-parse "$successor^")" = "$reviewed"
+          git diff --exit-code "$direct" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/go_archive_netgofer.py'
+          git show "$GITHUB_SHA:.github/qualification/go_archive_netgofer.py" > "$w/check.py"
+          git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
+          test "$(git hash-object "$w/previous.py")" = 0c1db7071558c5f9c8de45b60ba625183bd8a400
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$inputs:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          test "$(git hash-object "$w/public_assets.py")" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          test "$(git hash-object "$w/tldk_public_inputs.py")" = 1f3f7d4d75810ad60941772776e01f3b71b3b171
+          git checkout -q --detach "$base"
+          test -z "$(git remote)"
+          test "$(cat .bazelversion)" = 9.3.1
+          grep -xq 'go 1.27.3' go.mod
+          curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          curl -qfsSL --retry 2 --max-time 120 https://go.dev/dl/go1.27.3.linux-amd64.tar.gz -o "$w/go.tar.gz"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          echo "65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40  $w/go.tar.gz" | sha256sum -c -
+          tar -xzf "$w/go.tar.gz" -C "$w"
+          chmod +x "$w/bazel"
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+            done > "$w/jammy.list"
+            opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+      - name: Build three archives and run their Go-only consumers
+        timeout-minutes: 67
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            python3 -B "$RUNNER_TEMP/netgofer-export/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: netgofer-go-archives
+          path: |
+            ${{ runner.temp }}/netgofer-export/evidence/result.json
+            ${{ runner.temp }}/netgofer-export/evidence/repaired-help.txt
+            ${{ runner.temp }}/netgofer-export/evidence/direct-help.txt
+          if-no-files-found: error
+          retention-days: 14
