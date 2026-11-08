@@ -453,6 +453,8 @@ work. Check each current source or matching import failure against its exact
 head and failing check ID/URL; a named owner or an older free-text disposition
 does not establish that this failure has been diagnosed. Keep its concrete
 next action in the owner handoff until repaired or explicitly transferred.
+For an open source PR, `actionCheckIds` identifies the public validations to
+inspect in `failedChecks`. `recordedFollowup` preserves the earlier assignment.
 Older-source imports, approval-gated checks and internal-only failures retain
 their distinct scopes. Do not repeat notifications for an owner already acting
 on the same evidence, or publish an empty update merely to acknowledge a sweep.

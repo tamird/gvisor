@@ -13,7 +13,7 @@ from pathlib import Path
 
 from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
-from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, verified_landing, with_maintainer_reviewers
+from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -845,7 +845,16 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 if active:
                     imports.append(observation)
             if active and (failed or check_states(pr) & FAILURES):
-                failures.append({**observation, "followup": assignment})
+                failure = {**observation, "recordedFollowup": assignment}
+                if (is_source and source["status"] == "open" and source.get("head") and not delivered
+                        and not source.get("revisionChanged") and not observation["sourceBranchMismatch"]):
+                    source_checks = [check["id"] for check in validation_checks(source)
+                                     if check in failed and check.get("id") and check.get("url")]
+                    if source_checks:
+                        failure["actionCheckIds"] = source_checks
+                        failure["action"] = ("Use the diagnosis for these exact checks, or read their original results "
+                                             "and identify the source repair or CI recovery.")
+                failures.append(failure)
             unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"} or observation["sourceBranchMismatch"]
             if active and unresolved:
                 mergeability.append({**observation, "followup": assignment})

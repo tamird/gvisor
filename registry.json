@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T14:29:01+00:00",
+    "updatedAt": "2026-11-08T14:54:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60571,9 +60571,25 @@
       "url": "https://github.com/google/gvisor/pull/17181",
       "group": "tests",
       "status": "open",
-      "summary": "The accounting test touches 524,288 KiB. A default large worker reported 475,728 KiB total and no swap. Both save and save/resume passed on enormous workers. The ptrace process suite ran all seven cases on a large worker, including the 1,000-thread case. A separate medium worker reported a system-wide cap of 1,821 threads. All nine cases ran uncached on the declared LLVM integration with the same size patch. The control measured default worker capacity without launching a workload too large for it.",
-      "updatedAt": "2026-11-07T12:02:13+00:00",
+      "summary": "The accounting test touches 524,288 KiB. A default large worker reported 475,728 KiB total and no swap. Both save and save/resume passed on enormous workers. The ptrace process suite ran all seven cases on a large worker, including the 1,000-thread case. A separate medium worker reported a system-wide cap of 1,821 threads. All nine cases ran uncached on the declared LLVM integration with the same size patch. The control measured default worker capacity without launching a workload too large for it.\n\nBuildifier reported two formatting differences on the approved head. Applying the pinned formatter to 31d5b49f3 reproduced the complete tree of the published revision b6294cc79. Upstream lint passed on that revision.",
+      "updatedAt": "2026-11-08T14:51:37+00:00",
       "evidence": [
+        {
+          "label": "Upstream lint passed on b6294cc79",
+          "url": "https://github.com/google/gvisor/actions/runs/42491661444/job/128765160351"
+        },
+        {
+          "label": "Pinned Buildifier regenerated the complete revised tree from the approved source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42491494666/job/128764649521"
+        },
+        {
+          "label": "Original lint failure on 31d5b49f3",
+          "url": "https://github.com/google/gvisor/actions/runs/42370336532/job/128396962778"
+        },
+        {
+          "label": "Published formatting correction",
+          "url": "https://github.com/tamird/gvisor/commit/b6294cc79"
+        },
         {
           "label": "Default medium and large workers, including available RAM, swap and threads-max",
           "url": "https://github.com/tamird/gvisor/actions/runs/42368827189/artifacts/13572951004"
@@ -60615,16 +60631,18 @@
           "url": "https://github.com/google/gvisor/pull/17181"
         }
       ],
-      "head": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
+      "head": "b6294cc79c585b002b430f62562d2f15e40b6383",
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "31d5b49f3eb2ea920ace2b94425761720ca449e5",
-        "observedAt": "2026-11-07T12:02:13+00:00",
-        "disposition": "The reviewed change is on #17181 at 31d5b49f3.",
-        "nextAction": "Follow #17181 for maintainer review and import.",
+        "sourceHead": "b6294cc79c585b002b430f62562d2f15e40b6383",
+        "observedAt": "2026-11-08T14:51:37+00:00",
+        "disposition": "The formatting-only correction is published on #17181. Upstream lint passed on b6294cc79.",
+        "nextAction": "Follow #17181 for maintainer review and import on the corrected head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17181",
-          "https://github.com/tamird/gvisor/commit/31d5b49f3"
+          "https://github.com/tamird/gvisor/commit/b6294cc79",
+          "https://github.com/tamird/gvisor/actions/runs/42491494666/job/128764649521",
+          "https://github.com/google/gvisor/actions/runs/42491661444/job/128765160351"
         ]
       },
       "settledReviews": [
@@ -64291,9 +64309,13 @@
       "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
       "title": "Store a single absorbed graph child inline",
       "group": "runtime",
-      "updatedAt": "2026-11-08T13:47:46Z",
+      "updatedAt": "2026-11-08T14:54:55+00:00",
       "summary": "On a kernel with 50,000 tmpfs files, allocations per graph Encode fell from 100,938 to 769. Two independent 16-pair trials of the complete checkpoint found different timing effects: 177.6 to 179.1 ms (p=.696) and 270.6 to 262.2 ms (p=.011). Each trial restored and verified all 34 checkpoints, including the warmups.",
       "evidence": [
+        {
+          "label": "Combined checkpoint comparison of #17231, #17232 and #17233 on 50,000 files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42490809724/artifacts/13621991682"
+        },
         {
           "label": "Encode benchmark and cross-loads",
           "url": "https://github.com/tamird/gvisor/actions/runs/42437428710/artifacts/13600866530"
@@ -64336,6 +64358,16 @@
           "https://github.com/google/gvisor/pull/17231",
           "https://github.com/tamird/gvisor/commit/4774ec693"
         ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
+        "url": "https://github.com/google/gvisor/pull/17231",
+        "title": "Post the combined checkpoint comparison on #17231",
+        "summary": "Post one comment reporting the combined result for #17231, #17232 and #17233.",
+        "body": "I measured #17231, #17232 and #17233 together against their common parent on a sandbox containing 50,000 files in tmpfs. We measured each build 16 times on the same worker, alternating which build ran first.\n\n```text\n                   │    stock    │              combined              │\n                   │   sec/op    │   sec/op     vs base               │\nRootlessCheckpoint   230.8m ± 3%   220.7m ± 5%  -4.37% (p=0.017 n=16)\nLiveSave/graph       219.3m ± 3%   210.3m ± 5%  -4.14% (p=0.035 n=16)\n```\n\nAll 34 checkpoints, including the two warmups, restored with every file verified. [Benchstat and original samples](https://github.com/tamird/gvisor/actions/runs/42490809724/artifacts/13621991682).\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-08T14:54:55+00:00"
       }
     },
     {
@@ -64349,9 +64381,13 @@
       "head": "22134a44640f341afc4e3357fae072515dccbbf8",
       "title": "Store zero-sized target pointers separately",
       "group": "runtime",
-      "updatedAt": "2026-11-08T13:47:49Z",
+      "updatedAt": "2026-11-08T14:54:55+00:00",
       "summary": "On a live rootless systrap sandbox with 50,000 tmpfs files, the complete checkpoint was 4.55% faster across 16 alternating pairs (p=.014). All 34 restores verified the files, including the two warmups. A separate counting-writer Encode fell from 118.9 to 115.7 MiB per save with one more allocation at the median.",
       "evidence": [
+        {
+          "label": "Combined checkpoint comparison of #17231, #17232 and #17233 on 50,000 files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42490809724/artifacts/13621991682"
+        },
         {
           "label": "Live 50,000-file checkpoint and 34 verified restores",
           "url": "https://github.com/tamird/gvisor/actions/runs/42451269851/artifacts/13605948652"
@@ -64403,9 +64439,13 @@
       "head": "576430c42e0bb216b2611274a20d08463741c8a9",
       "title": "Reserve graph prefixes for inexact values",
       "group": "runtime",
-      "updatedAt": "2026-11-08T13:47:51Z",
+      "updatedAt": "2026-11-08T14:54:55+00:00",
       "summary": "The graph encoder writes a length prefix for inexact values. On a real tmpfs checkpoint with 50,000 files, reserving prefixes only for those values reduced the final output buffer by 1,007,616 bytes. Across 12 paired encodes, allocated bytes fell from 118.9 MiB to 117.9 MiB (−0.81%). Allocation count stayed at 100,937 per encode, and the timing difference was inconclusive (p=.551).",
       "evidence": [
+        {
+          "label": "Combined checkpoint comparison of #17231, #17232 and #17233 on 50,000 files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42490809724/artifacts/13621991682"
+        },
         {
           "label": "50,000-file checkpoint, buffer capacities and original benchstat",
           "url": "https://github.com/tamird/gvisor/actions/runs/42431995900/artifacts/13598227954"
@@ -64497,6 +64537,51 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fe04aebd1",
           "https://github.com/google/gvisor/pull/17234"
+        ]
+      }
+    },
+    {
+      "id": "branch:posix-timer-checkpoint-lock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/posix-timer-checkpoint-lock",
+      "head": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
+      "title": "Guard POSIX timer teardown and checkpoint walks",
+      "url": "https://github.com/tamird/gvisor/commit/5b9d447ba",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-11-08T14:54:55+00:00",
+      "summary": "The timer syscalls, exec and final exit use timerMu for the interval timer table. Checkpoint takes the same lock when pausing and resuming the timers. The analyzer passed on AMD64 and ARM64. Removing the checkpoint pause lock reported the same unguarded read twice per architecture. The fork job recorded a failure because its result reader expected one diagnostic. Its original Linux and lockdep systrap tests passed, including save/restore with two pending timer IDs, their invalidation after exec, and exit with a newly armed timer. The syscall fixture is fork-only.",
+      "evidence": [
+        {
+          "label": "Signed timer-lock proposal",
+          "url": "https://github.com/tamird/gvisor/commit/5b9d447ba"
+        },
+        {
+          "label": "Original lock analysis, Linux syscall and lockdep systrap save/restore results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42485063170/artifacts/13621319306"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "url": "https://github.com/tamird/gvisor/commit/5b9d447ba",
+        "title": "Guard POSIX timer teardown and checkpoint walks",
+        "body": "Timer syscalls use the thread group's timerMu to look up timers and allocate IDs. Exec and final exit instead copied the table into a slice under the signal mutex, then released that mutex to destroy the timers.\n\nHold timerMu while destroying the timers, as timer_delete already does. Drop the TaskSet and signal locks before destruction so a timer can finish delivering its signal. Clear the existing map for reuse after exec, without allocating a temporary slice.\n\nGuard the table and next timer ID with checklocks. Take the same mutex when checkpoint pauses and resumes the group's timers.",
+        "summary": "Open the single signed timer-lock change against gVisor master.",
+        "requestedAt": "2026-11-08T14:54:55+00:00"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "5b9d447ba1bbfd67e6db860d585239167d1bc9f9",
+        "observedAt": "2026-11-08T14:54:55+00:00",
+        "disposition": "The timer-lock change is ready for contributor review.",
+        "nextAction": "Review 5b9d447ba for submission to gVisor.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/5b9d447ba",
+          "https://github.com/tamird/gvisor/actions/runs/42485063170/artifacts/13621319306"
         ]
       }
     }
@@ -77393,7 +77478,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T13:55:39.956262+00:00",
+      "updatedAt": "2026-11-08T14:54:55+00:00",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -78524,6 +78609,41 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "Complete checkpoints with #17231, #17232 and #17233 together",
+          "description": "Rootless systrap on one Linux AMD64 worker with 50,000 files in tmpfs. Stock and the combined encoder ran in 16 alternating pairs after one warmup each. All 34 checkpoints restored, and every file was verified.",
+          "columns": [
+            "Median elapsed time",
+            "Common parent 7d1b049f5",
+            "Three changes 6e9777262",
+            "Observed change"
+          ],
+          "rows": [
+            [
+              "Container.Checkpoint",
+              "230.8 ms ± 3%",
+              "220.7 ms ± 5%",
+              "−4.37% (p=.017, n=16)"
+            ],
+            [
+              "LiveSave/graph",
+              "219.3 ms ± 3%",
+              "210.3 ms ± 5%",
+              "−4.14% (p=.035, n=16)"
+            ]
+          ],
+          "note": "Both rows measure the three changes together. The archive size, CPU time and memory phases showed no statistically significant change in this comparison.",
+          "evidence": [
+            {
+              "label": "Benchstat and original samples",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42490809724/artifacts/13621991682"
+            },
+            {
+              "label": "Combined encoder source",
+              "url": "https://github.com/tamird/gvisor/commit/6e9777262"
+            }
+          ]
+        },
         {
           "title": "MapRange: existing Map Save microbenchmark",
           "description": "Go 1.27.1, one Linux AMD64 worker, fixed CPU affinity, GOMAXPROCS=1, 12 balanced before/after pairs and one-second measurements. The reported unit follows the existing benchmark calibration, not one complete Save call.",
@@ -85251,9 +85371,22 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T00:43:46+00:00",
+      "updatedAt": "2026-11-08T14:54:55+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "The POSIX timer proposal guards both the table of timers and the next timer ID. Its checkpoint control identified the unguarded pause read on AMD64 and ARM64.",
+          "evidence": [
+            {
+              "label": "Signed timer-lock proposal",
+              "url": "https://github.com/tamird/gvisor/commit/5b9d447ba"
+            },
+            {
+              "label": "Original lock analysis, Linux syscall and lockdep systrap save/restore results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42485063170/artifacts/13621319306"
+            }
+          ]
+        },
         {
           "text": "VFSPipe.newFD still required callers to hold a mutex removed when FIFO opens switched to waiter queues. The batch cleanup removes that precondition and the unused vfs and inode mutex declarations. The lockdep runtime suite and both pipe Nogo owners passed on 0bae5ce4b.",
           "evidence": [

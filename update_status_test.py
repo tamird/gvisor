@@ -1128,6 +1128,40 @@ class CollectorHistoryTest(unittest.TestCase):
 
 
 class CheckReportTest(unittest.TestCase):
+    def test_failed_source_check_after_recorded_review_wait(self) -> None:
+        source = retained(raw_pr(17181))
+        waiting = {"owner": "Upstream review", "sourceHead": source["head"],
+                   "nextAction": "Follow for maintainer review and import."}
+        node = {"type": "pr", "repo": "google/gvisor", "number": 17181, "followup": waiting}
+        previous = {"prs": [copy.deepcopy(source)]}
+        lint = {"id": "lint-job", "kind": "check-run", "name": "lint", "state": "FAILURE",
+                "url": "https://github.com/google/gvisor/actions/runs/42370336532/job/128396962778"}
+        internal = {"id": "feedback", "kind": "status", "name": "feedback/copybara", "state": "FAILURE",
+                    "url": "https://github.com/google/gvisor/pull/17181"}
+        source["checks"] = {"state": "FAILURE", "complete": True, "total": 2, "contexts": [internal, lint]}
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
+            first = updater.check_report([source], previous)
+            row, = first["checkFailures"]
+            self.assertEqual(row["actionCheckIds"], [lint["id"]])
+            self.assertEqual(row["head"], source["head"])
+            self.assertIn(lint, row["failedChecks"])
+            self.assertIn("original results", row["action"])
+            self.assertEqual(row["recordedFollowup"], waiting)
+            self.assertNotIn("followup", row)
+            stable = updater.check_report([source], {"prs": [copy.deepcopy(source)]})
+            self.assertEqual(stable["checkFailures"], first["checkFailures"])
+            self.assertEqual(stable["changedChecks"], [])
+            source["branchHead"] = "b" * 40
+            mismatch, = updater.check_report([source], {})["checkFailures"]
+            self.assertNotIn("actionCheckIds", mismatch)
+            self.assertIn(lint, mismatch["failedChecks"])
+            self.assertEqual(mismatch["recordedFollowup"], waiting)
+            source["branchHead"] = source["head"]
+            lint["state"] = "SUCCESS"
+            internal_only, = updater.check_report([source], {})["checkFailures"]
+            self.assertNotIn("action", internal_only)
+            self.assertNotIn("actionCheckIds", internal_only)
+
     def test_delivered_head_keeps_raw_conflict_without_requesting_a_rebase(self) -> None:
         current = retained(raw_pr(16467))
         current["mergeable"] = "CONFLICTING"
