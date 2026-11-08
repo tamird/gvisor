@@ -1420,7 +1420,9 @@ func (e *Endpoint) keepaliveTimerExpired() tcpip.Error {
 		return nil
 	}
 	e.keepalive.Lock()
-	if !e.SocketOptions().GetKeepAlive() || e.keepalive.timer.isUninitialized() || !e.keepalive.timer.checkExpiration() {
+	// Consume an orphaned wakeup even when keepalive is disabled so that
+	// re-enabling it schedules a new clock timer.
+	if e.keepalive.timer.isUninitialized() || !e.keepalive.timer.checkExpiration() || !e.SocketOptions().GetKeepAlive() {
 		e.keepalive.Unlock()
 		return nil
 	}
