@@ -78,9 +78,7 @@ func (conn *connection) InitSend(creds *auth.Credentials, pid uint32) error {
 	return conn.CallAsync(context.Background(), req)
 }
 
-// InitRecv receives a FUSE_INIT reply and process it.
-//
-// Preconditions: conn.asyncMu must not be held if minor version is newer than 13.
+// InitRecv processes a FUSE_INIT reply.
 //
 // +checklocks:conn.mu
 func (conn *connection) InitRecv(res *Response, hasSysAdminCap bool) error {
@@ -99,8 +97,7 @@ func (conn *connection) InitRecv(res *Response, hasSysAdminCap bool) error {
 	return conn.initProcessReply(&initRes.initOut, hasSysAdminCap)
 }
 
-// Process the FUSE_INIT reply from the FUSE server.
-// It tries to acquire the conn.asyncMu lock if minor version is newer than 13.
+// initProcessReply applies the limits and flags negotiated with the FUSE server.
 //
 // +checklocks:conn.mu
 func (conn *connection) initProcessReply(out *linux.FUSEInitOut, hasSysAdminCap bool) error {
@@ -153,8 +150,6 @@ func (conn *connection) initProcessReply(out *linux.FUSEInitOut, hasSysAdminCap 
 
 	// No support for limits before minor version 13.
 	if out.Minor >= 13 {
-		conn.asyncMu.Lock()
-
 		if out.MaxBackground > 0 {
 			conn.asyncNumMax = out.MaxBackground
 
@@ -172,22 +167,16 @@ func (conn *connection) initProcessReply(out *linux.FUSEInitOut, hasSysAdminCap 
 				conn.asyncCongestionThreshold = MaxUserCongestionThreshold
 			}
 		}
-
-		conn.asyncMu.Unlock()
 	}
 
 	return nil
 }
 
-// Abort this FUSE connection.
-// It tries to acquire conn.fd.mu, conn.lock, conn.bgLock in order.
-// All possible requests waiting or blocking will be aborted.
+// Abort disconnects the FUSE connection and wakes blocked requests.
 func (conn *connection) Abort(ctx context.Context) {
 	conn.mu.Lock()
-	conn.asyncMu.Lock()
 
 	if !conn.connected {
-		conn.asyncMu.Unlock()
 		conn.mu.Unlock()
 		return
 	}
@@ -217,8 +206,7 @@ func (conn *connection) Abort(ctx context.Context) {
 		terminate = append(terminate, unique)
 	}
 
-	// Release locks to avoid deadlock.
-	conn.asyncMu.Unlock()
+	// setInitialized takes conn.mu.
 	conn.mu.Unlock()
 
 	// 1. The request blocked before initialization.

@@ -90,9 +90,8 @@ func (dc *deviceConn) interrupt(fut *futureResponse) {
 // connection is the struct by which the sentry communicates with the FUSE server daemon.
 //
 // Lock order:
-//   - conn.fd.mu
-//   - conn.mu
-//   - conn.asyncMu
+//   - DeviceFD.mu
+//   - connection.mu
 //
 // +stateify savable
 type connection struct {
@@ -232,26 +231,23 @@ type connection struct {
 	// The "async requests" in unix term is our async requests that expect a reply,
 	// i.e. `!request.noReply`
 
-	// asyncMu protects the async request fields.
-	asyncMu sync.Mutex `state:"nosave"`
-
 	// asyncNum is the number of async requests.
 	//
-	// +checklocks:asyncMu
+	// +checklocks:mu
 	asyncNum uint16
 
 	// asyncCongestionThreshold the number of async requests.
 	// Negotiated in FUSE_INIT as "CongestionThreshold".
 	// TODO(gvisor.dev/issue/3529): add congestion control.
 	//
-	// +checklocks:asyncMu
+	// +checklocks:mu
 	asyncCongestionThreshold uint16
 
 	// asyncNumMax is the maximum number of asyncNum.
 	// Connection blocks the async requests when it is reached.
 	// Negotiated in FUSE_INIT as "MaxBackground".
 	//
-	// +checklocks:asyncMu
+	// +checklocks:mu
 	asyncNumMax uint16
 
 	// maxRead is the maximum size of a read buffer in in bytes.
