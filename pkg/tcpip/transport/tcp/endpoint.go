@@ -427,7 +427,11 @@ type Endpoint struct {
 	// state.
 	origEndpointState uint32 `state:"nosave"`
 
-	isPortReserved    bool
+	// isPortReserved records whether cleanup must release the reserved port.
+	//
+	// +checklocks:mu
+	isPortReserved bool
+
 	isRegistered      bool
 	boundNICID        tcpip.NICID
 	route             *stack.Route `state:"nosave"`
