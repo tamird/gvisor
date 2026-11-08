@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T23:53:42+00:00",
+    "updatedAt": "2026-11-08T00:00:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21,7 +21,8 @@
       "periareon/rules_cc_autoconf": "none",
       "llvm/llvm-project": "none",
       "protocolbuffers/protobuf": "none",
-      "bazel-contrib/buildtools": "none"
+      "bazel-contrib/buildtools": "none",
+      "fmeum/with_cfg.bzl": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -34,7 +35,8 @@
       "periareon/rules_cc_autoconf",
       "llvm/llvm-project",
       "protocolbuffers/protobuf",
-      "bazel-contrib/buildtools"
+      "bazel-contrib/buildtools",
+      "fmeum/with_cfg.bzl"
     ],
     "registryDate": "2026-11-01"
   },
@@ -49490,8 +49492,8 @@
       "url": "https://github.com/tamird/gvisor/commit/3c8aa1d51",
       "group": "runtime",
       "status": "Delivered",
-      "updatedAt": "2026-11-07T23:25:31+00:00",
-      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and the approved 3c8aa1d51 revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. The approved change is now open as #17206 at 1f50f4698 on the landed counter in master.",
+      "updatedAt": "2026-11-07T23:58:15+00:00",
+      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and the approved 3c8aa1d51 revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. The approved change is now open as #17206 at 1f50f4698 on the landed counter in master.\n\nOn the published 1f50f4698, the original TestRepeatedSynInSynRcvd passed uncached on a local AMD64 Linux Netstack TestRunner. It requires matching sequence and acknowledgment numbers on both SYN-ACKs before the same 500 ms deadline. After an immediate third SYN and completion of the handshake, the accepted socket reported exactly one retransmission. The original Go log and clean single-case XML agree.",
       "evidence": [
         {
           "label": "Changes since the previous source review",
@@ -49530,8 +49532,8 @@
           "url": "https://github.com/google/gvisor/pull/16982"
         },
         {
-          "label": "Hosted Netstack replay of the published source",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42425194587"
+          "label": "Original uncached Netstack packet result on published 1f50f4698",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42425194587/artifacts/13595683733"
         }
       ],
       "settledReviews": [
@@ -49575,7 +49577,8 @@
           "https://github.com/google/gvisor/pull/17206",
           "https://github.com/google/gvisor/commit/1f50f469810b7a38f9de87e8d84cbed627ed5730",
           "https://github.com/tamird/gvisor/compare/3c8aa1d51..1f50f4698",
-          "https://github.com/google/gvisor/pull/16982"
+          "https://github.com/google/gvisor/pull/16982",
+          "https://github.com/tamird/gvisor/actions/runs/42425194587/artifacts/13595683733"
         ]
       },
       "inactive": true
@@ -52672,8 +52675,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T23:53:42+00:00",
-      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The coordinated supplier PR and reviewer reply are pending contributor review.",
+      "updatedAt": "2026-11-08T00:00:42+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.\n\nOn the published head, dzbarsky asked to put the platform transition in the existing with_cfg rule so separate native helper targets are unnecessary. The author is working on that change.\n\nOn Bazel 7.7.0 and 9.3.1, the ordinary empty platform selection dropped the caller’s custom Windows platform. With an opt-in in with_cfg, the fork retained the MSVC tool owner’s custom platform and executable contract. The real MSVC consumer passed analysis. On Linux, the static module-map-generator built and returned the expected usage result. The LLVM consumer diff adds two lines and removes 30. The existing supplier proposal #178 offers a prepend operation.\n\nOn the LLVM consumer c0768cac2, the unmodified prepend operation from supplier PR #178 passed all seven configuration checks without a multi-platform warning. The actual Linux owner selected only linux_x86_64_musl and the Windows owner selected only custom_windows, with one .exe. The Windows consumer was analyzed. The native Linux helper matched the 8e03cdffb binary that previously produced module map 213d63b2a. This satisfies #908’s consumer case without keep_if_empty. The current supplier tree also passed both Bazel versions and the paired LLVM checks. Its native static Linux executable generated the expected two-header module map, and the MSVC consumer retained its platform in analysis. The approved successor is open as with_cfg.bzl #275 and the author replied to David on #908. Updating LLVM now awaits a release of with_cfg containing prepend().",
       "evidence": [
         {
           "label": "Buildifier annotation for the internal rule registered by with_cfg",
@@ -52760,8 +52763,16 @@
           "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42427015026/artifacts/13595617323"
         },
         {
-          "label": "Single credited supplier proposal and proposed reply",
+          "label": "Delivered supplier source and qualification",
           "url": "https://tamird.github.io/gvisor/#branch:with-cfg-prepend-list-setting"
+        },
+        {
+          "label": "Published one-commit supplier PR #275",
+          "url": "https://github.com/fmeum/with_cfg.bzl/pull/275"
+        },
+        {
+          "label": "Posted reply to David’s review on LLVM #908",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
         }
       ],
       "settledReviews": [
@@ -52771,7 +52782,26 @@
           "at": "2026-11-02T19:41:01.662487+00:00",
           "outcome": "approved"
         }
-      ]
+      ],
+      "releaseWait": {
+        "head": "533981c365e8ee683926bd465efcc81bc31158bf",
+        "confirmedAt": "2026-11-08T00:00:42+00:00",
+        "checkedVersion": "1.0.2",
+        "module": "with_cfg.bzl",
+        "nextAction": "Adopt a released with_cfg.bzl containing prepend() and update #908 to the verified single-binary transition."
+      },
+      "followup": {
+        "owner": "Upstream release",
+        "sourceHead": "533981c365e8ee683926bd465efcc81bc31158bf",
+        "observedAt": "2026-11-08T00:00:42+00:00",
+        "disposition": "The credited supplier PR is open and the author answered David’s review. The latest BCR release, 1.0.2, predates the operation.",
+        "nextAction": "Adopt a released with_cfg.bzl containing prepend() and update #908 to the verified single-binary transition.",
+        "evidence": [
+          "https://github.com/fmeum/with_cfg.bzl/pull/275",
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119",
+          "https://bcr.bazel.build/modules/with_cfg.bzl/metadata.json"
+        ]
+      }
     },
     {
       "id": "pr:16834",
@@ -61688,8 +61718,8 @@
       "url": "https://github.com/google/gvisor/pull/17206",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T23:25:31+00:00",
-      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and the approved 3c8aa1d51 revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. The approved change is now open as #17206 at 1f50f4698 on the landed counter in master.",
+      "updatedAt": "2026-11-07T23:58:15+00:00",
+      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and the approved 3c8aa1d51 revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. The approved change is now open as #17206 at 1f50f4698 on the landed counter in master.\n\nOn the published 1f50f4698, the original TestRepeatedSynInSynRcvd passed uncached on a local AMD64 Linux Netstack TestRunner. It requires matching sequence and acknowledgment numbers on both SYN-ACKs before the same 500 ms deadline. After an immediate third SYN and completion of the handshake, the accepted socket reported exactly one retransmission. The original Go log and clean single-case XML agree.",
       "evidence": [
         {
           "label": "Changes since the previous source review",
@@ -61728,8 +61758,8 @@
           "url": "https://github.com/google/gvisor/pull/16982"
         },
         {
-          "label": "Hosted Netstack replay of the published source",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42425194587"
+          "label": "Original uncached Netstack packet result on published 1f50f4698",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42425194587/artifacts/13595683733"
         }
       ],
       "settledReviews": [
@@ -61765,7 +61795,8 @@
           "https://github.com/google/gvisor/pull/17206",
           "https://github.com/google/gvisor/commit/1f50f469810b7a38f9de87e8d84cbed627ed5730",
           "https://github.com/tamird/gvisor/compare/3c8aa1d51..1f50f4698",
-          "https://github.com/google/gvisor/pull/16982"
+          "https://github.com/google/gvisor/pull/16982",
+          "https://github.com/tamird/gvisor/actions/runs/42425194587/artifacts/13595683733"
         ]
       }
     },
@@ -61778,8 +61809,8 @@
       "title": "Run YAML checks with the declared validator",
       "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T23:39:37+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-07T23:59:48+00:00",
       "summary": "All five existing YAML checks passed on the 22 original files with the direct Go validator. On stock, the tests passed with Bash and failed to start once their own namespaces hid /bin and /usr/bin. Bazel’s outer test setup ran on ordinary Ubuntu. All 20 test results were uncached. Direct execution now passes extra Bazel --test_arg values to the validator as additional filenames. None of the five current owners supplies any.",
       "evidence": [
         {
@@ -61791,16 +61822,33 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42425854263/artifacts/13595004667"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
+          "baseHead": "7eda82e34c64918d1f1b2a3d73a244d6979dbe44",
+          "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
+          "requestedAt": "2026-11-07T23:39:37+00:00",
+          "title": "Run YAML checks with the declared validator",
+          "summary": "Open this single-commit gVisor PR?",
+          "body": "The YAML checks for the Buildkite pipelines, GitHub workflows, Nogo configuration and two website datasets generate Bash scripts just to start the Go validator. Without `/bin/bash`, the test executable fails before it reads a single YAML file.\n\nRun the existing target-platform validator as a Bazel `native_test`. A private input target supplies the resolved schema, filegroups and options as test arguments so callers can continue using `select()`.\n\nOn Linux/AMD64 with Bazel 9.3.1, all five original checks passed with Bash and failed to start when the test's namespace hid `/bin` and `/usr/bin`. The replacement checked the same 22 files there. It also retained strict decoding, the comment policy and schema diagnostics, and handled a multi-file input containing spaces and a literal dollar expression. Bazel's outer test setup ran on ordinary Ubuntu. [Original qualification](https://github.com/tamird/gvisor/actions/runs/42425854263/artifacts/13595004667)",
+          "outcome": "changes-requested",
+          "at": "2026-11-07T23:59:48+00:00"
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
-        "baseHead": "7eda82e34c64918d1f1b2a3d73a244d6979dbe44",
-        "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
-        "requestedAt": "2026-11-07T23:39:37+00:00",
-        "title": "Run YAML checks with the declared validator",
-        "summary": "Open this single-commit gVisor PR?",
-        "body": "The YAML checks for the Buildkite pipelines, GitHub workflows, Nogo configuration and two website datasets generate Bash scripts just to start the Go validator. Without `/bin/bash`, the test executable fails before it reads a single YAML file.\n\nRun the existing target-platform validator as a Bazel `native_test`. A private input target supplies the resolved schema, filegroups and options as test arguments so callers can continue using `select()`.\n\nOn Linux/AMD64 with Bazel 9.3.1, all five original checks passed with Bash and failed to start when the test's namespace hid `/bin` and `/usr/bin`. The replacement checked the same 22 files there. It also retained strict decoding, the comment policy and schema diagnostics, and handled a multi-file input containing spaces and a literal dollar expression. Bazel's outer test setup ran on ordinary Ubuntu. [Original qualification](https://github.com/tamird/gvisor/actions/runs/42425854263/artifacts/13595004667)"
+        "url": "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c"
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c",
+        "observedAt": "2026-11-07T23:59:48+00:00",
+        "disposition": "Tamir requested changes to argument construction on dbd1c2e9f.",
+        "nextAction": "Construct the validator argument vector directly. If the rule requires shell escaping, document the reason at the relevant code.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c"
+        ]
       }
     },
     {
@@ -61812,9 +61860,9 @@
       "title": "Prepend to list-valued settings",
       "url": "https://github.com/tamird/with_cfg.bzl/commit/14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T23:53:42+00:00",
-      "summary": "The successor carries Nikolaus Wittenstein’s prepend implementation from #178 onto current with_cfg, shares the list-setting recorder, and adds the documentation and example requested by the maintainer. Repeated prefixes remain idempotent and an empty prefix preserves the caller’s list. The supplier tests passed on Bazel 7.7.1 and 9.2.0. With that same supplier tree and the LLVM consumer, the native static AMD64 helper wrote the expected module map for 20- and 24-byte headers. The custom Windows MSVC owner retained its original platform and a single generator .exe, and the real MSVC consumer passed analysis. No multiple-platform warnings were emitted.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-08T00:00:42+00:00",
+      "summary": "The successor carries Nikolaus Wittenstein’s prepend implementation from #178 onto current with_cfg, shares the list-setting recorder, and adds the documentation and example requested by the maintainer. Repeated prefixes remain idempotent and an empty prefix preserves the caller’s list. The supplier tests passed on Bazel 7.7.1 and 9.2.0. With that same supplier tree and the LLVM consumer, the native static AMD64 helper wrote the expected module map for 20- and 24-byte headers. The custom Windows MSVC owner retained its original platform and a single generator .exe, and the real MSVC consumer passed analysis. No multiple-platform warnings were emitted. The contributor approved submission and the paired reply. Both are public in with_cfg.bzl #275 and David’s original #908 thread.",
       "evidence": [
         {
           "label": "Nikolaus Wittenstein’s original #178 and maintainer review",
@@ -61839,20 +61887,117 @@
         {
           "label": "David’s original #908 review",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
+        },
+        {
+          "label": "Published one-commit supplier PR #275",
+          "url": "https://github.com/fmeum/with_cfg.bzl/pull/275"
+        },
+        {
+          "label": "Posted reply to David’s review on LLVM #908",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
-        "baseHead": "9b8b10962419346889e528cbe57a539754489d57",
-        "url": "https://github.com/tamird/with_cfg.bzl/commit/14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
-        "title": "Prepend to list-valued settings",
-        "requestedAt": "2026-11-07T23:53:42+00:00",
-        "summary": "Open the credited successor to with_cfg.bzl #178 and reply to David on hermetic-llvm #908 with its link?\n\ngit -C ~/code/cedar-with_cfg.bzl range-diff --creation-factor=999 0b02ab402^! 14a10e44f^!",
-        "body": "A transition can supply -DFOO as a compiler default. extend() places\nit after a caller's --copt=-UFOO, so FOO stays defined. prepend()\nplaces the default before the caller's options. Reapplying an existing\nprefix leaves the list unchanged.\n\nBased on Nikolaus Wittenstein’s implementation in #178.\n\nFixes #151\n\nCo-authored-by: Nikolaus Wittenstein <nikolaus.wittenstein@gmail.com>",
-        "replyBody": "@dzbarsky, yes. <supplier PR> carries Nikolaus Wittenstein’s [prepend proposal](https://github.com/fmeum/with_cfg.bzl/pull/178) forward with the requested documentation and example. [The LLVM change](https://github.com/tamird/hermetic-llvm/commit/c0768cac2) prepends Linux musl on the existing binary rule and removes the separate `native/` and `musl/` targets. An empty prefix on Windows keeps the caller’s MSVC platform. I’ll update this PR once the supplier change is released.\n\nPosted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+          "baseHead": "9b8b10962419346889e528cbe57a539754489d57",
+          "url": "https://github.com/tamird/with_cfg.bzl/commit/14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+          "title": "Prepend to list-valued settings",
+          "requestedAt": "2026-11-07T23:53:42+00:00",
+          "summary": "Open the credited successor to with_cfg.bzl #178 and reply to David on hermetic-llvm #908 with its link?\n\ngit -C ~/code/cedar-with_cfg.bzl range-diff --creation-factor=999 0b02ab402^! 14a10e44f^!",
+          "body": "A transition can supply -DFOO as a compiler default. extend() places\nit after a caller's --copt=-UFOO, so FOO stays defined. prepend()\nplaces the default before the caller's options. Reapplying an existing\nprefix leaves the list unchanged.\n\nBased on Nikolaus Wittenstein’s implementation in #178.\n\nFixes #151\n\nCo-authored-by: Nikolaus Wittenstein <nikolaus.wittenstein@gmail.com>",
+          "replyBody": "@dzbarsky, yes. <supplier PR> carries Nikolaus Wittenstein’s [prepend proposal](https://github.com/fmeum/with_cfg.bzl/pull/178) forward with the requested documentation and example. [The LLVM change](https://github.com/tamird/hermetic-llvm/commit/c0768cac2) prepends Linux musl on the existing binary rule and removes the separate `native/` and `musl/` targets. An empty prefix on Windows keeps the caller’s MSVC platform. I’ll update this PR once the supplier change is released.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-08T00:00:42+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+        "observedAt": "2026-11-08T00:00:42+00:00",
+        "disposition": "Published #275 at the exact approved commit and posted the approved companion reply.",
+        "nextAction": "Follow the supplier PR through maintainer review and a released with_cfg containing prepend().",
+        "evidence": [
+          "https://github.com/fmeum/with_cfg.bzl/pull/275",
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
+        ]
       }
+    },
+    {
+      "id": "pr:fmeum/with_cfg.bzl:275",
+      "type": "pr",
+      "repo": "fmeum/with_cfg.bzl",
+      "number": 275,
+      "ref": "research/prepend-list-setting",
+      "head": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+      "title": "Prepend to list-valued settings",
+      "url": "https://github.com/fmeum/with_cfg.bzl/pull/275",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-08T00:00:42+00:00",
+      "summary": "The successor carries Nikolaus Wittenstein’s prepend implementation from #178 onto current with_cfg, shares the list-setting recorder, and adds the documentation and example requested by the maintainer. Repeated prefixes remain idempotent and an empty prefix preserves the caller’s list. The supplier tests passed on Bazel 7.7.1 and 9.2.0. With that same supplier tree and the LLVM consumer, the native static AMD64 helper wrote the expected module map for 20- and 24-byte headers. The custom Windows MSVC owner retained its original platform and a single generator .exe, and the real MSVC consumer passed analysis. No multiple-platform warnings were emitted. The contributor approved submission and the paired reply. Both are public in with_cfg.bzl #275 and David’s original #908 thread.",
+      "evidence": [
+        {
+          "label": "Nikolaus Wittenstein’s original #178 and maintainer review",
+          "url": "https://github.com/fmeum/with_cfg.bzl/pull/178"
+        },
+        {
+          "label": "Current supplier tests, generated docs and formatting",
+          "url": "https://github.com/tamird/with_cfg.bzl/actions/runs/42426615376/artifacts/13595548731"
+        },
+        {
+          "label": "Current supplier plus LLVM consumer, native module map and MSVC analysis",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42427015026/artifacts/13595617323"
+        },
+        {
+          "label": "Seven integration cases with original #178 on with_cfg v0.12",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42426347889/artifacts/13595098610"
+        },
+        {
+          "label": "Tested one-transition LLVM consumer",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/c0768cac2"
+        },
+        {
+          "label": "David’s original #908 review",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4503803472"
+        },
+        {
+          "label": "Published one-commit supplier PR #275",
+          "url": "https://github.com/fmeum/with_cfg.bzl/pull/275"
+        },
+        {
+          "label": "Posted reply to David’s review on LLVM #908",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+        "observedAt": "2026-11-08T00:00:42+00:00",
+        "disposition": "Published #275 at the exact approved commit and posted the approved companion reply.",
+        "nextAction": "Follow the supplier PR through maintainer review and a released with_cfg containing prepend().",
+        "evidence": [
+          "https://github.com/fmeum/with_cfg.bzl/pull/275",
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/908#discussion_r4504239119"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+          "baseHead": "9b8b10962419346889e528cbe57a539754489d57",
+          "url": "https://github.com/tamird/with_cfg.bzl/commit/14a10e44f636caafa6a2c589b7da9d4a02e5e31c",
+          "title": "Prepend to list-valued settings",
+          "requestedAt": "2026-11-07T23:53:42+00:00",
+          "summary": "Open the credited successor to with_cfg.bzl #178 and reply to David on hermetic-llvm #908 with its link?\n\ngit -C ~/code/cedar-with_cfg.bzl range-diff --creation-factor=999 0b02ab402^! 14a10e44f^!",
+          "body": "A transition can supply -DFOO as a compiler default. extend() places\nit after a caller's --copt=-UFOO, so FOO stays defined. prepend()\nplaces the default before the caller's options. Reapplying an existing\nprefix leaves the list unchanged.\n\nBased on Nikolaus Wittenstein’s implementation in #178.\n\nFixes #151\n\nCo-authored-by: Nikolaus Wittenstein <nikolaus.wittenstein@gmail.com>",
+          "replyBody": "@dzbarsky, yes. <supplier PR> carries Nikolaus Wittenstein’s [prepend proposal](https://github.com/fmeum/with_cfg.bzl/pull/178) forward with the requested documentation and example. [The LLVM change](https://github.com/tamird/hermetic-llvm/commit/c0768cac2) prepends Linux musl on the existing binary rule and removes the separate `native/` and `musl/` targets. An empty prefix on Windows keeps the caller’s MSVC platform. I’ll update this PR once the supplier change is released.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-08T00:00:42+00:00"
+        }
+      ]
     }
   ],
   "edges": [
@@ -85512,5 +85657,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T23:53:42+00:00"
+  "updatedAt": "2026-11-08T00:00:42+00:00"
 }
