@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T13:31:51+00:00",
+    "updatedAt": "2026-11-08T13:35:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63057,13 +63057,13 @@
       "id": "branch:netgofer-shutdown-test",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/netgofer-shutdown-test",
-      "head": "17c06be738ce97a25d90002ac7e5edf32ab99cd9",
+      "ref": "fixes/netgofer-shutdown-pipes",
+      "head": "68343a66b827123e407712b7e9fbccf426dc385a",
       "title": "Exercise netgofer shutdown with the test binary",
-      "url": "https://github.com/tamird/gvisor/commit/17c06be73",
+      "url": "https://github.com/tamird/gvisor/commit/68343a66b",
       "group": "tests",
-      "status": "Contributor review requested",
-      "summary": "With cat and sleep absent, both original tests failed before reaching shutdown. The new child exited normally after EOF and received SIGKILL when its socket remained open. The delivery commit 5bc377314 has the reviewed tree on the landed parent 451b92800.",
+      "status": "Agent work",
+      "summary": "The revised netgofer tests use the child’s stdin and stdout to distinguish graceful EOF from a forced exit. The previous socket-based fixture passed both cases. The first job for the pipe revision failed during setup before Bazel ran.",
       "evidence": [
         {
           "label": "Original missing executables and both Linux child exit statuses",
@@ -63076,20 +63076,36 @@
         {
           "label": "Same reviewed tree on the landed parent",
           "url": "https://github.com/tamird/gvisor/commit/5bc377314"
+        },
+        {
+          "label": "Pipe revision awaiting native validation",
+          "url": "https://github.com/tamird/gvisor/commit/68343a66b"
+        },
+        {
+          "label": "First pipe-revision job stopped before Bazel",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42485302748"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "17c06be738ce97a25d90002ac7e5edf32ab99cd9",
-        "baseHead": "856bbeb51d6e56fba6fe2be04bd14e1e365551ec",
-        "title": "Exercise netgofer shutdown with the test binary",
-        "url": "https://github.com/tamird/gvisor/commit/17c06be73",
-        "summary": "Open this test-only PR using the identical delivery tree at 5bc377314?",
-        "body": "451b92800 introduced netgofer shutdown tests that run /bin/cat and /bin/sleep. Without those programs, both cases fail before stopNetgofer runs. Checking only that the PID disappeared also lets a force-killed child pass the graceful case.\n\nRun the test binary as the child and wait for it to report readiness. Close the socket’s write half in the graceful case and require the child to acknowledge EOF. Keep it open in the forced case so the child blocks until the grace period expires.",
-        "requestedAt": "2026-11-08T12:41:39+00:00"
+      "updatedAt": "2026-11-08T13:35:05+00:00",
+      "refinement": {
+        "before": {
+          "head": "17c06be738ce97a25d90002ac7e5edf32ab99cd9"
+        },
+        "after": {
+          "head": "68343a66b827123e407712b7e9fbccf426dc385a"
+        }
       },
-      "updatedAt": "2026-11-08T12:41:39+00:00"
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "68343a66b827123e407712b7e9fbccf426dc385a",
+        "observedAt": "2026-11-08T13:35:05+00:00",
+        "disposition": "Pipe revision awaiting native validation",
+        "nextAction": "Recover setup and verify the graceful and forced child exits on the revised source.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/68343a66b",
+          "https://github.com/tamird/gvisor/actions/runs/42485302748"
+        ]
+      }
     },
     {
       "id": "branch:marshal-test-per-library",
