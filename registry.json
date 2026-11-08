@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T20:53:15+00:00",
+    "updatedAt": "2026-11-08T20:58:46+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43305,9 +43305,13 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T15:58:09.697Z",
-      "summary": "The 36 measured one-CPU restores on each build reached the first verified read in 670.0 ms on the parent, 554.0 ms with #16134 alone and 547.9 ms on this PR. Benchstat found no difference between the PR and #16134 on this workload (p=0.750).\n\nOn c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
+      "updatedAt": "2026-11-08T20:58:46+00:00",
+      "summary": "Parent 706b124a2 and c31b2adc2 each restored the same parent checkpoint and verified all 100,000 tmpfs files. With a sibling holding 760 MiB under a shared 1 GiB limit, the OOM killer killed the sibling on both revisions. Both restore processes survived and completed verification. The two unpressured baselines had zero OOM kills. Each configuration ran once.\n\nThe 36 measured one-CPU restores on each build reached the first verified read in 670.0 ms on the parent, 554.0 ms with #16134 alone and 547.9 ms on this PR. Benchstat found no difference between the PR and #16134 on this workload (p=0.750).\n\nOn c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
       "evidence": [
+        {
+          "label": "Sibling-memory pressure: original cgroup counters and 100,000-file restore checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42520827122/artifacts/13633399791"
+        },
         {
           "label": "Published restore comparison",
           "url": "https://github.com/google/gvisor/pull/16735#issuecomment-6689167201"
@@ -66122,6 +66126,61 @@
         "summary": "Open the single-commit gVisor PR?",
         "body": "Disabling SO_KEEPALIVE leaves the clock timer running. If it fires while keepalive is disabled, the callback returns before consuming the orphaned timer. Re-enabling keepalive then records a new deadline but leaves an idle connection without a scheduled probe.\n\nConsume the clock wakeup before checking SO_KEEPALIVE. Check that an idle connection stays quiet while keepalive is disabled and resumes probing when the option is enabled again.",
         "requestedAt": "2026-11-08T20:33:01+00:00"
+      }
+    },
+    {
+      "id": "branch:tcp-connect-bound-device",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-connect-bound-device",
+      "head": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
+      "title": "Honor SO_BINDTODEVICE when choosing a TCP connect route",
+      "url": "https://github.com/tamird/gvisor/commit/0235b052b",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-08T20:58:46+00:00",
+      "summary": "A wildcard-bound TCP socket could select a source address on a device other than the one named by SO_BINDTODEVICE. The fix uses the live option for outgoing route selection and preserves the device saved with the port reservation.\n\nTwo isolated Linux syscall tests and the stock and fixed systrap runs used identical C++ fixture bytes. Stock chose 192.0.2.129 for both bound devices. Linux and fixed gVisor chose 192.0.2.1 on veth1 and 192.0.2.129 on veth2, whether the application set the device before or after wildcard bind. For an IPv6 destination scope that conflicted with the device, Linux and the fix returned EINVAL. Stock returned ENETUNREACH.\n\nAll three changed-device checkpoint controls and all three endpoint device cases passed on both gVisor revisions. The fixed TCP analyzer passed on AMD64 and ARM64. The original ordinary Linux runner skipped the syscall tests for lack of CAP_NET_ADMIN. Both tests executed uncached in the isolated Linux recovery. The IPv4 observations come from getsockname during a nonblocking connect.",
+      "evidence": [
+        {
+          "label": "Original report: TCP connect can ignore the selected device",
+          "url": "https://github.com/google/gvisor/issues/8276"
+        },
+        {
+          "label": "Stock and fixed systrap syscall results, checkpoint and endpoint cases, and both Nogo architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42520089823/artifacts/13633427072"
+        },
+        {
+          "label": "Exact C++ fixture on isolated Linux with both syscall cases executed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42521694150/artifacts/13633614112"
+        }
+      ],
+      "links": [
+        {
+          "label": "TCP issues and reviews",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Atcp-issues-and-reviews"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
+        "observedAt": "2026-11-08T20:58:46+00:00",
+        "disposition": "The single fork commit matches the isolated Linux source-address and IPv6 errno observations.",
+        "nextAction": "Review the proposed fix for one independent gVisor pull request.",
+        "evidence": [
+          "https://github.com/google/gvisor/issues/8276",
+          "https://github.com/tamird/gvisor/actions/runs/42521694150/artifacts/13633614112",
+          "https://github.com/tamird/gvisor/actions/runs/42520089823/artifacts/13633427072"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
+        "url": "https://github.com/tamird/gvisor/commit/0235b052b",
+        "title": "Honor SO_BINDTODEVICE when choosing a TCP connect route",
+        "summary": "Open the single-commit gVisor PR?",
+        "body": "A wildcard bind reserves a port without selecting a source address. When two interfaces have routes to the peer, connect can then send its SYN through the other interface because it looks up the route without the device selected by SO_BINDTODEVICE.\n\nUse the socket's current device for the route lookup, as Linux does [1]. Reject a conflicting destination scope [2]. Keep the saved device used by the port reservation and endpoint registration. Restore an established connection with the NIC selected for its saved route.\n\nCheck the selected source address on two interfaces with overlapping prefixes. Both can reach the peer, so failure to honor the socket's device is visible before the handshake completes.\n\n[1]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv4/tcp_ipv4.c#L233-L235\n[2]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv6/tcp_ipv6.c#L188-L197\n\nFixes #8276",
+        "requestedAt": "2026-11-08T20:58:46+00:00"
       }
     }
   ],
@@ -90093,5 +90152,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T20:53:15+00:00"
+  "updatedAt": "2026-11-08T20:58:46+00:00"
 }
