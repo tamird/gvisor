@@ -35,6 +35,7 @@ import (
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/shim/v1/extension"
 	"gvisor.dev/gvisor/pkg/shim/v1/runsccmd"
+	"gvisor.dev/gvisor/pkg/shim/v1/testutil"
 )
 
 func BenchmarkRuntimeLockUncontended(b *testing.B) {
@@ -154,11 +155,7 @@ func newRuntimeWedgedInit(t *testing.T) *Init {
 	runscTimeout = 200 * time.Millisecond
 	runscLongOperationTimeout = runscTimeout
 	t.Cleanup(func() { runscTimeout, runscLongOperationTimeout = old, oldLong })
-	fake := filepath.Join(t.TempDir(), "fake-runsc")
-	if err := os.WriteFile(fake, []byte("#!/bin/sh\nexec >/dev/null 2>&1\nexec sleep 60\n"), 0o755); err != nil {
-		t.Fatalf("write fake runsc: %v", err)
-	}
-	p := New("test", &runsccmd.Runsc{Command: fake, Root: t.TempDir()}, stdio.Stdio{})
+	p := New("test", &runsccmd.Runsc{Command: testutil.WedgedRunsc(t), Root: t.TempDir()}, stdio.Stdio{})
 	p.initState = &runningState{p: p}
 	return p
 }
@@ -187,6 +184,7 @@ func TestRuntimeCallsAreBounded(t *testing.T) {
 				t.Fatalf("%s succeeded against a wedged runsc", tc.name)
 			}
 			requireBounded(t, start)
+			testutil.CheckStarted(t, p.runtime.Command)
 		})
 	}
 }
@@ -200,6 +198,7 @@ func TestCreateWedgedRunscIsBounded(t *testing.T) {
 		t.Fatal("Create succeeded against a wedged runsc")
 	}
 	requireBounded(t, start)
+	testutil.CheckStarted(t, p.runtime.Command)
 }
 
 func init() {
@@ -456,6 +455,7 @@ func TestFuseStatusRetryPreservesOutcome(t *testing.T) {
 			}
 			flag := filepath.Join(t.TempDir(), "first-call")
 			script := "#!/bin/sh\nif [ ! -e '" + flag + "' ]; then : > '" + flag + "'; exec >/dev/null 2>&1; exec sleep 60; fi\n" + result + "\n"
+			p.runtime.Command = filepath.Join(t.TempDir(), "retry-runsc")
 			if err := os.WriteFile(p.runtime.Command, []byte(script), 0o755); err != nil {
 				t.Fatal(err)
 			}
@@ -495,6 +495,7 @@ func TestExecRuntimeCallsAreBounded(t *testing.T) {
 				t.Fatalf("exec %s succeeded against a wedged runsc", name)
 			}
 			requireBounded(t, start)
+			testutil.CheckStarted(t, p.runtime.Command)
 			_ = e.delete(context.Background())
 		})
 	}
@@ -895,6 +896,7 @@ func TestLongRuntimeOperationsAreBounded(t *testing.T) {
 				t.Fatal("operation succeeded against a wedged runtime")
 			}
 			requireBounded(t, start)
+			testutil.CheckStarted(t, p.runtime.Command)
 		})
 	}
 }
@@ -1087,9 +1089,7 @@ func TestFailedDeleteRetainsOnlyLivePidfd(t *testing.T) {
 					t.Fatal("failed delete discarded the live sandbox identity")
 				}
 				requireLiveProcess(t, pipe)
-				if err := os.WriteFile(fake, []byte("#!/bin/sh\nexec >/dev/null 2>&1\nexec sleep 60\n"), 0o755); err != nil {
-					t.Fatal(err)
-				}
+				p.runtime.Command = testutil.WedgedRunsc(t)
 				if err := p.Delete(context.Background()); !errors.Is(err, errRunscTimeout) {
 					t.Fatalf("wedged retry error = %v", err)
 				}

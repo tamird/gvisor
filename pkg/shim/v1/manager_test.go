@@ -32,6 +32,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go/features"
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/shim/v1/runsc"
+	"gvisor.dev/gvisor/pkg/shim/v1/testutil"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
 
@@ -123,10 +124,7 @@ func TestManagerStopBoundsWedgedRuntime(t *testing.T) {
 			stopRunscTimeout = 100 * time.Millisecond
 			dir := t.TempDir()
 			t.Chdir(dir)
-			fake := filepath.Join(dir, "fake-runsc")
-			if err := os.WriteFile(fake, []byte("#!/bin/sh\nexec >/dev/null 2>&1\nexec sleep 60\n"), 0o755); err != nil {
-				t.Fatal(err)
-			}
+			fake := testutil.WedgedRunsc(t)
 			st := runsc.State{Options: runsc.Options{BinaryName: fake, Root: dir}, Rootfs: dir}
 			if err := st.Save(dir); err != nil {
 				t.Fatal(err)
@@ -157,6 +155,7 @@ func TestManagerStopBoundsWedgedRuntime(t *testing.T) {
 			if !errors.Is(err, context.DeadlineExceeded) {
 				t.Fatalf("Stop error = %v, want deadline failure", err)
 			}
+			testutil.CheckStarted(t, fake)
 			if calls.Load() != 1 {
 				t.Fatalf("timed-out Delete skipped cleanup: %d calls", calls.Load())
 			}
@@ -184,10 +183,7 @@ func TestManagerStopPreservesCallerCancellation(t *testing.T) {
 			stopRunscTimeout = time.Second
 			dir := t.TempDir()
 			t.Chdir(dir)
-			fake := filepath.Join(dir, "fake-runsc")
-			if err := os.WriteFile(fake, []byte("#!/bin/sh\nexec >/dev/null 2>&1\nexec sleep 60\n"), 0o755); err != nil {
-				t.Fatal(err)
-			}
+			fake := testutil.WedgedRunsc(t)
 			st := runsc.State{Options: runsc.Options{BinaryName: fake, Root: dir}, Rootfs: dir}
 			if err := st.Save(dir); err != nil {
 				t.Fatal(err)

@@ -19,13 +19,13 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/containerd/containerd/v2/pkg/stdio"
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/shim/v1/runsccmd"
+	"gvisor.dev/gvisor/pkg/shim/v1/testutil"
 )
 
 // newWedgedInit returns an Init whose runsc never answers.
@@ -34,11 +34,7 @@ func newWedgedInit(t *testing.T) *Init {
 	old := runscTimeout
 	runscTimeout = 500 * time.Millisecond
 	t.Cleanup(func() { runscTimeout = old })
-	fake := filepath.Join(t.TempDir(), "fake-runsc")
-	if err := os.WriteFile(fake, []byte("#!/bin/sh\nexec >/dev/null 2>&1\nexec sleep 60\n"), 0o755); err != nil {
-		t.Fatalf("failed to write fake runsc: %v", err)
-	}
-	return New("test", &runsccmd.Runsc{Command: fake}, stdio.Stdio{})
+	return New("test", &runsccmd.Runsc{Command: testutil.WedgedRunsc(t)}, stdio.Stdio{})
 }
 
 func expectBounded(t *testing.T, name string, start time.Time) {
@@ -57,7 +53,7 @@ func TestKillAllWedgedRunscReturnsAndSparesSandbox(t *testing.T) {
 	}
 	defer r.Close()
 
-	sandbox := exec.Command("sleep", "60")
+	sandbox := exec.Command(testutil.WedgedRunsc(t))
 	sandbox.ExtraFiles = []*os.File{w}
 	if err := sandbox.Start(); err != nil {
 		t.Fatalf("failed to start fake sandbox: %v", err)
@@ -74,6 +70,7 @@ func TestKillAllWedgedRunscReturnsAndSparesSandbox(t *testing.T) {
 	start := time.Now()
 	p.KillAll(context.Background())
 	expectBounded(t, "KillAll", start)
+	testutil.CheckStarted(t, p.runtime.Command)
 
 	r.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 	var b [1]byte
@@ -89,6 +86,7 @@ func TestStatsWedgedRunscTimesOut(t *testing.T) {
 		t.Fatal("Stats succeeded against a wedged runsc")
 	}
 	expectBounded(t, "Stats", start)
+	testutil.CheckStarted(t, p.runtime.Command)
 }
 
 func TestStatusWedgedRunscTimesOut(t *testing.T) {
@@ -98,6 +96,7 @@ func TestStatusWedgedRunscTimesOut(t *testing.T) {
 		t.Fatal("Status succeeded against a wedged runsc")
 	}
 	expectBounded(t, "Status", start)
+	testutil.CheckStarted(t, p.runtime.Command)
 }
 
 func TestKillWedgedRunscTimesOut(t *testing.T) {
@@ -107,4 +106,5 @@ func TestKillWedgedRunscTimesOut(t *testing.T) {
 		t.Fatal("kill succeeded against a wedged runsc")
 	}
 	expectBounded(t, "kill", start)
+	testutil.CheckStarted(t, p.runtime.Command)
 }
