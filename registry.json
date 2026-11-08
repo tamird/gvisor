@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T15:28:03+00:00",
+    "updatedAt": "2026-11-08T15:35:23+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -62565,7 +62565,7 @@
       "url": "https://github.com/google/gvisor/pull/17209",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T15:28:03+00:00",
+      "updatedAt": "2026-11-08T15:35:23+00:00",
       "summary": "The four safecopy files in this standalone change are byte-identical to those already on #15181. On AMD64 CPUs with ERMS, large clears use REP STOSQ inside the existing fault handler. The standalone diff contains only safecopy code and tests. Ayush requested review of his alternative on #17214. Tamir reviewed it and prefers it for the protected clear. #17209 remains open.\n\nOn one AMD EPYC 9V45 core, clearing a resident 64 MiB shared ext4 mapping took 1,826.2 µs ±4% on stock and 907.1 µs ±5% with ERMS (−50.33%, p=0.000, 12 samples per arm). Both arms passed 71 named fault-handling and unaligned-clear controls. The measured candidate used the same three runtime files and the same test file as this revision. After measurement, the job failed while building benchstat because a package-metadata dependency was missing. The official benchstat tool subsequently processed the 24 original sample rows without rebuilding the workload. No end-to-end overlay allocation timing was collected.",
       "evidence": [
         {
@@ -62622,6 +62622,96 @@
           "https://github.com/tamird/gvisor/commit/d20802a06d38ffc13ffcc17bc175d047eee232d9",
           "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
           "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "maintainer-review",
+            "action": "prefer-alternative",
+            "replacement": "pr:17214",
+            "title": "The author prefers #17214",
+            "nextAction": "Follow the author’s response to the two test comments on #17214.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
+              "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
+            ],
+            "binding": {
+              "sourceHead": "d20802a06d38ffc13ffcc17bc175d047eee232d9",
+              "reviewDecision": null,
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-07T22:27:02Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABkIjHgg",
+                    "url": "https://github.com/google/gvisor/pull/17209#issuecomment-6719850370",
+                    "body": "@tamird I think I have a more robust approach in https://github.com/google/gvisor/pull/17214. Please take a look!",
+                    "createdAt": "2026-11-08T09:32:18Z",
+                    "updatedAt": "2026-11-08T09:32:18Z",
+                    "author": {
+                      "login": "ayushr2",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "replacement": {
+                "id": "pr:17214",
+                "head": "4f94a055b5566bc22a529e2cc00bf7471d46810c",
+                "status": "open",
+                "endorsement": {
+                  "kind": "review",
+                  "id": "PRR_kwDOB9IlXs8AAAABWscRlA",
+                  "url": "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900",
+                  "body": "The protected clear and the allocator changes from #15181 passed together on native AMD64 and ARM64. I’d use this implementation in place of #17209.\n\nPosted by Codex on behalf of @tamird.",
+                  "state": "COMMENTED",
+                  "submittedAt": "2026-11-08T12:54:33Z",
+                  "updatedAt": "2026-11-08T12:54:33Z",
+                  "authorAssociation": "CONTRIBUTOR",
+                  "author": {
+                    "login": "tamird",
+                    "__typename": "User"
+                  },
+                  "commit": {
+                    "oid": "4f94a055b5566bc22a529e2cc00bf7471d46810c"
+                  }
+                },
+                "feedback": [
+                  [
+                    "PRR_kwDOB9IlXs8AAAABWscRlA",
+                    "2026-11-08T12:54:33Z"
+                  ],
+                  [
+                    "PRRC_kwDOB9IlXs8AAAABDJh5VQ",
+                    "2026-11-08T12:54:33Z"
+                  ],
+                  [
+                    "PRRC_kwDOB9IlXs8AAAABDJh5Vw",
+                    "2026-11-08T12:54:33Z"
+                  ]
+                ]
+              },
+              "reviewRequests": [
+                {
+                  "__typename": "User",
+                  "login": "relkochta"
+                },
+                {
+                  "__typename": "User",
+                  "login": "trantoji"
+                }
+              ]
+            }
+          }
         ]
       },
       "links": [
@@ -64543,8 +64633,8 @@
       "head": "fe04aebd118f84df78dc0173e515f854d1809347",
       "title": "Start TCP checksum offload after the serialized IP header",
       "group": "runtime",
-      "updatedAt": "2026-11-08T13:47:56Z",
-      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Recording the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth. Full-size IPv6 writes at the route MSS still exceeded the MTU.",
+      "updatedAt": "2026-11-08T15:35:23+00:00",
+      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Recording the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth. Full-size IPv6 writes at the route MSS still exceeded the MTU.\n\nA separate native Linux study ran 144 transfers to measure packet sizing with the experiment option. With the published checksum fix, four 10,153-byte writes at the route MSS delivered no data on option-capable NICs: IPv4 software segmentation and IPv6 with software, host or no GSO. A fork prototype that reserves option space delivered all 72 transfers on that build. With the socket option off on a capable NIC, each full packet carried 4 fewer data bytes on IPv4 and 8 fewer on IPv6. Restore across NICs with different option capabilities remains under investigation. This study exercised explicit netstack options outside #16393’s default configuration.",
       "evidence": [
         {
           "label": "Original peer and checksum-offset observations",
@@ -64561,6 +64651,10 @@
         {
           "label": "Published as #17234 with both requested references",
           "url": "https://github.com/google/gvisor/pull/17234"
+        },
+        {
+          "label": "Native TCP packet sizing and delivery across 144 transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42494393630/artifacts/13622937557"
         }
       ],
       "settledReviews": [
