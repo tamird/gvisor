@@ -38,7 +38,8 @@ def main():
     data = (root / "llvm-source-selection.json").read_bytes()
     plan = json.loads(data)
     source = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-    assert source in ("f6d6788e84731673a155c9fff6f28b8624e34c50", "55e7265abbd508e773fa259c1ddd6e3182d5296e")
+    assert source in ("f6d6788e84731673a155c9fff6f28b8624e34c50", "55e7265abbd508e773fa259c1ddd6e3182d5296e",
+                      "5c8ad1d07625045ba8bb2a21e2cae100557b569a")
     assert receipt["source"] == plan["source"] == source
     assert plan["eligible"] and SAMPLES.keys() <= plan["tests"].keys()
     assert receipt["selection_digest"] == hashlib.sha256(data).hexdigest() == (root / "submitted-selection.sha256").read_text()

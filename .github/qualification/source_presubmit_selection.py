@@ -11,6 +11,7 @@ import sys
 import uuid
 
 HISTORICAL_SOURCE = "f6d6788e84731673a155c9fff6f28b8624e34c50"
+PINRING_SOURCE = "5c8ad1d07625045ba8bb2a21e2cae100557b569a"
 SOURCE = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 CONTROL = "//test/syscalls:uname_test_native"
 TMP = Path(os.environ["RUNNER_TEMP"])
@@ -25,6 +26,8 @@ FIRECRACKER = {
     "//runsc/sandbox:sandbox_test", "//sandboxexec/sandbox/python:sandbox_py_test",
     "//sandboxexec/sandbox:sandbox_test", CONTROL,
 }
+if SOURCE == PINRING_SOURCE:
+    FIRECRACKER.add("//pkg/pinring:pinring_test")
 PROBE = '''set -eu
 machine=$(/bin/uname -m)
 case "$TEST_TARGET" in
@@ -192,5 +195,5 @@ def execute():
 
 
 if __name__ == "__main__":
-    assert SOURCE in (HISTORICAL_SOURCE, "55e7265abbd508e773fa259c1ddd6e3182d5296e")
+    assert SOURCE in (HISTORICAL_SOURCE, "55e7265abbd508e773fa259c1ddd6e3182d5296e", PINRING_SOURCE)
     {"analyze": analyze, "execute": execute}[sys.argv[1]]()

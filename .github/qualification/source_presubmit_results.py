@@ -11,6 +11,10 @@ from urllib.parse import unquote, urlparse
 import xml.etree.ElementTree as ET
 
 PRODUCT = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+PINRING_SOURCE = "5c8ad1d07625045ba8bb2a21e2cae100557b569a"
+PINRING = "//pkg/pinring:pinring_test"
+PACKET_CASE = "TestAFPacketDeferredRelease"
+KVM_CASE = "TestKVMVMDeferredRelease"
 COMPILER = "llvm@0.8.24"
 LABEL = re.compile(r"//[A-Za-z0-9_.+/-]*:[A-Za-z0-9_.+/-]+")
 CONTROL = "//test/syscalls:uname_test_native"
@@ -114,7 +118,7 @@ def publish(name, result):
 
 
 def main():
-    assert PRODUCT in ("f6d6788e84731673a155c9fff6f28b8624e34c50", "55e7265abbd508e773fa259c1ddd6e3182d5296e")
+    assert PRODUCT in ("f6d6788e84731673a155c9fff6f28b8624e34c50", "55e7265abbd508e773fa259c1ddd6e3182d5296e", PINRING_SOURCE)
     SEP.mkdir(exist_ok=True)
     sel_path=TMP/"llvm-source-selection.json"
     data = sel_path.read_bytes() if sel_path.is_file() else b""
@@ -313,6 +317,12 @@ def main():
         and all(v[0]=="PASSED" for v in result["test_summaries"].values())
         and all(v[0]=="built" for v in result["target_results"].values()) and len(seen_shards)==len(result["shards"])
         and all(s["status"]=="PASSED" and s["strategy"]=="remote" and not s["cached_locally"] and not s["cached_remotely"] for s in result["shards"]))
+    if PRODUCT == PINRING_SOURCE:
+        owners = result["named_cases"]["owners"]
+        result["pinring_verified"] = bool(exact and result.get("invocation") == selection.get("invocation") and all(
+            len(owners.get(label, [])) == 1 and owners[label][0]["verified"]
+            and (label, 1, 1) in expected_ids for label in (PINRING, PINRING + SUFFIX)))
+        result["complete_pass"] &= result["pinring_verified"]
     result["coverage_counts"] = {
         name: {change: len(labels) for change, labels in changes.items()}
         for name, changes in result["historical_changes"].items()}
@@ -367,6 +377,36 @@ def safe_name(name):
     return "sha256-" + hashlib.sha256(name.encode()).hexdigest()
 
 
+def pinring_probes(text, xml):
+    # Both serial Go cases log an identical p50 line. Match only the interval
+    # from this case's RUN to its own terminal line in the original test log.
+    parts = re.split(r"(?m)^\x16?=== RUN[ \t]+(\S+)[ \t]*\r?$", text)
+    terminal = re.compile(r"(?m)^\x16?--- (PASS|SKIP|FAIL): (\S+) \(")
+    terminals = terminal.findall(text)
+    duration = r"(?:[0-9]{1,10}(?:\.[0-9]{1,9})?(?:ns|µs|ms|s|m|h)){1,3}"
+    timing = re.compile(r"(?m)^\x16?[ \t]+(?:\S+/)?pinring_test\.go:\d+: p50: plain=(" + duration
+                        + r"), with deferral=(" + duration + r")\r?$")
+    probes = {}
+    for name in (PACKET_CASE, KVM_CASE):
+        blocks = [body for case, body in zip(parts[1::2], parts[2::2]) if case == name]
+        ends = collections.Counter(status for status, case in terminals if case == name)
+        states = xml.get(name, {})
+        probe = probes[name] = {"xml": states, "starts": len(blocks), "terminals": dict(ends), "verified": False}
+        if len(blocks) != 1:
+            continue
+        end = terminal.search(blocks[0])
+        if not end or end[2] != name:
+            continue
+        times = timing.findall(blocks[0][:end.start()])
+        probe["p50_count"] = len(times)
+        if len(times) == 1:
+            probe["p50"] = dict(zip(("plain", "deferred"), times[0]))
+        state = end[1]
+        expected = (state == "PASS" and len(times) == 1) if name == PACKET_CASE else state in ("PASS", "SKIP")
+        probe["verified"] = expected and states == ends == {state: 1}
+    return probes
+
+
 def collect_outputs(result, locations_by_row):
     outputs = [p.resolve() for p in Path("bazel-out").glob("*/testlogs") if p.is_dir()]
     candidates = {}
@@ -414,7 +454,9 @@ def collect_outputs(result, locations_by_row):
     for row, locations in zip(result["shards"], locations_by_row):
         owner = row["owner"]
         base = owner.removesuffix(SUFFIX)
-        special = base in expected or base in (CMD, PYTHON)
+        pinring = PRODUCT == PINRING_SOURCE and base == PINRING
+        special = base in expected or base in (CMD, PYTHON) or pinring
+        probe_xml = collections.defaultdict(collections.Counter)
         evidence = {}
         observed = {}
         outcomes = {}
@@ -449,6 +491,14 @@ def collect_outputs(result, locations_by_row):
                             names[bucket].append(ident)
                             budget[bucket] -= len(ident)
                     status = {"passed":"PASS","skipped":"SKIP","error":"FAIL","failed":"FAIL"}[state]
+                    if pinring and name in (PACKET_CASE, KVM_CASE):
+                        probe_state = status
+                        if class_name != "pinring":
+                            probe_state = "wrong_class"
+                        elif status == "PASS" and (case.get("status") not in (None, "run", "passed")
+                                                   or case.get("result") not in (None, "completed", "passed")):
+                            probe_state = "unconfirmed"
+                        probe_xml[name][probe_state] += 1
                     short = name.removeprefix("cmd.")
                     if base == CMD and POSTURE_CASE.fullmatch(short):
                         outcomes[short] = {"state": status}
@@ -491,6 +541,18 @@ def collect_outputs(result, locations_by_row):
                 row["native"] = {"cpu": cpu, "uid": int(uid), "index": int(index), "total": int(total), "matches": matches}
         if not special:
             continue
+        if pinring:
+            probes = pinring_probes(raw.decode(errors="replace") if raw else "", probe_xml)
+            cpu = "arm64" if owner.endswith(SUFFIX) else "amd64"
+            native = row.get("native", {})
+            evidence.update(probes=probes, verified=bool(
+                all(probe["verified"] for probe in probes.values())
+                and native.get("matches") and native["cpu"] == cpu and native["uid"] == 0
+                and owner in result["configured_firecracker_owners"]
+                and result["target_results"].get(owner) == ["built", row["config"], "run"] and row["config"]
+                and row["run"] == row["shard"] == row["attempt"] == 1 and row["action_exit"] == 0
+                and row["status"] == "PASSED" and row["strategy"] == "remote"
+                and not row["cached_locally"] and not row["cached_remotely"]))
         if raw:
             text = raw.decode(errors="replace")
             for status, name in re.findall(r"(?m)^\s*--- (PASS|SKIP|FAIL): (\S+?) \(", text):
