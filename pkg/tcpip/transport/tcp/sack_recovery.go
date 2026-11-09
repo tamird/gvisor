@@ -30,6 +30,7 @@ func newSACKRecovery(s *sender) *sackRecovery {
 
 // handleSACKRecovery implements the loss recovery phase as described in RFC6675
 // section 5, step C.
+//
 // +checklocks:sr.s.ep.mu
 func (sr *sackRecovery) handleSACKRecovery(limit int, end seqnum.Value) (dataSent bool) {
 	snd := sr.s
@@ -82,7 +83,7 @@ func (sr *sackRecovery) handleSACKRecovery(limit int, end seqnum.Value) (dataSen
 		// transmitted in (C.1)."
 		snd.Outstanding++
 		dataSent = true
-		snd.sendSegment(nextSeg)
+		snd.sendSegment(nextSeg, snd.ep.getExperimentOptionValue(snd.ep.route))
 
 		segEnd := nextSeg.sequenceNumber.Add(nextSeg.logicalLen())
 		if rescueRtx {
