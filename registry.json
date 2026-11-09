@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T23:26:09+00:00",
+    "updatedAt": "2026-11-09T23:38:02+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23148,30 +23148,30 @@
       "id": "branch:luajit-target-generators",
       "type": "branch",
       "repo": "tamird/bazel-central-registry",
-      "ref": "review/luajit-2.1.20230430",
-      "head": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
-      "title": "Package LuaJIT 2.1 for Linux cross-compilation",
-      "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
+      "ref": "review/luajit-2.1.1794214635",
+      "head": "a4f336eeac836d983cccce0167d321ca423acc91",
+      "title": "Package LuaJIT 2.1.1794214635 for cross-compilation",
+      "url": "https://github.com/tamird/bazel-central-registry/commit/a4f336eea",
       "group": "bazel",
-      "status": "Updating the LuaJIT registry module",
-      "updatedAt": "2026-11-09T23:34:08+00:00",
-      "summary": "The 2017 BCR entry and the 2023 gVisor pin both print 2.1.0-beta3, 476 commits apart. The registry proposal is moving to upstream v2.1.1794214635 and its declared ARM64 VM generator.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T23:38:02+00:00",
+      "summary": "The published 2017 beta builds x86 assembly for an ARM64 target. This module uses the production v2.1 snapshot and the target CPU. The native ARM64 command and an embedded Lua program both reported 2.1.1794214635.",
       "evidence": [
         {
-          "label": "Released module fails on x86 instructions in the ARM64 assembler",
+          "label": "Single BCR commit",
+          "url": "https://github.com/tamird/bazel-central-registry/commit/a4f336eea"
+        },
+        {
+          "label": "Exact release number, JIT trace, bytecode and C consumer on native ARM64",
+          "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42721647380/artifacts/13720581361"
+        },
+        {
+          "label": "Upstream rolling releases and version numbers",
+          "url": "https://luajit.org/status.html"
+        },
+        {
+          "label": "Failed cross-build with the released beta",
           "url": "https://github.com/tamird/gvisor/actions/runs/41532085303/artifacts/13182183612"
-        },
-        {
-          "label": "Native ARM64 library, bytecode saver, JIT trace and C error handling",
-          "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42719913445/artifacts/13718903734"
-        },
-        {
-          "label": "Intel macOS, Bazel 7, 8 and 9",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41541451429/artifacts/13187520466"
-        },
-        {
-          "label": "Previous LuaJIT release used the registry’s archive URL exception",
-          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/6931#issuecomment-3685841539"
         }
       ],
       "settledReviews": [
@@ -23190,159 +23190,64 @@
           "note": "Use LuaJIT's rolling production version for the public registry entry. The 2023 snapshot still prints 2.1.0-beta3."
         }
       ],
-      "followup": {
-        "owner": "Build and release",
-        "sourceHead": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
-        "observedAt": "2026-11-09T23:34:08+00:00",
-        "disposition": "The 2023 snapshot has been superseded.",
-        "nextAction": "Verify the rolling release number and run the packaged VM before publishing a new proposal.",
-        "evidence": [
-          "https://github.com/LuaJIT/LuaJIT/compare/8271c643c...224129a8e",
-          "https://github.com/LuaJIT/LuaJIT/commit/50e0fa03c",
-          "https://luajit.org/status.html"
-        ]
+      "refinement": {
+        "before": {
+          "base": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
+          "head": "bfb6f63503f54c05af617bafc983dccc716eb4a2"
+        },
+        "after": {
+          "base": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
+          "head": "a4f336eeac836d983cccce0167d321ca423acc91"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "a4f336eeac836d983cccce0167d321ca423acc91",
+        "baseHead": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
+        "url": "https://github.com/tamird/bazel-central-registry/commit/a4f336eea",
+        "requestedAt": "2026-11-09T23:38:02+00:00",
+        "title": "luajit@2.1.1794214635",
+        "body": "The latest LuaJIT version in the registry is the 2017 beta3 release.\nLuaJIT now numbers releases on its maintained 2.1 branch using the\ncommit timestamp [1]. Add the November 9, 2026 release and generate\nluajit.h with upstream’s generator and the archive’s .relver file.\nThe library and CLI then use the same version as the upstream build.\n\nThe existing module builds its VM generator for the execution machine,\nso an ARM64 cross-build on x86_64 feeds x86 assembly to the assembler.\nSelect the output architecture and x86 frame layout before building the\ngenerator for the host. Export the bytecode saver and copyright notice\nfor consumers that embed Lua sources or redistribute the library.\n\n[1]: https://github.com/LuaJIT/LuaJIT/commit/50e0fa03c",
+        "summary": "Submit the rolling production version to BCR? The command and the embedded VM agree on the upstream release number. The earlier candidate used a 2023 snapshot that still identified as beta3."
       }
     },
     {
       "id": "branch:rules-img-wrk2-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/wrk2-registry-openssl4",
-      "head": "93a67e0bedddd81ab5978f3ad134de5298899f45",
+      "ref": "review/wrk2-rolling-luajit",
+      "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a",
       "title": "Build the wrk2 image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/93a67e0be",
+      "url": "https://github.com/tamird/gvisor/commit/bbb847c17",
       "group": "bazel",
-      "status": "Checking the rolling LuaJIT release",
-      "updatedAt": "2026-11-09T23:34:08+00:00",
-      "summary": "The 2023 LuaJIT proposal verified all 226 license records with OpenSSL 4. The next revision uses the production LuaJIT branch and checks the packaged client against HTTP and HTTPS on both architectures.",
+      "status": "Checking the packaged wrk2 benchmark",
+      "updatedAt": "2026-11-09T23:38:02+00:00",
+      "summary": "Build wrk2 with BCR OpenSSL 4.0.3.bcr.1 and the rolling LuaJIT module. The shipped client is being run against HTTP and HTTPS on AMD64 and ARM64, along with a fresh license scan.",
       "followup": {
         "owner": "Agent",
-        "sourceHead": "93a67e0bedddd81ab5978f3ad134de5298899f45",
-        "observedAt": "2026-11-09T23:34:08+00:00",
+        "sourceHead": "bbb847c171e47457bb2139f5af42dc6a95a3361a",
+        "observedAt": "2026-11-09T23:38:02+00:00",
         "disposition": "The previous LuaJIT pin still identifies as beta3.",
-        "nextAction": "Use the new registry module and run the HTTP, HTTPS and license checks against the published proposal.",
+        "nextAction": "Check the packaged benchmark and verify its notices on the rolling BCR dependency.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42719955552/artifacts/13720255684",
-          "https://github.com/tamird/gvisor/actions/runs/42720865348",
-          "https://github.com/LuaJIT/LuaJIT/commit/c4b1e2f73"
+          "https://github.com/tamird/gvisor/commit/bbb847c17",
+          "https://github.com/tamird/bazel-central-registry/commit/a4f336eea",
+          "https://github.com/tamird/gvisor/actions/runs/42721640478"
         ]
       },
       "evidence": [
         {
-          "label": "Proposed LuaJIT registry module",
-          "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350"
+          "label": "Rolling-version wrk2 change",
+          "url": "https://github.com/tamird/gvisor/commit/bbb847c17"
         },
         {
-          "label": "OpenSSL 4 images and license audit on this revision",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42719955552"
+          "label": "Single BCR prerequisite",
+          "url": "https://github.com/tamird/bazel-central-registry/commit/a4f336eea"
         },
         {
-          "label": "The image needs the license checker to recognize LuaJIT’s COPYRIGHT file. Review the two-line license lookup separately.",
-          "url": "https://github.com/tamird/gvisor/commit/dbb96525c"
-        },
-        {
-          "label": "Compare this source with its previously reviewed base",
-          "url": "https://github.com/tamird/gvisor/compare/6e6276344...5bb80cbb9"
-        },
-        {
-          "label": "Previously approved shared-runtime revision",
-          "url": "https://github.com/tamird/gvisor/commit/f258c589b"
-        },
-        {
-          "label": "1. Recognize COPYRIGHT after the existing notice filenames",
-          "url": "https://github.com/tamird/gvisor/compare/6e6276344...dbb96525c"
-        },
-        {
-          "label": "2. Build and ship the standalone wrk2 client",
-          "url": "https://github.com/tamird/gvisor/compare/dbb96525c...5bb80cbb9"
-        },
-        {
-          "label": "Native AMD64 client completed 584 HTTPS requests",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034082572"
-        },
-        {
-          "label": "ARM64 client under QEMU completed 576 HTTPS requests",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034476469"
-        },
-        {
-          "label": "Fresh Fetch and full Verify on the stock classifier",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033988266"
-        },
-        {
-          "label": "Kubernetes pod command and latency parser",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41176614088/artifacts/13033448265"
-        },
-        {
-          "label": "Both consumers resolved the public OpenSSL notice",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033808570"
-        },
-        {
-          "label": "Remove the unused zlib input and share the Ubuntu base label",
-          "url": "https://github.com/tamird/gvisor/compare/106d67993..3fbd95b13"
-        },
-        {
-          "label": "Original upstream source included zlib.h in hdr_histogram.c",
-          "url": "https://github.com/giltene/wrk2/blob/44a94c17d/src/hdr_histogram.c#L6-L18"
-        },
-        {
-          "label": "Workload, explicit dependency and fresh catalog checks",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41176614088"
-        },
-        {
-          "label": "Standalone image and workload",
-          "url": "https://github.com/tamird/gvisor/compare/dbb96525c...106d67993"
-        },
-        {
-          "label": "Original emulated ARM64 printed usage at startup",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41172943631/artifacts/13031462589"
-        },
-        {
-          "label": "Corrected emulated ARM64 served 560 HTTP requests",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032029191"
-        },
-        {
-          "label": "Corrected native AMD64 workload",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13031869662"
-        },
-        {
-          "label": "Kubernetes Go wrk2 workload and parser",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41172943631/artifacts/13032451914"
-        },
-        {
-          "label": "Upstream ARM option-parser repair",
-          "url": "https://github.com/giltene/wrk2/pull/110"
-        },
-        {
-          "label": "Current source",
-          "url": "https://github.com/tamird/gvisor/commit/ad60b3164"
-        },
-        {
-          "label": "Current owning qualification",
-          "url": "https://app.buildbuddy.io/invocation/db2a0f9f-5487-4041-b6c3-5c599d0ac83c"
-        },
-        {
-          "label": "Current packaging source",
-          "url": "https://github.com/tamird/gvisor/commit/41b64d63a"
-        },
-        {
-          "label": "Full runtime PASS",
-          "url": "https://app.buildbuddy.io/invocation/b5c32b8d-edd5-4507-82fa-22006476823f"
-        },
-        {
-          "label": "Canonical catalog PASS",
-          "url": "https://app.buildbuddy.io/invocation/587e51d0-c932-4342-bc32-db15f9e5b433"
-        },
-        {
-          "label": "Final qualified proposal",
-          "url": "https://github.com/tamird/gvisor/commit/8ba703d3a"
-        },
-        {
-          "label": "Exact packaging cleanup PASS",
-          "url": "https://app.buildbuddy.io/invocation/f47b897b-594f-4613-807e-b3b9f22cf9df"
-        },
-        {
-          "label": "Approved comment refinement",
-          "url": "https://github.com/tamird/gvisor/commit/f258c589b"
+          "label": "Packaged Linux runtime and licensing checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42721640478"
         }
       ],
       "settledReviews": [
@@ -23366,12 +23271,12 @@
       ],
       "refinement": {
         "before": {
-          "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
-          "base": "6e6276344dce3728a09a8271c8360269e7d881a4"
+          "base": "dbb96525c56acc964ffcc6e5acbfe49baf034c74",
+          "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4"
         },
         "after": {
-          "head": "93a67e0bedddd81ab5978f3ad134de5298899f45",
-          "base": "272ad5c729aa522d373a786400c21c2eed198f4d"
+          "base": "272ad5c729aa522d373a786400c21c2eed198f4d",
+          "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a"
         }
       }
     },
@@ -67652,8 +67557,8 @@
       "title": "Resume TCP keepalive at its saved deadline",
       "url": "https://github.com/tamird/gvisor/commit/38b1dd1da",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T21:48:58+00:00",
+      "status": "Approved; waiting for TCP send deadlines",
+      "updatedAt": "2026-11-09T23:38:02+00:00",
       "summary": "A restored TCP socket could have SO_KEEPALIVE enabled and never send its next probe. On the send-deadline prerequisite, the idle and between-probe tests both failed. The proposed change passed both packet tests and kept a disabled timer quiet. The failed-route test passed on the proposal and failed when terminal timer cleanup was removed.\n\nThe first Linux run also exposed a separate reset-socket fixture error. After the fixture deregistered the closed endpoint, changing TCP_KEEPIDLE queued one timer on the previous draft and zero on the proposal. The corrected run exercised only that terminal case.",
       "evidence": [
         {
@@ -67670,27 +67575,32 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "38b1dd1dac75b1fcbbe718d33db05237ce849182",
-        "observedAt": "2026-11-08T21:48:58+00:00",
-        "disposition": "The fork commit builds on the approved send-deadline change. The original packet, failed-route and reset-socket tests cover its timer behavior.",
-        "nextAction": "Review opening this one-commit pull request after its send-deadline prerequisite lands.",
+        "observedAt": "2026-11-09T23:38:02+00:00",
+        "disposition": "The exact revision is approved.",
+        "nextAction": "Open the keepalive PR after the send-deadline change lands. That change is waiting for #16666.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/38b1dd1da",
           "https://github.com/tamird/gvisor/actions/runs/42525477772/artifacts/13635765481",
           "https://github.com/tamird/gvisor/actions/runs/42526430689/artifacts/13636125398"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "38b1dd1dac75b1fcbbe718d33db05237ce849182",
-        "url": "https://github.com/tamird/gvisor/commit/38b1dd1da",
-        "title": "Resume TCP keepalive at its saved deadline",
-        "summary": "Open this gVisor PR after the send-deadline prerequisite lands?",
-        "body": "An idle TCP connection can resume from a checkpoint with SO_KEEPALIVE enabled and never send another probe. Restoring the endpoint initialized a disabled timer. Setting TCP_KEEPIDLE again restarted it.\n\nSave the active timer's stack-clock deadline and bind its callback after the connected endpoint has a route. This preserves both the remaining idle period and the shorter interval between unanswered probes. Clear the saved timer state if the connection closes before it can be armed.\n\nCheck the remaining time and packets across a stack save and restore. Also cover a disabled timer and the configured probe count.",
-        "requestedAt": "2026-11-08T21:48:58+00:00"
-      }
+      "settledReviews": [
+        {
+          "status": "pending",
+          "kind": "proposal",
+          "head": "38b1dd1dac75b1fcbbe718d33db05237ce849182",
+          "url": "https://github.com/tamird/gvisor/commit/38b1dd1da",
+          "title": "Resume TCP keepalive at its saved deadline",
+          "summary": "Open this gVisor PR after the send-deadline prerequisite lands?",
+          "body": "An idle TCP connection can resume from a checkpoint with SO_KEEPALIVE enabled and never send another probe. Restoring the endpoint initialized a disabled timer. Setting TCP_KEEPIDLE again restarted it.\n\nSave the active timer's stack-clock deadline and bind its callback after the connected endpoint has a route. This preserves both the remaining idle period and the shorter interval between unanswered probes. Clear the saved timer state if the connection closes before it can be armed.\n\nCheck the remaining time and packets across a stack save and restore. Also cover a disabled timer and the configured probe count.",
+          "requestedAt": "2026-11-08T21:48:58+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T23:38:02+00:00",
+          "note": "Approved for submission after the send-deadline fix lands."
+        }
+      ]
     },
     {
       "id": "branch:tcp-checklocks-paragraphs",
@@ -73947,10 +73857,10 @@
       "from": "branch:luajit-target-generators",
       "to": "branch:rules-img-wrk2-image",
       "type": "depends_on",
-      "reason": "The wrk2 image declares LuaJIT 2.1.20230430 as a Bazel module. That version must be available in the registry before the image can be submitted independently.",
+      "reason": "The wrk2 image uses LuaJIT 2.1.1794214635 from BCR.",
       "evidence": [
-        "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
-        "https://github.com/tamird/gvisor/commit/93a67e0be"
+        "https://github.com/tamird/bazel-central-registry/commit/a4f336eea",
+        "https://github.com/tamird/gvisor/commit/bbb847c17"
       ]
     }
   ],
@@ -95203,5 +95113,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T23:34:08+00:00"
+  "updatedAt": "2026-11-09T23:38:02+00:00"
 }
