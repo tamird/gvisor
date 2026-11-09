@@ -1381,7 +1381,7 @@ function appendCIFlakeScan(card, scan) {
     if (scan.actions.checkedAt) coverage.push(`Last successful read ${date(scan.actions.checkedAt)}.`);
     if (scan.actions.pending?.length) coverage.push(`${scan.actions.pending.length} retried runs awaiting job details.`);
     if (scan.actions.error) coverage.push(scan.actions.error);
-    else if (!scan.actions.checkedAt) coverage.push("Waiting for request budget.");
+    else if (!scan.actions.checkedAt) coverage.push("No workflow sample recorded yet.");
     actions.append(element("p", "comparison-note", coverage.join(" ")));
     if (Number.isSafeInteger(scan.actions.partialRun?.run)) {
       const line = element("p", "comparison-note");

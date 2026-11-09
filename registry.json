@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T19:07:20+00:00",
+    "updatedAt": "2026-11-09T19:26:47+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2294,15 +2294,31 @@
       "id": "branch:bazel-python-release",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/flit-release-execution-runtime",
-      "title": "Build Python releases with declared Flit",
-      "url": "https://github.com/tamird/gvisor/commit/6df375dfb",
+      "ref": "research/flit-release-distinct-outputs",
+      "title": "Build Python release archives with the declared Flit backend",
+      "url": "https://github.com/tamird/gvisor/commit/be90b4814",
       "group": "release",
-      "status": "Agent work",
+      "status": "Contributor review requested",
       "summary": "Flit now runs with the execution platform’s registered Python. The previous action tried to start a GNU-linked target interpreter on an AMD64 musl worker that lacks its ELF loader. The integrated action used the static execution interpreter and produced the wheel and source distribution. The older combined proposal and wheel-scanner amendment remain on hold.\n\nThe large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite command at 11013b7d6 ran without Docker and staged the same wheel and source archive. The original caller tried Docker 13 times and failed before creating either file. The comparison supplied a fixed version and registry reply. With the Buildkite Bazelisk prerequisite, the plain make artifacts-python command takes DOCKER_BUILD=false from the job environment. GNU Make selected the same build and copy commands as the tested explicit override.\n\nrules_python 2.4.5 selects uv for the target platform and keeps its toolchain executable alias private. Using uv for a cross build would require another execution-platform adapter. Replacing a literal version in pyproject.toml can also silently lose a release override. The uv experiment did not replace the qualified Flit producer.",
-      "updatedAt": "2026-11-09T19:07:20+00:00",
-      "head": "6df375dfb751a3985a351462e1a54704e606bb7d",
+      "updatedAt": "2026-11-09T19:26:47+00:00",
+      "head": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
       "evidence": [
+        {
+          "label": "Independent concurrent Make and standalone releases, repeated release and preservation of unrelated files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42683100964/artifacts/13703726459"
+        },
+        {
+          "label": "Single complete Flit change",
+          "url": "https://github.com/tamird/gvisor/commit/be90b4814"
+        },
+        {
+          "label": "Previous single-commit version before staging reconciliation",
+          "url": "https://github.com/tamird/gvisor/commit/ed59355f4"
+        },
+        {
+          "label": "Concurrent and repeat release staging",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42681715103"
+        },
         {
           "label": "Revised standalone commit and permanent description",
           "url": "https://github.com/tamird/gvisor/commit/6650e2f29"
@@ -2438,23 +2454,35 @@
       ],
       "refinement": {
         "before": {
-          "head": "feab64aff25e950f5f3095c73cc5f6176efedddc"
+          "head": "6650e2f29d84dc3409678a3bdcaacf81a48ca7aa"
         },
         "after": {
-          "head": "6650e2f29d84dc3409678a3bdcaacf81a48ca7aa"
+          "head": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
+          "base": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c"
         }
       },
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "6df375dfb751a3985a351462e1a54704e606bb7d",
-        "observedAt": "2026-11-09T19:07:20+00:00",
-        "disposition": "The earlier preview omitted the Flit backend change. The combined revision also preserves the existing archive-staging lock and stale-archive cleanup.",
-        "nextAction": "Exercise two releases and concurrent staging against the current #16766 prerequisite before requesting review.",
+        "owner": "Contributor",
+        "sourceHead": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
+        "observedAt": "2026-11-09T19:26:47+00:00",
+        "disposition": "Two concurrent Make writers and a concurrent Make/standalone pair each published the expected files without leaving a stale archive.",
+        "nextAction": "Review the complete Flit backend and release staging change. Each concurrent producer published its own wheel and sdist under the destination lock. It can open once #16766 lands.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/6df375dfb",
-          "https://github.com/tamird/gvisor/commit/ed59355f4",
+          "https://github.com/tamird/gvisor/commit/be90b4814",
+          "https://github.com/tamird/gvisor/actions/runs/42683100964/artifacts/13703726459",
           "https://github.com/google/gvisor/pull/16766"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
+        "baseHead": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
+        "url": "https://github.com/tamird/gvisor/commit/be90b4814",
+        "title": "Build Python release archives with the declared Flit backend",
+        "body": "Building the SandboxExec distributions with setuptools could give\nidentical files different archive timestamps. A remote release worker\nalso had to provide Python and its packaging tools.\n\nSelect Flit in pyproject.toml and build the wheel from the sdist with\nits PEP 517 hooks. Use a fixed source timestamp and run the pinned\nbackend with the execution-platform Python. Record the licenses for\nFlit and its bundled Tomli.\n\nKeep version selection in the release service. Stage both Bazel and\nstandalone builds through the same directory lock so repeated and\nconcurrent releases leave one matching wheel and sdist.",
+        "summary": "Review the complete Flit backend and release staging change. Each concurrent producer published its own wheel and sdist under the destination lock. It can open once #16766 lands.",
+        "requestedAt": "2026-11-09T19:26:47+00:00"
       }
     },
     {
@@ -12609,26 +12637,34 @@
       "id": "branch:nvproxy-declared-sources",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/nvproxy-shared-driver-headers",
-      "head": "2627f0daa9a8127598d9405151660567a1f26c0c",
+      "ref": "review/nvproxy-offline-abi-single",
+      "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
       "title": "Compare NVIDIA driver ABIs using declared source archives",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/2627f0daa",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T19:07:20+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/4b9a9bc5d",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T19:18:26+00:00",
       "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. The final commit differs from that tested tree only in the README.",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "2627f0daa9a8127598d9405151660567a1f26c0c",
-        "observedAt": "2026-11-09T19:07:20+00:00",
-        "disposition": "The preview omits the split that takes the live installer-download test out of the offline ABI target.",
-        "nextAction": "Include the split in the single proposed commit or present its separately reviewable prerequisite. Verify the resulting target offline.",
+        "owner": "Contributor",
+        "sourceHead": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+        "observedAt": "2026-11-09T19:18:26+00:00",
+        "disposition": "Single-commit proposal prepared.",
+        "nextAction": "Review the full offline ABI change after #17112, #17114 and #17151. The same commit now moves the network-dependent installer checksum test to its own target.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2627f0daa",
-          "https://github.com/tamird/gvisor/commit/63f10e43e"
+          "https://github.com/tamird/gvisor/commit/4b9a9bc5d",
+          "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
         ]
       },
       "evidence": [
+        {
+          "label": "Complete diff, including the checksum test split",
+          "url": "https://github.com/tamird/gvisor/commit/4b9a9bc5d"
+        },
+        {
+          "label": "Previously qualified identical tree: offline driver checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+        },
         {
           "label": "25 available ABI comparisons, nine absent tags and the supported-pair CLI",
           "url": "https://github.com/tamird/gvisor/actions/runs/42298941700/artifacts/13543213033"
@@ -12662,10 +12698,6 @@
           "url": "https://github.com/tamird/gvisor/commit/63f10e43e"
         },
         {
-          "label": "25 driver ABIs and TestParser passed offline; 9 versions had no source tag",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
-        },
-        {
           "label": "Regenerated pins and recorded absences matched; original live checks failed TLS",
           "url": "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286"
         },
@@ -12676,10 +12708,12 @@
       ],
       "refinement": {
         "before": {
-          "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702"
+          "head": "2627f0daa9a8127598d9405151660567a1f26c0c",
+          "base": "7c42f97e66d1b62df825d8e423071b1dd52443de"
         },
         "after": {
-          "head": "2627f0daa9a8127598d9405151660567a1f26c0c"
+          "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+          "base": "4a735693062dedd81863e75f7a82efd8414dbe6f"
         }
       },
       "settledReviews": [
@@ -12692,7 +12726,18 @@
           "note": "Tamir requested removal of the remaining driver clone machinery.",
           "at": "2026-11-06T22:18:20.596Z"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+        "baseHead": "4a735693062dedd81863e75f7a82efd8414dbe6f",
+        "url": "https://github.com/tamird/gvisor/commit/4b9a9bc5d",
+        "title": "Compare NVIDIA driver ABIs using declared source archives",
+        "body": "The NVIDIA ABI test clones a driver repository during each comparison.\nWithout Git or network access, the test fails before Clang can compare\nthe driver’s ioctl definitions with the corresponding nvproxy types.\n\nGive the ABI test and driver differ the same pinned header archives\nas Bazel runfiles. Record versions without a public source tag so\nthe test can distinguish them from missing build inputs. Developers\ncan also pin a candidate version for the differ before nvproxy adopts\nit. Keep these archives development dependencies of the gVisor module.\n\nChecking the installer checksums still requires network access. Move\nthat check into its own test. The existing parity suite runs both\ntests, while the ABI target can run offline on every supported version\nwith published headers.",
+        "requestedAt": "2026-11-09T19:18:26+00:00",
+        "summary": "Review the full offline ABI change after #17112, #17114 and #17151. The same commit now moves the network-dependent installer checksum test to its own target."
+      }
     },
     {
       "id": "pr:15645",
@@ -53840,15 +53885,19 @@
       "id": "branch:state-graph-print-errors",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "revision/state-graph-print-errors-direct",
-      "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea",
+      "ref": "review/graph-print-scoped-errors",
+      "head": "0cc542e1feffe9f26b4d3657511be4e7b79fb11d",
       "title": "Return write errors from the state graph printer",
-      "url": "https://github.com/tamird/gvisor/commit/265ff93b2",
+      "url": "https://github.com/tamird/gvisor/commit/0cc542e1f",
       "group": "runtime",
       "summary": "When the output pipe closed inside an array, PrintGraph returned nil for both text and HTML. The revision returns each nested write error directly and retains the existing panic handling for the shared decoder and reflection. The same fixture passed 5 of 6 cases on stock and all 6 on the revision.",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-09T19:20:29+00:00",
       "evidence": [
+        {
+          "label": "Full state suite: 68 cases passed uncached on Linux, including text and HTML writer errors",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42682846232/artifacts/13703567329"
+        },
         {
           "label": "Original stock/fixed graph printer results and test output",
           "url": "https://github.com/tamird/gvisor/actions/runs/41529423728/artifacts/13182405129"
@@ -53874,6 +53923,18 @@
           "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
           "outcome": "needs-work",
           "at": "2026-11-02T22:17:21.705842+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea",
+          "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+          "title": "Return write errors from the state graph printer",
+          "url": "https://github.com/tamird/gvisor/commit/265ff93b2",
+          "requestedAt": "2026-11-02T22:54:43.336654+00:00",
+          "summary": "Open the revision that returns write errors directly from nested graph values?",
+          "body": "PrintGraph reported success when its reader closed partway through a\ncheckpoint dump. Return each write error through the value being printed,\nso callers see the error even when it occurs inside a nested value.\n\nReturn malformed graph headers and trailing-data errors directly as\nwell. Keep the existing recovery for the shared decoder and reflection,\nwhich can panic on malformed input.",
+          "outcome": "approved",
+          "at": "2026-11-09T19:20:29+00:00"
         }
       ],
       "refinement": {
@@ -53886,17 +53947,17 @@
           "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea",
-        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
-        "title": "Return write errors from the state graph printer",
-        "url": "https://github.com/tamird/gvisor/commit/265ff93b2",
-        "requestedAt": "2026-11-02T22:54:43.336654+00:00",
-        "summary": "Open the revision that returns write errors directly from nested graph values?",
-        "body": "PrintGraph reported success when its reader closed partway through a\ncheckpoint dump. Return each write error through the value being printed,\nso callers see the error even when it occurs inside a nested value.\n\nReturn malformed graph headers and trailing-data errors directly as\nwell. Keep the existing recovery for the shared decoder and reflection,\nwhich can panic on malformed input."
-      }
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "0cc542e1feffe9f26b4d3657511be4e7b79fb11d",
+        "observedAt": "2026-11-09T19:20:29+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow review on #17297.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17297"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:tcp-keepalive-user-timeout",
@@ -64404,20 +64465,28 @@
       "id": "branch:shim-wedged-runtime-tests",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/shim-wedged-runtime-tests",
-      "head": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
-      "title": "Exercise the shim against a wedged runtime",
-      "url": "https://github.com/tamird/gvisor/commit/6b2d3261d",
+      "ref": "review/shared-test-process",
+      "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
+      "title": "Use one test process for shim timeouts and runsc lifecycle tests",
+      "url": "https://github.com/tamird/gvisor/commit/885fe8b75",
       "group": "tests",
-      "status": "Agent work",
-      "summary": "The stock timeout case passed when the fake runtime failed to start. With shell utilities hidden, the replacement recorded child startup, SIGKILL and reaping of the same process. A deliberately missing helper failed the startup check. The review commit drops one redundant manager assertion from the tested source.",
+      "status": "Contributor review requested",
+      "summary": "Use one self-executing test fixture for processes that exit or wait to be killed. Runsc, the shim and systrap share it. The shim timeout cases check that their own command actually died from SIGKILL.",
       "evidence": [
+        {
+          "label": "Single-commit shared process fixture",
+          "url": "https://github.com/tamird/gvisor/commit/885fe8b75"
+        },
+        {
+          "label": "Linux validation and missing-executable control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42681696570"
+        },
         {
           "label": "Original false pass, traced child exit and missing-helper control",
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-09T19:07:20+00:00",
+      "updatedAt": "2026-11-09T19:18:26+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64432,20 +64501,37 @@
           "at": "2026-11-09T19:07:20+00:00"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
-        "url": "https://github.com/tamird/gvisor/commit/6b2d3261d"
-      },
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
-        "observedAt": "2026-11-09T19:07:20+00:00",
-        "disposition": "Consolidate the passive child processes used in runsc and shim tests.",
-        "nextAction": "Compare the shared fixture with the three existing implementations. Verify the real deadline, process identity and reaping behavior on Linux before sending a single-commit revision.",
+        "owner": "Contributor",
+        "sourceHead": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
+        "observedAt": "2026-11-09T19:18:26+00:00",
+        "disposition": "Single-commit proposal prepared.",
+        "nextAction": "Review the single process fixture and the shim’s check for a real watchdog kill. The Linux run is testing five packages, a deliberately missing runtime, and the ARM64 builds.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/6b2d3261d",
-          "https://github.com/google/gvisor/pull/17053"
+          "https://github.com/tamird/gvisor/commit/885fe8b75",
+          "https://github.com/tamird/gvisor/actions/runs/42681696570"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
+          "base": "7d1b049f5d541992b47cc38cf564025908a9ed7b"
+        },
+        "after": {
+          "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
+          "base": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
+        "baseHead": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295",
+        "url": "https://github.com/tamird/gvisor/commit/885fe8b75",
+        "title": "Use one test process for shim timeouts and runsc lifecycle tests",
+        "body": "The shim deadline tests run a fake runtime through /bin/sh and sleep.\nOn a worker without those programs, some tests accept the launch error\nbefore the watchdog has a chance to terminate a running command.\n\nRe-execute the test binary as a process that stays alive until killed.\nThe shim tests observe the runtime being killed, including operations\nthat discard its error. The runsc and systrap tests use the same child\nfor process identity, readiness and an unresponsive sandbox. An\nimmediate exit also lets specutils inspect and reap a zombie.",
+        "requestedAt": "2026-11-09T19:18:26+00:00",
+        "summary": "Review the single process fixture and the shim’s check for a real watchdog kill. The Linux run is testing five packages, a deliberately missing runtime, and the ARM64 builds."
       }
     },
     {
@@ -69042,6 +69128,64 @@
           "at": "2026-11-09T18:52:37+00:00"
         }
       ]
+    },
+    {
+      "id": "pr:17297",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17297,
+      "ref": "review/graph-print-scoped-errors",
+      "title": "Return write errors from the state graph printer",
+      "url": "https://github.com/google/gvisor/pull/17297",
+      "group": "runtime",
+      "head": "0cc542e1feffe9f26b4d3657511be4e7b79fb11d",
+      "status": "open",
+      "updatedAt": "2026-11-09T19:26:47+00:00",
+      "summary": "When the output pipe closed inside an array, PrintGraph returned nil for both text and HTML. The revision returns each nested write error directly and retains the existing panic handling for the shared decoder and reflection. The same fixture passed 5 of 6 cases on stock and all 6 on the revision.",
+      "evidence": [
+        {
+          "label": "Full state suite: 68 cases passed uncached on Linux, including text and HTML writer errors",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42682846232/artifacts/13703567329"
+        },
+        {
+          "label": "Original stock/fixed graph printer results and test output",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41529423728/artifacts/13182405129"
+        },
+        {
+          "label": "Matched text/HTML closed-pipe, successful output, and caller-buffer controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41533115417/artifacts/13183400567"
+        },
+        {
+          "label": "Same graph fixture: closed pipe inside an array and five controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41537064444/artifacts/13184613470"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
+          "outcome": "needs-work",
+          "at": "2026-11-02T21:53:09.343406+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
+          "outcome": "needs-work",
+          "at": "2026-11-02T22:17:21.705842+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea",
+          "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+          "title": "Return write errors from the state graph printer",
+          "url": "https://github.com/tamird/gvisor/commit/265ff93b2",
+          "requestedAt": "2026-11-02T22:54:43.336654+00:00",
+          "summary": "Open the revision that returns write errors directly from nested graph values?",
+          "body": "PrintGraph reported success when its reader closed partway through a\ncheckpoint dump. Return each write error through the value being printed,\nso callers see the error even when it occurs inside a nested value.\n\nReturn malformed graph headers and trailing-data errors directly as\nwell. Keep the existing recovery for the shared decoder and reflection,\nwhich can panic on malformed input.",
+          "outcome": "approved",
+          "at": "2026-11-09T19:20:29+00:00"
+        }
+      ]
     }
   ],
   "edges": [
@@ -69170,13 +69314,6 @@
       "type": "depends_on",
       "reason": "Prepared on the combined hermetic toolchain migration.",
       "evidence": "https://github.com/tamird/gvisor/tree/platform-only-architecture"
-    },
-    {
-      "from": "pr:15114",
-      "to": "branch:bazel-python-release",
-      "type": "depends_on",
-      "reason": "Reviewed Python release change is held for this prerequisite.",
-      "evidence": "https://github.com/tamird/gvisor/tree/bazel-python-release"
     },
     {
       "from": "pr:15141",
@@ -72970,6 +73107,13 @@
         "https://github.com/google/gvisor/pull/17286",
         "https://github.com/tamird/gvisor/commit/88bd70024"
       ]
+    },
+    {
+      "from": "pr:16766",
+      "to": "branch:bazel-python-release",
+      "type": "depends_on",
+      "reason": "Share the existing locked archive publication and stale archive removal across both release producers.",
+      "evidence": "https://github.com/google/gvisor/pull/16766"
     }
   ],
   "investigations": [
