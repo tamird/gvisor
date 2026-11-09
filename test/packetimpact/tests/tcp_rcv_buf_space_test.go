@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"testing"
+	"time"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -101,4 +102,80 @@ func TestReduceRecvBuf(t *testing.T) {
 	if ret, got, err := dut.RecvWithErrno(context.Background(), t, acceptFd, int32(len(sampleData)), unix.MSG_DONTWAIT); got != nil || ret != -1 || err != unix.EAGAIN {
 		t.Fatalf("expected no packets but got: %s", got)
 	}
+}
+
+// TestACKOnDrain records when the peer receives an ACK relative to a read.
+// The raw peer controls PSH and sends only one segment at a time.
+func TestACKOnDrain(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	for _, tc := range []struct {
+		name  string
+		push  bool
+		leave int32
+	}{
+		{"push_drain", true, 0},
+		{"push_leave_one", true, 1},
+		{"no_push_drain", false, 0},
+	} {
+		observeDrain(t, &dut, tc.name, tc.push, tc.leave)
+	}
+}
+
+func observeDrain(t *testing.T, dut *testbench.DUT, name string, push bool, leave int32) {
+	t.Helper()
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+	defer conn.Close(t)
+	conn.Connect(t)
+	fd, _ := dut.Accept(t, listener)
+	defer dut.Close(t, fd)
+
+	mss := header.ParseSynOptions(conn.SynAck(t).Options, true).MSS
+	if mss < 536 || mss > 9000 {
+		t.Fatalf("%s: unexpected SYN-ACK MSS %d", name, mss)
+	}
+	payload := &testbench.Payload{Bytes: make([]byte, mss)}
+	send := func(flags header.TCPFlags) testbench.TCP {
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(flags)}, payload)
+		return testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck),
+			AckNum: testbench.Uint32(uint32(*conn.LocalSeqNum(t)))}
+	}
+	expectACK := func(expected testbench.TCP) {
+		t.Helper()
+		if _, err := conn.Expect(t, expected, time.Second); err != nil {
+			t.Fatalf("%s: missing cumulative ACK: %v", name, err)
+		}
+	}
+	receive := func(n int32, flags int32) {
+		t.Helper()
+		if got := dut.Recv(t, fd, n, flags|unix.MSG_WAITALL); len(got) != int(n) {
+			t.Fatalf("%s: recv returned %d bytes, want %d", name, len(got), n)
+		}
+	}
+
+	// Exhaust startup quick ACKs and establish the receive MSS. Use one-way
+	// traffic so replies from the application cannot carry any of the ACKs.
+	for i := 0; i < 24; i++ {
+		ack := send(header.TCPFlagAck | header.TCPFlagPsh)
+		receive(int32(len(payload.Bytes)), 0)
+		expectACK(ack)
+	}
+	rcvMSS := dut.GetSockOptTCPInfo(t, fd).RcvMss
+	flags := header.TCPFlagAck
+	if push {
+		flags |= header.TCPFlagPsh
+	}
+	sent := time.Now()
+	ack := send(flags)
+	receive(int32(len(payload.Bytes)), unix.MSG_PEEK)
+	peeked := time.Now()
+	// Separate an ACK caused by the final read from one sent at arrival
+	// or by the 40 ms delayed-ACK timer. The capture records all three.
+	time.Sleep(time.Until(sent.Add(10 * time.Millisecond)))
+	started := time.Now()
+	receive(int32(mss)-leave, 0)
+	finished := time.Now()
+	expectACK(ack)
+	t.Logf("DRAIN case=%s port=%d ack=%d mss=%d tcpinfo_rcv_mss=%d send_ns=%d peek_ns=%d read_start_ns=%d read_end_ns=%d", name, port, *ack.AckNum, mss, rcvMSS, sent.UnixNano(), peeked.UnixNano(), started.UnixNano(), finished.UnixNano())
 }
