@@ -1706,18 +1706,19 @@ class ReapprovalReminderTest(unittest.TestCase):
                          ("due", "reapprove-amendment", ["manninglucas"]))
         self.assertTrue(due["importReapproval"])
         self.assertIn("[#16647](https://github.com/google/gvisor/pull/16647)", due["body"])
-        url = f"https://github.com/google/gvisor/pull/{pr['number']}#discussion_r123"
-        reply = {"kind": "inline", "url": url, "author": {"login": "tamird"}, "createdAt": eligible.isoformat(),
-                 "body": f"Moved in {pr['head'][:9]}. Could you re-approve that commit?"}
-        with mock.patch.dict(node["reapproval"], {"evidence": url}), \
-                mock.patch.dict(pr["feedback"], {"items": [*pr["feedback"]["items"], reply]}):
-            for seconds, status in [(10799, "skipped"), (10800, "due")]:
-                at = eligible + timedelta(seconds=seconds)
-                self.assertEqual(updater.reminder_plan(pr, node, at, "tamird", maintainers)["status"], status)
-            for change in [{"author": {"login": "outsider"}}, {"url": url + "0"},
-                           {"body": "Could you re-approve the old version?"}, {"body": f"Fixed in {pr['head'][:9]}."}]:
-                with self.subTest(change=change), mock.patch.dict(reply, change):
-                    self.assertEqual(updater.reminder_plan(pr, node, eligible, "tamird", maintainers)["status"], "due")
+        for kind, anchor in [("inline", "discussion_r123"), ("comment", "issuecomment-123")]:
+            url = f"https://github.com/google/gvisor/pull/{pr['number']}#{anchor}"
+            reply = {"kind": kind, "url": url, "author": {"login": "tamird"}, "createdAt": eligible.isoformat(),
+                     "body": f"Moved in {pr['head'][:9]}. Could you re-approve that commit?"}
+            with self.subTest(kind=kind), mock.patch.dict(node["reapproval"], {"evidence": url}), \
+                    mock.patch.dict(pr["feedback"], {"items": [*pr["feedback"]["items"], reply]}):
+                for seconds, status in [(10799, "skipped"), (10800, "due")]:
+                    at = eligible + timedelta(seconds=seconds)
+                    self.assertEqual(updater.reminder_plan(pr, node, at, "tamird", maintainers)["status"], status)
+                for change in [{"author": {"login": "outsider"}}, {"url": url + "0"},
+                               {"body": "Could you re-approve the old version?"}, {"body": f"Fixed in {pr['head'][:9]}."}]:
+                    with self.subTest(change=change), mock.patch.dict(reply, change):
+                        self.assertEqual(updater.reminder_plan(pr, node, eligible, "tamird", maintainers)["status"], "due")
         self.assertIn("does not contain this amendment", due["body"])
         self.assert_commit_links(due, pr["head"], node["reapproval"]["approvedHead"])
         self.assertNotIn("patch-preserving", due["body"])

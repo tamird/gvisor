@@ -125,12 +125,12 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             return skip("incomplete-reminder-window")
     reminders = [item for item in comments if MARKER in item.get("body", "")]
     proof = node.get("reapproval", {})
-    # A contributor may request reapproval in the original review thread.
+    # A contributor may request reapproval inline or in the PR conversation.
     # Its URL binds the published request to this amendment. Use GitHub's
     # creation time for the cooldown, just as for a scheduled reminder.
     if proof.get("head") == pr["head"] and proof.get("evidence"):
         reminders.extend(item for item in feedback
-                         if item.get("kind") == "inline" and item.get("url") == proof["evidence"]
+                         if item.get("kind") in {"inline", "comment"} and item.get("url") == proof["evidence"]
                          and pr["head"][:9] in item.get("body", "")
                          and re.search(r"\bre-?approve\b", item.get("body", ""), re.IGNORECASE))
     history = maintainer_review_history(pr)
