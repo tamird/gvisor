@@ -45,6 +45,7 @@ go_library(
 
 go_test(
     name = "container_test",
+    env = {"GVISOR_CMD_TEST_APP": "$(rootpath //test/cmd/test_app)"},
     size = "large",
     srcs = [
         "console_test.go",

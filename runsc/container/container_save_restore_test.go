@@ -21,6 +21,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -2775,6 +2776,14 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 		}
 
 		if hop.inspectStatefile {
+			var originalImage []byte
+			wirePair := hopIdx == 0 && hop.saveEngine == config.StateEngineWire
+			if wirePair {
+				originalImage, err = os.ReadFile(imgPath)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
 			dumpPath := filepath.Join(ckptDir, "statefile-dump.txt")
 			if out, err := exec.Command(specutils.ExePath, "statefile", "-output="+dumpPath, imgPath).CombinedOutput(); err != nil {
 				t.Fatalf("hop %d statefile dump failed: %v\n%s%s", hopIdx, err, out, preserveStatefile(t, hopIdx, imgPath))
@@ -2784,6 +2793,34 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 				t.Fatalf("hop %d ReadFile(%s): %v", hopIdx, dumpPath, err)
 			}
 			dump := string(dumpBytes)
+			if wirePair {
+				// Compare both CLIs on the checkpoint that this test will restore.
+				stock := os.Getenv("GVISOR_CKPT_OLD_RELEASE")
+				stockOutput := filepath.Join(ckptDir, "stock-dump.txt")
+				cmd := exec.Command(filepath.Join(stock, "runsc"), "statefile", "-output="+stockOutput, imgPath)
+				cmd.Env = append(os.Environ(), "GVISOR_SIDECAR_BINARIES_DIR="+filepath.Join(stock, "gvisor-bin"))
+				out, err := cmd.CombinedOutput()
+				stockResult := "success"
+				if err != nil {
+					stockResult = strings.TrimSpace(string(out))
+					if cmd.ProcessState == nil {
+						t.Fatalf("could not run stock statefile: %v", err)
+					}
+					if stockResult != "error printing state: unreachable" {
+						t.Logf("other stock statefile result: %v: %.300s", err, out)
+						stockResult = "different-error"
+					}
+				} else if oldDump, err := os.ReadFile(stockOutput); err != nil {
+					t.Fatal(err)
+				} else if !bytes.Equal(oldDump, dumpBytes) {
+					stockResult = "different-output"
+				}
+				after, err := os.ReadFile(imgPath)
+				if err != nil || !bytes.Equal(originalImage, after) {
+					t.Fatalf("checkpoint changed during comparison: %v", err)
+				}
+				t.Logf("WIRE_PAIR image=%x bytes=%d stock=%q corrected=%x", sha256.Sum256(after), len(after), stockResult, sha256.Sum256(dumpBytes))
+			}
 			wantRoot := "g1r0 = kernel.Kernel{"
 			if hop.saveEngine == config.StateEngineWire {
 				wantRoot = ".Kernel]{"
