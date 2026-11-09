@@ -1,0 +1,29 @@
+name: Collect semaphore and Copybara observations
+on:
+  push:
+    branches: [qualification/work-map-semaphore-and-matching-export]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Collect fresh public observations with the standard collector
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = ddb0f88b6dae9ed37d41a0010e89d845c482f598
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          python3 -B -u update-status.py > "$RUNNER_TEMP/collection.log"
+          node metadata-preflight.mjs .
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: paired-public-status
+          path: github-status.json
+          if-no-files-found: error
+          retention-days: 14
