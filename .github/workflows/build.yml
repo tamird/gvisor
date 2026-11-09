@@ -1,16 +1,16 @@
-name: Qualify goimports unified diffs on Bazel 9
+name: Check the merged goimports formatter in an empty root
 on:
   push:
-    branches: [qualification/goimports-bazel-diff]
+    branches: [qualification/goimports-merged-scratch]
 permissions:
   contents: read
 jobs:
   lint:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 60
     env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      GNU: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/default_x86_64@sha256:2e57d91fbce58ed6f9653aa4f976b78ea388305da7cdfb41d1eea1a594e81606
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 3, persist-credentials: false}
@@ -21,9 +21,10 @@ jobs:
           set -eu
           d="$RUNNER_TEMP/lint-bazel9"
           mkdir -p "$d/platform"
-          cp .github/qualification/lint-pilot/check.py .github/qualification/lint-pilot/*.patch "$d/"
+          cp .github/qualification/lint-pilot/check.py "$d/"
           echo '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/goimports-bazel9.json"
-          git checkout --detach 8858bbb350e274b58fdb4be8cd1057dd3d9a3ddc
+          git fetch --no-tags --depth=1 origin 1954485c9a50945b0189fba1ed6bb3852cc016ea
+          git checkout --detach 1954485c9a50945b0189fba1ed6bb3852cc016ea
           curl --retry 3 -fsSL https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
           printf '%s  %s\n' 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c "$d/bazel" | sha256sum -c -
           chmod +x "$d/bazel"
@@ -35,7 +36,7 @@ jobs:
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$d/bb.rc"
-      - name: Compare original and corrected hunks through the real source check
+      - name: Run the repository check and the formatter in an empty root
         run: LINT_RC="$RUNNER_TEMP/lint-bazel9/bb.rc" python3 -B "$RUNNER_TEMP/lint-bazel9/check.py"
       - name: Check the compact artifact boundary
         id: privacy

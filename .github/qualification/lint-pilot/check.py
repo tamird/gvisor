@@ -6,11 +6,12 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 from uuid import uuid4
 
-SOURCE = "8858bbb350e274b58fdb4be8cd1057dd3d9a3ddc"
-TREE = "78e9dfcfd91af862615da7ff2b1acb564dc75150"
+SOURCE = "1954485c9a50945b0189fba1ed6bb3852cc016ea"
+TREE = "db2910f8c73fd197e781d5afd2dbf14c16b2802a"
 TEMP = Path(os.environ["RUNNER_TEMP"])
 BAZEL = [str(TEMP / "lint-bazel9/bazel"), "--bazelrc=" + os.environ["LINT_RC"]]
 TARGET = "//tools/lint:goimports"
@@ -22,19 +23,10 @@ DIRTY = "package proof\n\nimport \"gvisor.dev/gvisor/qualification/missing\"\n\n
 FORMATTED = DIRTY.replace("_=", "_ = ")
 MULTI = DIRTY + "\nvar A=1\n\n" + "".join(f"// filler {i}\n" for i in range(12)) + "var B=2\n"
 MULTI_FORMATTED = MULTI.replace("_=", "_ = ").replace("A=1", "A = 1").replace("B=2", "B = 2")
+MOD = "golang.org/x/tools"
+VERSION = "v0.52.1-0.20261109220859-588ada3c4d4d"
 OUT = {"source": SOURCE, "tree": TREE, "verdict": "INCOMPLETE", "phases": {},
-       "priorAttempt": {"run": 41402832471, "artifact": 13122371568,
-                        "archiveSha256": "b16f671dea64e12e7fb8ef31f1494ccc152518bb0b3dfddb414aed11c061b3ae",
-                        "firstInvocation": "5b2e6d11-bd7d-4eaa-83fc-8c19445c06f3", "exit": 1,
-                        "cause": "GoCompilePkg missing strict dependency golang.org/x/tools/internal/diff",
-                        "goimportsActionsExecuted": 0},
-       "supplierVersion": "v0.51.0", "supplierChange": "d140e4d63b51cb5053d57cde308379069b5a6436",
-       "hunkPrerequisite": {"author": "Mustafa Senoglu", "githubCommit": "e135a42156aede7624b869cd526ad7cd75859084",
-                            "gerritRevision": "3f8223d50b560eece75d128e1b139c6f7252c462", "change": 834825,
-                            "application": "qualification only; strip Go vendor prefix"},
-       "priorDownstreamIsolation": {"run": 41399910347, "artifact": 13120089067,
-                                    "source": "80c4e21583bedbc99d1ff253fe02612df4e6e21d",
-                                    "scope": "unchanged module and source projection; no downstream compilation"}}
+       "supplierRevision": "588ada3c4d4d6d24ab1758e86bd2768beba5946d", "supplierVersion": VERSION}
 
 
 def now() -> str:
@@ -291,6 +283,32 @@ def minimal_elf() -> None:
     row["verified"] = True
 
 
+def empty_root(resolved: dict) -> None:
+    original = OUT["phases"]["corrected_hunks"]
+    root = TEMP / "lint-bazel9" / "empty-root"
+    root.mkdir()
+    tool = root / "goimports"
+    shutil.copy(EXECROOT / original["tool"], tool)
+    (root / "input.go").write_text(MULTI)
+    require(sorted(p.name for p in root.iterdir()) == ["goimports", "input.go"], "unexpected helper in empty root")
+    result = subprocess.run(["sudo", "-n", "chroot", "--userspec=65534:65534", str(root), "/goimports",
+                             "-format-only", "-d", "--", "input.go"], capture_output=True, timeout=30)
+    require(result.returncode == 0 and not result.stderr and result.stdout.count(b"\n@@ ") == 2,
+            "missing two-hunk diff in empty root")
+    applied = subprocess.run(["patch", "--batch", "--fuzz=0", "-p0", "input.go"], cwd=root,
+                             input=result.stdout, capture_output=True, timeout=30)
+    require(applied.returncode == 0 and (root / "input.go").read_text() == MULTI_FORMATTED, "incorrect diff")
+    base = Path(subprocess.check_output([*BAZEL, "info", "output_base"], text=True).strip())
+    label = Path("cmd/goimports/goimports.go")
+    candidates = [p / label for p in (base / "external").glob("*org_golang_x_tools") if (p / label).is_file()]
+    source_hash = sha256((Path(resolved["Dir"]) / label).read_bytes()).hexdigest()
+    require(len(candidates) == 1 and sha256(candidates[0].read_bytes()).hexdigest() == source_hash,
+            "Bazel and the selected Go module disagree on goimports.go")
+    OUT["phases"]["empty_root"] = {"verified": True, "files": ["goimports", "input.go"], "hunks": 2,
+                                  "toolSha256": original["toolDigest"]["hash"], "sourceSha256": source_hash,
+                                  "diffSha256": sha256(result.stdout).hexdigest()}
+
+
 def dirty(name: str, sources: set[str], originals: dict[str, str], formatted: dict[str, str], corrected: bool) -> None:
     check(name, sources | set(originals), set(originals), image=NATIVE if corrected else "")
     roundtrip(name, originals, formatted, corrected)
@@ -308,17 +326,17 @@ def main() -> None:
     require(len(sources) == 2685 and not CASE.exists(), "unexpected source inventory")
     build, module = Path("tools/lint/BUILD"), Path("MODULE.bazel")
     original_build, original_module, golden = build.read_text(), module.read_text(), GOLDEN.read_bytes()
-    patches = ["goimports.patch", "goimports-build.patch", "unified-lines.patch"]
-    OUT["patches"] = {}
-    for name in patches:
-        data = (TEMP / "lint-bazel9" / name).read_bytes()
-        (build.parent / name).write_bytes(data)
-        OUT["patches"][name] = {"sha256": sha256(data).hexdigest(), "size": len(data)}
-    exports = '\nexports_files(' + repr(patches) + ')\n'
-    def overlay(corrected: bool, minimal: bool) -> None:
-        labels = ["//tools/lint:" + p for p in patches[:3 if corrected else 2]]
-        module.write_text(original_module + '\ngo_deps.module_override(\n    patch_strip = 1,\n    patches = ' + repr(labels) + ',\n    path = "golang.org/x/tools",\n)\n')
-        contents = original_build + exports
+    subprocess.run(["go", "get", MOD + "@" + VERSION], check=True)
+    resolved = json.loads(subprocess.check_output(["go", "mod", "download", "-json", MOD + "@" + VERSION]))
+    selected = subprocess.check_output(["go", "list", "-m", "-f", "{{.Version}}", MOD], text=True).strip()
+    require(selected == resolved["Version"] == VERSION, "wrong module version")
+    info = json.loads(subprocess.check_output(["curl", "-fsSL", "--retry", "3",
+                                               f"https://proxy.golang.org/{MOD}/@v/{VERSION}.info"]))
+    require(info["Version"] == selected and info["Origin"]["Hash"] == OUT["supplierRevision"],
+            "the selected module does not contain the merged Gerrit revision")
+    OUT["supplierSum"] = resolved["Sum"]
+    def overlay(minimal: bool) -> None:
+        contents = original_build
         if minimal:
             needle = '    mnemonic = "GoimportsDiff",\n'
             require(contents.count(needle) == 1, "ambiguous action selection")
@@ -328,16 +346,16 @@ def main() -> None:
     originals = {str(CASE / "changed $file.go"): MULTI, str(CASE / "other.go"): DIRTY}
     formatted = {str(CASE / "changed $file.go"): MULTI_FORMATTED, str(CASE / "other.go"): FORMATTED}
     try:
-        overlay(False, False)
+        overlay(True)
+        phase("clean", check, "clean", sources, image=NATIVE)
         CASE.mkdir()
         (CASE / "BUILD.bazel").write_text('exports_files(glob(["*.go"]))\n')
         GOLDEN.write_text("intentionally invalid golden output\n")
         for file, content in originals.items():
             Path(file).write_text(content)
-        phase("uncorrected_hunks", dirty, "uncorrected_hunks", sources, originals, formatted, False)
-        overlay(True, True)
         phase("corrected_hunks", dirty, "corrected_hunks", sources, originals, formatted, True)
         phase("minimal_elf", minimal_elf)
+        phase("empty_root", empty_root, resolved)
         invalid = str(CASE / "other.go")
         Path(invalid).write_text("package proof\nfunc broken(\n")
         phase("invalid_syntax", check, "invalid_syntax", sources | set(originals), syntax=invalid, image=NATIVE)
@@ -356,20 +374,19 @@ def main() -> None:
         (CASE / "BUILD.bazel").unlink()
         CASE.rmdir()
         GOLDEN.write_bytes(golden)
-        overlay(True, False)
+        overlay(False)
         phase("input_graph", input_graph, sources)
     finally:
         build.write_text(original_build)
         module.write_text(original_module)
         GOLDEN.write_bytes(golden)
-        for name in patches:
-            (build.parent / name).unlink()
         if CASE.exists():
             for file in CASE.iterdir():
                 file.unlink()
             CASE.rmdir()
-    require(not subprocess.check_output(["git", "status", "--porcelain"]), "files left modified")
-    expected = {"uncorrected_hunks", "corrected_hunks", "invalid_syntax", "format", "formatted", "input_graph", "minimal_elf"}
+    changed = set(subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines())
+    require(changed <= {"go.mod", "go.sum", "MODULE.bazel.lock"} and "go.mod" in changed, "unexpected modified files")
+    expected = {"clean", "empty_root", "corrected_hunks", "invalid_syntax", "format", "formatted", "input_graph", "minimal_elf"}
     require(set(OUT["phases"]) == expected and all(p["verified"] for p in OUT["phases"].values()), "missing control")
     OUT["verdict"] = "PASS"
 
