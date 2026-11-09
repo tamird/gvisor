@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T21:19:08+00:00",
+    "updatedAt": "2026-11-09T21:46:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23640,9 +23640,9 @@
       "title": "Assemble the tcpdump test image from signed Ubuntu packages",
       "url": "https://github.com/tamird/gvisor/commit/768579797",
       "group": "bazel",
-      "status": "Waiting for packet socket and package inventory fixes",
-      "updatedAt": "2026-11-07T01:18:44+00:00",
-      "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR lists only two of the 47 installed packages in the dpkg status file. The revised 225-entry catalog passed Fetch and Verify. Its manually recorded Ubuntu keyring matched the 3,607 bytes in Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.",
+      "status": "Waiting for the package release and #17168",
+      "updatedAt": "2026-11-09T21:46:42+00:00",
+      "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR lists only two of the 47 installed packages in the dpkg status file. The revised 225-entry catalog passed Fetch and Verify. Its manually recorded Ubuntu keyring matched the 3,607 bytes in Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.\n\nWith rules_distroless #294 applied to 0.11.1, dpkg lists all 47 installed packages in each image. All versions and architectures matched the signed lock. All 1,882 AMD64 and 1,881 ARM64 regular-file comparisons matched the signed packages. Both Make image archives built and the license check passed. The AMD64 image also ran tcpdump under runc. This run inspected the ARM64 archive.\n\nThe registry’s two macOS jobs stop at the GnuPG setup because brew is missing. Its Bazel 8 jobs on Debian and Ubuntu fail with native repository rules disabled. The generated tar and zstd toolchains still load local_config_platform.",
       "links": [
         {
           "label": "Signed Ubuntu package revision",
@@ -23686,17 +23686,27 @@
         }
       ],
       "followup": {
-        "owner": "work_map_current",
+        "owner": "Agent",
         "sourceHead": "768579797b0d15dedee7b974dde31d09e529a152",
-        "observedAt": "2026-11-07T01:18:44+00:00",
-        "disposition": "Both architectures passed capture and catalog checks on the fork.",
-        "nextAction": "Qualify a BCR release or backport that records installed dependencies in dpkg status. The all-interfaces test also needs the PACKET_RESERVE readback. The earlier source-build approval is retained separately.",
+        "observedAt": "2026-11-09T21:42:44+00:00",
+        "disposition": "Both image inventories and payloads verified with the supplier fix.",
+        "nextAction": "Use the BCR release containing rules_distroless #294 when it is available. The 0.11.1 registry submission has maintainer approval and four failed presubmit jobs. The all-interfaces capture needs gVisor #17168.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855",
-          "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee"
+          "https://github.com/tamird/gvisor/actions/runs/42703973355/artifacts/13713441827",
+          "https://github.com/bazel-contrib/rules_distroless/pull/294",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11526",
+          "https://github.com/google/gvisor/pull/17168"
         ]
       },
       "evidence": [
+        {
+          "label": "Signed package inventory, both image archives and license result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42703973355/artifacts/13713441827"
+        },
+        {
+          "label": "BCR release presubmit for rules_distroless 0.11.1",
+          "url": "https://buildkite.com/bazel/bcr-presubmit/builds/44623"
+        },
         {
           "label": "Exact Ubuntu keyring and supplier notice bytes, canonical Fetch and Verify, and both image archives",
           "url": "https://github.com/tamird/gvisor/actions/runs/42296544946/artifacts/13542451552"
@@ -23736,6 +23746,14 @@
         {
           "label": "The three original syscall XML files, test binary and Sentry hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
+        },
+        {
+          "label": "BCR macOS GnuPG setup failure",
+          "url": "https://buildkite.com/organizations/bazel/pipelines/bcr-presubmit/builds/44623/jobs/01a19f45-ef46-4721-8e74-f454be307771/download.txt"
+        },
+        {
+          "label": "BCR Linux toolchain resolution failure",
+          "url": "https://buildkite.com/organizations/bazel/pipelines/bcr-presubmit/builds/44623/jobs/01a19f45-5185-4bea-a72a-1cd5c7f488c5/download.txt"
         }
       ]
     },
@@ -47075,9 +47093,17 @@
       "url": "https://github.com/tamird/gvisor/commit/22451846e",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-09T21:19:08+00:00",
-      "summary": "After an asynchronous page read fails, registering the next MemoryFile can return the checkpoint gofer’s closed-handle error. The fix checks the original read error under the same mutex that excludes Close. The regression now uses the landed test helper, and Nogo can check the mutex on the shared file list.",
+      "updatedAt": "2026-11-09T21:42:44+00:00",
+      "summary": "After an asynchronous page read fails, registering the next MemoryFile can return the checkpoint gofer’s closed-handle error. The fix checks the original read error under the same mutex that excludes Close. The regression now uses the landed test helper, and Nogo can check the mutex on the shared file list.\n\nStock returned “file already closed” for the second file. All 72 corrected package cases passed. Both Nogo test targets passed on the AMD64 worker. Each target checks the findings for AMD64 and ARM64 and propagates either failure. A separate ARM64 worker invocation stopped before analysis because its configuration was missing. The race build failed before any test ran because the worker had no C compiler.",
       "evidence": [
+        {
+          "label": "Original stock, package, Nogo and failed race-build records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701040726/artifacts/13712601949"
+        },
+        {
+          "label": "Race suite in the gVisor compiler image",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42704817816"
+        },
         {
           "label": "Revision on the landed parent",
           "url": "https://github.com/tamird/gvisor/commit/22451846e"
@@ -47127,12 +47153,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "22451846e8248de7c94528de1a39108fd8e34cf1",
-        "observedAt": "2026-11-09T21:19:08+00:00",
-        "disposition": "The prerequisite merged. The refreshed proposal is being qualified before contributor review.",
-        "nextAction": "Check the stock error and the revised second-file case, package and race results, and the mutex annotation on AMD64 and ARM64.",
+        "observedAt": "2026-11-09T21:42:44+00:00",
+        "disposition": "Stock regression reproduced. Package and Nogo checks passed.",
+        "nextAction": "Verify the full race suite and the second-file regression in the pinned gVisor compiler image.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42701040726",
-          "https://github.com/tamird/gvisor/commit/22451846e"
+          "https://github.com/tamird/gvisor/actions/runs/42701040726/artifacts/13712601949",
+          "https://github.com/tamird/gvisor/actions/runs/42704817816",
+          "https://github.com/tamird/gvisor/blob/22451846e/tools/arch.bzl#L12-L23"
         ]
       }
     },
@@ -69525,9 +69552,13 @@
       "group": "ci-flakes",
       "head": "cf2a26737bd6a255ef74c136a3c6fd06f5a5ab30",
       "status": "open",
-      "updatedAt": "2026-11-09T21:00:08+00:00",
-      "summary": "A blocked recv slept until timeout even though poll showed a pending error. Listening for EventErr makes recv return ECONNREFUSED as Linux does. Linux and corrected gVisor each passed all 22 UDP records and eight focused reruns. Withholding ICMP hit the intended failure on both. The native AMD64 comparison used the exact two changed files on the RBE integration tree.",
+      "updatedAt": "2026-11-09T21:46:42+00:00",
+      "summary": "A blocked recv slept until timeout even though poll showed a pending error. Listening for EventErr makes recv return ECONNREFUSED as Linux does. Linux and corrected gVisor each passed all 22 UDP records and eight focused reruns. Withholding ICMP hit the intended failure on both. The native AMD64 comparison used the exact two changed files on the RBE integration tree. The standalone PR head also passed all 22 UDP records on Linux and all 22 on gVisor in the project’s native AMD64 builder. On its parent, the original test passed on both stacks. With just the revised test, Linux returned ECONNREFUSED and gVisor timed out after 10.13 seconds with EAGAIN.",
       "evidence": [
+        {
+          "label": "Standalone PR head, both UDP suites on native AMD64",
+          "url": "https://app.buildbuddy.io/invocation/718ee49e-916b-4459-911e-d0069f6faa72"
+        },
         {
           "label": "Full results, repetitions and missing-ICMP controls",
           "url": "https://app.buildbuddy.io/invocation/b9e8d9a7-157c-4875-a6e0-e8150c068c25"
@@ -69539,6 +69570,14 @@
         {
           "label": "Investigation and four upstream CI failures",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation:ci-flake-icmp-udp-recv"
+        },
+        {
+          "label": "Parent with only the revised regression, Linux and gVisor",
+          "url": "https://app.buildbuddy.io/invocation/d3dcd323-a7c3-4795-a68a-c53147a7df21"
+        },
+        {
+          "label": "Standalone sources and original XML, logs and packet captures",
+          "url": "https://app.buildbuddy.io/invocation/8d399a5a-fe21-4a7f-b420-d0349b3ce675"
         }
       ],
       "settledReviews": [
@@ -94431,7 +94470,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T21:00:08+00:00",
+      "updatedAt": "2026-11-09T21:46:42+00:00",
       "summary": "A blocking receive on a connected UDP socket returned data where the test expected ECONNREFUSED. The same assertion failed on four builds.",
       "findings": [
         {
@@ -94533,6 +94572,10 @@
       "nextStep": "The blocked-receive fix and packet regression are in #17312. After it lands, check for further failures of the same UDP assertion in CI.",
       "evidence": [
         {
+          "label": "Standalone PR head, both UDP suites on native AMD64",
+          "url": "https://app.buildbuddy.io/invocation/718ee49e-916b-4459-911e-d0069f6faa72"
+        },
+        {
           "label": "Published gVisor PR #17312",
           "url": "https://github.com/google/gvisor/pull/17312"
         },
@@ -94551,6 +94594,10 @@
         {
           "label": "gVisor #16230",
           "url": "https://github.com/google/gvisor/pull/16230"
+        },
+        {
+          "label": "Standalone parent with just the revised regression",
+          "url": "https://app.buildbuddy.io/invocation/d3dcd323-a7c3-4795-a68a-c53147a7df21"
         }
       ]
     },
@@ -94805,5 +94852,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T21:19:08+00:00"
+  "updatedAt": "2026-11-09T21:46:42+00:00"
 }
