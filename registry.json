@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T21:55:41+00:00",
+    "updatedAt": "2026-11-09T22:10:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50916,7 +50916,7 @@
       "url": "https://github.com/tamird/gvisor/commit/1954485c9",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-08T21:45:51+00:00",
+      "updatedAt": "2026-11-09T22:10:43+00:00",
       "summary": "The proposed GitHub lint step calls bazel build --keep_going //tools/lint:check. On hosted Ubuntu with Docker unavailable, Bazel 9.3.1 ran six actions for all five default linters. With a formatting error and a spelling mistake in the same checkout, both checks reported the affected files and the build failed.\n\nThe earlier six-action scratch run used a filename-only goimports check. On 8858bbb35, the scratch-worker check produced a unified diff that applied and reversed cleanly with both x/tools changes in place. The restored action selected all 2,685 intended Go files.",
       "evidence": [
         {
@@ -50959,9 +50959,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "1954485c9a50945b0189fba1ed6bb3852cc016ea",
-        "observedAt": "2026-11-08T21:44:52+00:00",
-        "disposition": "The hosted workflow passed on the proposal. The x/tools hunk-length change and its goimports child both have Code-Review +2 and remain open. The gVisor proposal carries neither patch.",
-        "nextAction": "After the shared source inventory lands and a released x/tools contains both changes, rebase the single proposal and verify the full-diff lint build with that release on the empty worker.",
+        "observedAt": "2026-11-09T22:10:43+00:00",
+        "disposition": "The hunk correction and in-process goimports formatter both merged in x/tools. The latest tagged module, v0.52.0, predates them.",
+        "nextAction": "Once the shared source inventory lands and x/tools tags a release containing 588ada3c4, rebase and run the full-diff lint build on an empty worker.",
         "evidence": [
           "https://go-review.googlesource.com/c/tools/+/858481",
           "https://go-review.googlesource.com/c/tools/+/858482",
@@ -50974,15 +50974,19 @@
       "id": "branch:goimports-in-process-diff",
       "type": "branch",
       "repo": "golang/tools",
-      "ref": "refs/changes/82/858482/8",
-      "head": "7a065ec802ee7a1deb4e7c404b4ea3cd40d5eac9",
+      "ref": "refs/changes/82/858482/9",
+      "head": "588ada3c4d4d6d24ab1758e86bd2768beba5946d",
       "title": "Let goimports print a unified diff without a system diff program",
       "url": "https://go-review.googlesource.com/c/tools/+/858482",
       "group": "analysis",
-      "status": "Published for upstream review",
-      "updatedAt": "2026-11-06T15:01:36.918Z",
-      "summary": "The parent Gerrit change corrects hunk line numbers in x/tools/internal/diff. Its child lets goimports -d print the patch without an external diff program. Patch set 8 simplifies the test and checks the stdin.go labels used when reading standard input. The native Linux checks also exercised writes to a full device and an unwritable file.",
+      "status": "Merged",
+      "updatedAt": "2026-11-09T22:10:43+00:00",
+      "summary": "goimports -d now computes unified diffs in process. Its parent fixes hunk line counts. Both changes landed in x/tools on November 9.",
       "evidence": [
+        {
+          "label": "Merged goimports CL and final patch set",
+          "url": "https://go-review.googlesource.com/c/tools/+/858482/9"
+        },
         {
           "label": "Gerrit patch set 8 on parent ac8a34898",
           "url": "https://go-review.googlesource.com/c/tools/+/858482/8"
@@ -51042,15 +51046,13 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "7a065ec802ee7a1deb4e7c404b4ea3cd40d5eac9",
-        "observedAt": "2026-11-06T15:01:36.918Z",
-        "disposition": "Patch set 8 and the requested reply are published",
-        "nextAction": "Follow Peter’s review on Gerrit.",
+        "sourceHead": "588ada3c4d4d6d24ab1758e86bd2768beba5946d",
+        "observedAt": "2026-11-09T22:10:43+00:00",
+        "disposition": "Both x/tools CLs merged. The gVisor lint proposal tracks adoption.",
+        "nextAction": "No further upstream action.",
         "evidence": [
-          "https://go-review.googlesource.com/c/tools/+/858482/8",
-          "https://github.com/tamird/tools/actions/runs/42238726517",
           "https://go-review.googlesource.com/c/tools/+/858481",
-          "https://go-review.googlesource.com/c/tools/+/858482/comment/429e1d44_9d2624f2/"
+          "https://go-review.googlesource.com/c/tools/+/858482"
         ]
       }
     },
@@ -73125,7 +73127,7 @@
       "to": "branch:goimports-bazel-action",
       "reason": "The existing Go check shows a unified diff. Running goimports -d on a scratch worker requires a formatter that can produce that diff in process.",
       "evidence": [
-        "https://github.com/tamird/tools/commit/d140e4d63"
+        "https://go-review.googlesource.com/c/tools/+/858482"
       ]
     },
     {
@@ -73646,7 +73648,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-08T00:43:46+00:00",
+      "updatedAt": "2026-11-09T22:10:43+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -75718,7 +75720,7 @@
           ]
         }
       ],
-      "nextStep": "The reviewer guide distinguishes #16624’s timeout from the RACK repair decision. The approved fresh-SACK amendment is on the public draft #16495 at 5fd5532c1. Use separate transmission and propagation queues when measuring 100 packets of bottleneck capacity.",
+      "nextStep": "Compare #16495 at ffac28a03, now ready for review, with its parent over eight alternating pairs against a Linux sender. Check bottleneck drops, propagation drops and first-data order before interpreting throughput or the longest gap in new data.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
@@ -76179,6 +76181,10 @@
         {
           "label": "Two 45-second stock/draft pairs sharing a CUBIC link, with packet and receiver records",
           "url": "https://github.com/tamird/gvisor/actions/runs/41400998891/artifacts/13121981713"
+        },
+        {
+          "label": "Eight-pair comparison with separate bottleneck and propagation queues",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42708554879"
         }
       ],
       "comparisons": [
@@ -90977,7 +90983,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T23:23:39+00:00",
+      "updatedAt": "2026-11-09T22:10:43+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -91276,7 +91282,7 @@
           ]
         }
       ],
-      "nextStep": "The PI waiter fix is under upstream review in #16810. The contributor approved the distinct-waiter requeue follow-up for delivery after #16810 lands.",
+      "nextStep": "Follow the distinct-waiter fix in #17305. Its futex prerequisite, #16810, merged. Check other lock contracts against the callers that establish them and verify that Nogo diagnoses an omitted guard.",
       "evidence": [
         {
           "label": "Timekeeper updater: all four lock diagnostics verified",
@@ -91325,6 +91331,10 @@
         {
           "label": "Approved follow-up and its dependency",
           "url": "https://tamird.github.io/gvisor/#branch:futex-requeue-count"
+        },
+        {
+          "label": "Distinct-waiter fix under review",
+          "url": "https://github.com/google/gvisor/pull/17305"
         }
       ]
     },
@@ -93601,7 +93611,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T01:28:16+00:00",
+      "updatedAt": "2026-11-09T22:10:43+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -93866,7 +93876,7 @@
           ]
         }
       ],
-      "nextStep": "The goimports change needs the upstream hunk correction. Preparing the independent containerd change for Gazelle needs a Gazelle checkout and fork. Keep gVisor’s protobuf startup patch when changing the production Go dependency policy.",
+      "nextStep": "Use the first x/tools release that includes the merged goimports diff change to check the full lint build on an empty worker. Separately, test whether Gazelle selects containerd/cgroups’ published Go metrics types and retains both protobuf schemas.",
       "evidence": [
         {
           "label": "Gazelle: qualified proposal",
@@ -93907,6 +93917,14 @@
         {
           "label": "Development-only modules and the downstream Netlink version",
           "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643111398"
+        },
+        {
+          "label": "Both Go formatter changes merged",
+          "url": "https://go-review.googlesource.com/c/tools/+/858482"
+        },
+        {
+          "label": "Gazelle proposal for containerd/cgroups’ published metrics types",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/9e4aff6b5"
         }
       ]
     },
@@ -94873,5 +94891,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T21:55:41+00:00"
+  "updatedAt": "2026-11-09T22:10:43+00:00"
 }
