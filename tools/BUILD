@@ -76,6 +76,7 @@ bzl_library(
 exports_files([
     "benchmark-umbrella-exports.patch",
     "gazelle-native-environment.patch",
+    "llvm-freestanding-runtimes.patch",
     "llvm-linux-header-default.patch",
     "grpc_plugin_symlink.patch",
     "protobuf_authenticity.patch",
