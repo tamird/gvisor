@@ -142,6 +142,7 @@ test('a registry update keeps known merges and current decisions across visits',
       type: 'pr', number, repo: repoName, status: 'open', title: 'Test PR', url: `https://github.com/${repoName}/pull/${number}` });
     const old = { ...context.registryInput, nodes: [pr(1), pr(2), pr(3), pr(1, 'other/repo')], groups: [], edges: [] };
     const next = structuredClone(old);
+    old.nodes.push(retiredRBEGrant());
     next.meta.updatedAt = '2026-10-13T01:00:00Z';
     next.nodes[2].contributorReview = { kind: 'reply', status: 'pending', title: 'Post reply', summary: 'Reply about the follow-up.',
       body: 'The follow-up landed.', url: next.nodes[2].url, head };
@@ -168,6 +169,7 @@ test('a registry update keeps known merges and current decisions across visits',
     await run('start()');
     if (alreadyOpen) {
       assert.equal(run('nodeMap().get("pr:2").status'), 'closed');
+      assert.deepEqual(idsFor(run('nodeMap().get("branch:buildkite-source-syscalls")')), ['agent-branch-work']);
       served = next;
       await run('lastAttempt = 0; refresh(true)');
     }
@@ -2939,17 +2941,24 @@ test('copying contributor decisions uses the matching change, review and reply l
 });
 
 
+function retiredRBEGrant() {
+  const head = '4eb27c4081e535d69c1257998a6c94256d9812e2', sourceHead = 'efaf79761adcb3e5ac2b6e5fc96249ac85d435b1';
+  return { id: 'branch:buildkite-source-syscalls', type: 'branch', repo: 'tamird/gvisor', head, status: 'Agent work',
+    followup: { owner: 'Agent', sourceHead: head, nextAction: 'Verify the remote build outputs.' },
+    humanAction: { kind: 'execution', status: 'pending', head, sourceHead,
+      title: 'Authorize the full ARM64 source-presubmit build', summary: 'Build the default outputs on RBE.',
+      body: 'Verify the archive and four executables.', url: 'https://github.com/tamird/gvisor/commit/efaf79761' } };
+}
+
 test('RBE qualification belongs to the agent', () => {
-  const context = client();
-  const head = 'b'.repeat(40);
-  const node = { id: 'branch:workload', type: 'branch', repo: 'tamird/gvisor', head, status: 'Agent work',
-    followup: { owner: 'Agent', sourceHead: head, nextAction: 'Verify the remote build outputs.' } };
+  const context = client(), node = retiredRBEGrant();
+  const run = source => vm.runInContext(source, context);
   assert.deepEqual(idsFor(node), ['agent-branch-work']);
-  node.humanAction = { kind: 'execution', status: 'pending', head, sourceHead: head,
-    title: 'Authorize the build', summary: 'Run ARM64 targets on RBE.', body: 'Verify the outputs.',
-    url: 'https://github.com/tamird/gvisor/commit/' + head.slice(0, 9) };
   context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
-  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid human-only action/);
+  assert.throws(() => run('validateRegistry(registryInput)'), /Invalid human-only action/);
+  run('validateRegistry(registryInput, { allowRetiredExecution: true })');
+  node.humanAction.url = 'https://github.com/tamird/gvisor/commit/' + node.head.slice(0, 9);
+  assert.throws(() => run('validateRegistry(registryInput, { allowRetiredExecution: true })'), /Invalid human-only action/);
 });
 
 test('human-only submissions stay separate from review decisions and clear when settled', () => {
