@@ -82,7 +82,7 @@ func (sr *sackRecovery) handleSACKRecovery(limit int, end seqnum.Value) (dataSen
 		// transmitted in (C.1)."
 		snd.Outstanding++
 		dataSent = true
-		snd.sendSegment(nextSeg)
+		snd.sendSegment(nextSeg, snd.ep.getExperimentOptionValue(snd.ep.route))
 
 		segEnd := nextSeg.sequenceNumber.Add(nextSeg.logicalLen())
 		if rescueRtx {
