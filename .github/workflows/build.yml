@@ -1,35 +1,85 @@
-name: CI
-
-"on":
+name: Measure lazy TCP keepalive allocation
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-lazy-keepalive-clock]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  keepalive:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 160
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind both native sources, fixtures and public tools
+        id: setup
+        timeout-minutes: 13
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/keepalive"
+          mkdir -m 700 "$w" "$w/receipt"
+          mkdir -p "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"verified":false,"stage":"setup"}' > "$w/receipt/result.json"
+          product=652abc17553ec414b91e8d8a9a17af53b109d466
+          base=ad55e4137a68d87deeb46518d93b063d8231a5d6
+          prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
+          donor=4a4ff24e85a4bc8f74eb791c715553c8b1a2bec7
+          benchstat=2b51abee8530385431b7225198fdd5cd65e78696
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          packet=4cb48b081a23192834acbf878a80ecb4d2127af1
+          allocation=c1831ef23098a8d0f80ce8a3c99d69ac5d5483b7
+          git init -q .
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prep" "$assets" "$inputs" "$donor" "$benchstat" "$packet" "$allocation"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$product"
+          test "$(git rev-parse "$product^{tree}")" = 4f561e29488f2206263f1594a57215d456a949ba
+          test "$(git rev-parse "$product^")" = "$base"
+          git diff --exit-code "$product" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/keepalive/check.py' ':!.github/qualification/keepalive_toggle.py'
+          git show "$GITHUB_SHA:.github/qualification/keepalive/check.py" > "$w/check.py"
+          git show "$GITHUB_SHA:.github/qualification/keepalive_toggle.py" > "$w/packets.py"
+          git show "$packet:.github/qualification/recvbuf.py" > "$w/packet_reader.py"
+          test "$(git hash-object --no-filters "$w/packet_reader.py")" = 6447368c89544b2884f42d9124656addc7296bec
+          test "$(git rev-parse "$product:test/packetimpact/tests/tcp_user_timeout_test.go")" = e9d4db9ab825db9cafb8e2cf4b3e00afdce9be87
+          for file in handshake.go.inc keepalive_probe.go; do
+            git show "$allocation:.github/qualification/keepalive/$file" > "$w/$file"
+          done
+          mkdir "$w/receipt/packets"
+          git show "$donor:.github/qualification/netip_wildcard.py" > "$w/netip_wildcard.py"
+          test "$(git rev-parse "$base:pkg/tcpip/transport/tcp/test/e2e/tcp_migration_test.go")" = a0c140f2242a9e47cc8aa10a49d31d8ccbf37de2
+          test "$(git rev-parse "$base:pkg/tcpip/transport/tcp/test/benchmarks/netstack_bench_test.go")" = 90366ccba9089ec767239e23ed28f817e632e74c
+          git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$inputs:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          git checkout -q --detach "$product"
+          test "$(cat .bazelversion)" = 9.3.1
+          cd "$w"
+          test "$(git hash-object --no-filters netip_wildcard.py)" = 607ebe973b2650264838a69357da861c73e628ef
+          echo '022e7f6be9f0cfce9634bda8da9c6c8d2ff41ac92a214481e76a3727b1e57731  keepalive_probe.go' | sha256sum -c -
+          echo '821550adf53ac22a556834b86dab32f1f3c006dda7054e8a5629b62ff6abadb1  handshake.go.inc' | sha256sum -c -
+          test "$(git hash-object --no-filters previous.py)" = 0c1db7071558c5f9c8de45b60ba625183bd8a400
+          test "$(git hash-object --no-filters public_assets.py)" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          test "$(git hash-object --no-filters tldk_public_inputs.py)" = 1f3f7d4d75810ad60941772776e01f3b71b3b171
+          curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o bazel
+          echo '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel' | sha256sum -c -
+          chmod +x bazel
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > jammy.list
+          opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+          sudo -n apt-get "${opts[@]}" update -qq
+          sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu libnuma-dev
+      - name: Capture all three corrected packet traces
+        timeout-minutes: 62
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$RUNNER_TEMP/keepalive/packets.py"
+      - name: Compare keepalive allocation and verify sender timer ownership
+        if: steps.setup.outcome == 'success' && !cancelled()
+        timeout-minutes: 83
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            python3 -B "$RUNNER_TEMP/keepalive/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tcp-lazy-keepalive-results
+          path: ${{ runner.temp }}/keepalive/receipt
+          if-no-files-found: error
+          retention-days: 14
