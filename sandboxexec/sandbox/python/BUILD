@@ -1,5 +1,7 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
+load(":archives.bzl", "release_archives")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -30,4 +32,19 @@ py_test(
     deps = [
         ":sandbox_py",
     ],
+)
+
+string_flag(
+    name = "dist_version",
+    build_setting_default = "",
+)
+
+release_archives(
+    name = "dist",
+    srcs = [
+        "README.md",
+        ":sandbox_py",
+    ],
+    project = "pyproject.toml",
+    tags = ["manual"],
 )
