@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T21:04:39+00:00",
+    "updatedAt": "2026-11-09T21:19:08+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47069,15 +47069,23 @@
       "id": "branch:checkpoint-memory-file-registration",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "checkpoint-memory-file-registration",
-      "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
-      "title": "Preserve the page read error across memory files",
-      "url": "https://github.com/tamird/gvisor/commit/211a9e3b9",
+      "ref": "review/pgalloc-next-read-landed-parent",
+      "head": "22451846e8248de7c94528de1a39108fd8e34cf1",
+      "title": "Return the page read error when restoring the next memory file",
+      "url": "https://github.com/tamird/gvisor/commit/22451846e",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T18:05:07.150+00:00",
-      "summary": "When a checkpoint gofer reports a truncated pages file, registering a second memory file can hide the original I/O error behind “invalid server file handle.” The corrected loader checks its saved error before registration. Both the intact and truncated two-file gofer cases passed in the diagnostic. On 211a9e3b9, all 70 package cases and both Nogo targets passed. With an in-memory pages reader the permanent regression saw “file already closed” on stock and EIO on the fix.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T21:19:08+00:00",
+      "summary": "After an asynchronous page read fails, registering the next MemoryFile can return the checkpoint gofer’s closed-handle error. The fix checks the original read error under the same mutex that excludes Close. The regression now uses the landed test helper, and Nogo can check the mutex on the shared file list.",
       "evidence": [
+        {
+          "label": "Revision on the landed parent",
+          "url": "https://github.com/tamird/gvisor/commit/22451846e"
+        },
+        {
+          "label": "Stock error, corrected package and race tests, and both target architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701040726"
+        },
         {
           "label": "Proposed source and two-file gofer regression",
           "url": "https://github.com/tamird/gvisor/commit/211a9e3b9"
@@ -47091,16 +47099,41 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
-        "baseHead": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
-        "url": "https://github.com/tamird/gvisor/commit/211a9e3b9",
-        "title": "Preserve read errors across memory files",
-        "requestedAt": "2026-10-31T18:03:49.634+00:00",
-        "summary": "Open this PR after the parent checkpoint page-read fix lands?",
-        "body": "When the checkpoint gofer fails to read a truncated pages file, a\nlater memory file can report an invalid server handle instead of the\noriginal I/O error [1].\n\nCheck the saved read error before registering the next destination.\nThe existing file-list mutex serializes registration with Close.\n\nThe permanent regression uses the same loader for two memory files.\nThe parent reports a closed reader on the second file. The corrected\nloader returns EIO on both. All 70 package cases and both analyzer\ntargets passed [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41226335084/artifacts/13052195243\n[2]: https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
+          "baseHead": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+          "url": "https://github.com/tamird/gvisor/commit/211a9e3b9",
+          "title": "Preserve read errors across memory files",
+          "requestedAt": "2026-10-31T18:03:49.634+00:00",
+          "summary": "Open this PR after the parent checkpoint page-read fix lands?",
+          "body": "When the checkpoint gofer fails to read a truncated pages file, a\nlater memory file can report an invalid server handle instead of the\noriginal I/O error [1].\n\nCheck the saved read error before registering the next destination.\nThe existing file-list mutex serializes registration with Close.\n\nThe permanent regression uses the same loader for two memory files.\nThe parent reports a closed reader on the second file. The corrected\nloader returns EIO on both. All 70 package cases and both analyzer\ntargets passed [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41226335084/artifacts/13052195243\n[2]: https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306",
+          "outcome": "superseded",
+          "at": "2026-11-09T21:19:08+00:00",
+          "note": "The parent landed with a different memory-file test helper. The old proposal conflicts in the regression test."
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
+          "base": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb"
+        },
+        "after": {
+          "head": "22451846e8248de7c94528de1a39108fd8e34cf1",
+          "base": "6782e66bb04ba41de7da417da53406c2525ac9f1"
+        }
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "22451846e8248de7c94528de1a39108fd8e34cf1",
+        "observedAt": "2026-11-09T21:19:08+00:00",
+        "disposition": "The prerequisite merged. The refreshed proposal is being qualified before contributor review.",
+        "nextAction": "Check the stock error and the revised second-file case, package and race results, and the mutex annotation on AMD64 and ARM64.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42701040726",
+          "https://github.com/tamird/gvisor/commit/22451846e"
+        ]
       }
     },
     {
@@ -69574,6 +69607,55 @@
           "note": "Approved for publication after #16886 lands."
         }
       ]
+    },
+    {
+      "id": "branch:bazel-default-registry-module-mirror",
+      "type": "branch",
+      "repo": "tamird/bazel",
+      "ref": "proposal/default-bcr-module-mirror",
+      "head": "a6d03b87ce5689d871074bce123ebbf25f305933",
+      "url": "https://github.com/tamird/bazel/commit/a6d03b87c",
+      "title": "Honor module mirrors for the implicit Bazel Central Registry",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T21:20:42+00:00",
+      "summary": "Bazel 9.3.2 rejects a mirror scoped to the default BCR unless the same registry is explicitly selected. The rebuilt Bazel accepted both forms and produced identical module URLs and fresh lockfiles. The offline regression and two existing mirror controls passed.",
+      "evidence": [
+        {
+          "label": "Rebuilt Bazel, three tests, original CLI error and identical lockfiles",
+          "url": "https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143"
+        },
+        {
+          "label": "Prepared Bazel issue with the exact command",
+          "url": "https://github.com/bazelbuild/bazel/issues/new?title=Specifying+a+mirror+for+the+default+BCR+requires+repeating+--registry&body=On+Linux+with+Bazel+9.3.2%2C+run+the+following+command+in+a+workspace+with+an+empty+MODULE.bazel.+It+fails+before+any+network+request.%0A%0A~~~text%0Abazel+--noworkspace_rc+info+release+--module_mirrors%3Dhttps%3A%2F%2Fbcr.bazel.build%2F%3Dhttps%3A%2F%2Fmirror.example.com%0AERROR%3A+--module_mirrors+references+registries+not+listed+in+--registries%3A+https%3A%2F%2Fbcr.bazel.build%0A~~~%0A%0AAdding+--registry%3Dhttps%3A%2F%2Fbcr.bazel.build+to+the+same+command+prints+%E2%80%9Crelease+9.3.2%E2%80%9D.+Both+invocations+select+the+Bazel+Central+Registry.+A+mirror+scoped+to+that+registry+should+work+in+either+case.%0A%0APosted+by+Codex+for+%40tamird."
+        },
+        {
+          "label": "Bazel patch acceptance and issue policy",
+          "url": "https://bazel.build/contribute/patch-acceptance"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a6d03b87ce5689d871074bce123ebbf25f305933",
+        "baseHead": "bb65e8a523496da74619c6678cc75ba8ca15016d",
+        "url": "https://github.com/tamird/bazel/commit/a6d03b87c",
+        "title": "Honor module mirrors for the implicit Bazel Central Registry",
+        "requestedAt": "2026-11-09T21:20:42+00:00",
+        "summary": "May I file the tracking issue and submit the one-line fix and regression to Bazel? The PR will reference the issue that is created.",
+        "body": "Bazel rejects --module_mirrors=https://bcr.bazel.build=<mirror> unless the caller also passes --registry=https://bcr.bazel.build. The scoped mirror lookup introduced in 7c72ade4f strips trailing slashes from option values, but the default registry URL still includes one.\n\nUse the same URL for the default BCR as for an explicit --registry. Registry file URLs in MODULE.bazel.lock already have a slash between the registry host and the file path."
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "a6d03b87ce5689d871074bce123ebbf25f305933",
+        "observedAt": "2026-11-09T21:20:42+00:00",
+        "disposition": "The upstream fix is qualified; the gVisor workspace-wide mirror does not depend on it.",
+        "nextAction": "May I file the tracking issue and submit the one-line fix and regression to Bazel? The PR will reference the issue that is created.",
+        "evidence": [
+          "https://github.com/tamird/bazel/commit/a6d03b87c",
+          "https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143"
+        ]
+      }
     }
   ],
   "edges": [
@@ -94204,7 +94286,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T19:33:12+00:00",
+      "updatedAt": "2026-11-09T21:19:08+00:00",
       "summary": "The wire → graph → wire checkpoint test stopped at its first dump on two independent commits. Both logs reported “error printing state: unreachable” and exit 128.",
       "findings": [
         {
@@ -94253,10 +94335,31 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/53956#01a1c194-4ffa-414a-aa99-252303698e22"
             }
           ]
+        },
+        {
+          "text": "The exact CLI message narrows the failure to a top-level stream header. ReadHeaderMode converts the wire decoder’s string panic to a plain error. The generic printer re-panics on a string from an object body. These code paths matched on the three failing heads. The message alone cannot place that header inside MemoryFile data.",
+          "evidence": [
+            {
+              "label": "ReadHeaderMode unwraps a read failure",
+              "url": "https://github.com/google/gvisor/blob/87713ade1/pkg/state/decode.go#L752-L763"
+            },
+            {
+              "label": "Object printer propagates string panics",
+              "url": "https://github.com/google/gvisor/blob/87713ade1/pkg/state/pretty/pretty.go#L216-L226"
+            },
+            {
+              "label": "Varint reader and its ten-byte limit",
+              "url": "https://github.com/google/gvisor/blob/87713ade1/pkg/state/wire/wire.go#L133-L150"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture the next failing dump’s byte offset or a stack trace at the wire decoder, and compare the two renderers on that specific input. The six successful local-control chains do not establish a fix for the public failures.",
+      "nextStep": "Compare both printers on the same guest-generated checkpoint and verify a full restore. If the dump fails, locate the failing header relative to the MemoryFile metadata and page boundaries.",
       "evidence": [
+        {
+          "label": "Eight guest-generated checkpoint chains with an offset probe",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701281118"
+        },
         {
           "label": "gVisor #16851",
           "url": "https://github.com/google/gvisor/pull/16851"
@@ -94577,6 +94680,10 @@
       "nextStep": "The workspace mirror is in #17311. After it lands, check Gazelle, Go branch generation and the GPU driver job for further BCR archive download failures.",
       "evidence": [
         {
+          "label": "Independent Bazel fix for registry-scoped mirrors",
+          "url": "https://github.com/tamird/bazel/commit/a6d03b87c"
+        },
+        {
           "label": "Published gVisor PR #17311",
           "url": "https://github.com/google/gvisor/pull/17311"
         },
@@ -94698,5 +94805,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T21:04:39+00:00"
+  "updatedAt": "2026-11-09T21:19:08+00:00"
 }
