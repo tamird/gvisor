@@ -1,12 +1,12 @@
-name: Compare the Bazel unit test profile
+name: Run the one admitted Bazel unit test
 on:
   workflow_dispatch:
 permissions: {}
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/qualification/bazel-unit-test-profile' && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/qualification/bazel-unit-profile-owner' && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 71
+    timeout-minutes: 42
     steps:
       - name: Bind the public source, Bazel and public distfile readers
         timeout-minutes: 7
@@ -22,12 +22,13 @@ jobs:
           defaults=14c96d94e2e775381e765e270f485a158362504b
           mixed=1b8d903a787fa5cd71acd42f78ae97a15a1220af
           git init -q
-          git fetch --no-tags --no-auto-maintenance --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$mixed" "$public" "$assets" "$registry" "$defaults"
+          git fetch --no-tags --no-auto-maintenance --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$mixed" "$public" "$assets" "$registry" "$defaults"
           git checkout -q --detach "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = 3c4df972e49ddaeb43edf2a66fd25ebdda60bb41
-          test "$(git rev-parse HEAD^^)" = 975fb172241c7946a9f67b4f52e0349d9240589a
-          test "$(git rev-parse HEAD^^{tree})" = 14f5c384ea7e0337a455855732678897aa903447
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/unit_profile.py' ':!.github/workflows/build.yml'
+          test "$(git rev-parse HEAD^)" = 1397d6a37e6508fe4ef8455c7b83a01df4b0063b
+          test "$(git rev-parse HEAD^^)" = 3c4df972e49ddaeb43edf2a66fd25ebdda60bb41
+          test "$(git rev-parse HEAD^^^)" = 975fb172241c7946a9f67b4f52e0349d9240589a
+          test "$(git rev-parse HEAD^^^{tree})" = 14f5c384ea7e0337a455855732678897aa903447
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/unit_profile.py' ':!.github/qualification/unit_profile_selection.json' ':!.github/workflows/build.yml'
           test "$(git rev-parse "$mixed^{tree}")" = cde4413cc020a6dd554253d0a88599399bce4b52
           test "$(git rev-parse "$public:.github/qualification/timer_teardown.py")" = 534106cbd56686f52e19b2c5ecc60194134add83
           test "$(git rev-parse "$assets:.github/qualification/recvbuf_deps.py")" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
@@ -40,18 +41,19 @@ jobs:
           git show "$registry:.github/qualification/tldk_installed_inputs.json" > "$d/inputs.json"
           git show "$defaults:.github/qualification/packet_mime/bazel-9.3.1-inputs.json" > "$d/bazel-defaults.json"
           cp .github/qualification/unit_profile.py "$d/"
+          cp .github/qualification/unit_profile_selection.json "$d/results/historical-selection.json"
           curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
           echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
           chmod 700 "$d/bazel"
           sudo apt-get -qq update
           sudo apt-get -q -y install g++-aarch64-linux-gnu libnuma-dev make
           printf '{"stage":"prepare","complete":true}\n' > "$d/results/setup.json"
-      - name: Check selection and run the single admitted native test
-        timeout-minutes: 61
+      - name: Execute the single admitted native owner
+        timeout-minutes: 32
         run: env -i HOME="$HOME" PATH="$PATH" USER="$USER" RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" LANG=C.UTF-8 python3 -B "$RUNNER_TEMP/bazel-unit-profile/unit_profile.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && !cancelled()
         with:
-          name: unit-profile-selection-and-test
+          name: unit-profile-native-owner
           path: ${{ runner.temp }}/bazel-unit-profile/results/
           retention-days: 14

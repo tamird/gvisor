@@ -1,0 +1,285 @@
+{
+  "artifact": 13654349783,
+  "cells": {
+    "admit-one": {
+      "abort_reason": "NO_BUILD",
+      "bazel_exit_code": 1,
+      "config": "9de51fa2a53e7e248b26a839a77a2bc7b9e632db084e1f5d5ee23e003e79dadb",
+      "label": "//pkg/safecopy:safecopy_x_test",
+      "member": "admit-one.events.jsonl.gz",
+      "member_sha256": "1a8d9a0b69569c23a5d6f998b31ec3224d4cc7f6a7cb3b104f557bfdce83a561",
+      "non_test_rows": 0,
+      "options": {
+        "build_tag_filters": [
+          "-network_plugins"
+        ],
+        "build_tests_only": [
+          "1"
+        ],
+        "test_env": [
+          "CGROUPV2=true",
+          "GO_TEST_WRAP_TESTV=1"
+        ],
+        "test_tag_filters": [
+          "not_run:arm,-manual,-nogo"
+        ]
+      },
+      "original_command_exit": 1,
+      "raw_projection_sha256": "727ed1a13ab1fbcbd55548795d65c37cd368b863419a4efe8ecd23df24840a74",
+      "root_rows": 1,
+      "rows_sha256": "50617fa6f61ac83b0fc5791100b615094ffc2b00c036339daac25db41df328ad",
+      "target_patterns": [
+        "//:all",
+        "//pkg/...",
+        "//tools/...",
+        "//runsc/...",
+        "//vdso/...",
+        "//sandboxexec/...",
+        "//examples/...",
+        "//test/trace/..."
+      ],
+      "test_tag_matches": 1
+    },
+    "new-false": {
+      "abort_reason": "NO_BUILD",
+      "bazel_exit_code": 1,
+      "member": "new-false.events.jsonl.gz",
+      "member_sha256": "9797108b2ba2d13c13e29820b399c19788fafead53fe197229c1c8e1f15c8bcd",
+      "non_test_rows": 2157,
+      "options": {
+        "build_tag_filters": [
+          "-network_plugins"
+        ],
+        "test_env": [
+          "CGROUPV2=caller",
+          "CGROUPV2=false"
+        ],
+        "test_tag_filters": [
+          "-nogo,-requires-kvm"
+        ]
+      },
+      "original_command_exit": 2,
+      "raw_projection_sha256": "5f572d6a86369cb243126cf287cb44d16b2b87692ae54d30b934685e30fe442e",
+      "root_rows": 3245,
+      "rows_sha256": "e7f56e114db5e5eaa875198d7f9125b3bcad8933b8c11a2d5a6301931fbf2044",
+      "target_patterns": [
+        "//:all",
+        "//pkg/...",
+        "//tools/...",
+        "//runsc/...",
+        "//vdso/...",
+        "//sandboxexec/...",
+        "//examples/...",
+        "//test/trace/..."
+      ],
+      "test_tag_matches": 362
+    },
+    "new-mixed": {
+      "abort_reason": "NO_BUILD",
+      "bazel_exit_code": 1,
+      "member": "new-mixed.events.jsonl.gz",
+      "member_sha256": "b5aeb6bebf99fc9407a5e9d420857f5aff2cb8bc421327ce5f625b17f9246859",
+      "non_test_rows": 1578,
+      "options": {
+        "build_tag_filters": [
+          "-network_plugins"
+        ],
+        "test_env": [
+          "CGROUPV2=true"
+        ],
+        "test_tag_filters": [
+          "-nogo,-requires-kvm"
+        ]
+      },
+      "original_command_exit": 1,
+      "packetimpact": 164,
+      "raw_projection_sha256": "8ad2f5d8b36077e203d77f21c0fc4e0bed9b5c99268b6878ae14ec877a2706cf",
+      "root_rows": 3209,
+      "rows_sha256": "f2199979b7fd274e8f0b659f44e124a6588a8d815fe531659d79389be7a217d0",
+      "syscalls": [
+        "//test/rbe:netfilter_syscalls",
+        "//test/rbe:netfilter_syscalls_presubmit_arm64",
+        "//test/syscalls:uname_test_native",
+        "//test/syscalls:uname_test_native_presubmit_arm64"
+      ],
+      "target_patterns": [
+        "//:all",
+        "//pkg/...",
+        "//tools/...",
+        "//runsc/...",
+        "//vdso/...",
+        "//sandboxexec/...",
+        "//examples/...",
+        "//test/trace/...",
+        "//test/rbe:native_syscalls",
+        "//test/packetimpact/tests:mixed_tests"
+      ],
+      "test_tag_matches": 896
+    },
+    "new-true": {
+      "abort_reason": "NO_BUILD",
+      "bazel_exit_code": 1,
+      "member": "new-true.events.jsonl.gz",
+      "member_sha256": "e778ecc49aa7869045f63959a2b0074284c5b2bfb8249599860c2fe76826571e",
+      "non_test_rows": 2157,
+      "options": {
+        "build_tag_filters": [
+          "-network_plugins"
+        ],
+        "test_env": [
+          "CGROUPV2=caller",
+          "CGROUPV2=true"
+        ],
+        "test_tag_filters": [
+          "-nogo,-requires-kvm"
+        ]
+      },
+      "original_command_exit": 2,
+      "raw_projection_sha256": "ce9b43f901358c198775539182d4f0eada69bf5722d352dce70b6c3b5fd25436",
+      "root_rows": 3245,
+      "rows_sha256": "c170c6dcc0b61ecf8fd927c574ececb8c5c62aa49f068093a0e2797a0ba7f65d",
+      "target_patterns": [
+        "//:all",
+        "//pkg/...",
+        "//tools/...",
+        "//runsc/...",
+        "//vdso/...",
+        "//sandboxexec/...",
+        "//examples/...",
+        "//test/trace/..."
+      ],
+      "test_tag_matches": 362
+    },
+    "old-false": {
+      "abort_reason": "NO_BUILD",
+      "bazel_exit_code": 1,
+      "member": "old-false.events.jsonl.gz",
+      "member_sha256": "6962424296a0cdf0bb7bf1ae48dee2766a6940dd6757a6958c71f6c197345660",
+      "non_test_rows": 2157,
+      "options": {
+        "build_tag_filters": [
+          "-network_plugins"
+        ],
+        "test_env": [
+          "CGROUPV2=caller",
+          "CGROUPV2=false"
+        ],
+        "test_tag_filters": [
+          "-nogo,-requires-kvm"
+        ]
+      },
+      "original_command_exit": 2,
+      "raw_projection_sha256": "d2bd56022af3e8166923646d64aa37620cd68260c8f7ffce98bfda020c78522f",
+      "root_rows": 3245,
+      "rows_sha256": "e7f56e114db5e5eaa875198d7f9125b3bcad8933b8c11a2d5a6301931fbf2044",
+      "target_patterns": [
+        "//:all",
+        "//pkg/...",
+        "//tools/...",
+        "//runsc/...",
+        "//vdso/...",
+        "//sandboxexec/...",
+        "//examples/...",
+        "//test/trace/..."
+      ],
+      "test_tag_matches": 362
+    },
+    "old-mixed": {
+      "abort_reason": "NO_BUILD",
+      "bazel_exit_code": 1,
+      "member": "old-mixed.events.jsonl.gz",
+      "member_sha256": "34d75d5d32db062a51633f4b88fbe6209ea42aa61fbb7fc71b9ea370b920d44f",
+      "non_test_rows": 1578,
+      "options": {
+        "build_tag_filters": [
+          "-network_plugins"
+        ],
+        "test_env": [
+          "CGROUPV2=true"
+        ],
+        "test_tag_filters": [
+          "-nogo,-requires-kvm"
+        ]
+      },
+      "original_command_exit": 1,
+      "packetimpact": 164,
+      "raw_projection_sha256": "284f534379a9b11c3837c4f617b8e9b138a351f444975bf28844261de2d6ce08",
+      "root_rows": 3209,
+      "rows_sha256": "f2199979b7fd274e8f0b659f44e124a6588a8d815fe531659d79389be7a217d0",
+      "syscalls": [
+        "//test/rbe:netfilter_syscalls",
+        "//test/rbe:netfilter_syscalls_presubmit_arm64",
+        "//test/syscalls:uname_test_native",
+        "//test/syscalls:uname_test_native_presubmit_arm64"
+      ],
+      "target_patterns": [
+        "//:all",
+        "//pkg/...",
+        "//tools/...",
+        "//runsc/...",
+        "//vdso/...",
+        "//sandboxexec/...",
+        "//examples/...",
+        "//test/trace/...",
+        "//test/rbe:native_syscalls",
+        "//test/packetimpact/tests:mixed_tests"
+      ],
+      "test_tag_matches": 896
+    },
+    "old-true": {
+      "abort_reason": "NO_BUILD",
+      "bazel_exit_code": 1,
+      "member": "old-true.events.jsonl.gz",
+      "member_sha256": "9b76a714b07f99fa882afb37acd6068a28979f666b2b4e34236749f86e061186",
+      "non_test_rows": 2157,
+      "options": {
+        "build_tag_filters": [
+          "-network_plugins"
+        ],
+        "test_env": [
+          "CGROUPV2=caller",
+          "CGROUPV2=true"
+        ],
+        "test_tag_filters": [
+          "-nogo,-requires-kvm"
+        ]
+      },
+      "original_command_exit": 2,
+      "raw_projection_sha256": "0c348bfc3981efa437d145e3e5684851321ea6fd13b7f1ee3fac37f90e9afc6c",
+      "root_rows": 3245,
+      "rows_sha256": "c170c6dcc0b61ecf8fd927c574ececb8c5c62aa49f068093a0e2797a0ba7f65d",
+      "target_patterns": [
+        "//:all",
+        "//pkg/...",
+        "//tools/...",
+        "//runsc/...",
+        "//vdso/...",
+        "//sandboxexec/...",
+        "//examples/...",
+        "//test/trace/..."
+      ],
+      "test_tag_matches": 362
+    }
+  },
+  "comparisons": {
+    "false": {
+      "extra_rows": 0,
+      "identical_kinds_sizes_tags_and_configurations": true,
+      "missing_rows": 0
+    },
+    "mixed": {
+      "extra_rows": 0,
+      "identical_kinds_sizes_tags_and_configurations": true,
+      "missing_rows": 0
+    },
+    "true": {
+      "extra_rows": 0,
+      "identical_kinds_sizes_tags_and_configurations": true,
+      "missing_rows": 0
+    }
+  },
+  "original_conclusion": "failure",
+  "run": 42574603478,
+  "source": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+  "zip_sha256": "0ec0a3154ed72bad55f7f1efd47c1e6cda80f0568048121793ca43847fee26fe"
+}
