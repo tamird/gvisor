@@ -1341,6 +1341,14 @@
   commit: c02969a1822191a179cd70c0cedd076385446a26
   sha256: 20721f63908879c083f94869e618ea8d4ff5edb91ff9a72a2ebee357fdbc352d
   license: Apache-2.0
+- dependency: sandboxexec_flit_core
+  version: https://files.pythonhosted.org/packages/f2/65/b6ba90634c984a4fcc02c7e3afe523fef500c4980fec67cc27536ee50acf/flit_core-3.12.0-py3-none-any.whl
+  retrieved: "2026-11-01"
+  commit: 1c8141722066ffe1497e511982feeea0f091ddb6
+  sha256: e7a0304069ea895172e3c7bb703292e992c5d1555dd1233ab7b5621b5b69e62c
+  license:
+    - BSD-3-Clause
+    - MIT
 - dependency: sigs.k8s.io/json
   version: v0.0.0-20241010143419-9aa6b5e7a4b3
   retrieved: "2026-08-27"
