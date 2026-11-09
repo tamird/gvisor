@@ -1,35 +1,81 @@
-name: CI
-
-"on":
+name: Checkpoint one UDP multicast case on AMD64
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/amd64-udp-private-restore]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  restore:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 58
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the unchanged standalone candidate and original receipt reader
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          git init -q
+          git fetch --no-tags --no-auto-maintenance --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout --detach -q "$GITHUB_SHA"
+          product=e1a7eb4e59559027881dad66970207ab8b27d2f2
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse HEAD^^)" = 975fb172241c7946a9f67b4f52e0349d9240589a
+          test "$(git rev-parse "$product^{tree}")" = 9f368a992e96bde036624fe273e93813bc1e75ad
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/udp_restore.py .github/workflows/build.yml)"
+          d="$RUNNER_TEMP/arm64-syscalls"
+          mkdir -p "$d/results"
+          cp .github/udp_restore.py "$d/udp_restore.py"
+          echo "d3a9359e572c7b15cf08146dc1c8ef642125427db19cc69d8d53e81502bb336c  $d/udp_restore.py" | sha256sum -c -
+          git checkout --detach -q "$product"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = x86_64 && test "$(id -u)" != 0
+          printf '{"source":"%s","arch":"amd64","uid":%s,"bazel":"9.3.1"}\n' "$product" "$(id -u)" > "$d/results/source.json"
+      - name: Supply the checked-in GNU toolchains and pinned Bazel
+        timeout-minutes: 9
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/arm64-syscalls"
+          if ! test -x /usr/bin/aarch64-linux-gnu-g++; then
+            sudo apt-get -o Acquire::Retries=3 update
+            sudo apt-get -o Acquire::Retries=3 install --no-install-recommends -y g++-aarch64-linux-gnu
+          fi
+          for arch in x86_64 aarch64; do
+            test "$("/usr/bin/$arch-linux-gnu-g++" -dumpmachine)" = "$arch-linux-gnu"
+          done
+          fetch=(curl --fail --silent --show-error --location --retry 1 --proto '=https' --proto-redir '=https' --max-time 90)
+          "${fetch[@]}" https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel" ||
+            "${fetch[@]}" -H 'Accept: application/octet-stream' https://api.github.com/repos/bazelbuild/bazelisk/releases/assets/281831574 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Execute the exact filtered save owner once and retain its originals
+        timeout-minutes: 41
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/arm64-syscalls"
+          target=//test/syscalls:socket_ipv6_udp_unbound_external_networking_test_runsc_systrap_directfs_save
+          leaf=IPv6UDPUnboundSockets/IPv6UDPUnboundExternalNetworkingSocketTest.AddV4MembershipToV6Socket/0
+          code=0
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 \
+            timeout --kill-after=20s 38m "$d/bazel" --nosystem_rc --nohome_rc test \
+              --config=x86_64 --jobs=4 --strategy=TestRunner=local --nocache_test_results \
+              --runs_per_test=1 --flaky_test_attempts=1 --test_env=GTEST_COLOR=no --test_env="GTEST_FILTER=$leaf" \
+              --color=no --curses=no --build_event_json_file="$d/events.jsonl" \
+              --nobuild_event_json_file_path_conversion "$target" >"$d/bazel.log" 2>&1 || code=$?
+          env -i HOME="$HOME" PATH=/usr/bin:/bin LANG=C.UTF-8 python3 -B "$d/udp_restore.py" \
+            "$d" e1a7eb4e59559027881dad66970207ab8b27d2f2 "$code"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: standalone-amd64-udp-restore
+          path: |
+            ${{ runner.temp }}/arm64-syscalls/results/source.json
+            ${{ runner.temp }}/arm64-syscalls/results/receipt.json
+            ${{ runner.temp }}/arm64-syscalls/results/test.log
+            ${{ runner.temp }}/arm64-syscalls/results/test.xml
+          if-no-files-found: error
+          retention-days: 14
