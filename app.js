@@ -1990,7 +1990,7 @@ function validateRegistry(candidate) {
       !registeredOnly.every(repo => typeof repo === "string" && policies[repo] === "none")) throw new Error("Invalid registered-only repository selection");
   for (const node of candidate.nodes.filter(node => node.type === "pr"))
     if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) || !Number.isInteger(node.number) || node.number <= 0 ||
-        Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||
+        node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
     if (node.inactive !== undefined && typeof node.inactive !== "boolean") throw new Error("Invalid inactive classification");
@@ -2235,14 +2235,20 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       }
     }
   }
-  const policies = repositoryPolicies(nextRegistry);
-  if (snapshot.repositories !== undefined && (Object.keys(snapshot.repositories).length !== Object.keys(policies).length ||
-      Object.entries(policies).some(([repo, policy]) => snapshot.repositories[repo] !== policy))) throw new Error("Snapshot repository policies differ");
-  if (Object.keys(policies).length > 1 && !snapshot.repositories) throw new Error("Snapshot lacks repository inventory");
+  const configured = repositoryPolicies(nextRegistry);
+  const suppliers = (nextRegistry.nodes || []).filter(node => node.type === "pr" && !Object.hasOwn(configured, node.repo));
+  // Older snapshots may predate observation of a registered supplier. Only
+  // repositories actually observed in this snapshot can supply live PRs.
+  const policies = snapshot.repositories || configured;
+  if (Object.entries(configured).some(([repo, policy]) => policies[repo] !== policy) ||
+      Object.entries(policies).some(([repo, policy]) => !Object.hasOwn(configured, repo) &&
+        (policy !== "none" || !suppliers.some(node => node.repo === repo)))) throw new Error("Snapshot repository policies differ");
+  if (Object.keys(configured).length > 1 && !snapshot.repositories) throw new Error("Snapshot lacks repository inventory");
   const numbers = new Set();
   for (const pr of snapshot.prs) {
     const identity = prIdentity(pr, nextRegistry), repo = prRepo(pr, nextRegistry), policy = policies[repo];
     if (!Number.isInteger(pr.number) || numbers.has(identity) || !Array.isArray(pr.imports) || !policy ||
+        (!Object.hasOwn(configured, repo) && !suppliers.some(node => node.id === identity)) ||
         pr.url !== `https://github.com/${repo}/pull/${pr.number}` ||
         (pr.importPolicy !== undefined && pr.importPolicy !== policy) ||
         (policy === "none" && (pr.importPolicy !== "none" || pr.imports.length))) throw new Error("Invalid PR inventory");

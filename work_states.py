@@ -35,15 +35,21 @@ PASSED = {"SUCCESS", "SKIPPED", "NEUTRAL"}
 
 def repository_policies(registry: dict) -> dict[str, str]:
     """Keep import workflows explicit; old snapshots describe the primary repo."""
-    policies = registry["meta"].get("repositories", {registry["meta"]["repo"]: "copybara"})
-    if not isinstance(policies, dict) or registry["meta"]["repo"] not in policies or not all(
+    configured = registry["meta"].get("repositories", {registry["meta"]["repo"]: "copybara"})
+    if not isinstance(configured, dict) or registry["meta"]["repo"] not in configured:
+        raise ValueError("Invalid tracked repository policies")
+    policies = configured.copy()
+    for node in registry.get("nodes", []):
+        if node["type"] == "pr":
+            policies.setdefault(node["repo"], "none")
+    if not all(
         isinstance(repo, str) and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
         and policy in ("copybara", "none") for repo, policy in policies.items()
     ):
         raise ValueError("Invalid tracked repository policies")
     registered_only = registry["meta"].get("registeredOnlyRepositories", [])
     if (not isinstance(registered_only, list)
-            or not all(isinstance(repo, str) and policies.get(repo) == "none" for repo in registered_only)
+            or not all(isinstance(repo, str) and configured.get(repo) == "none" for repo in registered_only)
             or len(set(registered_only)) != len(registered_only)):
         raise ValueError("Invalid registered-only repository selection")
     return policies

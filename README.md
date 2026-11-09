@@ -100,7 +100,9 @@ imported automatically. Repositories in `meta.registeredOnlyRepositories` use
 ordinary direct PR review and fetch only their registered repo/number pairs on
 each refresh, including terminal rows so reopening remains visible. They do not
 run open-PR discovery. Their inventory scope is explicit, with no claimed
-repository-wide open count.
+repository-wide open count. Registering a PR from an unlisted public repository
+also refreshes that exact PR in direct-review mode without enabling discovery
+for other PRs there.
 
 An investigation with a `group` also appears as a dashed blue graph card. It
 remains the same research record in the Investigations view, can be an edge

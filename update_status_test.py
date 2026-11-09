@@ -237,7 +237,7 @@ class RegisteredPRBatchTest(unittest.TestCase):
         self.assertGreater(len(batch), 0)
         self.assertLessEqual(len(batch), updater.PR_BATCH_SIZE)
         self.batches.append(list(batch.values()))
-        return {alias: {"pullRequest": copy.deepcopy(self.rows[identity])} for alias, identity in batch.items()}
+        return {alias: {"pullRequest": copy.deepcopy(self.rows[identity]), "visibility": "PUBLIC"} for alias, identity in batch.items()}
 
     def fetch(self) -> dict:
         repositories = {repo for repo, _ in self.rows}
@@ -258,7 +258,7 @@ class RegisteredPRBatchTest(unittest.TestCase):
 
     def test_missing_extra_or_mismatched_alias_fails_closed(self) -> None:
         query = self.graphql
-        for failure in ("missing", "extra", "repository", "number", "unavailable"):
+        for failure in ("missing", "extra", "repository", "number", "unavailable", "private", "internal", "missing visibility"):
             with self.subTest(failure=failure):
                 def malformed(text: str) -> dict:
                     response = query(text)
@@ -268,6 +268,10 @@ class RegisteredPRBatchTest(unittest.TestCase):
                         response["r99"] = response["r0"]
                     elif failure == "unavailable":
                         response["r0"] = None
+                    elif failure in ("private", "internal"):
+                        response["r0"]["visibility"] = failure.upper()
+                    elif failure == "missing visibility":
+                        del response["r0"]["visibility"]
                     elif failure == "number":
                         response["r0"]["pullRequest"]["number"] += 1
                     else:
@@ -544,7 +548,7 @@ class CollectorHistoryTest(unittest.TestCase):
         if 'r0:repository(' in query:
             matches = re.findall(r'(r\d+):repository\(owner:"([^"]+)",name:"([^"]+)"\)\{pullRequest\(number:(\d+)\)', query)
             self.requested.extend(int(number) for _, _, _, number in matches)
-            return {alias: {"pullRequest": copy.deepcopy(self.raw[int(number)])}
+            return {alias: {"pullRequest": copy.deepcopy(self.raw[int(number)]), "visibility": "PUBLIC"}
                     for alias, _, _, number in matches}
         numbers = [int(n) for n in re.findall(r"p(\d+):pullRequest", query)]
         self.assertTrue(numbers, query)
@@ -1054,7 +1058,7 @@ class CollectorHistoryTest(unittest.TestCase):
                 numbers = [int(number) for number in re.findall(r"pullRequest\(number:(\d+)\)", query)]
                 node_requests.extend(numbers)
                 self.assertEqual(numbers, [66835, 66874])
-                return {f"r{index}": {"pullRequest": copy.deepcopy(raw[number])}
+                return {f"r{index}": {"pullRequest": copy.deepcopy(raw[number]), "visibility": "PUBLIC"}
                         for index, number in enumerate(numbers)}
             return primary_graphql(query, variables)
 
@@ -1071,6 +1075,36 @@ class CollectorHistoryTest(unittest.TestCase):
         inventory = current["limits"]["repositories"][repo]
         self.assertEqual((inventory["scope"], inventory["registeredCount"], inventory["openInventoryTotal"]),
                          ("registered-only", 2, None))
+
+    def test_unlisted_supplier_prs_refresh_by_identity_without_discovery(self) -> None:
+        registered = {2510: "bazel-contrib/bazel-gazelle", 4772: "bazel-contrib/rules_go"}
+        for number, repo in registered.items():
+            url = f"https://github.com/{repo}/pull/{number}"
+            self.registry["nodes"].append({"id": f"pr:{repo}:{number}", "type": "pr",
+                                           "repo": repo, "number": number, "url": url})
+            self.raw[number] = raw_pr(number) | {"url": url, "repository": {"nameWithOwner": repo}}
+        node_queries = []
+        original = self.graphql
+
+        def graphql(query: str, variables: dict | None = None) -> dict:
+            self.assertNotEqual((variables or {}).get("owner"), "bazel-contrib")
+            if 'owner:"bazel-contrib"' in query:
+                node_queries.append(query)
+            return original(query, variables)
+
+        with mock.patch.object(self, "graphql", side_effect=graphql):
+            for _ in range(2):
+                current = self.collect()
+                rows = [(p["number"], p["repo"]) for p in current["prs"] if p["repo"] in registered.values()]
+                self.assertCountEqual(rows, registered.items())
+                for repo in registered.values():
+                    self.assertEqual(current["repositories"][repo], "none")
+                    scope = current["limits"]["repositories"][repo]
+                    self.assertEqual((scope["scope"], scope["openInventoryTotal"], scope["registeredCount"]),
+                                     ("registered-only", None, 1))
+                self.assertFalse(current["incomingReviewRequests"])
+        self.assertEqual(len(node_queries), 2)
+        self.assertTrue(all(query.count("pullRequest(number:") == 2 for query in node_queries))
 
     def test_registered_only_requires_direct_review_policy(self) -> None:
         self.registry["meta"]["registeredOnlyRepositories"] = ["google/gvisor"]

@@ -2898,6 +2898,23 @@ test('registered-only repositories require direct review and retain curated node
   assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /registered-only/);
 });
 
+test('a supplier PR outside the discovery roster joins its exact direct-review observation', () => {
+  const context = client(), repo = 'bazel-contrib/bazel-gazelle', number = 2510;
+  const url = `https://github.com/${repo}/pull/${number}`, id = `pr:${repo}:${number}`;
+  context.registryInput.nodes = [{ id, repo, number, url, type: 'pr', title: 'Gazelle runner environment' }];
+  context.registryInput.edges = []; context.registryInput.groups = [];
+  context.snapshotInput.repositories = { 'google/gvisor': 'copybara', [repo]: 'none' };
+  context.snapshotInput.prs = [{ ...attentionNode(number).github, repo, number, url, importPolicy: 'none',
+    checkedAt: context.snapshotInput.checkedAt }];
+  context.document = { getElementById: () => ({ querySelectorAll: () => [], scrollTo() {} }) };
+  vm.runInContext('validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput); updateRegistryControls = render = setFreshness = () => {}; applyLive(snapshotInput, registryInput)', context);
+  assert.deepEqual([...vm.runInContext('model.nodes.map(node => node.id)', context)], [id]);
+  assert.equal(vm.runInContext('visibleDecisions(model.nodes[0]).length', context), 0);
+  context.snapshotInput.prs = [{ ...context.snapshotInput.prs[0], number: number + 1,
+    url: `https://github.com/${repo}/pull/${number + 1}` }];
+  assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid PR inventory/);
+});
+
 test('copying contributor decisions uses the matching change, review and reply links', () => {
   const context = client(), pr = attentionNode(15814);
   pr.github.headOwner = 'EtiennePerot';
