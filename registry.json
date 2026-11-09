@@ -23150,12 +23150,12 @@
       "repo": "tamird/bazel-central-registry",
       "ref": "review/luajit-2.1.20230430",
       "head": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
-      "title": "LuaJIT 2.1.20230430 for Linux cross-compilation",
+      "title": "Package LuaJIT 2.1 for Linux cross-compilation",
       "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T23:26:09+00:00",
-      "summary": "The released registry module sends x86 assembly to the ARM assembler. This version builds the VM for the requested architecture and keeps the LuaJIT source revision used by wrk2. A native ARM64 C consumer loaded bytecode from the declared saver, executed a JIT trace and caught an error raised by C.",
+      "status": "Updating the LuaJIT registry module",
+      "updatedAt": "2026-11-09T23:34:08+00:00",
+      "summary": "The 2017 BCR entry and the 2023 gVisor pin both print 2.1.0-beta3, 476 commits apart. The registry proposal is moving to upstream v2.1.1794214635 and its declared ARM64 VM generator.",
       "evidence": [
         {
           "label": "Released module fails on x86 instructions in the ARM64 assembler",
@@ -23174,16 +23174,33 @@
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/6931#issuecomment-3685841539"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
-        "baseHead": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
-        "title": "luajit@2.1.20230430",
-        "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
-        "body": "Cross-compiling the existing LuaJIT module for ARM64 on x86_64 feeds\nx86 assembly to the ARM assembler. Bazel builds the VM generator for\nthe execution platform, and the generator takes its instruction set\nfrom that compiler.\n\nAdd the April 30, 2023 snapshot of LuaJIT 2.1 used by gVisor’s wrk2\nbenchmark. Select a generator for the target architecture before\nBazel builds it for the host. Use the snapshot’s default GC64 format\non x86_64 and ARM64 so both VMs can load the same embedded bytecode.\nSelect external unwinding on Darwin as the upstream Makefile does.\n\nExport jit/bcsave.lua for consumers that embed Lua code and COPYRIGHT\nfor consumers that redistribute the VM.",
-        "summary": "Send this single-commit module update to bazelbuild/bazel-central-registry? Apple Silicon runtime coverage is still open.",
-        "requestedAt": "2026-11-09T23:26:09+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
+          "baseHead": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
+          "title": "luajit@2.1.20230430",
+          "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
+          "body": "Cross-compiling the existing LuaJIT module for ARM64 on x86_64 feeds\nx86 assembly to the ARM assembler. Bazel builds the VM generator for\nthe execution platform, and the generator takes its instruction set\nfrom that compiler.\n\nAdd the April 30, 2023 snapshot of LuaJIT 2.1 used by gVisor’s wrk2\nbenchmark. Select a generator for the target architecture before\nBazel builds it for the host. Use the snapshot’s default GC64 format\non x86_64 and ARM64 so both VMs can load the same embedded bytecode.\nSelect external unwinding on Darwin as the upstream Makefile does.\n\nExport jit/bcsave.lua for consumers that embed Lua code and COPYRIGHT\nfor consumers that redistribute the VM.",
+          "summary": "Send this single-commit module update to bazelbuild/bazel-central-registry? Apple Silicon runtime coverage is still open.",
+          "requestedAt": "2026-11-09T23:26:09+00:00",
+          "outcome": "superseded",
+          "at": "2026-11-09T23:34:08+00:00",
+          "note": "Use LuaJIT's rolling production version for the public registry entry. The 2023 snapshot still prints 2.1.0-beta3."
+        }
+      ],
+      "followup": {
+        "owner": "Build and release",
+        "sourceHead": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
+        "observedAt": "2026-11-09T23:34:08+00:00",
+        "disposition": "The 2023 snapshot has been superseded.",
+        "nextAction": "Verify the rolling release number and run the packaged VM before publishing a new proposal.",
+        "evidence": [
+          "https://github.com/LuaJIT/LuaJIT/compare/8271c643c...224129a8e",
+          "https://github.com/LuaJIT/LuaJIT/commit/50e0fa03c",
+          "https://luajit.org/status.html"
+        ]
       }
     },
     {
@@ -23195,18 +23212,19 @@
       "title": "Build the wrk2 image from pinned source",
       "url": "https://github.com/tamird/gvisor/commit/93a67e0be",
       "group": "bazel",
-      "status": "Checking the OpenSSL 4 image",
-      "updatedAt": "2026-11-09T23:26:09+00:00",
-      "summary": "The image uses the registry’s LuaJIT module and OpenSSL 4. Its license check recognizes LuaJIT’s COPYRIGHT notice in the same change. The image checks failed on their first attempt and are under investigation.",
+      "status": "Checking the rolling LuaJIT release",
+      "updatedAt": "2026-11-09T23:34:08+00:00",
+      "summary": "The 2023 LuaJIT proposal verified all 226 license records with OpenSSL 4. The next revision uses the production LuaJIT branch and checks the packaged client against HTTP and HTTPS on both architectures.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "93a67e0bedddd81ab5978f3ad134de5298899f45",
-        "observedAt": "2026-11-09T23:26:09+00:00",
-        "disposition": "The first image jobs failed before their packaged workloads were verified.",
-        "nextAction": "Diagnose the image failures, check the packaged benchmark and license scan, and present the verified revision for contributor review.",
+        "observedAt": "2026-11-09T23:34:08+00:00",
+        "disposition": "The previous LuaJIT pin still identifies as beta3.",
+        "nextAction": "Use the new registry module and run the HTTP, HTTPS and license checks against the published proposal.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42719955552",
-          "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350"
+          "https://github.com/tamird/gvisor/actions/runs/42719955552/artifacts/13720255684",
+          "https://github.com/tamird/gvisor/actions/runs/42720865348",
+          "https://github.com/LuaJIT/LuaJIT/commit/c4b1e2f73"
         ]
       },
       "evidence": [
@@ -95185,5 +95203,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T23:26:09+00:00"
+  "updatedAt": "2026-11-09T23:34:08+00:00"
 }
