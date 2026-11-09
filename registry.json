@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T05:30:03+00:00",
+    "updatedAt": "2026-11-09T05:35:31+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56638,8 +56638,8 @@
       "url": "https://github.com/google/gvisor/pull/17048",
       "title": "Release the sandbox file table when starting a process fails",
       "status": "open",
-      "updatedAt": "2026-11-09T05:14:37+00:00",
-      "summary": "Ayush approved the published head 8f08865cd and asked to remove the added boot test. The proposed replacement fd64b1636 removes only TestFailedRunClosesStdio, restoring loader_test.go to the PR parent. The fix in loader.go is byte-identical to the approved version. A fresh run of the existing boot tests has no result yet.\n\nA missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.",
+      "updatedAt": "2026-11-09T05:35:31+00:00",
+      "summary": "Ayush approved the published head 8f08865cd and asked to remove the added boot test. The proposed replacement fd64b1636 removes only TestFailedRunClosesStdio, restoring loader_test.go to the PR parent. The fix in loader.go is byte-identical to the approved version. On fd64b1636, one uncached native AMD64 run of //runsc/boot:boot_test on Linux 6.8.0-1070-azure passed TestRun, TestRestoreFailBeforeStart and TestStartupHeapReleaseOnStart. The two successful startup cases each ran /bin/true in the guest and verified exit status 0. The earlier missing-executable check ran on both architectures against the same production fix before the test was removed.\n\nA missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.",
       "evidence": [
         {
           "label": "Proposed fix and regression on master",
@@ -56656,6 +56656,10 @@
         {
           "label": "Proposed amendment removing the added test",
           "url": "https://github.com/tamird/gvisor/commit/fd64b1636"
+        },
+        {
+          "label": "Three existing boot tests on fd64b1636: original AMD64 log and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42566666794/artifacts/13651804088"
         }
       ],
       "settledReviews": [
@@ -56678,7 +56682,8 @@
         "nextAction": "Await contributor approval to update #17048 in place and reply on the original thread. Recheck the public PR and import before acting.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17048#discussion_r4509588941",
-          "https://github.com/tamird/gvisor/commit/fd64b1636"
+          "https://github.com/tamird/gvisor/commit/fd64b1636",
+          "https://github.com/tamird/gvisor/actions/runs/42566666794/artifacts/13651804088"
         ]
       },
       "contributorReview": {
@@ -91475,5 +91480,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T05:30:03+00:00"
+  "updatedAt": "2026-11-09T05:35:31+00:00"
 }
