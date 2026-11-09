@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T16:18:01+00:00",
+    "updatedAt": "2026-11-09T16:23:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24379,15 +24379,15 @@
       "title": "Check for zero values while encoding legacy checkpoints",
       "url": "https://github.com/tamird/gvisor/commit/dffb3d3c3",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T03:42:00+00:00",
+      "status": "Contributor approved; awaiting prerequisite",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
       "summary": "The legacy checkpoint encoder now checks the value it has already read to decide whether to omit a field. Unlike the previously approved 15f2d7624, this revision preserves the sign of floating-point zero and of each complex component. It applies directly to #16718.\n\nOn Linux/amd64, saving a 32-packet UDP receive queue took 632.1 µs before and 607.0 µs after (−3.98%, p=0.000, 16 matched pairs). Both arms used the legacy encoder and produced the same 12,690 checkpoint bytes. This measures legacy Save; graph is the default encoder.\n\nReplacing the sign-aware checks with arithmetic comparisons lost negative zero in four wire cases; all six graph cases passed. The first run also exposed two missing test imports. With those imports fixed, ordinary and race builds each ran both test targets on the proposed tree: all 15 signed-zero records and 16 wire-representation and struct-hook records passed, with no skips. The review commit has the same tree as the tested 139053514; its message links the measured legacy benchmark.",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "dffb3d3c3f7850994b8059fad487b379d1943862",
-        "observedAt": "2026-11-05T14:55:40.136006Z",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review dffb3d3c3 for submission after #16718 lands. The earlier approval covered 15f2d7624 only.",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "The revised encoder and its benchmark record are approved.",
+        "nextAction": "Open the approved encoder revision after #16718 lands.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/dffb3d3c3",
           "https://github.com/google/gvisor/pull/16718",
@@ -24429,17 +24429,6 @@
           "url": "https://github.com/tamird/gvisor/commit/139053514"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "dffb3d3c3f7850994b8059fad487b379d1943862",
-        "baseHead": "1f4905b21f956027a76ded34b96584e00f9269f1",
-        "url": "https://github.com/tamird/gvisor/commit/dffb3d3c3",
-        "title": "Check for zero values while encoding legacy checkpoints",
-        "requestedAt": "2026-11-05T14:55:40.136006Z",
-        "summary": "Approve dffb3d3c3 for submission after #16718 lands? It preserves negative zero and reduced the time to save a 32-packet UDP queue with the legacy encoder by 3.98% on Linux/amd64.",
-        "body": "The wire encoder inspects the type of each field to decide whether to\nomit it, then dispatches on its kind again to write it. Use the value\nalready read by each encoder case to decide whether the field can be\nomitted. Whole arrays still need to account for struct save hooks and\nthe sign bit of floating-point elements.\n\nTyped zeros in interfaces and other full-value contexts preserve their\nwire types. An ordinary field containing negative zero keeps its sign,\nincluding either component of a complex number.\n\nThe graph encoder is the default. The 32-packet UDP receive queue\nbenchmark [1] selects the legacy encoder on both sides. Sixteen\nalternating pairs on Linux/amd64 gave the following Save times.\n\nUDPReceiveQueueSave/32    632.1µ ± 1%   607.0µ ± 0%  -3.98% (p=0.000 n=16)\n\n[1]: https://github.com/tamird/gvisor/blob/d8fe8e3ef/pkg/tcpip/transport/udp/codec_queue_benchmark_test.go#L41-L47"
-      },
       "refinement": {
         "before": {
           "head": "15f2d7624e84c8d879d25b746da0f2c2517db962"
@@ -24447,7 +24436,21 @@
         "after": {
           "head": "dffb3d3c3f7850994b8059fad487b379d1943862"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dffb3d3c3f7850994b8059fad487b379d1943862",
+          "baseHead": "1f4905b21f956027a76ded34b96584e00f9269f1",
+          "url": "https://github.com/tamird/gvisor/commit/dffb3d3c3",
+          "title": "Check for zero values while encoding legacy checkpoints",
+          "requestedAt": "2026-11-05T14:55:40.136006Z",
+          "summary": "Approve dffb3d3c3 for submission after #16718 lands? It preserves negative zero and reduced the time to save a 32-packet UDP queue with the legacy encoder by 3.98% on Linux/amd64.",
+          "body": "The wire encoder inspects the type of each field to decide whether to\nomit it, then dispatches on its kind again to write it. Use the value\nalready read by each encoder case to decide whether the field can be\nomitted. Whole arrays still need to account for struct save hooks and\nthe sign bit of floating-point elements.\n\nTyped zeros in interfaces and other full-value contexts preserve their\nwire types. An ordinary field containing negative zero keeps its sign,\nincluding either component of a complex number.\n\nThe graph encoder is the default. The 32-packet UDP receive queue\nbenchmark [1] selects the legacy encoder on both sides. Sixteen\nalternating pairs on Linux/amd64 gave the following Save times.\n\nUDPReceiveQueueSave/32    632.1µ ± 1%   607.0µ ± 0%  -3.98% (p=0.000 n=16)\n\n[1]: https://github.com/tamird/gvisor/blob/d8fe8e3ef/pkg/tcpip/transport/udp/codec_queue_benchmark_test.go#L41-L47",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "approved"
+        }
+      ]
     },
     {
       "id": "branch:state-decoder-dependencies",
@@ -66639,8 +66642,8 @@
       "title": "Create the TCP keepalive callback when a connection needs a probe",
       "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T21:48:58+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
       "summary": "Create the keepalive timer when an established sender needs it. In 12 alternating AMD64 pairs, wildcard bind/close fell from 26 allocations to 24, and dial/accept from 168 to 162 with keepalive disabled and 171 to 169 with it enabled. Bytes allocated fell in all three workloads. Elapsed time showed no statistically significant change.\n\nBoth revisions gave the same six packet observations. Accepted, post-connect and explicitly rearmed restored sockets sent their idle probe. The pre-connect, re-enabled and untouched restored sockets missed the observed deadline on both revisions. The TCP analyzer passed for AMD64 and ARM64. The reviewed commit has the same tree and parent as measured 2808320e8.",
       "evidence": [
         {
@@ -66663,29 +66666,33 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
-        "observedAt": "2026-11-08T21:48:58+00:00",
-        "disposition": "The single fork commit and its source-matched qualification are available for review.",
-        "nextAction": "Review the proposal before opening a gVisor pull request. Before publishing it on a tree with the restore fix, move the saved timer state and deadline onto the sender timer, preserve the re-enable fix’s expiry check before SO_KEEPALIVE, and rerun the restore and toggle controls.",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "The sender-owned keepalive callback uses the same short-circuit that can lose a wakeup. The existing allocation measurements cover the independently based proposal.",
+        "nextAction": "Rebase the sender-owned timer on the callback fix and requalify both the wakeup behavior and allocation measurements before requesting review.",
         "evidence": [
           "https://github.com/google/gvisor/issues/7493",
           "https://github.com/tamird/gvisor/commit/2808320e8",
           "https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379",
           "https://github.com/tamird/gvisor/commit/38b1dd1da",
-          "https://github.com/tamird/gvisor/commit/ba00452d5"
+          "https://github.com/tamird/gvisor/commit/ba00452d5",
+          "https://github.com/tamird/gvisor/commit/afabfbaf9"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
-        "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
-        "title": "Create the TCP keepalive callback when a connection needs a probe",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "A socket that only binds, listens or connects with keepalive disabled sets up a keepalive callback that it never schedules. The endpoint also reserves space for the timer and an unused waker before a sender exists.\n\nKeep the timer with the sender and initialize it when SO_KEEPALIVE is enabled and no data is outstanding. Leave keepalive options on the endpoint so applications can set them before connecting or listening.\n\nOn AMD64, compare binding and closing a wildcard socket and completing a dial/accept handshake with keepalive disabled or enabled [1].\n\n```text\n                                   │    stock     │                fixed                │\n                                   │     B/op     │     B/op      vs base               │\nWildcardBindClose-2                  4.844Ki ± 0%   4.555Ki ± 0%  -5.97% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   18.05Ki ± 1%   17.43Ki ± 0%  -3.48% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    18.22Ki ± 0%   17.69Ki ± 0%  -2.89% (p=0.000 n=12)\n\n                                   │   stock    │               fixed               │\n                                   │ allocs/op  │ allocs/op   vs base               │\nWildcardBindClose-2                  26.00 ± 0%   24.00 ± 0%  -7.69% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   168.0 ± 1%   162.0 ± 1%  -3.57% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    171.0 ± 0%   169.0 ± 1%  -1.17% (p=0.000 n=12)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379\n\nFixes #7493",
-        "requestedAt": "2026-11-08T19:57:20+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
+          "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
+          "title": "Create the TCP keepalive callback when a connection needs a probe",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "A socket that only binds, listens or connects with keepalive disabled sets up a keepalive callback that it never schedules. The endpoint also reserves space for the timer and an unused waker before a sender exists.\n\nKeep the timer with the sender and initialize it when SO_KEEPALIVE is enabled and no data is outstanding. Leave keepalive options on the endpoint so applications can set them before connecting or listening.\n\nOn AMD64, compare binding and closing a wildcard socket and completing a dial/accept handshake with keepalive disabled or enabled [1].\n\n```text\n                                   │    stock     │                fixed                │\n                                   │     B/op     │     B/op      vs base               │\nWildcardBindClose-2                  4.844Ki ± 0%   4.555Ki ± 0%  -5.97% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   18.05Ki ± 1%   17.43Ki ± 0%  -3.48% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    18.22Ki ± 0%   17.69Ki ± 0%  -2.89% (p=0.000 n=12)\n\n                                   │   stock    │               fixed               │\n                                   │ allocs/op  │ allocs/op   vs base               │\nWildcardBindClose-2                  26.00 ± 0%   24.00 ± 0%  -7.69% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   168.0 ± 1%   162.0 ± 1%  -3.57% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    171.0 ± 0%   169.0 ± 1%  -1.17% (p=0.000 n=12)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379\n\nFixes #7493",
+          "requestedAt": "2026-11-08T19:57:20+00:00",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "superseded"
+        }
+      ]
     },
     {
       "id": "branch:gpu-driver-installer-fixture",
@@ -66751,8 +66758,8 @@
       "title": "Guard TCP port reservation ownership",
       "url": "https://github.com/tamird/gvisor/commit/cc9a10f3a",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T20:00:21+00:00",
+      "status": "Published as #17277",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
       "summary": "Guard the endpoint’s port reservation flag with its mutex. Record all four reservation details after ephemeral port selection succeeds. The synchronous callback returns success only after it registers the endpoint. Restore clears the flag and restores the closed state in one critical section before stack cleanup.\n\nThe TCP analyzer reported zero findings on AMD64 and ARM64. Restoring the previous callback or the unlocked restore assignment independently produced diagnostics at the corresponding statement on both architectures. All 93 named native AMD64 XML cases passed across seven selected Go tests. A saved closed endpoint restored to StateClose and its port could be rebound. The evidence establishes the lock precondition and the observed runtime behavior.",
       "evidence": [
         {
@@ -66762,6 +66769,10 @@
         {
           "label": "Earlier restore-only change exposed the callback access",
           "url": "https://github.com/tamird/gvisor/actions/runs/42515998685/artifacts/13631252676"
+        },
+        {
+          "label": "Approved change published as #17277",
+          "url": "https://github.com/google/gvisor/pull/17277"
         }
       ],
       "links": [
@@ -66771,26 +66782,32 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
-        "observedAt": "2026-11-08T20:00:21+00:00",
-        "disposition": "The single fork commit passed both analyzer architectures and the native close, connect and restore checks.",
-        "nextAction": "Review the proposal before opening a gVisor pull request.",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "Published the reviewed revision as #17277.",
+        "nextAction": "Follow #17277 for maintainer review and import.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42517144793/artifacts/13632092618",
-          "https://github.com/tamird/gvisor/actions/runs/42515998685/artifacts/13631252676"
+          "https://github.com/tamird/gvisor/actions/runs/42515998685/artifacts/13631252676",
+          "https://github.com/google/gvisor/pull/17277",
+          "https://github.com/tamird/gvisor/commit/cc9a10f3a"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
-        "url": "https://github.com/tamird/gvisor/commit/cc9a10f3a",
-        "title": "Guard TCP port reservation ownership",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "Bind, accept and cleanup hold the endpoint mutex when they record or release a port. Restore cleared the reservation flag without that mutex when returning a saved endpoint to StateClose.\n\nMark isPortReserved as guarded by the endpoint mutex. Record the port's reservation details after PickEphemeralPort returns successfully. Its callback accepts a port only after registering the endpoint.\n\nClear the flag and restore StateClose in the same critical section. Release the endpoint mutex before removing the endpoint from the stack's cleanup list.",
-        "requestedAt": "2026-11-08T20:00:21+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
+          "url": "https://github.com/tamird/gvisor/commit/cc9a10f3a",
+          "title": "Guard TCP port reservation ownership",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "Bind, accept and cleanup hold the endpoint mutex when they record or release a port. Restore cleared the reservation flag without that mutex when returning a saved endpoint to StateClose.\n\nMark isPortReserved as guarded by the endpoint mutex. Record the port's reservation details after PickEphemeralPort returns successfully. Its callback accepts a port only after registering the endpoint.\n\nClear the flag and restore StateClose in the same critical section. Release the endpoint mutex before removing the endpoint from the stack's cleanup list.",
+          "requestedAt": "2026-11-08T20:00:21+00:00",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17277"
+        }
+      ]
     },
     {
       "id": "branch:tcp-keepalive-reenable",
@@ -66801,8 +66818,8 @@
       "title": "Restart TCP keepalive after a disabled timer fires",
       "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T20:33:01+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
       "summary": "An idle connection stopped sending TCP keepalive probes when its timer fired with SO_KEEPALIVE disabled and the application later re-enabled it. The callback now consumes the expired timer before checking the option.\n\nPacketimpact captured three connections per implementation. When keepalive was re-enabled after the old deadline, native Linux and the fix sent one new probe each, and stock gVisor sent none. Re-enabling before that deadline produced one probe on all three. When a probe had already been sent before disabling the option, Linux and the fix sent a second probe after re-enabling it. Stock sent only the first. All disabled intervals stayed quiet.\n\nThe separate allocation proposal afabfbaf9 touches the same callback. An integration needs to retain its sender and timer initialization guards, then consume expiration before checking SO_KEEPALIVE.",
       "evidence": [
         {
@@ -66817,24 +66834,32 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-        "observedAt": "2026-11-08T20:33:01+00:00",
-        "disposition": "One fork commit includes the fix and the regression test. The packet captures reproduce the missed probe and verify resumption on the revised source.",
-        "nextAction": "Review the keepalive re-enable fix for a single upstream pull request.",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "Tamir requested that the timer API make the callback side effects clear. isUninitialized is a predicate. checkExpiration can consume an obsolete wakeup, rearm a premature callback, or disable an expired timer.",
+        "nextAction": "Revise the timer callback API and qualify keepalive disable and re-enable before requesting another review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991"
+          "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991",
+          "https://github.com/tamird/gvisor/commit/ba00452d5"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
+          "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
+          "title": "Restart TCP keepalive after a disabled timer fires",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "Disabling SO_KEEPALIVE leaves the clock timer running. If it fires while keepalive is disabled, the callback returns before consuming the orphaned timer. Re-enabling keepalive then records a new deadline but leaves an idle connection without a scheduled probe.\n\nConsume the clock wakeup before checking SO_KEEPALIVE. Check that an idle connection stays quiet while keepalive is disabled and resumes probing when the option is enabled again.",
+          "requestedAt": "2026-11-08T20:33:01+00:00",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "changes-requested"
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-        "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
-        "title": "Restart TCP keepalive after a disabled timer fires",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "Disabling SO_KEEPALIVE leaves the clock timer running. If it fires while keepalive is disabled, the callback returns before consuming the orphaned timer. Re-enabling keepalive then records a new deadline but leaves an idle connection without a scheduled probe.\n\nConsume the clock wakeup before checking SO_KEEPALIVE. Check that an idle connection stays quiet while keepalive is disabled and resumes probing when the option is enabled again.",
-        "requestedAt": "2026-11-08T20:33:01+00:00"
+        "url": "https://github.com/tamird/gvisor/commit/ba00452d5"
       }
     },
     {
@@ -66846,8 +66871,8 @@
       "title": "Honor SO_BINDTODEVICE when choosing a TCP connect route",
       "url": "https://github.com/tamird/gvisor/commit/0235b052b",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T20:58:46+00:00",
+      "status": "Published as #17278",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
       "summary": "A wildcard-bound TCP socket could select a source address on a device other than the one named by SO_BINDTODEVICE. The fix uses the live option for outgoing route selection and preserves the device saved with the port reservation.\n\nTwo isolated Linux syscall tests and the stock and fixed systrap runs used identical C++ fixture bytes. Stock chose 192.0.2.129 for both bound devices. Linux and fixed gVisor chose 192.0.2.1 on veth1 and 192.0.2.129 on veth2, whether the application set the device before or after wildcard bind. For an IPv6 destination scope that conflicted with the device, Linux and the fix returned EINVAL. Stock returned ENETUNREACH.\n\nAll three changed-device checkpoint controls and all three endpoint device cases passed on both gVisor revisions. The fixed TCP analyzer passed on AMD64 and ARM64. The original ordinary Linux runner skipped the syscall tests for lack of CAP_NET_ADMIN. Both tests executed uncached in the isolated Linux recovery. The IPv4 observations come from getsockname during a nonblocking connect.",
       "evidence": [
         {
@@ -66861,6 +66886,10 @@
         {
           "label": "Exact C++ fixture on isolated Linux with both syscall cases executed",
           "url": "https://github.com/tamird/gvisor/actions/runs/42521694150/artifacts/13633614112"
+        },
+        {
+          "label": "Approved change published as #17278",
+          "url": "https://github.com/google/gvisor/pull/17278"
         }
       ],
       "links": [
@@ -66870,27 +66899,33 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
-        "observedAt": "2026-11-08T20:58:46+00:00",
-        "disposition": "The single fork commit matches the isolated Linux source-address and IPv6 errno observations.",
-        "nextAction": "Review the proposed fix for one independent gVisor pull request.",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "Published the reviewed revision as #17278.",
+        "nextAction": "Follow #17278 for maintainer review and import.",
         "evidence": [
           "https://github.com/google/gvisor/issues/8276",
           "https://github.com/tamird/gvisor/actions/runs/42521694150/artifacts/13633614112",
-          "https://github.com/tamird/gvisor/actions/runs/42520089823/artifacts/13633427072"
+          "https://github.com/tamird/gvisor/actions/runs/42520089823/artifacts/13633427072",
+          "https://github.com/google/gvisor/pull/17278",
+          "https://github.com/tamird/gvisor/commit/0235b052b"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
-        "url": "https://github.com/tamird/gvisor/commit/0235b052b",
-        "title": "Honor SO_BINDTODEVICE when choosing a TCP connect route",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "A wildcard bind reserves a port without selecting a source address. When two interfaces have routes to the peer, connect can then send its SYN through the other interface because it looks up the route without the device selected by SO_BINDTODEVICE.\n\nUse the socket's current device for the route lookup, as Linux does [1]. Reject a conflicting destination scope [2]. Keep the saved device used by the port reservation and endpoint registration. Restore an established connection with the NIC selected for its saved route.\n\nCheck the selected source address on two interfaces with overlapping prefixes. Both can reach the peer, so failure to honor the socket's device is visible before the handshake completes.\n\n[1]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv4/tcp_ipv4.c#L233-L235\n[2]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv6/tcp_ipv6.c#L188-L197\n\nFixes #8276",
-        "requestedAt": "2026-11-08T20:58:46+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
+          "url": "https://github.com/tamird/gvisor/commit/0235b052b",
+          "title": "Honor SO_BINDTODEVICE when choosing a TCP connect route",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "A wildcard bind reserves a port without selecting a source address. When two interfaces have routes to the peer, connect can then send its SYN through the other interface because it looks up the route without the device selected by SO_BINDTODEVICE.\n\nUse the socket's current device for the route lookup, as Linux does [1]. Reject a conflicting destination scope [2]. Keep the saved device used by the port reservation and endpoint registration. Restore an established connection with the NIC selected for its saved route.\n\nCheck the selected source address on two interfaces with overlapping prefixes. Both can reach the peer, so failure to honor the socket's device is visible before the handshake completes.\n\n[1]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv4/tcp_ipv4.c#L233-L235\n[2]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv6/tcp_ipv6.c#L188-L197\n\nFixes #8276",
+          "requestedAt": "2026-11-08T20:58:46+00:00",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17278"
+        }
+      ]
     },
     {
       "id": "branch:bwrap-without-docker-registration",
@@ -67495,9 +67530,9 @@
       "title": "Use test scratch for syscall overlay backing",
       "url": "https://github.com/tamird/gvisor/commit/3ff1e7080",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "Published as #17279",
       "head": "3ff1e708095db91e220a653d170a8c1f46a4ea82",
-      "updatedAt": "2026-11-09T09:42:13+00:00",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
       "summary": "The syscall test runner hardcodes /tmp for writable overlay backing files. On the ARM64 worker, /tmp shares the root mount and the filesystem gofer failed to remount the root read-only. Use testutil.TmpDir(), as the runner does for its bundle and runtime root. The container shared-volume tests already use test scratch for overlay storage (#15333).",
       "evidence": [
         {
@@ -67515,18 +67550,37 @@
         {
           "label": "Six ARM64 TestRunners: mounted paths, runtime binaries, guest logs and XML",
           "url": "https://github.com/tamird/gvisor/actions/runs/42594552997/artifacts/13663495669"
+        },
+        {
+          "label": "Approved change published as #17279",
+          "url": "https://github.com/google/gvisor/pull/17279"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3ff1e708095db91e220a653d170a8c1f46a4ea82",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/3ff1e7080",
-        "title": "Use test scratch for syscall overlay backing",
-        "requestedAt": "2026-11-09T09:42:13+00:00",
-        "summary": "Open the standalone gVisor PR to use test scratch for syscall overlay backing? All three previous startup failures reached their guest scripts with this change. They passed on a worker image containing the networking tools used by those scripts.",
-        "body": "The syscall test runner creates writable overlay backing files in\n/tmp. On workers where /tmp shares the root mount, the filesystem\ngofer can get EBUSY while remounting the root read-only. The container\nthen exits before the syscall test starts.\n\nUse the test temporary directory for overlay backing, as the runner\ndoes for the bundle and runtime root. testutil.TmpDir falls back to\n/tmp when TEST_TMPDIR is unset."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3ff1e708095db91e220a653d170a8c1f46a4ea82",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/3ff1e7080",
+          "title": "Use test scratch for syscall overlay backing",
+          "requestedAt": "2026-11-09T09:42:13+00:00",
+          "summary": "Open the standalone gVisor PR to use test scratch for syscall overlay backing? All three previous startup failures reached their guest scripts with this change. They passed on a worker image containing the networking tools used by those scripts.",
+          "body": "The syscall test runner creates writable overlay backing files in\n/tmp. On workers where /tmp shares the root mount, the filesystem\ngofer can get EBUSY while remounting the root read-only. The container\nthen exits before the syscall test starts.\n\nUse the test temporary directory for overlay backing, as the runner\ndoes for the bundle and runtime root. testutil.TmpDir falls back to\n/tmp when TEST_TMPDIR is unset.",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17279"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "3ff1e708095db91e220a653d170a8c1f46a4ea82",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "Published the reviewed revision as #17279.",
+        "nextAction": "Follow #17279 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17279",
+          "https://github.com/tamird/gvisor/commit/3ff1e7080"
+        ]
       }
     },
     {
@@ -67569,6 +67623,183 @@
         "requestedAt": "2026-11-09T15:12:39+00:00",
         "summary": "Open one gVisor PR for the two UDP syscall suites and their private network setup?",
         "body": "The external UDP suites skip when they find only loopback. Create an addressed Ethernet bridge with no ports in a private network namespace before starting the test. Join that namespace when runsc imports the network into the sandbox.\n\nSelect loopback on the IPv6 multicast sender, matching the receiver's membership, and route its test group through loopback. Use the Linux expectations when host networking forwards multicast socket options.\n\nKeep the buffer sizes runsc reports for the private link in the test log. Linux requires CAP_NET_ADMIN in the initial user namespace to force larger socket buffers."
+      }
+    },
+    {
+      "id": "pr:17277",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17277,
+      "url": "https://github.com/google/gvisor/pull/17277",
+      "status": "open",
+      "ref": "research/tcp-port-reservation-lock",
+      "head": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
+      "title": "Guard TCP port reservation ownership",
+      "group": "analysis",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
+      "summary": "Guard the endpoint’s port reservation flag with its mutex. Record all four reservation details after ephemeral port selection succeeds. The synchronous callback returns success only after it registers the endpoint. Restore clears the flag and restores the closed state in one critical section before stack cleanup.\n\nThe TCP analyzer reported zero findings on AMD64 and ARM64. Restoring the previous callback or the unlocked restore assignment independently produced diagnostics at the corresponding statement on both architectures. All 93 named native AMD64 XML cases passed across seven selected Go tests. A saved closed endpoint restored to StateClose and its port could be rebound. The evidence establishes the lock precondition and the observed runtime behavior.",
+      "evidence": [
+        {
+          "label": "Guarded source, two independent analyzer negatives and 93 native runtime cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42517144793/artifacts/13632092618"
+        },
+        {
+          "label": "Earlier restore-only change exposed the callback access",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42515998685/artifacts/13631252676"
+        },
+        {
+          "label": "Approved change published as #17277",
+          "url": "https://github.com/google/gvisor/pull/17277"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
+          "url": "https://github.com/tamird/gvisor/commit/cc9a10f3a",
+          "title": "Guard TCP port reservation ownership",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "Bind, accept and cleanup hold the endpoint mutex when they record or release a port. Restore cleared the reservation flag without that mutex when returning a saved endpoint to StateClose.\n\nMark isPortReserved as guarded by the endpoint mutex. Record the port's reservation details after PickEphemeralPort returns successfully. Its callback accepts a port only after registering the endpoint.\n\nClear the flag and restore StateClose in the same critical section. Release the endpoint mutex before removing the endpoint from the stack's cleanup list.",
+          "requestedAt": "2026-11-08T20:00:21+00:00",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17277"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "cc9a10f3a7e2a8bdb971fd984da42ba941993062",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "Published the reviewed revision as #17277.",
+        "nextAction": "Follow #17277 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42517144793/artifacts/13632092618",
+          "https://github.com/tamird/gvisor/actions/runs/42515998685/artifacts/13631252676",
+          "https://github.com/google/gvisor/pull/17277",
+          "https://github.com/tamird/gvisor/commit/cc9a10f3a"
+        ]
+      }
+    },
+    {
+      "id": "pr:17278",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17278,
+      "url": "https://github.com/google/gvisor/pull/17278",
+      "status": "open",
+      "ref": "research/tcp-connect-bound-device",
+      "head": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
+      "title": "Honor SO_BINDTODEVICE when choosing a TCP connect route",
+      "group": "runtime",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
+      "summary": "A wildcard-bound TCP socket could select a source address on a device other than the one named by SO_BINDTODEVICE. The fix uses the live option for outgoing route selection and preserves the device saved with the port reservation.\n\nTwo isolated Linux syscall tests and the stock and fixed systrap runs used identical C++ fixture bytes. Stock chose 192.0.2.129 for both bound devices. Linux and fixed gVisor chose 192.0.2.1 on veth1 and 192.0.2.129 on veth2, whether the application set the device before or after wildcard bind. For an IPv6 destination scope that conflicted with the device, Linux and the fix returned EINVAL. Stock returned ENETUNREACH.\n\nAll three changed-device checkpoint controls and all three endpoint device cases passed on both gVisor revisions. The fixed TCP analyzer passed on AMD64 and ARM64. The original ordinary Linux runner skipped the syscall tests for lack of CAP_NET_ADMIN. Both tests executed uncached in the isolated Linux recovery. The IPv4 observations come from getsockname during a nonblocking connect.",
+      "evidence": [
+        {
+          "label": "Original report: TCP connect can ignore the selected device",
+          "url": "https://github.com/google/gvisor/issues/8276"
+        },
+        {
+          "label": "Stock and fixed systrap syscall results, checkpoint and endpoint cases, and both Nogo architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42520089823/artifacts/13633427072"
+        },
+        {
+          "label": "Exact C++ fixture on isolated Linux with both syscall cases executed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42521694150/artifacts/13633614112"
+        },
+        {
+          "label": "Approved change published as #17278",
+          "url": "https://github.com/google/gvisor/pull/17278"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
+          "url": "https://github.com/tamird/gvisor/commit/0235b052b",
+          "title": "Honor SO_BINDTODEVICE when choosing a TCP connect route",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "A wildcard bind reserves a port without selecting a source address. When two interfaces have routes to the peer, connect can then send its SYN through the other interface because it looks up the route without the device selected by SO_BINDTODEVICE.\n\nUse the socket's current device for the route lookup, as Linux does [1]. Reject a conflicting destination scope [2]. Keep the saved device used by the port reservation and endpoint registration. Restore an established connection with the NIC selected for its saved route.\n\nCheck the selected source address on two interfaces with overlapping prefixes. Both can reach the peer, so failure to honor the socket's device is visible before the handshake completes.\n\n[1]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv4/tcp_ipv4.c#L233-L235\n[2]: https://github.com/torvalds/linux/blob/e8f897f4a/net/ipv6/tcp_ipv6.c#L188-L197\n\nFixes #8276",
+          "requestedAt": "2026-11-08T20:58:46+00:00",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17278"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "0235b052b4ea92fb70e12b0eb58f576d2688463a",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "Published the reviewed revision as #17278.",
+        "nextAction": "Follow #17278 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/issues/8276",
+          "https://github.com/tamird/gvisor/actions/runs/42521694150/artifacts/13633614112",
+          "https://github.com/tamird/gvisor/actions/runs/42520089823/artifacts/13633427072",
+          "https://github.com/google/gvisor/pull/17278",
+          "https://github.com/tamird/gvisor/commit/0235b052b"
+        ]
+      }
+    },
+    {
+      "id": "pr:17279",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17279,
+      "url": "https://github.com/google/gvisor/pull/17279",
+      "status": "open",
+      "ref": "research/syscall-overlay-test-scratch",
+      "head": "3ff1e708095db91e220a653d170a8c1f46a4ea82",
+      "title": "Use test scratch for syscall overlay backing",
+      "group": "tests",
+      "updatedAt": "2026-11-09T16:23:10+00:00",
+      "summary": "The syscall test runner hardcodes /tmp for writable overlay backing files. On the ARM64 worker, /tmp shares the root mount and the filesystem gofer failed to remount the root read-only. Use testutil.TmpDir(), as the runner does for its bundle and runtime root. The container shared-volume tests already use test scratch for overlay storage (#15333).",
+      "evidence": [
+        {
+          "label": "Standalone one-file change against upstream master",
+          "url": "https://github.com/tamird/gvisor/commit/3ff1e7080"
+        },
+        {
+          "label": "Merged precedent for the container shared-volume tests",
+          "url": "https://github.com/google/gvisor/pull/15333"
+        },
+        {
+          "label": "Original systrap bridge gofer: read-only root remount returned EBUSY",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42592463752/artifacts/13661567984"
+        },
+        {
+          "label": "Six ARM64 TestRunners: mounted paths, runtime binaries, guest logs and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42594552997/artifacts/13663495669"
+        },
+        {
+          "label": "Approved change published as #17279",
+          "url": "https://github.com/google/gvisor/pull/17279"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3ff1e708095db91e220a653d170a8c1f46a4ea82",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/3ff1e7080",
+          "title": "Use test scratch for syscall overlay backing",
+          "requestedAt": "2026-11-09T09:42:13+00:00",
+          "summary": "Open the standalone gVisor PR to use test scratch for syscall overlay backing? All three previous startup failures reached their guest scripts with this change. They passed on a worker image containing the networking tools used by those scripts.",
+          "body": "The syscall test runner creates writable overlay backing files in\n/tmp. On workers where /tmp shares the root mount, the filesystem\ngofer can get EBUSY while remounting the root read-only. The container\nthen exits before the syscall test starts.\n\nUse the test temporary directory for overlay backing, as the runner\ndoes for the bundle and runtime root. testutil.TmpDir falls back to\n/tmp when TEST_TMPDIR is unset.",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17279"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "3ff1e708095db91e220a653d170a8c1f46a4ea82",
+        "observedAt": "2026-11-09T16:23:10+00:00",
+        "disposition": "Published the reviewed revision as #17279.",
+        "nextAction": "Follow #17279 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17279",
+          "https://github.com/tamird/gvisor/commit/3ff1e7080"
+        ]
       }
     }
   ],
@@ -71487,6 +71718,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/3ff1e7080",
         "https://github.com/tamird/gvisor/actions/runs/42594552997/artifacts/13663495669"
+      ]
+    },
+    {
+      "from": "branch:tcp-keepalive-reenable",
+      "to": "branch:tcp-keepalive-sender",
+      "type": "depends_on",
+      "reason": "The sender-owned timer uses the same callback. Rebase and qualify it on the keepalive wakeup fix before contributor review.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/afabfbaf9",
+        "https://github.com/tamird/gvisor/commit/ba00452d5"
       ]
     }
   ],
@@ -92114,5 +92355,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T16:18:01+00:00"
+  "updatedAt": "2026-11-09T16:23:10+00:00"
 }
