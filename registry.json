@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T17:50:06+00:00",
+    "updatedAt": "2026-11-09T18:07:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21169,21 +21169,22 @@
       "url": "https://github.com/google/gvisor/pull/16059",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T14:15:49.730261+00:00",
+      "updatedAt": "2026-11-09T18:07:34+00:00",
       "summary": "The import exposes a separate IPv6 socket-option bug: Java reads the multicast hop limit on eth0 and receives ENOPROTOOPT. The tested socket-option fix makes this Java case pass. The interface-flag change itself remains approved.\n\nThe approved amendment is published at b584529cb. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific history:\n\nCurrent public #16059 remains at 857926029. The reviewed fork amendment at b584529cb is qualified and ready for contributor review. No upstream source update has been made.\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific record:\n\nThe October 25 source reconciliation is delivered at 857926029bac and the 12:53 provider snapshot reports it mergeable. Preserves the multicast capability behavior with the landed interface id and NIC Kind fields; the two overlapping sites retain both changes. No runtime replay or fresh exact-head approval is claimed.\n\nHistorical source-specific record:\n\nMulticast correction rebased, preserving landed TUN MTU bounds and both bounds and multicast during namespace moves. Exact head 36aadebb1e is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 71a5b3cbd3d2 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at ef937e84f8. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at ef937e84f875e956938dc7d04f9aabadd1314854 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe approved multicast proposal is delivered as PR #16059 at b06ac692f7. Authoritative readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from the source-bound qualification. Its current Gazelle log requests only removal of the unused production //pkg/zip dependency from tools/nogo/check/BUILD, already corrected by pending #16031.\n\nUser approved the exact proposal, and root delivered public PR16059 at b06ac692f7. Authoritative PR-number readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from source-bound qualification. No repeated question or merge is authorized.\n\nRoot requested contributor review once on October20 after independent qualification acceptance. Independent source review and owning unit/analyzer, ABI and focused Java validation passed at 00c8. The unchanged-production negative case reproduces the missing flag. Imported flags and Linux defaults are preserved; no writable-flag or checkpoint roundtrip claim. No public PR has been opened.",
       "followup": {
-        "owner": "root",
+        "owner": "Upstream review",
         "sourceHead": "b584529cbf05e11ed7ba8f59b2706c554bf78250",
-        "observedAt": "2026-10-31T14:15:49.730261+00:00",
-        "disposition": "Approved; import exposes missing multicast socket options",
-        "nextAction": "Review the separate IPv6 multicast socket-options proposal. It fixes the Java failure shown in the import. Keep the approved interface-flag head unchanged.",
+        "observedAt": "2026-11-09T18:07:34+00:00",
+        "disposition": "The separate IPv6 multicast socket-option fix is open as #16875.",
+        "nextAction": "Follow #16875 through upstream review. After it lands, check the Java multicast test on the next import of #16059.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16059",
           "https://github.com/google/gvisor/pull/16059#pullrequestreview-5658612539",
           "https://github.com/google/gvisor/pull/16059#pullrequestreview-5689638274",
           "https://buildkite.com/gvisor/pipeline/builds/52852",
           "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f",
-          "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149"
+          "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149",
+          "https://github.com/google/gvisor/pull/16875"
         ]
       },
       "evidence": [
@@ -21246,6 +21247,10 @@
         {
           "label": "Original OpenJDK test with the socket-option fix",
           "url": "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149"
+        },
+        {
+          "label": "Published IPv6 multicast socket-option fix",
+          "url": "https://github.com/google/gvisor/pull/16875"
         }
       ],
       "number": 16059,
@@ -46470,9 +46475,9 @@
       "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
       "title": "Check the instance lock when changing inotify watch indexes",
       "url": "https://github.com/tamird/gvisor/commit/b79fa85f7",
-      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
-      "status": "Published",
-      "summary": "Delivered in #16812.",
+      "updatedAt": "2026-11-09T18:07:34+00:00",
+      "status": "Merged",
+      "summary": "The inotify lock annotations landed as 738ede495 through #16882. Their patch matches the reviewed b79fa85f7. The separate removal of Watch.OwnerID is tracked on #17044.",
       "evidence": [
         {
           "label": "VFS analyzer: product passes",
@@ -46489,6 +46494,18 @@
         {
           "label": "Upstream pull request",
           "url": "https://github.com/google/gvisor/pull/16812"
+        },
+        {
+          "label": "Merged inotify lock annotation import",
+          "url": "https://github.com/google/gvisor/pull/16882"
+        },
+        {
+          "label": "Landed lock annotations",
+          "url": "https://github.com/google/gvisor/commit/738ede495"
+        },
+        {
+          "label": "Separate Watch.OwnerID cleanup",
+          "url": "https://github.com/google/gvisor/pull/17044"
         }
       ],
       "settledReviews": [
@@ -56321,14 +56338,14 @@
       "id": "branch:kernfs-ordered-child-locks",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "kernfs-ordered-child-locks",
+      "ref": "review/kernfs-ordered-child-locks",
       "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
       "title": "Check the locks protecting kernfs directory children",
       "url": "https://github.com/tamird/gvisor/commit/199cf1558",
       "group": "analysis",
-      "status": "Delivered",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
-      "summary": "Published as #17047.",
+      "status": "Merged",
+      "updatedAt": "2026-11-09T18:07:34+00:00",
+      "summary": "The ordered-child lock annotations landed on master through #17047 and its Copybara import #17071.",
       "evidence": [
         {
           "label": "Proposed source: checked directory readers, removal and both rename paths",
@@ -56357,24 +56374,16 @@
         {
           "label": "Published on #17047",
           "url": "https://github.com/google/gvisor/pull/17047"
+        },
+        {
+          "label": "Merged Copybara import",
+          "url": "https://github.com/google/gvisor/pull/17071"
+        },
+        {
+          "label": "Landed import commit",
+          "url": "https://github.com/google/gvisor/commit/30e890a96"
         }
       ],
-      "followup": {
-        "owner": "Maintainer",
-        "sourceHead": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
-        "observedAt": "2026-11-05T16:41:13.307421Z",
-        "disposition": "Published on #17047",
-        "nextAction": "Await upstream review and checks.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/199cf1558",
-          "https://github.com/tamird/gvisor/actions/runs/42024013729/artifacts/13412948249",
-          "https://github.com/tamird/gvisor/commit/1f4e06419",
-          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L210",
-          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L228",
-          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/inode_impl_util.go#L713",
-          "https://github.com/google/gvisor/pull/17047"
-        ]
-      },
       "settledReviews": [
         {
           "kind": "proposal",
