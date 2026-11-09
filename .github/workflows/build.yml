@@ -16,17 +16,18 @@ jobs:
           set -euo pipefail
           umask 077
           git init -q
-          git fetch --no-tags --no-auto-maintenance --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git fetch --no-tags --no-auto-maintenance --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
           git checkout --detach -q "$GITHUB_SHA"
           product=e1a7eb4e59559027881dad66970207ab8b27d2f2
-          test "$(git rev-parse HEAD^)" = "$product"
-          test "$(git rev-parse HEAD^^)" = 975fb172241c7946a9f67b4f52e0349d9240589a
+          test "$(git rev-parse HEAD^)" = 8daed9385b44134e52e905254c29bd0e1bece192
+          test "$(git rev-parse HEAD^^)" = "$product"
+          test "$(git rev-parse "$product^")" = 975fb172241c7946a9f67b4f52e0349d9240589a
           test "$(git rev-parse "$product^{tree}")" = 9f368a992e96bde036624fe273e93813bc1e75ad
-          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/udp_restore.py .github/workflows/build.yml)"
+          test "$(git diff --name-only "$product" HEAD)" = "$(printf '%s\n' .github/udp_restore.py .github/workflows/build.yml)"
           d="$RUNNER_TEMP/arm64-syscalls"
           mkdir -p "$d/results"
           cp .github/udp_restore.py "$d/udp_restore.py"
-          echo "d3a9359e572c7b15cf08146dc1c8ef642125427db19cc69d8d53e81502bb336c  $d/udp_restore.py" | sha256sum -c -
+          echo "1279956784c1b323c2ba525b4960a4e7048cdabe1174a7763f89fcd65e61a77d  $d/udp_restore.py" | sha256sum -c -
           git checkout --detach -q "$product"
           test -z "$(git status --porcelain --untracked-files=no)"
           test "$(cat .bazelversion)" = 9.3.1

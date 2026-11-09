@@ -98,7 +98,7 @@ def main(work: Path, source: str, exit_code: int) -> int:
                         results.append((ident["testResult"], event["testResult"]))
                 if ident.get("testSummary", {}).get("label") == OWNER:
                     summaries.append((ident["testSummary"], event["testSummary"]))
-                if "finished" in ident:
+                if "buildFinished" in ident:
                     finishes.append(event["finished"]["exitCode"].get("name"))
         require(len(results) == len(summaries) == count == 1, "expected exactly one TestResult and owner summary")
         ident, result = results[0]
