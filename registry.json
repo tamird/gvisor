@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T19:55:52+00:00",
+    "updatedAt": "2026-11-09T20:24:14+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50436,8 +50436,8 @@
       "title": "Count distinct waiters moved by futex requeue",
       "url": "https://github.com/tamird/gvisor/commit/dabaf5e45",
       "group": "runtime",
-      "status": "Approved; waiting for #16810",
-      "updatedAt": "2026-11-06T16:32:56.778Z",
+      "status": "Published",
+      "updatedAt": "2026-11-09T20:14:05+00:00",
       "summary": "With two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
       "evidence": [
         {
@@ -50462,16 +50462,17 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "dabaf5e4552b6f310f2ca05c1c0b9e0b8555df85",
-        "observedAt": "2026-11-06T16:32:56.778Z",
-        "disposition": "Tamir approved submission after #16810.",
-        "nextAction": "Open the approved PR after #16810.",
+        "owner": "Upstream review",
+        "sourceHead": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
+        "observedAt": "2026-11-09T20:14:05+00:00",
+        "disposition": "Opened #17305 after #16810 merged. The approved patch survived the rebase unchanged.",
+        "nextAction": "Follow review on #17305.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/dabaf5e45",
-          "https://github.com/google/gvisor/pull/16810"
+          "https://github.com/google/gvisor/pull/17305",
+          "https://github.com/tamird/gvisor/actions/runs/41377109901/artifacts/13111867362"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:16844",
@@ -61330,7 +61331,7 @@
       "ref": "research/unix-listener-readiness-current",
       "head": "1a322dca25c58e1f3088921133c346b77f2246e0",
       "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets.",
-      "updatedAt": "2026-11-09T19:55:52+00:00",
+      "updatedAt": "2026-11-09T20:14:05+00:00",
       "evidence": [
         {
           "label": "Ryan’s doc-comment request and the published fix",
@@ -61389,13 +61390,14 @@
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "1a322dca25c58e1f3088921133c346b77f2246e0",
-        "observedAt": "2026-11-09T19:55:52+00:00",
-        "disposition": "Published Ryan’s opening sentence for updateEventsLocked and replied on the review. The diff from his approved head changes only that comment.",
-        "nextAction": "Ryan has been asked to reapprove the amended commit.",
+        "observedAt": "2026-11-09T20:14:05+00:00",
+        "disposition": "Ryan’s doc-comment change is published. Copybara opened #17304 from his earlier approved commit a2d366673.",
+        "nextAction": "Await Ryan’s reapproval of 1a322dca2 so Copybara can refresh #17304.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1a322dca2",
           "https://github.com/google/gvisor/pull/17170#discussion_r4517282604",
-          "https://github.com/google/gvisor/pull/17170#discussion_r4517215881"
+          "https://github.com/google/gvisor/pull/17170#discussion_r4517215881",
+          "https://github.com/google/gvisor/pull/17304"
         ]
       },
       "id": "pr:17170",
@@ -69213,6 +69215,75 @@
           "at": "2026-11-09T19:20:29+00:00"
         }
       ]
+    },
+    {
+      "id": "pr:17305",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17305,
+      "ref": "delivery/futex-requeue-count",
+      "head": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
+      "title": "Count each waiter once during futex requeue",
+      "url": "https://github.com/google/gvisor/pull/17305",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-09T20:14:05+00:00",
+      "summary": "With two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
+      "evidence": [
+        {
+          "label": "Qualified syscall and package tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41377109901/artifacts/13111867362"
+        },
+        {
+          "label": "Merged PI waiter prerequisite",
+          "url": "https://github.com/google/gvisor/pull/16810"
+        }
+      ]
+    },
+    {
+      "id": "branch:public-ci-bcr-mirror",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/bcr-archives-public-ci",
+      "head": "e08a227bdd6d58b014968fe1dd60822e456348ee",
+      "url": "https://github.com/tamird/gvisor/commit/e08a227bd",
+      "title": "Mirror module archives in public CI",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T20:24:14+00:00",
+      "summary": "With GitHub blocked, Bazel fetched Skylib, Protobuf and toml.bzl from Cloudflare. With Cloudflare blocked, all three came from GitHub. Both runs matched the BCR digests. Only the three public CI jobs select this configuration.",
+      "evidence": [
+        {
+          "label": "Single commit",
+          "url": "https://github.com/tamird/gvisor/commit/e08a227bd"
+        },
+        {
+          "label": "Cold fetch and fallback controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42692225274/artifacts/13707033240"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "url": "https://github.com/tamird/gvisor/commit/e08a227bd",
+        "head": "e08a227bdd6d58b014968fe1dd60822e456348ee",
+        "baseHead": "d114141c1a06d89f7e920c4d15f7337483739729",
+        "title": "Mirror module archives in public CI",
+        "body": "GitHub release downloads returned HTTP 504 while Gazelle fetched Skylib,\nwhile Go branch generation fetched Protobuf, and while the GPU driver\nrelease job fetched toml.bzl. Each job stopped before running its check.\n\nGive those jobs a Bazel rc that tries the Cloudflare mirror for BCR\narchives before contacting the release host. Bazel verifies the same\nregistry-provided digest for both downloads. Select the rc in the jobs\nso ordinary builds can keep using their own registries.",
+        "requestedAt": "2026-11-09T20:24:14+00:00",
+        "summary": "May I open the CI-only BCR mirror PR for the three jobs that saw GitHub release HTTP 504s?"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "e08a227bdd6d58b014968fe1dd60822e456348ee",
+        "observedAt": "2026-11-09T20:24:14+00:00",
+        "disposition": "Ready for contributor review.",
+        "nextAction": "May I open the CI-only BCR mirror PR for the three jobs that saw GitHub release HTTP 504s?",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e08a227bd",
+          "https://github.com/tamird/gvisor/actions/runs/42692225274/artifacts/13707033240"
+        ]
+      }
     }
   ],
   "edges": [
@@ -86968,7 +87039,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T05:02:00+00:00",
+      "updatedAt": "2026-11-09T20:24:14+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -89867,6 +89938,40 @@
             {
               "label": "Four original native Linux and Netstack TestResults, logs and packet captures",
               "url": "https://github.com/tamird/gvisor/actions/runs/42564062107/artifacts/13650647482"
+            }
+          ]
+        },
+        {
+          "text": "The failed ARM64 retransmission run captured the third retry at 04:33:58.872326 UTC and the next copy at 04:34:01.597487. The Sentry logged clock samples at 04:33:59.157333 and 04:34:00.158486. Firecracker recorded a VM pause at 04:34:02.038688, after that packet and the end of the test. The logs lack a TCP close or send-timer event that could identify what delayed the fourth packet.",
+          "evidence": [
+            {
+              "label": "Failed test action and worker metadata",
+              "url": "https://app.buildbuddy.io/invocation/01bbe57a-76f8-405f-b221-a5a4bd41d063"
+            },
+            {
+              "label": "Original wire capture",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42564062107/artifacts/13651010772"
+            }
+          ]
+        },
+        {
+          "text": "On mixed source 373937b75 the two newly selected netstack benchmark test binaries each ran seven named tests (15 XML records including subtests) uncached on native AMD64 and ARM64, with no skips. The six added default build outputs completed. The standalone build initially filtered three Nogo owners; those three were built separately with the mixed presubmit’s build filter. This closes the eight inventory additions only.",
+          "evidence": [
+            {
+              "label": "Combined evidence and original test XML",
+              "url": "https://app.buildbuddy.io/invocation/af85c3c4-e61a-4767-99c9-39ef2c02347f"
+            },
+            {
+              "label": "Native test runners",
+              "url": "https://app.buildbuddy.io/invocation/072772fd-f465-4eac-af12-fd694e61029f"
+            },
+            {
+              "label": "Three product outputs",
+              "url": "https://app.buildbuddy.io/invocation/063500da-e2e0-4543-9a44-b14a41d104ad"
+            },
+            {
+              "label": "Three Nogo outputs",
+              "url": "https://app.buildbuddy.io/invocation/cb7e3562-336e-4864-b67d-dd95dfb368c7"
             }
           ]
         }
@@ -93930,8 +94035,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T18:35:40+00:00",
-      "summary": "TestICMPErrorDuringUDPRecv/Connected/PortUnreachable expected ECONNREFUSED. On two builds the receive succeeded instead.",
+      "updatedAt": "2026-11-09T20:24:14+00:00",
+      "summary": "A blocking receive on a connected UDP socket returned data where the test expected ECONNREFUSED. The same assertion failed on four builds.",
       "findings": [
         {
           "text": "The two failing logs point to the same receive assertion. On each retry, the UDP ICMP-error target was the only one of 82 tests to rerun and passed in 9.7 seconds. Its log does not report the individual passing subtest.",
@@ -93953,9 +94058,30 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/53938#01a1be0e-2735-4910-a872-03bb9c16cd92"
             }
           ]
+        },
+        {
+          "text": "Master build #53964 and the unrelated #17068 import build #53975 hit the same PortUnreachable assertion. Both original UDP targets reran and passed in 9.8 seconds. The public artifact listings for all four failed jobs contain the UDP test log but no matching packet capture.",
+          "evidence": [
+            {
+              "label": "#53964 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53964#01a1c193-d7b3-4c02-afbc-83887e9bf699"
+            },
+            {
+              "label": "#53964 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53964#01a1c19a-e22d-4cb8-9788-50035c7aec33"
+            },
+            {
+              "label": "#53975 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53975#01a1c1a4-ea9a-42d1-9e5c-dbbdfcb52ca2"
+            },
+            {
+              "label": "#53975 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53975#01a1c1b2-abdb-4b26-b05f-fca67aed7abf"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the two failed packet captures with the socket receive order. The test sends the ICMP error and then UDP payloads. Establish which was enqueued first at the affected socket.",
+      "nextStep": "Capture both wire traffic and when the blocking receive returns on a failing run. The test injects the ICMP error and then sends the UDP data that can wake the same socket.",
       "evidence": [
         {
           "label": "gVisor #17052",
@@ -94025,7 +94151,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T19:33:12+00:00",
+      "updatedAt": "2026-11-09T20:24:14+00:00",
       "summary": "Gazelle and Go generation stopped before testing on three contributors’ PRs. Bazel reported HTTP 504 while fetching bazel-skylib 1.9.2 or protobuf 35.1.",
       "findings": [
         {
@@ -94053,9 +94179,22 @@
               "url": "https://buildkite.com/gvisor/release/builds/7667#01a1b4b4-d220-4629-a06e-37c962f2935e"
             }
           ]
+        },
+        {
+          "text": "The three jobs fetch bazel_skylib 1.9.2, Protobuf 35.1 and toml.bzl 0.4.1 through Bazel’s registry downloader. Two empty-cache Linux runs fetched all three: from Cloudflare with the GitHub URLs blocked, and from GitHub with the mirror blocked. The six archives matched the three registry digests. The experiment exercised the fetches and Make’s Bazel selection, not the three end-to-end workflows.",
+          "evidence": [
+            {
+              "label": "Bazel fetches, SHA-256 values and extracted files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42692225274/artifacts/13707033240"
+            },
+            {
+              "label": "CI-only configuration",
+              "url": "https://github.com/tamird/gvisor/commit/e08a227bd"
+            }
+          ]
         }
       ],
-      "nextStep": "Both conventional mirror.bazel.build paths returned 404. Check for a verified mirror of the exact BCR archives and watch for another failed fetch.",
+      "nextStep": "Review the CI-only configuration. The mirror applies to the three public jobs. A separate upstream investigation covers Bazel’s handling of the implicit public registry.",
       "evidence": [
         {
           "label": "#17236 · Gazelle · bazel-skylib",
@@ -94116,6 +94255,61 @@
         {
           "label": "#53957 · passing retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53957#01a1c191-7c7d-499b-af59-45a29b0daa83"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-packetimpact-address-dump",
+      "title": "Interrupted IPv6 address dumps stop PacketImpact before the TCP test starts",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T20:24:14+00:00",
+      "summary": "Four builds stopped while the test DUT was retrieving IPv6 addresses. Each affected TCP target ran and passed uncached in the same-head retry.",
+      "findings": [
+        {
+          "text": "The affected TCP tests were unaccepted sequence numbers (#53950), handshake window size (#53959), TCP_INFO (#53965) and TIME_WAIT reset (#53975). Their retries took 7.3, 0.6, 0.8 and 1.5 seconds respectively. #53975 separately reproduced the connected UDP receive failure.",
+          "evidence": [
+            {
+              "label": "#53950 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53950#01a1c159-3afa-4a74-aee4-1217a4d65cff"
+            },
+            {
+              "label": "#53950 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53950#01a1c161-b71a-4782-9fef-33233d48dc46"
+            },
+            {
+              "label": "#53959 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53959#01a1c187-b1f0-41e8-a8b2-926897ac9042"
+            },
+            {
+              "label": "#53959 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53959#01a1c192-7120-4033-a0e2-fd68fa2cf322"
+            },
+            {
+              "label": "#53965 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53965#01a1c194-5288-4973-b01b-30d4eb0f7504"
+            },
+            {
+              "label": "#53965 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53965#01a1c1a0-88a7-4140-8532-d266f7d8f56f"
+            },
+            {
+              "label": "#53975 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53975#01a1c1a4-ea9a-42d1-9e5c-dbbdfcb52ca2"
+            },
+            {
+              "label": "#53975 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53975#01a1c1b2-abdb-4b26-b05f-fca67aed7abf"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Follow #17288, which retries the interrupted address family and discards partial results. Check for recurrences on a head containing the fix.",
+      "evidence": [
+        {
+          "label": "Proposed bootstrap fix",
+          "url": "https://github.com/google/gvisor/pull/17288"
         }
       ]
     }
