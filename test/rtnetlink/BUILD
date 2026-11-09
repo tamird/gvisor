@@ -1,9 +1,11 @@
-load("//test/runner:defs.bzl", "syscall_test")
+load("//test/runner:defs.bzl", "arm64_syscall_suite", "syscall_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
+
+arm64_syscall_suite(name = "arm64_syscalls")
 
 syscall_test(
     size = "small",

@@ -11,5 +11,9 @@
 # Native Linux syscall tests on workers that support nested namespaces.
 //test/rbe:native_syscalls
 
+# ARM64 syscall tests running under runsc with ptrace or systrap.
+//test/syscalls:arm64_syscalls
+//test/rtnetlink:arm64_syscalls
+
 # PacketImpact needs nested namespaces on its native test worker.
 //test/packetimpact/tests:mixed_tests

@@ -6,6 +6,15 @@ load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "with_t
 
 native_arm64_test, _native_arm64_transition = with_test_architecture(native_test, "arm64").build()
 
+_ARM64_GUEST_SYSCALL = "arm64_guest_syscall"
+
+def arm64_syscall_suite(name):
+    """Groups this package's ARM64 tests for the ordinary syscall presubmit."""
+    native.test_suite(
+        name = name,
+        tags = ["manual", _ARM64_GUEST_SYSCALL],
+    )
+
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {
     platform: ",".join(sorted([
@@ -174,6 +183,12 @@ def _syscall_test(
     native_test(name = name, out = name, **kwargs)
     if platform == "native":
         arm64_presubmit_test(name, native_arm64_test, kwargs)
+    elif platform in ("ptrace", "systrap") and "allsave" not in tags and "perf" not in tags:
+        # The syscalls-arm64 configuration runs these variants. The runner
+        # starts runsc in a new user namespace and mount namespace.
+        guest = dict(kwargs, tags = tags + [_ARM64_GUEST_SYSCALL])
+        guest.setdefault("exec_properties", namespace_test_exec_properties)
+        arm64_presubmit_test(name, native_arm64_test, guest)
 
 def all_platforms():
     """All platforms returns a list of all platforms."""

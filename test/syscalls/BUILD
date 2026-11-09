@@ -1,10 +1,12 @@
-load("//test/runner:defs.bzl", "syscall_test")
+load("//test/runner:defs.bzl", "arm64_syscall_suite", "syscall_test")
 load("//tools:defs.bzl", "more_shards", "most_shards")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
+
+arm64_syscall_suite(name = "arm64_syscalls")
 
 # Please keep syscall tests ordered alphabetically by name.
 
