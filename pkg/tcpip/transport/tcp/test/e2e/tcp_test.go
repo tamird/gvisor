@@ -10206,36 +10206,21 @@ func testSetExperimentOption(t *testing.T, gso bool) {
 	c.SetGSOEnabled(gso)
 	c.CreateConnected(context.TestInitialSequenceNumber, 30000, -1 /* epRcvBuf */)
 
-	var expval uint16 = 99
-	c.EP.SocketOptions().SetExperimentOptionValue(expval)
-
-	var r bytes.Reader
-	r.Reset(make([]byte, 1))
-	_, err := c.EP.Write(&r, tcpip.WriteOptions{})
-	if err != nil {
-		t.Fatalf("Write failed: %s", err)
-	}
-
-	v := c.GetPacket()
-	defer v.Release()
-	want := header.IPv4Options{
-		byte(header.IPv4OptionExperimentType),
-		byte(header.IPv4OptionExperimentLength),
-		0,
-		byte(expval),
-	}
-	checker.IPv4(t, v, checker.IPv4Options(want))
+	checkExperimentOptionWrite(t, c, false /* ipv6 */, gso, 99)
 }
 
 func TestSetExperimentOptionIPv6(t *testing.T) {
 	for _, gso := range []bool{false, true} {
 		t.Run(fmt.Sprintf("host_GSO=%t", gso), func(t *testing.T) {
-			testSetExperimentOptionIPv6(t, gso)
+			testSetExperimentOptionIPv6(t, gso, 99)
 		})
 	}
+	t.Run("untagged_host_GSO", func(t *testing.T) {
+		testSetExperimentOptionIPv6(t, true /* gso */, 0)
+	})
 }
 
-func testSetExperimentOptionIPv6(t *testing.T, gso bool) {
+func testSetExperimentOptionIPv6(t *testing.T, gso bool, value uint16) {
 	c := context.NewWithOpts(t, context.Options{
 		EnableV4:                 false,
 		EnableV6:                 true,
@@ -10318,20 +10303,57 @@ func testSetExperimentOptionIPv6(t *testing.T, gso bool) {
 	c.RcvdWindowScale = uint8(synOpts.WS)
 	c.Port = tcpHdr.SourcePort()
 
-	var expval uint16 = 99
-	c.EP.SocketOptions().SetExperimentOptionValue(expval)
+	checkExperimentOptionWrite(t, c, true /* ipv6 */, gso, value)
+}
 
-	var r bytes.Reader
-	r.Reset(make([]byte, 1))
-	_, err = c.EP.Write(&r, tcpip.WriteOptions{})
-	if err != nil {
-		t.Fatalf("Write failed: %s", err)
+func checkExperimentOptionWrite(t *testing.T, c *context.Context, ipv6, hostGSO bool, value uint16) {
+	t.Helper()
+	c.EP.SocketOptions().SetExperimentOptionValue(value)
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil || info.SndMss == 0 {
+		t.Fatalf("GetSockOpt(TCP_INFO) = %v, MSS = %d", err, info.SndMss)
+	}
+	mss := int(info.SndMss)
+	data := make([]byte, 2*mss)
+	for i := range data {
+		data[i] = byte(i + i/251)
+	}
+	if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+		t.Fatalf("Write = %d, %v, want %d, nil", n, err, len(data))
 	}
 
-	v := c.GetV6Packet()
-	defer v.Release()
-
-	checker.IPv6WithExtHdr(t, v, checker.IPv6ExtHdr(checker.IPv6ExperimentHeader(expval)), checker.TCP(checker.Payload([]byte{0})))
+	// The channel receives host GSO aggregates before host segmentation.
+	// TCP must split writes carrying the IPv6 experiment header itself.
+	chunk := mss
+	if hostGSO && (!ipv6 || value == 0) {
+		chunk = len(data)
+	}
+	for offset := 0; offset < len(data); offset += chunk {
+		want := data[offset : offset+chunk]
+		seq := c.IRS.Add(1 + seqnum.Size(offset))
+		payload := func(t *testing.T, h header.Transport) {
+			t.Helper()
+			if got := len(h.Payload()); got != len(want) {
+				t.Fatalf("TCP payload at sequence %d has %d bytes, want %d", seq, got, len(want))
+			}
+			checker.Payload(want)(t, h)
+		}
+		tcp := checker.TCP(checker.TCPSeqNum(uint32(seq)), payload)
+		if ipv6 {
+			v := c.GetV6Packet()
+			defer v.Release()
+			if value == 0 {
+				checker.IPv6(t, v, tcp)
+			} else {
+				checker.IPv6WithExtHdr(t, v, checker.IPv6ExtHdr(checker.IPv6ExperimentHeader(value)), tcp)
+			}
+		} else {
+			v := c.GetPacket()
+			defer v.Release()
+			opts := header.IPv4Options{byte(header.IPv4OptionExperimentType), header.IPv4OptionExperimentLength, byte(value >> 8), byte(value)}
+			checker.IPv4(t, v, checker.IPv4Options(opts), tcp)
+		}
+	}
 }
 
 func TestSetExperimentOptionWithOptionDisabled(t *testing.T) {

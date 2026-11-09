@@ -1047,7 +1047,7 @@ func (e *Endpoint) sendEmptyRaw(flags header.TCPFlags, seq, ack seqnum.Value, rc
 		Mark: e.ops.GetMark(),
 	})
 	defer pkt.DecRef()
-	return e.sendRaw(pkt, flags, seq, ack, rcvWnd, sackBlocks)
+	return e.sendRaw(pkt, flags, seq, ack, rcvWnd, sackBlocks, e.getExperimentOptionValue(e.route))
 }
 
 // currentSACKBlocks returns the SACK blocks to include in an outgoing segment
@@ -1064,11 +1064,10 @@ func (e *Endpoint) currentSACKBlocks(flags header.TCPFlags) []header.SACKBlock {
 // ownership of pkt. pkt must not have any headers set.
 //
 // +checklocks:e.mu
-func (e *Endpoint) sendRaw(pkt *stack.PacketBuffer, flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size, sackBlocks []header.SACKBlock) tcpip.Error {
+func (e *Endpoint) sendRaw(pkt *stack.PacketBuffer, flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size, sackBlocks []header.SACKBlock, expOptVal uint16) tcpip.Error {
 	options := e.makeOptions(sackBlocks)
 	defer putOptions(options)
 	hdrSize := header.TCPMinimumSize + int(e.route.MaxHeaderLength()) + len(options)
-	expOptVal := e.getExperimentOptionValue(e.route)
 	if e.route.NetProto() == header.IPv6ProtocolNumber && expOptVal != 0 {
 		hdrSize += header.IPv6ExperimentHdrLength
 	}
