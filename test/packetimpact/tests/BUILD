@@ -1,4 +1,4 @@
-load("//test/packetimpact/runner:defs.bzl", "ALL_TESTS", "packetimpact_go_test", "packetimpact_testbench", "validate_all_tests")
+load("//test/packetimpact/runner:defs.bzl", "ALL_TESTS", "PACKETIMPACT_TAGS", "packetimpact_go_test", "packetimpact_testbench", "validate_all_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -474,17 +474,17 @@ validate_all_tests()
 _PACKETIMPACT_TESTS = [
     t.name + "_" + dut + "_test"
     for t in ALL_TESTS
-    for dut in ["native", "netstack"]
+    for dut in ("native", "netstack")
 ]
 
 test_suite(
     name = "all_tests",
-    tags = ["manual", "notap", "packetimpact"],
+    tags = PACKETIMPACT_TAGS,
     tests = _PACKETIMPACT_TESTS,
 )
 
 test_suite(
     name = "mixed_tests",
-    tags = ["manual", "notap", "packetimpact"],
+    tags = PACKETIMPACT_TAGS,
     tests = [":all_tests"] + [name + "_presubmit_arm64" for name in _PACKETIMPACT_TESTS],
 )

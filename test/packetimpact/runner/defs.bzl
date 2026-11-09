@@ -17,6 +17,7 @@ def _packetimpact_test(
         expect_failure,
         num_duts = 1,
         args = [],
+        exec_properties = namespace_test_exec_properties,
         **kwargs):
     # The DUT needs its runfiles in the new user namespace, including its
     # POSIX server and, for netstack, runsc and its sidecars.
@@ -31,7 +32,7 @@ def _packetimpact_test(
             "--num_duts=%d" % num_duts,
         ] + (["--expect_failure"] if expect_failure else []) + args,
         data = [dut_binary, testbench_binary],
-        exec_properties = namespace_test_exec_properties,
+        exec_properties = exec_properties,
         tags = PACKETIMPACT_TAGS,
         **kwargs
     )
