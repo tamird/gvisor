@@ -114,7 +114,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                 "reason": "source-conflicted" if pr.get("mergeable") == "CONFLICTING" else "mergeability-unknown"}
     if not pr.get("reviewsComplete") or not pr.get("reviewDismissals", {}).get("complete"):
         return skip("incomplete-review-or-comment-history")
-    comments = [item for item in pr.get("feedback", {}).get("items", []) if item.get("kind") == "comment"]
+    feedback = pr.get("feedback", {}).get("items", [])
+    comments = [item for item in feedback if item.get("kind") == "comment"]
     if not pr.get("commentsComplete"):
         try:
             oldest = min(datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00")) for item in comments)
@@ -122,6 +123,16 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             return skip("incomplete-reminder-window")
         if oldest.tzinfo is None or now - oldest < REMINDER_INTERVAL:
             return skip("incomplete-reminder-window")
+    reminders = [item for item in comments if MARKER in item.get("body", "")]
+    proof = node.get("reapproval", {})
+    # A contributor may request reapproval in the original review thread.
+    # Its URL binds the published request to this amendment. Use GitHub's
+    # creation time for the cooldown, just as for a scheduled reminder.
+    if proof.get("head") == pr["head"] and proof.get("evidence"):
+        reminders.extend(item for item in feedback
+                         if item.get("kind") == "inline" and item.get("url") == proof["evidence"]
+                         and pr["head"][:9] in item.get("body", "")
+                         and re.search(r"\bre-?approve\b", item.get("body", ""), re.IGNORECASE))
     history = maintainer_review_history(pr)
     if history is None:
         return skip("missing-review-time")
@@ -159,7 +170,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                 "The source rebase preserves the reviewed patch, but that comparison and the older export "
                 "do not establish approval of the current head.\n\n"
                 f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} -->")
-        return schedule_reminder(result, comments, now, owner, action="reapprove-amendment",
+        return schedule_reminder(result, reminders, now, owner, action="reapprove-amendment",
                                  approvedHead=old, approvers=approvers, body=body,
                                  importReapproval=True)
     if disposition["action"] in {"maintainer-import-label", "maintainer-reimport"} and disposition["trigger"]["state"] == "missing":
@@ -192,7 +203,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                 f"{'You already approved this head.' if current_approval else 'The reviewed patch is unchanged.'} "
                 f"{export_status}\n\n"
                 f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} action=restore-import-label -->")
-        return schedule_reminder(result, comments, now, owner, action="restore-import-label",
+        return schedule_reminder(result, reminders, now, owner, action="restore-import-label",
                                  approvers=approvers, removedAt=trigger["removedAt"], body=body)
     current = [item for item in latest.values() if (item.get("commit") or {}).get("oid") == pr["head"]]
     for item in current:
@@ -224,7 +235,6 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                         item.get("sourceHead") in {patch["approvedHead"], pr["head"]}):
                     return {**skip("open-export-of-approved-patch"), "export": item["url"]}
         return skip("reviewed-patch-preserving-rebase")
-    proof = node.get("reapproval", {})
     match proof:
         case {"head": str(head), "approvedHead": str(old),
               "kind": ("content-amendment" | "patch-preserving-rebase") as kind,
@@ -255,16 +265,15 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             f"{commit_link(old)}. {export_detail}\n\n{summary}\n\n"
             f"[Amendment evidence]({evidence})\n\n"
             f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} -->")
-    return schedule_reminder(result, comments, now, owner, approvedHead=old,
+    return schedule_reminder(result, reminders, now, owner, approvedHead=old,
                              approvers=approvers, diffSha256=digest, body=body,
                              action="reapprove-amendment", importReapproval=prior_export)
 
 
-def schedule_reminder(result: dict, comments: list[dict], now: datetime, owner: str, **details: object) -> dict:
+def schedule_reminder(result: dict, reminders: list[dict], now: datetime, owner: str, **details: object) -> dict:
     """Share the per-PR cooldown and Pacific-hours gate across reminder purposes."""
-    for item in comments:
-        if ((item.get("author") or {}).get("login") != owner
-                or MARKER not in item.get("body", "")):
+    for item in reminders:
+        if (item.get("author") or {}).get("login") != owner:
             continue
         try:
             sent = datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00"))

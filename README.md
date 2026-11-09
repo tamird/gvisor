@@ -344,6 +344,10 @@ history and comments immediately before posting. The comment links the exact
 old and amended commits and retains delegated attribution. Its hidden marker
 and GitHub creation time enforce three full hours between reminders, including
 across head changes and reminder purposes; no separate reminder database is kept.
+When the contributor asks for reapproval in an inline reply, record its URL as
+the amendment’s evidence. A reply from the contributor naming the current
+commit and asking for reapproval starts the same cooldown at its GitHub posting
+time.
 Posting is limited to weekdays, 09:00–17:00 America/Los_Angeles with DST.
 The ten-minute Actions cron is best-effort scheduling, not a guaranteed
 execution interval; a missed runner slot does not reset the cooldown. Mutations are never
