@@ -26,12 +26,15 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// queryAddrs is replaced only in the private qualification fixture.
+var queryAddrs = netlink.AddrList
+
 func addrList(link netlink.Link, family int) ([]netlink.Addr, error) {
 	// An interrupted dump may contain an address for this link even when the
 	// list is incomplete. Only use the result of a completed dump.
 	const maxAttempts = 10
 	for attempt := 1; ; attempt++ {
-		addrs, err := netlink.AddrList(link, family)
+		addrs, err := queryAddrs(link, family)
 		if err == nil {
 			return addrs, nil
 		}
