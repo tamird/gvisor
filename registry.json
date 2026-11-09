@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T16:47:29+00:00",
+    "updatedAt": "2026-11-09T17:17:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1671,19 +1671,18 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-08T16:53:59+00:00",
-      "summary": "The November 4 rebase onto master 183a39d1b is published at e438da4be. GitHub reports the head is mergeable. All four Nogo targets passed on AMD64 and ARM64. On native AMD64, 171 TMPFS and 40 VFS cases passed, including both new SIGBUS cases. No cases were skipped. The earlier changes-requested review remains on the PR.\n\nOn October 25 the 12:53 provider snapshot reported e1e9c4ea0 mergeable. That source preserved the device-file credential callback with the landed Filesystem identity accessors. Its reconciliation did not include a runtime replay or fresh approval.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
+      "summary": "The November 4 rebase onto master 183a39d1b is published at e438da4be. GitHub reports the head is mergeable. All four Nogo targets passed on AMD64 and ARM64. On native AMD64, 171 TMPFS and 40 VFS cases passed, including both new SIGBUS cases. No cases were skipped. The earlier changes-requested review remains on the PR.\n\nOn October 25 the 12:53 provider snapshot reported e1e9c4ea0 mergeable. That source preserved the device-file credential callback with the landed Filesystem identity accessors. Its reconciliation did not include a runtime replay or fresh approval.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.\n\nAyush’s resolved longer-term analyzer suggestion preceded his formal approval of c84ba7677. The proposed change to work around that suggestion was withdrawn.",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "c84ba767743ce2c96109a89f234d234485b3a230",
-        "observedAt": "2026-11-08T16:53:59+00:00",
-        "disposition": "Ayush asked about removing lock pairs during private VFS initialization. The fork amendment confines the existing checklocks exception to the helper that initializes the guarded fields.",
-        "nextAction": "Approve publishing the qualified amendment and replying on the original thread.",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Retired the proposed amendment and reply. Ayush’s long-term suggestion is in a resolved thread, and he approved the existing PR head.",
+        "nextAction": "Follow the existing c84ba7677 PR head for upstream disposition.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14343#discussion_r4506829771",
-          "https://github.com/tamird/gvisor/commit/cfdbe9edf",
-          "https://github.com/tamird/gvisor/actions/runs/42499650984",
-          "https://github.com/tamird/gvisor/actions/runs/42499650984/artifacts/13625797683"
+          "https://github.com/google/gvisor/pull/14343#pullrequestreview-5818560303",
+          "https://github.com/google/gvisor/pull/14343#discussion_r4260325076"
         ]
       },
       "head": "c84ba767743ce2c96109a89f234d234485b3a230",
@@ -1727,6 +1726,18 @@
         {
           "label": "Native VFS/TMPFS suites and guarded versus whole-method Nogo controls on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42499650984/artifacts/13625797683"
+        },
+        {
+          "label": "Resolved longer-term suggestion",
+          "url": "https://github.com/google/gvisor/pull/14343#discussion_r4506829771"
+        },
+        {
+          "label": "Ayush approved the published source",
+          "url": "https://github.com/google/gvisor/pull/14343#pullrequestreview-5818560303"
+        },
+        {
+          "label": "Etienne’s lock-comment request",
+          "url": "https://github.com/google/gvisor/pull/14343#discussion_r4260325076"
         }
       ],
       "refinement": {
@@ -1752,19 +1763,21 @@
           "outcome": "approved",
           "at": "2026-11-07T12:02:13+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/14343"
+        },
+        {
+          "kind": "amendment",
+          "baseHead": "c84ba767743ce2c96109a89f234d234485b3a230",
+          "head": "cfdbe9edf497581ae3340e184806b5e3d39b7dbf",
+          "url": "https://github.com/tamird/gvisor/commit/cfdbe9edf",
+          "title": "Check TMPFS and VFS locking contracts",
+          "body": "Make checklocks enforce the existing guards for TMPFS file data and VFS registries, mount state, dentries, and epoll state. Express shared filesystem ownership where the checker can follow it, and document the remaining collection and callback boundaries.\n\nUse filesystem receivers for TMPFS path traversal so callers can prove which mutex they hold. Initialize the VFS registries before the VFS is shared, and keep the construction of its anonymous mount checked. Detach the filesystem registry before releasing its entries so release callbacks run outside the registry lock. Read file offsets through Seek in the existing TMPFS test.",
+          "summary": "Publish the qualified amendment and reply to Ayush. All 40 VFS and 171 TMPFS tests passed on native AMD64 with no skips. Nogo passed for AMD64 and ARM64. On each architecture it detected the same unguarded vfs.devices write with the exception confined to the helper. Suppressing the entire Init function hid that write.\n\nProposed inline reply\n\nYes, those lock pairs aren't needed while this VFS is private. Checklocks already supports `// +checklocksignore` on a function. I confined it to the helper that initializes the guarded fields so the rest of `Init`, including construction of its anonymous mount, stays checked. For a general annotation I'd want to name the exclusively owned receiver or parameter and check that precondition at call sites.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff c84ba7677^! cfdbe9edf^!",
+          "requestedAt": "2026-11-08T16:24:02+00:00",
+          "outcome": "changes-requested",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Retired the proposed amendment and reply. Ayush’s long-term suggestion is in a resolved thread, and he approved the existing PR head."
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "c84ba767743ce2c96109a89f234d234485b3a230",
-        "head": "cfdbe9edf497581ae3340e184806b5e3d39b7dbf",
-        "url": "https://github.com/tamird/gvisor/commit/cfdbe9edf",
-        "title": "Check TMPFS and VFS locking contracts",
-        "body": "Make checklocks enforce the existing guards for TMPFS file data and VFS registries, mount state, dentries, and epoll state. Express shared filesystem ownership where the checker can follow it, and document the remaining collection and callback boundaries.\n\nUse filesystem receivers for TMPFS path traversal so callers can prove which mutex they hold. Initialize the VFS registries before the VFS is shared, and keep the construction of its anonymous mount checked. Detach the filesystem registry before releasing its entries so release callbacks run outside the registry lock. Read file offsets through Seek in the existing TMPFS test.",
-        "summary": "Publish the qualified amendment and reply to Ayush. All 40 VFS and 171 TMPFS tests passed on native AMD64 with no skips. Nogo passed for AMD64 and ARM64. On each architecture it detected the same unguarded vfs.devices write with the exception confined to the helper. Suppressing the entire Init function hid that write.\n\nProposed inline reply\n\nYes, those lock pairs aren't needed while this VFS is private. Checklocks already supports `// +checklocksignore` on a function. I confined it to the helper that initializes the guarded fields so the rest of `Init`, including construction of its anonymous mount, stays checked. For a general annotation I'd want to name the exclusively owned receiver or parameter and check that precondition at call sites.\n\nPosted by Codex on behalf of @tamird.\n\ngit range-diff c84ba7677^! cfdbe9edf^!",
-        "requestedAt": "2026-11-08T16:24:02+00:00"
-      }
+      ]
     },
     {
       "id": "pr:14338",
@@ -28290,22 +28303,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-future-ack-discard",
-      "head": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
+      "head": "03e02dbb31d4510556da404e54fd25f1450a6719",
       "title": "tcp: reject acknowledgments beyond sent data",
       "url": "https://github.com/google/gvisor/pull/16378",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T05:02:00+00:00",
+      "updatedAt": "2026-11-09T17:17:34+00:00",
       "summary": "Proposed 03e02dbb3 changes only the PacketImpact test relative to published 8dd08c771. The production receive path is byte-identical. The test permits native Linux to silently discard the two ACKs of unsent bytes. It still requires the unchanged challenge ACK from gVisor and checks that only the continuation reaches the application.\n\nThe qualifier applied the two-file 03e02dbb3 proposal to mixed integration 373937b75 and selected only the established-state test. Four uncached TestEstablishedUnaccSeqAck runs passed on AMD64 and ARM64 (24 subtests and four parents, zero skips). For the two probes acknowledging unsent bytes, native Linux 6.18.57 sent both challenge ACKs, native Linux 5.10.0 sent neither, and Netstack sent both on each architecture. All eight flows acknowledged and delivered the distinct 12-byte continuation at the rejected sequence number.\n\nThe approved future-ACK repair is delivered independently on public 7bffefa. Both complete product postimages and patch identity match approved 3d17. It rejects invalid payload before consumption or sender ACK processing; the separate unread-FIN investigation remains agent work. Published as #16378, open and ready for review, with exact provider head readback.\n\nHistorical source-specific validation:\n\nReject ESTABLISHED segments that acknowledge unsent data before delivering their payload or passing their acknowledgment to the sender, and send an unchanged acknowledgment through the existing limiter. The shared test checks that rejected payload is not delivered and valid traffic can continue. Public-base proposal 3d17e956611c17719835876ac9d1d63c4c85a38e was the independently qualified pre-delivery source with no prerequisite PR. The test-only baseline d517 retains native FAIL and proves both invalid payload deliveries; corrected 245c passes native Linux and netstack plus TCP Nogo and goimports (four remote uncached owners, 16 positive XML records). This focused result does not cover FIN-specific rejection, limiter saturation or performance.",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
-        "observedAt": "2026-11-09T05:02:00+00:00",
-        "disposition": "Contributor review of the proposed test revision",
-        "nextAction": "Await approval to replace the published commit on #16378 with 03e02dbb3.",
+        "owner": "Upstream review",
+        "sourceHead": "03e02dbb31d4510556da404e54fd25f1450a6719",
+        "observedAt": "2026-11-09T17:17:34+00:00",
+        "disposition": "Published the approved single-commit amendment.",
+        "nextAction": "Follow the published head for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/03e02dbb3",
-          "https://github.com/tamird/gvisor/actions/runs/42564062107/artifacts/13650647482"
+          "https://github.com/google/gvisor/pull/16378",
+          "https://github.com/tamird/gvisor/commit/03e02dbb3"
         ]
       },
       "evidence": [
@@ -28339,17 +28352,6 @@
         }
       ],
       "number": 16378,
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
-        "head": "03e02dbb31d4510556da404e54fd25f1450a6719",
-        "url": "https://github.com/tamird/gvisor/commit/03e02dbb3",
-        "title": "tcp: reject acknowledgments beyond sent data",
-        "body": "Reject established segments that acknowledge unsent data before consuming their payload or updating sender state. Send the current acknowledgment through the existing limiter, as required by RFC 9293.\n\nCheck that gVisor sends the unchanged acknowledgment. Linux kernels without [1] discard the segment silently. On both stacks, send distinct continuation data at the rejected sequence number and check that the application receives those bytes.\n\n[1]: https://github.com/torvalds/linux/commit/42726ec64",
-        "summary": "Publish 03e02dbb3 on #16378 with the qualified test change and the same TCP implementation?",
-        "requestedAt": "2026-11-09T05:02:00+00:00"
-      },
       "refinement": {
         "before": {
           "head": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
@@ -28359,7 +28361,23 @@
           "head": "03e02dbb31d4510556da404e54fd25f1450a6719",
           "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "baseHead": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
+          "head": "03e02dbb31d4510556da404e54fd25f1450a6719",
+          "url": "https://github.com/tamird/gvisor/commit/03e02dbb3",
+          "title": "tcp: reject acknowledgments beyond sent data",
+          "body": "Reject established segments that acknowledge unsent data before consuming their payload or updating sender state. Send the current acknowledgment through the existing limiter, as required by RFC 9293.\n\nCheck that gVisor sends the unchanged acknowledgment. Linux kernels without [1] discard the segment silently. On both stacks, send distinct continuation data at the rejected sequence number and check that the application receives those bytes.\n\n[1]: https://github.com/torvalds/linux/commit/42726ec64",
+          "summary": "Publish 03e02dbb3 on #16378 with the qualified test change and the same TCP implementation?",
+          "requestedAt": "2026-11-09T05:02:00+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication.",
+          "postedURL": "https://github.com/google/gvisor/pull/16378"
+        }
+      ]
     },
     {
       "id": "pr:16374",
@@ -48747,8 +48765,8 @@
       "title": "Check the set lock when accessing SysV semaphores",
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-06T21:55:33.037Z",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
       "summary": "Each caller passes its locked Set to the member’s wake method. SetVal reuses the member it already looked up, and each semaphore keeps its existing fields. Checklocks on AMD64 and ARM64 caught unlocked indexed access to waiters and value, and a wake after unlock. Both writes through previously saved pointers escaped the analyzer. The caller must supply the Set that owns the member. All four native Linux package tests passed, including TestUnregister.",
       "evidence": [
         {
@@ -48804,6 +48822,19 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T20:48:54.951Z",
           "note": "Retain sem.wakeWaiters() without a second lookup; give the semaphore a link to its protecting lock."
+        },
+        {
+          "kind": "proposal",
+          "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
+          "baseHead": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
+          "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
+          "title": "Check the set lock when accessing SysV semaphores",
+          "body": "Waking a waiter reads the semaphore value and removes the waiter from\nits queue. Guard the slice with the set mutex and require that mutex\nwhen waking waiters. Callers pass the set whose lock they hold and\nreuse the semaphore they just updated.\n\nSize only reads the length of the slice. That length is fixed when the\nset is created, so callers can read it without the mutex.",
+          "summary": "May I open this change once #16806 merges? Each caller passes its locked Set to the member’s wake method. SetVal reuses the member it already looked up, and each semaphore keeps its existing fields. Checklocks on AMD64 and ARM64 caught unlocked indexed access to waiters and value, and a wake after unlock. Both writes through previously saved pointers escaped the analyzer. The caller must supply the Set that owns the member. All four native Linux package tests passed, including TestUnregister.",
+          "requestedAt": "2026-11-06T21:55:33.037Z",
+          "outcome": "changes-requested",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Tamir asked whether checklocks should express that a returned reference remains valid only while the lock is held."
         }
       ],
       "refinement": {
@@ -48815,27 +48846,18 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "observedAt": "2026-11-06T21:55:33.037Z",
-        "disposition": "Review requested for the revised member wake method.",
-        "nextAction": "Review this commit for submission after #16806 merges.",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Tamir asked whether checklocks should express that a returned reference remains valid only while the lock is held.",
+        "nextAction": "Investigate a lock-bound reference contract with checklocks before revising the semaphore proposal.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8d8a461be",
-          "https://github.com/tamird/gvisor/actions/runs/42299643596/artifacts/13544341014",
-          "https://github.com/tamird/gvisor/actions/runs/42291965723/artifacts/13542971144"
+          "https://github.com/tamird/gvisor/commit/8d8a461be"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "baseHead": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
-        "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
-        "title": "Check the set lock when accessing SysV semaphores",
-        "body": "Waking a waiter reads the semaphore value and removes the waiter from\nits queue. Guard the slice with the set mutex and require that mutex\nwhen waking waiters. Callers pass the set whose lock they hold and\nreuse the semaphore they just updated.\n\nSize only reads the length of the slice. That length is fixed when the\nset is created, so callers can read it without the mutex.",
-        "summary": "May I open this change once #16806 merges? Each caller passes its locked Set to the member’s wake method. SetVal reuses the member it already looked up, and each semaphore keeps its existing fields. Checklocks on AMD64 and ARM64 caught unlocked indexed access to waiters and value, and a wake after unlock. Both writes through previously saved pointers escaped the analyzer. The caller must supply the Set that owns the member. All four native Linux package tests passed, including TestUnregister.",
-        "requestedAt": "2026-11-06T21:55:33.037Z"
+        "url": "https://github.com/tamird/gvisor/commit/8d8a461be"
       }
     },
     {
@@ -51729,15 +51751,23 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "checkpoint-page-read-error",
-      "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+      "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
       "number": 16807,
       "title": "Release waiters and page references after a checkpoint read error",
       "url": "https://github.com/google/gvisor/pull/16807",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T18:31:23.952068+00:00",
+      "updatedAt": "2026-11-09T17:07:39+00:00",
       "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The initial race test did not build. On a GNU worker all 69 race cases passed with zero skips.",
       "evidence": [
+        {
+          "label": "Ryan reapproved f054d1f11",
+          "url": "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829594996"
+        },
+        {
+          "label": "Earlier Copybara import names 2d5231b45",
+          "url": "https://github.com/google/gvisor/pull/17285"
+        },
         {
           "label": "Proposed source and permanent three-page test",
           "url": "https://github.com/tamird/gvisor/commit/3adb1aa3b"
@@ -51773,6 +51803,18 @@
         {
           "label": "69 race cases and two analyzers on the rebased commit",
           "url": "https://github.com/tamird/gvisor/actions/runs/41677508668/artifacts/13256418500"
+        },
+        {
+          "label": "Published comment move",
+          "url": "https://github.com/tamird/gvisor/compare/2d5231b45..f054d1f11"
+        },
+        {
+          "label": "Ryan approved 2d5231b45",
+          "url": "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829354526"
+        },
+        {
+          "label": "Reapproval requested on the original thread",
+          "url": "https://github.com/google/gvisor/pull/16807#discussion_r4515548044"
         }
       ],
       "settledReviews": [
@@ -51788,28 +51830,58 @@
           "outcome": "approved",
           "at": "2026-11-03T18:31:23.952068+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16807"
+        },
+        {
+          "kind": "amendment",
+          "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+          "baseHead": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+          "outcome": "approved",
+          "at": "2026-11-09T17:07:39+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/f054d1f11",
+          "postedURL": "https://github.com/google/gvisor/pull/16807",
+          "note": "Ryan requested this comment move. Tamir directed publication on the existing PR."
+        },
+        {
+          "kind": "reply",
+          "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+          "outcome": "approved",
+          "at": "2026-11-09T17:04:23Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16807#discussion_r4515548044",
+          "body": "Moved the waiter comment directly above `finishCompletions()` in f054d1f11. @relkochta, could you re-approve that commit so Copybara picks up the move?\n\nPosted by Codex on behalf of @tamird."
         }
       ],
       "refinement": {
         "before": {
-          "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
-          "base": "aa767e4c43d011121271551fe24da501a56f729d"
+          "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+          "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         },
         "after": {
-          "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+          "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
-        "observedAt": "2026-11-03T18:31:23.952068+00:00",
-        "disposition": "Approved amendment published",
-        "nextAction": "Follow upstream review and CI on the rebased head.",
+        "owner": "Agent",
+        "sourceHead": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+        "observedAt": "2026-11-09T17:07:39+00:00",
+        "disposition": "Ryan reapproved f054d1f11 at 17:05:13 UTC. The ready-to-pull label is present. Open Copybara import #17285 still names 2d5231b45.",
+        "nextAction": "Watch #17285 and its successor until the import carries f054d1f11. If the old import lands, verify the comment above finishCompletions() on master and roll it into the next cleanup only if missing.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2d5231b45",
-          "https://github.com/tamird/gvisor/actions/runs/41677508668/artifacts/13256418500"
+          "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829594996",
+          "https://github.com/google/gvisor/pull/17285",
+          "https://github.com/tamird/gvisor/compare/2d5231b45..f054d1f11",
+          "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829354526",
+          "https://github.com/google/gvisor/pull/16807#discussion_r4515548044"
         ]
+      },
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+        "approvedHead": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+        "diffSha256": "27c8f160ad1fabc16a657ab02798adc3890458982c4e958bf58eef5f10c8a8aa",
+        "summary": "Move the two existing waiter-comment lines directly above finishCompletions(). The executable source is unchanged.",
+        "evidence": "https://github.com/google/gvisor/pull/16807#discussion_r4515548044"
       }
     },
     {
@@ -53980,19 +54052,33 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/buildkite-license-native",
-      "head": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
+      "head": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac",
       "title": "Run governance and license checks on the Buildkite agent",
       "url": "https://github.com/google/gvisor/pull/16904",
       "group": "bazel",
       "status": "open",
       "summary": "Buildkite build 53913 ran the two governance comparisons in the dedicated job and all three unit jobs. The proposed revision keeps them in the unit jobs and runs license verification on the agent. Native Make verified all 220 entries and rejected a catalog missing abseil-cpp.",
-      "updatedAt": "2026-11-08T13:23:54+00:00",
+      "updatedAt": "2026-11-09T17:17:34+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
           "outcome": "approved",
           "head": "896acc45666c609ab05f92160f322f976a86cea1",
           "at": "2026-11-03T14:10:33.767303+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac",
+          "baseHead": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
+          "title": "Run license CI natively and deduplicate governance",
+          "url": "https://github.com/tamird/gvisor/commit/d51e6c370",
+          "summary": "Replace the published commit on #16904 with this revision?",
+          "body": "Buildkite runs the same two comparisons for CODEOWNERS and MAINTAINERS.md in the governance and unit jobs. In build 53913, the dedicated job and all three unit jobs reported both tests [1]. The first-pass unit job uses the same Make target, which includes //:all.\n\nRemove the dedicated governance job from both pipelines. Keep make governance-check available for running just those comparisons.\n\nThe license check builds the checker, then runs it to query the dependency graph through Make. Run that job on the agent in both pipelines. Let the nested queries use the selected Bazel installation and the agent's remote-cache options.\n\nBuildkite overlays hook exports on the agent's original environment. Unsetting USE_BAZEL_VERSION allowed an inherited 8.5.0 to reach Bazelisk on a checkout pinned to 8.8.1 [2]. Export the checkout's version and shut down the native server when the job finishes.\n\nThe shared failure hook calls Make to clean and shut down Bazel even when the job never used the builder. Those calls can start a builder on a cold agent [3]. Keep reporting failed test logs and let the existing container sweep stop running builders.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53913\n[2]: https://github.com/tamird/gvisor/actions/runs/42462374395/artifacts/13609898731\n[3]: https://github.com/tamird/gvisor/commit/7e2f75125",
+          "requestedAt": "2026-11-08T12:41:39+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication.",
+          "postedURL": "https://github.com/google/gvisor/pull/16904"
         }
       ],
       "evidence": [
@@ -54030,27 +54116,15 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
-        "observedAt": "2026-11-08T13:23:54+00:00",
-        "disposition": "The published PR runs both checks on the agent. The proposed revision removes the duplicate governance jobs and keeps the native license check.",
-        "nextAction": "Await contributor review of the proposed replacement for the published commit.",
+        "owner": "Upstream review",
+        "sourceHead": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac",
+        "observedAt": "2026-11-09T17:17:34+00:00",
+        "disposition": "Published the approved single-commit amendment.",
+        "nextAction": "Follow the published head for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42466456845/artifacts/13612101725",
-          "https://github.com/tamird/gvisor/actions/runs/42462374395/artifacts/13609898731",
-          "https://buildkite.com/gvisor/pipeline/builds/53913"
+          "https://github.com/google/gvisor/pull/16904",
+          "https://github.com/tamird/gvisor/commit/d51e6c370"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac",
-        "baseHead": "e0c3c48c8f6c98dec38252c20320ee563d8f37e8",
-        "title": "Run license CI natively and deduplicate governance",
-        "url": "https://github.com/tamird/gvisor/commit/d51e6c370",
-        "summary": "Replace the published commit on #16904 with this revision?",
-        "body": "Buildkite runs the same two comparisons for CODEOWNERS and MAINTAINERS.md in the governance and unit jobs. In build 53913, the dedicated job and all three unit jobs reported both tests [1]. The first-pass unit job uses the same Make target, which includes //:all.\n\nRemove the dedicated governance job from both pipelines. Keep make governance-check available for running just those comparisons.\n\nThe license check builds the checker, then runs it to query the dependency graph through Make. Run that job on the agent in both pipelines. Let the nested queries use the selected Bazel installation and the agent's remote-cache options.\n\nBuildkite overlays hook exports on the agent's original environment. Unsetting USE_BAZEL_VERSION allowed an inherited 8.5.0 to reach Bazelisk on a checkout pinned to 8.8.1 [2]. Export the checkout's version and shut down the native server when the job finishes.\n\nThe shared failure hook calls Make to clean and shut down Bazel even when the job never used the builder. Those calls can start a builder on a cold agent [3]. Keep reporting failed test logs and let the existing container sweep stop running builders.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53913\n[2]: https://github.com/tamird/gvisor/actions/runs/42462374395/artifacts/13609898731\n[3]: https://github.com/tamird/gvisor/commit/7e2f75125",
-        "requestedAt": "2026-11-08T12:41:39+00:00"
       },
       "refinement": {
         "before": {
@@ -56703,13 +56777,17 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "review/boot-failed-exec-stdio",
-      "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+      "head": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
       "url": "https://github.com/google/gvisor/pull/17048",
       "title": "Release the sandbox file table when starting a process fails",
       "status": "open",
-      "updatedAt": "2026-11-09T05:35:31+00:00",
+      "updatedAt": "2026-11-09T17:17:34+00:00",
       "summary": "Ayush approved the published head 8f08865cd and asked to remove the added boot test. The proposed replacement fd64b1636 removes only TestFailedRunClosesStdio, restoring loader_test.go to the PR parent. The fix in loader.go is byte-identical to the approved version. On fd64b1636, one uncached native AMD64 run of //runsc/boot:boot_test on Linux 6.8.0-1070-azure passed TestRun, TestRestoreFailBeforeStart and TestStartupHeapReleaseOnStart. The two successful startup cases each ran /bin/true in the guest and verified exit status 0. The earlier missing-executable check ran on both architectures against the same production fix before the test was removed.\n\nA missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.",
       "evidence": [
+        {
+          "label": "Reply to Ayush after removing the test",
+          "url": "https://github.com/google/gvisor/pull/17048#discussion_r4515677276"
+        },
         {
           "label": "Proposed fix and regression on master",
           "url": "https://github.com/tamird/gvisor/commit/8f08865cd"
@@ -56741,30 +56819,41 @@
           "at": "2026-11-05T16:41:13.307421Z",
           "note": "Published as #17048.",
           "postedURL": "https://github.com/google/gvisor/pull/17048"
+        },
+        {
+          "kind": "amendment",
+          "baseHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+          "head": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
+          "title": "Release the sandbox file table when starting a process fails",
+          "body": "A missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.\n\ncreateContainerProcess owns the initial reference to the file table. CreateProcess takes a separate reference for the task only after it loads the executable. Drop the caller’s reference on every return, including errors while preparing the mount namespace or loading the process.",
+          "url": "https://github.com/tamird/gvisor/commit/fd64b1636",
+          "summary": "Update #17048 in place with fd64b1636 and reply to Ayush on the original thread? The added test is removed and the approved file-table fix is unchanged.\n\nProposed inline reply\n\nRemoved the added test in fd64b1636.\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-09T05:14:37+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication.",
+          "postedURL": "https://github.com/google/gvisor/pull/17048"
+        },
+        {
+          "kind": "reply",
+          "head": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
+          "body": "Removed the added test in fd64b1636.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17048#discussion_r4515677276",
+          "at": "2026-11-09T17:16:59Z"
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
-        "observedAt": "2026-11-09T05:14:37+00:00",
-        "disposition": "Open approved PR with an unanswered file-level request from Ayush",
-        "nextAction": "Await contributor approval to update #17048 in place and reply on the original thread. Recheck the public PR and import before acting.",
+        "owner": "Upstream review",
+        "sourceHead": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
+        "observedAt": "2026-11-09T17:17:34+00:00",
+        "disposition": "Published the approved single-commit amendment. Replied to Ayush in the original thread.",
+        "nextAction": "Follow the published head for maintainer review and import.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17048#discussion_r4509588941",
+          "https://github.com/google/gvisor/pull/17048",
           "https://github.com/tamird/gvisor/commit/fd64b1636",
-          "https://github.com/tamird/gvisor/actions/runs/42566666794/artifacts/13651804088"
+          "https://github.com/google/gvisor/pull/17048#discussion_r4515677276"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
-        "head": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
-        "title": "Release the sandbox file table when starting a process fails",
-        "body": "A missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.\n\ncreateContainerProcess owns the initial reference to the file table. CreateProcess takes a separate reference for the task only after it loads the executable. Drop the caller’s reference on every return, including errors while preparing the mount namespace or loading the process.",
-        "url": "https://github.com/tamird/gvisor/commit/fd64b1636",
-        "summary": "Update #17048 in place with fd64b1636 and reply to Ayush on the original thread? The added test is removed and the approved file-table fix is unchanged.\n\nProposed inline reply\n\nRemoved the added test in fd64b1636.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-09T05:14:37+00:00"
       },
       "refinement": {
         "before": {
@@ -61243,20 +61332,9 @@
       "title": "Keep packet header views across short reads",
       "url": "https://github.com/tamird/gvisor/commit/664d9fdb5",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T03:31:55+00:00",
+      "status": "Contributor approved; awaiting prerequisite",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
       "summary": "Each partial read on #16886 clones the header prefix to remove consumed payload. Removing the range in place preserves preceding views and their contents. Two connected sockets transferring 4 MiB in 64-byte reads improved from 56.72 to 69.02 MiB/s on AMD64 (16 pairs, p=0.010).",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "664d9fdb50b6bf530aa98ae738cce3c3cf68b8b1",
-        "baseHead": "e9abe5401c9fa5bc3c96738e52d406b0b1fbc15b",
-        "url": "https://github.com/tamird/gvisor/commit/664d9fdb5",
-        "title": "Keep packet header views across short reads",
-        "body": "A partial packet read rebuilds the header prefix each time it removes\nbytes from the payload. On connected TCP sockets with 64-byte reads,\ntrimming takes 2.50 ms of CPU per MiB at e9abe5401. Walking and cloning\nthe header prefix accounts for 1.30 ms of that time.\n\nRemove the consumed range directly from the buffer. Keep preceding views\nin place and split a view only when it contains bytes on both sides of\nthe removed range. Clones retain their original contents.\n\nTwo connected netstack sockets transferred 4 MiB on two pinned AMD EPYC\n7763 CPUs with MTU 1500 and GRO and GSO disabled. Each transfer checked\nthe received bytes and EOF. Benchstat compared 16 alternating pairs.\n\n                                  │   e9abe5401   │               279ee9ded               │\n                                  │      B/s      │      B/s       vs base                │\n    ConnectedTCPRead/read=64-2      56.72Mi ± 14%   69.02Mi ± 14%  +21.68% (p=0.010 n=16)\n\nBenchmarkPacketDataReadTo drained a 1536-byte packet with a four-byte\nheader in 64-byte reads.\n\n                                              │ drain-e9abe5401 │           drain-279ee9ded           │\n                                              │     sec/op      │   sec/op     vs base                │\n    PacketDataReadTo/headers=4/fragments=1-2        3.449µ ± 1%   1.737µ ± 0%  -49.63% (p=0.000 n=16)\n    PacketDataReadTo/headers=4/fragments=16-2       9.322µ ± 1%   7.383µ ± 1%  -20.81% (p=0.000 n=16)",
-        "summary": "Open after #16886 lands? Across 16 alternating pairs, 64-byte connected TCP reads improved 21.68% with unchanged data and EOF. The 64 KiB control showed no significant change. The ordinary owners and focused race runs passed.",
-        "requestedAt": "2026-11-07T03:31:55+00:00"
-      },
       "evidence": [
         {
           "label": "Connected transfers and packet-drain benchstat",
@@ -61270,7 +61348,33 @@
           "label": "Per-MiB CPU profiles",
           "url": "https://github.com/tamird/gvisor/actions/runs/42331342422/artifacts/13557344826"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "664d9fdb50b6bf530aa98ae738cce3c3cf68b8b1",
+          "baseHead": "e9abe5401c9fa5bc3c96738e52d406b0b1fbc15b",
+          "url": "https://github.com/tamird/gvisor/commit/664d9fdb5",
+          "title": "Keep packet header views across short reads",
+          "body": "A partial packet read rebuilds the header prefix each time it removes\nbytes from the payload. On connected TCP sockets with 64-byte reads,\ntrimming takes 2.50 ms of CPU per MiB at e9abe5401. Walking and cloning\nthe header prefix accounts for 1.30 ms of that time.\n\nRemove the consumed range directly from the buffer. Keep preceding views\nin place and split a view only when it contains bytes on both sides of\nthe removed range. Clones retain their original contents.\n\nTwo connected netstack sockets transferred 4 MiB on two pinned AMD EPYC\n7763 CPUs with MTU 1500 and GRO and GSO disabled. Each transfer checked\nthe received bytes and EOF. Benchstat compared 16 alternating pairs.\n\n                                  │   e9abe5401   │               279ee9ded               │\n                                  │      B/s      │      B/s       vs base                │\n    ConnectedTCPRead/read=64-2      56.72Mi ± 14%   69.02Mi ± 14%  +21.68% (p=0.010 n=16)\n\nBenchmarkPacketDataReadTo drained a 1536-byte packet with a four-byte\nheader in 64-byte reads.\n\n                                              │ drain-e9abe5401 │           drain-279ee9ded           │\n                                              │     sec/op      │   sec/op     vs base                │\n    PacketDataReadTo/headers=4/fragments=1-2        3.449µ ± 1%   1.737µ ± 0%  -49.63% (p=0.000 n=16)\n    PacketDataReadTo/headers=4/fragments=16-2       9.322µ ± 1%   7.383µ ± 1%  -20.81% (p=0.000 n=16)",
+          "summary": "Open after #16886 lands? Across 16 alternating pairs, 64-byte connected TCP reads improved 21.68% with unchanged data and EOF. The 64 KiB control showed no significant change. The ordinary owners and focused race runs passed.",
+          "requestedAt": "2026-11-07T03:31:55+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication after #16886 lands."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "664d9fdb50b6bf530aa98ae738cce3c3cf68b8b1",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Approved for publication after #16886 lands.",
+        "nextAction": "Open the reviewed PR after #16886 lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/664d9fdb5",
+          "https://github.com/google/gvisor/pull/16886"
+        ]
+      }
     },
     {
       "id": "branch:tcp-receiver-sack-history-lock",
@@ -61388,8 +61492,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a8e54633f",
       "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T10:42:28+00:00",
+      "status": "Contributor approved; awaiting prerequisite",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
       "summary": "Two peer queues can contend for the same TCP listener. Replacing the membership mutex with one atomic claim removed 63 net lines. On two AMD64 CPUs, rejected duplicate queue operations fell from 20.24 to 12.01 ns and a successful dequeue/requeue from 25.20 to 17.24 ns. The 16-pair benchmark measures queue operations. The ordinary and race TCP suites, both architecture analyzers and both single-processor scheduling controls passed.\n\nA fresh-connection HTTP/1.1 benchmark on two CPUs found no statistically distinguishable change with one or 16 concurrent clients (16 alternating pairs, 2,048 requests per sample). Every response matched. In a separate 16-client run on the parent, both TCP processors queued the listener. Of 2,235 duplicate enqueue attempts, 1,133 found the listener already queued on the other processor.",
       "evidence": [
         {
@@ -61409,26 +61513,14 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42600089102/artifacts/13665133641"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "a8e54633f47fda892caa896ab37f3200b662cccf",
-        "baseHead": "77f1abcbe2ea642642a13317b2fd8c37cbb7ad08",
-        "url": "https://github.com/tamird/gvisor/commit/a8e54633f",
-        "title": "Claim TCP processor queue membership atomically",
-        "body": "Peers of a listening socket can hash to different TCP processors. An\nendpoint has only one pair of queue links. Each processor takes a\nsecond mutex on the endpoint to test or clear its queue membership\nwhile holding its own queue mutex.\n\nClaim membership before inserting the endpoint and release it after\nunlinking it. Each processor still protects its own list. Removing the\nmembership mutex also removes its lock-order annotations.\n\nBenchstat for ProcessorQueueMembership on two AMD64 CPUs [1].\n\n                   │ 77f1abcbe.txt │            01da93c33.txt          │\n                   │    sec/op     │   sec/op     vs base              │\nDuplicateEnqueue-2     20.24n ± 0%   12.01n ± 0%  -40.66% (p=0.000 n=16)\nDequeueRequeue-2       25.20n ± 0%   17.24n ± 0%  -31.60% (p=0.000 n=16)\n\nDuplicateEnqueue times two queues concurrently trying to enqueue the\nsame already queued endpoint. DequeueRequeue moves the endpoint from\none queue to the other.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42366670610",
-        "summary": "Open the single-commit TCP PR after #17045 lands. The existing fairness behavior and the two-queue handoff passed on both implementations.",
-        "requestedAt": "2026-11-07T11:35:54+00:00"
-      },
       "followup": {
-        "owner": "root",
+        "owner": "Agent",
         "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
-        "observedAt": "2026-11-07T11:35:54+00:00",
-        "disposition": "Contributor review requested for a tested standalone change",
-        "nextAction": "After contributor approval and #17045 landing, submit the change with the queue-operation benchstat.",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Approved for publication after #17045 lands.",
+        "nextAction": "Open the reviewed PR after #17045 lands.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/1eae09b6e",
-          "https://github.com/tamird/gvisor/actions/runs/42366670610/artifacts/13573320005",
+          "https://github.com/tamird/gvisor/commit/a8e54633f",
           "https://github.com/google/gvisor/pull/17045"
         ]
       },
@@ -61439,7 +61531,22 @@
         "after": {
           "head": "a8e54633f47fda892caa896ab37f3200b662cccf"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a8e54633f47fda892caa896ab37f3200b662cccf",
+          "baseHead": "77f1abcbe2ea642642a13317b2fd8c37cbb7ad08",
+          "url": "https://github.com/tamird/gvisor/commit/a8e54633f",
+          "title": "Claim TCP processor queue membership atomically",
+          "body": "Peers of a listening socket can hash to different TCP processors. An\nendpoint has only one pair of queue links. Each processor takes a\nsecond mutex on the endpoint to test or clear its queue membership\nwhile holding its own queue mutex.\n\nClaim membership before inserting the endpoint and release it after\nunlinking it. Each processor still protects its own list. Removing the\nmembership mutex also removes its lock-order annotations.\n\nBenchstat for ProcessorQueueMembership on two AMD64 CPUs [1].\n\n                   │ 77f1abcbe.txt │            01da93c33.txt          │\n                   │    sec/op     │   sec/op     vs base              │\nDuplicateEnqueue-2     20.24n ± 0%   12.01n ± 0%  -40.66% (p=0.000 n=16)\nDequeueRequeue-2       25.20n ± 0%   17.24n ± 0%  -31.60% (p=0.000 n=16)\n\nDuplicateEnqueue times two queues concurrently trying to enqueue the\nsame already queued endpoint. DequeueRequeue moves the endpoint from\none queue to the other.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42366670610",
+          "summary": "Open the single-commit TCP PR after #17045 lands. The existing fairness behavior and the two-queue handoff passed on both implementations.",
+          "requestedAt": "2026-11-07T11:35:54+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication after #17045 lands."
+        }
+      ]
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:11090",
@@ -66691,14 +66798,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/tcp-keepalive-sender",
-      "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
-      "title": "Create the TCP keepalive callback when a connection needs a probe",
-      "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
+      "head": "88bd70024abacac290b21e95597bc43e3dd42454",
+      "title": "Allocate the TCP keepalive timer on demand",
+      "url": "https://github.com/tamird/gvisor/commit/88bd70024",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T16:23:10+00:00",
-      "summary": "Create the keepalive timer when an established sender needs it. In 12 alternating AMD64 pairs, wildcard bind/close fell from 26 allocations to 24, and dial/accept from 168 to 162 with keepalive disabled and 171 to 169 with it enabled. Bytes allocated fell in all three workloads. Elapsed time showed no statistically significant change.\n\nBoth revisions gave the same six packet observations. Accepted, post-connect and explicitly rearmed restored sockets sent their idle probe. The pre-connect, re-enabled and untouched restored sockets missed the observed deadline on both revisions. The TCP analyzer passed for AMD64 and ARM64. The reviewed commit has the same tree and parent as measured 2808320e8.",
+      "status": "Contributor approved; awaiting prerequisite",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
+      "summary": "The TCP sender allocates its keepalive timer when an idle connection first needs a probe. Twelve paired AMD64 samples showed 2 fewer allocations on bind/close, 6 fewer for a dial/accept handshake with keepalive disabled, and 2 fewer with it enabled. All three packet cases and both architecture analyzers passed on 652abc175; the final revision differs only by two inherited comments.",
       "evidence": [
+        {
+          "label": "Three packet captures, both Nogo architectures and twelve paired allocation samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42655269859/artifacts/13694885819"
+        },
         {
           "label": "TCP timer lifetime issue #7493",
           "url": "https://github.com/google/gvisor/issues/7493"
@@ -66720,17 +66831,13 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
-        "observedAt": "2026-11-09T16:23:10+00:00",
-        "disposition": "The sender-owned keepalive callback uses the same short-circuit that can lose a wakeup. The existing allocation measurements cover the independently based proposal.",
-        "nextAction": "Rebase the sender-owned timer on the callback fix and requalify both the wakeup behavior and allocation measurements before requesting review.",
+        "sourceHead": "88bd70024abacac290b21e95597bc43e3dd42454",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Approved for publication after #17286.",
+        "nextAction": "Open the single-commit allocation PR once #17286 lands.",
         "evidence": [
-          "https://github.com/google/gvisor/issues/7493",
-          "https://github.com/tamird/gvisor/commit/2808320e8",
-          "https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379",
-          "https://github.com/tamird/gvisor/commit/38b1dd1da",
-          "https://github.com/tamird/gvisor/commit/ba00452d5",
-          "https://github.com/tamird/gvisor/commit/afabfbaf9"
+          "https://github.com/tamird/gvisor/commit/88bd70024",
+          "https://github.com/google/gvisor/pull/17286"
         ]
       },
       "settledReviews": [
@@ -66744,8 +66851,28 @@
           "requestedAt": "2026-11-08T19:57:20+00:00",
           "at": "2026-11-09T16:23:10+00:00",
           "outcome": "superseded"
+        },
+        {
+          "kind": "proposal",
+          "head": "88bd70024abacac290b21e95597bc43e3dd42454",
+          "url": "https://github.com/tamird/gvisor/commit/88bd70024",
+          "title": "Allocate the TCP keepalive timer on demand",
+          "summary": "Open this one-commit allocation change after the separate timer wakeup fix lands? It keeps the same three packet outcomes while reducing allocation size and count. The proposed description includes the benchstat output.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 afabfbaf9^! 88bd70024^!",
+          "body": "Sockets that only bind or listen reserve space for a keepalive timer\nand create a callback they never schedule. Connected sockets also pay\nfor the callback when SO_KEEPALIVE is off.\n\nKeep the timer with the TCP sender. Initialize its callback when an\nidle connection first needs a probe. Keep the options on the endpoint\nso applications can configure keepalive before connecting. Remove the\nunused waker that accompanied the timer.\n\nOn AMD64, compare binding and closing a wildcard socket and completing\na dial/accept handshake with keepalive disabled or enabled [1].\n\n                                   │    stock     │                fixed                │\n                                   │     B/op     │     B/op      vs base               │\nWildcardBindClose-2                  4.852Ki ± 0%   4.555Ki ± 0%  -6.12% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   18.14Ki ± 0%   17.47Ki ± 0%  -3.65% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    18.29Ki ± 0%   17.76Ki ± 0%  -2.88% (p=0.000 n=12)\n\n                                   │   stock    │               fixed               │\n                                   │ allocs/op  │ allocs/op   vs base               │\nWildcardBindClose-2                  26.00 ± 0%   24.00 ± 0%  -7.69% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   168.0 ± 0%   162.0 ± 0%  -3.57% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    171.0 ± 0%   169.0 ± 0%  -1.17% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42655269859/artifacts/13694885819\n\nFixes #7493",
+          "requestedAt": "2026-11-09T17:09:03+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Open after #17286 lands."
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656"
+        },
+        "after": {
+          "head": "88bd70024abacac290b21e95597bc43e3dd42454"
+        }
+      }
     },
     {
       "id": "branch:gpu-driver-installer-fixture",
@@ -66873,15 +67000,27 @@
       "id": "branch:tcp-keepalive-reenable",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/tcp-keepalive-reenable",
-      "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-      "title": "Restart TCP keepalive after a disabled timer fires",
-      "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
+      "ref": "research/tcp-keepalive-clock-wake",
+      "head": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+      "title": "Consume TCP timer wakeups before handling expiry",
+      "url": "https://github.com/tamird/gvisor/commit/59a8c8cc1",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T16:23:10+00:00",
-      "summary": "An idle connection stopped sending TCP keepalive probes when its timer fired with SO_KEEPALIVE disabled and the application later re-enabled it. The callback now consumes the expired timer before checking the option.\n\nPacketimpact captured three connections per implementation. When keepalive was re-enabled after the old deadline, native Linux and the fix sent one new probe each, and stock gVisor sent none. Re-enabling before that deadline produced one probe on all three. When a probe had already been sent before disabling the option, Linux and the fix sent a second probe after re-enabling it. Stock sent only the first. All disabled intervals stayed quiet.\n\nThe separate allocation proposal afabfbaf9 touches the same callback. An integration needs to retain its sender and timer initialization guards, then consume expiration before checking SO_KEEPALIVE.",
+      "status": "Published as #17286",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
+      "summary": "The timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
       "evidence": [
+        {
+          "label": "Published TCP timer wakeup fix",
+          "url": "https://github.com/google/gvisor/pull/17286"
+        },
+        {
+          "label": "Packet captures, package and analyzer records, and paired benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42654872005/artifacts/13694980473"
+        },
+        {
+          "label": "Exact source changes since the previous proposal",
+          "url": "https://github.com/tamird/gvisor/compare/ba00452d5..59a8c8cc1"
+        },
         {
           "label": "Native Linux, stock gVisor and corrected gVisor: original logs, XML and packet captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991"
@@ -66894,14 +67033,14 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-        "observedAt": "2026-11-09T16:23:10+00:00",
-        "disposition": "Tamir requested that the timer API make the callback side effects clear. isUninitialized is a predicate. checkExpiration can consume an obsolete wakeup, rearm a premature callback, or disable an expired timer.",
-        "nextAction": "Revise the timer callback API and qualify keepalive disable and re-enable before requesting another review.",
+        "owner": "Upstream review",
+        "sourceHead": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Published the approved timer wakeup fix as #17286.",
+        "nextAction": "Follow #17286 for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991",
-          "https://github.com/tamird/gvisor/commit/ba00452d5"
+          "https://github.com/google/gvisor/pull/17286",
+          "https://github.com/tamird/gvisor/commit/59a8c8cc1"
         ]
       },
       "settledReviews": [
@@ -66915,11 +67054,28 @@
           "requestedAt": "2026-11-08T20:33:01+00:00",
           "at": "2026-11-09T16:23:10+00:00",
           "outcome": "changes-requested"
+        },
+        {
+          "kind": "proposal",
+          "head": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+          "url": "https://github.com/tamird/gvisor/commit/59a8c8cc1",
+          "title": "Consume TCP timer wakeups before handling expiry",
+          "summary": "Open this revised timer PR? It moves wakeup consumption into the timer API. All three packet tests, both owning suites, and both analyzers passed. The proposed description reports the two increases in bytes allocated per operation.\n\ngit -C ~/code/gvisor range-diff ba00452d5^! 59a8c8cc1^!",
+          "body": "Turning SO_KEEPALIVE off while a probe is pending leaves a clock\ncallback scheduled. If the callback runs while keepalive is off, the\nnext enable can mistake the spent callback for one that will still\nfire. The connection then sends no more probes.\n\nHave the timer consume each clock wake under the endpoint mutex\nbefore calling the protocol handler. A canceled arm becomes idle,\nan early wake rearms the clock for the current deadline, and only a\ndue arm reaches the handler. This also lets cleanup discard a\ncallback that was already waiting for the mutex.\n\nExercise disabling keepalive, waiting past the old deadline, and\nenabling it again on an idle connection.\n\nBinding and closing a socket, or completing a handshake with keepalive\ndisabled, allocated slightly more memory in six paired runs [1].\n\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42654872005/artifacts/13694980473",
+          "requestedAt": "2026-11-09T17:07:39+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Published as the reviewed single commit. Benchstat and qualification are retained on this card.",
+          "postedURL": "https://github.com/google/gvisor/pull/17286"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-        "url": "https://github.com/tamird/gvisor/commit/ba00452d5"
+      "refinement": {
+        "before": {
+          "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f"
+        },
+        "after": {
+          "head": "59a8c8cc138ea704a5e635b794a9e76197faa744"
+        }
       }
     },
     {
@@ -66996,10 +67152,14 @@
       "title": "Skip Docker runtime setup for bwrap tests",
       "url": "https://github.com/tamird/gvisor/commit/28ed2e5fb",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T21:45:32+00:00",
+      "status": "Published as #17287",
+      "updatedAt": "2026-11-09T17:17:34+00:00",
       "summary": "Both Buildkite bwrap jobs use the staged runsc directly. Each reported 56 passes and one intentional TestUserns skip. On hosted AMD64 Linux, the privileged Bazel test produced the same 56 passes and one skip with only the default Docker runtimes registered. The ordinary unprivileged run had eight failures and the Linux sandbox with fake root had 55. The proposed change removes only Docker runtime registration from the AMD64 and ARM64 jobs. Both keep their existing privileged Make test.",
       "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17287"
+        },
         {
           "label": "AMD64 Buildkite test on the existing pipeline",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53913#01a1b9e5-b615-4779-b629-a998e2bc8f64"
@@ -67014,26 +67174,31 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
-        "observedAt": "2026-11-08T21:45:32+00:00",
-        "disposition": "The privileged integration test passed without registering runsc with Docker.",
-        "nextAction": "Review the two-line Buildkite change for one independent gVisor pull request.",
+        "disposition": "Published the approved single commit as #17287.",
+        "nextAction": "Follow #17287 for maintainer review and import.",
+        "observedAt": "2026-11-09T17:17:34+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/28ed2e5fb",
-          "https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233"
+          "https://github.com/google/gvisor/pull/17287",
+          "https://github.com/tamird/gvisor/commit/28ed2e5fb"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
-        "url": "https://github.com/tamird/gvisor/commit/28ed2e5fb",
-        "title": "Skip Docker runtime setup for bwrap tests",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "Both Buildkite bwrap jobs register runsc with Docker. The pre-command hook calls Make to run runsc install, then reloads or restarts Docker. The post-command hook removes the registered runtimes and reloads the daemon again.\n\nThe bwrap test invokes the staged runsc executable directly. Drop the Docker setup from the AMD64 and ARM64 jobs. On a Linux host with only the default runc runtimes registered, the privileged Bazel test reported 56 passes and one existing skip. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233",
-        "requestedAt": "2026-11-08T21:45:32+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+          "url": "https://github.com/tamird/gvisor/commit/28ed2e5fb",
+          "title": "Skip Docker runtime setup for bwrap tests",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "Both Buildkite bwrap jobs register runsc with Docker. The pre-command hook calls Make to run runsc install, then reloads or restarts Docker. The post-command hook removes the registered runtimes and reloads the daemon again.\n\nThe bwrap test invokes the staged runsc executable directly. Drop the Docker setup from the AMD64 and ARM64 jobs. On a Linux host with only the default runc runtimes registered, the privileged Bazel test reported 56 passes and one existing skip. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233",
+          "requestedAt": "2026-11-08T21:45:32+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication.",
+          "postedURL": "https://github.com/google/gvisor/pull/17287"
+        }
+      ]
     },
     {
       "id": "branch:tcp-restore-keepalive-deadline",
@@ -67299,20 +67464,9 @@
       "head": "be0aab89c556c459e8e110c517ea7e1011d24ce4",
       "url": "https://github.com/tamird/gvisor/commit/be0aab89c",
       "title": "Store a single graph waiter without a callback record",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T01:29:38+00:00",
+      "status": "Contributor approved; awaiting prerequisite",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
       "summary": "On a 50,000-file checkpoint, the first guest command took 200.2 ms versus 243.2 ms on #16860. Decoding allocated 99.27 MiB versus 121.84 MiB per checkpoint. Both comparisons have 16 pairs. Separate cold and pooled callback, pointer-chain, and map benchmarks detected no timing change. Package and race checks passed.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "9f19447bdd727295bbaee1d8b198ae4e52a75ce5",
-        "head": "be0aab89c556c459e8e110c517ea7e1011d24ce4",
-        "url": "https://github.com/tamird/gvisor/commit/be0aab89c",
-        "title": "Store a single graph waiter without a callback record",
-        "body": "A graph decoder wait with no callback only needs the ID of the object to\nwake. The decoder appends a 72-byte callback record for each such wait.\nA checkpoint with 50,000 tmpfs files contained 50,364 objects with\nexactly one plain waiter. [1]\n\nKeep that ID in the incoming queue. If another waiter arrives, append\nthe first waiter to the callback list before adding the second. The\nobject's own callbacks run before it wakes its waiter.\n\nOn Linux AMD64, all 34 checkpoints restored with every file verified.\nThe first guest command was measured from container creation through a\nsuccessful /bin/true. Both decoders also read the same checkpoint in\nfresh processes. [2]\n\n                  │   before    │               after                │\n                  │   sec/op    │   sec/op     vs base               │\nGuest/restore       233.2m ± 1%   184.1m ± 1%  -21.05% (p=0.000 n=16)\nGuest/new-to-guest  243.2m ± 1%   200.2m ± 5%  -17.69% (p=0.000 n=16)\n\n                              │    before     │               after                 │\n                              │     B/op      │    B/op       vs base               │\nCheckpointFile/DecodeStatefile  121.84Mi ± 0%   99.27Mi ± 0%  -18.53% (p=0.000 n=16)\n\nDirect decode time was inconclusive (p=0.305). Cold and pooled tests\nof a single AfterLoad, a pointer chain and a shared map also showed no\nsignificant difference in time or allocated bytes across 16 pairs. [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535\n[2]: https://github.com/tamird/gvisor/actions/runs/42537752922/artifacts/13640319931\n[3]: https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643640390",
-        "summary": "Open this graph decoder optimization after #16860 lands?",
-        "requestedAt": "2026-11-09T01:29:38+00:00"
-      },
       "evidence": [
         {
           "label": "First guest command and bytes allocated on the 50,000-file checkpoint",
@@ -67326,7 +67480,33 @@
           "label": "Race and package checks and a uniform-queue comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42540723329/artifacts/13642840434"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "9f19447bdd727295bbaee1d8b198ae4e52a75ce5",
+          "head": "be0aab89c556c459e8e110c517ea7e1011d24ce4",
+          "url": "https://github.com/tamird/gvisor/commit/be0aab89c",
+          "title": "Store a single graph waiter without a callback record",
+          "body": "A graph decoder wait with no callback only needs the ID of the object to\nwake. The decoder appends a 72-byte callback record for each such wait.\nA checkpoint with 50,000 tmpfs files contained 50,364 objects with\nexactly one plain waiter. [1]\n\nKeep that ID in the incoming queue. If another waiter arrives, append\nthe first waiter to the callback list before adding the second. The\nobject's own callbacks run before it wakes its waiter.\n\nOn Linux AMD64, all 34 checkpoints restored with every file verified.\nThe first guest command was measured from container creation through a\nsuccessful /bin/true. Both decoders also read the same checkpoint in\nfresh processes. [2]\n\n                  │   before    │               after                │\n                  │   sec/op    │   sec/op     vs base               │\nGuest/restore       233.2m ± 1%   184.1m ± 1%  -21.05% (p=0.000 n=16)\nGuest/new-to-guest  243.2m ± 1%   200.2m ± 5%  -17.69% (p=0.000 n=16)\n\n                              │    before     │               after                 │\n                              │     B/op      │    B/op       vs base               │\nCheckpointFile/DecodeStatefile  121.84Mi ± 0%   99.27Mi ± 0%  -18.53% (p=0.000 n=16)\n\nDirect decode time was inconclusive (p=0.305). Cold and pooled tests\nof a single AfterLoad, a pointer chain and a shared map also showed no\nsignificant difference in time or allocated bytes across 16 pairs. [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535\n[2]: https://github.com/tamird/gvisor/actions/runs/42537752922/artifacts/13640319931\n[3]: https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643640390",
+          "summary": "Open this graph decoder optimization after #16860 lands?",
+          "requestedAt": "2026-11-09T01:29:38+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication after #16860 lands."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "be0aab89c556c459e8e110c517ea7e1011d24ce4",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Approved for publication after #16860 lands.",
+        "nextAction": "Open the reviewed PR after #16860 lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/be0aab89c",
+          "https://github.com/google/gvisor/pull/16860"
+        ]
+      }
     },
     {
       "id": "branch:tcp-segment-experiment-ipv6",
@@ -67439,21 +67619,14 @@
       "head": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
       "url": "https://github.com/tamird/gvisor/commit/e18f42092",
       "title": "Retry interrupted PacketImpact address dumps",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T04:28:47+00:00",
+      "status": "Published as #17288",
+      "updatedAt": "2026-11-09T17:17:34+00:00",
       "summary": "An interrupted IPv6 address dump stopped an upstream PacketImpact DUT before its testbench started. The fix discards the partial reply and retries only that address family, up to ten attempts. All seven focused Linux controls passed in a private namespace. Two genuine kernel interruptions occurred during 16 successful lookups. An uninstrumented build on the standalone fork timed out after 22 minutes with no TestResult. A separate replay used the exact revised lookup file and unchanged SYN-SENT test on the previously verified ARM64 Firecracker runner integration. All four cases passed without skips. The capture showed payload in both directions on the queued-send connection, inbound payload on the queued-receive connection, and resets acknowledging the initial SYN on the two refused connections.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "head": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
-        "url": "https://github.com/tamird/gvisor/commit/e18f42092",
-        "title": "Retry interrupted PacketImpact address dumps",
-        "body": "A PacketImpact DUT stopped during bootstrap when the kernel marked its IPv6 address dump as interrupted [1]. Such a dump may contain one address for the requested link even when another address is missing.\n\nDiscard the incomplete result and retry only the affected family. Bound the number of attempts at ten, as in the netlink library’s opt-in retry [2], and propagate the last error if the dump remains interrupted.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4a-013c-4f0a-aea4-1e82a1d51acf/208978 [2]: https://github.com/vishvananda/netlink/blob/188504cbe/nl/nl_linux.go#L518",
-        "summary": "Open the independent PacketImpact interrupted-address-dump fix?",
-        "requestedAt": "2026-11-09T04:15:30+00:00"
-      },
       "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17288"
+        },
         {
           "label": "Upstream Buildkite failure during DUT address discovery",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4a-013c-4f0a-aea4-1e82a1d51acf/208978"
@@ -67474,7 +67647,34 @@
           "label": "Original ARM64 Netstack test log, four passing XML cases and IPv4 capture",
           "url": "https://github.com/tamird/gvisor/actions/runs/42561653833/artifacts/13649910805"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
+          "url": "https://github.com/tamird/gvisor/commit/e18f42092",
+          "title": "Retry interrupted PacketImpact address dumps",
+          "body": "A PacketImpact DUT stopped during bootstrap when the kernel marked its IPv6 address dump as interrupted [1]. Such a dump may contain one address for the requested link even when another address is missing.\n\nDiscard the incomplete result and retry only the affected family. Bound the number of attempts at ten, as in the netlink library’s opt-in retry [2], and propagate the last error if the dump remains interrupted.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4a-013c-4f0a-aea4-1e82a1d51acf/208978 [2]: https://github.com/vishvananda/netlink/blob/188504cbe/nl/nl_linux.go#L518",
+          "summary": "Open the independent PacketImpact interrupted-address-dump fix?",
+          "requestedAt": "2026-11-09T04:15:30+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication.",
+          "postedURL": "https://github.com/google/gvisor/pull/17288"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
+        "disposition": "Published the approved single commit as #17288.",
+        "nextAction": "Follow #17288 for maintainer review and import.",
+        "observedAt": "2026-11-09T17:17:34+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17288",
+          "https://github.com/tamird/gvisor/commit/e18f42092"
+        ]
+      }
     },
     {
       "id": "branch:bazel-unit-test-profile",
@@ -68225,6 +68425,200 @@
         }
       ],
       "number": 17284
+    },
+    {
+      "id": "pr:17286",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/tcp-keepalive-clock-wake",
+      "head": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+      "title": "Consume TCP timer wakeups before handling expiry",
+      "url": "https://github.com/google/gvisor/pull/17286",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-09T17:16:09+00:00",
+      "summary": "The timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
+      "evidence": [
+        {
+          "label": "Published TCP timer wakeup fix",
+          "url": "https://github.com/google/gvisor/pull/17286"
+        },
+        {
+          "label": "Packet captures, package and analyzer records, and paired benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42654872005/artifacts/13694980473"
+        },
+        {
+          "label": "Exact source changes since the previous proposal",
+          "url": "https://github.com/tamird/gvisor/compare/ba00452d5..59a8c8cc1"
+        },
+        {
+          "label": "Native Linux, stock gVisor and corrected gVisor: original logs, XML and packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+        "observedAt": "2026-11-09T17:16:09+00:00",
+        "disposition": "Published the approved timer wakeup fix as #17286.",
+        "nextAction": "Follow #17286 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17286",
+          "https://github.com/tamird/gvisor/commit/59a8c8cc1"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
+          "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
+          "title": "Restart TCP keepalive after a disabled timer fires",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "Disabling SO_KEEPALIVE leaves the clock timer running. If it fires while keepalive is disabled, the callback returns before consuming the orphaned timer. Re-enabling keepalive then records a new deadline but leaves an idle connection without a scheduled probe.\n\nConsume the clock wakeup before checking SO_KEEPALIVE. Check that an idle connection stays quiet while keepalive is disabled and resumes probing when the option is enabled again.",
+          "requestedAt": "2026-11-08T20:33:01+00:00",
+          "at": "2026-11-09T16:23:10+00:00",
+          "outcome": "changes-requested"
+        },
+        {
+          "kind": "proposal",
+          "head": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+          "url": "https://github.com/tamird/gvisor/commit/59a8c8cc1",
+          "title": "Consume TCP timer wakeups before handling expiry",
+          "summary": "Open this revised timer PR? It moves wakeup consumption into the timer API. All three packet tests, both owning suites, and both analyzers passed. The proposed description reports the two increases in bytes allocated per operation.\n\ngit -C ~/code/gvisor range-diff ba00452d5^! 59a8c8cc1^!",
+          "body": "Turning SO_KEEPALIVE off while a probe is pending leaves a clock\ncallback scheduled. If the callback runs while keepalive is off, the\nnext enable can mistake the spent callback for one that will still\nfire. The connection then sends no more probes.\n\nHave the timer consume each clock wake under the endpoint mutex\nbefore calling the protocol handler. A canceled arm becomes idle,\nan early wake rearms the clock for the current deadline, and only a\ndue arm reaches the handler. This also lets cleanup discard a\ncallback that was already waiting for the mutex.\n\nExercise disabling keepalive, waiting past the old deadline, and\nenabling it again on an idle connection.\n\nBinding and closing a socket, or completing a handshake with keepalive\ndisabled, allocated slightly more memory in six paired runs [1].\n\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42654872005/artifacts/13694980473",
+          "requestedAt": "2026-11-09T17:07:39+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Published as the reviewed single commit. Benchstat and qualification are retained on this card.",
+          "postedURL": "https://github.com/google/gvisor/pull/17286"
+        }
+      ],
+      "number": 17286
+    },
+    {
+      "id": "pr:17287",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/bwrap-without-docker-registration",
+      "head": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+      "title": "Skip Docker runtime setup for bwrap tests",
+      "url": "https://github.com/google/gvisor/pull/17287",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-09T17:17:34+00:00",
+      "summary": "Both Buildkite bwrap jobs use the staged runsc directly. Each reported 56 passes and one intentional TestUserns skip. On hosted AMD64 Linux, the privileged Bazel test produced the same 56 passes and one skip with only the default Docker runtimes registered. The ordinary unprivileged run had eight failures and the Linux sandbox with fake root had 55. The proposed change removes only Docker runtime registration from the AMD64 and ARM64 jobs. Both keep their existing privileged Make test.",
+      "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17287"
+        },
+        {
+          "label": "AMD64 Buildkite test on the existing pipeline",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53913#01a1b9e5-b615-4779-b629-a998e2bc8f64"
+        },
+        {
+          "label": "ARM64 Buildkite test on the existing pipeline",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53913#01a1b9e5-b615-46c3-a98b-68165e7261da"
+        },
+        {
+          "label": "Original ordinary, sandbox fake-root and privileged AMD64 tests with logs and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+        "disposition": "Published the approved single commit as #17287.",
+        "nextAction": "Follow #17287 for maintainer review and import.",
+        "observedAt": "2026-11-09T17:17:34+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17287",
+          "https://github.com/tamird/gvisor/commit/28ed2e5fb"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+          "url": "https://github.com/tamird/gvisor/commit/28ed2e5fb",
+          "title": "Skip Docker runtime setup for bwrap tests",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "Both Buildkite bwrap jobs register runsc with Docker. The pre-command hook calls Make to run runsc install, then reloads or restarts Docker. The post-command hook removes the registered runtimes and reloads the daemon again.\n\nThe bwrap test invokes the staged runsc executable directly. Drop the Docker setup from the AMD64 and ARM64 jobs. On a Linux host with only the default runc runtimes registered, the privileged Bazel test reported 56 passes and one existing skip. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42525385250/artifacts/13635134233",
+          "requestedAt": "2026-11-08T21:45:32+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication.",
+          "postedURL": "https://github.com/google/gvisor/pull/17287"
+        }
+      ],
+      "number": 17287
+    },
+    {
+      "id": "pr:17288",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "group": "rbe",
+      "ref": "research/packetimpact-interrupted-address-dump",
+      "head": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
+      "url": "https://github.com/google/gvisor/pull/17288",
+      "title": "Retry interrupted PacketImpact address dumps",
+      "status": "open",
+      "updatedAt": "2026-11-09T17:17:34+00:00",
+      "summary": "An interrupted IPv6 address dump stopped an upstream PacketImpact DUT before its testbench started. The fix discards the partial reply and retries only that address family, up to ten attempts. All seven focused Linux controls passed in a private namespace. Two genuine kernel interruptions occurred during 16 successful lookups. An uninstrumented build on the standalone fork timed out after 22 minutes with no TestResult. A separate replay used the exact revised lookup file and unchanged SYN-SENT test on the previously verified ARM64 Firecracker runner integration. All four cases passed without skips. The capture showed payload in both directions on the queued-send connection, inbound payload on the queued-receive connection, and resets acknowledging the initial SYN on the two refused connections.",
+      "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17288"
+        },
+        {
+          "label": "Upstream Buildkite failure during DUT address discovery",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4a-013c-4f0a-aea4-1e82a1d51acf/208978"
+        },
+        {
+          "label": "Same upstream Netstack test passed on retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4d-20ee-44fa-a609-3381762cc6ec"
+        },
+        {
+          "label": "Native namespace controls, two observed kernel interruptions, original logs and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42558478722/artifacts/13647609165"
+        },
+        {
+          "label": "Uninstrumented Netstack target timed out before a TestResult",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42558478722/artifacts/13649088261"
+        },
+        {
+          "label": "Original ARM64 Netstack test log, four passing XML cases and IPv4 capture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42561653833/artifacts/13649910805"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
+          "url": "https://github.com/tamird/gvisor/commit/e18f42092",
+          "title": "Retry interrupted PacketImpact address dumps",
+          "body": "A PacketImpact DUT stopped during bootstrap when the kernel marked its IPv6 address dump as interrupted [1]. Such a dump may contain one address for the requested link even when another address is missing.\n\nDiscard the incomplete result and retry only the affected family. Bound the number of attempts at ten, as in the netlink library’s opt-in retry [2], and propagate the last error if the dump remains interrupted.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4a-013c-4f0a-aea4-1e82a1d51acf/208978 [2]: https://github.com/vishvananda/netlink/blob/188504cbe/nl/nl_linux.go#L518",
+          "summary": "Open the independent PacketImpact interrupted-address-dump fix?",
+          "requestedAt": "2026-11-09T04:15:30+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T17:16:09+00:00",
+          "note": "Approved for publication.",
+          "postedURL": "https://github.com/google/gvisor/pull/17288"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
+        "disposition": "Published the approved single commit as #17288.",
+        "nextAction": "Follow #17288 for maintainer review and import.",
+        "observedAt": "2026-11-09T17:17:34+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17288",
+          "https://github.com/tamird/gvisor/commit/e18f42092"
+        ]
+      },
+      "number": 17288
     }
   ],
   "edges": [
@@ -72145,13 +72539,13 @@
       ]
     },
     {
-      "from": "branch:tcp-keepalive-reenable",
+      "from": "pr:17286",
       "to": "branch:tcp-keepalive-sender",
       "type": "depends_on",
-      "reason": "The sender-owned timer uses the same callback. Rebase and qualify it on the keepalive wakeup fix before contributor review.",
+      "reason": "The allocation change builds on the corrected timer callback.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/afabfbaf9",
-        "https://github.com/tamird/gvisor/commit/ba00452d5"
+        "https://github.com/google/gvisor/pull/17286",
+        "https://github.com/tamird/gvisor/commit/88bd70024"
       ]
     }
   ],
@@ -92788,5 +93182,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T16:47:29+00:00"
+  "updatedAt": "2026-11-09T17:17:34+00:00"
 }
