@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T20:24:14+00:00",
+    "updatedAt": "2026-11-09T20:31:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -62508,9 +62508,13 @@
       "url": "https://github.com/google/gvisor/pull/17191",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-07T17:26:09+00:00",
+      "updatedAt": "2026-11-09T20:31:12+00:00",
       "summary": "Use the registered BSD tar toolchain to write release archives without a host shell. On Ubuntu 22.04 with stock GCC 11.4.0, AMD64 built the ordinary bzip2 and zstd releases. Both target-named symlinks resolved, GNU tar extracted the publisher’s literal runsc member, and the nine staged ELFs and archive metadata matched. The canonical audit verified 224 dependencies and its test passed. The standalone ARM64 checks configured both archive writers. In a separate compiler integration, four fresh Tar actions on an empty AMD64 worker wrote both formats for AMD64 and ARM64. The eight flavor/format declarations were compared; archive builds covered the ordinary flavor. The commit applies directly to master 9ee2906f5.",
       "evidence": [
+        {
+          "label": "Approved amendment for Ryan’s four requests",
+          "url": "https://github.com/tamird/gvisor/commit/8469c237d"
+        },
         {
           "label": "Standalone Ubuntu/GCC build, two working aliases, both GNU tar publisher reads, nine ELF hashes and license audit",
           "url": "https://github.com/tamird/gvisor/actions/runs/42382741313/artifacts/13578876228"
@@ -62541,21 +62545,39 @@
           "outcome": "approved",
           "at": "2026-11-07T17:18:48+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17191"
+        },
+        {
+          "kind": "amendment",
+          "head": "8469c237d9f493a9183f50ea7de304cd13fcf91a",
+          "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+          "url": "https://github.com/tamird/gvisor/commit/8469c237d",
+          "outcome": "approved",
+          "at": "2026-11-09T20:31:12+00:00",
+          "note": "Publish and reply to Ryan’s four threads after the Linux archive checks pass."
         }
       ],
       "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "3841547872e7c7f0f665f4d8d08939e8fb3a80d0",
-        "observedAt": "2026-11-07T17:26:09+00:00",
-        "disposition": "The approved 657d01de1 was published as #17191. Buildifier requested one blank line in debian/release.bzl. The public PR is at 384154787 with that formatting correction.",
-        "nextAction": "Follow #17191 for maintainer review and import.",
+        "owner": "Agent",
+        "sourceHead": "8469c237d9f493a9183f50ea7de304cd13fcf91a",
+        "observedAt": "2026-11-09T20:31:12+00:00",
+        "disposition": "Contributor approved the removal of the archive aliases, use of the common packaging adapter, and both comment corrections.",
+        "nextAction": "Verify the Linux archive outputs, publish to #17191 and reply to all four original threads.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17191",
-          "https://github.com/tamird/gvisor/commit/657d01de1",
-          "https://github.com/google/gvisor/actions/runs/42395699832/job/128472486505"
+          "https://github.com/tamird/gvisor/commit/8469c237d",
+          "https://github.com/google/gvisor/pull/17191#discussion_r4517580122"
         ]
       },
-      "number": 17191
+      "number": 17191,
+      "refinement": {
+        "before": {
+          "head": "3841547872e7c7f0f665f4d8d08939e8fb3a80d0",
+          "base": "9ee2906f518e1d0f9fd109e9e1feb2812096418b"
+        },
+        "after": {
+          "head": "8469c237d9f493a9183f50ea7de304cd13fcf91a",
+          "base": "9ee2906f518e1d0f9fd109e9e1feb2812096418b"
+        }
+      }
     },
     {
       "id": "pr:17192",
@@ -69250,7 +69272,7 @@
       "title": "Mirror module archives in public CI",
       "group": "rbe",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T20:24:14+00:00",
+      "updatedAt": "2026-11-09T20:31:12+00:00",
       "summary": "With GitHub blocked, Bazel fetched Skylib, Protobuf and toml.bzl from Cloudflare. With Cloudflare blocked, all three came from GitHub. Both runs matched the BCR digests. Only the three public CI jobs select this configuration.",
       "evidence": [
         {
@@ -69260,6 +69282,10 @@
         {
           "label": "Cold fetch and fallback controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42692225274/artifacts/13707033240"
+        },
+        {
+          "label": "Real Make query in the Docker builder read the public rc",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42692991725/artifacts/13707178979"
         }
       ],
       "contributorReview": {
@@ -94151,7 +94177,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T20:24:14+00:00",
+      "updatedAt": "2026-11-09T20:31:12+00:00",
       "summary": "Gazelle and Go generation stopped before testing on three contributors’ PRs. Bazel reported HTTP 504 while fetching bazel-skylib 1.9.2 or protobuf 35.1.",
       "findings": [
         {
@@ -94190,6 +94216,15 @@
             {
               "label": "CI-only configuration",
               "url": "https://github.com/tamird/gvisor/commit/e08a227bd"
+            }
+          ]
+        },
+        {
+          "text": "Bazel 9.3.1 in the normal gVisor Docker builder read both public registry options from the mounted checkout and resolved //tools/gpu:main through make query. The check exercised the GPU job’s Bazel client and required no GPU hardware.",
+          "evidence": [
+            {
+              "label": "Builder image, selected rc file and query output",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42692991725/artifacts/13707178979"
             }
           ]
         }
