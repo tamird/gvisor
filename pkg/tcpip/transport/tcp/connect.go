@@ -1408,6 +1408,7 @@ func (e *Endpoint) handleSegmentLocked(s *segment) (cont bool, err tcpip.Error) 
 // keepaliveTimerExpired is called when the keepaliveTimer fires. We send TCP
 // keepalive packets periodically when the connection is idle. If we don't hear
 // from the other side after a number of tries, we terminate the connection.
+//
 // +checklocks:e.mu
 func (e *Endpoint) keepaliveTimerExpired() tcpip.Error {
 	userTimeout := e.userTimeout
@@ -1451,37 +1452,28 @@ func (e *Endpoint) keepaliveTimerExpired() tcpip.Error {
 //
 // +checklocks:e.mu
 func (e *Endpoint) resetKeepaliveTimer(receivedData bool) {
-	e.keepalive.Lock()
-	defer e.keepalive.Unlock()
-	if e.keepalive.timer.isUninitialized() {
-		if state := e.EndpointState(); !state.closed() {
-			panic(fmt.Sprintf("Unexpected state when the keepalive time is cleaned up, got %s, want %s or %s", state, StateClose, StateError))
-		}
+	if e.snd == nil || e.EndpointState().closed() {
 		return
 	}
+	e.keepalive.Lock()
+	defer e.keepalive.Unlock()
 	if receivedData {
 		e.keepalive.unacked = 0
 	}
 	// Start the keepalive timer IFF it's enabled and there is no pending
 	// data to send.
-	if !e.SocketOptions().GetKeepAlive() || e.snd == nil || e.snd.SndUna != e.snd.SndNxt {
-		e.keepalive.timer.disable()
+	if !e.SocketOptions().GetKeepAlive() || e.snd.SndUna != e.snd.SndNxt {
+		e.snd.keepaliveTimer.disable()
 		return
 	}
-	if e.keepalive.unacked > 0 {
-		e.keepalive.timer.enable(e.keepalive.interval)
-	} else {
-		e.keepalive.timer.enable(e.keepalive.idle)
+	if e.snd.keepaliveTimer.isUninitialized() {
+		e.snd.keepaliveTimer.init(e, e.keepaliveTimerExpired)
 	}
-}
-
-// disableKeepaliveTimer stops the keepalive timer.
-//
-// +checklocks:e.mu
-func (e *Endpoint) disableKeepaliveTimer() {
-	e.keepalive.Lock()
-	e.keepalive.timer.disable()
-	e.keepalive.Unlock()
+	if e.keepalive.unacked > 0 {
+		e.snd.keepaliveTimer.enable(e.keepalive.interval)
+	} else {
+		e.snd.keepaliveTimer.enable(e.keepalive.idle)
+	}
 }
 
 // finWait2TimerExpired is called when the FIN-WAIT-2 timeout is hit

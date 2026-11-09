@@ -200,6 +200,11 @@ type sender struct {
 	// corkTimer is used to drain the segments which are held when TCP_CORK
 	// option is enabled.
 	corkTimer timer `state:"nosave"`
+
+	// keepaliveTimer sends probes when an idle connection has SO_KEEPALIVE set.
+	//
+	// +checklocks:ep.mu
+	keepaliveTimer timer `state:"nosave"`
 }
 
 // protectedWriteList wraps the write list, checking for invalid state when
@@ -1089,7 +1094,7 @@ func (s *sender) postXmit(dataSent bool, shouldScheduleProbe bool) {
 	if dataSent {
 		// We sent data, so we should stop the keepalive timer to ensure
 		// that no keepalives are sent while there is pending data.
-		s.ep.disableKeepaliveTimer()
+		s.keepaliveTimer.disable()
 	}
 
 	// If the sender has advertised zero receive window and we have
