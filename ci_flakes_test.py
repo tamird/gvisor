@@ -43,7 +43,8 @@ class FlakeTest(unittest.TestCase):
 
     def test_missing_cyclic_or_wrong_shard_successor_is_incomplete(self):
         start = job(FIRST, False, SECOND)
-        for second in (None, job(SECOND, False, FIRST), job(SECOND, True, shard=2)):
+        for second in (None, job(SECOND, False, FIRST), job(SECOND, True, shard=2),
+                       dict(job(SECOND, True), group_uuid=OTHER), dict(job(SECOND, True), retry_pending=True)):
             with self.subTest(second=second), self.assertRaises(ValueError):
                 jobs = {FIRST: start}
                 if second:

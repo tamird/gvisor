@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T18:07:34+00:00",
+    "updatedAt": "2026-11-09T18:35:40+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -68,6 +68,10 @@
     {
       "id": "buildbuddy",
       "label": "BuildBuddy"
+    },
+    {
+      "id": "ci-flakes",
+      "label": "CI flakes"
     }
   ],
   "nodes": [
@@ -93207,6 +93211,193 @@
         {
           "label": "Native test suites and four regression controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42396550227/artifacts/13583881407"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flakes",
+      "title": "gVisor CI flake triage",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "summary": "Follow intermittent failures on source PRs, Copybara imports, master, and release builds. The individual investigations link to the first useful error and the retry and name the next diagnostic.",
+      "findings": [],
+      "nextStep": "Read new failures and recovered jobs across contributors. Group matching test failures by their actual error, check existing issues and fixes, and keep the investigation open until the fix has been exercised.",
+      "evidence": [
+        {
+          "label": "GitHub issues mentioning “flaky”",
+          "url": "https://github.com/search?q=repo%3Agoogle%2Fgvisor+%22flaky%22+in%3Atitle%2Cbody%2Ccomments+sort%3Aupdated-desc&type=issues"
+        },
+        {
+          "label": "PR discussions mentioning “flake”",
+          "url": "https://github.com/search?q=repo%3Agoogle%2Fgvisor+%22flake%22+in%3Atitle%2Cbody%2Ccomments+sort%3Aupdated-desc&type=pullrequests"
+        },
+        {
+          "label": "gVisor Actions runs",
+          "url": "https://github.com/google/gvisor/actions"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-checkpoint-dump",
+      "title": "Checkpoint dump exits before the first restore",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "summary": "The wire → graph → wire checkpoint test stopped at its first dump on two independent commits. Both logs reported “error printing state: unreachable” and exit 128.",
+      "findings": [
+        {
+          "text": "The same container-test shard failed on 87713ade1 and 676e03aa1. The replacement jobs passed the container test target, with seven of eight shards cached. Neither retry log names the individual passing subtest.",
+          "evidence": [
+            {
+              "label": "#53936 failed attempt",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53936#01a1bba7-9d7c-4148-a752-1f24563329b6"
+            },
+            {
+              "label": "#53936 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53936#01a1bbb2-d7ae-4303-9d5e-17048f30d672"
+            },
+            {
+              "label": "#53938 failed attempt",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53938#01a1bdfa-2693-48ff-b342-3fdc8ce66316"
+            },
+            {
+              "label": "#53938 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53938#01a1be04-1a70-4b9c-b08b-6544adb929fd"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Retain a new wire-first checkpoint from the chained test and run both dump tools on the same bytes. The wire frame-header reader can emit this exact error. The two original public artifact sets contain logs but no checkpoint image.",
+      "evidence": [
+        {
+          "label": "gVisor #16851",
+          "url": "https://github.com/google/gvisor/pull/16851"
+        },
+        {
+          "label": "gVisor #16230",
+          "url": "https://github.com/google/gvisor/pull/16230"
+        },
+        {
+          "label": "gVisor #17208",
+          "url": "https://github.com/google/gvisor/pull/17208"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-systemd-user-manager",
+      "title": "Systemd user manager misses its startup deadline",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "summary": "TestSystemdMultiUser timed out waiting for Bob’s user@1002.service before it could exercise cross-user isolation.",
+      "findings": [
+        {
+          "text": "The cgroup-v2 job on the import of #16886 and the ARM64 job on the import of #17060 each passed on retry. The cgroup-v1 run also reached systemd’s 90-second deadline. The ARM64 retry reports the owning target passed in 24.3 seconds.",
+          "evidence": [
+            {
+              "label": "#53928 failed attempt",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53928#01a1bb36-bcd7-47b2-bf81-bce16b3994ff"
+            },
+            {
+              "label": "#53928 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53928#01a1bb45-580a-445d-b5e1-09a6dc6fc37f"
+            },
+            {
+              "label": "#53945 failed attempt",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53945#01a1c01b-3f61-4ff2-a53a-57ad584faec3"
+            },
+            {
+              "label": "#53945 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53945#01a1c024-f4e9-4fa8-b1c6-844e1fa8f8fd"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Inspect the user manager’s journal and unit state at the first timeout. The manager-reload fix in #14716 covers a later part of the test.",
+      "evidence": [
+        {
+          "label": "gVisor #16886",
+          "url": "https://github.com/google/gvisor/pull/16886"
+        },
+        {
+          "label": "gVisor #17060",
+          "url": "https://github.com/google/gvisor/pull/17060"
+        },
+        {
+          "label": "gVisor #14716",
+          "url": "https://github.com/google/gvisor/pull/14716"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-icmp-udp-recv",
+      "title": "Connected UDP receive occasionally misses ECONNREFUSED",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "summary": "TestICMPErrorDuringUDPRecv/Connected/PortUnreachable expected ECONNREFUSED. On two builds the receive succeeded instead.",
+      "findings": [
+        {
+          "text": "The two failing logs point to the same receive assertion. On each retry, the UDP ICMP-error target was the only one of 82 tests to rerun and passed in 9.7 seconds. Its log does not report the individual passing subtest.",
+          "evidence": [
+            {
+              "label": "#53932 failed attempt",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53932#01a1bb5c-6aca-4204-a580-43245a200aab"
+            },
+            {
+              "label": "#53932 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53932#01a1bb6a-0b61-4e4f-a113-810596f28b44"
+            },
+            {
+              "label": "#53938 failed attempt",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53938#01a1bdfa-26c1-474a-aeff-bba815652c35"
+            },
+            {
+              "label": "#53938 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53938#01a1be0e-2735-4910-a872-03bb9c16cd92"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare the two failed packet captures with the socket receive order. The test sends the ICMP error and then UDP payloads. Establish which was enqueued first at the affected socket.",
+      "evidence": [
+        {
+          "label": "gVisor #17052",
+          "url": "https://github.com/google/gvisor/pull/17052"
+        },
+        {
+          "label": "gVisor #16230",
+          "url": "https://github.com/google/gvisor/pull/16230"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-userns-logs",
+      "title": "User namespace test times out reading container logs",
+      "status": "active",
+      "owner": "CI flake triage",
+      "group": "ci-flakes",
+      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "summary": "TestUnshareUsernsWithoutSetfcap timed out collecting container logs on the cgroup-v1 Docker shard for the import of #17060. The same shard passed on its linked retry.",
+      "findings": [],
+      "nextStep": "Check whether the container exited before log collection timed out, and whether the same test has failed on another commit. The passing shard does not identify which individual cases reran.",
+      "evidence": [
+        {
+          "label": "#53945 failed attempt",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53945#01a1c01b-3f5e-4651-a2fc-c9431f31855e"
+        },
+        {
+          "label": "#53945 passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53945#01a1c02b-f5bb-4dd4-8f79-1f32d3107975"
+        },
+        {
+          "label": "Source PR #17060",
+          "url": "https://github.com/google/gvisor/pull/17060"
         }
       ]
     }

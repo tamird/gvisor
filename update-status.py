@@ -11,6 +11,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ci_actions import collect as collect_ci_actions
+from ci_flakes import collect as collect_ci_flakes
 from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers
@@ -1157,6 +1159,7 @@ def feedback_sweep(registry: dict, prs: list[dict], previous: dict, checked_at: 
 
 
 def main() -> None:
+    global requests
     policies = repository_policies(REGISTRY)
     output = ROOT / "github-status.json"
     previous = {}
@@ -1236,6 +1239,23 @@ def main() -> None:
     if sweep := feedback_sweep(REGISTRY, [*prs, *review_prs], previous, checked_at):
         snapshot["projectFeedbackReview"] = sweep
         print(json.dumps({"projectFeedbackReview": sweep}))
+    if any(item["id"] == "investigation:ci-flakes" and item["status"] == "active"
+           for item in REGISTRY.get("investigations", [])):
+        prior_flakes = previous.get("ciFlakes", {})
+        flakes = collect_ci_flakes(prior_flakes, checked_at)
+        actions = collect_ci_actions(prior_flakes.get("actions", {}), checked_at, budget=min(2, REQUEST_LIMIT - requests))
+        requests += actions["requestsUsed"]
+        snapshot["limits"]["requests"] = requests
+        flakes["actions"] = actions
+        snapshot["ciFlakes"] = flakes
+        prior_jobs = {row["failedJob"] for row in prior_flakes.get("observations", [])}
+        for row in flakes["observations"]:
+            if row["failedJob"] not in prior_jobs:
+                print(json.dumps({"newBuildkiteRetry": row}))
+        prior_jobs = {row["failedJob"] for row in prior_flakes.get("actions", {}).get("observations", [])}
+        for row in actions["observations"]:
+            if row["failedJob"] not in prior_jobs:
+                print(json.dumps({"newActionsRetry": row}))
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
     # Run the same validator used by the browser before publishing any bytes.

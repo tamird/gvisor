@@ -94,11 +94,11 @@ def recoveries(slug: str, number: int, build: dict, jobs: dict[str, dict]) -> li
                 raise ValueError("Incomplete or cyclic Buildkite retry chain")
             seen.add(next_id)
             last = jobs[next_id]
-            if (last.get("name"), last.get("step_key"), last.get("parallel_group_index")) != (
-                    name, start.get("step_key"), start.get("parallel_group_index")):
+            if any(last.get(field) != start.get(field) for field in (
+                    "name", "step_key", "group_uuid", "parallel_group_index", "parallel_group_total")):
                 raise ValueError("Buildkite retry changed job identity")
         traversed.update(seen)
-        if last["state"] not in {"finished", "timed_out", "expired", "broken", "skipped", "canceled"}:
+        if last.get("retry_pending") or last["state"] not in {"finished", "timed_out", "expired", "broken", "skipped", "canceled"}:
             raise ValueError("Retry still active after build reported completion")
         if last["state"] != "finished" or last.get("passed") is not True:
             continue
@@ -134,7 +134,8 @@ def inspect(slug: str, number: int, now: datetime) -> tuple[list[dict], bool]:
         if at.tzinfo is None:
             raise ValueError("Missing build completion time zone")
         revisit = now - at < RETRY_WINDOW
-    return recoveries(slug, number, build, job_records(base + "/data/jobs")), revisit
+    jobs = job_records(base + "/data/jobs")
+    return recoveries(slug, number, build, jobs), revisit or any(job.get("retry_pending") for job in jobs.values())
 
 
 def scan(slug: str, previous: dict, now: str) -> tuple[dict, list]:

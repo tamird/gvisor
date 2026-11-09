@@ -9,7 +9,7 @@
   <title>gVisor + BuildBuddy · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css?v=20261028-neighbors-4">
-  <script src="app.js?v=20261107-snapshot-revision" defer></script>
+  <script src="app.js?v=20261109-ci-flakes" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -21,6 +21,7 @@
   <main id="workspace">
     <div class="toolbar">
       <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true" aria-controls="dag-pane">Dependency DAG</button><button id="table-view" aria-pressed="false" aria-controls="table-pane">Table</button><button id="investigations-view" aria-pressed="false" aria-controls="investigations-pane">Investigations</button></div>
+      <a href="?view=investigations&amp;q=CI+flakes#investigation%3Aci-flakes">CI flakes</a>
       <label class="search"><span class="sr-only">Search work</span><input id="search" type="search" placeholder="Search title, PR #, or branch" autocomplete="off"><kbd>/</kbd></label>
       <label id="investigation-search-control" class="search" hidden><span class="sr-only">Search investigations</span><input id="investigation-search" type="search" placeholder="Search investigations and findings" autocomplete="off"><kbd>/</kbd></label>
       <label id="group-control"><span class="sr-only">Workstream</span><select id="group-filter"><option value="">All workstreams</option></select></label>

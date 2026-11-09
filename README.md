@@ -114,6 +114,24 @@ with a repository (`repo`), PR `numbers`, an `owner`, and `reviewers`. A new
 head or substantive reply then appears in the refresh workflow's review
 report without putting the other author's PR in the contributor delivery queue.
 
+The [CI flakes queue](?view=investigations&q=CI+flakes#investigation%3Aci-flakes)
+tracks failures on gVisor PRs from any author, their Copybara imports, and
+integration builds. Start a branchless investigation when a test or failure
+signature needs a closer look. Record the exact commit and failing attempt,
+what passed on retry (case, target, or whole job), and what the owner will
+check next. Link subsequent occurrences, the upstream issue and the fix on
+the same card. Conclude it when the repair has been exercised.
+
+Each scheduled work-map refresh scans the public Buildkite build listings
+and follows job retry IDs. It also samples gVisor PR validation workflows
+on GitHub Actions within the remaining GitHub request budget. The CI flake
+triage owner checks new observations, unrecovered failures and public flake
+reports for repeat symptoms. Look through passing builds as well as failed
+ones. Record service outages, cancellations and persistent failures separately
+from intermittent test failures. First-pass alone is advisory under #16791.
+The queue shows the covered builds, backlog and provider errors. A recovered
+job is a lead until its original log identifies the failing operation.
+
 On subscriptions with a `since` timestamp, `reviewWatchHandoff` also keeps
 human mentions of the reviewer's GitHub login and replies in threads they
 opened visible on every refresh. It links the incoming message and its thread

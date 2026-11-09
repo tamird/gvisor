@@ -260,6 +260,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
+  { id: "agent-ci-flake", owner: "agent", title: "CI flake investigations" },
   { id: "agent-release-check", owner: "agent", title: "Check an upstream release" },
   { id: "agent-release-opportunity", owner: "agent", title: "Inspect a newer BCR release", secondary: true },
   { id: "upstream-release", owner: "agent", title: "Waiting for an upstream release" },
@@ -585,6 +586,8 @@ function attentionReasons(node, owner) {
     }
   }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
+  if (node.type === "investigation" && node.group === "ci-flakes" && node.status === "active")
+    add("agent-ci-flake", node.nextStep);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const sweep = liveSnapshot?.projectFeedbackReview;
   if (node.id === "investigation:project-feedback" && node.status === "active" && sweep?.dailyReviewDue === true
@@ -1307,7 +1310,8 @@ function navigateFromURL() {
 function tableNodes() { return model.nodes.filter((node) => matches(node) && visibleHistory(node)); }
 function investigationMatches(item) {
   const query = $("investigation-search").value.trim().toLowerCase(), state = $("investigation-filter").value;
-  const text = [item.title, item.owner, item.summary, item.nextStep || "", ...item.findings.map(finding => finding.text),
+  const group = registry.groups?.find(entry => entry.id === item.group);
+  const text = [item.title, group?.label || "", item.owner, item.summary, item.nextStep || "", ...item.findings.map(finding => finding.text),
     ...(item.comparisons || []).flatMap(comparison => [comparison.title, comparison.description, comparison.note, ...comparison.columns, ...comparison.rows.flat()])].join(" ").toLowerCase();
   return visibleHistory(item) && (!state || item.status === state) && (!query || text.includes(query));
 }
@@ -1315,6 +1319,66 @@ function investigationEvidence(sources) {
   const evidence = element("div", "investigation-evidence");
   for (const source of sources) evidence.append(link(source.label + " ↗", source.url));
   return evidence;
+}
+function appendCIFlakeScan(card, scan) {
+  if (!scan) {
+    card.append(element("p", "comparison-note", "No Buildkite scan is available in this snapshot."));
+    return;
+  }
+  const section = element("details", "investigation-comparison");
+  section.append(element("summary", "", `Recovered Buildkite jobs (${scan.observations.length})`));
+  section.append(element("p", "comparison-note", `Scan at ${date(scan.checkedAt)}`));
+  const coverage = element("ul");
+  for (const [name, state] of Object.entries(scan.pipelines)) {
+    const line = element("li"); line.append(link(name, `https://buildkite.com/gvisor/${name}/builds`));
+    const facts = [];
+    if (state.nextBuild > state.firstBuild) facts.push(`visited #${state.firstBuild}–${state.nextBuild - 1}`);
+    if (state.latest >= state.nextBuild) facts.push(`${state.latest - state.nextBuild + 1} newer builds queued`);
+    if (state.pending?.length) facts.push(`${state.pending.length} to revisit`);
+    if (state.unobservedBuilds?.length) facts.push(`${state.unobservedBuilds.length} unobserved`);
+    if (state.missingBuilds?.length) facts.push(`${state.missingBuilds.length} missing`);
+    if (state.error) facts.push(state.error);
+    line.append(` · ${facts.join(", ") || state.status}`); coverage.append(line);
+  }
+  section.append(coverage);
+  if (scan.observations.length) {
+    const table = element("table", "comparison-table"), header = element("tr");
+    const caption = element("caption");
+    caption.append(element("span", "", "Buildkite linked each failed job to a passing retry on the same commit. A job can contain many tests."));
+    for (const text of ["Job", "Build / PR", "Attempts", "Recovered"]) {
+      const cell = element("th", "", text); cell.scope = "col"; header.append(cell);
+    }
+    const head = element("thead"); head.append(header); table.append(caption, head);
+    const body = element("tbody");
+    for (const row of [...scan.observations].sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt))) {
+      const url = `https://buildkite.com/gvisor/${row.pipeline}/builds/${row.build}`;
+      const tr = element("tr"), job = element("th", "", row.job); job.scope = "row";
+      const build = element("td"); build.append(link(`${row.pipeline} #${row.build}`, url));
+      if (row.pr) build.append(" · ", link(`PR #${row.pr}`, `https://github.com/google/gvisor/pull/${row.pr}`));
+      const attempts = element("td");
+      attempts.append(link(row.exitCode == null ? "Failed" : `Exit ${row.exitCode}`, `${url}#${row.failedJob}`),
+        " → ", link("Passed", `${url}#${row.passedJob}`));
+      tr.append(job, build, attempts, element("td", "", date(row.finishedAt))); body.append(tr);
+    }
+    table.append(body); section.append(table);
+  }
+  card.append(section);
+  if (scan.actions) {
+    const actions = element("details", "investigation-comparison");
+    actions.append(element("summary", "", `Recovered GitHub Actions jobs (${scan.actions.observations.length})`));
+    const coverage = scan.actions.error || scan.actions.status;
+    actions.append(element("p", "comparison-note", `Rotating sample of PR validation workflows · ${coverage}`));
+    for (const row of scan.actions.observations) {
+      const p = element("p", "", `${row.workflow} / ${row.job} · `);
+      const base = `https://github.com/google/gvisor/actions/runs/${row.run}/job/`;
+      p.append(link("Failed", base + row.failedJob), " → ", link("Passed", base + row.passedJob),
+        " · ", link(row.head.slice(0, 9), `https://github.com/google/gvisor/commit/${row.head}`),
+        ` · ${date(row.finishedAt)}`);
+      if (row.pr) p.append(" · ", link(`PR #${row.pr}`, `https://github.com/google/gvisor/pull/${row.pr}`));
+      actions.append(p);
+    }
+    card.append(actions);
+  }
 }
 function drawInvestigations() {
   const list = $("investigation-list"); list.replaceChildren();
@@ -1354,6 +1418,7 @@ function drawInvestigations() {
     if (item.evidence.length) {
       card.append(investigationEvidence(item.evidence));
     }
+    if (item.id === "investigation:ci-flakes") appendCIFlakeScan(card, liveSnapshot?.ciFlakes);
     list.append(card);
   }
   return items;
@@ -2189,6 +2254,28 @@ function validateSnapshotSource(snapshot, nextRegistry) {
 function validateSnapshot(snapshot, nextRegistry = registry) {
   validateSnapshotSource(snapshot, nextRegistry);
   if (snapshot.mergedOnly || snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
+  if (snapshot.ciFlakes !== undefined) {
+    const scan = snapshot.ciFlakes, slug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    const uuid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
+    if (!scan || !Number.isFinite(Date.parse(scan.checkedAt)) || !scan.pipelines || Array.isArray(scan.pipelines) ||
+        typeof scan.pipelines !== "object" || Object.entries(scan.pipelines).some(([name, state]) =>
+          !slug.test(name) || !state || typeof state.status !== "string" || (state.error != null && typeof state.error !== "string")) ||
+        !Array.isArray(scan.observations) || scan.observations.some(row => !row || !Object.hasOwn(scan.pipelines, row.pipeline) ||
+          !Number.isSafeInteger(row.build) || row.build < 1 || !/^[a-f0-9]{40}$/.test(row.head) ||
+          (row.pr != null && (!Number.isSafeInteger(row.pr) || row.pr < 1)) || typeof row.job !== "string" || !row.job.trim() ||
+          !uuid.test(row.failedJob) || !uuid.test(row.passedJob) || row.failedJob === row.passedJob ||
+          !Number.isFinite(Date.parse(row.finishedAt)) || (row.exitCode != null && !Number.isInteger(row.exitCode))))
+      throw new Error("Invalid CI flake scan");
+    if (scan.actions) {
+      const positive = value => Number.isSafeInteger(value) && value > 0;
+      if (typeof scan.actions.status !== "string" || !Array.isArray(scan.actions.observations) ||
+          scan.actions.observations.some(row => !row || !positive(row.run) || !positive(row.failedJob) ||
+            !positive(row.passedJob) || row.failedJob === row.passedJob || !/^[0-9a-f]{40}$/.test(row.head) ||
+            ![row.workflow, row.job].every(value => typeof value === "string" && value.trim()) ||
+            !Number.isFinite(Date.parse(row.finishedAt)) || (row.pr != null && !positive(row.pr))))
+        throw new Error("Invalid GitHub Actions retry evidence");
+    }
+  }
   if (snapshot.incomingReviewRequests !== undefined) {
     if (!Array.isArray(snapshot.incomingReviewRequests) || snapshot.incomingReviewRequests.some(item => {
       if (!item || !/^[\w.-]+\/[\w.-]+$/.test(item.repo) || !Number.isSafeInteger(item.number) || item.number < 1) return true;

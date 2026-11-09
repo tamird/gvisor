@@ -16,6 +16,33 @@ function client() {
   return context;
 }
 
+test('an active CI flake investigation belongs to the agent before it has a branch', () => {
+  const context = client();
+  context.nodeInput = { id: 'investigation:ci-flake-example', type: 'investigation', group: 'ci-flakes',
+    status: 'active', nextStep: 'Compare the two attempts.' };
+  const reasons = () => [...vm.runInContext('attentionReasons(nodeInput, "tamird").map(r => r.owner)', context)];
+  assert.deepEqual(reasons(), ['agent']);
+  context.nodeInput.status = 'concluded';
+  assert.deepEqual(reasons(), []);
+});
+
+test('retry evidence must identify distinct attempts in the scanned pipeline', () => {
+  const context = client();
+  const scan = { checkedAt: context.snapshotInput.checkedAt, pipelines: { pipeline: { status: 'ok' } },
+    observations: [{ pipeline: 'pipeline', build: 17, head: 'a'.repeat(40), job: 'Arm64 tests',
+      failedJob: 'aaaaaaaa-0000-4000-8000-000000000000', passedJob: 'bbbbbbbb-0000-4000-8000-000000000000',
+      finishedAt: context.snapshotInput.checkedAt, exitCode: 2 }] };
+  const validate = () => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
+  validate();  // A snapshot collected before CI intake is still usable.
+  context.snapshotInput.ciFlakes = scan;
+  validate();
+  scan.observations[0].pipeline = 'another-pipeline';
+  assert.throws(validate, /Invalid CI flake scan/);
+  scan.observations[0].pipeline = 'pipeline';
+  scan.observations[0].passedJob = scan.observations[0].failedJob;
+  assert.throws(validate, /Invalid CI flake scan/);
+});
+
 test('a visible tab refreshes once when due and retains its view if the snapshot is unavailable', async () => {
   const context = client(), run = source => vm.runInContext(source, context);
   let now = Date.now(), timer, pending, requests = 0;
