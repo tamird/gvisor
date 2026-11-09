@@ -108,6 +108,8 @@ steps:
   - <<: *common
     label: ":screwdriver: All GPU Drivers Test"
     parallelism: 8
+    env:
+      STARTUP_OPTIONS: --bazelrc=tools/public-ci.bazelrc
     commands:
       - tools/gpu/all_drivers_test.sh
     agents:

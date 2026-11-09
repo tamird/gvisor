@@ -115,7 +115,7 @@ GOMODCACHE ?=
 ##                         default, set to "streamed" to show test logs as
 ##                         they happen.
 ##
-STARTUP_OPTIONS    :=
+STARTUP_OPTIONS    ?=
 BAZEL_OPTIONS      ?=
 BAZEL_REMOTE_CACHE ?=
 BAZEL              := bazel $(STARTUP_OPTIONS)
