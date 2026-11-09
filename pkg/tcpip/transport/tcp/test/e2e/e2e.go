@@ -249,6 +249,13 @@ func TestV4Connect(t *testing.T, c *context.Context, checkers ...checker.Network
 
 // TestV6Connect establishes an IPv6 Connection with the context stack.
 func TestV6Connect(t *testing.T, c *context.Context, checkers ...checker.NetworkChecker) {
+	t.Helper()
+	TestV6ConnectWithOptions(t, c, nil, checkers...)
+}
+
+// TestV6ConnectWithOptions establishes an IPv6 connection with the given TCP
+// options in the peer's SYN-ACK.
+func TestV6ConnectWithOptions(t *testing.T, c *context.Context, options []byte, checkers ...checker.NetworkChecker) {
 	// Start connection attempt to IPv6 address.
 	we, ch := waiter.NewChannelEntry(waiter.WritableEvents)
 	c.WQ.EventRegister(&we)
@@ -279,6 +286,7 @@ func TestV6Connect(t *testing.T, c *context.Context, checkers ...checker.Network
 		SeqNum:  iss,
 		AckNum:  c.IRS.Add(1),
 		RcvWnd:  30000,
+		TCPOpts: options,
 	})
 
 	// Receive ACK packet.

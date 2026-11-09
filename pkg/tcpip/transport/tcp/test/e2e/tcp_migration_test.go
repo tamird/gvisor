@@ -22,6 +22,7 @@ import (
 	"time"
 	"unsafe"
 
+	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
@@ -240,6 +241,131 @@ func TestTCPMigrationACKAfterMTUReduction(t *testing.T) {
 	t.Logf("ACK of %d-byte packet at MSS %d: cwnd %d -> %d", len(data), before.SndMss, before.SndCwnd, after.SndCwnd)
 	if want := before.SndCwnd + 1; after.SndCwnd != want {
 		t.Errorf("ACK of one old packet: got cwnd %d, want %d", after.SndCwnd, want)
+	}
+}
+
+// TestTCPMigrationExperimentOption follows a peer-limited connection through
+// a first enable with data in flight and two restores on a capable route.
+func TestTCPMigrationExperimentOption(t *testing.T) {
+	for _, family := range []struct {
+		name   string
+		addr   tcpip.ProtocolAddress
+		subnet tcpip.Subnet
+		cost   int
+	}{
+		{"IPv4", tcpip.ProtocolAddress{Protocol: ipv4.ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix}, header.IPv4EmptySubnet, header.IPv4OptionExperimentLength},
+		{"IPv6", tcpip.ProtocolAddress{Protocol: ipv6.ProtocolNumber, AddressWithPrefix: testcontext.StackV6AddrWithPrefix}, header.IPv6EmptySubnet, header.IPv6ExperimentHdrLength},
+	} {
+		for _, source := range []struct {
+			name    string
+			capable bool
+		}{{"already_capable", true}, {"newly_capable", false}} {
+			t.Run(family.name+"/"+source.name, func(t *testing.T) {
+				v6 := family.addr.Protocol == ipv6.ProtocolNumber
+				c := testcontext.NewWithOpts(t, testcontext.Options{MTU: 1500, EnableV4: !v6, EnableV6: v6, Clock: faketime.NewManualClock(), EnableExperimentIPOption: source.capable})
+				t.Cleanup(c.Cleanup)
+				const peerMSS = 1200
+				var synOptions [4]byte
+				header.EncodeMSSOption(peerMSS, synOptions[:])
+				getPacket := c.GetPacket
+				if v6 {
+					c.CreateV6Endpoint(true)
+					e2e.TestV6ConnectWithOptions(t, c, synOptions[:])
+					getPacket = c.GetV6Packet
+				} else {
+					c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, synOptions[:])
+				}
+				const value = 99
+				checkData := func(view *buffer.View, seq seqnum.Value, data []byte, tagged bool) {
+					t.Helper()
+					defer view.Release()
+					tcpCheck := checker.TCP(checker.TCPSeqNum(uint32(seq)), checker.Payload(data))
+					switch {
+					case v6 && tagged:
+						checker.IPv6WithExtHdr(t, view, checker.IPv6ExtHdr(checker.IPv6ExperimentHeader(value)), tcpCheck)
+					case v6:
+						checker.IPv6(t, view, tcpCheck)
+					default:
+						var opts header.IPv4Options
+						if tagged {
+							opts = header.IPv4Options{byte(header.IPv4OptionExperimentType), header.IPv4OptionExperimentLength, 0, value}
+						}
+						checker.IPv4(t, view, checker.IPv4Options(opts), tcpCheck)
+					}
+				}
+				write := func(ep tcpip.Endpoint, data []byte) {
+					t.Helper()
+					if n, err := ep.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+						t.Fatalf("Write = %d, %v; want %d", n, err, len(data))
+					}
+				}
+				checkMSS := func(ep tcpip.Endpoint, stage string, want int) {
+					t.Helper()
+					var info tcpip.TCPInfoOption
+					if err := ep.GetSockOpt(&info); err != nil || int(info.SndMss) != want {
+						t.Fatalf("%s: send MSS = %d, %v, want %d", stage, info.SndMss, err, want)
+					}
+				}
+				// Keep the first full segment in flight when enabling the option.
+				checkMSS(c.EP, "never enabled", peerMSS)
+				seq := c.IRS.Add(1)
+				old := bytes.Repeat([]byte{0x42}, peerMSS)
+				write(c.EP, old)
+				checkData(getPacket(), seq, old, false)
+				seq = seq.Add(peerMSS)
+				c.EP.SocketOptions().SetExperimentOptionValue(value)
+				want := peerMSS
+				if source.capable {
+					want -= family.cost
+				}
+				checkMSS(c.EP, "after enable", want)
+				queued := bytes.Repeat([]byte{0x17}, want)
+				write(c.EP, queued)
+				checkData(getPacket(), seq, queued, source.capable)
+				seq = seq.Add(seqnum.Size(len(queued)))
+
+				s := c.Stack()
+				var link *channel.Endpoint
+				for range 2 {
+					s.SetAllowLiveTCPMigration(true)
+					s.SetRemoveConf(true)
+					var image bytes.Buffer
+					if _, err := state.Save(context.Background(), &image, s); err != nil {
+						t.Fatal(err)
+					}
+					s.Resume()
+					s, _ = loadTCPMigrationStack(t, image.Bytes(), true, 0)
+					link = channel.New(1000, 1500, "")
+					if err := s.CreateNICWithOptions(1, link, stack.NICOptions{EnableExperimentIPOption: true}); err != nil {
+						t.Fatal(err)
+					}
+					if err := s.AddProtocolAddress(1, family.addr, stack.AddressProperties{}); err != nil {
+						t.Fatal(err)
+					}
+					s.SetRouteTable([]tcpip.Route{{Destination: family.subnet, NIC: 1}})
+					s.Restore()
+					tcpip.AsyncLoading.Wait()
+				}
+
+				eps := s.RegisteredEndpoints()
+				if len(eps) != 1 {
+					t.Fatalf("restored %d endpoints, want 1", len(eps))
+				}
+				ep := eps[0].(tcpip.Endpoint)
+				want = peerMSS - family.cost
+				checkMSS(ep, "after restore", want)
+				data := bytes.Repeat([]byte{0xa7}, peerMSS)
+				write(ep, data)
+				ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+				defer cancel()
+				pkt := link.ReadContext(ctx)
+				if pkt == nil {
+					t.Fatal("missing restored data")
+				}
+				defer pkt.DecRef()
+				checkData(pkt.ToView(), seq, data[:want], true)
+			})
+		}
 	}
 }
 

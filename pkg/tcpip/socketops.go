@@ -587,7 +587,13 @@ func (so *SocketOptions) GetExperimentOptionValue() uint16 {
 }
 
 // SetExperimentOptionValue sets the value for the experiment IP option header.
+// Enabling the option on TCP may take the endpoint lock.
 func (so *SocketOptions) SetExperimentOptionValue(v uint16) {
+	if v != 0 && so.GetExperimentOptionValue() == 0 {
+		if h, ok := so.handler.(interface{ PrepareExperimentOption() }); ok {
+			h.PrepareExperimentOption()
+		}
+	}
 	so.experimentOptionValue.Store(uint32(v))
 }
 

@@ -111,6 +111,12 @@ func (r *Route) OutgoingNIC() tcpip.NICID {
 	return r.outgoingNIC.id
 }
 
+// ExperimentIPOptionEnabled reports whether the outgoing NIC supports the IP
+// experiment option.
+func (r *Route) ExperimentIPOptionEnabled() bool {
+	return r.outgoingNIC.GetExperimentIPOptionEnabled()
+}
+
 // RouteInfo contains all of Route's exported fields.
 //
 // +stateify savable

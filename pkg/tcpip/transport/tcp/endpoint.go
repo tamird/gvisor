@@ -499,6 +499,12 @@ type Endpoint struct {
 	// and dropped when it is.
 	segmentQueue segmentQueue `state:"wait"`
 
+	// experimentOptionUsed records the first request for the IP experiment
+	// option, even if this endpoint has not yet acquired a capable route.
+	//
+	// +checklocks:mu
+	experimentOptionUsed bool
+
 	// userMSS if non-zero is the MSS value explicitly set by the user
 	// for this endpoint using the TCP_MAXSEG setsockopt.
 	userMSS uint16
@@ -3299,7 +3305,27 @@ func (e *Endpoint) maybeEnableSACKPermitted(synOpts header.TCPSynOptions) {
 	}
 }
 
-// maxOptionSize return the maximum size of TCP options.
+// PrepareExperimentOption reserves space before SocketOptions publishes the
+// first nonzero value. Data already in flight keeps its original packet ends.
+//
+// +checklocksexclude:e.mu
+// +checklocksexclude:e.segmentQueue.mu
+// +checklocksexclude:e.pendingProcessingMu
+func (e *Endpoint) PrepareExperimentOption() {
+	e.LockUser()
+	defer e.UnlockUser()
+	if e.experimentOptionUsed {
+		return
+	}
+	e.experimentOptionUsed = true
+	if e.snd != nil && e.route != nil {
+		e.snd.updateMaxPayloadSize(int(e.route.MTU()), 0)
+	}
+}
+
+// maxOptionSize returns the space reserved for IP and TCP options in each
+// segment. The experiment option can be enabled on a connected socket while
+// earlier segments are still outstanding.
 //
 // +checklocks:e.mu
 func (e *Endpoint) maxOptionSize() (size int) {
@@ -3308,6 +3334,14 @@ func (e *Endpoint) maxOptionSize() (size int) {
 	size = len(options)
 	putOptions(options)
 
+	if e.experimentOptionUsed && e.route.ExperimentIPOptionEnabled() {
+		switch e.route.NetProto() {
+		case header.IPv4ProtocolNumber:
+			size += header.IPv4OptionExperimentLength
+		case header.IPv6ProtocolNumber:
+			size += header.IPv6ExperimentHdrLength
+		}
+	}
 	return size
 }
 
@@ -3502,7 +3536,7 @@ func (e *Endpoint) GetAcceptConn() bool {
 // getExperimentOptionValue returns the experiment option value set on the
 // endpoint if experiment IP options are enabled on outgoing NIC of the route.
 func (e *Endpoint) getExperimentOptionValue(route *stack.Route) uint16 {
-	if nic, err := e.stack.GetNICByID(route.OutgoingNIC()); err == nil && nic.GetExperimentIPOptionEnabled() {
+	if route.ExperimentIPOptionEnabled() {
 		return e.ops.GetExperimentOptionValue()
 	}
 	return 0
