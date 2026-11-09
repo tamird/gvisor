@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T22:32:51+00:00",
+    "updatedAt": "2026-11-09T22:37:48+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -64622,14 +64622,22 @@
       "id": "branch:shim-wedged-runtime-tests",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/shared-test-process",
-      "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
+      "ref": "review/shared-testprocess-explicit-main",
+      "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
       "title": "Use one test process for shim timeouts and runsc lifecycle tests",
-      "url": "https://github.com/tamird/gvisor/commit/885fe8b75",
+      "url": "https://github.com/tamird/gvisor/commit/531bc8fc3",
       "group": "tests",
-      "status": "Contributor review requested",
-      "summary": "Two approved changes in #17053 introduced the specutils and runsc/cmd children. Both landed on November 6. This follow-up keeps those tests and moves their child behavior into the same fixture used by the proposed shim tests and the systrap stuck-child test.",
+      "status": "Agent work",
+      "summary": "The revised shim, runsc and systrap tests opt in to the shared test process in five TestMain entry points. Child commands receive their test context. The shim assertion observes the watchdog killing the expected runtime PID. The systrap host-stall test owns its stub so it can use waitid and cleans up the process group on early failure.\n\nQualification on the revised source is running. The previous source passed 53 selected AMD64 cases across the two earlier runs.",
       "evidence": [
+        {
+          "label": "Revised process fixture",
+          "url": "https://github.com/tamird/gvisor/commit/531bc8fc3"
+        },
+        {
+          "label": "Exact-source Linux qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42713412767"
+        },
         {
           "label": "Both approved lifecycle commits landed in #17053",
           "url": "https://github.com/google/gvisor/pull/17053"
@@ -64637,10 +64645,6 @@
         {
           "label": "Independent netgofer change with its own shutdown protocol",
           "url": "https://github.com/google/gvisor/pull/17242"
-        },
-        {
-          "label": "Single-commit shared process fixture",
-          "url": "https://github.com/tamird/gvisor/commit/885fe8b75"
         },
         {
           "label": "Process identity passed uncached on a pidfs-capable AMD64 worker",
@@ -64655,7 +64659,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-09T19:55:52+00:00",
+      "updatedAt": "2026-11-09T22:37:48+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64668,40 +64672,41 @@
           "requestedAt": "2026-11-08T12:41:39+00:00",
           "outcome": "changes-requested",
           "at": "2026-11-09T19:07:20+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
+          "baseHead": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295",
+          "url": "https://github.com/tamird/gvisor/commit/885fe8b75",
+          "title": "Use one test process for shim timeouts and runsc lifecycle tests",
+          "body": "The shim deadline tests run a fake runtime through /bin/sh and sleep.\nOn a worker without those programs, some tests accept the launch error\nbefore the watchdog has a chance to terminate a running command.\n\nRe-execute the test binary as a process that stays alive until killed.\nThe shim tests observe the runtime being killed, including operations\nthat discard its error. The runsc and systrap tests use the same child\nfor process identity, readiness and an unresponsive sandbox. An\nimmediate exit also lets specutils inspect and reap a zombie.",
+          "requestedAt": "2026-11-09T19:18:26+00:00",
+          "summary": "This supersedes the unsubmitted shim draft 6b2d3261d and follows the two changes already merged in #17053. The separately approved netgofer PR #17242 exercises a child that exits on stdin EOF. Review the shared pause fixture and its watchdog check.",
+          "outcome": "changes-requested",
+          "at": "2026-11-09T22:37:48+00:00",
+          "note": "Revise the shared test-process fixture and its caller ownership."
         }
       ],
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
-        "observedAt": "2026-11-09T19:55:52+00:00",
-        "disposition": "All 53 selected cases passed on native AMD64 across two runs. The pidfs-capable worker ran the process-identity case that skipped on GitHub. The deliberately missing runtime failed its watchdog assertion as expected. All five ARM64 test binaries cross-compiled.",
-        "nextAction": "This supersedes the unsubmitted shim draft 6b2d3261d and follows the two changes already merged in #17053. The separately approved netgofer PR #17242 exercises a child that exits on stdin EOF. Review the shared pause fixture and its watchdog check.",
+        "owner": "Agent",
+        "sourceHead": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
+        "observedAt": "2026-11-09T22:37:48+00:00",
+        "disposition": "Contributor requested revisions to 885fe8b75. The revised source is being validated.",
+        "nextAction": "Check the actual Linux case results and watchdog behavior before requesting review of this revision.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/885fe8b75",
-          "https://github.com/tamird/gvisor/actions/runs/42681696570/artifacts/13705196514",
-          "https://app.buildbuddy.io/invocation/23a9d94f-85ca-4d70-8471-b5d083d7c84a"
+          "https://github.com/tamird/gvisor/commit/531bc8fc3",
+          "https://github.com/tamird/gvisor/actions/runs/42713412767"
         ]
       },
       "refinement": {
         "before": {
-          "head": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
-          "base": "7d1b049f5d541992b47cc38cf564025908a9ed7b"
-        },
-        "after": {
           "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
           "base": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295"
+        },
+        "after": {
+          "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
+          "base": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295"
         }
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
-        "baseHead": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295",
-        "url": "https://github.com/tamird/gvisor/commit/885fe8b75",
-        "title": "Use one test process for shim timeouts and runsc lifecycle tests",
-        "body": "The shim deadline tests run a fake runtime through /bin/sh and sleep.\nOn a worker without those programs, some tests accept the launch error\nbefore the watchdog has a chance to terminate a running command.\n\nRe-execute the test binary as a process that stays alive until killed.\nThe shim tests observe the runtime being killed, including operations\nthat discard its error. The runsc and systrap tests use the same child\nfor process identity, readiness and an unresponsive sandbox. An\nimmediate exit also lets specutils inspect and reap a zombie.",
-        "requestedAt": "2026-11-09T19:18:26+00:00",
-        "summary": "This supersedes the unsubmitted shim draft 6b2d3261d and follows the two changes already merged in #17053. The separately approved netgofer PR #17242 exercises a child that exits on stdin EOF. Review the shared pause fixture and its watchdog check."
       }
     },
     {
@@ -95055,5 +95060,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T22:32:51+00:00"
+  "updatedAt": "2026-11-09T22:37:48+00:00"
 }
