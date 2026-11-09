@@ -1,6 +1,8 @@
+diff --git a/bazel/grpc_build_system.bzl b/bazel/grpc_build_system.bzl
+index b1df59866f..77b728fa89 100644
 --- a/bazel/grpc_build_system.bzl
 +++ b/bazel/grpc_build_system.bzl
-@@ -201,6 +201,26 @@
+@@ -201,6 +201,26 @@ def grpc_cc_library(
          linkstatic = linkstatic,
      )
  
@@ -27,7 +29,7 @@
  def grpc_proto_plugin(name, srcs = [], deps = []):
      cc_binary(
          name = name + "_native",
-@@ -212,16 +232,14 @@
+@@ -212,16 +232,14 @@ def grpc_proto_plugin(name, srcs = [], deps = []):
          binary = name + "_native",
      )
  
@@ -47,9 +49,11 @@
      )
  
  def grpc_internal_proto_library(
+diff --git a/tools/artifact_gen/extract_metadata_from_bazel_xml.cc b/tools/artifact_gen/extract_metadata_from_bazel_xml.cc
+index 57507dd037..6d0ad0a08d 100644
 --- a/tools/artifact_gen/extract_metadata_from_bazel_xml.cc
 +++ b/tools/artifact_gen/extract_metadata_from_bazel_xml.cc
-@@ -422,7 +422,7 @@
+@@ -422,7 +422,7 @@ class ArtifactGen {
              bazel_rule.clazz == "upb_c_proto_library" ||
              bazel_rule.clazz == "upb_proto_reflection_library" ||
              bazel_rule.clazz == "alias" || bazel_rule.clazz == "bind" ||
@@ -58,9 +62,11 @@
            rules_[bazel_rule.name] = bazel_rule;
          }
        }
+diff --git a/tools/buildgen/extract_metadata_from_bazel_xml.py b/tools/buildgen/extract_metadata_from_bazel_xml.py
+index 83eb4eecf0..3b3c14f726 100644
 --- a/tools/buildgen/extract_metadata_from_bazel_xml.py
 +++ b/tools/buildgen/extract_metadata_from_bazel_xml.py
-@@ -258,6 +258,7 @@
+@@ -258,6 +258,7 @@ def _extract_rules_from_bazel_xml(xml_tree):
                  "alias",
                  "bind",
                  "genrule",
