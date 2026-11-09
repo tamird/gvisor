@@ -470,12 +470,21 @@ validate_all_tests()
     num_duts = t.num_duts if hasattr(t, "num_duts") else 1,
 ) for t in ALL_TESTS]
 
+# Keep the normal suite on its selected architecture.
+_PACKETIMPACT_TESTS = [
+    t.name + "_" + dut + "_test"
+    for t in ALL_TESTS
+    for dut in ["native", "netstack"]
+]
+
 test_suite(
     name = "all_tests",
-    tags = [
-        "manual",
-        "notap",
-        "packetimpact",
-    ],
-    tests = existing_rules(),
+    tags = ["manual", "notap", "packetimpact"],
+    tests = _PACKETIMPACT_TESTS,
+)
+
+test_suite(
+    name = "mixed_tests",
+    tags = ["manual", "notap", "packetimpact"],
+    tests = [":all_tests"] + [name + "_presubmit_arm64" for name in _PACKETIMPACT_TESTS],
 )

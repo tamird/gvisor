@@ -1,7 +1,7 @@
 """Defines rules for packetimpact test targets."""
 
-load("@bazel_skylib//rules:native_binary.bzl", "native_test")
-load("//tools:defs.bzl", "go_test")
+load("//tools:defs.bzl", "go_test", "namespace_test_exec_properties")
+load("//tools/bazeldefs:presubmit_tests.bzl", "native_test")
 
 PACKETIMPACT_TAGS = [
     "manual",
@@ -31,6 +31,7 @@ def _packetimpact_test(
             "--num_duts=%d" % num_duts,
         ] + (["--expect_failure"] if expect_failure else []) + args,
         data = [dut_binary, testbench_binary],
+        exec_properties = namespace_test_exec_properties,
         tags = PACKETIMPACT_TAGS,
         **kwargs
     )

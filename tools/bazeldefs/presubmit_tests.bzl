@@ -8,8 +8,12 @@ load(":test_architectures.bzl", "arm64_presubmit_test", "with_presubmit_variant"
 _arm64_native_test, _native_transition = with_test_architecture(_native_test, "arm64").build()
 _arm64_sh_test, _sh_transition = with_test_architecture(_sh_test, "arm64").build()
 
-native_test = with_presubmit_variant(_native_test, _arm64_native_test)
 sh_test = with_presubmit_variant(_sh_test, _arm64_sh_test)
+
+def native_test(name, out = "", **kwargs):
+    """Preserves the original output name and gives the ARM64 companion its own executable."""
+    _native_test(name = name, out = out, **kwargs)
+    arm64_presubmit_test(name, _arm64_native_test, kwargs)
 
 def arm64_presubmit_executable(name, **kwargs):
     """Runs a generated test executable and its runfiles in the ARM64 configuration."""

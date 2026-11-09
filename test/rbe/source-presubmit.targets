@@ -10,3 +10,6 @@
 
 # Linux syscall control on a worker that supports nested namespaces.
 //test/rbe:uname
+
+# PacketImpact needs nested namespaces on its native test worker.
+//test/packetimpact/tests:mixed_tests
