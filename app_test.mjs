@@ -2939,32 +2939,17 @@ test('copying contributor decisions uses the matching change, review and reply l
 });
 
 
-test('a workload grant has its own contributor attention and preserves independent agent work', () => {
+test('RBE qualification belongs to the agent', () => {
   const context = client();
-  const source = 'a'.repeat(40), head = 'b'.repeat(40);
+  const head = 'b'.repeat(40);
   const node = { id: 'branch:workload', type: 'branch', repo: 'tamird/gvisor', head, status: 'Agent work',
-    followup: { owner: 'Agent', sourceHead: head, nextAction: 'Check the independent runtime issue.' },
-    humanAction: { kind: 'execution', status: 'pending', head, sourceHead: source,
-      title: 'Authorize the full build', summary: 'Run the selected ARM64 targets on RBE.',
-      body: 'Verify the archive and executables.', url: 'https://github.com/tamird/gvisor/commit/' + source.slice(0, 9) } };
-  context.location = { href: 'https://tamird.github.io/gvisor/' };
-  context.nodeInput = node;
-  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
-  const primary = () => vm.runInContext('primaryAttention(attentionReasons(nodeInput, "tamird"))?.id', context);
-  assert.equal(primary(), 'approve-run', 'an outstanding workload grant must reach the contributor');
-  vm.runInContext('validateRegistry(registryInput)', context);
-  assert.ok(idsFor(node).includes('agent-branch-work'));
-  assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
-  const selected = vm.runInContext('attentionGroups([nodeInput], "tamird", true, new Set(["queue-user"]))', context);
-  assert.equal(selected[0].title, 'Authorize workload runs');
-  assert.equal(new URL(selected[0].entries[0].copyURL).searchParams.get('reason'), 'approve-run');
-  node.humanAction.url = 'https://github.com/tamird/gvisor/commit/' + head;
-  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid human-only action/);
-  node.head = 'c'.repeat(40);
-  assert.ok(!idsFor(node).includes('approve-run'));
-  node.head = head;
-  delete node.humanAction;
+    followup: { owner: 'Agent', sourceHead: head, nextAction: 'Verify the remote build outputs.' } };
   assert.deepEqual(idsFor(node), ['agent-branch-work']);
+  node.humanAction = { kind: 'execution', status: 'pending', head, sourceHead: head,
+    title: 'Authorize the build', summary: 'Run ARM64 targets on RBE.', body: 'Verify the outputs.',
+    url: 'https://github.com/tamird/gvisor/commit/' + head.slice(0, 9) };
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid human-only action/);
 });
 
 test('human-only submissions stay separate from review decisions and clear when settled', () => {

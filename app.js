@@ -267,7 +267,6 @@ const ATTENTION_REASONS = [
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   ...DECISION_REASONS,
   { id: "human-submission", owner: "user", title: "Human-only submissions" },
-  { id: "approve-run", owner: "user", title: "Authorize workload runs" },
   { id: "maintainer-import-refresh", owner: "maintainer", title: "Refresh earlier export" },
   { id: "maintainer-reapproval", owner: "maintainer", title: "Reapprove current source PR" },
   { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
@@ -585,8 +584,7 @@ function attentionReasons(node, owner) {
       add(decisionReason(decision), decision.summary || decision.title || "Ready for your review.");
     }
   }
-  const action = humanAction(node);
-  if (action) add(action.kind === "execution" ? "approve-run" : "human-submission", action.summary);
+  if (humanAction(node)) add("human-submission", humanAction(node).summary);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const sweep = liveSnapshot?.projectFeedbackReview;
   if (node.id === "investigation:project-feedback" && node.status === "active" && sweep?.dailyReviewDue === true
@@ -1125,7 +1123,7 @@ function contributorDecisionNeedsRefresh(node, decision = contributorDecision(no
 }
 function humanAction(node) {
   const action = node.humanAction;
-  return action?.status === "pending" && ["submission", "execution"].includes(action.kind) && action.head === node.head ? action : null;
+  return action?.status === "pending" && action.kind === "submission" && action.head === node.head ? action : null;
 }
 function contributorDecisionURL(node, reason) {
   const url = new URL(location.href);
@@ -1561,7 +1559,7 @@ function drawTable(nodes) {
       }
     }
     const action = humanAction(node);
-    if (action) title.append(link(action.kind === "execution" ? "Open workload source ↗" : "Open submission context ↗", action.url, "human-action-source"));
+    if (action) title.append(link("Open submission context ↗", action.url, "human-action-source"));
     const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
     state.append(element("span", "base-status", status(node))); appendStates(state, node);
     for (const reason of entry.reasons) { const item = element("span", `attention-reason ${reason.owner}`, reason.title); item.title = `${ATTENTION_OWNERS[reason.owner]}. ${reason.detail}`; state.append(item); }
@@ -1696,11 +1694,10 @@ function drawDetails() {
   const action = humanAction(node);
   if (action) {
     const section = element("section", "detail-section human-action");
-    const execution = action.kind === "execution";
     section.append(element("h3", "", action.title), element("p", "", action.summary),
-      element("p", "detail-meta", execution ? `Requested source ${action.sourceHead}` : `Prepared local commit ${action.head}; not published upstream`),
-      element("div", "decision-body", action.body), link(execution ? "Open workload source ↗" : "Open submission context ↗", action.url));
-    if (!execution) section.append(link("Read contribution policy ↗", action.policyURL));
+      element("p", "detail-meta", `Prepared local commit ${action.head}; not published upstream`),
+      element("div", "decision-body", action.body), link("Open submission context ↗", action.url),
+      link("Read contribution policy ↗", action.policyURL));
     details.append(section);
   }
   // Service-owned attributes lead PR details; curated notes remain available
@@ -2048,12 +2045,10 @@ function validateRegistry(candidate) {
     const proposalRepo = node.type === "branch" && typeof node.repo === "string"
       && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) && node.repo.split("/")[0] === candidate.meta.owner ? node.repo : null;
     const action = node.humanAction;
-    if (action !== undefined && (!action || action.status !== "pending"
+    if (action !== undefined && (!action || action.status !== "pending" || action.kind !== "submission"
         || !/^[a-f0-9]{40}$/.test(action.head) || action.head !== node.head
         || ![action.title, action.summary, action.body].every(value => typeof value === "string" && value.trim())
-        || !safeURL(action.url) || !(action.kind === "submission" && safeURL(action.policyURL)
-          || action.kind === "execution" && proposalRepo && /^[a-f0-9]{40}$/.test(action.sourceHead)
-            && commitLinkMatches(proposalRepo, action.sourceHead, action.url)) || node.contributorReview !== undefined))
+        || !safeURL(action.url) || !safeURL(action.policyURL) || node.contributorReview !== undefined))
       throw new Error("Invalid human-only action");
     if (node.additionalReviews !== undefined && (!Array.isArray(node.additionalReviews) || node.type !== "pr" || action ||
         node.additionalReviews.some(review => review?.kind !== "review"))) throw new Error("Invalid additional review");
