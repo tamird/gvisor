@@ -772,8 +772,6 @@ def select_profile(
                 policy_excluded[label] = "KVM runs in the dedicated syscalls-kvm lane."
             else:
                 unavailable[variant] = "KVM execution is unavailable."
-        elif not hybrid and architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
-            unavailable[variant] = "ARM64 Firecracker execution is unavailable."
     eligible = expected - unavailable.keys() - policy_excluded.keys()
     buckets: dict[str, list[str]] = {}
     if selected_buckets is not None:
@@ -917,13 +915,8 @@ def select_variants(
             "profile_excluded_variants": sorted(expected - eligible),
         }, indent=2))
         return
-    unavailable = sorted(
-        label for label, properties in requirements.items()
-        if properties["Arch"] == "arm64" and properties["workload-isolation-type"] == "firecracker"
-    )
-    available = expected - set(unavailable)
-    selected = sorted(variants & available)
-    selected_environment = sorted(environment & available)
+    selected = sorted(variants)
+    selected_environment = sorted(environment)
     if profile_path is None:
         # Ordinary mixed units retain their original patterns and build-only
         # work. Other lanes that require neutral filters use canonical leaves.
@@ -936,7 +929,7 @@ def select_variants(
     print(json.dumps({
         "additional_arm64_variants": selected,
         "additional_environment_owners": selected_environment,
-        "unavailable_arm64_firecracker": unavailable,
+        "unavailable_arm64_firecracker": [],  # Retained for existing report readers.
         "canonical_selection": profile_path or patterns_path,
     }, indent=2))
 

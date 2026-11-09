@@ -328,6 +328,54 @@ class SyscallBucketsTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Configured owners differ from profile"):
                 self.select(None, routing, owners=[owner])
 
+    def test_native_arm64_remote_selection(self):
+        # Use the retained ARM64 profile and configured action identities. Remove
+        # the local route imposed by the hybrid fixture and keep one OCI control.
+        graph = json.loads((FIXTURE / "actions.json").read_text())
+        for action in graph["actions"]:
+            props = action["executionInfo"]
+            props[:] = [prop for prop in props if prop["key"] != "no-remote-exec"]
+        for prop in graph["actions"][0]["executionInfo"]:
+            if prop["key"] == "workload-isolation-type":
+                prop["value"] = "oci"
+        variants = sorted(target["label"] for target in graph["targets"])
+        owners = [label.removesuffix("_arm64") for label in variants]
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            actions = root / "actions.json"
+            actions.write_text(json.dumps(graph))
+            output = root / "targets"
+            with self.subTest(selector="mixed unit"), contextlib.redirect_stdout(io.StringIO()) as out:
+                patterns, unit_owners = root / "patterns", root / "owners"
+                patterns.write_text("//test/...\n")
+                unit_owners.write_text("\n".join(owners[:-1]) + "\n")
+                unit_matrix.select_variants(str(patterns), str(unit_owners), str(actions), str(output),
+                                            None, environment_owners=[variants[-1]])
+                report = json.loads(out.getvalue())
+                self.assertEqual(report["unavailable_arm64_firecracker"], [])
+                self.assertEqual(report["additional_arm64_variants"], variants[:-1])
+                self.assertEqual(report["additional_environment_owners"], variants[-1:])
+                self.assertEqual(output.read_text().splitlines(), ["//test/...", *variants])
+
+            with self.subTest(selector="syscall profile"), contextlib.redirect_stdout(io.StringIO()) as out:
+                events = [json.loads(line) for line in (FIXTURE / "profile.jsonl").read_text().splitlines()]
+                # Keep the two independent exclusions in the same remote profile.
+                flags = {owners[-2]: "runsc_kvm", owners[-1]: "nogo"}
+                for event in events:
+                    label = event["id"].get("targetConfigured", {}).get("label")
+                    if label in flags:
+                        event["configured"]["tag"].append(flags[label])
+                profile = root / "profile.jsonl"
+                profile.write_text("".join(json.dumps(event) + "\n" for event in events))
+                unit_matrix.select_profile(str(profile), "arm64", str(FIXTURE / "routing.jsonl"),
+                                           str(actions), str(output), syscall_policy=True)
+                report = json.loads(out.getvalue())
+                self.assertEqual(report["remote_owners"], variants[:-2])
+                self.assertEqual(set(report["unavailable_owners"]), {variants[-2]})
+                self.assertEqual(set(report["policy_excluded_owners"]), {variants[-1]})
+                self.assertEqual(output.read_text().splitlines(), variants[:-2])
+
     def test_single_and_union_partition(self):
         expected = json.loads((FIXTURE / "expected.json").read_text())
         full = self.select(None)

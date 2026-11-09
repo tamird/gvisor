@@ -1086,8 +1086,8 @@ test/rbe/qualify.sh --arch=all unit release-repository
 ```
 
 This uses one `bazel test` invocation. The unit selector preserves the AMD64
-selection and adds the declared ARM64 variants, reporting unavailable ARM64
-Firecracker workers. The existing release graph builds Debian, bzip2 and zstd
+selection and adds the declared ARM64 variants, including Firecracker tests.
+The existing release graph builds Debian, bzip2 and zstd
 packages for both CPUs, then checks signing and APT metadata on AMD64. Its
 owning test preserves the release build's default stripping policy even though
 unit tests use `--strip=never`. Either lane can also be selected alone with
@@ -1120,9 +1120,8 @@ The combined selection follows the public CI architectures: normal smoke,
 Docker and bwrap include ARM64; `do`, root, port forwarding and workflow
 checks retain AMD64. Bazel expands each architecture's owning suites, including
 explicit manual tests, before the selector checks their declared variants and
-configured worker requirements. Unavailable ARM64 Firecracker tests are
-reported and omitted from execution. Declaring and analyzing these variants
-does not establish ARM64 runtime coverage.
+configured worker requirements. Bazel submits the selected Firecracker tests
+to the scheduler. Runtime coverage requires a completed test action.
 
 The selected tests must survive the final invocation's filters; a changed
 selection fails before execution. Single-architecture lanes and combined lanes
@@ -1168,7 +1167,7 @@ The same path also accepts `overlay`, `swgso`, `hostnet`, `containerd`,
 `podman`, `syzkaller`, `go-export`, `cpu-images` and `gpu-images`. These lanes
 retain their existing suites and target-owned runtime settings. Combined
 selection uses AMD64; standalone ARM64 selection remains available where the
-existing lane supports it, with ARM64 Firecracker capacity still unqualified.
+existing lane supports it.
 The image checks retain four AMD64 shards or two standalone ARM64 shards.
 They check image availability/builds, not GPU runtime execution. Adding a
 lane to the combined graph does not resolve its existing workload failures.
@@ -1749,8 +1748,7 @@ that supplies Docker, external networking and IPv6. They use the host
 OverlayFS driver and request root disk space for expanded image layers and
 container writes; the action workspace holds the declared archives. These
 resource estimates need runtime qualification. Test logs identify the actual
-Docker version, storage and cgroup mode. ARM64 Firecracker capacity remains
-unqualified; providing ARM64 image pins does not supply that capacity.
+Docker version, storage and cgroup mode on the selected worker.
 
 The `docker-v1` lane selects the same complete AMD64 Docker suite under an
 actual cgroup-v1 hierarchy:
@@ -2072,10 +2070,9 @@ setup and delegates to the same smoke commands. By default that body owns both
 DirectFS modes; `RUNTIME_ARGS` retains the original single configured run and
 its shell quoting, including explicit `--directfs` selection.
 It can also run directly with an installed runtime and image archive, as
-described by `test/podman/smoke.sh`'s usage. Both architecture images are pinned,
-but ARM64 Firecracker capacity remains unqualified. Image tools, strict rootless
-storage and default networking must work on the actual worker; failures are not
-converted to skips or host-network runs.
+described by `test/podman/smoke.sh`'s usage. Both architecture images are pinned.
+Image tools, strict rootless storage and default networking must work on the
+actual worker. Failures propagate to the test.
 
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
@@ -2170,8 +2167,7 @@ Packetdrill retains all seven scripts against Linux and netstack. The wire
 server and Linux DUT explicitly use runc; the netstack DUT uses the declared
 runsc release. The shell tests share the Go suites' daemon lifecycle and report
 command and cleanup failures. Kernel netfilter support remains a worker
-requirement; missing features are errors. Native ARM64 images are declared,
-but ARM64 Firecracker capacity remains unqualified.
+requirement on both architectures. Missing features fail the test.
 
 The AMD64 website lane builds and checks the complete website filesystem and
 packages its deployable image without a Docker daemon on the coordinator:
@@ -2221,9 +2217,8 @@ its tests pass or complete the full save/restore matrix.
 
 With `--arch=all`, both checkpoint lanes use those public architectures and can
 join ordinary syscalls and other lanes in one invocation. Each profile is
-selected separately by Bazel before applying the existing worker-capacity
-checks. Unavailable ARM64 owners are reported; a selection with no available
-tests fails before execution.
+selected separately by Bazel. The selector reports KVM exclusions and owners
+reserved for the dedicated Nogo lane.
 
 ```sh
 test/rbe/qualify.sh --arch=all syscalls syscalls-save syscalls-resume smoke
@@ -2271,9 +2266,7 @@ This builds and runs two ordinary Go/C++ owners for both architectures in one
 Bazel invocation. The existing test frontend selects a matching native worker;
 compilation and linking retain the caller's execution constraints and consistent
 toolchain selection. No global host-platform override is needed. Target-owned
-`test.*`
-properties continue to select specialized workers; declaring an ARM64 variant
-does not supply the unavailable ARM64 Firecracker capacity.
+`test.*` properties continue to select specialized workers.
 
 The unit lane uses the same declarations without a copied test list:
 
@@ -2284,11 +2277,14 @@ test/rbe/qualify.sh --arch=all unit
 The selector preserves `test/unit.targets`, including its exclusions and non-test
 build targets, and adds ARM64 variants of its non-manual test owners. Both
 architectures run in one Bazel test invocation with the ordinary unit tag
-filters. A query of configured test actions reports and omits ARM64 Firecracker
-requirements while that worker capacity is unavailable; the declarations retain
-their ARM64 support. Shell, Python, YAML, generator, dependency and build checks
+filters. Earlier runs omitted ARM64 Firecracker owners. On November 8, the
+[docprocessor test][arm64-firecracker] passed uncached on a native ARM64
+Firecracker worker as root with IPv6 enabled in its execution properties.
+Shell, Python, YAML, generator, dependency and build checks
 use the same architecture selection as Go/C++ tests. Single-architecture lanes
 remain available through `--arch=amd64` and `--arch=arm64`.
+
+[arm64-firecracker]: https://github.com/tamird/gvisor/actions/runs/42455777370/artifacts/13607926451
 
 The existing syscall runner also declares architecture variants centrally;
 individual syscall declarations and their shard/hash buckets remain unchanged:
@@ -2301,8 +2297,8 @@ Bazel analyzes the ordered `test/syscalls.targets` roots with each public
 architecture configuration, including the separate ARM64 64K-page systrap
 profile, and `--build_tests_only`. The selector reads that
 invocation's configured top-level test events, then checks the actual variants'
-TestRunner configurations and worker properties. It reports KVM and ARM64
-Firecracker omissions explicitly. It separately reports Nogo owners selected
+TestRunner configurations and worker properties. It reports KVM omissions
+explicitly. It separately reports Nogo owners selected
 by public CI but excluded by the established RBE runtime policy; the dedicated
 `nogo` lane retains them. Public ARM64 syscall selection contains only
 ptrace/systrap owners; it excludes native tests. Native syscall wrappers also

@@ -48,7 +48,7 @@ with the target-configured test lanes described in test/rbe/README.md.
 Presubmit builds run separately for each requested CPU in the same job.
 Clang-tidy retains a separate AMD64 aspect build over its recursive roots.
 ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
-image-source lanes; unavailable workers are reported before execution.
+image-source lanes. Bazel requests the worker declared by each selected test.
 The remote syscalls-64k lane selects the public ARM64 64K systrap profile.
 The local AMD64 syscalls-rc-pilot lane runs four mincore owners in a pinned
 RC guest, including nested KVM. It does not select the full RC profile.
@@ -91,8 +91,8 @@ USAGE
 
 gaps() {
   cat <<'GAPS'
-Environment limits: remote execution does not supply KVM, slimvm, ARM64
-Firecracker, arbitrary alternate kernels, or GPU/TPU runtime environments.
+Environment limits: remote execution does not supply KVM, slimvm, arbitrary
+alternate kernels, or GPU/TPU runtime environments.
 The syscalls-64k and syscalls-rc routes supply pinned ARM64 kernels through QEMU TCG.
 Selecting a lane does not establish a passing result or full public CI coverage.
 GAPS
@@ -1514,7 +1514,6 @@ PY
       fi
     elif [[ $arch == arm64 ]]; then
       execution_config=rbe-arm64
-      printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
     fi
   fi
   bazel "$command" "${runtime_options[@]}" "--config=$execution_config" "--config=$architecture_config" \
