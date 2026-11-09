@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T05:59:36+00:00",
+    "updatedAt": "2026-11-09T06:22:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42897,9 +42897,9 @@
       "title": "Add an opt-in native POSIX test wrapper",
       "url": "https://github.com/bazelbuild/bazel/pull/30837",
       "group": "bazel",
-      "summary": "Dmitry Zbarsky’s open PR adds an opt-in native POSIX test wrapper. Its head b9d613ad6 conflicts with Bazel master a765dc177 in the coverage resolver and the wrapper test’s filesystem dependency. Tamir’s fork at aa90c0a75 preserves the upstream conditional coverage behavior and the filesystem header used by the new POSIX tests. The prepared revision applies to the inspected master source. A current-master build and the maintainers’ cross-compilation concern remain open. On gVisor’s ordinary Ubuntu worker, Bazel 9.3.1’s shell wrapper failed two otherwise successful TCP handshake tests when the qualification requested ZIP artifacts. The host lacked file and zip. The default unzipped mode retains individual files, but its wrapper still invokes file to collect MIME metadata.",
+      "summary": "Dmitry Zbarsky’s open PR adds an opt-in native POSIX test wrapper. Its head b9d613ad6 conflicts with Bazel master a765dc177 in the coverage resolver and the wrapper test’s filesystem dependency. Tamir’s fork at aa90c0a75 preserves the upstream conditional coverage behavior and the filesystem header used by the new POSIX tests. The prepared revision applies to the inspected master source. A current-master build and the maintainers’ cross-compilation concern remain open. On gVisor’s ordinary Ubuntu worker, Bazel 9.3.1’s shell wrapper failed two otherwise successful TCP handshake tests when the qualification requested ZIP artifacts. The host lacked file and zip. The default unzipped mode retains individual files, but its wrapper still invokes file to collect MIME metadata.\n\nAcross 164 PacketImpact manifests, stock Bazel 9.3.1 put a file-type error in all 424 MIME fields. In an AMD64 Linux sandbox with file blocked, the archived static wrapper wrote application/octet-stream for two PCAPs and a Go log containing control bytes, and text/plain for an ASCII manifest. It preserved a filename containing a space and a literal %. The outer stock Bazel wrapper still reported its own file error.",
       "ref": "codex/native-posix-test-wrapper",
-      "updatedAt": "2026-11-09T01:06:19+00:00",
+      "updatedAt": "2026-11-09T06:22:09+00:00",
       "status": "open",
       "followup": {
         "owner": "Bazel PR author and maintainers",
@@ -42933,6 +42933,14 @@
         {
           "label": "Ubuntu RBE test logs and failed capture packaging",
           "url": "https://github.com/tamird/gvisor/actions/runs/42539499075/artifacts/13642555484"
+        },
+        {
+          "label": "164 original PacketImpact manifests and test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649803459"
+        },
+        {
+          "label": "Four raw manifest rows from the archived static wrapper in the Linux sandbox",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42571822658/artifacts/13653547725"
         }
       ]
     },
@@ -80037,7 +80045,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-09T01:29:38+00:00",
+      "updatedAt": "2026-11-09T06:22:09+00:00",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -81198,9 +81206,76 @@
         {
           "label": "Race and package checks and a uniform-queue comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42540723329/artifacts/13642840434"
+        },
+        {
+          "label": "Original benchstat, samples, 34 XML results and restore verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42570572235/artifacts/13653214709"
+        },
+        {
+          "label": "Four published encoder changes together on master 975fb1722",
+          "url": "https://github.com/tamird/gvisor/commit/c9e35f48a"
         }
       ],
       "comparisons": [
+        {
+          "title": "Four encoder changes cut complete checkpoint time by 10.51% with 50,000 tmpfs files",
+          "description": "Together #17231, #17232, #17233 and #17240 reduced median Container.Checkpoint time from 271.5 ms to 242.9 ms. On one native AMD64 worker, rootless systrap checkpointed 50,000 empty tmpfs files without compression. Stock 975fb1722 and the combined encoder c9e35f48a used the same guest test_app binary. After one warmup per build, 16 measured pairs alternated which build ran first. All 34 checkpoints restored, ran /bin/true in the guest, and passed the full file-tree check.",
+          "columns": [
+            "Benchmark",
+            "Unit",
+            "stock",
+            "four",
+            "vs base"
+          ],
+          "rows": [
+            [
+              "RootlessCheckpoint",
+              "sec/op",
+              "271.5m ± 1%",
+              "242.9m ± 5%",
+              "-10.51% (p=0.000 n=16)"
+            ],
+            [
+              "LiveSave/graph",
+              "sec/op",
+              "259.9m ± 2%",
+              "228.2m ± 3%",
+              "-12.21% (p=0.000 n=16)"
+            ],
+            [
+              "LiveSave/state",
+              "sec/op",
+              "264.0m ± 1%",
+              "232.4m ± 3%",
+              "-11.97% (p=0.000 n=16)"
+            ],
+            [
+              "LiveSave/kernel",
+              "sec/op",
+              "269.9m ± 1%",
+              "238.8m ± 5%",
+              "-11.51% (p=0.000 n=16)"
+            ],
+            [
+              "LiveSave/cpu",
+              "cpu-sec/op",
+              "356.2m ± 1%",
+              "307.6m ± 5%",
+              "-13.63% (p=0.000 n=16)"
+            ]
+          ],
+          "note": "These benchstat rows measure the four changes together. From Container.New through the first restored guest command, the measured difference was inconclusive (p=0.780). Archive size and the memory-save phase also showed no statistically significant difference. LiveSave/graph is nested within LiveSave/state, which is nested within LiveSave/kernel.",
+          "evidence": [
+            {
+              "label": "Original benchstat, samples, 34 XML results and restore verification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42570572235/artifacts/13653214709"
+            },
+            {
+              "label": "Four published encoder changes together on master 975fb1722",
+              "url": "https://github.com/tamird/gvisor/commit/c9e35f48a"
+            }
+          ]
+        },
         {
           "title": "Complete checkpoints with #17231, #17232 and #17233 together",
           "description": "Rootless systrap on one Linux AMD64 worker with 50,000 files in tmpfs. Stock and the combined encoder ran in 16 alternating pairs after one warmup each. All 34 checkpoints restored, and every file was verified.",
@@ -91500,5 +91575,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T05:59:36+00:00"
+  "updatedAt": "2026-11-09T06:22:09+00:00"
 }
