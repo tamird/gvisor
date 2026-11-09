@@ -5,6 +5,7 @@ load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "
 load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "with_test_architecture")
 
 native_arm64_test, _native_arm64_transition = with_test_architecture(native_test, "arm64").build()
+arm64_syscall_filegroup, _arm64_filegroup_transition = with_test_architecture(native.filegroup, "arm64").build()
 
 _ARM64_GUEST_SYSCALL = "arm64_guest_syscall"
 
