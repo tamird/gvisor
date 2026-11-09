@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T19:46:07+00:00",
+    "updatedAt": "2026-11-09T19:55:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -61328,17 +61328,21 @@
       "title": "Watch bound Unix sockets only when they listen",
       "group": "runtime",
       "ref": "research/unix-listener-readiness-current",
-      "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
-      "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets. Approved for submission after #16739 lands.",
-      "updatedAt": "2026-11-07T03:31:55+00:00",
+      "head": "1a322dca25c58e1f3088921133c346b77f2246e0",
+      "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets.",
+      "updatedAt": "2026-11-09T19:55:52+00:00",
       "evidence": [
+        {
+          "label": "Ryan’s doc-comment request and the published fix",
+          "url": "https://github.com/google/gvisor/pull/17170#discussion_r4517282604"
+        },
         {
           "label": "Approved upstream PR description",
           "url": "https://tamird.github.io/gvisor/unix-listener-readiness-pr-body.md"
         },
         {
-          "label": "Review branch on top of #16739",
-          "url": "https://github.com/tamird/gvisor/tree/research/unix-listener-readiness-current"
+          "label": "Published single commit",
+          "url": "https://github.com/tamird/gvisor/commit/1a322dca2"
         },
         {
           "label": "One-commit source difference",
@@ -61384,13 +61388,14 @@
       ],
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "a2d36667326189d023f1a2746121dec505a2ef2f",
-        "observedAt": "2026-11-07T03:31:55+00:00",
-        "disposition": "Opened the approved single commit after #16739 merged.",
-        "nextAction": "Follow upstream review on #17170.",
+        "sourceHead": "1a322dca25c58e1f3088921133c346b77f2246e0",
+        "observedAt": "2026-11-09T19:55:52+00:00",
+        "disposition": "Published Ryan’s opening sentence for updateEventsLocked and replied on the review. The diff from his approved head changes only that comment.",
+        "nextAction": "Ryan has been asked to reapprove the amended commit.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16739",
-          "https://github.com/tamird/gvisor/commit/a2d366673"
+          "https://github.com/tamird/gvisor/commit/1a322dca2",
+          "https://github.com/google/gvisor/pull/17170#discussion_r4517282604",
+          "https://github.com/google/gvisor/pull/17170#discussion_r4517215881"
         ]
       },
       "id": "pr:17170",
@@ -61398,7 +61403,16 @@
       "repo": "google/gvisor",
       "number": 17170,
       "status": "open",
-      "url": "https://github.com/google/gvisor/pull/17170"
+      "url": "https://github.com/google/gvisor/pull/17170",
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "1a322dca25c58e1f3088921133c346b77f2246e0",
+        "approvedHead": "a2d36667326189d023f1a2746121dec505a2ef2f",
+        "diffSha256": "199759c2e605a4379a7a8b74e2202e11f6e03aae2a58729c9a2c3daa1749ed3a",
+        "summary": "Start the updateEventsLocked doc comment with Ryan’s suggested sentence. The executable source is identical.",
+        "evidence": "https://github.com/google/gvisor/pull/17170#discussion_r4517282604"
+      }
     },
     {
       "id": "pr:16886",
@@ -64486,6 +64500,10 @@
           "url": "https://github.com/tamird/gvisor/commit/885fe8b75"
         },
         {
+          "label": "Process identity passed uncached on a pidfs-capable AMD64 worker",
+          "url": "https://app.buildbuddy.io/invocation/23a9d94f-85ca-4d70-8471-b5d083d7c84a"
+        },
+        {
           "label": "52 AMD64 cases passed, one pidfs skip, five ARM64 binaries built, missing runtime rejected",
           "url": "https://github.com/tamird/gvisor/actions/runs/42681696570/artifacts/13705196514"
         },
@@ -64494,7 +64512,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-09T19:46:07+00:00",
+      "updatedAt": "2026-11-09T19:55:52+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64512,12 +64530,13 @@
       "followup": {
         "owner": "Contributor",
         "sourceHead": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
-        "observedAt": "2026-11-09T19:46:07+00:00",
-        "disposition": "On AMD64, 52 cases passed. TestProcessIdentity skipped because the host lacks pidfs. Removing the runtime made the watchdog test fail as intended. All five ARM64 test binaries cross-compiled.",
+        "observedAt": "2026-11-09T19:55:52+00:00",
+        "disposition": "All 53 selected cases passed on native AMD64 across two runs. The pidfs-capable worker ran the process-identity case that skipped on GitHub. The deliberately missing runtime failed its watchdog assertion as expected. All five ARM64 test binaries cross-compiled.",
         "nextAction": "This supersedes the unsubmitted shim draft 6b2d3261d and follows the two changes already merged in #17053. The separately approved netgofer PR #17242 exercises a child that exits on stdin EOF. Review the shared pause fixture and its watchdog check.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/885fe8b75",
-          "https://github.com/tamird/gvisor/actions/runs/42681696570/artifacts/13705196514"
+          "https://github.com/tamird/gvisor/actions/runs/42681696570/artifacts/13705196514",
+          "https://app.buildbuddy.io/invocation/23a9d94f-85ca-4d70-8471-b5d083d7c84a"
         ]
       },
       "refinement": {
