@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T16:23:10+00:00",
+    "updatedAt": "2026-11-09T16:31:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55421,7 +55421,7 @@
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T16:16:05+00:00",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nOn native Linux, the sender observed an ACK 6–14 µs after the receiver started setting TCP_QUICKACK following a read (four trials). Without that request, the ACK arrived 40–41 ms after the data. On controlled packet clocks, #16953 with delayed ACKs enabled waited 40 ms in both cases. #17082 sent the ACK immediately on request. With the receive-side MSS fixed at 536 bytes, both PRs acknowledged the second 536-byte segment immediately when the peer advertised MSS 536. When only the peer’s advertised MSS changed to 1,460, #16953 waited 40 ms and #17082 still acknowledged immediately.",
       "evidence": [
         {
@@ -55487,6 +55487,10 @@
         {
           "label": "TCP reviewer guide: socket behavior",
           "url": "https://github.com/google/gvisor/issues/16670#tcp-review-socket"
+        },
+        {
+          "label": "Published review feedback",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
         }
       ],
       "settledReviews": [
@@ -55520,6 +55524,18 @@
           "outcome": "approved",
           "at": "2026-11-09T15:36:19Z",
           "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
+        },
+        {
+          "kind": "review",
+          "head": "f05cd8923fb8aa27186834df01d7433085db41f1",
+          "url": "https://github.com/google/gvisor/pull/16953#pullrequestreview-5828267057",
+          "title": "Compare the two delayed-ACK policies on TamaGo",
+          "summary": "Add this assessment as the body of the existing review? The timer finding has already been posted inline.",
+          "body": "Could you run the TamaGo Redis benchmark on #17082 before we add `TCPDelayedACKOption`? Both PRs cut a one-write exchange from four segments to two in the same embedded-netstack benchmark. After the receiver read the request, Linux and #17082 also honored `TCP_QUICKACK=1`. With this option enabled, #16953 still waited 40 ms. If #17082 delivers the Redis gain too, I’d use your benchmark to cover that workload and keep one delayed-ACK policy.\n\n[Paired benchmark](https://github.com/tamird/gvisor/actions/runs/42433234507/artifacts/13598009223) · [Socket and packet results](https://github.com/tamird/gvisor/actions/runs/42647898980/artifacts/13688422420)\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-09T16:16:05+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
         }
       ],
       "reviewWatch": {
@@ -55533,15 +55549,15 @@
           }
         ]
       },
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "f05cd8923fb8aa27186834df01d7433085db41f1",
-        "url": "https://github.com/google/gvisor/pull/16953#pullrequestreview-5828267057",
-        "title": "Compare the two delayed-ACK policies on TamaGo",
-        "summary": "Add this assessment as the body of the existing review? The timer finding has already been posted inline.",
-        "body": "Could you run the TamaGo Redis benchmark on #17082 before we add `TCPDelayedACKOption`? Both PRs cut a one-write exchange from four segments to two in the same embedded-netstack benchmark. After the receiver read the request, Linux and #17082 also honored `TCP_QUICKACK=1`. With this option enabled, #16953 still waited 40 ms. If #17082 delivers the Redis gain too, I’d use your benchmark to cover that workload and keep one delayed-ACK policy.\n\n[Paired benchmark](https://github.com/tamird/gvisor/actions/runs/42433234507/artifacts/13598009223) · [Socket and packet results](https://github.com/tamird/gvisor/actions/runs/42647898980/artifacts/13688422420)\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-09T16:16:05+00:00"
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "f05cd8923fb8aa27186834df01d7433085db41f1",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "The TamaGo comparison request is in the existing inline review alongside the timer finding.",
+        "nextAction": "Follow the author’s benchmark comparison and any revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
+        ]
       }
     },
     {
@@ -57688,7 +57704,7 @@
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T16:18:01+00:00",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "At b5062f222, draining the receive queue after a full-size 1,460-byte PSH segment triggered the delayed ACK. On four fresh connections, the ACK followed the start of the draining read by 0.99–3.45 ms on Netstack and 0.45–1.23 ms on native Linux 6.8. Leaving one byte queued or omitting PSH kept the ACK at 40.5–41.9 ms from packet arrival on both stacks. All eight uncached tests passed on AMD64, four with native Linux and four with Netstack.\n\nEarlier measurements at 981034f8b:\n\nThe delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nAfter 24 individually acknowledged segments, Linux ACKed a pushed 1,460-byte segment within 0.33–0.75 ms of starting the read that drained the socket. The PR waited 29.84–30.85 ms. Leaving one byte queued or omitting PSH kept both stacks near 40 ms from packet arrival. Each case ran on four fresh connections per stack. All four Linux test runs and all four netstack runs passed on AMD64. The workflow reported failure because its capture reader required all 1,514 Ethernet bytes. The capture retained 1,500 bytes, including every TCP header. The corrected reader verified the original packet lengths, sequence numbers and timestamps.",
       "evidence": [
         {
@@ -57762,6 +57778,10 @@
         {
           "label": "Count the first response as interactive only after inbound payload",
           "url": "https://github.com/tamird/gvisor/commit/e4ac44223"
+        },
+        {
+          "label": "Published review feedback",
+          "url": "https://github.com/google/gvisor/pull/17082#discussion_r4515162604"
         }
       ],
       "settledReviews": [
@@ -57775,33 +57795,29 @@
           "at": "2026-11-06T13:13:00.663Z",
           "note": "Posted and verified against the approved head.",
           "postedURL": "https://github.com/google/gvisor/pull/17082#pullrequestreview-5800533890"
+        },
+        {
+          "kind": "reply",
+          "head": "b5062f2222f563af2f39c4cc2e57cd1194634146",
+          "url": "https://github.com/google/gvisor/pull/17082#discussion_r4510522594",
+          "title": "Reply to Botir about the first response on a new connection",
+          "summary": "Send the measured first-response result and the tested correction to Botir and Ayush?",
+          "body": "@botirkhaltaev, I reproduced this. After the client wrote first and read a one-byte reply, the PR sent its ACK at 40 ms on the test clock. On four fresh Linux connections the server saw the reply acknowledged within 16–28 µs of writing it. @ayushr2, [this correction](https://github.com/tamird/gvisor/commit/e4ac44223) starts the response deadline expired and extends it only when payload arrives. The first reply then gets an immediate ACK, and the interactive piggyback and restore cases still pass. [Packet and socket results](https://github.com/tamird/gvisor/actions/runs/42651997189/artifacts/13690373114)\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-09T16:18:01+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17082#discussion_r4515162604"
         }
       ],
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Upstream review",
         "sourceHead": "b5062f2222f563af2f39c4cc2e57cd1194634146",
-        "observedAt": "2026-11-09T05:03:05+00:00",
-        "disposition": "The updated source addresses the reviewer’s full-read ACK finding.",
-        "nextAction": "Follow upstream review of b5062f222 and any new request to the contributor.",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Posted the first-response packet comparison and tested correction on Botir’s original thread.",
+        "nextAction": "Follow the authors’ response and any changes to the first-ACK deadline.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42288031163/artifacts/13538692103",
-          "https://github.com/google/gvisor/pull/17082#issuecomment-6694613110",
-          "https://github.com/google/gvisor/pull/17082#pullrequestreview-5800533890",
-          "https://github.com/google/gvisor/pull/17082#discussion_r4492765687",
-          "https://github.com/google/gvisor/pull/17082#discussion_r4492765694",
-          "https://github.com/tamird/gvisor/actions/runs/42560569778/artifacts/13650199225",
-          "https://github.com/google/gvisor/pull/17082#discussion_r4507717527"
+          "https://github.com/google/gvisor/pull/17082#discussion_r4515162604"
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "b5062f2222f563af2f39c4cc2e57cd1194634146",
-        "url": "https://github.com/google/gvisor/pull/17082#discussion_r4510522594",
-        "title": "Reply to Botir about the first response on a new connection",
-        "summary": "Send the measured first-response result and the tested correction to Botir and Ayush?",
-        "body": "@botirkhaltaev, I reproduced this. After the client wrote first and read a one-byte reply, the PR sent its ACK at 40 ms on the test clock. On four fresh Linux connections the server saw the reply acknowledged within 16–28 µs of writing it. @ayushr2, [this correction](https://github.com/tamird/gvisor/commit/e4ac44223) starts the response deadline expired and extends it only when payload arrives. The first reply then gets an immediate ACK, and the interactive piggyback and restore cases still pass. [Packet and socket results](https://github.com/tamird/gvisor/actions/runs/42651997189/artifacts/13690373114)\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-09T16:18:01+00:00"
       }
     },
     {
@@ -58802,8 +58818,8 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-09T16:17:02+00:00",
-      "summary": "One mixed Bazel invocation built the 2,887 top-level build-only labels in their selected configurations and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 6.8 run observed an extra pidfd on the fourth default Sentry repeat. A retained-helper control reproduced that observation on stock. Waiting through the proc umounter’s Go handle fixed it, and all ten original comparisons passed on the uninstrumented corrected runtime. The Linux 5.10 per-thread reporting failure remains open. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.\n\nThe separate native ARM64 wildcard selects //runsc:runsc_race_coverage, //runsc/cmd/sentry:gvisor_sentry_race_coverage and //pkg/metric:metric_cc_proto. Across all 11 mixed cquery partitions, encompassing 16,709 distinct pkg/runsc rows, those three targets and their generated output paths appeared only in AMD64 configurations. Both inventories used the same source tree, 4305e961c. Removing the separate ARM64 wildcard job would drop those ARM64 builds. The local Go standard-library analyzer could not run with processwrapper-sandbox, so the comparison produced no new binaries. The separate native wildcard projection also omitted some selected rows.\n\nA targeted build on x86_64 produced the three ARM64 defaults for //pkg/metric:metric_cc_proto: the generated C++ source, header and libmetric_proto.a. The archive contained an AArch64 ELF object. A separate analysis of coordinator change efaf79761 selected all 3,246 original ARM64 root labels (2,882 build-only labels and 364 existing test labels), with zero missing or extra. It checked 321 roots outside pkg and runsc, including four aliases. Eight shell controls checked propagation of build and test failures. The full ARM64 build on efaf79761 has no invocation. Approval to run it was requested. The 747 passing shards out of 748 belong to the earlier mixed test execution.\n\nThe frozen local qualifier (7b920f2cd) checks which labels belong to each of the six Bazel configuration groups across all 3,246 roots. It compares CPU, platform, mnemonic and tool-configuration flag, then inspects the metric archive and four runsc and Sentry ELF binaries. In the earlier mixed analysis and physical run, all 728 test labels kept their original group membership while every raw configuration checksum changed. The separate PacketImpact family analysis on 61a9e54af selected all 164 mixed tests. Dependency build failures prevented any of them from running. The pristine baseline and the requested ARM64 3,246-root build remain separate qualification steps.\n\nOnce the common RBE source presubmit runs the native AMD64 netfilter syscall test upstream, it can replace the “Nftables native syscall tests” Buildkite step and its nftables-syscall-runc-tests Make target. On fork 1b8d903a7, AMD64 Linux 6.18.57 matched all 267 named Buildkite results (262 passed, five skipped). ARM64 Linux 5.10.0 passed six and skipped 261. The test’s kernel-version guard accounted for all 256 additional skips. The separate “Nftables docker tests” step still uses the image.\n\nOn fork 1bda86e0c, the two ARM64 guest syscall suites expanded to the same 915 test labels as Buildkite #53930: 907 syscall and eight rtnetlink owners, comprising 257 ptrace and 658 systrap variants. Their shard counts yield 1,671 runs. The query found 87 ordinary performance variants and zero ARM64 companions for them. Buildkite also selected 2,837 build-only roots. This query measured test membership and attributes; whole-lane execution and build-only coverage remain open. Buildkite’s Make target supplied --cxxopt=-Werror, which the mixed profile at 1bda86e0c did not set.\n\nOf those 2,837 additional labels in the earlier configured-root census, 2,525 are generated test launchers and 312 are other build roots. Following the ARM/Linux srcs, data and deps from the 257 selected fixtures in the source reaches 305 of the 312. Five remaining binaries cover the other seven labels: memfd_test, sigaltstack_test and the three socket_bind_to_device test binaries, including their sigaltstack_check and socket_bind_to_device_util dependencies. Earlier builds linked all five ARM64 binaries and sigaltstack_check, then verified the same outputs by digest. The mixed selector at 1bda86e0c omitted those five build roots.\n\nFive owners on 1bda86e0c ran uncached on native ARM64 Ubuntu Firecracker workers. Ptrace uname and systrap uname with directfs each passed all four named cases, with zero skips. Three rtnetlink owners failed before their guest scripts started: systrap bridge, ptrace bridge and systrap setlink. All three logged a connection reset in containerManager.SetNetworkArgs during default-loopback setup, produced empty XML, and reached zero fixture assertions. On the original systrap bridge run, its filesystem gofer exited after the read-only bind remount of the root filesystem returned EBUSY. Runsc then reported the SetNetworkArgs reset. The log does not identify what kept the mount busy. The ptrace bridge and systrap setlink TestRunners used the same verified AArch64 runsc (SHA-256 552148f89…) and Sentry (132e77dfd…). The initial uname test binary was linked on an AMD64 distroless worker.\n\nAll five original TestRunners received 1,000 millicpu. The effective memory estimates were 300 MB for each uname owner and 220 MB for each rtnetlink owner. Repeating systrap setlink with its original timeout, Linux 5.10.0 and CPUs 0–3 raised the VM’s measured MemTotal from 186,960 KiB to 508,760 KiB with a 512 MB request. Both runs failed in SetNetworkArgs before the guest script started, and the VM’s oom_kill counter stayed at zero in both.\n\nUsing test scratch for overlay backing in 0a851bf99 let all three rtnetlink tests start on Ubuntu. Each guest then failed because ip was missing. With the same source and the existing pinned Istio networking image, both bridge variants each delivered two distinct TCP messages, and systrap setlink verified the MTU, rename, MAC address and three cleanup checks. Across the six uncached ARM64 Firecracker tests, / and /tmp had mount ID 25 and TEST_TMPDIR had mount ID 38. Both images used the same runsc and Sentry binaries, and each action received 1 CPU and 220 MB. The standalone gVisor proposal changes only the overlay backing path. The networking image remains a separate fork integration.\n\nOn research/mixed-arm64-syscalls at 6ed4ed427, Bazel ran //test/rtnetlink:arm64_syscalls through its checked-in worker settings. All eight bridge, route, setlink and veth owners passed across ptrace and systrap on uncached native ARM64 Firecracker TestRunners using the pinned Istio networking image. Each bridge delivered two TCP messages. Both route tests observed two, one and then zero routes to 10.0.0.0/24 after successive deletions and recovered the original routing table. Both veth tests checked the restricted move and exited successfully. Bazel exited zero. All 3,777 recorded compile and link actions were AMD64 scratch-worker cache hits. Together with the two earlier uname owners, 10 distinct owners have passed out of the 915 selected for the ARM64 syscall lane. The full 1,671-shard guest run remains open.\n\nThe mixed ARM64 selector at fbeacd531 adds the five standalone syscall binaries. Both single-architecture profiles select zero of those five through the new group. Aquery showed -Werror last on the native, guest and standalone C++ fixtures and their checked dependencies. The unrelated AMD64 control kept -Wno-error. In the first build on 9ae8c6df6, Clang rejected two delete signatures missing noexcept. No test ran. The fork then integrated #15368 at 403195966.\n\nOn the corrected source, AMD64 scratch workers cross-linked all five AArch64 standalone binaries and the native RSEQ test binary. All six links were fresh. The three socket links consumed the same socket_bind_to_device_util object. The separate sigaltstack_check and freestanding RSEQ helper outputs matched their cached ARM64 links. One uncached native ARM64 Firecracker TestRunner passed all 13 RSEQ cases with no skips. The five standalone binaries were build-only. The allocator contract test did not run. Guest coverage remains 10 of 915 owners across the earlier runs.\n\nA historical ARM64 archive contains 1,671 XML reports matching all 915 selected owner names. For 46 owners, every recorded case was skipped or suppressed (392 skipped, 22 suppressed). Seven UDP external-networking owners accounted for 176 setup skips because the fixture found loopback but no addressed non-loopback interface.\n\nThe mixed fork at 6daca2aa7 selects 1,171 existing AMD64 syscall owners, comprising the same 257 ptrace and 658 systrap names as ARM64, plus 256 native Linux owners. Adding the 257 KVM owners and the separate tcp_serv_nogo analyzer reproduces all 1,429 Buildkite #53930 names. The three AMD64 smoke tests ran uncached on Firecracker. Native and ptrace uname each passed all four cases with no skips. The systrap bridge on the networking image delivered both TCP payloads and removed its bridge and namespaces. Its shell transcript records the results. The XML is empty. The October Actions/Docker qualification ran 1,172 owners on an earlier source and host route. Of those, 1,164 passed and eight native owners failed.\n\nBuildkite selected 3,753 AMD64 labels, comprising 1,429 tests and 2,324 build-only labels. Bazel loading identified 2,012 allsave wrappers and 312 other producers. The ordinary AMD64 suite reaches all 224 distinct fixture labels used by those wrappers. Five standalone fixture roots, their signal-stack helper and their shared socket utility were missing from the AMD64 closure. Two older RSEQ rules have since been replaced by the native rseq binary.\n\nOn mixed fork a023961f0, building //test/syscalls:standalone_fixtures produced six AMD64 ELF executables in fresh LLVM link actions on scratch workers. The outputs were memfd_test, sigaltstack_test, sigaltstack_check and three socket_bind_to_device binaries. All three socket links consumed the same verified utility object. The ARM64 configured query returned the same five default output paths as the previous ARM64 build. This invocation built the AMD64 fixture group only and ran no tests. This comparison did not build the 2,012 wrapper outputs or the full wildcard.\n\nOn ARM64, all 176 UDP cases in the seven original guest owners also skipped on fbeacd531 for lack of an addressed non-loopback interface. Adding a dummy interface failed with EOPNOTSUPP before GTest in all nine guest and native owners. On the separate fork at ff35512db, a bridge with no ports let all 176 guest cases pass. IPv4 native and IPv4 host-network systrap had passing TestResults. The other six guest wrappers failed because runsc warned that Linux had rejected the raw socket receive and send buffer requests on eth0 (4,194,304 bytes requested, 425,984 available). Native IPv6 passed six of eight cases. Both multicast join/leave cases sent 200 bytes but timed out receiving them. Their sender bound ::1 without selecting loopback as the multicast output interface. The receiver had joined on loopback.\n\nThe corrected fork at cf2339899 passed all eight uncached Firecracker TestRunners. Seven ARM64 owners passed 146 cases, and the original AMD64 native IPv6 owner passed all eight cases. None skipped. Both native IPv6 multicast joins selected loopback on the sender and received the payload. Each of the six Netstack logs retained the two eth0 socket-buffer warnings and the usable 425,984-byte buffer size. The earlier IPv4 ARM64 native and host-network controls each passed 38 cases on ff35512db. On the separate standalone patch e1a7eb4e5, one AMD64 systrap case passed and completed 11 restores. Bazel exited 0. The reporting script failed to recognize the BEP finish identifier.\n\nOn a023961f0, two uncached native AMD64 TestRunners used Linux 6.18.57. All six selected read-only ip6tables socket-option cases passed. The other 16 cases did not run. Both cgroup2 transfer cases failed with EPERM on their first cgroup2 mount, before either could exercise the transfer to v1. The earlier October failures occurred later, when mounting v1.",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "summary": "Tamir approved 4eb27c408, which runs the statefile permission tests as UID 65534. Its BUILD rule selects //test/rbe:source_presubmit, introduced by its parent d78fe07a0. The test change ships with that configuration. The full ARM64 build request is for efaf79761.\n\nOne mixed Bazel invocation built the 2,887 top-level build-only labels in their selected configurations and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 6.8 run observed an extra pidfd on the fourth default Sentry repeat. A retained-helper control reproduced that observation on stock. Waiting through the proc umounter’s Go handle fixed it, and all ten original comparisons passed on the uninstrumented corrected runtime. The Linux 5.10 per-thread reporting failure remains open. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.\n\nThe separate native ARM64 wildcard selects //runsc:runsc_race_coverage, //runsc/cmd/sentry:gvisor_sentry_race_coverage and //pkg/metric:metric_cc_proto. Across all 11 mixed cquery partitions, encompassing 16,709 distinct pkg/runsc rows, those three targets and their generated output paths appeared only in AMD64 configurations. Both inventories used the same source tree, 4305e961c. Removing the separate ARM64 wildcard job would drop those ARM64 builds. The local Go standard-library analyzer could not run with processwrapper-sandbox, so the comparison produced no new binaries. The separate native wildcard projection also omitted some selected rows.\n\nA targeted build on x86_64 produced the three ARM64 defaults for //pkg/metric:metric_cc_proto: the generated C++ source, header and libmetric_proto.a. The archive contained an AArch64 ELF object. A separate analysis of coordinator change efaf79761 selected all 3,246 original ARM64 root labels (2,882 build-only labels and 364 existing test labels), with zero missing or extra. It checked 321 roots outside pkg and runsc, including four aliases. Eight shell controls checked propagation of build and test failures. The full ARM64 build on efaf79761 has no invocation. Approval to run it was requested. The 747 passing shards out of 748 belong to the earlier mixed test execution.\n\nThe frozen local qualifier (7b920f2cd) checks which labels belong to each of the six Bazel configuration groups across all 3,246 roots. It compares CPU, platform, mnemonic and tool-configuration flag, then inspects the metric archive and four runsc and Sentry ELF binaries. In the earlier mixed analysis and physical run, all 728 test labels kept their original group membership while every raw configuration checksum changed. The separate PacketImpact family analysis on 61a9e54af selected all 164 mixed tests. Dependency build failures prevented any of them from running. The pristine baseline and the requested ARM64 3,246-root build remain separate qualification steps.\n\nOnce the common RBE source presubmit runs the native AMD64 netfilter syscall test upstream, it can replace the “Nftables native syscall tests” Buildkite step and its nftables-syscall-runc-tests Make target. On fork 1b8d903a7, AMD64 Linux 6.18.57 matched all 267 named Buildkite results (262 passed, five skipped). ARM64 Linux 5.10.0 passed six and skipped 261. The test’s kernel-version guard accounted for all 256 additional skips. The separate “Nftables docker tests” step still uses the image.\n\nOn fork 1bda86e0c, the two ARM64 guest syscall suites expanded to the same 915 test labels as Buildkite #53930: 907 syscall and eight rtnetlink owners, comprising 257 ptrace and 658 systrap variants. Their shard counts yield 1,671 runs. The query found 87 ordinary performance variants and zero ARM64 companions for them. Buildkite also selected 2,837 build-only roots. This query measured test membership and attributes; whole-lane execution and build-only coverage remain open. Buildkite’s Make target supplied --cxxopt=-Werror, which the mixed profile at 1bda86e0c did not set.\n\nOf those 2,837 additional labels in the earlier configured-root census, 2,525 are generated test launchers and 312 are other build roots. Following the ARM/Linux srcs, data and deps from the 257 selected fixtures in the source reaches 305 of the 312. Five remaining binaries cover the other seven labels: memfd_test, sigaltstack_test and the three socket_bind_to_device test binaries, including their sigaltstack_check and socket_bind_to_device_util dependencies. Earlier builds linked all five ARM64 binaries and sigaltstack_check, then verified the same outputs by digest. The mixed selector at 1bda86e0c omitted those five build roots.\n\nFive owners on 1bda86e0c ran uncached on native ARM64 Ubuntu Firecracker workers. Ptrace uname and systrap uname with directfs each passed all four named cases, with zero skips. Three rtnetlink owners failed before their guest scripts started: systrap bridge, ptrace bridge and systrap setlink. All three logged a connection reset in containerManager.SetNetworkArgs during default-loopback setup, produced empty XML, and reached zero fixture assertions. On the original systrap bridge run, its filesystem gofer exited after the read-only bind remount of the root filesystem returned EBUSY. Runsc then reported the SetNetworkArgs reset. The log does not identify what kept the mount busy. The ptrace bridge and systrap setlink TestRunners used the same verified AArch64 runsc (SHA-256 552148f89…) and Sentry (132e77dfd…). The initial uname test binary was linked on an AMD64 distroless worker.\n\nAll five original TestRunners received 1,000 millicpu. The effective memory estimates were 300 MB for each uname owner and 220 MB for each rtnetlink owner. Repeating systrap setlink with its original timeout, Linux 5.10.0 and CPUs 0–3 raised the VM’s measured MemTotal from 186,960 KiB to 508,760 KiB with a 512 MB request. Both runs failed in SetNetworkArgs before the guest script started, and the VM’s oom_kill counter stayed at zero in both.\n\nUsing test scratch for overlay backing in 0a851bf99 let all three rtnetlink tests start on Ubuntu. Each guest then failed because ip was missing. With the same source and the existing pinned Istio networking image, both bridge variants each delivered two distinct TCP messages, and systrap setlink verified the MTU, rename, MAC address and three cleanup checks. Across the six uncached ARM64 Firecracker tests, / and /tmp had mount ID 25 and TEST_TMPDIR had mount ID 38. Both images used the same runsc and Sentry binaries, and each action received 1 CPU and 220 MB. The standalone gVisor proposal changes only the overlay backing path. The networking image remains a separate fork integration.\n\nOn research/mixed-arm64-syscalls at 6ed4ed427, Bazel ran //test/rtnetlink:arm64_syscalls through its checked-in worker settings. All eight bridge, route, setlink and veth owners passed across ptrace and systrap on uncached native ARM64 Firecracker TestRunners using the pinned Istio networking image. Each bridge delivered two TCP messages. Both route tests observed two, one and then zero routes to 10.0.0.0/24 after successive deletions and recovered the original routing table. Both veth tests checked the restricted move and exited successfully. Bazel exited zero. All 3,777 recorded compile and link actions were AMD64 scratch-worker cache hits. Together with the two earlier uname owners, 10 distinct owners have passed out of the 915 selected for the ARM64 syscall lane. The full 1,671-shard guest run remains open.\n\nThe mixed ARM64 selector at fbeacd531 adds the five standalone syscall binaries. Both single-architecture profiles select zero of those five through the new group. Aquery showed -Werror last on the native, guest and standalone C++ fixtures and their checked dependencies. The unrelated AMD64 control kept -Wno-error. In the first build on 9ae8c6df6, Clang rejected two delete signatures missing noexcept. No test ran. The fork then integrated #15368 at 403195966.\n\nOn the corrected source, AMD64 scratch workers cross-linked all five AArch64 standalone binaries and the native RSEQ test binary. All six links were fresh. The three socket links consumed the same socket_bind_to_device_util object. The separate sigaltstack_check and freestanding RSEQ helper outputs matched their cached ARM64 links. One uncached native ARM64 Firecracker TestRunner passed all 13 RSEQ cases with no skips. The five standalone binaries were build-only. The allocator contract test did not run. Guest coverage remains 10 of 915 owners across the earlier runs.\n\nA historical ARM64 archive contains 1,671 XML reports matching all 915 selected owner names. For 46 owners, every recorded case was skipped or suppressed (392 skipped, 22 suppressed). Seven UDP external-networking owners accounted for 176 setup skips because the fixture found loopback but no addressed non-loopback interface.\n\nThe mixed fork at 6daca2aa7 selects 1,171 existing AMD64 syscall owners, comprising the same 257 ptrace and 658 systrap names as ARM64, plus 256 native Linux owners. Adding the 257 KVM owners and the separate tcp_serv_nogo analyzer reproduces all 1,429 Buildkite #53930 names. The three AMD64 smoke tests ran uncached on Firecracker. Native and ptrace uname each passed all four cases with no skips. The systrap bridge on the networking image delivered both TCP payloads and removed its bridge and namespaces. Its shell transcript records the results. The XML is empty. The October Actions/Docker qualification ran 1,172 owners on an earlier source and host route. Of those, 1,164 passed and eight native owners failed.\n\nBuildkite selected 3,753 AMD64 labels, comprising 1,429 tests and 2,324 build-only labels. Bazel loading identified 2,012 allsave wrappers and 312 other producers. The ordinary AMD64 suite reaches all 224 distinct fixture labels used by those wrappers. Five standalone fixture roots, their signal-stack helper and their shared socket utility were missing from the AMD64 closure. Two older RSEQ rules have since been replaced by the native rseq binary.\n\nOn mixed fork a023961f0, building //test/syscalls:standalone_fixtures produced six AMD64 ELF executables in fresh LLVM link actions on scratch workers. The outputs were memfd_test, sigaltstack_test, sigaltstack_check and three socket_bind_to_device binaries. All three socket links consumed the same verified utility object. The ARM64 configured query returned the same five default output paths as the previous ARM64 build. This invocation built the AMD64 fixture group only and ran no tests. This comparison did not build the 2,012 wrapper outputs or the full wildcard.\n\nOn ARM64, all 176 UDP cases in the seven original guest owners also skipped on fbeacd531 for lack of an addressed non-loopback interface. Adding a dummy interface failed with EOPNOTSUPP before GTest in all nine guest and native owners. On the separate fork at ff35512db, a bridge with no ports let all 176 guest cases pass. IPv4 native and IPv4 host-network systrap had passing TestResults. The other six guest wrappers failed because runsc warned that Linux had rejected the raw socket receive and send buffer requests on eth0 (4,194,304 bytes requested, 425,984 available). Native IPv6 passed six of eight cases. Both multicast join/leave cases sent 200 bytes but timed out receiving them. Their sender bound ::1 without selecting loopback as the multicast output interface. The receiver had joined on loopback.\n\nThe corrected fork at cf2339899 passed all eight uncached Firecracker TestRunners. Seven ARM64 owners passed 146 cases, and the original AMD64 native IPv6 owner passed all eight cases. None skipped. Both native IPv6 multicast joins selected loopback on the sender and received the payload. Each of the six Netstack logs retained the two eth0 socket-buffer warnings and the usable 425,984-byte buffer size. The earlier IPv4 ARM64 native and host-network controls each passed 38 cases on ff35512db. On the separate standalone patch e1a7eb4e5, one AMD64 systrap case passed and completed 11 restores. Bazel exited 0. The reporting script failed to recognize the BEP finish identifier.\n\nOn a023961f0, two uncached native AMD64 TestRunners used Linux 6.18.57. All six selected read-only ip6tables socket-option cases passed. The other 16 cases did not run. Both cgroup2 transfer cases failed with EPERM on their first cgroup2 mount, before either could exercise the transfer to v1. The earlier October failures occurred later, when mounting v1.",
       "evidence": [
         {
           "label": "Mixed cquery inventory across all 11 partitions and original local build failures",
@@ -59493,6 +59509,15 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T14:13:12.896Z",
           "note": "The contributor rejected a separate Buildkite job for each source-test configuration and requested one Bazel invocation spanning the targets and configurations on RBE."
+        },
+        {
+          "kind": "proposal",
+          "head": "4eb27c4081e535d69c1257998a6c94256d9812e2",
+          "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
+          "title": "Run statefile permission tests as a non-root user in presubmit",
+          "body": "Run the two statefile permission tests as UID 65534 in the AMD64 and ARM64 source presubmits. Both otherwise skip because the test process runs as root.",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00"
         }
       ],
       "contributorChangesRequested": {
@@ -59540,10 +59565,20 @@
         "head": "4eb27c4081e535d69c1257998a6c94256d9812e2",
         "sourceHead": "efaf79761adcb3e5ac2b6e5fc96249ac85d435b1",
         "url": "https://github.com/tamird/gvisor/commit/efaf79761",
-        "title": "Authorize the full ARM64 source-presubmit build",
+        "title": "Authorize the full ARM64 source-presubmit build at efaf79761",
         "summary": "Authorize one BuildBuddy RBE build of the 3,246 ARM64 root targets on efaf79761.",
         "body": "Build the default outputs of 2,882 build-only targets and 364 test targets. Check selection in all six Bazel configuration groups, then verify the metric archive and four runsc and Sentry ELF files. The full build has no invocation yet. The earlier 747/748 mixed test-shard result covers a different run."
-      }
+      },
+      "links": [
+        {
+          "label": "Approved change: run the statefile permission tests as UID 65534",
+          "url": "https://github.com/tamird/gvisor/commit/4eb27c408"
+        },
+        {
+          "label": "Separate ARM64 build awaiting execution approval",
+          "url": "https://github.com/tamird/gvisor/commit/efaf79761"
+        }
+      ]
     },
     {
       "id": "pr:17111",
@@ -66316,12 +66351,12 @@
       "repo": "bazel-contrib/bazel-gazelle",
       "number": 2510,
       "ref": "fix/defer-gazelle-runner-go-env",
-      "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+      "head": "685bcd62bd7bf6a077319f9dd047e2736659663e",
       "title": "Load the Go environment when analyzing a runner",
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-09T16:16:05+00:00",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
       "evidence": [
         {
@@ -66363,6 +66398,10 @@
         {
           "label": "Bazel 8 WORKSPACE and Bazel 9 Bzlmod, root and renamed dependency",
           "url": "https://github.com/tamird/gvisor/actions/runs/42652593383/artifacts/13691241347"
+        },
+        {
+          "label": "Amendment published and reply to Fabian",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129"
         }
       ],
       "settledReviews": [
@@ -66390,35 +66429,32 @@
           "outcome": "approved",
           "at": "2026-11-09T15:35:35Z",
           "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4514562617"
+        },
+        {
+          "kind": "amendment",
+          "baseHead": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+          "head": "685bcd62bd7bf6a077319f9dd047e2736659663e",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/685bcd62b",
+          "title": "Use Bazel’s label for the generated runner environment",
+          "summary": "Publish the two-line amendment and reply to Fabian? He confirmed that Gazelle supports Bazel 7 with its default label-stringification flag. Ten Linux queries loaded the generated runner environment from Gazelle and from a consumer that renamed it. These queries used WORKSPACE and Bzlmod on Bazel 7.6.1 and 8.2.1, and Bzlmod on Bazel 9.3.1.\n\ngit -C ~/code/bazel-gazelle range-diff 82ccd8794^! 685bcd62b^!",
+          "body": "Since 1deae95ac, loading def.bzl also loads GO_ENV from the Go repository configuration. If that repository cannot supply go_env.bzl, even bazel query //:gazelle fails while loading the package. The query only needs the target declaration [1].\n\nExpose GO_ENV through a target in the generated configuration repository for both Bzlmod and WORKSPACE. Make that target a private dependency of the runner rules so Bazel resolves it during analysis. Read the environment from its provider and apply the runner's env overrides as before.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
+          "requestedAt": "2026-11-09T16:16:05+00:00",
+          "replyBody": "Changed in 685bcd62b. The generated BUILD now uses the label Bazel returns for //internal:env.bzl. I checked Gazelle both as the root and as a renamed dependency.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129"
         }
       ],
       "followup": {
-        "owner": "Tamir",
-        "sourceHead": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
-        "observedAt": "2026-11-09T16:16:05+00:00",
-        "disposition": "Fabian confirmed that Gazelle does not support disabling Bazel 7’s unambiguous label stringification. The two-line revision uses his suggested label directly.",
-        "nextAction": "Review the revised source and reply before publishing the amendment.",
+        "owner": "Upstream review",
+        "sourceHead": "685bcd62bd7bf6a077319f9dd047e2736659663e",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the direct label and replied on Fabian’s original thread.",
+        "nextAction": "Follow the amended PR for maintainer review.",
         "evidence": [
-          "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4514562617",
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4514791982",
           "https://github.com/tamird/bazel-gazelle/commit/685bcd62b",
-          "https://github.com/tamird/gvisor/actions/runs/42651507328/artifacts/13689931625",
-          "https://github.com/tamird/gvisor/actions/runs/42652593383/artifacts/13691241347"
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
-        "head": "685bcd62bd7bf6a077319f9dd047e2736659663e",
-        "url": "https://github.com/tamird/bazel-gazelle/commit/685bcd62b",
-        "title": "Use Bazel’s label for the generated runner environment",
-        "summary": "Publish the two-line amendment and reply to Fabian? He confirmed that Gazelle supports Bazel 7 with its default label-stringification flag. Ten Linux queries loaded the generated runner environment from Gazelle and from a consumer that renamed it. These queries used WORKSPACE and Bzlmod on Bazel 7.6.1 and 8.2.1, and Bzlmod on Bazel 9.3.1.\n\ngit -C ~/code/bazel-gazelle range-diff 82ccd8794^! 685bcd62b^!",
-        "body": "Since 1deae95ac, loading def.bzl also loads GO_ENV from the Go repository configuration. If that repository cannot supply go_env.bzl, even bazel query //:gazelle fails while loading the package. The query only needs the target declaration [1].\n\nExpose GO_ENV through a target in the generated configuration repository for both Bzlmod and WORKSPACE. Make that target a private dependency of the runner rules so Bazel resolves it during analysis. Read the environment from its provider and apply the runner's env overrides as before.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42348869753/artifacts/13564836743",
-        "requestedAt": "2026-11-09T16:16:05+00:00",
-        "replyBody": "Changed in 685bcd62b. The generated BUILD now uses the label Bazel returns for //internal:env.bzl. I checked Gazelle both as the root and as a renamed dependency.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -66578,8 +66614,8 @@
       "title": "Run dependency checks without Bash",
       "url": "https://github.com/tamird/gvisor/commit/5bc259512",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T19:10:03+00:00",
+      "status": "Published as #17284",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "The netstack, runsc and Sentry dependency tests traverse the configured dependency graph in an aspect. Their generated executables use Bash even for a passing graph, and the shell expands dollar signs in forbidden labels. Using Bazel’s AnalysisTestResultInfo still requires /bin/sh. It also drops transitive validation outputs: on both CPU configurations, the original netstack, runsc and Sentry owners exposed zero, one and two validation artifacts respectively. The runsc and Sentry validations cover prebuilt Protobuf tools. With an intentionally failing validation action, the original rule failed and the analysis-test replacement passed without running that action.\n\nThe single-commit change keeps the ordinary test rule and includes its diagnostic in the test runfiles. All three real TestRunners passed uncached on native AMD64 with /bin and /usr/bin masked for the test child. A forbidden edge printed the literal label price$usd and exited 1. The AMD64 and ARM64 executables also returned the expected statuses in empty roots, with ARM64 executed under QEMU on AMD64. With the executable and test label unchanged, a fresh pass was followed by a cached pass. Changing just the generated report produced a fresh failure. The deliberate transitive validation still failed.\n\nThe same patch on the compiler integration at 08ca50082 passed all three tests on each of the native AMD64 and ARM64 remote workers. Both Bazel invocations exited 0. The original receipt records six uncached remote TestResults and their XML and log digests. It binds the requested worker image and runtime wrapper to the netstack owner on both architectures. The reporter subsequently failed when it looked for private _validation outputs in ordinary target-completion events. The separate native/QEMU qualification verified validation propagation and the failing action directly.",
       "evidence": [
         {
@@ -66601,6 +66637,10 @@
         {
           "label": "Six remote TestResults and their original log and XML digests",
           "url": "https://github.com/tamird/gvisor/actions/runs/42512950891/artifacts/13629718592"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17284"
         }
       ],
       "links": [
@@ -66610,28 +66650,30 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "5bc25951220fabd92bee33b5862da3271391ada8",
-        "observedAt": "2026-11-08T19:10:03+00:00",
-        "disposition": "Exact-source controls and the two-architecture remote integration are verified.",
-        "nextAction": "Review the proposed single commit before opening a gVisor pull request.",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17284.",
+        "nextAction": "Follow #17284 for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42511362248/artifacts/13629068503",
-          "https://github.com/tamird/gvisor/actions/runs/42512734678/artifacts/13629962697",
-          "https://github.com/tamird/gvisor/commit/08ca50082",
-          "https://github.com/tamird/gvisor/actions/runs/42512950891/artifacts/13629718592"
+          "https://github.com/google/gvisor/pull/17284",
+          "https://github.com/tamird/gvisor/commit/5bc259512"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "5bc25951220fabd92bee33b5862da3271391ada8",
-        "url": "https://github.com/tamird/gvisor/commit/5bc259512",
-        "title": "Run dependency checks without Bash",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "The netstack, runsc and Sentry dependency tests cannot report a passing graph on a worker without /bin/bash. When a check fails, the generated script expands dollar signs in dependency labels.\n\nWrite the diagnostic next to the test executable and include it in the runfiles. Link each test to one target-native program that reads its own report, prints any forbidden edges and exits with failure. Keep the ordinary test rule so Bazel forwards the dependencies’ validation actions, including the prebuilt Protobuf compiler check.",
-        "requestedAt": "2026-11-08T19:10:03+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5bc25951220fabd92bee33b5862da3271391ada8",
+          "url": "https://github.com/tamird/gvisor/commit/5bc259512",
+          "title": "Run dependency checks without Bash",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "The netstack, runsc and Sentry dependency tests cannot report a passing graph on a worker without /bin/bash. When a check fails, the generated script expands dollar signs in dependency labels.\n\nWrite the diagnostic next to the test executable and include it in the runfiles. Link each test to one target-native program that reads its own report, prints any forbidden edges and exits with failure. Keep the ordinary test rule so Bazel forwards the dependencies’ validation actions, including the prebuilt Protobuf compiler check.",
+          "requestedAt": "2026-11-08T19:10:03+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17284"
+        }
+      ]
     },
     {
       "id": "branch:tcp-keepalive-sender",
@@ -66703,8 +66745,8 @@
       "title": "Use a native installer in GPU driver tests",
       "url": "https://github.com/tamird/gvisor/commit/f5d014239",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T19:57:20+00:00",
+      "status": "Published as #17280",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "TestDriverInstalls executes the downloaded file before uninstalling the existing driver. On a native AMD64 worker with /bin/sh hidden, the original shell fixture failed at exec. The Go fixture passed all nine install cases. Removing execute permission still failed with EACCES, and a missing fixture failed when the test read it. All four runs were uncached.\n\nOn the separate compiler integration, the same patch passed all 35 package cases, including the nine installer cases, in one uncached remote TestRunner on each native AMD64 and ARM64 empty worker. These tests exercised the mock installer and its error paths without GPU hardware.",
       "evidence": [
         {
@@ -66718,6 +66760,10 @@
         {
           "label": "Both remote native workers and all 35 named cases on each",
           "url": "https://github.com/tamird/gvisor/actions/runs/42516812217/artifacts/13631452712"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17280"
         }
       ],
       "links": [
@@ -66727,27 +66773,30 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "f5d014239449fd5ce9a72af493c40d7c579e367b",
-        "observedAt": "2026-11-08T19:57:20+00:00",
-        "disposition": "The single fork commit and its source-matched qualification are available for review.",
-        "nextAction": "Review the proposal before opening a gVisor pull request.",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17280.",
+        "nextAction": "Follow #17280 for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42516727608/artifacts/13631203699",
-          "https://github.com/tamird/gvisor/commit/56be21cd4",
-          "https://github.com/tamird/gvisor/actions/runs/42516812217/artifacts/13631452712"
+          "https://github.com/google/gvisor/pull/17280",
+          "https://github.com/tamird/gvisor/commit/f5d014239"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "f5d014239449fd5ce9a72af493c40d7c579e367b",
-        "url": "https://github.com/tamird/gvisor/commit/f5d014239",
-        "title": "Use a native installer in GPU driver tests",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "TestDriverInstalls checks that a downloaded replacement executable is ready to run before uninstalling the current driver. Its mock installer is a shell script, so executing it fails if the test environment lacks /bin/sh, even when the download, permissions and close all succeeded.\n\nUse a small test-only Go executable as the response body. Compute its checksum once and continue executing the prepared file before uninstall and at install time.",
-        "requestedAt": "2026-11-08T19:57:20+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "f5d014239449fd5ce9a72af493c40d7c579e367b",
+          "url": "https://github.com/tamird/gvisor/commit/f5d014239",
+          "title": "Use a native installer in GPU driver tests",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "TestDriverInstalls checks that a downloaded replacement executable is ready to run before uninstalling the current driver. Its mock installer is a shell script, so executing it fails if the test environment lacks /bin/sh, even when the download, permissions and close all succeeded.\n\nUse a small test-only Go executable as the response body. Compute its checksum once and continue executing the prepared file before uninstall and at install time.",
+          "requestedAt": "2026-11-08T19:57:20+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17280"
+        }
+      ]
     },
     {
       "id": "branch:tcp-port-reservation-lock",
@@ -67033,20 +67082,9 @@
       "head": "3171566a54776598ea3f9ced5b96e5f399b2f31e",
       "url": "https://github.com/tamird/gvisor/commit/3171566a5",
       "title": "Separate TCP lock annotations from their descriptions",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T23:20:59+00:00",
+      "status": "Contributor approved; awaiting cleanup",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "Two merged TCP changes left four lock annotations in the same paragraph as their descriptions. Four empty comment lines separate them. Every original source line and checklocks directive is identical. gofmt reports no changes.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "head": "3171566a54776598ea3f9ced5b96e5f399b2f31e",
-        "url": "https://github.com/tamird/gvisor/commit/3171566a5",
-        "title": "Separate TCP lock annotations from their descriptions",
-        "body": "Give the lock requirements on the TCP endpoint errors and SACK helpers\ntheir own paragraph in the Go documentation.",
-        "summary": "Include these four comment separators in the next post-merge cleanup?",
-        "requestedAt": "2026-11-08T23:20:59+00:00"
-      },
       "evidence": [
         {
           "label": "Four comment separators",
@@ -67060,7 +67098,33 @@
           "label": "Endpoint error guards",
           "url": "https://github.com/google/gvisor/pull/16667"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "3171566a54776598ea3f9ced5b96e5f399b2f31e",
+          "url": "https://github.com/tamird/gvisor/commit/3171566a5",
+          "title": "Separate TCP lock annotations from their descriptions",
+          "body": "Give the lock requirements on the TCP endpoint errors and SACK helpers\ntheir own paragraph in the Go documentation.",
+          "summary": "Include these four comment separators in the next post-merge cleanup?",
+          "requestedAt": "2026-11-08T23:20:59+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "note": "Approved for the next post-merge cleanup."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "3171566a54776598ea3f9ced5b96e5f399b2f31e",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Tamir approved the four blank comment lines for the next post-merge cleanup.",
+        "nextAction": "Include the four separators in the next cleanup. #16893 already has formal approval.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3171566a5",
+          "https://github.com/google/gvisor/pull/16893"
+        ]
+      }
     },
     {
       "id": "branch:fuse-release-directory-handle",
@@ -67071,20 +67135,9 @@
       "head": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
       "url": "https://github.com/tamird/gvisor/commit/beaf6a362",
       "title": "Release FUSE directory handles after unsupported file opens",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T23:23:39+00:00",
+      "status": "Published as #17282",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "A FUSE server can reject regular file OPEN and still return a directory handle from OPENDIR. On close, native Linux sent RELEASEDIR for handle 305419896. Both stock gVisor configurations timed out waiting for it. With the fix, ptrace and systrap returned the same handle. The syscall ran on AMD64. The FUSE analyzer passed for AMD64 and ARM64.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "head": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
-        "url": "https://github.com/tamird/gvisor/commit/beaf6a362",
-        "title": "Release FUSE directory handles after unsupported file opens",
-        "body": "A server can return ENOSYS for OPEN and still implement OPENDIR. The\nregular-file fallback then suppresses RELEASEDIR when the directory\ncloses, leaving the server with an open directory handle.\n\nApply that fallback only to regular-file releases. Record the OPEN\ncapability atomically since file descriptions on different inodes\nshare the connection. Exercise the fallback and check the handle\nreturned to the server in RELEASEDIR.",
-        "summary": "Open this one-commit FUSE release fix?",
-        "requestedAt": "2026-11-08T23:23:39+00:00"
-      },
       "evidence": [
         {
           "label": "Native Linux, stock and fixed gVisor syscall logs, plus both architecture analyzers",
@@ -67093,8 +67146,38 @@
         {
           "label": "Proposed implementation and permanent syscall test",
           "url": "https://github.com/tamird/gvisor/commit/beaf6a362"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17282"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
+          "url": "https://github.com/tamird/gvisor/commit/beaf6a362",
+          "title": "Release FUSE directory handles after unsupported file opens",
+          "body": "A server can return ENOSYS for OPEN and still implement OPENDIR. The\nregular-file fallback then suppresses RELEASEDIR when the directory\ncloses, leaving the server with an open directory handle.\n\nApply that fallback only to regular-file releases. Record the OPEN\ncapability atomically since file descriptions on different inodes\nshare the connection. Exercise the fallback and check the handle\nreturned to the server in RELEASEDIR.",
+          "summary": "Open this one-commit FUSE release fix?",
+          "requestedAt": "2026-11-08T23:23:39+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17282"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17282.",
+        "nextAction": "Follow #17282 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17282",
+          "https://github.com/tamird/gvisor/commit/beaf6a362"
+        ]
+      }
     },
     {
       "id": "branch:tcp-experiment-first-use",
@@ -67390,9 +67473,9 @@
       "title": "Select the unit tests with a Bazel configuration",
       "url": "https://github.com/tamird/gvisor/commit/3c4df972e",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Published as #17281",
       "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
-      "updatedAt": "2026-11-09T06:59:40+00:00",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "Make owns the eight package patterns and filters used by the unit jobs. The mixed RBE presubmit has to duplicate them. The proposed Bazel configuration supplies that selection to either caller. Make still supplies the cgroup version so v1 and v2 test results cache separately.\n\nAll 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
       "evidence": [
         {
@@ -67402,18 +67485,37 @@
         {
           "label": "Native AMD64 execution, XML and log, with independently recovered selection evidence",
           "url": "https://github.com/tamird/gvisor/actions/runs/42575748449/artifacts/13654934362"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17281"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/3c4df972e",
-        "title": "Select the unit tests with a Bazel configuration",
-        "requestedAt": "2026-11-09T06:59:40+00:00",
-        "summary": "Open this two-file PR independently? All 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
-        "body": "The Buildkite unit jobs take their package roots and tag filters from\nmake unit-tests. A direct Bazel invocation has to repeat that list,\nincluding the targets built alongside the tests.\n\nPut the same selection in bazel test --config=unit-tests. Keep the\ncgroup mode in the Make caller so builds on cgroup v1 and v2 continue\nto use separate test results."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/3c4df972e",
+          "title": "Select the unit tests with a Bazel configuration",
+          "requestedAt": "2026-11-09T06:59:40+00:00",
+          "summary": "Open this two-file PR independently? All 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
+          "body": "The Buildkite unit jobs take their package roots and tag filters from\nmake unit-tests. A direct Bazel invocation has to repeat that list,\nincluding the targets built alongside the tests.\n\nPut the same selection in bazel test --config=unit-tests. Keep the\ncgroup mode in the Make caller so builds on cgroup v1 and v2 continue\nto use separate test results.",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17281"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17281.",
+        "nextAction": "Follow #17281 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17281",
+          "https://github.com/tamird/gvisor/commit/3c4df972e"
+        ]
       }
     },
     {
@@ -67591,9 +67693,9 @@
       "title": "Run UDP broadcast and multicast syscall tests on a private interface",
       "url": "https://github.com/tamird/gvisor/commit/e1a7eb4e5",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "Published as #17283",
       "head": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
-      "updatedAt": "2026-11-09T15:12:39+00:00",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
       "summary": "Two UDP syscall suites skip their broadcast and multicast tests when only loopback is available. This patch creates an addressed bridge without ports in a private network namespace. The corrected mixed build passed 146 ARM64 cases and eight AMD64 cases without skips. Two earlier ARM64 IPv4 controls each passed 38 cases. On the standalone commit, one AMD64 systrap case completed 11 restores from nonempty checkpoints. Its Bazel test exited 0 with a passing TestResult and XML. The reporting script looked for the wrong BEP finish identifier and marked the job failed. KVM execution is unverified.",
       "evidence": [
         {
@@ -67611,18 +67713,37 @@
         {
           "label": "Standalone AMD64 restore log, XML and Bazel result",
           "url": "https://github.com/tamird/gvisor/actions/runs/42640110545/artifacts/13684732848"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17283"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/e1a7eb4e5",
-        "title": "Run UDP broadcast and multicast syscall tests on a private interface",
-        "requestedAt": "2026-11-09T15:12:39+00:00",
-        "summary": "Open one gVisor PR for the two UDP syscall suites and their private network setup?",
-        "body": "The external UDP suites skip when they find only loopback. Create an addressed Ethernet bridge with no ports in a private network namespace before starting the test. Join that namespace when runsc imports the network into the sandbox.\n\nSelect loopback on the IPv6 multicast sender, matching the receiver's membership, and route its test group through loopback. Use the Linux expectations when host networking forwards multicast socket options.\n\nKeep the buffer sizes runsc reports for the private link in the test log. Linux requires CAP_NET_ADMIN in the initial user namespace to force larger socket buffers."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/e1a7eb4e5",
+          "title": "Run UDP broadcast and multicast syscall tests on a private interface",
+          "requestedAt": "2026-11-09T15:12:39+00:00",
+          "summary": "Open one gVisor PR for the two UDP syscall suites and their private network setup?",
+          "body": "The external UDP suites skip when they find only loopback. Create an addressed Ethernet bridge with no ports in a private network namespace before starting the test. Join that namespace when runsc imports the network into the sandbox.\n\nSelect loopback on the IPv6 multicast sender, matching the receiver's membership, and route its test group through loopback. Use the Linux expectations when host networking forwards multicast socket options.\n\nKeep the buffer sizes runsc reports for the private link in the test log. Linux requires CAP_NET_ADMIN in the initial user namespace to force larger socket buffers.",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17283"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17283.",
+        "nextAction": "Follow #17283 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17283",
+          "https://github.com/tamird/gvisor/commit/e1a7eb4e5"
+        ]
       }
     },
     {
@@ -67801,6 +67922,298 @@
           "https://github.com/tamird/gvisor/commit/3ff1e7080"
         ]
       }
+    },
+    {
+      "id": "pr:17280",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/gpu-driver-installer-fixture",
+      "head": "f5d014239449fd5ce9a72af493c40d7c579e367b",
+      "title": "Use a native installer in GPU driver tests",
+      "url": "https://github.com/google/gvisor/pull/17280",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "summary": "TestDriverInstalls executes the downloaded file before uninstalling the existing driver. On a native AMD64 worker with /bin/sh hidden, the original shell fixture failed at exec. The Go fixture passed all nine install cases. Removing execute permission still failed with EACCES, and a missing fixture failed when the test read it. All four runs were uncached.\n\nOn the separate compiler integration, the same patch passed all 35 package cases, including the nine installer cases, in one uncached remote TestRunner on each native AMD64 and ARM64 empty worker. These tests exercised the mock installer and its error paths without GPU hardware.",
+      "evidence": [
+        {
+          "label": "Original package and masked-shell, chmod and missing-input controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42516727608/artifacts/13631203699"
+        },
+        {
+          "label": "Patch-identical source on the compiler integration",
+          "url": "https://github.com/tamird/gvisor/commit/56be21cd4"
+        },
+        {
+          "label": "Both remote native workers and all 35 named cases on each",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42516812217/artifacts/13631452712"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17280"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "f5d014239449fd5ce9a72af493c40d7c579e367b",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17280.",
+        "nextAction": "Follow #17280 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17280",
+          "https://github.com/tamird/gvisor/commit/f5d014239"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "f5d014239449fd5ce9a72af493c40d7c579e367b",
+          "url": "https://github.com/tamird/gvisor/commit/f5d014239",
+          "title": "Use a native installer in GPU driver tests",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "TestDriverInstalls checks that a downloaded replacement executable is ready to run before uninstalling the current driver. Its mock installer is a shell script, so executing it fails if the test environment lacks /bin/sh, even when the download, permissions and close all succeeded.\n\nUse a small test-only Go executable as the response body. Compute its checksum once and continue executing the prepared file before uninstall and at install time.",
+          "requestedAt": "2026-11-08T19:57:20+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17280"
+        }
+      ],
+      "number": 17280
+    },
+    {
+      "id": "pr:17281",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/bazel-unit-test-profile",
+      "title": "Select the unit tests with a Bazel configuration",
+      "url": "https://github.com/google/gvisor/pull/17281",
+      "group": "bazel",
+      "status": "open",
+      "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "summary": "Make owns the eight package patterns and filters used by the unit jobs. The mixed RBE presubmit has to duplicate them. The proposed Bazel configuration supplies that selection to either caller. Make still supplies the cgroup version so v1 and v2 test results cache separately.\n\nAll 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
+      "evidence": [
+        {
+          "label": "Original Make and mixed Bazel target selections for both arms",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42574603478/artifacts/13654349783"
+        },
+        {
+          "label": "Native AMD64 execution, XML and log, with independently recovered selection evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42575748449/artifacts/13654934362"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17281"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/3c4df972e",
+          "title": "Select the unit tests with a Bazel configuration",
+          "requestedAt": "2026-11-09T06:59:40+00:00",
+          "summary": "Open this two-file PR independently? All 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
+          "body": "The Buildkite unit jobs take their package roots and tag filters from\nmake unit-tests. A direct Bazel invocation has to repeat that list,\nincluding the targets built alongside the tests.\n\nPut the same selection in bazel test --config=unit-tests. Keep the\ncgroup mode in the Make caller so builds on cgroup v1 and v2 continue\nto use separate test results.",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17281"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17281.",
+        "nextAction": "Follow #17281 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17281",
+          "https://github.com/tamird/gvisor/commit/3c4df972e"
+        ]
+      },
+      "number": 17281
+    },
+    {
+      "id": "pr:17282",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "group": "runtime",
+      "ref": "research/fuse-release-directory-handle",
+      "head": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
+      "url": "https://github.com/google/gvisor/pull/17282",
+      "title": "Release FUSE directory handles after unsupported file opens",
+      "status": "open",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "summary": "A FUSE server can reject regular file OPEN and still return a directory handle from OPENDIR. On close, native Linux sent RELEASEDIR for handle 305419896. Both stock gVisor configurations timed out waiting for it. With the fix, ptrace and systrap returned the same handle. The syscall ran on AMD64. The FUSE analyzer passed for AMD64 and ARM64.",
+      "evidence": [
+        {
+          "label": "Native Linux, stock and fixed gVisor syscall logs, plus both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533671518/artifacts/13639230782"
+        },
+        {
+          "label": "Proposed implementation and permanent syscall test",
+          "url": "https://github.com/tamird/gvisor/commit/beaf6a362"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17282"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
+          "url": "https://github.com/tamird/gvisor/commit/beaf6a362",
+          "title": "Release FUSE directory handles after unsupported file opens",
+          "body": "A server can return ENOSYS for OPEN and still implement OPENDIR. The\nregular-file fallback then suppresses RELEASEDIR when the directory\ncloses, leaving the server with an open directory handle.\n\nApply that fallback only to regular-file releases. Record the OPEN\ncapability atomically since file descriptions on different inodes\nshare the connection. Exercise the fallback and check the handle\nreturned to the server in RELEASEDIR.",
+          "summary": "Open this one-commit FUSE release fix?",
+          "requestedAt": "2026-11-08T23:23:39+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17282"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "beaf6a3627f81fa6a8575f33c3c12f7d09598b3f",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17282.",
+        "nextAction": "Follow #17282 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17282",
+          "https://github.com/tamird/gvisor/commit/beaf6a362"
+        ]
+      },
+      "number": 17282
+    },
+    {
+      "id": "pr:17283",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/syscall-udp-multicast-interface",
+      "title": "Run UDP broadcast and multicast syscall tests on a private interface",
+      "url": "https://github.com/google/gvisor/pull/17283",
+      "group": "tests",
+      "status": "open",
+      "head": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "summary": "Two UDP syscall suites skip their broadcast and multicast tests when only loopback is available. This patch creates an addressed bridge without ports in a private network namespace. The corrected mixed build passed 146 ARM64 cases and eight AMD64 cases without skips. Two earlier ARM64 IPv4 controls each passed 38 cases. On the standalone commit, one AMD64 systrap case completed 11 restores from nonempty checkpoints. Its Bazel test exited 0 with a passing TestResult and XML. The reporting script looked for the wrong BEP finish identifier and marked the job failed. KVM execution is unverified.",
+      "evidence": [
+        {
+          "label": "Standalone commit on current master",
+          "url": "https://github.com/tamird/gvisor/commit/e1a7eb4e5"
+        },
+        {
+          "label": "Eight corrected TestRunners on the mixed fork",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42638990802/artifacts/13685365229"
+        },
+        {
+          "label": "Earlier IPv4 native and host-network controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42608756247/artifacts/13670010761"
+        },
+        {
+          "label": "Standalone AMD64 restore log, XML and Bazel result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42640110545/artifacts/13684732848"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17283"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/e1a7eb4e5",
+          "title": "Run UDP broadcast and multicast syscall tests on a private interface",
+          "requestedAt": "2026-11-09T15:12:39+00:00",
+          "summary": "Open one gVisor PR for the two UDP syscall suites and their private network setup?",
+          "body": "The external UDP suites skip when they find only loopback. Create an addressed Ethernet bridge with no ports in a private network namespace before starting the test. Join that namespace when runsc imports the network into the sandbox.\n\nSelect loopback on the IPv6 multicast sender, matching the receiver's membership, and route its test group through loopback. Use the Linux expectations when host networking forwards multicast socket options.\n\nKeep the buffer sizes runsc reports for the private link in the test log. Linux requires CAP_NET_ADMIN in the initial user namespace to force larger socket buffers.",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17283"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17283.",
+        "nextAction": "Follow #17283 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17283",
+          "https://github.com/tamird/gvisor/commit/e1a7eb4e5"
+        ]
+      },
+      "number": 17283
+    },
+    {
+      "id": "pr:17284",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/native-dependency-checks",
+      "head": "5bc25951220fabd92bee33b5862da3271391ada8",
+      "title": "Run dependency checks without Bash",
+      "url": "https://github.com/google/gvisor/pull/17284",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "summary": "The netstack, runsc and Sentry dependency tests traverse the configured dependency graph in an aspect. Their generated executables use Bash even for a passing graph, and the shell expands dollar signs in forbidden labels. Using Bazel’s AnalysisTestResultInfo still requires /bin/sh. It also drops transitive validation outputs: on both CPU configurations, the original netstack, runsc and Sentry owners exposed zero, one and two validation artifacts respectively. The runsc and Sentry validations cover prebuilt Protobuf tools. With an intentionally failing validation action, the original rule failed and the analysis-test replacement passed without running that action.\n\nThe single-commit change keeps the ordinary test rule and includes its diagnostic in the test runfiles. All three real TestRunners passed uncached on native AMD64 with /bin and /usr/bin masked for the test child. A forbidden edge printed the literal label price$usd and exited 1. The AMD64 and ARM64 executables also returned the expected statuses in empty roots, with ARM64 executed under QEMU on AMD64. With the executable and test label unchanged, a fresh pass was followed by a cached pass. Changing just the generated report produced a fresh failure. The deliberate transitive validation still failed.\n\nThe same patch on the compiler integration at 08ca50082 passed all three tests on each of the native AMD64 and ARM64 remote workers. Both Bazel invocations exited 0. The original receipt records six uncached remote TestResults and their XML and log digests. It binds the requested worker image and runtime wrapper to the netstack owner on both architectures. The reporter subsequently failed when it looked for private _validation outputs in ordinary target-completion events. The separate native/QEMU qualification verified validation propagation and the failing action directly.",
+      "evidence": [
+        {
+          "label": "Single-commit dependency checker",
+          "url": "https://github.com/tamird/gvisor/commit/5bc259512"
+        },
+        {
+          "label": "Stock, standard analysis test and native control. All 18 original log/XML pairs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42511362248/artifacts/13629068503"
+        },
+        {
+          "label": "Exact-source native AMD64 tests, direct AMD64 and ARM64 QEMU execution, cache and validation controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42512734678/artifacts/13629962697"
+        },
+        {
+          "label": "Same source patch on the compiler integration",
+          "url": "https://github.com/tamird/gvisor/commit/08ca50082"
+        },
+        {
+          "label": "Six remote TestResults and their original log and XML digests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42512950891/artifacts/13629718592"
+        },
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/17284"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "5bc25951220fabd92bee33b5862da3271391ada8",
+        "observedAt": "2026-11-09T16:31:03+00:00",
+        "disposition": "Published the reviewed revision as #17284.",
+        "nextAction": "Follow #17284 for maintainer review and import.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17284",
+          "https://github.com/tamird/gvisor/commit/5bc259512"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5bc25951220fabd92bee33b5862da3271391ada8",
+          "url": "https://github.com/tamird/gvisor/commit/5bc259512",
+          "title": "Run dependency checks without Bash",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "The netstack, runsc and Sentry dependency tests cannot report a passing graph on a worker without /bin/bash. When a check fails, the generated script expands dollar signs in dependency labels.\n\nWrite the diagnostic next to the test executable and include it in the runfiles. Link each test to one target-native program that reads its own report, prints any forbidden edges and exits with failure. Keep the ordinary test rule so Bazel forwards the dependencies’ validation actions, including the prebuilt Protobuf compiler check.",
+          "requestedAt": "2026-11-08T19:10:03+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T16:31:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17284"
+        }
+      ],
+      "number": 17284
     }
   ],
   "edges": [
@@ -92355,5 +92768,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T16:23:10+00:00"
+  "updatedAt": "2026-11-09T16:31:03+00:00"
 }
