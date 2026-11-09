@@ -82,6 +82,8 @@ into the node’s `settledReviews` with the outcome and time (and the body for a
 comment). Remove the pending request immediately, including when publication
 has to wait. Keep these records when promoting a branch to a PR. The metadata
 preflight rejects a pending request for work that has already been reviewed.
+For a new PR proposal, link the card and its review button to the same
+single commit. Keep the branch name in `ref` for tracking dependencies.
 A changed proposal gets its own head and range-diff. Include the runnable Git
 command in the card and in the outgoing contributor request itself, on its own
 line as plain text, without backticks, quotation marks, or a code fence. For an

@@ -16,6 +16,10 @@ vm.runInContext('validateRegistry(candidateRegistry); validateSnapshot(candidate
 for (const node of context.candidateRegistry.nodes) {
   const decision = node.contributorReview;
   if (decision?.status !== 'pending') continue;
+  if (node.type === 'branch' &&
+      (node.head !== decision.head || node.url !== decision.url || !decision.url.endsWith('/commit/' + decision.head.slice(0, 9)))) {
+    throw new Error(`Link the proposal and its card to the same single commit: ${node.id}`);
+  }
   context.node = node;
   if (vm.runInContext('alreadyReviewed(node, node.contributorReview)', context)) {
     throw new Error(`Already reviewed: ${node.id} at ${decision.head || decision.url}`);

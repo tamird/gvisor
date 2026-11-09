@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T18:43:26+00:00",
+    "updatedAt": "2026-11-09T18:52:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22,7 +22,8 @@
       "llvm/llvm-project": "none",
       "protocolbuffers/protobuf": "none",
       "bazel-contrib/buildtools": "none",
-      "fmeum/with_cfg.bzl": "none"
+      "fmeum/with_cfg.bzl": "none",
+      "bazelbuild/bazel-skylib": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -36,7 +37,8 @@
       "llvm/llvm-project",
       "protocolbuffers/protobuf",
       "bazel-contrib/buildtools",
-      "fmeum/with_cfg.bzl"
+      "fmeum/with_cfg.bzl",
+      "bazelbuild/bazel-skylib"
     ],
     "registryDate": "2026-11-01"
   },
@@ -41650,12 +41652,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "runtime",
-      "ref": "research/poll-successful-entry-ownership",
-      "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
-      "url": "https://github.com/tamird/gvisor/commit/e39e7d78e",
+      "ref": "review/poll-successful-registrations",
+      "head": "70f8576af3ddb78d5bfc9be51b14460a2253a2e4",
+      "url": "https://github.com/tamird/gvisor/commit/70f8576af",
       "title": "Unregister only successful poll waiters",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T23:18:04+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
       "summary": "On master, poll called EventUnregister once after the file rejected the waiter with EIO. The proposed change returned EIO, made zero unregister calls and left the file’s reference count unchanged. The permanent regression runs pollBlock in the gVisor Linux syscall package.",
       "refinement": {
         "before": {
@@ -41665,17 +41667,6 @@
           "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f"
         },
         "command": "git -C ~/code/gvisor range-diff 85cb9f489^! e39e7d78e^!"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "url": "https://github.com/tamird/gvisor/commit/e39e7d78e",
-        "title": "Unregister only successful poll waiters",
-        "body": "poll defers cleanup of each registered waiter. It records the file before EventRegister returns, so a failure causes cleanup to call EventUnregister on the entry that was just rejected. Unix sockets already undo their own registration on a host error (ed3929b26).\n\nKeep the file reference in pollState only after registration succeeds. On failure, release the reference and return the registration error.",
-        "summary": "Open this single-commit gVisor PR now that the Unix socket rollback in #16739 has landed?",
-        "requestedAt": "2026-11-08T23:18:04+00:00"
       },
       "evidence": [
         {
@@ -41689,19 +41680,41 @@
         {
           "label": "Native AMD64 poll regression on master and on this revision; Linux syscall package Nogo passed for AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+        },
+        {
+          "label": "Konstantin on the similar failed-registration fixture",
+          "url": "https://github.com/google/gvisor/pull/16854#discussion_r4474272667"
+        },
+        {
+          "label": "Fork-only regression: stock called cleanup once, the fix zero times",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
         }
       ],
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
-        "observedAt": "2026-11-08T23:18:04+00:00",
-        "disposition": "The Unix socket registration rollback has landed. The poll source is one commit on master 975fb1722.",
-        "nextAction": "Review opening the poll correction now.",
+        "owner": "Agent",
+        "sourceHead": "70f8576af3ddb78d5bfc9be51b14460a2253a2e4",
+        "observedAt": "2026-11-09T18:52:37+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow review on #17295.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/e39e7d78e",
-          "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+          "https://github.com/google/gvisor/pull/17295"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/e39e7d78e",
+          "title": "Unregister only successful poll waiters",
+          "body": "poll defers cleanup of each registered waiter. It records the file before EventRegister returns, so a failure causes cleanup to call EventUnregister on the entry that was just rejected. Unix sockets already undo their own registration on a host error (ed3929b26).\n\nKeep the file reference in pollState only after registration succeeds. On failure, release the reference and return the registration error.",
+          "summary": "Open this single-commit gVisor PR now that the Unix socket rollback in #16739 has landed?",
+          "requestedAt": "2026-11-08T23:18:04+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ],
+      "inactive": true
     },
     {
       "id": "branch:mutable-overlay-poll-waiter",
@@ -47043,7 +47056,7 @@
       "ref": "checkpoint-memory-file-registration",
       "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
       "title": "Preserve the page read error across memory files",
-      "url": "https://github.com/tamird/gvisor/tree/checkpoint-memory-file-registration",
+      "url": "https://github.com/tamird/gvisor/commit/211a9e3b9",
       "group": "runtime",
       "status": "Contributor review requested",
       "updatedAt": "2026-10-31T18:05:07.150+00:00",
@@ -64582,7 +64595,7 @@
       "title": "Build one marshal test binary per Go library",
       "url": "https://github.com/tamird/gvisor/commit/580909068",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Published",
       "summary": "Each marshal library now has one Go test. The generator no longer emits an identical untagged Example for each source group. The original and revised 20 libraries ran the same 2,340 named cases per architecture. AMD64 ran natively and ARM64 under QEMU. All 92 remaining generated implementation and test files matched byte for byte. A synthetic library with architecture-only inputs ran five cases on AMD64 and passed with zero selected cases on ARM64. Compared with the original 46 binaries per architecture, the 20 library binaries remove 26 Bazel test actions and reduce their total from 460 to 176 MiB on AMD64 and 395 to 156 MiB on ARM64.",
       "evidence": [
         {
@@ -64610,7 +64623,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42506859314/artifacts/13628231537"
         }
       ],
-      "updatedAt": "2026-11-08T18:03:33+00:00",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
       "refinement": {
         "before": {
           "head": "75a946b540c92de35f0d3d3f3cec09b4b892cb67"
@@ -64620,15 +64633,13 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "580909068b883b6f191337e638028d5fffb297a5",
-        "observedAt": "2026-11-08T18:03:33+00:00",
-        "disposition": "Revised generator and grouped tests qualified on both architectures",
-        "nextAction": "Review the single-commit revision before opening a gVisor pull request.",
+        "observedAt": "2026-11-09T18:52:37+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow review on #17294.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/580909068",
-          "https://github.com/tamird/gvisor/actions/runs/42506859314/artifacts/13628231537",
-          "https://github.com/tamird/gvisor/commit/75a946b54"
+          "https://github.com/google/gvisor/pull/17294"
         ]
       },
       "settledReviews": [
@@ -64643,19 +64654,21 @@
           "requestedAt": "2026-11-08T13:49:13+00:00",
           "outcome": "changes-requested",
           "at": "2026-11-08T17:42:17+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "580909068b883b6f191337e638028d5fffb297a5",
+          "baseHead": "75a946b540c92de35f0d3d3f3cec09b4b892cb67",
+          "url": "https://github.com/tamird/gvisor/commit/580909068",
+          "title": "Build one marshal test binary per Go library",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "A two-architecture presubmit ran 92 generated marshal test binaries. Of those, 58 ran no test cases. Each still needed a linked executable and a test action on a remote worker. [1]\n\nFor example, on AMD64, pkg/abi/linux runs its common and AMD64 cases in separate binaries. Bazel also links and runs a 4.2 MiB binary for the ARM64 types, even though Go excludes every one of its tests. [2]\n\nGive each library one go_test with all its generated test sources. Their build constraints select the cases for the target architecture. For pkg/abi/linux, :linux_abi_autogen_test runs all 960 applicable cases on either architecture. Cases in one library rerun together.\n\nDrop the untagged file that each source group emits solely to keep its test suite from being empty. Go skips its Example because it has no Output comment. When build tags exclude every test, rules_go can already build and run the empty suite. [4]\n\nAcross 20 libraries, this removes 26 test actions per architecture. The test executables shrink from 460 to 176 MiB on AMD64 and from 395 to 156 MiB on ARM64. Both ran the same 2,340 named cases as before. All 92 retained implementation and test files matched byte for byte. [2] [3] [4]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525\n[2]: https://github.com/tamird/gvisor/actions/runs/42458854682/artifacts/13609192012\n[3]: https://github.com/tamird/gvisor/actions/runs/42459715024/artifacts/13608887823\n[4]: https://github.com/tamird/gvisor/actions/runs/42506859314/artifacts/13628231537",
+          "requestedAt": "2026-11-08T18:03:33+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "580909068b883b6f191337e638028d5fffb297a5",
-        "baseHead": "75a946b540c92de35f0d3d3f3cec09b4b892cb67",
-        "url": "https://github.com/tamird/gvisor/commit/580909068",
-        "title": "Build one marshal test binary per Go library",
-        "summary": "Open the single-commit gVisor PR?",
-        "body": "A two-architecture presubmit ran 92 generated marshal test binaries. Of those, 58 ran no test cases. Each still needed a linked executable and a test action on a remote worker. [1]\n\nFor example, on AMD64, pkg/abi/linux runs its common and AMD64 cases in separate binaries. Bazel also links and runs a 4.2 MiB binary for the ARM64 types, even though Go excludes every one of its tests. [2]\n\nGive each library one go_test with all its generated test sources. Their build constraints select the cases for the target architecture. For pkg/abi/linux, :linux_abi_autogen_test runs all 960 applicable cases on either architecture. Cases in one library rerun together.\n\nDrop the untagged file that each source group emits solely to keep its test suite from being empty. Go skips its Example because it has no Output comment. When build tags exclude every test, rules_go can already build and run the empty suite. [4]\n\nAcross 20 libraries, this removes 26 test actions per architecture. The test executables shrink from 460 to 176 MiB on AMD64 and from 395 to 156 MiB on ARM64. Both ran the same 2,340 named cases as before. All 92 retained implementation and test files matched byte for byte. [2] [3] [4]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525\n[2]: https://github.com/tamird/gvisor/actions/runs/42458854682/artifacts/13609192012\n[3]: https://github.com/tamird/gvisor/actions/runs/42459715024/artifacts/13608887823\n[4]: https://github.com/tamird/gvisor/actions/runs/42506859314/artifacts/13628231537",
-        "requestedAt": "2026-11-08T18:03:33+00:00"
-      }
+      "inactive": true
     },
     {
       "id": "branch:go-generics-native-golden",
@@ -65957,8 +65970,8 @@
       "title": "Allow build_test to run without a shell",
       "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T15:58:09+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
       "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nOn the earlier supplier revision, each real gVisor build_test built 16 manual binaries and passed: AMD64 natively and ARM64 through QEMU on the same AMD64 host. The receipt retains both test results and 32 link-output/marker-input pairs. The collector failed while reading the action graph, so those two runs do not establish the physical consumer runfiles or payload digests. Both ran through Bazel’s standard POSIX test harness. Replacing Bazel’s own shell wrapper is tracked separately in #30837.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
       "evidence": [
         {
@@ -66012,27 +66025,14 @@
           "base": "a920cdfe02154b916b493b4ffdd08087f0498fc7"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "b2d9986a40604f82df42c322122ad61313104cfa",
-        "baseHead": "a920cdfe02154b916b493b4ffdd08087f0498fc7",
-        "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
-        "title": "Allow build_test to run without a shell",
-        "body": "build_test uses a genrule to create a marker for each batch of checked targets. Its test executable is also a shell script on POSIX. Both steps require a shell on the machine that runs them.\n\nLet callers provide a tool that creates an empty file on the execution platform and an executable that runs on the test’s target platform. Pass the marker path as a single argument, including when the target name contains shell metacharacters. The markers keep the checked targets in the build graph when another test inherits only the runfiles, without adding their binaries to that test’s runfiles.\n\nIn gVisor, both the AMD64 and ARM64 tests built all 16 selected binaries. The AMD64 test ran natively and the ARM64 test ran under QEMU on the same worker. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785",
-        "summary": "Open this single-commit pull request against bazelbuild/bazel-skylib?",
-        "requestedAt": "2026-11-08T15:58:09+00:00"
-      },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "b2d9986a40604f82df42c322122ad61313104cfa",
-        "observedAt": "2026-11-08T15:58:09+00:00",
-        "disposition": "The single Skylib fork commit is ready for contributor review.",
-        "nextAction": "Review the proposed Skylib change. The gVisor filegroup proposal has its own disposition.",
+        "observedAt": "2026-11-09T18:52:37+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow review on #648.",
         "evidence": [
-          "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
-          "https://github.com/tamird/bazel-skylib/actions/runs/42497003818/artifacts/13623652091",
-          "https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785"
+          "https://github.com/bazelbuild/bazel-skylib/pull/648"
         ]
       },
       "links": [
@@ -66040,7 +66040,22 @@
           "label": "Scratch build actions investigation",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Ascratch-build-actions"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b2d9986a40604f82df42c322122ad61313104cfa",
+          "baseHead": "a920cdfe02154b916b493b4ffdd08087f0498fc7",
+          "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
+          "title": "Allow build_test to run without a shell",
+          "body": "build_test uses a genrule to create a marker for each batch of checked targets. Its test executable is also a shell script on POSIX. Both steps require a shell on the machine that runs them.\n\nLet callers provide a tool that creates an empty file on the execution platform and an executable that runs on the test’s target platform. Pass the marker path as a single argument, including when the target name contains shell metacharacters. The markers keep the checked targets in the build graph when another test inherits only the runfiles, without adding their binaries to that test’s runfiles.\n\nIn gVisor, both the AMD64 and ARM64 tests built all 16 selected binaries. The AMD64 test ran natively and the ARM64 test ran under QEMU on the same worker. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785",
+          "summary": "Open this single-commit pull request against bazelbuild/bazel-skylib?",
+          "requestedAt": "2026-11-08T15:58:09+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ],
+      "inactive": true
     },
     {
       "id": "branch:go-branch-netgofer",
@@ -67459,20 +67474,9 @@
       "head": "67f8866474c0fb1644927618a9cf20ee71ba441d",
       "url": "https://github.com/tamird/gvisor/commit/67f886647",
       "title": "Remove the PacketImpact runner's host tool calls",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T02:49:58+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
       "summary": "Stock failed on the Ubuntu AMD64 worker when it tried to start iptables-nft. With the proposed runner, the native Linux and Netstack handshake targets passed uncached on both AMD64 and ARM64. On fork integration 43fdbb717, LLVM compiled and linked the AArch64 POSIX server on an AMD64 OCI worker. Both AArch64 test executables ran on ARM64 Firecracker workers with root and IPv6 requested. Each IPv4 capture showed the receive window open from 0 to 32,768 and all 11 bytes of Sample Data. Bazel retained both raw captures. The native manifest recorded 611 bytes without a MIME type. The Netstack wrapper reported three printf warnings and omitted the 505-byte capture from its manifest.\n\nSix hosted targets passed with host binaries masked. The development-only dependencies preserve the consuming module’s Netlink version, and all 225 license records passed. The first ARM64 attempt timed out during the build. It reached 7,685 of 10,907 actions, with 803 remote actions completing in the last five minutes. Neither TestRunner had started.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "head": "67f8866474c0fb1644927618a9cf20ee71ba441d",
-        "url": "https://github.com/tamird/gvisor/commit/67f886647",
-        "title": "Remove the PacketImpact runner's host tool calls",
-        "body": "PacketImpact builds its runner, DUT and testbench with Bazel, but starts\nthem through a Bash script that calls find and chmod. Both Linux DUTs\ninvoke uname for their identity. The runner also requires iptables-nft\nand ip6tables-nft at fixed host paths, so a worker without those tools\nfails before the first packet exchange.\n\nRun the Go runner as the Bazel test and obtain DUT identity from\nuname(2). Install the TCP input filters through nftables in the\ntestbench network namespace. Packet sockets still see incoming frames\nbefore the input hook drops TCP on the DUT-facing interfaces.\n\nDeclare the firewall modules as development dependencies to preserve\ndownstream Bazel modules' existing Netlink version selection.",
-        "summary": "Open the standalone PacketImpact runner PR?",
-        "requestedAt": "2026-11-09T01:28:16+00:00"
-      },
       "evidence": [
         {
           "label": "ARM64 Linux and Netstack handshakes, LLVM actions and both packet captures",
@@ -67498,7 +67502,32 @@
           "label": "First ARM64 attempt: build time limit, zero TestResults",
           "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644257975"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "67f8866474c0fb1644927618a9cf20ee71ba441d",
+          "url": "https://github.com/tamird/gvisor/commit/67f886647",
+          "title": "Remove the PacketImpact runner's host tool calls",
+          "body": "PacketImpact builds its runner, DUT and testbench with Bazel, but starts\nthem through a Bash script that calls find and chmod. Both Linux DUTs\ninvoke uname for their identity. The runner also requires iptables-nft\nand ip6tables-nft at fixed host paths, so a worker without those tools\nfails before the first packet exchange.\n\nRun the Go runner as the Bazel test and obtain DUT identity from\nuname(2). Install the TCP input filters through nftables in the\ntestbench network namespace. Packet sockets still see incoming frames\nbefore the input hook drops TCP on the DUT-facing interfaces.\n\nDeclare the firewall modules as development dependencies to preserve\ndownstream Bazel modules' existing Netlink version selection.",
+          "summary": "Open the standalone PacketImpact runner PR?",
+          "requestedAt": "2026-11-09T01:28:16+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "67f8866474c0fb1644927618a9cf20ee71ba441d",
+        "observedAt": "2026-11-09T18:52:37+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow review on #17292.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17292"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:state-single-plain-waiter",
@@ -67596,20 +67625,9 @@
       "head": "4dad1e4b9741b815b3332d75994ee01224602912",
       "url": "https://github.com/tamird/gvisor/commit/4dad1e4b9",
       "title": "Fix PacketImpact runsc debug log filenames",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T03:28:20+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
       "summary": "The Netstack PacketImpact runner left literal percent signs in three debug filenames. Bazel interpreted them while writing the undeclared-output manifest and folded the packet capture into a malformed row. Using runsc’s single percent delimiters produced four distinct rows for boot, gofer, run and the capture. Both uncached ARM64 Firecracker handshake tests passed. The native control had one capture row. Both manifests still reported that the worker lacked the file utility for MIME detection.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "head": "4dad1e4b9741b815b3332d75994ee01224602912",
-        "url": "https://github.com/tamird/gvisor/commit/4dad1e4b9",
-        "title": "Fix PacketImpact runsc debug log filenames",
-        "body": "The Dockerless PacketImpact runner introduced in b318556f8 passes its debug log template directly to runsc. Doubling the percent signs leaves literal percent signs around the expanded timestamp and command.\n\nBazel 9.3.1 uses each output record as a printf format [1]. On a Netstack handshake, the three log names corrupted the manifest entry for the packet capture.\n\nUse the single percent delimiters expected by runsc.\n\n[1]: https://github.com/bazelbuild/bazel/blob/fee2bf2d1/tools/test/test-setup.sh#L333",
-        "summary": "Open this one-line PacketImpact debug log filename fix?",
-        "requestedAt": "2026-11-09T03:28:20+00:00"
-      },
       "evidence": [
         {
           "label": "Original malformed Netstack row and intact packet capture",
@@ -67623,7 +67641,32 @@
           "label": "Bazel 9.3.1 manifest formatter",
           "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/tools/test/test-setup.sh#L333"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "4dad1e4b9741b815b3332d75994ee01224602912",
+          "url": "https://github.com/tamird/gvisor/commit/4dad1e4b9",
+          "title": "Fix PacketImpact runsc debug log filenames",
+          "body": "The Dockerless PacketImpact runner introduced in b318556f8 passes its debug log template directly to runsc. Doubling the percent signs leaves literal percent signs around the expanded timestamp and command.\n\nBazel 9.3.1 uses each output record as a printf format [1]. On a Netstack handshake, the three log names corrupted the manifest entry for the packet capture.\n\nUse the single percent delimiters expected by runsc.\n\n[1]: https://github.com/bazelbuild/bazel/blob/fee2bf2d1/tools/test/test-setup.sh#L333",
+          "summary": "Open this one-line PacketImpact debug log filename fix?",
+          "requestedAt": "2026-11-09T03:28:20+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "4dad1e4b9741b815b3332d75994ee01224602912",
+        "observedAt": "2026-11-09T18:52:37+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow review on #17293.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17293"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:packetimpact-testbench-exit",
@@ -67634,26 +67677,39 @@
       "head": "3518f04377b87fa7136ea9063d9804e4f7d3be8b",
       "url": "https://github.com/tamird/gvisor/commit/3518f0437",
       "title": "Reject PacketImpact testbench launch failures",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T03:47:47+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
       "summary": "Two PacketImpact tests expect their testbench to fail. The original runner also returned success when the executable was missing or its process was killed by a signal. The corrected runner rejected both in six uncached exit-status controls. It still accepts an expected nonzero exit, propagates an unexpected exit code 7, and distinguishes ordinary from unexpected success.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
-        "head": "3518f04377b87fa7136ea9063d9804e4f7d3be8b",
-        "url": "https://github.com/tamird/gvisor/commit/3518f0437",
-        "title": "Reject PacketImpact testbench launch failures",
-        "body": "Two Netstack tests expect the testbench to fail. Since b318556f8, a missing testbench executable satisfies that expectation and the runner reports success without running a test. A child killed by a signal also satisfies the check.\n\nAccept an expected failure only when the child exits with a nonzero status. Report launch errors and signals with the testbench path.",
-        "summary": "Open this independent PacketImpact testbench exit-status fix?",
-        "requestedAt": "2026-11-09T03:47:47+00:00"
-      },
       "evidence": [
         {
           "label": "Original and corrected runner results for all six process outcomes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13647668246"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "3518f04377b87fa7136ea9063d9804e4f7d3be8b",
+          "url": "https://github.com/tamird/gvisor/commit/3518f0437",
+          "title": "Reject PacketImpact testbench launch failures",
+          "body": "Two Netstack tests expect the testbench to fail. Since b318556f8, a missing testbench executable satisfies that expectation and the runner reports success without running a test. A child killed by a signal also satisfies the check.\n\nAccept an expected failure only when the child exits with a nonzero status. Report launch errors and signals with the testbench path.",
+          "summary": "Open this independent PacketImpact testbench exit-status fix?",
+          "requestedAt": "2026-11-09T03:47:47+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "3518f04377b87fa7136ea9063d9804e4f7d3be8b",
+        "observedAt": "2026-11-09T18:52:37+00:00",
+        "disposition": "Contributor approved the proposal.",
+        "nextAction": "Use errors.AsType for the existing exec.ExitError match and verify the runner exit cases before publishing.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3518f0437"
+        ]
+      }
     },
     {
       "id": "branch:packetimpact-interrupted-address-dump",
@@ -68664,6 +68720,296 @@
         ]
       },
       "number": 17288
+    },
+    {
+      "id": "pr:17292",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17292,
+      "ref": "research/packetimpact-runner-host-tools",
+      "title": "Remove the PacketImpact runner's host tool calls",
+      "url": "https://github.com/google/gvisor/pull/17292",
+      "group": "rbe",
+      "head": "67f8866474c0fb1644927618a9cf20ee71ba441d",
+      "status": "open",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
+      "summary": "Stock failed on the Ubuntu AMD64 worker when it tried to start iptables-nft. With the proposed runner, the native Linux and Netstack handshake targets passed uncached on both AMD64 and ARM64. On fork integration 43fdbb717, LLVM compiled and linked the AArch64 POSIX server on an AMD64 OCI worker. Both AArch64 test executables ran on ARM64 Firecracker workers with root and IPv6 requested. Each IPv4 capture showed the receive window open from 0 to 32,768 and all 11 bytes of Sample Data. Bazel retained both raw captures. The native manifest recorded 611 bytes without a MIME type. The Netstack wrapper reported three printf warnings and omitted the 505-byte capture from its manifest.\n\nSix hosted targets passed with host binaries masked. The development-only dependencies preserve the consuming module’s Netlink version, and all 225 license records passed. The first ARM64 attempt timed out during the build. It reached 7,685 of 10,907 actions, with 803 remote actions completing in the last five minutes. Neither TestRunner had started.",
+      "evidence": [
+        {
+          "label": "ARM64 Linux and Netstack handshakes, LLVM actions and both packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13645917134"
+        },
+        {
+          "label": "Stock failure, both remote TestResults and raw packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13642623133"
+        },
+        {
+          "label": "Six hosted owners and ten verified captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42538507534/artifacts/13641740630"
+        },
+        {
+          "label": "Development-only modules and the downstream Netlink version",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643111398"
+        },
+        {
+          "label": "Canonical license catalog and both scoped source fetches",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13642365784"
+        },
+        {
+          "label": "First ARM64 attempt: build time limit, zero TestResults",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644257975"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "67f8866474c0fb1644927618a9cf20ee71ba441d",
+          "url": "https://github.com/tamird/gvisor/commit/67f886647",
+          "title": "Remove the PacketImpact runner's host tool calls",
+          "body": "PacketImpact builds its runner, DUT and testbench with Bazel, but starts\nthem through a Bash script that calls find and chmod. Both Linux DUTs\ninvoke uname for their identity. The runner also requires iptables-nft\nand ip6tables-nft at fixed host paths, so a worker without those tools\nfails before the first packet exchange.\n\nRun the Go runner as the Bazel test and obtain DUT identity from\nuname(2). Install the TCP input filters through nftables in the\ntestbench network namespace. Packet sockets still see incoming frames\nbefore the input hook drops TCP on the DUT-facing interfaces.\n\nDeclare the firewall modules as development dependencies to preserve\ndownstream Bazel modules' existing Netlink version selection.",
+          "summary": "Open the standalone PacketImpact runner PR?",
+          "requestedAt": "2026-11-09T01:28:16+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:17293",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17293,
+      "ref": "research/packetimpact-debug-log-names",
+      "title": "Fix PacketImpact runsc debug log filenames",
+      "url": "https://github.com/google/gvisor/pull/17293",
+      "group": "rbe",
+      "head": "4dad1e4b9741b815b3332d75994ee01224602912",
+      "status": "open",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
+      "summary": "The Netstack PacketImpact runner left literal percent signs in three debug filenames. Bazel interpreted them while writing the undeclared-output manifest and folded the packet capture into a malformed row. Using runsc’s single percent delimiters produced four distinct rows for boot, gofer, run and the capture. Both uncached ARM64 Firecracker handshake tests passed. The native control had one capture row. Both manifests still reported that the worker lacked the file utility for MIME detection.",
+      "evidence": [
+        {
+          "label": "Original malformed Netstack row and intact packet capture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13645917134"
+        },
+        {
+          "label": "Corrected native and Netstack manifests, logs, XML and captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42555203237/artifacts/13647880100"
+        },
+        {
+          "label": "Bazel 9.3.1 manifest formatter",
+          "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/tools/test/test-setup.sh#L333"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "4dad1e4b9741b815b3332d75994ee01224602912",
+          "url": "https://github.com/tamird/gvisor/commit/4dad1e4b9",
+          "title": "Fix PacketImpact runsc debug log filenames",
+          "body": "The Dockerless PacketImpact runner introduced in b318556f8 passes its debug log template directly to runsc. Doubling the percent signs leaves literal percent signs around the expanded timestamp and command.\n\nBazel 9.3.1 uses each output record as a printf format [1]. On a Netstack handshake, the three log names corrupted the manifest entry for the packet capture.\n\nUse the single percent delimiters expected by runsc.\n\n[1]: https://github.com/bazelbuild/bazel/blob/fee2bf2d1/tools/test/test-setup.sh#L333",
+          "summary": "Open this one-line PacketImpact debug log filename fix?",
+          "requestedAt": "2026-11-09T03:28:20+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:17294",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17294,
+      "ref": "research/marshal-test-per-library",
+      "title": "Build one marshal test binary per Go library",
+      "url": "https://github.com/google/gvisor/pull/17294",
+      "group": "bazel",
+      "head": "580909068b883b6f191337e638028d5fffb297a5",
+      "status": "open",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
+      "summary": "Each marshal library now has one Go test. The generator no longer emits an identical untagged Example for each source group. The original and revised 20 libraries ran the same 2,340 named cases per architecture. AMD64 ran natively and ARM64 under QEMU. All 92 remaining generated implementation and test files matched byte for byte. A synthetic library with architecture-only inputs ran five cases on AMD64 and passed with zero selected cases on ARM64. Compared with the original 46 binaries per architecture, the 20 library binaries remove 26 Bazel test actions and reduce their total from 460 to 176 MiB on AMD64 and 395 to 156 MiB on ARM64.",
+      "evidence": [
+        {
+          "label": "Native AMD64 case comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42458854682/artifacts/13609192012"
+        },
+        {
+          "label": "ARM64 case comparison under QEMU",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42459715024/artifacts/13608887823"
+        },
+        {
+          "label": "Revised change description, same tested tree 40c3756ac",
+          "url": "https://github.com/tamird/gvisor/commit/fe913ba6c"
+        },
+        {
+          "label": "Measured bytes and test actions on the same tested tree",
+          "url": "https://github.com/tamird/gvisor/commit/75a946b54"
+        },
+        {
+          "label": "Single-commit revision removing the duplicate generator output",
+          "url": "https://github.com/tamird/gvisor/commit/580909068"
+        },
+        {
+          "label": "Generated-file comparison and named outcomes on native AMD64 and QEMU ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42506859314/artifacts/13628231537"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "75a946b540c92de35f0d3d3f3cec09b4b892cb67",
+          "baseHead": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+          "url": "https://github.com/tamird/gvisor/commit/75a946b54",
+          "title": "Build one marshal test binary per Go library",
+          "body": "A two-architecture presubmit ran 92 generated marshal test binaries. Of those, 58 ran no test cases. Each still needed a linked Go executable and a test action on a remote worker. [1]\n\nFor example, on AMD64 the pkg/abi/linux tests for common types and AMD64 types run in separate binaries. Bazel also links and runs a 4.2 MiB binary for the ARM64 types, even though Go excludes every one of its tests. [2]\n\nGive each library one go_test containing all its generated test files. Their Go build constraints already select the cases for the target architecture. Use //pkg/abi/linux:linux_abi_autogen_test to run all 960 applicable cases on either architecture. The common and architecture-specific cases in each library now rerun together.\n\nAcross the 20 libraries this removes 26 test actions per architecture. The AMD64 test executables total 176 MiB instead of 460 MiB, and the ARM64 executables total 156 MiB instead of 395 MiB. Each architecture ran the same 2,340 named cases. [2] [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525\n[2]: https://github.com/tamird/gvisor/actions/runs/42458854682/artifacts/13609192012\n[3]: https://github.com/tamird/gvisor/actions/runs/42459715024/artifacts/13608887823",
+          "summary": "Open the single-commit gVisor PR?",
+          "requestedAt": "2026-11-08T13:49:13+00:00",
+          "outcome": "changes-requested",
+          "at": "2026-11-08T17:42:17+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "580909068b883b6f191337e638028d5fffb297a5",
+          "baseHead": "75a946b540c92de35f0d3d3f3cec09b4b892cb67",
+          "url": "https://github.com/tamird/gvisor/commit/580909068",
+          "title": "Build one marshal test binary per Go library",
+          "summary": "Open the single-commit gVisor PR?",
+          "body": "A two-architecture presubmit ran 92 generated marshal test binaries. Of those, 58 ran no test cases. Each still needed a linked executable and a test action on a remote worker. [1]\n\nFor example, on AMD64, pkg/abi/linux runs its common and AMD64 cases in separate binaries. Bazel also links and runs a 4.2 MiB binary for the ARM64 types, even though Go excludes every one of its tests. [2]\n\nGive each library one go_test with all its generated test sources. Their build constraints select the cases for the target architecture. For pkg/abi/linux, :linux_abi_autogen_test runs all 960 applicable cases on either architecture. Cases in one library rerun together.\n\nDrop the untagged file that each source group emits solely to keep its test suite from being empty. Go skips its Example because it has no Output comment. When build tags exclude every test, rules_go can already build and run the empty suite. [4]\n\nAcross 20 libraries, this removes 26 test actions per architecture. The test executables shrink from 460 to 176 MiB on AMD64 and from 395 to 156 MiB on ARM64. Both ran the same 2,340 named cases as before. All 92 retained implementation and test files matched byte for byte. [2] [3] [4]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525\n[2]: https://github.com/tamird/gvisor/actions/runs/42458854682/artifacts/13609192012\n[3]: https://github.com/tamird/gvisor/actions/runs/42459715024/artifacts/13608887823\n[4]: https://github.com/tamird/gvisor/actions/runs/42506859314/artifacts/13628231537",
+          "requestedAt": "2026-11-08T18:03:33+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:bazelbuild/bazel-skylib:648",
+      "type": "pr",
+      "repo": "bazelbuild/bazel-skylib",
+      "number": 648,
+      "ref": "research/skylib-build-test-native-tools",
+      "title": "Allow build_test to run without a shell",
+      "url": "https://github.com/bazelbuild/bazel-skylib/pull/648",
+      "group": "bazel",
+      "head": "b2d9986a40604f82df42c322122ad61313104cfa",
+      "status": "open",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
+      "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nOn the earlier supplier revision, each real gVisor build_test built 16 manual binaries and passed: AMD64 natively and ARM64 through QEMU on the same AMD64 host. The receipt retains both test results and 32 link-output/marker-input pairs. The collector failed while reading the action graph, so those two runs do not establish the physical consumer runfiles or payload digests. Both ran through Bazel’s standard POSIX test harness. Replacing Bazel’s own shell wrapper is tracked separately in #30837.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
+      "evidence": [
+        {
+          "label": "Single-commit supplier proposal",
+          "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4"
+        },
+        {
+          "label": "Tested source with the same tree",
+          "url": "https://github.com/tamird/bazel-skylib/commit/2cea96124"
+        },
+        {
+          "label": "Bazel’s separate POSIX test-wrapper work",
+          "url": "https://github.com/bazelbuild/bazel/pull/30837"
+        },
+        {
+          "label": "Earlier supplier revision",
+          "url": "https://github.com/tamird/bazel-skylib/commit/426072981"
+        },
+        {
+          "label": "Generated API reference on the final source",
+          "url": "https://github.com/tamird/bazel-skylib/blob/b2d9986a4/docs/build_test_doc.md"
+        },
+        {
+          "label": "Canonical docs update, uncached docs test and Buildifier",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42496238240/artifacts/13623870953"
+        },
+        {
+          "label": "Ten effective test sizes on the final source",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42497003818/artifacts/13623652091"
+        },
+        {
+          "label": "Direct argument, test runfiles and deliberately broken consumer controls",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42492450235/artifacts/13622013284"
+        },
+        {
+          "label": "Private fixture on Bazel 7.7.0, 8.5.0 and 9.3.1",
+          "url": "https://github.com/tamird/bazel-skylib/actions/runs/42489087805/artifacts/13621086928"
+        },
+        {
+          "label": "Two real gVisor owners: native AMD64 and emulated ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785"
+        },
+        {
+          "label": "PR Buildifier step: nine warnings in two unchanged files",
+          "url": "https://buildkite.com/bazel/bazel-skylib/builds/4674#01a1c1a8-0e14-4828-aab9-efee3cc08b7a"
+        },
+        {
+          "label": "Base build: same Buildifier failure",
+          "url": "https://buildkite.com/bazel/bazel-skylib/builds/4673"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b2d9986a40604f82df42c322122ad61313104cfa",
+          "baseHead": "a920cdfe02154b916b493b4ffdd08087f0498fc7",
+          "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
+          "title": "Allow build_test to run without a shell",
+          "body": "build_test uses a genrule to create a marker for each batch of checked targets. Its test executable is also a shell script on POSIX. Both steps require a shell on the machine that runs them.\n\nLet callers provide a tool that creates an empty file on the execution platform and an executable that runs on the test’s target platform. Pass the marker path as a single argument, including when the target name contains shell metacharacters. The markers keep the checked targets in the build graph when another test inherits only the runfiles, without adding their binaries to that test’s runfiles.\n\nIn gVisor, both the AMD64 and ARM64 tests built all 16 selected binaries. The AMD64 test ran natively and the ARM64 test ran under QEMU on the same worker. [1]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42494568795/artifacts/13622938785",
+          "summary": "Open this single-commit pull request against bazelbuild/bazel-skylib?",
+          "requestedAt": "2026-11-08T15:58:09+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:17295",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17295,
+      "ref": "review/poll-successful-registrations",
+      "title": "Unregister only successful poll waiters",
+      "url": "https://github.com/google/gvisor/pull/17295",
+      "group": "runtime",
+      "head": "70f8576af3ddb78d5bfc9be51b14460a2253a2e4",
+      "status": "open",
+      "updatedAt": "2026-11-09T18:52:37+00:00",
+      "summary": "On master, poll called EventUnregister once after the file rejected the waiter with EIO. The proposed change returned EIO, made zero unregister calls and left the file’s reference count unchanged. The permanent regression runs pollBlock in the gVisor Linux syscall package.",
+      "evidence": [
+        {
+          "label": "Merged Unix socket waiter rollback (#16739)",
+          "url": "https://github.com/google/gvisor/pull/16739"
+        },
+        {
+          "label": "Earlier standalone poll correction",
+          "url": "https://github.com/tamird/gvisor/commit/85cb9f489"
+        },
+        {
+          "label": "Native AMD64 poll regression on master and on this revision; Linux syscall package Nogo passed for AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+        },
+        {
+          "label": "Konstantin on the similar failed-registration fixture",
+          "url": "https://github.com/google/gvisor/pull/16854#discussion_r4474272667"
+        },
+        {
+          "label": "Fork-only regression: stock called cleanup once, the fix zero times",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "url": "https://github.com/tamird/gvisor/commit/e39e7d78e",
+          "title": "Unregister only successful poll waiters",
+          "body": "poll defers cleanup of each registered waiter. It records the file before EventRegister returns, so a failure causes cleanup to call EventUnregister on the entry that was just rejected. Unix sockets already undo their own registration on a host error (ed3929b26).\n\nKeep the file reference in pollState only after registration succeeds. On failure, release the reference and return the registration error.",
+          "summary": "Open this single-commit gVisor PR now that the Unix socket rollback in #16739 has landed?",
+          "requestedAt": "2026-11-08T23:18:04+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ]
     }
   ],
   "edges": [
@@ -71629,7 +71975,7 @@
     {
       "type": "depends_on",
       "from": "pr:16739",
-      "to": "branch:poll-successful-entry-ownership",
+      "to": "pr:17295",
       "reason": "The merged Unix socket change removes a rejected waiter before returning the host error. The poll change can therefore skip unregistering that entry.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16739",
@@ -71638,7 +71984,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:poll-successful-entry-ownership",
+      "from": "pr:17295",
       "to": "branch:mutable-overlay-poll-waiter",
       "reason": "The overlay file counts successful registrations and relies on poll releasing only entries that were accepted. Submit the overlay change after the poll fix lands.",
       "evidence": [
@@ -93333,7 +93679,7 @@
           ]
         }
       ],
-      "nextStep": "Inspect the user manager’s journal and unit state at the first timeout. The manager-reload fix in #14716 covers a later part of the test.",
+      "nextStep": "Capture pending systemd jobs, the unit’s MainPID/SubState/Result, and Bob’s process wait state while user@1002.service is activating. Alice became active in under three seconds. Bob opened his PAM session but remained unready across 379 is-active polls on ARM64 and 291 on AMD64.",
       "evidence": [
         {
           "label": "gVisor #16886",
@@ -93467,7 +93813,7 @@
           ]
         }
       ],
-      "nextStep": "Check whether an existing mirror serves these exact artifacts and checksums, and watch for another failure before proposing a change to the download path.",
+      "nextStep": "Both conventional mirror.bazel.build paths returned 404. Check for a verified mirror of the exact BCR archives and watch for another failed fetch.",
       "evidence": [
         {
           "label": "#17236 · Gazelle · bazel-skylib",
