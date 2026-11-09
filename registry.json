@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T15:36:41+00:00",
+    "updatedAt": "2026-11-09T15:46:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26849,18 +26849,19 @@
       "title": "Make pkg/state cheap and fast",
       "url": "https://github.com/google/gvisor/issues/16216",
       "group": "runtime",
-      "status": "Contributor approval requested for a performance handoff",
-      "summary": "Parth was invited to lead the rewrite in the posted Oct 24 reply. A new proposed comment reports a four-worker Nginx measurement of the shipping graph and wire codecs. All 78 warm restores served the expected bytes. Time from starting restore through a curl inside the guest was 4.12% shorter uncapped and 12.56% shorter with a quarter-CPU parent cap. With the ordinary OCI quarter-CPU limit, the restore command was 4.90% shorter and the first-response timing was inconclusive.",
-      "updatedAt": "2026-11-08T18:17:00+00:00",
+      "status": "open",
+      "summary": "Parth was invited to lead the rewrite in the posted Oct 24 reply. The Nov 9 handoff reports a four-worker Nginx measurement of the shipping graph and wire codecs. All 78 warm restores served the expected bytes. Time from starting restore through a curl inside the guest was 4.12% shorter uncapped and 12.56% shorter with a quarter-CPU parent cap. With the ordinary OCI quarter-CPU limit, the restore command was 4.90% shorter and the first-response timing was inconclusive.",
+      "updatedAt": "2026-11-09T15:41:42Z",
       "followup": {
-        "owner": "Contributor",
-        "observedAt": "2026-11-08T18:17:00+00:00",
-        "disposition": "The initial reply was delivered. The Nginx performance handoff is awaiting permission to post.",
-        "nextAction": "Review the proposed comment on #16216. Keep the production restore and first guest HTTP response as separate measurements.",
+        "owner": "Upstream author",
+        "observedAt": "2026-11-09T15:41:42Z",
+        "disposition": "Tamir posted the Nginx restore and first-response measurements for Parth.",
+        "nextAction": "Follow the rewrite discussion on #16216.",
         "evidence": [
           "https://github.com/google/gvisor/issues/16216#issuecomment-6383590232",
           "https://github.com/tamird/gvisor/blob/6bd21891a/.github/qualification/state_working_set/measure.py#L307-L367",
-          "https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367"
+          "https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367",
+          "https://github.com/google/gvisor/issues/16216#issuecomment-6744241060"
         ]
       },
       "evidence": [
@@ -26877,16 +26878,20 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367"
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "451b92800b9cb82262dc8a735388f7cf4d17d895",
-        "url": "https://github.com/google/gvisor/issues/16216",
-        "title": "Post the Nginx restore and first guest response measurements",
-        "summary": "Post this measured handoff for the pkg/state rewrite?",
-        "body": "@parth-opensrc, I measured how soon Nginx could serve a request with the [default graph codec](https://github.com/google/gvisor/commit/6e6276344) and the wire codec in the same runsc binary. The timer started before `runsc restore` and stopped after `runsc exec curl` read a 1 KiB response from the restored server. All 78 restores preserved the four workers and returned the expected bytes.\n\nWith the ordinary OCI ¼-CPU limit, the graph codec shortened the restore command. The first HTTP response was too variable to distinguish the codecs (p=0.219). The last row adds the same limit to the parent cgroup, so the parent stays capped when runsc raises the sandbox’s startup quota.\n\n```text\n                                                     │  wire.txt   │              graph.txt              │\n                                                     │   sec/op    │   sec/op     vs base                │\nRestore/unlimited/through_first_http_response          85.52m ±  5%   81.99m ±  4%   -4.12% (p=0.010 n=12)\nRestore/oci-quarter/restore_command                    48.97m ± 10%   46.57m ±  7%   -4.90% (p=0.045 n=12)\nRestore/ancestor-quarter/through_first_http_response   346.3m ±  7%   302.8m ± 16%  -12.56% (p=0.017 n=12)\n```\n\nThese were warm, uncompressed checkpoints. I’d keep both the restore command and first guest response in comparisons of future decoder changes. [Benchmark source](https://github.com/tamird/gvisor/blob/6bd21891a/.github/qualification/state_working_set/measure.py#L307-L367) · [Full benchstat and samples](https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367)\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-08T18:17:00+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "451b92800b9cb82262dc8a735388f7cf4d17d895",
+          "url": "https://github.com/google/gvisor/issues/16216",
+          "title": "Post the Nginx restore and first guest response measurements",
+          "summary": "Post this measured handoff for the pkg/state rewrite?",
+          "body": "@parth-opensrc, I measured how soon Nginx could serve a request with the [default graph codec](https://github.com/google/gvisor/commit/6e6276344) and the wire codec in the same runsc binary. The timer started before `runsc restore` and stopped after `runsc exec curl` read a 1 KiB response from the restored server. All 78 restores preserved the four workers and returned the expected bytes.\n\nWith the ordinary OCI ¼-CPU limit, the graph codec shortened the restore command. The first HTTP response was too variable to distinguish the codecs (p=0.219). The last row adds the same limit to the parent cgroup, so the parent stays capped when runsc raises the sandbox’s startup quota.\n\n```text\n                                                     │  wire.txt   │              graph.txt              │\n                                                     │   sec/op    │   sec/op     vs base                │\nRestore/unlimited/through_first_http_response          85.52m ±  5%   81.99m ±  4%   -4.12% (p=0.010 n=12)\nRestore/oci-quarter/restore_command                    48.97m ± 10%   46.57m ±  7%   -4.90% (p=0.045 n=12)\nRestore/ancestor-quarter/through_first_http_response   346.3m ±  7%   302.8m ± 16%  -12.56% (p=0.017 n=12)\n```\n\nThese were warm, uncompressed checkpoints. I’d keep both the restore command and first guest response in comparisons of future decoder changes. [Benchmark source](https://github.com/tamird/gvisor/blob/6bd21891a/.github/qualification/state_working_set/measure.py#L307-L367) · [Full benchstat and samples](https://github.com/tamird/gvisor/actions/runs/42472687037/artifacts/13614821367)\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-08T18:17:00+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T15:41:42Z",
+          "postedURL": "https://github.com/google/gvisor/issues/16216#issuecomment-6744241060"
+        }
+      ]
     },
     {
       "id": "branch:sample-tcp-port-bounds",
@@ -63718,7 +63723,7 @@
       "url": "https://github.com/google/gvisor/pull/17214",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T16:22:42+00:00",
+      "updatedAt": "2026-11-09T15:41:54Z",
       "summary": "Ayush updated the fault tests after Tamir reviewed #17214 as an alternative to #17209. On 58f1ae5ef, a full-system ARM64 Linux guest with 64 KiB pages passed all 86 fault cases, 43 each for SIGSEGV and SIGBUS. The revised test accepts EINVAL only for MADV_NOHUGEPAGE. The guest had THP enabled, so handling that error was checked in the source. The preceding 4f94a055b and an earlier fixture correction have separate results.",
       "evidence": [
         {
@@ -63782,18 +63787,32 @@
           "outcome": "approved",
           "at": "2026-11-08T12:54:33Z",
           "postedURL": "https://github.com/google/gvisor/pull/17214#pullrequestreview-5817962900"
+        },
+        {
+          "kind": "reply",
+          "head": "58f1ae5efa1675e7b0dc2b7812f4ddfb71886e49",
+          "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506778760",
+          "title": "Reply to Ayush’s two safecopy test updates",
+          "summary": "Approve both replies for the original #17214 review threads. The first reports the 64 KiB guest run. The second confirms the EINVAL change by source inspection.",
+          "body": "https://github.com/google/gvisor/pull/17214#discussion_r4506778760\n\nThanks, Ayush. On 58f1ae5ef all 86 `TestZeroOutLengthsFault` cases passed in a 64 KiB ARM64 Linux guest, 43 for SIGSEGV and 43 for SIGBUS. [Test log and XML](https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886).\n\nPosted by Codex on behalf of @tamird.\n\nhttps://github.com/google/gvisor/pull/17214#discussion_r4506778864\n\nThis addresses my second comment too. The test now accepts `EINVAL` from `MADV_NOHUGEPAGE` and still fails on other errors. The guest I tested had transparent huge pages enabled, so I verified this branch by reading the change.\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-08T16:22:42+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T15:41:54Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17214#discussion_r4514646283"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream author",
         "sourceHead": "58f1ae5efa1675e7b0dc2b7812f4ddfb71886e49",
-        "observedAt": "2026-11-08T16:22:42+00:00",
-        "disposition": "Ayush addressed both comments. The completed 64 KiB ARM64 guest run and the source inspection support one decision on two replies.",
-        "nextAction": "Approve the two replies on the original review threads.",
+        "observedAt": "2026-11-09T15:41:54Z",
+        "disposition": "Ayush revised both safecopy tests. Tamir replied on both threads with the ARM64 guest result and the source check.",
+        "nextAction": "Follow any further response on the original threads.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17214#discussion_r4506778760",
           "https://github.com/google/gvisor/pull/17214#discussion_r4506778864",
-          "https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886"
+          "https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886",
+          "https://github.com/google/gvisor/pull/17214#discussion_r4514646283",
+          "https://github.com/google/gvisor/pull/17214#discussion_r4514647119"
         ]
       },
       "links": [
@@ -63801,17 +63820,7 @@
           "label": "Original standalone protected clear",
           "url": "https://github.com/google/gvisor/pull/17209"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "58f1ae5efa1675e7b0dc2b7812f4ddfb71886e49",
-        "url": "https://github.com/google/gvisor/pull/17214#discussion_r4506778760",
-        "title": "Reply to Ayush’s two safecopy test updates",
-        "summary": "Approve both replies for the original #17214 review threads. The first reports the 64 KiB guest run. The second confirms the EINVAL change by source inspection.",
-        "body": "https://github.com/google/gvisor/pull/17214#discussion_r4506778760\n\nThanks, Ayush. On 58f1ae5ef all 86 `TestZeroOutLengthsFault` cases passed in a 64 KiB ARM64 Linux guest, 43 for SIGSEGV and 43 for SIGBUS. [Test log and XML](https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886).\n\nPosted by Codex on behalf of @tamird.\n\nhttps://github.com/google/gvisor/pull/17214#discussion_r4506778864\n\nThis addresses my second comment too. The test now accepts `EINVAL` from `MADV_NOHUGEPAGE` and still fails on other errors. The guest I tested had transparent huge pages enabled, so I verified this branch by reading the change.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-08T16:22:42+00:00"
-      }
+      ]
     },
     {
       "id": "branch:checkpoint-dir-without-docker",
@@ -65368,7 +65377,7 @@
       "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
       "title": "Store a single absorbed graph child inline",
       "group": "runtime",
-      "updatedAt": "2026-11-09T07:51:00+00:00",
+      "updatedAt": "2026-11-09T15:41:46Z",
       "summary": "On a kernel with 50,000 tmpfs files, allocations per graph Encode fell from 100,938 to 769. Two independent 16-pair trials of the complete checkpoint found different timing effects: 177.6 to 179.1 ms (p=.696) and 270.6 to 262.2 ms (p=.011). Each trial restored and verified all 34 checkpoints, including the warmups.",
       "evidence": [
         {
@@ -65405,6 +65414,18 @@
           "at": "2026-11-08T13:47:46Z",
           "outcome": "approved",
           "postedURL": "https://github.com/google/gvisor/pull/17231"
+        },
+        {
+          "kind": "reply",
+          "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
+          "url": "https://github.com/google/gvisor/pull/17231",
+          "title": "Post the combined checkpoint comparison on #17231",
+          "summary": "Post the measured full-checkpoint result for #17231, #17232, #17233 and #17240 together.",
+          "body": "I measured the full `Container.Checkpoint` call for a rootless systrap sandbox with 50,000 empty files in tmpfs and compression disabled. I compared master at 975fb1722 with [#17231](https://github.com/google/gvisor/pull/17231), [#17232](https://github.com/google/gvisor/pull/17232), [#17233](https://github.com/google/gvisor/pull/17233) and [#17240](https://github.com/google/gvisor/pull/17240) together. Each build ran 16 measured trials on the same AMD64 worker, alternating which build ran first.\n\n```text\n                       │    stock    │                four                 │\n                       │   sec/op    │   sec/op     vs base                │\nRootlessCheckpoint       271.5m ± 1%   242.9m ± 5%  -10.51% (p=0.000 n=16)\n```\n\nAll 34 checkpoints, including one warmup per build, restored successfully. After each restore the guest ran `/bin/true` and the test verified every file. [Benchstat and original samples](https://github.com/tamird/gvisor/actions/runs/42570572235/artifacts/13653214709).\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-08T14:54:55+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T15:41:46Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17231#issuecomment-6744242292"
         }
       ],
       "followup": {
@@ -65418,16 +65439,6 @@
           "https://github.com/tamird/gvisor/commit/4774ec693",
           "https://github.com/google/gvisor/pull/17231#pullrequestreview-5822011750"
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
-        "url": "https://github.com/google/gvisor/pull/17231",
-        "title": "Post the combined checkpoint comparison on #17231",
-        "summary": "Post the measured full-checkpoint result for #17231, #17232, #17233 and #17240 together.",
-        "body": "I measured the full `Container.Checkpoint` call for a rootless systrap sandbox with 50,000 empty files in tmpfs and compression disabled. I compared master at 975fb1722 with [#17231](https://github.com/google/gvisor/pull/17231), [#17232](https://github.com/google/gvisor/pull/17232), [#17233](https://github.com/google/gvisor/pull/17233) and [#17240](https://github.com/google/gvisor/pull/17240) together. Each build ran 16 measured trials on the same AMD64 worker, alternating which build ran first.\n\n```text\n                       │    stock    │                four                 │\n                       │   sec/op    │   sec/op     vs base                │\nRootlessCheckpoint       271.5m ± 1%   242.9m ± 5%  -10.51% (p=0.000 n=16)\n```\n\nAll 34 checkpoints, including one warmup per build, restored successfully. After each restore the guest ran `/bin/true` and the test verified every file. [Benchstat and original samples](https://github.com/tamird/gvisor/actions/runs/42570572235/artifacts/13653214709).\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-08T14:54:55+00:00"
       }
     },
     {
@@ -67293,7 +67304,7 @@
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T14:54:12+00:00",
+      "updatedAt": "2026-11-09T15:41:58Z",
       "summary": "This change adds a per-write cork. Its restore path overlaps #16671, and the truncated-write test expects the reader to be exhausted after a partial acceptance.",
       "evidence": [
         {
@@ -67313,16 +67324,20 @@
           "url": "https://github.com/google/gvisor/blob/975fb1722/pkg/sentry/socket/netstack/netstack.go#L3407-L3442"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "title": "Review the cork timer restore and partial-write assertion",
-        "summary": "Post these two inline comments together as one review on #17264?",
-        "body": "[endpoint_state.go, line 277](https://github.com/google/gvisor/pull/17264/files#diff-5701ff02ce1d54c6aa9e84d99c60583cd27dec8b7a85efa2abd098f69c32f1e7R277)\n\nCould you rearm the timer only if it was armed at checkpoint? An idle socket can have TCP_CORK enabled, and a pending MSG_MORE timer can have TCP_CORK off. #16671 saves whether the timer was armed under the endpoint lock. That bit can cover both cases.\n\nPosted by Codex on behalf of @tamird.\n\n[tcp_test.go, line 4389](https://github.com/google/gvisor/pull/17264/files#diff-69d0fe8d041526004a675c9c0ab7e0c8074772c2d2a82e99086741a0d8b3fde4R4389)\n\nPlease drop this check on payload.Len(). The endpoint accepted five bytes. A blocking Sentry sendmsg retries the same reader for the other five, so an exhausted reader would leave it unable to finish. The return count and wire payload already check the partial push.\n\nPosted by Codex on behalf of @tamird.",
-        "head": "d364b74a18e734c3e5077b64716b6ac41b5f4e44",
-        "url": "https://github.com/google/gvisor/pull/17264/files#diff-5701ff02ce1d54c6aa9e84d99c60583cd27dec8b7a85efa2abd098f69c32f1e7R277",
-        "requestedAt": "2026-11-09T07:39:52.097533+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "review",
+          "title": "Review the cork timer restore and partial-write assertion",
+          "summary": "Post these two inline comments together as one review on #17264?",
+          "body": "[endpoint_state.go, line 277](https://github.com/google/gvisor/pull/17264/files#diff-5701ff02ce1d54c6aa9e84d99c60583cd27dec8b7a85efa2abd098f69c32f1e7R277)\n\nCould you rearm the timer only if it was armed at checkpoint? An idle socket can have TCP_CORK enabled, and a pending MSG_MORE timer can have TCP_CORK off. #16671 saves whether the timer was armed under the endpoint lock. That bit can cover both cases.\n\nPosted by Codex on behalf of @tamird.\n\n[tcp_test.go, line 4389](https://github.com/google/gvisor/pull/17264/files#diff-69d0fe8d041526004a675c9c0ab7e0c8074772c2d2a82e99086741a0d8b3fde4R4389)\n\nPlease drop this check on payload.Len(). The endpoint accepted five bytes. A blocking Sentry sendmsg retries the same reader for the other five, so an exhausted reader would leave it unable to finish. The return count and wire payload already check the partial push.\n\nPosted by Codex on behalf of @tamird.",
+          "head": "d364b74a18e734c3e5077b64716b6ac41b5f4e44",
+          "url": "https://github.com/google/gvisor/pull/17264/files#diff-5701ff02ce1d54c6aa9e84d99c60583cd27dec8b7a85efa2abd098f69c32f1e7R277",
+          "requestedAt": "2026-11-09T07:39:52.097533+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T15:41:58Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17264#pullrequestreview-5828361313"
+        }
+      ]
     },
     {
       "id": "pr:17265",
@@ -92011,5 +92026,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T15:36:41+00:00"
+  "updatedAt": "2026-11-09T15:46:43+00:00"
 }
