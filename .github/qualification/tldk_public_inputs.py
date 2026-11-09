@@ -88,6 +88,13 @@ def materialize(module, version, url, digest, size, asset_id, budget):
             staged.write_bytes(blob)
             os.replace(staged, dest)
         return directory, dict(entry, bytes=len(blob), via=candidate)
+    if match.re is assets.URL and asset_id is None:
+        # Older receipts recorded the digest but not GitHub's numeric
+        # asset ID. Check the public release for the same download URL.
+        directory, row = assets.release_distfile(url, assets.DIST, remaining_bytes=limit)
+        if row["sha256"] != digest or (size is not None and row["bytes"] != size):
+            raise ValueError("release metadata differs from the declared archive")
+        return directory, dict(entry, bytes=row["bytes"], asset_id=row["asset_id"], via="release metadata")
     raise ValueError("public transports returned no matching bytes")
 
 
