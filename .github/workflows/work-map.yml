@@ -1,0 +1,41 @@
+name: Verify exact supplier PR collection
+on:
+  push:
+    branches: [qualification/work-map-exact-supplier-prs]
+permissions: {}
+jobs:
+  suites:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the collector and rendering changes to their public base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 4980b58607e77d30fb7853865a1e4eddce5a25d5
+          test "$(git rev-parse HEAD^^)" = 506decd1cbe8f641b330fb314c7a9f7f2f1a3ff4
+          test "$(git rev-parse 'HEAD~1^{tree}')" = 8fae389c89937909418180fa6d380781d1490e32
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+      - name: Run the site Python and frontend suites
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/suite-results"
+          mkdir -p "$out"
+          a=0; b=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 python3 -B -m unittest discover -p '*_test.py' -v > "$out/python.log" 2>&1 || a=$?
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 node --test --test-reporter=tap app_test.mjs > "$out/frontend.tap" 2>&1 || b=$?
+          tail -n 4 "$out/python.log"
+          tail -n 8 "$out/frontend.tap"
+          grep -F 'test_unlisted_supplier_prs_refresh_by_identity_without_discovery' "$out/python.log" | grep -E ' \.\.\. ok$'
+          grep -E '^ok [0-9]+ - a supplier PR outside the discovery roster joins its exact direct-review observation$' "$out/frontend.tap"
+          test "$a" -eq 0 && test "$b" -eq 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: work-map-exact-supplier-prs
+          path: ${{ runner.temp }}/suite-results/
+          if-no-files-found: error
+          retention-days: 14
