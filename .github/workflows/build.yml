@@ -1,35 +1,144 @@
-name: CI
-
-"on":
+name: Check PacketImpact dependencies and raw Ubuntu worker captures
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/packetimpact-dev-deps-raw-outputs]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packets:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 125
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the sources and public tools
+        id: bind
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/packet-worker"
+          mkdir -p "$d/results"
+          echo '{"verified":false,"stage":"setup"}' > "$d/results/result.json"
+          donor=ea373739cac60c41017891d6411258f22a100238
+          base=61ff148f0df0efa29c9f500914477525c5debe62
+          fix=43fdbb717c1b94352a5d0c12a0cb6fabad327d4f
+          product=1c0f505419145e1e550481a3cd98b9a20cf7a496
+          nondev=e366e3619098e18d76b90ca1da8094e01ff61cd5
+          helper=0d423372840cf49baa3af27956fe7244f5e7bbac
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          registry=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q
+          git fetch --no-tags --no-auto-maintenance --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$donor" "$product" "$nondev" "$helper" "$assets" "$registry"
+          git checkout --detach -q "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$fix"
+          test "$(git rev-parse HEAD^^)" = "$base"
+          test "$(git rev-parse "$fix^{tree}")" = 11e8fcf70ab287d73994f702da75f6af0d391343
+          test "$(git rev-parse "$donor^")" = c3d696ee1bfdf985a971be5854b18eda85b8820e
+          test "$(git rev-parse "$product^{tree}")" = 089ed338925da2414c5d279505427bb6db3ad63d
+          test "$(git rev-parse "$product^")" = "$(git rev-parse "$donor^^")"
+          test "$(git diff --name-only "$nondev" "$product")" = MODULE.bazel
+          test "$(git diff --name-only "$fix" "$product" -- test/packetimpact)" = test/packetimpact/tests/tcp_retransmits_test.go
+          git diff --exit-code "$fix" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/packet_workers.py' ':!.github/qualification/packet_consumer.py' ':!.github/qualification/state_ordinary.py' ':!.github/qualification/veth_leaf.py' ':!test/rbe/packet_worker/BUILD'
+          git show "$helper:.github/qualification/timer_teardown.py" > "$d/timer_teardown.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$d/public_assets.py"
+          git show "$registry:.github/qualification/tldk_installed_inputs.json" > "$d/inputs.json"
+          git show "$registry:.github/qualification/tldk_public_inputs.py" > "$d/tldk_public_inputs.py"
+          git show "$donor:.github/qualification/packet_runner/frames.py" > "$d/frames.py"
+          test "$(git hash-object "$d/frames.py")" = 34b16e4da74918523c9a7be8ffa27a0aeff40a82
+          cp .github/qualification/{packet_workers.py,packet_consumer.py} "$d/"
+          python3 -B "$d/packet_consumer.py" --bind
+          cp test/rbe/packet_worker/BUILD "$d/platform.BUILD"
+          cd "$d"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o bazel
+          curl --proto '=https' --proto-redir '=https' -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o bb ||
+            curl --proto '=https' --proto-redir '=https' -fsSL -H 'Accept: application/octet-stream' 'https://api.github.com/repos/buildbuddy-io/bazel/releases/assets/679595483' -o bb
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          SUMS
+          chmod 700 bazel bb
+      - name: Resolve the root and downstream development dependencies without service credentials
+        if: always() && !cancelled() && steps.bind.outcome == 'success'
+        timeout-minutes: 26
+        run: |
+          d="$RUNNER_TEMP/packet-worker"
+          env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$HOME" USER="$USER" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/packet_consumer.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: packetimpact-development-dependencies
+          path: ${{ runner.temp }}/packet-consumer/results/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Run two corrected handshakes and a bounded stock control on Ubuntu VMs
+        if: always() && !cancelled() && steps.bind.outcome == 'success'
+        timeout-minutes: 37
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          d="$RUNNER_TEMP/packet-worker"
+          rc="$d/remote.bazelrc"
+          cleanup() {
+            "$d/bazel" --nosystem_rc --nohome_rc --bazelrc=/dev/null shutdown > /dev/null 2>&1 || true
+            rm -f "$rc" "$d"/{fixed,stock}/{console,bep,compact}
+          }
+          trap cleanup EXIT
+          : "${BUILDBUDDY_API_KEY:?missing existing fork key}"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf '%s\n' 'build --experimental_remote_downloader=grpcs://remote.buildbuddy.io --noexperimental_remote_downloader_propagate_credentials --experimental_remote_downloader_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -B "$d/packet_workers.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: packetimpact-raw-ubuntu-workers
+          path: ${{ runner.temp }}/packet-worker/results/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Measure ordinary Go state loads without the remote service
+        if: always() && !cancelled()
+        timeout-minutes: 25
+        run: |
+          set -eu
+          tools="$RUNNER_TEMP/packet-worker"
+          d="$RUNNER_TEMP/state-ordinary"
+          mkdir -p "$d/results"
+          rm -f "$tools/remote.bazelrc" "$tools"/{fixed,stock}/{bep,compact,console}
+          if [ -x "$tools/bazel" ]; then
+            env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$HOME" USER="$USER" "$tools/bazel" --nosystem_rc --nohome_rc --bazelrc=/dev/null shutdown
+          fi
+          git show "$GITHUB_SHA:.github/qualification/state_ordinary.py" > "$d/observe.py"
+          echo "fd57f749e8ac4e1d79ae04b8308e7f2ee97c084da0f453c0ac2881b078a5e03d  $d/observe.py" | sha256sum -c -
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 GITHUB_SHA="$GITHUB_SHA" RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/observe.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: state-ordinary-graph-loads
+          path: ${{ runner.temp }}/state-ordinary/results/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Check one IPv6 route-MSS transfer over the private veth pair
+        if: always() && !cancelled() && steps.bind.outcome == 'success'
+        timeout-minutes: 18
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/packet-worker"
+          test ! -e "$tools/remote.bazelrc"
+          d="$RUNNER_TEMP/mtu-wire"
+          mkdir -p "$d/out"
+          git -c credential.helper= -c http.extraHeader= fetch -q --no-tags --no-auto-maintenance --depth=2 https://github.com/tamird/gvisor.git 7344701fde31934f4a08c9163a2285611c13784c a4ca95b85a9a770e6e01852c30da57ae94f89b52
+          git show "$GITHUB_SHA:.github/qualification/veth_leaf.py" > "$d/leaf.py"
+          echo "ddb75707a95a8b3bb10f056ef5f39a34f0364f80252fb651cf5fa8d9eec0e5f4  $d/leaf.py" | sha256sum -c -
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin LANG=C.UTF-8 GITHUB_SHA="$GITHUB_SHA" RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/leaf.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tcp-ipv6-first-use-veth
+          path: ${{ runner.temp }}/mtu-wire/out/
+          if-no-files-found: error
+          retention-days: 14
