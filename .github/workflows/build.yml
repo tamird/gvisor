@@ -1,35 +1,79 @@
-name: CI
-
-"on":
+name: Check TCP first-use sizing and the PacketImpact license catalog
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-experiment-first-use]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 110
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the Linux tools and the TCP source and packet readers
+        id: prepare
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/tcp-experiment-first-use"
+          mkdir -p -m700 "$d/results"
+          echo '{"stage":"setup","verified":false}' > "$d/results/result.json"
+          harness=0d423372840cf49baa3af27956fe7244f5e7bbac
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          registry=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          prior=fe8e3a2bd83cc3bee9995762569c7f40dfa13a8e
+          credit=76a8fcdb5b042d0ee19d25143fa71256c975a4e1
+          git init -q
+          git fetch -q --no-auto-maintenance --no-tags --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$harness" "$assets" "$registry" "$prior" "$credit"
+          git switch -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 7ba94b165d85a3fb49f0dcdd00f238cf76c751e1
+          test "$(git rev-parse HEAD^^{tree})" = 267a84bed95072815c9b967d36dc1044bf2ef18a
+          test "$(git rev-parse HEAD^^)" = 67c6038796bc6f70215e32699744843e3f10317f
+          test "$(git rev-parse HEAD^^^1)" = b64ce83201bc89cc9d52186a15ba982b02b4266e
+          test "$(git rev-parse HEAD^^^2)" = fe04aebd118f84df78dc0173e515f854d1809347
+          test "$(git rev-parse "$credit^")" = 9cbd7935e7b1e1f218d5d4e98a378b28695f842d
+          test "$(git rev-parse "$prior^")" = 93bdf65ef0c2179f59bf4a4b1ab6703c5eb7c8e5
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/first_use.py' ':!.github/workflows/build.yml'
+          cp .github/qualification/first_use.py "$d/"
+          git show "$credit:.github/qualification/tcp_migration_credit.py" > "$d/credit.py"
+          git show "$prior:.github/qualification/tcp_migration_mss.py" > "$d/previous.py"
+          git show "$harness:.github/qualification/timer_teardown.py" > "$d/timer_teardown.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$d/public_assets.py"
+          git show "$registry:.github/qualification/tldk_installed_inputs.json" > "$d/inputs.json"
+          git show "$registry:.github/qualification/tldk_public_inputs.py" > "$d/tldk_public_inputs.py"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -q --proto '=https' --proto-redir '=https' -fsSL --max-time 90 --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
+          chmod 700 "$d/bazel"
+      - name: Check the PacketImpact catalog on its own reviewed sources
+        if: always() && !cancelled() && steps.prepare.outcome == 'success'
+        timeout-minutes: 24
+        run: |
+          set -euo pipefail
+          catalog=10ec4cada73e5e4b4d272bbf8f8ae4a39ca7deb0
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$catalog" c3d696ee1bfdf985a971be5854b18eda85b8820e
+          test "$(git rev-parse "$catalog^{tree}")" = 92968c0365ea6f20c348c90da466c43b6c9e4b17
+          test "$(git rev-parse "$catalog^")" = e366e3619098e18d76b90ca1da8094e01ff61cd5
+          d="$RUNNER_TEMP/packet-catalog"
+          shared="$RUNNER_TEMP/tcp-experiment-first-use"
+          mkdir -p "$d/results"
+          git show "$catalog:.github/qualification/packet_catalog.py" > "$d/packet_catalog.py"
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" PYTHONPATH="$shared" GITHUB_SHA="$GITHUB_SHA" python3 -B "$d/packet_catalog.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: packetimpact-license-catalog
+          path: ${{ runner.temp }}/packet-catalog/results/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Check the two TCP senders and the owning analyzers
+        if: always() && !cancelled() && steps.prepare.outcome == 'success'
+        timeout-minutes: 70
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" python3 -B "$RUNNER_TEMP/tcp-experiment-first-use/first_use.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tcp-experiment-first-use
+          path: ${{ runner.temp }}/tcp-experiment-first-use/results/
+          if-no-files-found: error
+          retention-days: 14
