@@ -1990,7 +1990,7 @@ function validateRegistry(candidate) {
       !registeredOnly.every(repo => typeof repo === "string" && policies[repo] === "none")) throw new Error("Invalid registered-only repository selection");
   for (const node of candidate.nodes.filter(node => node.type === "pr"))
     if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) || !Number.isInteger(node.number) || node.number <= 0 ||
-        Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||
+        node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
     if (node.inactive !== undefined && typeof node.inactive !== "boolean") throw new Error("Invalid inactive classification");
@@ -2235,7 +2235,8 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       }
     }
   }
-  const policies = repositoryPolicies(nextRegistry);
+  const registered = (nextRegistry.nodes || []).filter(node => node.type === "pr");
+  const policies = { ...Object.fromEntries(registered.map(node => [node.repo, "none"])), ...repositoryPolicies(nextRegistry) };
   if (snapshot.repositories !== undefined && (Object.keys(snapshot.repositories).length !== Object.keys(policies).length ||
       Object.entries(policies).some(([repo, policy]) => snapshot.repositories[repo] !== policy))) throw new Error("Snapshot repository policies differ");
   if (Object.keys(policies).length > 1 && !snapshot.repositories) throw new Error("Snapshot lacks repository inventory");

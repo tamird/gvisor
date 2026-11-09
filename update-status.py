@@ -584,15 +584,16 @@ def fetch_registered_prs(repositories: set[str]) -> dict[tuple[str, int], dict]:
         for alias, (repo, number) in batch.items():
             owner, name = repo.split("/")
             fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{'
-                          f'pullRequest(number:{number}){{{FIELDS}{TIMELINE}}}}}')
+                          f'pullRequest(number:{number}){{{FIELDS}{TIMELINE}}} visibility}}')
         print(json.dumps({"registeredPRBatch": {"identities": list(batch.values()),
                                                 "nextRequest": requests + 1}}), flush=True)
         response = graphql("query {" + " ".join(fields) + "}")
         if set(response) != set(batch):
             raise RuntimeError("Registered PR inventory is incomplete; previous snapshot is unchanged")
         for alias, identity in batch.items():
-            pr = (response[alias] or {}).get("pullRequest")
-            if not pr or (pr["repository"]["nameWithOwner"], pr["number"]) != identity:
+            repository = response[alias] or {}
+            pr = repository.get("pullRequest")
+            if repository.get("visibility") != "PUBLIC" or not pr or (pr["repository"]["nameWithOwner"], pr["number"]) != identity:
                 raise RuntimeError(f"Registered PR {identity} was unavailable or mismatched; previous snapshot is unchanged")
             pr["_retrievedAt"] = datetime.now(timezone.utc).isoformat()
             result[identity] = pr
@@ -717,7 +718,7 @@ def collect_repository(repo: str, policy: str, previous: dict,
                if node["type"] == "pr" and node["repo"] == repo}
     prior_sources = {pr["number"]: pr for pr in previous.get("prs", []) if pr.get("repo", REPO) == repo}
     prior_imports = {pr["number"]: pr for source in prior_sources.values() for pr in source.get("imports", [])}
-    registered_only = repo in REGISTRY["meta"].get("registeredOnlyRepositories", [])
+    registered_only = registered is not None
     if registered_only:
         # Refresh even terminal registered PRs: without discovery this is also
         # how a reopening becomes visible. Never fetch unrelated repository PRs.
@@ -729,7 +730,7 @@ def collect_repository(repo: str, policy: str, previous: dict,
         numbers.update(number for number, author in open_numbers.items() if author == OWNER)
         refresh_numbers = {number for number in numbers if needs_refresh(number, prior_sources, open_numbers)}
     originals = ({number: registered[repo, number] for number in refresh_numbers}
-                 if registered_only and registered is not None
+                 if registered is not None
                  else fetch_numbers(sorted(refresh_numbers), timeline=True, repo=repo))
     relations = {number: {pr["number"]: pr["sourceHead"]
                           for pr in prior_sources.get(number, {}).get("imports", []) if policy == "copybara"}
@@ -1160,12 +1161,13 @@ def main() -> None:
             previous = {}
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
     maintainers = fetch_maintainers()
-    registered_repositories = set(REGISTRY["meta"].get("registeredOnlyRepositories", [])) & policies.keys()
+    discovery_repositories = set(REGISTRY["meta"].get("repositories", [REPO])) - set(REGISTRY["meta"].get("registeredOnlyRepositories", []))
+    registered_repositories = policies.keys() - discovery_repositories
     registered = None
     for repo, policy in policies.items():
         if repo in registered_repositories and registered is None:
             registered = fetch_registered_prs(registered_repositories)
-        records, fresh, prior, inventory = collect_repository(repo, policy, previous, registered)
+        records, fresh, prior, inventory = collect_repository(repo, policy, previous, registered if repo in registered_repositories else None)
         if repo == "google/gvisor":
             records = [with_maintainer_reviewers(pr, maintainers) if pr["status"] == "open" else pr for pr in records]
         # Keep observed human feedback actionable even if a later repository or
