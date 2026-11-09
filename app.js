@@ -1703,6 +1703,11 @@ function drawDetails() {
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
+  if (node.type === "branch" && node.status === "Agent work" && node.followup?.sourceHead === node.head) {
+    const url = node.followup.evidence?.[0];
+    const source = node.links?.find(item => item.url === url) || node.evidence?.find(item => item.url === url);
+    if (source) details.append(link(source.label + " ↗", url, "relation-source"));
+  }
   for (const record of node.followup?.attentionDispositions || []) {
     if (!attentionDisposition(node, record.reason)) continue;
     const section = element("section", "detail-section");
@@ -1976,7 +1981,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   setFreshness(`Work map · ${date(registry.meta.updatedAt)} | GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
   $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot. Scheduled collection publishes new snapshots when its workflow completes; the timestamp remains authoritative. Selected PR details can check conflicts directly on GitHub without a token. Investigations are curated research records with their own update dates.";
 }
-function validateRegistry(candidate) {
+function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
   const policies = repositoryPolicies(candidate);
@@ -2045,10 +2050,15 @@ function validateRegistry(candidate) {
     const proposalRepo = node.type === "branch" && typeof node.repo === "string"
       && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) && node.repo.split("/")[0] === candidate.meta.owner ? node.repo : null;
     const action = node.humanAction;
-    if (action !== undefined && (!action || action.status !== "pending" || action.kind !== "submission"
+    // Pages may serve a registry from before workloads moved into agent follow-ups.
+    // humanAction() ignores its execution records. New metadata cannot publish one.
+    const retiredExecution = allowRetiredExecution && action?.kind === "execution" && proposalRepo
+      && /^[a-f0-9]{40}$/.test(action.sourceHead) && commitLinkMatches(proposalRepo, action.sourceHead, action.url);
+    if (action !== undefined && (!action || action.status !== "pending"
         || !/^[a-f0-9]{40}$/.test(action.head) || action.head !== node.head
         || ![action.title, action.summary, action.body].every(value => typeof value === "string" && value.trim())
-        || !safeURL(action.url) || !safeURL(action.policyURL) || node.contributorReview !== undefined))
+        || !safeURL(action.url) || !(retiredExecution || action.kind === "submission" && safeURL(action.policyURL))
+        || node.contributorReview !== undefined))
       throw new Error("Invalid human-only action");
     if (node.additionalReviews !== undefined && (!Array.isArray(node.additionalReviews) || node.type !== "pr" || action ||
         node.additionalReviews.some(review => review?.kind !== "review"))) throw new Error("Invalid additional review");
@@ -2332,7 +2342,7 @@ async function readSnapshot(base) {
   if (!registryResponse.ok) throw new Error(`Registry returned ${registryResponse.status}`);
   if (!snapshotResponse.ok) throw new Error(`Snapshot returned ${snapshotResponse.status}`);
   const [nextRegistry, snapshot] = await Promise.all([registryResponse.json(), snapshotResponse.json()]);
-  validateRegistry(nextRegistry);
+  validateRegistry(nextRegistry, { allowRetiredExecution: true });
   if (nextRegistry.meta.repo !== registry.meta.repo || nextRegistry.meta.owner !== registry.meta.owner) throw new Error("Registry repository changed");
   if (Date.parse(nextRegistry.meta.updatedAt) < Date.parse(registry.meta.updatedAt)) throw new Error("Published registry is older than the displayed registry");
   return [nextRegistry, snapshotForRegistry(snapshot, nextRegistry)];
@@ -2531,7 +2541,7 @@ async function start() {
   try {
     const response = await fetch("registry.json", { cache: "no-cache" });
     if (!response.ok) throw new Error(`Registry returned ${response.status}`);
-    registry = await response.json(); validateRegistry(registry);
+    registry = await response.json(); validateRegistry(registry, { allowRetiredExecution: true });
     model = { ...registry, nodes: registryNodes(registry).map(node => ({ ...node, workStates: stateRecords({}, node) })),
       groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
     updateRegistryControls();
