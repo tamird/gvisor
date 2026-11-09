@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T00:31:11Z",
+    "updatedAt": "2026-11-09T01:07:19+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42779,9 +42779,9 @@
       "title": "Add an opt-in native POSIX test wrapper",
       "url": "https://github.com/bazelbuild/bazel/pull/30837",
       "group": "bazel",
-      "summary": "Dmitry Zbarsky’s open PR adds an opt-in native POSIX test wrapper. Its head b9d613ad6 conflicts with Bazel master a765dc177 in the coverage resolver and the wrapper test’s filesystem dependency. Tamir’s fork at aa90c0a75 preserves the upstream conditional coverage behavior and the filesystem header used by the new POSIX tests. The prepared revision applies to the inspected master source. A current-master build and the maintainers’ cross-compilation concern remain open.",
+      "summary": "Dmitry Zbarsky’s open PR adds an opt-in native POSIX test wrapper. Its head b9d613ad6 conflicts with Bazel master a765dc177 in the coverage resolver and the wrapper test’s filesystem dependency. Tamir’s fork at aa90c0a75 preserves the upstream conditional coverage behavior and the filesystem header used by the new POSIX tests. The prepared revision applies to the inspected master source. A current-master build and the maintainers’ cross-compilation concern remain open. On gVisor’s ordinary Ubuntu worker, Bazel 9.3.1’s shell wrapper failed two otherwise successful TCP handshake tests when the qualification requested ZIP artifacts. The host lacked file and zip. The default unzipped mode retains individual files, but its wrapper still invokes file to collect MIME metadata.",
       "ref": "codex/native-posix-test-wrapper",
-      "updatedAt": "2026-11-07T07:11:52+00:00",
+      "updatedAt": "2026-11-09T01:06:19+00:00",
       "status": "open",
       "followup": {
         "owner": "Bazel PR author and maintainers",
@@ -42811,6 +42811,10 @@
         {
           "label": "Maintainer question about a cross-platform C++ toolchain",
           "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5600246279"
+        },
+        {
+          "label": "Ubuntu RBE test logs and failed capture packaging",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42539499075/artifacts/13642555484"
         }
       ]
     },
@@ -65169,8 +65173,8 @@
       "head": "fe04aebd118f84df78dc0173e515f854d1809347",
       "title": "Start TCP checksum offload after the serialized IP header",
       "group": "runtime",
-      "updatedAt": "2026-11-09T00:31:11Z",
-      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Using the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth.\n\nFull-size writes also need room for the option. On a native Linux veth, four 10,153-byte transfers delivered no data with the published checksum fix. A prototype that reserves space delivered all 72 transfers on that build, but also reduced full payloads by four bytes on IPv4 or eight on IPv6 when the socket option was off on a capable NIC.\n\nRestoring onto a NIC that permits the IPv6 option added an eight-byte header. Recomputing the limit changed payloads from 1,200 to 1,192 bytes and preserved the limit through a second restore. The same test exposed a separate Reno accounting error: ACKing one packet sent before restore grew the window from 10 to 12. With the separate ACK-accounting fix applied, the same single packet grew the window from 10 to 11 on both IPv4 and IPv6. These cases require explicit Netstack configuration outside #16393’s default.",
+      "updatedAt": "2026-11-09T01:07:19+00:00",
+      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Using the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth.\n\nFull-sized writes still need room for the IP option. The conservative prototype delivered all 72 transfers in the veth comparison but reserved bytes for sockets that never enabled the option. The first-use proposal kept their full payload. It reduced the next payload from 1,200 to 1,196 bytes on IPv4 or 1,192 on IPv6 when a socket actually enabled the option on a capable route. Both sizes survived two restores. The ordinary ACK-accounting fix credited a previously transmitted 1,200-byte packet once on each family. These cases use explicit Netstack settings outside #16393’s default.",
       "evidence": [
         {
           "label": "Original peer and checksum-offset observations",
@@ -65203,6 +65207,14 @@
         {
           "label": "Combined IPv4 and IPv6 restore packet and ACK observations",
           "url": "https://github.com/tamird/gvisor/actions/runs/42539885905/artifacts/13640749391"
+        },
+        {
+          "label": "First-use sizing proposal",
+          "url": "https://github.com/tamird/gvisor/commit/a4ca95b85"
+        },
+        {
+          "label": "First-use and restore packets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13641833236"
         }
       ],
       "settledReviews": [
@@ -66542,6 +66554,44 @@
         {
           "label": "Proposed implementation and permanent syscall test",
           "url": "https://github.com/tamird/gvisor/commit/beaf6a362"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcp-experiment-first-use",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "runtime",
+      "ref": "research/tcp-experiment-first-use",
+      "head": "a4ca95b85a9a770e6e01852c30da57ae94f89b52",
+      "url": "https://github.com/tamird/gvisor/commit/a4ca95b85",
+      "title": "Reserve TCP experiment headers on first use",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T01:07:19+00:00",
+      "summary": "With a 1,200-byte peer MSS, both address families sent all 1,200 bytes untagged before the first socket option request. Enabling the option on a capable NIC with the first packet still in flight produced a 1,196-byte IPv4 payload or a 1,192-byte IPv6 payload. Each socket retained the correct limit after two restores. All 11 selected cases passed in Netstack channel-link and host-GSO tests. The TCP/IP, stack and TCP analyzers passed for AMD64 and ARM64. The published message-only revision has the exact tested tree.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "67c6038796bc6f70215e32699744843e3f10317f",
+        "head": "a4ca95b85a9a770e6e01852c30da57ae94f89b52",
+        "url": "https://github.com/tamird/gvisor/commit/a4ca95b85",
+        "title": "Reserve TCP experiment headers on first use",
+        "body": "A full-size TCP write with the IPv6 experiment header produced a\n1,508-byte packet that the 1,500-byte path rejected. TCP had chosen its\nsegment size before the socket enabled the option.\n\nReserve header space on the outgoing route before storing the first\nnonzero option value. Update the TCP and GSO segment sizes together so\nthe next send fits, even with earlier packets still in flight. Sockets\nthat never enable the option keep their full payload.\n\nRetain the smaller of the peer MSS and the path payload limit before\ndeducting option bytes, as specified in RFC 9293 section 3.7.1 [1].\nUse that limit after restore so a newly capable route gets the required\nheader space and repeated restores deduct it only once.\n\nTest first use with data in flight on IPv4 and IPv6, then restore each\nconnection twice and check the next segment on the wire.\n\n[1]: https://www.rfc-editor.org/rfc/rfc9293.html#section-3.7.1",
+        "summary": "Open this one-commit TCP change after the checksum and ordinary ACK-accounting fixes land?",
+        "requestedAt": "2026-11-09T01:07:19+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Original MTU and peer-read evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42449280852/artifacts/13605261310"
+        },
+        {
+          "label": "First-use frames, GSO controls and analyzer outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13641833236"
+        },
+        {
+          "label": "Transmitted packet credit across IPv4 and IPv6 restore",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42539885905/artifacts/13640749391"
         }
       ]
     }
@@ -70417,6 +70467,26 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/6650e2f29",
         "https://github.com/tamird/gvisor/commit/2306ebce4"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:17234",
+      "to": "branch:tcp-experiment-first-use",
+      "reason": "A host-offloaded packet with this IP option needs the checksum start after the serialized header.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/17234",
+        "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13641833236"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-ordinary-ack-wire-ends",
+      "to": "branch:tcp-experiment-first-use",
+      "reason": "Enabling the option can reduce the live MSS while an older packet is in flight. Credit that packet using its transmitted boundaries.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/b64ce8320",
+        "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13641833236"
       ]
     }
   ],
@@ -79512,7 +79582,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-09T00:27:41Z",
+      "updatedAt": "2026-11-09T01:06:19+00:00",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -80199,7 +80269,7 @@
           ]
         },
         {
-          "text": "On #16860’s 50,000-file checkpoint, 50,364 of 150,919 callback records held only one waiting object. Storing those waiters in the existing queue fields reduced restore through the first guest command from 243.2 to 200.2 ms (−17.69%, 16 alternating pairs). All 34 guest runs checked the restored tree. Direct decode allocated 121.84 versus 99.27 MiB/op (−18.53%). Its timing difference was inconclusive. Both public race runs printed PASS with the same 11,522 passing cases and 85 skips, then Bazel reported a timeout. A uniform queue with separate callback payloads is under investigation.",
+          "text": "On #16860’s 50,000-file checkpoint, 50,364 of 150,919 callback records held only one waiting object. Storing those waiters in the existing queue fields reduced restore through the first guest command from 243.2 to 200.2 ms (−17.69%, 16 alternating pairs). All 34 guest runs checked the restored tree. Direct decode allocated 121.84 versus 99.27 MiB/op (−18.53%). Its timing difference was inconclusive. A second 16-pair comparison tested a uniform queue with separate callback payloads. Against the inline waiter, that representation took 21.42% longer and allocated 34.17% more bytes on a cold pointer chain. The pooled chain was 4.24% faster. First guest command timing was inconclusive. The stock, inline and uniform public race owners all passed on the second run.",
           "evidence": [
             {
               "label": "Measured implementation",
@@ -80208,6 +80278,14 @@
             {
               "label": "Benchstat, checkpoint hashes, guest checks and original race XML",
               "url": "https://github.com/tamird/gvisor/actions/runs/42537752922/artifacts/13640319931"
+            },
+            {
+              "label": "Uniform queue source",
+              "url": "https://github.com/tamird/gvisor/commit/c6ff07a26"
+            },
+            {
+              "label": "Direct layout comparison, ordinary graphs and completed race runs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42540723329/artifacts/13642840434"
             }
           ]
         }
@@ -84158,7 +84236,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T00:27:41Z",
+      "updatedAt": "2026-11-09T01:06:19+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -86949,19 +87027,23 @@
           ]
         },
         {
-          "text": "All 82 PacketImpact owners share a generated Bash test launcher. The Go runner also invokes the host firewall programs, and both DUTs invoke uname. A fork change runs the existing Go test binary with declared arguments, reads DUT identity with uname(2), and installs the TCP drop rule in the testbench network namespace. Six native and Netstack owners are in qualification, including a three-DUT IPv6 case.",
+          "text": "All 82 PacketImpact owners share one runner. Running the Go binary directly, reading uname(2), and installing the firewall rules through netlink let eight cases across six native and Netstack owners pass with the host utilities hidden. Ten original captures survived. Exposing the pinned netlink repository to the catalog made all 225 entries verify. On the ordinary Ubuntu Firecracker worker, both handshakes printed PASS but both Bazel targets failed. The qualification requested a ZIP and the wrapper lacked zip. It also lacked file for MIME metadata. The stock remote arm timed out before executing its test. The default unzipped artifact path and downstream dependency scope are being checked.",
           "evidence": [
             {
-              "label": "PacketImpact runner change",
-              "url": "https://github.com/tamird/gvisor/commit/c3d696ee1"
+              "label": "Source and catalog",
+              "url": "https://github.com/tamird/gvisor/commit/e366e3619"
             },
             {
-              "label": "Stock controls and Linux qualification",
-              "url": "https://github.com/tamird/gvisor/actions/runs/42538507534"
+              "label": "Eight passing cases, three stock failures and ten captures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42538507534/artifacts/13641740630"
             },
             {
-              "label": "Ordinary Ubuntu Firecracker worker, original and corrected TCP handshakes",
-              "url": "https://github.com/tamird/gvisor/actions/runs/42539499075"
+              "label": "Stock, original and corrected catalog checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13642365784"
+            },
+            {
+              "label": "Ubuntu RBE test logs and failed capture packaging",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42539499075/artifacts/13642555484"
             }
           ]
         }
@@ -88531,7 +88613,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-09T00:31:11Z",
+      "updatedAt": "2026-11-09T01:06:19+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -89453,7 +89535,7 @@
           ]
         },
         {
-          "text": "On an IPv6 restore that enables the experiment option, recomputing the payload limit produced 1,192-byte payloads instead of 1,200. The sizing prototype credited one pre-restore packet twice. With the approved ordinary ACK-accounting fix applied, one packet grew the window from 10 to 11 on both IPv4 and IPv6. The separate published change in #17234 fixes the checksum offset.",
+          "text": "On an IPv6 restore that enables the experiment option, recomputing the payload limit produced 1,192-byte payloads instead of 1,200. The sizing prototype credited one pre-restore packet twice. With the approved ordinary ACK-accounting fix applied, one packet grew the window from 10 to 11 on both IPv4 and IPv6. The separate published change in #17234 fixes the checksum offset. The first-use revision kept 1,200-byte payloads on sockets that never enabled the option. After enabling it on a capable NIC, the next packet carried 1,196 bytes on IPv4 or 1,192 on IPv6. Both limits survived two restores.",
           "evidence": [
             {
               "label": "IPv6 option sizing and Reno window after one or two restores",
@@ -89466,6 +89548,23 @@
             {
               "label": "Combined IPv4 and IPv6 restore packet and ACK observations",
               "url": "https://github.com/tamird/gvisor/actions/runs/42539885905/artifacts/13640749391"
+            },
+            {
+              "label": "First-use wire packets, GSO controls and analyzers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13641833236"
+            }
+          ]
+        },
+        {
+          "text": "The SYN-option parser initializes an omitted peer MSS to 536. RFC 9293 gives different defaults for IPv4 and IPv6. The option-sizing regression advertises its own MSS. A native Linux and Netstack handshake without a peer MSS is needed before classifying the IPv6 behavior.",
+          "evidence": [
+            {
+              "label": "SYN option parser",
+              "url": "https://github.com/google/gvisor/blob/975fb1722/pkg/tcpip/header/tcp.go#L445"
+            },
+            {
+              "label": "RFC 9293 section 3.7.1",
+              "url": "https://www.rfc-editor.org/rfc/rfc9293.html#section-3.7.1"
             }
           ]
         }
@@ -90757,5 +90856,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T00:31:11Z"
+  "updatedAt": "2026-11-09T01:07:19+00:00"
 }
