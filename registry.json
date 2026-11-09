@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T17:17:34+00:00",
+    "updatedAt": "2026-11-09T17:50:06+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48766,9 +48766,17 @@
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-09T17:16:09+00:00",
-      "summary": "Each caller passes its locked Set to the member’s wake method. SetVal reuses the member it already looked up, and each semaphore keeps its existing fields. Checklocks on AMD64 and ARM64 caught unlocked indexed access to waiters and value, and a wake after unlock. Both writes through previously saved pointers escaped the analyzer. The caller must supply the Set that owns the member. All four native Linux package tests passed, including TestUnregister.",
+      "updatedAt": "2026-11-09T17:50:06+00:00",
+      "summary": "Checklocks can verify the mutex at a semaphore lookup. On AMD64 and ARM64 it missed accesses through a saved or forwarded pointer after unlock, a wake using a different set’s mutex, and use after unlocking and relocking. A fork-only checker caught uses after unlock and storage into a global. It also rejected two legitimate operations: waking waiters in SetVal and walking the queue in countWaiters.",
       "evidence": [
+        {
+          "label": "Uncached AMD64 and ARM64 checker results and missed accesses",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42664387976/artifacts/13696378343"
+        },
+        {
+          "label": "Fork-only checker results, including the valid calls it rejects",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42665113185/artifacts/13697018009"
+        },
         {
           "label": "Change from the previously reviewed guard",
           "url": "https://github.com/tamird/gvisor/compare/9385a07c9...8d8a461be"
@@ -48848,10 +48856,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "observedAt": "2026-11-09T17:16:09+00:00",
-        "disposition": "Tamir asked whether checklocks should express that a returned reference remains valid only while the lock is held.",
-        "nextAction": "Investigate a lock-bound reference contract with checklocks before revising the semaphore proposal.",
+        "observedAt": "2026-11-09T17:50:06+00:00",
+        "disposition": "The semaphore proposal remains on hold. The experimental checker flags both a correctly owned wake and a wake using the wrong set.",
+        "nextAction": "Determine how checklocks can follow the owning mutex through derived pointers and account for whether a called method releases the mutex or retains the pointer.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42665113185/artifacts/13697018009",
+          "https://github.com/tamird/gvisor/actions/runs/42664387976/artifacts/13696378343",
+          "https://github.com/tamird/gvisor/commit/e22d237b3",
           "https://github.com/tamird/gvisor/commit/8d8a461be"
         ]
       },
@@ -51757,7 +51768,7 @@
       "url": "https://github.com/google/gvisor/pull/16807",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T17:07:39+00:00",
+      "updatedAt": "2026-11-09T17:50:06+00:00",
       "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The initial race test did not build. On a GNU worker all 69 race cases passed with zero skips.",
       "evidence": [
         {
@@ -51765,8 +51776,12 @@
           "url": "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829594996"
         },
         {
-          "label": "Earlier Copybara import names 2d5231b45",
+          "label": "Copybara import #17285 includes the reviewed comment move from f054d1f11",
           "url": "https://github.com/google/gvisor/pull/17285"
+        },
+        {
+          "label": "Waiter comment above finishCompletions() in export 9058258b3",
+          "url": "https://github.com/google/gvisor/blob/9058258b3/pkg/sentry/pgalloc/save_restore.go"
         },
         {
           "label": "Proposed source and permanent three-page test",
@@ -51859,20 +51874,6 @@
           "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         }
-      },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
-        "observedAt": "2026-11-09T17:07:39+00:00",
-        "disposition": "Ryan reapproved f054d1f11 at 17:05:13 UTC. The ready-to-pull label is present. Open Copybara import #17285 still names 2d5231b45.",
-        "nextAction": "Watch #17285 and its successor until the import carries f054d1f11. If the old import lands, verify the comment above finishCompletions() on master and roll it into the next cleanup only if missing.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829594996",
-          "https://github.com/google/gvisor/pull/17285",
-          "https://github.com/tamird/gvisor/compare/2d5231b45..f054d1f11",
-          "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829354526",
-          "https://github.com/google/gvisor/pull/16807#discussion_r4515548044"
-        ]
       },
       "reapproval": {
         "kind": "content-amendment",
