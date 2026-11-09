@@ -1,35 +1,90 @@
-name: CI
-
-"on":
+name: Cross-build the stock PosixError test with LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/stock-llvm-cross-posix-jammy]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify stock source and native AMD64 client
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 975fb172241c7946a9f67b4f52e0349d9240589a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/qualification_stock_cross'
+          test "$(uname -m)" = x86_64
+          d="$RUNNER_TEMP/stock-cross"
+          mkdir -m 700 "$d"
+          curl --retry 2 -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          (
+            cd "$d"
+            sha256sum --check <<'SUMS'
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          SUMS
+            chmod 755 bazel
+          )
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Build on AMD64 and execute the original ELF on ARM64
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          work="$RUNNER_TEMP/stock-cross"
+          rc="$work/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          cat > "$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=64 --remote_timeout=10m
+          build --extra_execution_platforms=//test/qualification_stock_cross:amd64,//test/qualification_stock_cross:arm64
+          build --platforms=//tools/bazeldefs:linux_arm64
+          build --remote_default_exec_properties=Arch=amd64
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          bazel=("$work/bazel" --bazelrc="$rc")
+          target=//test/util:posix_error_test
+          "${bazel[@]}" aquery --output=jsonproto --noinclude_artifacts 'mnemonic("CppCompile|CppLink", //test/util:posix_error_test)' > "$work/control.json" 2> "$work/control.log" || : > "$work/control.json"
+          flags=(--extra_toolchains=@llvm//toolchain:linux_x86_64_to_linux_aarch64
+                 --noremote_accept_cached --remote_download_outputs=toplevel
+                 '--strategy_regexp=Compiling test/util/posix_error_test[.]cc=local'
+                 '--strategy_regexp=Linking test/util/posix_error_test=local')
+          build=0
+          "${bazel[@]}" build "${flags[@]}" --build_event_json_file="$work/build.bep" --execution_log_json_file="$work/build.spawn" "$target" > "$work/build.log" 2>&1 || build=$?
+          printf '%d\n' "$build" > "$work/build.exit"
+          native=125
+          if test "$build" = 0; then
+            sha256sum bazel-bin/test/util/posix_error_test > "$work/built.sha256"
+            native=0
+            "${bazel[@]}" test "${flags[@]}" --nocache_test_results --flaky_test_attempts=1 --test_sharding_strategy=disabled --build_event_json_file="$work/test.bep" --execution_log_json_file="$work/test.spawn" //test/qualification_stock_cross:native > "$work/test.log" 2>&1 || native=$?
+          fi
+          printf '%d\n' "$native" > "$work/test.exit"
+      - name: Extract per-action originals
+        run: python3 -B test/qualification_stock_cross/receipt.py
+      - name: Validate the original receipt
+        id: receipt
+        run: |
+          set -eu
+          f="$RUNNER_TEMP/stock-cross/receipt.json"
+          test -f "$f" && test ! -L "$f" && test "$(wc -c < "$f")" -lt 65536
+          jq -e '.source=="975fb172241c7946a9f67b4f52e0349d9240589a"' "$f" >/dev/null
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$f"; then exit 1; fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: stock-llvm-cross-posix
+          path: ${{ runner.temp }}/stock-cross/receipt.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Require original AMD64 compile and link plus native ARM64 test
+        run: jq -e '.verified == true' "$RUNNER_TEMP/stock-cross/receipt.json" >/dev/null
