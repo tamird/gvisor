@@ -345,6 +345,7 @@ type functionGuardInfo struct {
 
 // lockFunctionFacts apply on every method.
 type lockFunctionFacts struct {
+	BorrowedResult string // Fork probe: a pointer guarded by HeldOnEntry[BorrowedResult].
 	// HeldOnEntry tracks the names and number of parameter (including receiver)
 	// lockFuncfields that guard calls to this function.
 	//
@@ -1042,6 +1043,7 @@ func (pc *passContext) functionFacts(d *ast.FuncDecl) {
 				// extremely rare.
 				lff.Ignore = true
 			},
+			"// +checklocksborrow:":  func(name string) { lff.BorrowedResult = name },
 			checkLocksReadAny:        func(string) { pc.maybeFail(d.Pos(), "checklocksreadany is only valid on fields") },
 			checkLocksAnnotation:     func(guardName string) { lff.addGuardedBy(pc, d, guardName, true /* exclusive */) },
 			checkLocksAnnotationRead: func(guardName string) { lff.addGuardedBy(pc, d, guardName, false /* exclusive */) },

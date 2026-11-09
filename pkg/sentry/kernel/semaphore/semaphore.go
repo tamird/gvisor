@@ -365,6 +365,7 @@ func (s *Set) Unlock() {
 // access through Set.sems at lookup time.
 //
 // +checklocks:s.mu
+// +checklocksborrow:s.mu
 func (s *Set) findSem(num int32) *sem {
 	if num < 0 || int(num) >= s.Size() {
 		return nil
@@ -775,6 +776,7 @@ func newWaiter(val int16) *waiter {
 // methods and types used by the semaphore implementation.
 //
 // +checklocks:s.mu
+// +checklocksborrow:s.mu
 func (s *Set) forwardBorrowForTest(num int32) *sem {
 	return s.findSem(num)
 }
@@ -807,4 +809,20 @@ func (s *Set) returnedReferenceForTest(other *Set, num int32) {
 	s.mu.Lock()
 	alias.value++ // lifetime: explicit unlock and reacquire
 	s.mu.Unlock()
+}
+
+var escapedBorrowForTest *sem
+
+func (s *Set) pointerEscapeForTest(num int32) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p := s.findSem(num)
+	if p == nil {
+		return
+	}
+	p.value++
+	if w := p.waiters.Front(); w != nil {
+		_ = w.Next()
+	}
+	escapedBorrowForTest = p
 }

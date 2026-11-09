@@ -653,6 +653,16 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 		pc.applyTypeAliases(ls, arg)
 	}
 
+	if lff.BorrowedResult != "" && callValue != nil {
+		if guard, ok := lff.HeldOnEntry[lff.BorrowedResult]; ok {
+			if r := resolve(guard); r.valid() {
+				if owner, held := ls.isHeld(r, guard.Exclusive); held {
+					pc.probeBorrow(callValue, owner, ls)
+				}
+			}
+		}
+	}
+
 	// Check that excluded locks are not held on entry.
 	for fieldName, fg := range lff.ExcludedOnEntry {
 		r := resolve(fg)
