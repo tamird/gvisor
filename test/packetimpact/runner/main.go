@@ -183,17 +183,16 @@ func main() {
 	case <-ctx.Done():
 		log.Fatalf("background tasks exited early: %s", g.Wait())
 	case err := <-testResult:
+		var exitStatus *exec.ExitError
 		switch {
-		case err != nil == expectFailure:
-			// Expected.
-		case expectFailure:
-			log.Fatalf("the test is expected to fail, but it succeeded")
-		case err != nil:
-			var exitStatus *exec.ExitError
-			if errors.As(err, &exitStatus) {
-				os.Exit(exitStatus.ExitCode())
+		case err == nil:
+			if expectFailure {
+				log.Fatal("the test is expected to fail, but it succeeded")
 			}
-			log.Fatalf("unknown error when executing test: %s", err)
+		case !errors.As(err, &exitStatus) || !exitStatus.Exited():
+			log.Fatalf("running testbench %q: %v", testBinary, err)
+		case !expectFailure:
+			os.Exit(exitStatus.ExitCode())
 		}
 	}
 }
