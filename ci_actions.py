@@ -5,6 +5,7 @@ import re
 import subprocess
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlencode
 
 # These workflows each have a single, non-matrix validation job. For Go,
 # generation and building the exported sources are separate validation steps.
@@ -15,11 +16,17 @@ WORKFLOWS = {
     "Go": ("go.yml", "generate", {"Run tools/go_branch.sh", "Run git checkout go && git clean -xf . && go build ./..."}),
 }
 INTERVAL = timedelta(hours=1)
-SAMPLE = "Up to 100 recently created pull-request runs per workflow. One workflow is sampled each hour when the request budget permits."
+ACTIONS = "repos/google/gvisor/actions"
+DISCOVERY = ("reports", *WORKFLOWS)
+SAMPLE = ("Up to 100 recently created PR runs per workflow and 100 jobs per run. "
+          "Larger job histories are excluded. One discovery each hour rotates between public reports "
+          "and four workflows when the request budget permits.")
+REPORT_SAMPLE = ("Up to 25 gVisor issues and PRs updated in the last 90 days, newest update first. "
+                 "GitHub searches their titles for flake, flaky or intermittent.")
 
 
 def _read(path: str) -> dict:
-    result = subprocess.run(["gh", "api", "repos/google/gvisor/actions/" + path],
+    result = subprocess.run(["gh", "api", path],
                             text=True, capture_output=True, timeout=20, check=False)
     if result.returncode:
         status = re.search(r"HTTP (\d{3})\b", result.stderr)
@@ -35,9 +42,32 @@ def _job_pair(row: dict) -> tuple:
     return row["run"], row["head"], row["failedJob"], row["passedJob"]
 
 
+def _reports(now: datetime) -> dict:
+    start = (now - timedelta(days=90)).isoformat(timespec="seconds")
+    end = now.isoformat(timespec="seconds")
+    query = f"repo:google/gvisor in:title (flake OR flaky OR intermittent) updated:{start}..{end} sort:updated-desc"
+    page = _read("search/issues?" + urlencode({"q": query, "per_page": 25}))
+    rows, total = page["items"], page["total_count"]
+    if page["incomplete_results"] or not isinstance(rows, list) or len(rows) != min(total, 25):
+        raise ValueError("GitHub returned an incomplete flake report search")
+    items = []
+    for row in rows:
+        number = row["number"]
+        pull = row.get("pull_request")
+        path = "pull" if pull else "issues"
+        url = f"https://github.com/google/gvisor/{path}/{number}"
+        if row["html_url"] != url or row["repository_url"] != "https://api.github.com/repos/google/gvisor":
+            raise ValueError("Flake report does not identify a gVisor issue or PR")
+        items.append({"number": number, "kind": "pr" if pull else "issue", "title": row["title"],
+                      "url": url, "state": "merged" if pull and pull.get("merged_at") else row["state"],
+                      "updatedAt": row["updated_at"]})
+    return {"status": "ok", "checkedAt": now.isoformat(), "sample": REPORT_SAMPLE, "windowStart": start,
+            "windowEnd": end, "total": total, "hasMore": total > len(items), "items": items}
+
+
 def _discover(workflow: str) -> list[dict]:
     filename, _, _ = WORKFLOWS[workflow]
-    data = _read(f"workflows/{filename}/runs?event=pull_request&per_page=100")
+    data = _read(f"{ACTIONS}/workflows/{filename}/runs?event=pull_request&per_page=100")
     rows = data["workflow_runs"]
     if not isinstance(rows, list):
         raise ValueError("Invalid workflow run list")
@@ -58,19 +88,22 @@ def _discover(workflow: str) -> list[dict]:
     return candidates
 
 
-def _recoveries(candidate: dict) -> list[dict]:
+def _recoveries(candidate: dict) -> tuple[list[dict], dict | None]:
     run, head, attempt = candidate["run"], candidate["head"], candidate["attempt"]
     _, name, steps = WORKFLOWS[candidate["workflow"]]
-    data = _read(f"runs/{run}/jobs?filter=all&per_page=100")
+    data = _read(f"{ACTIONS}/runs/{run}/jobs?filter=all&per_page=100")
     jobs = data["jobs"]
     if not isinstance(jobs, list) or not jobs:
         raise ValueError("GitHub Actions returned no usable jobs for this run")
+    if len(jobs) < data["total_count"]:
+        # A second job with the same name could be on another page.
+        return [], {**candidate, "observed": len(jobs), "total": data["total_count"]}
     if len(jobs) != data["total_count"]:
-        return []  # A second job with the same name could be on another page.
+        raise ValueError("GitHub returned an inconsistent job count")
     attempts = defaultdict(list)
     for job in jobs:
         if job["run_id"] != run or job["head_sha"] != head or job["name"] != name:
-            return []
+            return [], None
         attempts[job["run_attempt"]].append(job)
     recovered = []
     for number in sorted(attempts):
@@ -96,7 +129,7 @@ def _recoveries(candidate: dict) -> list[dict]:
         if "pr" in candidate:
             row["pr"] = candidate["pr"]
         recovered.append(row)
-    return recovered
+    return recovered, None
 
 
 def _time(value: str | datetime) -> datetime:
@@ -125,30 +158,46 @@ def collect(previous: dict | None, now: str | datetime, *, budget: int) -> dict:
         _, slot = min(due)
         state[slot] = stamp
         state["requestsUsed"] += 1
+        source = None
+        if slot == "discoveryAt":
+            cursor = state.get("cursor", 0)
+            source = DISCOVERY[cursor]
+            # A missing or rate-limited endpoint must not starve every other source.
+            state["cursor"] = (cursor + 1) % len(DISCOVERY)
         try:
-            if slot == "discoveryAt":
-                cursor = state.get("cursor", 0)
-                workflow = list(WORKFLOWS)[cursor]
-                found = _discover(workflow)
+            status = "ok"
+            if source == "reports":
+                state["reports"] = _reports(now)
+                continue
+            if source:
+                found = _discover(source)
                 known = set(seen) | {_id(item) for item in pending}
                 pending.extend(item for item in found if _id(item) not in known)
                 pending = pending[:32]
-                state["cursor"] = (cursor + 1) % len(WORKFLOWS)
             else:
                 candidate = pending[0]
-                for row in _recoveries(candidate):
+                recovered, partial = _recoveries(candidate)
+                if partial:
+                    state["partialRun"] = {**partial, "checkedAt": stamp}
+                    status = "partial"
+                for row in recovered:
                     observations[_job_pair(row)] = row
                 seen.append(_id(candidate))
                 pending.pop(0)
             state["checkedAt"] = stamp
-            state["status"] = "ok"
+            state["status"] = status
             state.pop("error", None)
         except (subprocess.TimeoutExpired, OSError, ValueError, KeyError, TypeError) as exc:
+            error = str(exc)[:160] if type(exc) is ValueError else "Unable to read GitHub CI metadata"
+            if source == "reports":
+                state["reports"] = {"items": [], "sample": REPORT_SAMPLE, **state.get("reports", {}),
+                                    "status": "unavailable", "error": error, "attemptedAt": stamp}
+                continue
             if slot == "detailAt":
                 # An unallocated run may stay empty. Retry it after the other candidates.
                 pending.append(pending.pop(0))
             state["status"] = "unavailable"
-            state["error"] = str(exc)[:160] if type(exc) is ValueError else "Unable to read GitHub Actions metadata"
+            state["error"] = error
             break
     state["pending"], state["seen"] = pending, seen[-128:]
     state["observations"] = sorted(observations.values(), key=lambda row: row["finishedAt"], reverse=True)[:64]
