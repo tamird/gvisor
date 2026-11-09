@@ -76,8 +76,12 @@ steps:
       queue: "release"
   - <<: *common
     label: ":bun: COS Latest Driver Compatibility Test"
-    commands:
-      - tools/gpu/cos_drivers_test.sh
+    env:
+      DOCKER_BUILD: "false"
+    command: |
+      set -o pipefail
+      gcloud compute images list --project cos-cloud --filter='family:cos*' --format=json |
+        bazel run //test/gpu:cos_gpu_compatibility_test -- -test.v -image_json=/dev/stdin
     agents:
       queue: "release-cos"
   - <<: *common
