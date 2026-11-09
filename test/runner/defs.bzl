@@ -8,8 +8,8 @@ load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "with_t
 native_arm64_test, _native_arm64_transition = with_test_architecture(native_test, "arm64").build()
 arm64_syscall_filegroup, _arm64_filegroup_transition = with_test_architecture(native.filegroup, "arm64").extend("cxxopt", ["-Werror"]).build()
 
-# The enclosing test selects the target CPU. Only the mixed presubmit
-# supplies Make's syscall-specific warning policy through the fixture edge.
+# Keep the incoming target platform and treat warnings in mixed syscall
+# fixtures and their C++ dependencies as errors.
 _syscall_filegroup, _syscall_filegroup_transition = with_cfg(native.filegroup).extend("cxxopt", select({
     Label("//test/rbe:mixed_native_tests"): ["-Werror"],
     "//conditions:default": [],
@@ -26,6 +26,17 @@ def ordinary_syscall_suites():
         ("arm64_syscalls", _ARM64_GUEST_SYSCALL),
     ]:
         native.test_suite(name = name, tags = ["manual", tag])
+
+def standalone_syscall_fixtures(name, srcs):
+    """Declares the mixed presubmit's native and ARM64 fixture groups.
+
+    Args:
+        name: Name of the group built for the incoming target platform.
+        srcs: Standalone syscall binaries without a runner test.
+    """
+    inputs = select({_MIXED: srcs, "//conditions:default": []})
+    for group, rule in [(name, _syscall_filegroup), ("arm64_" + name, arm64_syscall_filegroup)]:
+        rule(name = group, srcs = inputs, tags = ["manual"], testonly = True)
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {

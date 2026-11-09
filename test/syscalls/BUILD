@@ -1,4 +1,4 @@
-load("//test/runner:defs.bzl", "arm64_syscall_filegroup", "ordinary_syscall_suites", syscall_test = "syscall_cc_test")
+load("//test/runner:defs.bzl", "ordinary_syscall_suites", "standalone_syscall_fixtures", syscall_test = "syscall_cc_test")
 load("//tools:defs.bzl", "more_shards", "most_shards")
 
 package(
@@ -8,21 +8,15 @@ package(
 
 ordinary_syscall_suites()
 
-# These binaries have no guest test, but the Make syscall package wildcard builds them.
-arm64_syscall_filegroup(
-    name = "arm64_standalone_fixtures",
-    testonly = True,
-    srcs = select({
-        "//test/rbe:mixed_native_tests": [
-            "//test/syscalls/linux:memfd_test",
-            "//test/syscalls/linux:sigaltstack_test",
-            "//test/syscalls/linux:socket_bind_to_device_distribution_test",
-            "//test/syscalls/linux:socket_bind_to_device_sequence_test",
-            "//test/syscalls/linux:socket_bind_to_device_test",
-        ],
-        "//conditions:default": [],
-    }),
-    tags = ["manual"],
+standalone_syscall_fixtures(
+    name = "standalone_fixtures",
+    srcs = [
+        "//test/syscalls/linux:memfd_test",
+        "//test/syscalls/linux:sigaltstack_test",
+        "//test/syscalls/linux:socket_bind_to_device_distribution_test",
+        "//test/syscalls/linux:socket_bind_to_device_sequence_test",
+        "//test/syscalls/linux:socket_bind_to_device_test",
+    ],
 )
 
 # Please keep syscall tests ordered alphabetically by name.

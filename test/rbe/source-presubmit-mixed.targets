@@ -16,6 +16,7 @@
 //test/rtnetlink:arm64_syscalls
 
 # Standalone syscall binaries built by the mixed profile.
+//test/syscalls:standalone_fixtures
 //test/syscalls:arm64_standalone_fixtures
 
 # PacketImpact needs nested namespaces on its native test worker.
