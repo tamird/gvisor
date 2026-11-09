@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T05:03:05+00:00",
+    "updatedAt": "2026-11-09T05:14:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56629,8 +56629,8 @@
       "url": "https://github.com/google/gvisor/pull/17048",
       "title": "Release the sandbox file table when starting a process fails",
       "status": "open",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
-      "summary": "A missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.",
+      "updatedAt": "2026-11-09T05:14:37+00:00",
+      "summary": "Ayush approved the published head 8f08865cd and asked to remove the added boot test. The proposed replacement fd64b1636 removes only TestFailedRunClosesStdio, restoring loader_test.go to the PR parent. The fix in loader.go is byte-identical to the approved version. A fresh run of the existing boot tests has no result yet.\n\nA missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.",
       "evidence": [
         {
           "label": "Proposed fix and regression on master",
@@ -56639,6 +56639,14 @@
         {
           "label": "AMD64 and ARM64 missing-executable controls and fixes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
+        },
+        {
+          "label": "Ayush’s file-level request on the approved revision",
+          "url": "https://github.com/google/gvisor/pull/17048#discussion_r4509588941"
+        },
+        {
+          "label": "Proposed amendment removing the added test",
+          "url": "https://github.com/tamird/gvisor/commit/fd64b1636"
         }
       ],
       "settledReviews": [
@@ -56652,7 +56660,39 @@
           "note": "Published as #17048.",
           "postedURL": "https://github.com/google/gvisor/pull/17048"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+        "observedAt": "2026-11-09T05:14:37+00:00",
+        "disposition": "Open approved PR with an unanswered file-level request from Ayush",
+        "nextAction": "Await contributor approval to update #17048 in place and reply on the original thread. Recheck the public PR and import before acting.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17048#discussion_r4509588941",
+          "https://github.com/tamird/gvisor/commit/fd64b1636"
+        ]
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+        "head": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
+        "title": "Release the sandbox file table when starting a process fails",
+        "body": "A missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.\n\ncreateContainerProcess owns the initial reference to the file table. CreateProcess takes a separate reference for the task only after it loads the executable. Drop the caller’s reference on every return, including errors while preparing the mount namespace or loading the process.",
+        "url": "https://github.com/tamird/gvisor/commit/fd64b1636",
+        "summary": "Update #17048 in place with fd64b1636 and reply to Ayush on the original thread? The added test is removed and the approved file-table fix is unchanged.\n\nProposed inline reply\n\nRemoved the added test in fd64b1636.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-09T05:14:37+00:00"
+      },
+      "refinement": {
+        "before": {
+          "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+          "base": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d"
+        },
+        "after": {
+          "head": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
+          "base": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d"
+        }
+      }
     },
     {
       "id": "pr:17049",
@@ -91426,5 +91466,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T05:03:05+00:00"
+  "updatedAt": "2026-11-09T05:14:37+00:00"
 }
