@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T22:46:01+00:00",
+    "updatedAt": "2026-11-09T23:08:26+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -64633,16 +64633,28 @@
       "title": "Use one test process for shim timeouts and runsc lifecycle tests",
       "url": "https://github.com/tamird/gvisor/commit/531bc8fc3",
       "group": "tests",
-      "status": "Agent work",
-      "summary": "The revised shim, runsc and systrap tests opt in to the shared test process in five TestMain entry points. Child commands receive their test context. The shim assertion observes the watchdog killing the expected runtime PID. The systrap host-stall test owns its stub so it can use waitid and cleans up the process group on early failure.\n\nQualification on the revised source is running. The previous source passed 53 selected AMD64 cases across the two earlier runs.",
+      "status": "Contributor review requested",
+      "summary": "The five test executables now opt in from TestMain. The shim tests check that the watchdog killed the runtime they started. The systrap host-stall child owns its stub and cleans up its process group on early failure.\n\nThe hosted AMD64 worker passed 123 of 124 selected test records. Its sole skip, specutils TestProcessIdentity, passed uncached on a worker with pidfs. The missing-runtime control failed as expected and all five ARM64 test binaries cross-compiled.",
       "evidence": [
         {
           "label": "Revised process fixture",
           "url": "https://github.com/tamird/gvisor/commit/531bc8fc3"
         },
         {
-          "label": "Exact-source Linux qualification",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42713412767"
+          "label": "Five AMD64 suites, missing-runtime control and five ARM64 executable builds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42713412767/artifacts/13719341117"
+        },
+        {
+          "label": "specutils TestProcessIdentity passed uncached with zero skips on a pidfs-capable worker",
+          "url": "https://app.buildbuddy.io/invocation/9a758ac6-fad0-43c6-8c78-8ad4846e568b"
+        },
+        {
+          "label": "Shim TestPinnedSandboxRemainsOwnedAcrossExec passed on a pidfs-capable worker",
+          "url": "https://app.buildbuddy.io/invocation/28bd663f-1a5f-4493-86fa-8359e79643fd"
+        },
+        {
+          "label": "Early-failure replay showed the revised driver was reaped and its stopped stub exited",
+          "url": "https://app.buildbuddy.io/invocation/f0a22c67-5026-4727-a288-2d406399c5dc"
         },
         {
           "label": "Both approved lifecycle commits landed in #17053",
@@ -64665,7 +64677,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-09T22:37:48+00:00",
+      "updatedAt": "2026-11-09T23:08:26+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64693,17 +64705,6 @@
           "note": "Revise the shared test-process fixture and its caller ownership."
         }
       ],
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
-        "observedAt": "2026-11-09T22:37:48+00:00",
-        "disposition": "Contributor requested revisions to 885fe8b75. The revised source is being validated.",
-        "nextAction": "Check the actual Linux case results and watchdog behavior before requesting review of this revision.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/531bc8fc3",
-          "https://github.com/tamird/gvisor/actions/runs/42713412767"
-        ]
-      },
       "refinement": {
         "before": {
           "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
@@ -64713,6 +64714,17 @@
           "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
           "base": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
+        "baseHead": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295",
+        "url": "https://github.com/tamird/gvisor/commit/531bc8fc3",
+        "title": "Use one test process for shim timeouts and runsc lifecycle tests",
+        "requestedAt": "2026-11-09T23:08:26+00:00",
+        "summary": "Open this single-commit gVisor PR? The five test binaries explicitly opt in, child commands use the owning test context, and the shim verifies that the watchdog killed its child. The systrap host-stall helper reaps the driver and stops its stub on an early failure.",
+        "body": "The shim deadline tests run a fake runtime through /bin/sh and sleep.\nOn a worker without those programs, some tests accept the launch error\nbefore the watchdog has a chance to terminate a running command.\n\nLet the five test binaries opt in from TestMain to run as a child that\nexits or waits for a signal. The shim can select the child by executable\nname while passing its ordinary runtime arguments. Check that the shim\nactually killed that process. The runsc and systrap tests use the same\nchild for process identity, readiness, and an unresponsive sandbox.\n\nGive child commands their owning test context and reap each process once."
       }
     },
     {
@@ -95066,5 +95078,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T22:46:01+00:00"
+  "updatedAt": "2026-11-09T23:08:26+00:00"
 }
