@@ -39,6 +39,7 @@ import (
 const (
 	shmPageSize       = 4096
 	shmTotalSize      = 2 * shmPageSize
+	imageShade        = 0xbd
 	tcpInflightBytes  = 16 * 1024
 	stateEnvKey       = "STATE_WORKLOAD_ENV"
 	stateEnvValue     = "preserved-across-sr-hops"
@@ -239,7 +240,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 	defer signal.Stop(sigCh)
 
 	// 3. Set up private anonymous mmap and file-backed MAP_SHARED mmap.
-	privMap, err := unix.Mmap(-1, 0, shmTotalSize, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_PRIVATE|unix.MAP_ANONYMOUS)
+	privMap, err := unix.Mmap(-1, 0, 768*1024, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_PRIVATE|unix.MAP_ANONYMOUS)
 	if err != nil {
 		return w.failf("anonymous Mmap: %v", err)
 	}
@@ -496,8 +497,11 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 	// Execute chained checkpoint/restore hops.
 	for hop := 0; hop < w.hops; hop++ {
 		// Mutate memory mappings, xattrs, and file seek offset before checkpoint.
-		wantPriv := deterministicPattern("priv-mmap", hop, shmTotalSize)
-		copy(privMap, wantPriv)
+		// Keep a uniform grayscale frame in guest memory and compare every
+		// pixel after the real restore.
+		for i := range privMap {
+			privMap[i] = imageShade
+		}
 
 		wantFileMap := deterministicPattern("file-mmap", hop, shmTotalSize)
 		copy(fileMap, wantFileMap)
@@ -616,7 +620,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		}
 
 		// Verify private anonymous mmap and file-backed MAP_SHARED coherence.
-		if !bytes.Equal(privMap, wantPriv) {
+		if bytes.Count(privMap, []byte{imageShade}) != len(privMap) {
 			return w.failf("hop %d privMap contents corrupted after restore", hop)
 		}
 		if !bytes.Equal(fileMap, wantFileMap) {

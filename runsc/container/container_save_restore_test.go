@@ -21,9 +21,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -39,9 +41,12 @@ import (
 	"gvisor.dev/gvisor/pkg/cpuid"
 	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/erofs"
+	"gvisor.dev/gvisor/pkg/sentry/pgalloc/metadata"
 	"gvisor.dev/gvisor/pkg/sentry/state/checkpointfiles"
 	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/pretty"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
@@ -2775,6 +2780,14 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 		}
 
 		if hop.inspectStatefile {
+			var originalImage []byte
+			wirePair := hopIdx == 0 && hop.saveEngine == config.StateEngineWire
+			if wirePair {
+				originalImage, err = os.ReadFile(imgPath)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
 			dumpPath := filepath.Join(ckptDir, "statefile-dump.txt")
 			if out, err := exec.Command(specutils.ExePath, "statefile", "-output="+dumpPath, imgPath).CombinedOutput(); err != nil {
 				t.Fatalf("hop %d statefile dump failed: %v\n%s%s", hopIdx, err, out, preserveStatefile(t, hopIdx, imgPath))
@@ -2784,6 +2797,35 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 				t.Fatalf("hop %d ReadFile(%s): %v", hopIdx, dumpPath, err)
 			}
 			dump := string(dumpBytes)
+			if wirePair {
+				// Compare both CLIs on the checkpoint that this test will restore.
+				stock := os.Getenv("GVISOR_CKPT_OLD_RELEASE")
+				stockOutput := filepath.Join(ckptDir, "stock-dump.txt")
+				cmd := exec.Command(filepath.Join(stock, "runsc"), "statefile", "-output="+stockOutput, imgPath)
+				cmd.Env = append(os.Environ(), "GVISOR_SIDECAR_BINARIES_DIR="+filepath.Join(stock, "gvisor-bin"))
+				out, err := cmd.CombinedOutput()
+				stockResult := "success"
+				if err != nil {
+					stockResult = strings.TrimSpace(string(out))
+					if cmd.ProcessState == nil {
+						t.Fatalf("could not run stock statefile: %v", err)
+					}
+					if stockResult != "error printing state: unreachable" {
+						t.Logf("other stock statefile result: %v: %.300s", err, out)
+						stockResult = "different-error"
+					}
+				} else if oldDump, err := os.ReadFile(stockOutput); err != nil {
+					t.Fatal(err)
+				} else if !bytes.Equal(oldDump, dumpBytes) {
+					stockResult = "different-output"
+				}
+				after, err := os.ReadFile(imgPath)
+				if err != nil || !bytes.Equal(originalImage, after) {
+					t.Fatalf("checkpoint changed during comparison: %v", err)
+				}
+				t.Logf("WIRE_PAIR image=%x bytes=%d stock=%q corrected=%x", sha256.Sum256(after), len(after), stockResult, sha256.Sum256(dumpBytes))
+				traceCheckpointRegions(t, originalImage, stockResult)
+			}
 			wantRoot := "g1r0 = kernel.Kernel{"
 			if hop.saveEngine == config.StateEngineWire {
 				wantRoot = ".Kernel]{"
@@ -2872,6 +2914,120 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 			t.Errorf("overlay root write leaked to host %s: stat error %v", workloadRootfsDir, err)
 		}
 	}
+}
+
+// traceCheckpointRegions measures offsets in the decompressed checkpoint. Only
+// counts and digests leave the worker. The input is the same untouched image
+// already passed to the two runsc binaries and restored by the test.
+func traceCheckpointRegions(t *testing.T, original []byte, stockResult string) {
+	t.Helper()
+	rc, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(original)), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rc.Close()
+	const maxStream = 128 << 20
+	data, err := io.ReadAll(io.LimitReader(rc, maxStream+1))
+	if err != nil || len(data) > maxStream {
+		t.Fatalf("read checkpoint stream: length=%d err=%v", len(data), err)
+	}
+	if err := rc.Verify(); err != nil {
+		t.Fatal(err)
+	}
+
+	// The generic printer reads headers a byte at a time. When its varint
+	// reader exhausts all ten bytes, ReadHeaderMode returns "unreachable".
+	// Re-read at the measured position to check that interpretation against
+	// the original CLI's error before assigning the bytes to a region.
+	offset := -1
+	if stockResult == "error printing state: unreachable" {
+		legacy := bytes.NewReader(data)
+		if err := pretty.PrintText(io.Discard, legacy); err == nil || err.Error() != "unreachable" {
+			t.Fatalf("generic reader disagrees with stock CLI: %v", err)
+		}
+		offset = len(data) - legacy.Len() - 10
+		if offset < 0 {
+			t.Fatal("header offset outside stream")
+		}
+		header := bytes.NewReader(data[offset:])
+		_, err := state.ReadHeaderMode(&wire.Reader{Reader: header})
+		if err == nil || err.Error() != "unreachable" || header.Len() != legacy.Len() {
+			t.Fatalf("header replay disagrees at %d: %v", offset, err)
+		}
+	}
+
+	r := bytes.NewReader(data)
+	at := func() int { return len(data) - r.Len() }
+	var last, kernelEnd, firstMetadata, memoryFiles, pageBytes int
+	region, regionStart, regionEnd := "none", -1, -1
+	record := func(name string, end int) {
+		if end < last || end > len(data) {
+			t.Fatalf("invalid %s bounds [%d,%d)", name, last, end)
+		}
+		if last <= offset && offset < end {
+			region, regionStart, regionEnd = name, last, end
+		}
+		last = end
+	}
+	inspect := func(report func(int64) error) error {
+		first := true
+		memoryFiles++
+		return metadata.InspectInline(r, func(size int64) error {
+			end := at()
+			if first {
+				if end-last != 8+int(size) {
+					return fmt.Errorf("length of MemoryFile metadata disagrees with reader")
+				}
+				record("metadata-length", last+8)
+				record("metadata-protobuf", end)
+				if memoryFiles == 1 {
+					firstMetadata = int(size)
+				}
+				first = false
+			} else {
+				record("page-header", end-int(size))
+				record("page-data", end)
+				pageBytes += int(size)
+			}
+			return report(size)
+		})
+	}
+	const owners = "pkg/sentry/kernel.privateMemoryFileMetadata"
+	err = pretty.PrintWithAfterGraph(io.Discard, r, false, owners, "owners", func(frame int, root string, length int64, report func(int64) error) error {
+		record("state-graph", at())
+		switch frame {
+		case 0:
+			if root != (*cpuid.FeatureSet)(nil).StateTypeName() {
+				return fmt.Errorf("unexpected CPU frame")
+			}
+		case 1:
+			if root != "pkg/sentry/kernel.Kernel" {
+				return fmt.Errorf("unexpected kernel frame")
+			}
+			kernelEnd = at()
+			return inspect(report)
+		case 2:
+			if root != owners || length < 0 {
+				return fmt.Errorf("unexpected private MemoryFile owner frame")
+			}
+			for i := int64(0); i < length; i++ {
+				if err := inspect(report); err != nil {
+					return err
+				}
+			}
+		default:
+			return fmt.Errorf("unexpected frame %d", frame)
+		}
+		return nil
+	})
+	if err != nil || kernelEnd == 0 || memoryFiles == 0 || firstMetadata == 0 || pageBytes == 0 || last != len(data) {
+		t.Fatalf("mapped %d of %d decompressed checkpoint bytes, %d MemoryFiles: %v", last, len(data), memoryFiles, err)
+	}
+	matchesWorkload := offset >= 0 && bytes.Count(data[offset:offset+10], []byte{0xbd}) == 10
+	if offset >= 0 && regionStart < 0 {
+		t.Fatalf("no region contains failing header at %d", offset)
+	}
+	t.Logf("WIRE_REGIONS image=%x decoded=%d kernel_end=%d first_metadata=%d memory_files=%d page_bytes=%d error_at=%d region=%s region_start=%d region_end=%d workload_shade=%t", sha256.Sum256(original), len(data), kernelEnd, firstMetadata, memoryFiles, pageBytes, offset, region, regionStart, regionEnd, matchesWorkload)
 }
 
 // preserveStatefile copies the statefile at imgPath to the test's undeclared

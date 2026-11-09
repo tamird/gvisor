@@ -45,6 +45,7 @@ go_library(
 
 go_test(
     name = "container_test",
+    env = {"GVISOR_CMD_TEST_APP": "$(rootpath //test/cmd/test_app)"},
     size = "large",
     srcs = [
         "console_test.go",
@@ -84,6 +85,7 @@ go_test(
         "//pkg/sentry/fscheckpoint",
         "//pkg/sentry/fscheckpoint:fscheckpoint_proto_go_proto",
         "//pkg/sentry/fsimpl/erofs",
+        "//pkg/sentry/pgalloc/metadata",
         "//pkg/sentry/kernel/auth",
         "//pkg/sentry/limits",
         "//pkg/sentry/platform/platformdesc",
@@ -92,7 +94,9 @@ go_test(
         "//pkg/sentry/seccheck/sinks/remote/test",
         "//pkg/sentry/state/checkpointfiles",
         "//pkg/state",
+        "//pkg/state/pretty",
         "//pkg/state/statefile",
+        "//pkg/state/wire",
         "//pkg/sync",
         "//pkg/test/testutil",
         "//pkg/unet",
