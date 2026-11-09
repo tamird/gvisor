@@ -1,4 +1,5 @@
 """Run one original IPv6 route-MSS transfer through the private veth pair."""
+import errno
 import hashlib
 import json
 import os
@@ -48,7 +49,10 @@ def prepare():
         (WORK / name).write_bytes(data)
         if name in ("BUILD", "wire_test.go"):
             (FIXTURE / name).write_bytes(data)
-    (WORK / "netns.sh").chmod(0o700)
+    wrapper = WORK / "netns.sh"
+    wrapper.write_text(replace_one(wrapper.read_text(), "strace -ff -qq -ttt -s 16",
+                                   "strace -ff -qq -ttt -T -s 16"))
+    wrapper.chmod(0o700)
     # Keep the donor's original case indices, packet decoder, syscall joins,
     # BEP-bound output copying, and checks. Select one original Go subtest.
     code = (WORK / "qualify.py").read_text()
@@ -57,6 +61,70 @@ def prepare():
                        '--test_arg=-test.run=^TestExperimentMTUWire$/^host$/^v6$/^mss_0$/^on$')
     code = replace_one(code, '"--lockfile_mode=off",', '"--lockfile_mode=off",*distdirs,')
     (WORK / "qualify_one.py").write_text(code)
+
+def sendmmsg_returns():
+    # -ff makes each file specific to one TID. A resumed syscall retains its
+    # original entry timestamp and fd; store only its return and duration.
+    returns = {}
+    for path in WORK.glob("syscall.*"):
+        pending = None
+        for line in path.read_text(errors="replace").splitlines():
+            start = re.match(r"^(\d+)[.](\d{6}) sendmmsg\((\d+),", line)
+            if start:
+                key = (int(start[3]), int(start[1])*1_000_000+int(start[2]))
+                if "<unfinished ...>" in line:
+                    pending = key
+                    continue
+            elif re.match(r"^\d+[.]\d+ <[.][.][.] sendmmsg resumed>", line) and pending:
+                key, pending = pending, None
+            else:
+                continue
+            parts = re.search(r"\)\s+=\s+(.{1,120}?)\s+<(\d+)[.](\d{6})>$", line)
+            if not parts:
+                continue
+            raw = parts[1]
+            m = re.fullmatch(r"(-?\d+)(?: ([A-Z][A-Z0-9_]+) \([^)]+\))?", raw)
+            duration = int(parts[2])*1_000_000+int(parts[3])
+            assert key not in returns
+            returns[key] = {"entry_us": key[1], "duration_us": duration, "return_text": raw,
+                            "return": int(m[1]) if m else None, "errno_name": m[2] if m else None,
+                            "errno_number": getattr(errno,m[2],None) if m and m[2] else None}
+    return returns
+
+def observe_calls(reader):
+    # Both originals have already been copied from the owner's TestResult.
+    log = (OUT / "test.log").read_text()
+    item, = [json.loads(line) for line in re.findall(r"(?m)MTU_RESULT (\{.*\})$",log)]
+    assert (item["Mode"],item["Family"],item["PeerMSS"],item["Phase"]) == ("host","v6",0,"on")
+    headers = reader.syscall_headers()
+    trace = sendmmsg_returns()
+    result = RESULT["data_sendmmsg"] = []
+    RESULT.update(kernel=os.uname().release, source_fd=item["SourceFD"],
+                  read=item["Read"], application_sha256=item["Digest"])
+    for call in item["Calls"]:
+        match = [v for (fd, timestamp),v in trace.items()
+                 if fd == item["SourceFD"] and call["BeginUS"] <= timestamp <= call["EndUS"]]
+        row = {"begin_us":call["BeginUS"], "end_us":call["EndUS"], "sent":call["Sent"],
+               "link_error":call["Error"], "packets":call["Packets"], "returns":match,
+               "virtio_calls":[h for h in headers if h["fd"] == item["SourceFD"] and
+                               call["BeginUS"] <= h["us"] <= call["EndUS"]]}
+        result.append(row)
+    save()
+    for row in result:
+        syscall, = row["returns"]
+        header, = row["virtio_calls"]
+        assert header["call"] == "sendmmsg" and header["fd"] == item["SourceFD"]
+        assert header["us"] == syscall["entry_us"] and header["virtio"]["gso_type"] in (0,4)
+        packet, = row["packets"]
+        assert header["virtio"]["gso_type"] == (4 if packet["Payload"] > packet["GSO"]["MSS"] else 0)
+        if syscall["return"] == -1:
+            assert row["sent"] == 0 and row["link_error"] and syscall["errno_number"] is not None
+        else:
+            assert syscall["return"] == row["sent"] == 1 and not row["link_error"] and not syscall["errno_name"]
+    rejected = [r for r in result if r["virtio_calls"][0]["virtio"]["gso_type"]==4 and r["sent"]==0]
+    RESULT["rejected_tcpv6_aggregates"] = len(rejected)
+    RESULT["observation"] = "aggregate rejection observed" if rejected else "aggregate rejection not reproduced"
+    assert any(r["virtio_calls"][0]["virtio"]["gso_type"]==4 for r in result)
 
 def check(reader):
     receipt = reader.REPORT
@@ -113,7 +181,11 @@ def main():
             bep = WORK / "bep"
             bep.unlink(missing_ok=True)
             try:
-                reader.main()
+                try:
+                    reader.main()
+                finally:
+                    if (OUT / "test.log").is_file() and (OUT / "test.xml").is_file():
+                        observe_calls(reader)
                 check(reader)
                 break
             except Exception as exc:
