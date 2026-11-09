@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T01:29:38+00:00",
+    "updatedAt": "2026-11-09T02:17:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2958,18 +2958,58 @@
     {
       "id": "external:arm64",
       "type": "issue",
-      "title": "ARM64 Firecracker requires self-hosted capacity",
+      "title": "Shared ARM64 Firecracker execution",
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13603",
       "group": "rbe",
-      "status": "unavailable",
-      "summary": "The current ARM64 Podman request in c818154a built its inputs and requested an ARM64 Firecracker TestRunner, but the scheduler found no matching worker: zero test attempts. The managed-worker limitation remains real. We own the native Actions fallback; this result creates no new human request and is unrelated to the closed output-buffer issue.\n\nThe provider confirmed on October 9 that ARM64 Firecracker still requires self-hosted capacity. A shared Firecracker + ARM64 pool is on the roadmap, without a deployment date or availability claim. The issue remains open. This is separate from demonstrated ARM64 OCI workers and the existing Actions execution route; no new self-hosted infrastructure commitment is made.\n\nProvider response: https://github.com/buildbuddy-io/buildbuddy/issues/13603#issuecomment-6084558794\n\nEarlier capability observations:\n\nThe native Actions ARM64 syscall profile now has passing observations for all 916 canonical owners and all 1,672 original shards. The disjoint evidence covers 524 owners at 5ade, two focused corrected owners at 426b, and 390 owners at 3c895. The latest passing observations contain 50,583 XML entries, 1,634 existing reported skips and eight empty shell XML files; the latter provide no named-case or internal-skip credit. Outcome 801a80f845eb and independent saved peer 55f2a25fd11d close the profile. TestRunners execute locally without cache reuse, while compilation stays remote or cached. All original failures remain recorded. This is a source-specific union, not a full replay at one final head, and does not establish ARM64 Firecracker, KVM, 64K, checkpoint, alternate-kernel, GPU or full-platform qualification.\n\nCorrected bucket 0 passes at 5ade0e7bed8dc359648bd2de50845743ea611ab7 in https://github.com/tamird/gvisor/actions/runs/37543232664: all 61 selected owners and 107 original uncached local test shards pass. The 2,399 recorded XML entries retain the exact 85 existing skips; the four corrected overlay owners execute 30 cases without skips. Actual compilation has 10 fresh remote compile/link actions and 2,756 remote cache hits, with no local compiler. Outcome 6a4f414bb2d6 and independent saved peer fb1ea23655a3 close this limited bucket. Prior failed/partial runs remain retained.\n\nThe first Actions ARM64 syscall bucket fails in https://github.com/tamird/gvisor/actions/runs/37535389228 at source 4f28: 61 selected owners, 2 passing and 59 failing; their 107 original shards have 2 passes and 105 failures. The other 855 of the canonical 916 owners remain unexecuted. Recorded compiler spawns are remote or cached, with none local. Representative diagnostics identify writable-path errors in the local root fixture (premature-exit marker and overlay filestore); the owner is investigating and correcting that boundary. This is not an established ARM runtime or compiler defect, and no full-profile pass is claimed.\n\nThe Actions local-test pilot passes one ARM64 rootless release smoke at c9b90126fb2a412f486fea32331250fc0a7932a3: https://github.com/tamird/gvisor/actions/runs/37477823960. Actual compilation stays remote and the uncached TestRunner executes on the ephemeral Ubuntu ARM64 Actions VM with 4K pages. The narrow setup reuses the existing Buildkite AppArmor user-namespace setting; AppArmor remains enabled. Original run 37475761132 at 7d3c9452 remains failed during user-namespace setup. This is one smoke owner, not ARM64 Firecracker capacity, 64K, Docker/cgroup, KVM/vhost, alternate-kernel, GPU or full public-CI qualification. The AMD64 control https://github.com/tamird/gvisor/actions/runs/37478390114 also passes at the same c9b901 source in 4 minutes 35 seconds. Its actual uncached 900-second TestRunner executes locally; every compiler spawn remains remote or a remote cache hit, and the runtime input matches the recorded AMD64 linker output. Independent paired evidence review 465cfe7024a3 is closed PASS for both controls (outcome be73c7408130); the original failed ARM run remains retained.\n\nThe existing ARM64 bwrap lane also passes at 97e82f2cd under https://github.com/tamird/gvisor/actions/runs/37480690126: 19 passing leaves and the one existing TestUserns skip, with no new skip. The actual uncached native TestRunner retains its original 300-second timeout and sudo -n -E wrapper. Its test binary and runsc inputs match the recorded remote ARM64 linker outputs; all recorded non-test spawns are remote or remote cache hits. Outcome f174cc56f08c and independent peer 792f18a99618 close this limited result. The runner has 4K pages; this does not qualify ARM64 Firecracker, 64K, Docker/full cgroup, KVM/vhost, alternate kernels or GPU.\n\nBuildBuddy Firecracker and 64K limits remain:\n\nThe actual ARM64 Firecracker scheduling attempt reports no registered executor, zero workers and zero named cases. Ordinary ARM64 OCI execution is separately qualified. Public ARM64 64K graph preparation fcb52c499 now has a successful build-and-graph-only check: the existing 1,430 AMD64, 916 ARM64 and 659 ARM64 64K selections are preserved, and all 659 configured 64K runtime owners are explicitly reported unavailable. Representative ARM64 4K and 64K runtime closures build together with the correct Go tags and systrap C flags. Outcome 91bbf78ce80c and independent peer 434303d1cb1e close this scope. This is neither a build of every 64K owner nor runtime evidence. No supported hosted 64K-kernel worker configuration exists in the retained evidence; ordinary ARM64 or Firecracker support does not establish it. The setting/config prerequisite is a separate independent proposal awaiting contributor review. No new provider issue is authorized.\n\nThe later full-cohort build at 7fbce9b26 remains FAILED after 109.772 seconds: 651 of 659 configured roots built; eight failed roots trace to four source files (x86-only unused constants in time/ptrace and a missing reserved-syscall macro in bad/seccomp). No runtime test executed, and no root was skipped or aborted. The corrected build at c65d805387 then passes all 659 roots using the same requested cohort and normal compilation caches (parent e73192d4, 172.696 seconds; Bazel build 72.138 seconds). No runtime test executes. Outcome 290a0abe5ee3 and independent peer 17f22b529933 close the full hermetic build scope. Worker capacity remains unavailable; no GNU or RISC-V qualification is claimed.",
+      "status": "Observed on shared workers",
+      "summary": "The shared BuildBuddy pool ran all nine docprocessor cases on an ARM64 Firecracker guest as UID 0 with IPv6 networking requested. A separate shared Linux 5.10.0 guest enforced a seccomp filter on both threads but reported the new filter count on only one. Linux 6.1 was tested under QEMU.\n\nThe earlier ARM64 Podman request was unscheduled and ran zero tests. Podman still needs its own image, nonroot storage and default networking checked. Nested KVM, 64 KiB pages and selection of a particular guest kernel each need separate evidence.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13603,
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
+      "updatedAt": "2026-11-09T01:54:29+00:00",
       "evidence": [
         {
-          "label": "Current ARM64 Firecracker request: no worker, zero test attempts",
+          "label": "Nine docprocessor cases on the native ARM64 Firecracker worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42455777370/artifacts/13607926451"
+        },
+        {
+          "label": "Seccomp enforcement and procfs counts on shared Linux 5.10.0",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368310414/artifacts/13572558404"
+        },
+        {
+          "label": "Podman worker request with zero test attempts",
           "url": "https://app.buildbuddy.io/invocation/c818154a-db69-4e47-92ed-b6b8c7acaa29"
+        },
+        {
+          "label": "October provider response on shared capacity",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13603#issuecomment-6084558794"
+        },
+        {
+          "label": "Separate Linux 5.10 and 6.1 comparison",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090#issuecomment-6706591708"
+        },
+        {
+          "label": "Historical ARM64 Actions, syscall, image and build results",
+          "url": "https://github.com/tamird/gvisor/blob/64d985803/registry.json"
+        },
+        {
+          "label": "Earlier native ARM64 Actions release smoke",
+          "url": "https://github.com/tamird/gvisor/actions/runs/37477823960"
+        },
+        {
+          "label": "Earlier native ARM64 Actions bwrap suite",
+          "url": "https://github.com/tamird/gvisor/actions/runs/37480690126"
+        },
+        {
+          "label": "Corrected syscall bucket on native ARM64 Actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/37543232664"
+        },
+        {
+          "label": "Remote selector suite: all 23 tests, original TestResult, log and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547915540/artifacts/13644615200"
+        },
+        {
+          "label": "First ARM64 attempt: build time limit, zero TestResults",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644257975"
         }
       ]
     },
@@ -6153,8 +6193,27 @@
       "title": "Select both architectures in public shared lanes",
       "url": "https://github.com/tamird/gvisor/tree/rbe-all-platform-lanes",
       "group": "rbe",
-      "status": "analysis validated; ARM runtime capacity unavailable",
-      "summary": "Public, clean and tracked source 5ed12170e0abac638fb4b202750c922a6622d97b extends the existing primary 8fca selection interface to the maintained normal smoke, Docker, bwrap, CPU image-source and GPU image-source profiles across their declared architectures. Source and record peers are closed. Existing native variants, target-owned worker properties and capacity exclusions are preserved; this adds neither root/race scope nor replacement images. Original source d2abaf0c4233d6b81744c9bf536188e673056b3a and analysis parent 792c9ce3 remain FAILED at package loading because existing image execution constraints duplicated the helper’s Linux/CPU additions (outcome 9eab951d79a0). The narrow correction normalizes labels in each caller BUILD package and removes equal constraints in their original order. Corrected analysis-only parent d2ef42f5-c032-459c-8739-ccf4ae2a9e86 finishes OK in 313.247 seconds at 5ed12170e after 24 zero-action analyses: ten profile/routing pairs plus final union and unit-filter checks. Saved evidence and independent review are closed at outcome a80c7fbe1de2 and peer 733d1ecc5364: all 338 CAS files (902,392 bytes), 27 source blobs plus commit, ten selection/routing reports and property joins are verified. Exactly nine AMD64 owners are selected and nine ARM64 siblings remain explicitly unavailable for Firecracker, with no policy exclusions. The final eleven roots also retain the existing AMD64 root and smoke-race owners, and the unit filter is preserved. All 24 analyses and finalization checks exit zero with no actions or tests executed; no runtime credit is claimed. Root integrated the unchanged reviewed source and verified primary 5ed public, clean and matching tracked. There is no upstream PR or contributor approval request for this qualification branch."
+      "status": "Analysis validated; the selector excluded nine ARM64 runtime targets",
+      "summary": "Public, clean and tracked source 5ed12170e0abac638fb4b202750c922a6622d97b extends the existing primary 8fca selection interface to the maintained normal smoke, Docker, bwrap, CPU image-source and GPU image-source profiles across their declared architectures. Source and record peers are closed. Existing native variants, target-owned worker properties and capacity exclusions are preserved; this adds neither root/race scope nor replacement images. Original source d2abaf0c4233d6b81744c9bf536188e673056b3a and analysis parent 792c9ce3 remain FAILED at package loading because existing image execution constraints duplicated the helper’s Linux/CPU additions (outcome 9eab951d79a0). The narrow correction normalizes labels in each caller BUILD package and removes equal constraints in their original order. Corrected analysis-only parent d2ef42f5-c032-459c-8739-ccf4ae2a9e86 finishes OK in 313.247 seconds at 5ed12170e after 24 zero-action analyses: ten profile/routing pairs plus final union and unit-filter checks. Saved evidence and independent review are closed at outcome a80c7fbe1de2 and peer 733d1ecc5364: all 338 CAS files (902,392 bytes), 27 source blobs plus commit, ten selection/routing reports and property joins are verified. Exactly nine AMD64 owners are selected and the historical selector excluded their nine ARM64 Firecracker siblings before scheduling, with no policy exclusions. The final eleven roots also retain the existing AMD64 root and smoke-race owners, and the unit filter is preserved. All 24 analyses and finalization checks exit zero with no actions or tests executed; no runtime credit is claimed. Root integrated the unchanged reviewed source and verified primary 5ed public, clean and matching tracked. There is no upstream PR or contributor approval request for this qualification branch.",
+      "evidence": [
+        {
+          "label": "ARM64 exclusion in the analyzed selector",
+          "url": "https://github.com/tamird/gvisor/blob/5ed12170e/test/rbe/unit_matrix.py#L250-L255"
+        },
+        {
+          "label": "Nine docprocessor cases on the native ARM64 Firecracker worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42455777370/artifacts/13607926451"
+        },
+        {
+          "label": "Corrected dispatcher for new runs",
+          "url": "https://github.com/tamird/gvisor/commit/227dd552c"
+        },
+        {
+          "label": "Remote selector suite: all 23 tests, original TestResult, log and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547915540/artifacts/13644615200"
+        }
+      ],
+      "updatedAt": "2026-11-09T01:57:59+00:00"
     },
     {
       "id": "branch:rbe-presubmit-build",
@@ -9421,13 +9480,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/final-public-ci",
-      "head": "38745c527784376e0b5d915fe5ebd85e1d1385fd",
+      "head": "227dd552cb6146b8441a4e17567d41428307081a",
       "title": "Current public-CI qualification",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/38745c527",
-      "status": "Native ARM64 SDK tests passed; QEMU SDK tests and full unit run remain incomplete",
-      "summary": "On a native ARM64 Ubuntu 22.04 worker, Bazel ran the docprocessor (9 cases), Go SDK (49), and Python SDK (43) tests at 38745c527. All three test targets ran uncached and passed. Nogo analyzed the standard library and produced 10,895,578 bytes of facts.\n\nAn AMD64 worker built the ARM64 kernel and ext4 guest image at 38745c527. The image assembly action now selects tar for the worker’s architecture. Its output digests matched the Bazel build report.\n\nAt its deadline the AMD64/ARM64 unit run at d943b4a177 had attempted 656 of 668 targets: 174,566 cases passed, 52 failed and 69 skipped. Five more targets passed all 34 cases on the same source. The root build test and both AMD64 NVIDIA tests ran in a second job. A native ARM64 run executed both NVIDIA tests: 60 cases passed, and nine skipped for unavailable driver sources. Only the AMD64 and ARM64 cgroup tests still have no attempt at d943b4a177. Both passed on the corrected source in #16496.\n\nOf 357 analyzer-dependent targets, 356 built; the remaining cgroup target required local compilation. These builds do not count as test attempts. The ARM64 SDK and docprocessor guest run separately stopped before any of its 58 cases because QEMU exhausted temporary disk.\n\nRelease qualification is separate. On cb548161f5, the mixed release smoke ran 32 cases successfully and skipped one bwrap case. AMD64 ran in Firecracker and ARM64 under QEMU. The optimized releases have also passed CLI checks on both native architectures.\n\nWith the rules_go coverage change in #16507, the coordinator and Sentry built on AMD64 and ARM64. On AMD64 both the coverage and race-plus-coverage releases reported Sentry source lines and passed the KCOV syscall test. At d837256cb, the instrumented releases passed KCOV with systrap and ptrace in AMD64 Firecracker and ARM64 QEMU guests. Native ARM64 KCOV at 38745c527 remains unmeasured.",
-      "updatedAt": "2026-11-06T10:02:53.722Z",
+      "url": "https://github.com/tamird/gvisor/commit/227dd552c",
+      "status": "Remote ARM64 selection verified; full unit and QEMU SDK runs remain incomplete",
+      "summary": "The mixed unit and non-hybrid profile selectors submit eligible ARM64 Firecracker tests while keeping independent KVM and Nogo exclusions. The original workflow ran all 23 selector tests on a remote AMD64 worker. The new case exercised a retained graph of 29 configured ARM64 actions for 15 owners. These were selection checks; the 15 workloads were not executed by this run.\n\nOn a native ARM64 Ubuntu 22.04 worker, Bazel ran the docprocessor (9 cases), Go SDK (49), and Python SDK (43) tests at 38745c527. All three test targets ran uncached and passed. Nogo analyzed the standard library and produced 10,895,578 bytes of facts.\n\nAn AMD64 worker built the ARM64 kernel and ext4 guest image at 38745c527. The image assembly action now selects tar for the worker’s architecture. Its output digests matched the Bazel build report.\n\nAt its deadline the AMD64/ARM64 unit run at d943b4a177 had attempted 656 of 668 targets: 174,566 cases passed, 52 failed and 69 skipped. Five more targets passed all 34 cases on the same source. The root build test and both AMD64 NVIDIA tests ran in a second job. A native ARM64 run executed both NVIDIA tests: 60 cases passed, and nine skipped for unavailable driver sources. Only the AMD64 and ARM64 cgroup tests still have no attempt at d943b4a177. Both passed on the corrected source in #16496.\n\nOf 357 analyzer-dependent targets, 356 built; the remaining cgroup target required local compilation. These builds do not count as test attempts. The ARM64 SDK and docprocessor guest run separately stopped before any of its 58 cases because QEMU exhausted temporary disk.\n\nRelease qualification is separate. On cb548161f5, the mixed release smoke ran 32 cases successfully and skipped one bwrap case. AMD64 ran in Firecracker and ARM64 under QEMU. The optimized releases have also passed CLI checks on both native architectures.\n\nWith the rules_go coverage change in #16507, the coordinator and Sentry built on AMD64 and ARM64. On AMD64 both the coverage and race-plus-coverage releases reported Sentry source lines and passed the KCOV syscall test. At d837256cb, the instrumented releases passed KCOV with systrap and ptrace in AMD64 Firecracker and ARM64 QEMU guests. Native ARM64 KCOV at 38745c527 remains unmeasured.",
+      "updatedAt": "2026-11-09T01:57:59+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "38745c527784376e0b5d915fe5ebd85e1d1385fd",
@@ -11223,6 +11282,10 @@
         {
           "label": "Future-ACK correction: native/netstack and owning checks pass",
           "url": "https://app.buildbuddy.io/invocation/245c8b33-c937-4cce-897e-dd78267336ab"
+        },
+        {
+          "label": "Remote selector suite: all 23 tests, original TestResult, log and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547915540/artifacts/13644615200"
         }
       ],
       "links": [
@@ -66567,8 +66630,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a4ca95b85",
       "title": "Reserve TCP experiment headers on first use",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T01:29:29+00:00",
-      "summary": "With a 1,200-byte peer MSS, both address families sent all 1,200 bytes untagged before the first socket option request. Enabling the option on a capable NIC with the first packet still in flight produced a 1,196-byte IPv4 payload or a 1,192-byte IPv6 payload. Each socket retained the correct limit after two restores. All 11 selected cases passed in Netstack channel-link and host-GSO tests. The TCP/IP, stack and TCP analyzers passed for AMD64 and ARM64. The published message-only revision has the exact tested tree. On a 1,500-byte IPv6 veth, the peer read all 10,153 bytes in eight correctly sized frames. Four multi-segment sends failed before delivery completed; this test establishes packet size and delivery.",
+      "updatedAt": "2026-11-09T02:17:56+00:00",
+      "summary": "With a 1,200-byte peer MSS, both address families sent all 1,200 bytes untagged before the first socket option request. Enabling the option on a capable NIC with the first packet still in flight produced a 1,196-byte IPv4 payload or a 1,192-byte IPv6 payload. Each socket retained the correct limit after two restores. All 11 selected cases passed in Netstack channel-link and host-GSO tests. The TCP/IP, stack and TCP analyzers passed for AMD64 and ARM64. The published message-only revision has the exact tested tree. On a 1,500-byte IPv6 veth, the peer read all 10,153 bytes in eight correctly sized frames. Four multi-segment sends returned ENOMEM before delivery completed. A separate queue-splitting prototype sent eight tagged IPv6 packets without a rejection. Untagged IPv6 and tagged IPv4 still submitted one aggregate each.",
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
@@ -66596,6 +66659,14 @@
         {
           "label": "Full IPv6 peer read and the eight captured data frames",
           "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13642964048"
+        },
+        {
+          "label": "Parent/candidate sendmmsg results with IPv4 and untagged IPv6 controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644693514"
+        },
+        {
+          "label": "Fork prototype selecting MSS-sized tagged IPv6 writes",
+          "url": "https://github.com/tamird/gvisor/commit/fc6a9528a"
         }
       ]
     },
@@ -66609,8 +66680,8 @@
       "url": "https://github.com/tamird/gvisor/commit/67f886647",
       "title": "Remove the PacketImpact runner's host tool calls",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T01:28:16+00:00",
-      "summary": "Stock failed before exchanging packets when the worker lacked iptables-nft. With this runner, the native Linux and Netstack handshake targets passed as uncached remote actions. Both packet captures contain the 11-byte payload and no unexpected reset. Six hosted targets passed with host binaries masked. The development-only dependencies preserve the consuming module’s Netlink version; all 225 license records passed.",
+      "updatedAt": "2026-11-09T02:15:42+00:00",
+      "summary": "Stock failed before exchanging packets when the worker lacked iptables-nft. With this runner, the native Linux and Netstack handshake targets passed as uncached remote actions. Both packet captures contain the 11-byte payload and no unexpected reset. Six hosted targets passed with host binaries masked. The development-only dependencies preserve the consuming module’s Netlink version; all 225 license records passed. The first ARM64 attempt reached its build time limit and produced no TestResult for either target.",
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
@@ -66638,6 +66709,10 @@
         {
           "label": "Canonical license catalog and both scoped source fetches",
           "url": "https://github.com/tamird/gvisor/actions/runs/42542477524/artifacts/13642365784"
+        },
+        {
+          "label": "First ARM64 attempt: build time limit, zero TestResults",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644257975"
         }
       ]
     },
@@ -66904,13 +66979,6 @@
       "type": "blocked_by",
       "reason": "Historical baseline constraint: the closed provider answer requires self-hosted KVM rather than hosted Firecracker. Current native Actions evidence is tracked separately; this is not an active external delivery gate.",
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13575"
-    },
-    {
-      "from": "external:arm64",
-      "to": "branch:rbe-qualification-next",
-      "type": "blocked_by",
-      "reason": "Required worker capability for part of the public runtime matrix.",
-      "evidence": "https://app.buildbuddy.io/invocation/6e1f969b-8054-4379-8bb2-8a12c48d7942"
     },
     {
       "from": "pr:15159",
@@ -84342,7 +84410,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T01:28:16+00:00",
+      "updatedAt": "2026-11-09T02:15:42+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -87158,6 +87226,10 @@
             {
               "label": "Development-only modules and the downstream Netlink version",
               "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643111398"
+            },
+            {
+              "label": "First ARM64 attempt: build time limit, zero TestResults",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644257975"
             }
           ]
         }
@@ -88735,7 +88807,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-09T01:06:19+00:00",
+      "updatedAt": "2026-11-09T02:17:56+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -89689,6 +89761,19 @@
               "url": "https://www.rfc-editor.org/rfc/rfc9293.html#section-3.7.1"
             }
           ]
+        },
+        {
+          "text": "On Linux 6.8.0-1070-azure, the IPv6 path with a gVisor experiment header rejected four TCPv6 host-GSO aggregates with ENOMEM. All eight individual packets succeeded. Splitting the queue at MSS for tagged IPv6 before charging the send removed the rejected calls. Both untagged IPv6 and tagged IPv4 retained one successful 10,153-byte aggregate. All four transfers reached their peers with the expected digest. The syscall return does not locate the rejection inside Linux. A permanent regression is in preparation.",
+          "evidence": [
+            {
+              "label": "Parent/candidate sendmmsg results with IPv4 and untagged IPv6 controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644693514"
+            },
+            {
+              "label": "Fork prototype selecting MSS-sized tagged IPv6 writes",
+              "url": "https://github.com/tamird/gvisor/commit/fc6a9528a"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -89787,6 +89872,14 @@
         {
           "label": "#17099 registers the listener before the handshake ACK and before Accept in two Go tests. The author reports both lost wakeups disappeared in repeated race tests.",
           "url": "https://github.com/google/gvisor/pull/17099"
+        },
+        {
+          "label": "Parent/candidate sendmmsg results with IPv4 and untagged IPv6 controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644693514"
+        },
+        {
+          "label": "Fork prototype selecting MSS-sized tagged IPv6 writes",
+          "url": "https://github.com/tamird/gvisor/commit/fc6a9528a"
         }
       ],
       "reviewWatch": {
@@ -90991,5 +91084,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T01:29:38+00:00"
+  "updatedAt": "2026-11-09T02:17:56+00:00"
 }
