@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T19:33:12+00:00",
+    "updatedAt": "2026-11-09T19:46:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -64486,15 +64486,15 @@
           "url": "https://github.com/tamird/gvisor/commit/885fe8b75"
         },
         {
-          "label": "Linux validation and missing-executable control",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42681696570"
+          "label": "52 AMD64 cases passed, one pidfs skip, five ARM64 binaries built, missing runtime rejected",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42681696570/artifacts/13705196514"
         },
         {
           "label": "Original false pass, traced child exit and missing-helper control",
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-09T19:18:26+00:00",
+      "updatedAt": "2026-11-09T19:46:07+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64512,12 +64512,12 @@
       "followup": {
         "owner": "Contributor",
         "sourceHead": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
-        "observedAt": "2026-11-09T19:18:26+00:00",
-        "disposition": "Single-commit proposal prepared.",
+        "observedAt": "2026-11-09T19:46:07+00:00",
+        "disposition": "On AMD64, 52 cases passed. TestProcessIdentity skipped because the host lacks pidfs. Removing the runtime made the watchdog test fail as intended. All five ARM64 test binaries cross-compiled.",
         "nextAction": "This supersedes the unsubmitted shim draft 6b2d3261d and follows the two changes already merged in #17053. The separately approved netgofer PR #17242 exercises a child that exits on stdin EOF. Review the shared pause fixture and its watchdog check.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/885fe8b75",
-          "https://github.com/tamird/gvisor/actions/runs/42681696570"
+          "https://github.com/tamird/gvisor/actions/runs/42681696570/artifacts/13705196514"
         ]
       },
       "refinement": {
@@ -94058,7 +94058,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T19:33:12+00:00",
+      "updatedAt": "2026-11-09T19:46:07+00:00",
       "summary": "All four UDP loopback cases passed on master, but the runner failed the shard after seeing the startup watchdog warning. The single uncached shard passed on retry in 0.5 seconds.",
       "findings": [
         {
@@ -94069,9 +94069,22 @@
               "url": "https://storage.googleapis.com/gvisor-buildkite/01a1c182-8849-41a3-bef7-2ab5c89d9651/01a1c182-c82e-4d75-b893-bbc277703950/home/agent-110926-175801/.cache/bazel/_bazel_agent-110926-175801/52a8e4f6ad486bf61a8b5b225fcafac8/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/socket_ip_udp_loopback_test_runsc_systrap_shared/shard_8_of_8/test.outputs/main.test/runsc1544842315/logs/runsc.log.20261109-182625.322057.boot.txt"
             }
           ]
+        },
+        {
+          "text": "At 30 seconds, the fourth request had been sent and was waiting for the reply header on the main socket. Another channel was waiting on a futex to finish connecting. Neither wait supplied a timeout. The gofer log records startup and EOF but has no stack from the delay.",
+          "evidence": [
+            {
+              "label": "Sentry stacks at 30 seconds",
+              "url": "https://storage.googleapis.com/gvisor-buildkite/01a1c182-8849-41a3-bef7-2ab5c89d9651/01a1c182-c82e-4d75-b893-bbc277703950/home/agent-110926-175801/.cache/bazel/_bazel_agent-110926-175801/52a8e4f6ad486bf61a8b5b225fcafac8/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/socket_ip_udp_loopback_test_runsc_systrap_shared/shard_8_of_8/test.outputs/main.test/runsc1544842315/logs/runsc.log.20261109-182625.322057.boot.txt"
+            },
+            {
+              "label": "Gofer log from the same run",
+              "url": "https://storage.googleapis.com/gvisor-buildkite/01a1c182-8849-41a3-bef7-2ab5c89d9651/01a1c182-c82e-4d75-b893-bbc277703950/home/agent-110926-175801/.cache/bazel/_bazel_agent-110926-175801/52a8e4f6ad486bf61a8b5b225fcafac8/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/socket_ip_udp_loopback_test_runsc_systrap_shared/shard_8_of_8/test.outputs/main.test/runsc1544842315/logs/runsc.log.20261109-182625.322057.gofer.txt"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture the gofer’s goroutine stack during the delayed request to locate the other end of the channel handshake.",
+      "nextStep": "Capture the gofer stack during a delayed startup. Check where Connection.Run is handling the socket request and where the other channel is waiting in RecvFirst.",
       "evidence": [
         {
           "label": "Master commit 9832d5d69",
