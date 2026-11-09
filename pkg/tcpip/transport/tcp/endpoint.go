@@ -1170,14 +1170,20 @@ func (e *Endpoint) closeNoShutdownLocked() {
 		// Notify that the endpoint is closed.
 		eventMask |= waiter.EventHUp
 	case StateFinWait2:
-		// The socket has been closed and we are in FIN-WAIT-2 so start
-		// the FIN-WAIT-2 timer.
-		if e.finWait2Timer == nil {
-			e.finWait2Timer = e.stack.Clock().AfterFunc(e.tcpLingerTimeout, e.finWait2TimerExpired)
-		}
+		e.maybeStartFinWait2TimerLocked()
 	}
 
 	e.waiterQueue.Notify(eventMask)
+}
+
+// maybeStartFinWait2TimerLocked starts the orphan timeout for a closed
+// endpoint in FIN-WAIT-2. A half-closed socket can still receive data.
+//
+// +checklocks:e.mu
+func (e *Endpoint) maybeStartFinWait2TimerLocked() {
+	if e.closed && e.finWait2Timer == nil {
+		e.finWait2Timer = e.stack.Clock().AfterFunc(e.tcpLingerTimeout, e.finWait2TimerExpired)
+	}
 }
 
 // closePendingAcceptableConnections closes all connections that have completed
@@ -2238,6 +2244,7 @@ func (e *Endpoint) getTCPInfo() tcpip.TCPInfoOption {
 	info := tcpip.TCPInfoOption{
 		Timestamps:    e.SendTSOk,
 		SACKPermitted: e.SACKPermitted,
+		TotalRetrans:  uint32(e.stats.SendErrors.Retransmits.Value()),
 	}
 	if state := e.EndpointState(); state.internal() {
 		info.State = tcpip.EndpointState(StateClose)

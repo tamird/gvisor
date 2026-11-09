@@ -310,8 +310,10 @@ class Sandbox:
       working_dir: The initial working directory inside the sandbox. Relative
         paths are normalized relative to container root ('/'). Defaults to "/".
       shared_root: An existing directory for sharing the gofers' empty network
-        namespace across sandboxes. The caller owns the directory and must
-        unmount its null-netns file before removing it.
+        namespace across sandboxes. Relative paths are resolved from the
+        caller's working directory. After all users finish, the caller must
+        unmount every bind mount on null-netns before removing the directory.
+        Concurrent starts can stack multiple mounts on that file.
 
     Raises:
       Error: If sandbox creation fails.
@@ -319,7 +321,7 @@ class Sandbox:
         working_dir, mount, or environment variable format is provided.
       TypeError: If env, mounts, or network has an invalid type.
     """
-    if shared_root == "":
+    if shared_root is not None and not shared_root:
       raise ValueError("shared_root must not be empty")
     if isinstance(network, NetworkMode):
       self._network = network.value
@@ -393,7 +395,7 @@ class Sandbox:
         # A pinned namespace would keep the runtime directory busy after close.
         args.append("--gofer-network-namespace=new")
       else:
-        args.extend(["--shared-root", shared_root])
+        args.extend(["--shared-root", os.path.abspath(shared_root)])
       if os.geteuid() != 0:
         args.append("--ignore-cgroups")
 
