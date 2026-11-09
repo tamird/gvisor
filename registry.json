@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T23:08:26+00:00",
+    "updatedAt": "2026-11-09T23:26:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22737,15 +22737,19 @@
       "id": "branch:rules-img-hackbench-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/hackbench-2.11-standalone",
-      "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
+      "ref": "review/hackbench-2.11-long-options",
+      "head": "cf59d0c561161233a6c8b96557dbb57452a5a301",
       "title": "Build the hackbench image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/e3ea0022c",
+      "url": "https://github.com/tamird/gvisor/commit/cf59d0c56",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
-      "summary": "The rt-tests 2.11 image passed pipe/thread and socket/process in both configurations: AMD64 natively under runc, and ARM64 via QEMU on AMD64 runc. Both Go test attempts were uncached and used the exact previously built image and context. The 221-dependency license verification is retained from the original run.",
+      "status": "Approved, checking the images",
+      "updatedAt": "2026-11-09T23:26:09+00:00",
+      "summary": "The rt-tests 2.11 benchmark passes the loop count as --loops=N. The kernel.org release archive resolves at its published location. Both image modes, the benchmark and the license catalog are being checked on this revision.",
       "evidence": [
+        {
+          "label": "Image, benchmark and license checks for the approved revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42719543023"
+        },
         {
           "label": "Compare this source with its previously reviewed base",
           "url": "https://github.com/tamird/gvisor/compare/471d6dff5...e3ea0022c"
@@ -22815,28 +22819,47 @@
           "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
           "outcome": "changes-requested",
           "at": "2026-11-02T20:50:09.856350+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
+          "baseHead": "471d6dff5229b99208bf6fec985601067f1f9d69",
+          "url": "https://github.com/tamird/gvisor/commit/e3ea0022c",
+          "title": "Build the Hackbench image from pinned source",
+          "requestedAt": "2026-11-03T04:16:24.163353+00:00",
+          "summary": "The standalone patch matches the qualified rt-tests 2.11 change byte for byte. All prerequisites have landed. Both benchmark modes passed on native AMD64 and emulated ARM64; the original 221-dependency license audit still applies.",
+          "body": "Build rt-tests 2.11 as a static executable and package it with COPYING\non pinned Alpine, replacing the Dockerfile’s Ubuntu package install. The\nexisting Make image name and both benchmark modes remain supported.",
+          "outcome": "approved",
+          "at": "2026-11-09T23:26:09+00:00",
+          "note": "Approved with the request to pass the loop count as --loops=N."
+        },
+        {
+          "kind": "proposal",
+          "head": "cf59d0c561161233a6c8b96557dbb57452a5a301",
+          "outcome": "approved",
+          "at": "2026-11-09T23:26:09+00:00",
+          "note": "Open the one-commit PR after the image, benchmark and license checks pass."
         }
       ],
       "refinement": {
         "before": {
-          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
-          "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e"
+          "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
+          "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         },
         "after": {
-          "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-          "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e"
+          "head": "cf59d0c561161233a6c8b96557dbb57452a5a301",
+          "base": "272ad5c729aa522d373a786400c21c2eed198f4d"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
-        "baseHead": "471d6dff5229b99208bf6fec985601067f1f9d69",
-        "url": "https://github.com/tamird/gvisor/commit/e3ea0022c",
-        "title": "Build the Hackbench image from pinned source",
-        "requestedAt": "2026-11-03T04:16:24.163353+00:00",
-        "summary": "The standalone patch matches the qualified rt-tests 2.11 change byte for byte. All prerequisites have landed. Both benchmark modes passed on native AMD64 and emulated ARM64; the original 221-dependency license audit still applies.",
-        "body": "Build rt-tests 2.11 as a static executable and package it with COPYING\non pinned Alpine, replacing the Dockerfile’s Ubuntu package install. The\nexisting Make image name and both benchmark modes remain supported."
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "cf59d0c561161233a6c8b96557dbb57452a5a301",
+        "observedAt": "2026-11-09T23:26:09+00:00",
+        "disposition": "Approved for submission after the Linux checks pass.",
+        "nextAction": "Check both architecture results and the license audit, then open the PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42719543023"
+        ]
       }
     },
     {
@@ -23122,30 +23145,79 @@
       ]
     },
     {
+      "id": "branch:luajit-target-generators",
+      "type": "branch",
+      "repo": "tamird/bazel-central-registry",
+      "ref": "review/luajit-2.1.20230430",
+      "head": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
+      "title": "LuaJIT 2.1.20230430 for Linux cross-compilation",
+      "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T23:26:09+00:00",
+      "summary": "The released registry module sends x86 assembly to the ARM assembler. This version builds the VM for the requested architecture and keeps the LuaJIT source revision used by wrk2. A native ARM64 C consumer loaded bytecode from the declared saver, executed a JIT trace and caught an error raised by C.",
+      "evidence": [
+        {
+          "label": "Released module fails on x86 instructions in the ARM64 assembler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41532085303/artifacts/13182183612"
+        },
+        {
+          "label": "Native ARM64 library, bytecode saver, JIT trace and C error handling",
+          "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42719913445/artifacts/13718903734"
+        },
+        {
+          "label": "Intel macOS, Bazel 7, 8 and 9",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41541451429/artifacts/13187520466"
+        },
+        {
+          "label": "Previous LuaJIT release used the registry’s archive URL exception",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/6931#issuecomment-3685841539"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "bfb6f63503f54c05af617bafc983dccc716eb4a2",
+        "baseHead": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
+        "title": "luajit@2.1.20230430",
+        "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
+        "body": "Cross-compiling the existing LuaJIT module for ARM64 on x86_64 feeds\nx86 assembly to the ARM assembler. Bazel builds the VM generator for\nthe execution platform, and the generator takes its instruction set\nfrom that compiler.\n\nAdd the April 30, 2023 snapshot of LuaJIT 2.1 used by gVisor’s wrk2\nbenchmark. Select a generator for the target architecture before\nBazel builds it for the host. Use the snapshot’s default GC64 format\non x86_64 and ARM64 so both VMs can load the same embedded bytecode.\nSelect external unwinding on Darwin as the upstream Makefile does.\n\nExport jit/bcsave.lua for consumers that embed Lua code and COPYRIGHT\nfor consumers that redistribute the VM.",
+        "summary": "Send this single-commit module update to bazelbuild/bazel-central-registry? Apple Silicon runtime coverage is still open.",
+        "requestedAt": "2026-11-09T23:26:09+00:00"
+      }
+    },
+    {
       "id": "branch:rules-img-wrk2-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/standalone-wrk2-image",
-      "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
+      "ref": "review/wrk2-registry-openssl4",
+      "head": "93a67e0bedddd81ab5978f3ad134de5298899f45",
       "title": "Build the wrk2 image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/5bb80cbb9",
+      "url": "https://github.com/tamird/gvisor/commit/93a67e0be",
       "group": "bazel",
-      "status": "Contributor review",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
-      "summary": "Build wrk2 and LuaJIT from pinned sources on Ubuntu Jammy. Use the upstream ARM option-parser fix and the OpenSSL module’s public license file. The four installed notices cover three sources. The full 223-record catalog verifies on the current classifier.",
+      "status": "Checking the OpenSSL 4 image",
+      "updatedAt": "2026-11-09T23:26:09+00:00",
+      "summary": "The image uses the registry’s LuaJIT module and OpenSSL 4. Its license check recognizes LuaJIT’s COPYRIGHT notice in the same change. The image checks failed on their first attempt and are under investigation.",
       "followup": {
-        "owner": "Build and release",
-        "sourceHead": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
-        "observedAt": "2026-10-31T07:18:55.041730+00:00",
-        "disposition": "Review the two new commits",
-        "nextAction": "Open the license-filename preparation first, then the standalone image once that lands.",
+        "owner": "Agent",
+        "sourceHead": "93a67e0bedddd81ab5978f3ad134de5298899f45",
+        "observedAt": "2026-11-09T23:26:09+00:00",
+        "disposition": "The first image jobs failed before their packaged workloads were verified.",
+        "nextAction": "Diagnose the image failures, check the packaged benchmark and license scan, and present the verified revision for contributor review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/6e6276344...dbb96525c",
-          "https://github.com/tamird/gvisor/compare/dbb96525c...5bb80cbb9",
-          "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033988266"
+          "https://github.com/tamird/gvisor/actions/runs/42719955552",
+          "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350"
         ]
       },
       "evidence": [
+        {
+          "label": "Proposed LuaJIT registry module",
+          "url": "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350"
+        },
+        {
+          "label": "OpenSSL 4 images and license audit on this revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42719955552"
+        },
         {
           "label": "The image needs the license checker to recognize LuaJIT’s COPYRIGHT file. Review the two-line license lookup separately.",
           "url": "https://github.com/tamird/gvisor/commit/dbb96525c"
@@ -23261,26 +23333,28 @@
           "head": "f258c589bea8fff7c4ef4163241227252b7299bc",
           "outcome": "approved",
           "at": "2026-10-21T23:06:42.244208+00:00"
+        },
+        {
+          "kind": "proposal",
+          "baseHead": "6e6276344dce3728a09a8271c8360269e7d881a4",
+          "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
+          "url": "https://github.com/tamird/gvisor/commit/5bb80cbb9",
+          "title": "Review the standalone wrk2 image and its license lookup",
+          "summary": "The approved f258c589b used a shared libc layer and shell-driven Lua generators. This revision uses Ubuntu Jammy and declared Bazel tools, fixes ARM option parsing and removes unused zlib. A two-line preparation recognizes LuaJIT’s COPYRIGHT notice. Review those changes. The image needs the license checker to recognize LuaJIT’s COPYRIGHT file. Review the two-line license lookup separately. [Prerequisite commit](https://github.com/tamird/gvisor/commit/dbb96525c).",
+          "outcome": "changes-requested",
+          "at": "2026-11-09T23:26:09+00:00",
+          "note": "Replace the image-local LuaJIT rules with a registry dependency."
         }
       ],
       "refinement": {
         "before": {
-          "base": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
-          "head": "f258c589bea8fff7c4ef4163241227252b7299bc"
+          "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
+          "base": "6e6276344dce3728a09a8271c8360269e7d881a4"
         },
         "after": {
-          "base": "6e6276344dce3728a09a8271c8360269e7d881a4",
-          "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4"
+          "head": "93a67e0bedddd81ab5978f3ad134de5298899f45",
+          "base": "272ad5c729aa522d373a786400c21c2eed198f4d"
         }
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "6e6276344dce3728a09a8271c8360269e7d881a4",
-        "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
-        "url": "https://github.com/tamird/gvisor/commit/5bb80cbb9",
-        "title": "Review the standalone wrk2 image and its license lookup",
-        "summary": "The approved f258c589b used a shared libc layer and shell-driven Lua generators. This revision uses Ubuntu Jammy and declared Bazel tools, fixes ARM option parsing and removes unused zlib. A two-line preparation recognizes LuaJIT’s COPYRIGHT notice. Review those changes. The image needs the license checker to recognize LuaJIT’s COPYRIGHT file. Review the two-line license lookup separately. [Prerequisite commit](https://github.com/tamird/gvisor/commit/dbb96525c)."
       }
     },
     {
@@ -64628,14 +64702,18 @@
       "id": "branch:shim-wedged-runtime-tests",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/shared-testprocess-explicit-main",
-      "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
+      "ref": "review/shared-testprocess-systrap-wait",
+      "head": "122b98abdf94f0000340b489c1da77505051de0d",
       "title": "Use one test process for shim timeouts and runsc lifecycle tests",
-      "url": "https://github.com/tamird/gvisor/commit/531bc8fc3",
+      "url": "https://github.com/tamird/gvisor/commit/122b98abd",
       "group": "tests",
-      "status": "Contributor review requested",
-      "summary": "The five test executables now opt in from TestMain. The shim tests check that the watchdog killed the runtime they started. The systrap host-stall child owns its stub and cleans up its process group on early failure.\n\nThe hosted AMD64 worker passed 123 of 124 selected test records. Its sole skip, specutils TestProcessIdentity, passed uncached on a worker with pidfs. The missing-runtime control failed as expected and all five ARM64 test binaries cross-compiled.",
+      "status": "Approved, checking the systrap wait",
+      "summary": "The systrap test reaps its child after observing the expected stop. The Linux run includes TestThreadWaitStoppedWhenSignaled, the five fixture owners and the ARM64 builds.",
       "evidence": [
+        {
+          "label": "Five owning suites, systrap wait control and ARM64 builds on the approved revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42720109893"
+        },
         {
           "label": "Revised process fixture",
           "url": "https://github.com/tamird/gvisor/commit/531bc8fc3"
@@ -64677,7 +64755,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-09T23:08:26+00:00",
+      "updatedAt": "2026-11-09T23:26:09+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64703,28 +64781,47 @@
           "outcome": "changes-requested",
           "at": "2026-11-09T22:37:48+00:00",
           "note": "Revise the shared test-process fixture and its caller ownership."
+        },
+        {
+          "kind": "proposal",
+          "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
+          "baseHead": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295",
+          "url": "https://github.com/tamird/gvisor/commit/531bc8fc3",
+          "title": "Use one test process for shim timeouts and runsc lifecycle tests",
+          "requestedAt": "2026-11-09T23:08:26+00:00",
+          "summary": "Open this single-commit gVisor PR? The five test binaries explicitly opt in, child commands use the owning test context, and the shim verifies that the watchdog killed its child. The systrap host-stall helper reaps the driver and stops its stub on an early failure.",
+          "body": "The shim deadline tests run a fake runtime through /bin/sh and sleep.\nOn a worker without those programs, some tests accept the launch error\nbefore the watchdog has a chance to terminate a running command.\n\nLet the five test binaries opt in from TestMain to run as a child that\nexits or waits for a signal. The shim can select the child by executable\nname while passing its ordinary runtime arguments. Check that the shim\nactually killed that process. The runsc and systrap tests use the same\nchild for process identity, readiness, and an unresponsive sandbox.\n\nGive child commands their owning test context and reap each process once.",
+          "outcome": "approved",
+          "at": "2026-11-09T23:26:09+00:00",
+          "note": "Approved with the systrap test retaining ownership of its own wait."
+        },
+        {
+          "kind": "proposal",
+          "head": "122b98abdf94f0000340b489c1da77505051de0d",
+          "outcome": "approved",
+          "at": "2026-11-09T23:26:09+00:00",
+          "note": "Open the one-commit PR after the five owning suites and the previously omitted systrap wait test pass."
         }
       ],
       "refinement": {
         "before": {
-          "head": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
+          "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
           "base": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295"
         },
         "after": {
-          "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
-          "base": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295"
+          "head": "122b98abdf94f0000340b489c1da77505051de0d",
+          "base": "272ad5c729aa522d373a786400c21c2eed198f4d"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "531bc8fc3f23f845f85762e2ee30bc7c511c4181",
-        "baseHead": "e3550d8a2d6f8f3d10ce7a36b702ab4e1d0fa295",
-        "url": "https://github.com/tamird/gvisor/commit/531bc8fc3",
-        "title": "Use one test process for shim timeouts and runsc lifecycle tests",
-        "requestedAt": "2026-11-09T23:08:26+00:00",
-        "summary": "Open this single-commit gVisor PR? The five test binaries explicitly opt in, child commands use the owning test context, and the shim verifies that the watchdog killed its child. The systrap host-stall helper reaps the driver and stops its stub on an early failure.",
-        "body": "The shim deadline tests run a fake runtime through /bin/sh and sleep.\nOn a worker without those programs, some tests accept the launch error\nbefore the watchdog has a chance to terminate a running command.\n\nLet the five test binaries opt in from TestMain to run as a child that\nexits or waits for a signal. The shim can select the child by executable\nname while passing its ordinary runtime arguments. Check that the shim\nactually killed that process. The runsc and systrap tests use the same\nchild for process identity, readiness, and an unresponsive sandbox.\n\nGive child commands their owning test context and reap each process once."
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "122b98abdf94f0000340b489c1da77505051de0d",
+        "observedAt": "2026-11-09T23:26:09+00:00",
+        "disposition": "Approved for submission after the updated tests pass.",
+        "nextAction": "Verify the stop and wait case, the owning tests, and the cross-built outputs, then open the PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42720109893"
+        ]
       }
     },
     {
@@ -73827,6 +73924,16 @@
       "type": "depends_on",
       "reason": "Share the existing locked archive publication and stale archive removal across both release producers.",
       "evidence": "https://github.com/google/gvisor/pull/16766"
+    },
+    {
+      "from": "branch:luajit-target-generators",
+      "to": "branch:rules-img-wrk2-image",
+      "type": "depends_on",
+      "reason": "The wrk2 image declares LuaJIT 2.1.20230430 as a Bazel module. That version must be available in the registry before the image can be submitted independently.",
+      "evidence": [
+        "https://github.com/tamird/bazel-central-registry/commit/bfb6f6350",
+        "https://github.com/tamird/gvisor/commit/93a67e0be"
+      ]
     }
   ],
   "investigations": [
@@ -95078,5 +95185,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T23:08:26+00:00"
+  "updatedAt": "2026-11-09T23:26:09+00:00"
 }
