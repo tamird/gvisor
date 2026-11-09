@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T18:52:37+00:00",
+    "updatedAt": "2026-11-09T19:07:20+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2296,12 +2296,12 @@
       "repo": "tamird/gvisor",
       "ref": "research/flit-release-execution-runtime",
       "title": "Build Python releases with declared Flit",
-      "url": "https://github.com/tamird/gvisor/commit/6650e2f29",
+      "url": "https://github.com/tamird/gvisor/commit/6df375dfb",
       "group": "release",
-      "status": "Contributor review requested",
+      "status": "Agent work",
       "summary": "Flit now runs with the execution platform’s registered Python. The previous action tried to start a GNU-linked target interpreter on an AMD64 musl worker that lacks its ELF loader. The integrated action used the static execution interpreter and produced the wheel and source distribution. The older combined proposal and wheel-scanner amendment remain on hold.\n\nThe large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite command at 11013b7d6 ran without Docker and staged the same wheel and source archive. The original caller tried Docker 13 times and failed before creating either file. The comparison supplied a fixed version and registry reply. With the Buildkite Bazelisk prerequisite, the plain make artifacts-python command takes DOCKER_BUILD=false from the job environment. GNU Make selected the same build and copy commands as the tested explicit override.\n\nrules_python 2.4.5 selects uv for the target platform and keeps its toolchain executable alias private. Using uv for a cross build would require another execution-platform adapter. Replacing a literal version in pyproject.toml can also silently lose a release override. The uv experiment did not replace the qualified Flit producer.",
-      "updatedAt": "2026-11-07T16:35:38+00:00",
-      "head": "6650e2f29d84dc3409678a3bdcaacf81a48ca7aa",
+      "updatedAt": "2026-11-09T19:07:20+00:00",
+      "head": "6df375dfb751a3985a351462e1a54704e606bb7d",
       "evidence": [
         {
           "label": "Revised standalone commit and permanent description",
@@ -2445,31 +2445,16 @@
         }
       },
       "followup": {
-        "owner": "release_owner",
-        "disposition": "Contributor requested a smaller design",
-        "sourceHead": "b5bd72431940ce903fe7521e2498811d8420f750",
-        "observedAt": "2026-11-01T23:12:46+00:00",
-        "nextAction": "Keep the larger proposal and scanner amendment on hold. Fold the Buildkite caller into whichever lands second, the Flit producer or release archive staging. The staging change can proceed independently.",
+        "owner": "Agent",
+        "sourceHead": "6df375dfb751a3985a351462e1a54704e606bb7d",
+        "observedAt": "2026-11-09T19:07:20+00:00",
+        "disposition": "The earlier preview omitted the Flit backend change. The combined revision also preserves the existing archive-staging lock and stale-archive cleanup.",
+        "nextAction": "Exercise two releases and concurrent staging against the current #16766 prerequisite before requesting review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/b5bd72431",
-          "https://github.com/tamird/gvisor/compare/e9289d0a2...d67495aac",
-          "https://github.com/tamird/gvisor/actions/runs/41090172899/artifacts/12993841762",
-          "https://github.com/tamird/gvisor/actions/runs/41086533339/artifacts/12991837566",
-          "https://github.com/tamird/gvisor/commit/11013b7d6",
-          "https://github.com/tamird/gvisor/actions/runs/41359642500/artifacts/13104458912",
-          "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
+          "https://github.com/tamird/gvisor/commit/6df375dfb",
+          "https://github.com/tamird/gvisor/commit/ed59355f4",
+          "https://github.com/google/gvisor/pull/16766"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6650e2f29d84dc3409678a3bdcaacf81a48ca7aa",
-        "baseHead": "7ad5699f22516e5d7a3fed787ff7e14c8c5535e5",
-        "url": "https://github.com/tamird/gvisor/commit/6650e2f29",
-        "title": "Build Python releases with declared Flit",
-        "requestedAt": "2026-11-07T16:35:38+00:00",
-        "summary": "Open this single-commit PR to build the Python release with declared Flit and the execution-platform interpreter? The previous Flit proposal used the target interpreter.",
-        "body": "Build the SandboxExec sdist from declared sources with Flit's public\nPEP 517 hooks. Build the wheel from that sdist and stage both files in\nthe existing release directory. The release service selects the version.\n\nUse the registered execution-platform Python to run Flit. On the AMD64\nmusl release worker, the target interpreter requested the absent GNU\nloader /lib64/ld-linux-x86-64.so.2. The static execution interpreter\nbuilt both packages from the same sources and version.\n\nThe build needs one pinned wheel. Record the BSD-3-Clause Flit notice\nand the MIT notice for its bundled copy of Tomli in the license catalog."
       }
     },
     {
@@ -5962,7 +5947,7 @@
           "url": "https://github.com/tamird/gvisor/blob/27a12d5ab/.github/qualification/lean_release_client.py#L411-L448"
         },
         {
-          "label": "Unmodified master: AMD64 clang++ built the ARM64 PosixError binary with paired exec and target toolchains",
+          "label": "At 975fb1722, AMD64 clang++ built the ARM64 PosixError binary with paired exec and target toolchains",
           "url": "https://app.buildbuddy.io/invocation/495fbabb-087c-4965-9977-7ce21778192d"
         },
         {
@@ -12629,21 +12614,18 @@
       "title": "Compare NVIDIA driver ABIs using declared source archives",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/2627f0daa",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-06T22:18:20.596Z",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T19:07:20+00:00",
       "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. The final commit differs from that tested tree only in the README.",
       "followup": {
+        "owner": "Agent",
         "sourceHead": "2627f0daa9a8127598d9405151660567a1f26c0c",
-        "observedAt": "2026-11-06T22:18:20.596Z",
-        "owner": "Contributor",
-        "disposition": "The revised parser reads declared sources for both callers.",
-        "nextAction": "Review the single NVIDIA commit for submission after #17112, #17114 and the direct x/text dependency change.",
+        "observedAt": "2026-11-09T19:07:20+00:00",
+        "disposition": "The preview omits the split that takes the live installer-download test out of the offline ABI target.",
+        "nextAction": "Include the split in the single proposed commit or present its separately reviewable prerequisite. Verify the resulting target offline.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2627f0daa",
-          "https://github.com/tamird/gvisor/actions/runs/42298941700/artifacts/13543213033",
-          "https://github.com/tamird/gvisor/actions/runs/42300917747/artifacts/13543888178",
-          "https://github.com/tamird/gvisor/actions/runs/42302502175/artifacts/13544592857",
-          "https://github.com/tamird/gvisor/commit/bcf1effec"
+          "https://github.com/tamird/gvisor/commit/63f10e43e"
         ]
       },
       "evidence": [
@@ -12710,18 +12692,7 @@
           "note": "Tamir requested removal of the remaining driver clone machinery.",
           "at": "2026-11-06T22:18:20.596Z"
         }
-      ],
-      "contributorReview": {
-        "head": "2627f0daa9a8127598d9405151660567a1f26c0c",
-        "baseHead": "7c42f97e66d1b62df825d8e423071b1dd52443de",
-        "title": "Compare NVIDIA driver ABIs using declared source archives",
-        "body": "The NVIDIA ABI test clones a driver repository during each comparison.\nWithout Git or network access, the test fails before Clang can compare\nthe driver's ioctl definitions with the corresponding nvproxy types.\n\nGive the test and the driver differ the same pinned header archives as\nBazel runfiles. Both use the same parser to resolve a version to its\nheaders. Record versions without a public source tag so the test can\ndistinguish them from missing build inputs.\n\nDevelopers use the differ to evaluate a new driver before adding it to\nnvproxy. The pin updater accepts a candidate version for that purpose.\nThe ABI test continues to check every supported driver. The archives\nare development dependencies of the gVisor module.",
-        "url": "https://github.com/tamird/gvisor/commit/2627f0daa",
-        "kind": "proposal",
-        "status": "pending",
-        "summary": "May I open this after #17112, #17114 and the direct x/text fix land? The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. The final commit differs from that tested tree only in the README.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 be4b12bea^! 2627f0daa^!",
-        "requestedAt": "2026-11-06T22:18:20.596Z"
-      }
+      ]
     },
     {
       "id": "pr:15645",
@@ -64438,7 +64409,7 @@
       "title": "Exercise the shim against a wedged runtime",
       "url": "https://github.com/tamird/gvisor/commit/6b2d3261d",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "Agent work",
       "summary": "The stock timeout case passed when the fake runtime failed to start. With shell utilities hidden, the replacement recorded child startup, SIGKILL and reaping of the same process. A deliberately missing helper failed the startup check. The review commit drops one redundant manager assertion from the tested source.",
       "evidence": [
         {
@@ -64446,18 +64417,36 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "updatedAt": "2026-11-09T19:07:20+00:00",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
+          "baseHead": "7d1b049f5d541992b47cc38cf564025908a9ed7b",
+          "title": "Exercise the shim against a wedged runtime",
+          "url": "https://github.com/tamird/gvisor/commit/6b2d3261d",
+          "summary": "Open this single-commit gVisor PR?",
+          "body": "1fcccf3e3 added shim deadline tests that run a fake runtime through /bin/sh and sleep. Several accept any error before a deadline, so they can pass when the fake runtime never starts.\n\nRun the test executable as the wedged runtime. Have the child record startup before waiting for termination, then check the marker after the shim returns from its synchronous wait.",
+          "requestedAt": "2026-11-08T12:41:39+00:00",
+          "outcome": "changes-requested",
+          "at": "2026-11-09T19:07:20+00:00"
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
-        "baseHead": "7d1b049f5d541992b47cc38cf564025908a9ed7b",
-        "title": "Exercise the shim against a wedged runtime",
-        "url": "https://github.com/tamird/gvisor/commit/6b2d3261d",
-        "summary": "Open this single-commit gVisor PR?",
-        "body": "1fcccf3e3 added shim deadline tests that run a fake runtime through /bin/sh and sleep. Several accept any error before a deadline, so they can pass when the fake runtime never starts.\n\nRun the test executable as the wedged runtime. Have the child record startup before waiting for termination, then check the marker after the shim returns from its synchronous wait.",
-        "requestedAt": "2026-11-08T12:41:39+00:00"
+        "url": "https://github.com/tamird/gvisor/commit/6b2d3261d"
       },
-      "updatedAt": "2026-11-08T12:41:39+00:00"
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "6b2d3261d9f84be2a833defd547c846cf6934b4d",
+        "observedAt": "2026-11-09T19:07:20+00:00",
+        "disposition": "Consolidate the passive child processes used in runsc and shim tests.",
+        "nextAction": "Compare the shared fixture with the three existing implementations. Verify the real deadline, process identity and reaping behavior on Linux before sending a single-commit revision.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6b2d3261d",
+          "https://github.com/google/gvisor/pull/17053"
+        ]
+      }
     },
     {
       "id": "branch:netgofer-shutdown-test",
@@ -67673,17 +67662,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "rbe",
-      "ref": "research/packetimpact-testbench-exit",
-      "head": "3518f04377b87fa7136ea9063d9804e4f7d3be8b",
-      "url": "https://github.com/tamird/gvisor/commit/3518f0437",
+      "ref": "review/packetimpact-testbench-as-type",
+      "head": "7e25e0168a6171890c02da0036b6e373fdc74108",
+      "url": "https://github.com/tamird/gvisor/commit/7e25e0168",
       "title": "Reject PacketImpact testbench launch failures",
-      "status": "Agent work",
+      "status": "Published",
       "updatedAt": "2026-11-09T18:52:37+00:00",
       "summary": "Two PacketImpact tests expect their testbench to fail. The original runner also returned success when the executable was missing or its process was killed by a signal. The corrected runner rejected both in six uncached exit-status controls. It still accepts an expected nonzero exit, propagates an unexpected exit code 7, and distinguishes ordinary from unexpected success.",
       "evidence": [
         {
           "label": "Original and corrected runner results for all six process outcomes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13647668246"
+        },
+        {
+          "label": "Six process outcomes on Linux using errors.AsType",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42678733918/artifacts/13702186842"
         }
       ],
       "settledReviews": [
@@ -67702,14 +67695,15 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "3518f04377b87fa7136ea9063d9804e4f7d3be8b",
+        "sourceHead": "7e25e0168a6171890c02da0036b6e373fdc74108",
         "observedAt": "2026-11-09T18:52:37+00:00",
-        "disposition": "Contributor approved the proposal.",
-        "nextAction": "Use errors.AsType for the existing exec.ExitError match and verify the runner exit cases before publishing.",
+        "disposition": "Published",
+        "nextAction": "Follow review on #17296.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/3518f0437"
+          "https://github.com/google/gvisor/pull/17296"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:packetimpact-interrupted-address-dump",
@@ -69006,6 +69000,44 @@
           "body": "poll defers cleanup of each registered waiter. It records the file before EventRegister returns, so a failure causes cleanup to call EventUnregister on the entry that was just rejected. Unix sockets already undo their own registration on a host error (ed3929b26).\n\nKeep the file reference in pollState only after registration succeeds. On failure, release the reference and return the registration error.",
           "summary": "Open this single-commit gVisor PR now that the Unix socket rollback in #16739 has landed?",
           "requestedAt": "2026-11-08T23:18:04+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T18:52:37+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:17296",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17296,
+      "ref": "review/packetimpact-testbench-as-type",
+      "title": "Reject PacketImpact testbench launch failures",
+      "url": "https://github.com/google/gvisor/pull/17296",
+      "group": "rbe",
+      "head": "7e25e0168a6171890c02da0036b6e373fdc74108",
+      "status": "open",
+      "updatedAt": "2026-11-09T19:07:20+00:00",
+      "summary": "Two PacketImpact tests expect their testbench to fail. The original runner also returned success when the executable was missing or its process was killed by a signal. The corrected runner rejected both in six uncached exit-status controls. It still accepts an expected nonzero exit, propagates an unexpected exit code 7, and distinguishes ordinary from unexpected success.",
+      "evidence": [
+        {
+          "label": "Original and corrected runner results for all six process outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13647668246"
+        },
+        {
+          "label": "Six process outcomes on Linux using errors.AsType",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42678733918/artifacts/13702186842"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "head": "3518f04377b87fa7136ea9063d9804e4f7d3be8b",
+          "url": "https://github.com/tamird/gvisor/commit/3518f0437",
+          "title": "Reject PacketImpact testbench launch failures",
+          "body": "Two Netstack tests expect the testbench to fail. Since b318556f8, a missing testbench executable satisfies that expectation and the runner reports success without running a test. A child killed by a signal also satisfies the check.\n\nAccept an expected failure only when the child exits with a nonzero status. Report launch errors and signals with the testbench path.",
+          "summary": "Open this independent PacketImpact testbench exit-status fix?",
+          "requestedAt": "2026-11-09T03:47:47+00:00",
           "outcome": "approved",
           "at": "2026-11-09T18:52:37+00:00"
         }
@@ -93603,7 +93635,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "updatedAt": "2026-11-09T19:07:20+00:00",
       "summary": "The wire → graph → wire checkpoint test stopped at its first dump on two independent commits. Both logs reported “error printing state: unreachable” and exit 128.",
       "findings": [
         {
@@ -93626,9 +93658,18 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/53938#01a1be04-1a70-4b9c-b08b-6544adb929fd"
             }
           ]
+        },
+        {
+          "text": "Six distinct checkpoints from the existing AMD64 test restored through wire → graph → wire. Stock and the #17208 dump both succeeded on all six unchanged inputs. Their text differed on every input, but the public “unreachable” error did not reproduce.",
+          "evidence": [
+            {
+              "label": "Six checkpoint comparisons and restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42676362803/artifacts/13702590654"
+            }
+          ]
         }
       ],
-      "nextStep": "Retain a new wire-first checkpoint from the chained test and run both dump tools on the same bytes. The wire frame-header reader can emit this exact error. The two original public artifact sets contain logs but no checkpoint image.",
+      "nextStep": "Capture the next failing dump’s byte offset or a stack trace at the wire decoder, and compare the two renderers on that specific input. The six successful local-control chains do not establish a fix for the public failures.",
       "evidence": [
         {
           "label": "gVisor #16851",
