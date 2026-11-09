@@ -770,3 +770,41 @@ func newWaiter(val int16) *waiter {
 		ch:    make(chan struct{}, 1),
 	}
 }
+
+// These functions are never called. They exercise the analyzer on the private
+// methods and types used by the semaphore implementation.
+//
+// +checklocks:s.mu
+func (s *Set) forwardBorrowForTest(num int32) *sem {
+	return s.findSem(num)
+}
+
+// +checklocks:s.mu
+func (s *Set) releaseAndReacquireForTest() {
+	s.mu.Unlock()
+	s.mu.Lock()
+}
+
+func (s *Set) returnedReferenceForTest(other *Set, num int32) {
+	s.mu.Lock()
+	member := s.findSem(num)
+	member.value++ // valid: original region
+	alias := member
+	alias.waiters.Reset() // valid: alias in original region
+	member.wakeWaiters(s) // valid: correct owner in original region
+	forwarded := s.forwardBorrowForTest(num)
+	s.releaseAndReacquireForTest()
+	forwarded.pid++ // lifetime: callee unlocked and reacquired
+	s.mu.Unlock()
+	alias.value++             // unguarded: retained direct result
+	forwarded.waiters.Reset() // unguarded: forwarded result
+	alias.wakeWaiters(s)      // diagnostic: wake without owner
+	_ = s.findSem(num)        // diagnostic: lookup without owner
+	other.mu.Lock()
+	alias.wakeWaiters(other) // wrong owner: unrelated set locked
+	_ = s.findSem(num)       // diagnostic: lookup locked another set
+	other.mu.Unlock()
+	s.mu.Lock()
+	alias.value++ // lifetime: explicit unlock and reacquire
+	s.mu.Unlock()
+}
