@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T07:39:52.097533+00:00",
+    "updatedAt": "2026-11-09T07:51:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63391,7 +63391,7 @@
       "url": "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9",
       "group": "runtime",
       "status": "Published as #17233",
-      "updatedAt": "2026-11-08T13:47:51Z",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "summary": "The graph encoder writes a length prefix for inexact values. On a real tmpfs checkpoint with 50,000 files, reserving prefixes only for those values reduced the final output buffer by 1,007,616 bytes. Across 12 paired encodes, allocated bytes fell from 118.9 MiB to 117.9 MiB (−0.81%). Allocation count stayed at 100,937 per encode, and the timing difference was inconclusive (p=.551).",
       "evidence": [
         {
@@ -63419,14 +63419,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "576430c42e0bb216b2611274a20d08463741c8a9",
-        "observedAt": "2026-11-08T13:47:51Z",
-        "disposition": "Published the approved change as #17233.",
-        "nextAction": "Follow #17233 for maintainer review and import.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 576430c42 on #17233.",
+        "nextAction": "Follow #17233 for its Copybara import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17233",
-          "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9"
+          "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9",
+          "https://github.com/google/gvisor/pull/17233#pullrequestreview-5822006118"
         ]
       }
     },
@@ -63843,7 +63844,7 @@
           "url": "https://github.com/google/gvisor/pull/17232"
         }
       ],
-      "updatedAt": "2026-11-08T13:47:49Z",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -63860,14 +63861,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "22134a44640f341afc4e3357fae072515dccbbf8",
-        "observedAt": "2026-11-08T13:47:49Z",
-        "disposition": "Published the approved change as #17232.",
-        "nextAction": "Follow #17232 for maintainer review and import.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 22134a446 on #17232.",
+        "nextAction": "Follow #17232 for its Copybara import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17232",
-          "https://github.com/tamird/gvisor/commit/22134a446"
+          "https://github.com/tamird/gvisor/commit/22134a446",
+          "https://github.com/google/gvisor/pull/17232#pullrequestreview-5822009201"
         ]
       }
     },
@@ -63900,7 +63902,7 @@
           "url": "https://github.com/google/gvisor/pull/17231"
         }
       ],
-      "updatedAt": "2026-11-08T13:47:46Z",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -63917,14 +63919,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
-        "observedAt": "2026-11-08T13:47:46Z",
-        "disposition": "Published the approved change as #17231.",
-        "nextAction": "Follow #17231 for maintainer review and import.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 4774ec693 on #17231.",
+        "nextAction": "Follow #17231 for its Copybara import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17231",
-          "https://github.com/tamird/gvisor/commit/4774ec693"
+          "https://github.com/tamird/gvisor/commit/4774ec693",
+          "https://github.com/google/gvisor/pull/17231#pullrequestreview-5822011750"
         ]
       }
     },
@@ -65199,7 +65202,7 @@
       "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
       "title": "Store a single absorbed graph child inline",
       "group": "runtime",
-      "updatedAt": "2026-11-08T14:54:55+00:00",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "summary": "On a kernel with 50,000 tmpfs files, allocations per graph Encode fell from 100,938 to 769. Two independent 16-pair trials of the complete checkpoint found different timing effects: 177.6 to 179.1 ms (p=.696) and 270.6 to 262.2 ms (p=.011). Each trial restored and verified all 34 checkpoints, including the warmups.",
       "evidence": [
         {
@@ -65239,14 +65242,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
-        "observedAt": "2026-11-08T13:47:46Z",
-        "disposition": "Published the approved change as #17231.",
-        "nextAction": "Follow #17231 for maintainer review and import.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 4774ec693 on #17231.",
+        "nextAction": "Follow #17231 for its Copybara import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17231",
-          "https://github.com/tamird/gvisor/commit/4774ec693"
+          "https://github.com/tamird/gvisor/commit/4774ec693",
+          "https://github.com/google/gvisor/pull/17231#pullrequestreview-5822011750"
         ]
       },
       "contributorReview": {
@@ -65255,8 +65259,8 @@
         "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
         "url": "https://github.com/google/gvisor/pull/17231",
         "title": "Post the combined checkpoint comparison on #17231",
-        "summary": "Post one comment reporting the combined result for #17231, #17232 and #17233.",
-        "body": "I measured #17231, #17232 and #17233 together against their common parent on a sandbox containing 50,000 files in tmpfs. We measured each build 16 times on the same worker, alternating which build ran first.\n\n```text\n                   │    stock    │              combined              │\n                   │   sec/op    │   sec/op     vs base               │\nRootlessCheckpoint   230.8m ± 3%   220.7m ± 5%  -4.37% (p=0.017 n=16)\nLiveSave/graph       219.3m ± 3%   210.3m ± 5%  -4.14% (p=0.035 n=16)\n```\n\nAll 34 checkpoints, including the two warmups, restored with every file verified. [Benchstat and original samples](https://github.com/tamird/gvisor/actions/runs/42490809724/artifacts/13621991682).\n\nPosted by Codex on behalf of @tamird.",
+        "summary": "Post the measured full-checkpoint result for #17231, #17232, #17233 and #17240 together.",
+        "body": "I measured the full `Container.Checkpoint` call for a rootless systrap sandbox with 50,000 empty files in tmpfs and compression disabled. I compared master at 975fb1722 with [#17231](https://github.com/google/gvisor/pull/17231), [#17232](https://github.com/google/gvisor/pull/17232), [#17233](https://github.com/google/gvisor/pull/17233) and [#17240](https://github.com/google/gvisor/pull/17240) together. Each build ran 16 measured trials on the same AMD64 worker, alternating which build ran first.\n\n```text\n                       │    stock    │                four                 │\n                       │   sec/op    │   sec/op     vs base                │\nRootlessCheckpoint       271.5m ± 1%   242.9m ± 5%  -10.51% (p=0.000 n=16)\n```\n\nAll 34 checkpoints, including one warmup per build, restored successfully. After each restore the guest ran `/bin/true` and the test verified every file. [Benchstat and original samples](https://github.com/tamird/gvisor/actions/runs/42570572235/artifacts/13653214709).\n\nPosted by Codex on behalf of @tamird.",
         "requestedAt": "2026-11-08T14:54:55+00:00"
       }
     },
@@ -65271,7 +65275,7 @@
       "head": "22134a44640f341afc4e3357fae072515dccbbf8",
       "title": "Store zero-sized target pointers separately",
       "group": "runtime",
-      "updatedAt": "2026-11-08T14:54:55+00:00",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "summary": "On a live rootless systrap sandbox with 50,000 tmpfs files, the complete checkpoint was 4.55% faster across 16 alternating pairs (p=.014). All 34 restores verified the files, including the two warmups. A separate counting-writer Encode fell from 118.9 to 115.7 MiB per save with one more allocation at the median.",
       "evidence": [
         {
@@ -65307,14 +65311,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "22134a44640f341afc4e3357fae072515dccbbf8",
-        "observedAt": "2026-11-08T13:47:49Z",
-        "disposition": "Published the approved change as #17232.",
-        "nextAction": "Follow #17232 for maintainer review and import.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 22134a446 on #17232.",
+        "nextAction": "Follow #17232 for its Copybara import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17232",
-          "https://github.com/tamird/gvisor/commit/22134a446"
+          "https://github.com/tamird/gvisor/commit/22134a446",
+          "https://github.com/google/gvisor/pull/17232#pullrequestreview-5822009201"
         ]
       }
     },
@@ -65329,7 +65334,7 @@
       "head": "576430c42e0bb216b2611274a20d08463741c8a9",
       "title": "Reserve graph prefixes for inexact values",
       "group": "runtime",
-      "updatedAt": "2026-11-08T14:54:55+00:00",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "summary": "The graph encoder writes a length prefix for inexact values. On a real tmpfs checkpoint with 50,000 files, reserving prefixes only for those values reduced the final output buffer by 1,007,616 bytes. Across 12 paired encodes, allocated bytes fell from 118.9 MiB to 117.9 MiB (−0.81%). Allocation count stayed at 100,937 per encode, and the timing difference was inconclusive (p=.551).",
       "evidence": [
         {
@@ -65361,14 +65366,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "576430c42e0bb216b2611274a20d08463741c8a9",
-        "observedAt": "2026-11-08T13:47:51Z",
-        "disposition": "Published the approved change as #17233.",
-        "nextAction": "Follow #17233 for maintainer review and import.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 576430c42 on #17233.",
+        "nextAction": "Follow #17233 for its Copybara import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17233",
-          "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9"
+          "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9",
+          "https://github.com/google/gvisor/pull/17233#pullrequestreview-5822006118"
         ]
       }
     },
@@ -65969,7 +65975,7 @@
       "url": "https://github.com/tamird/gvisor/commit/26a561422",
       "group": "runtime",
       "status": "Published as #17240",
-      "updatedAt": "2026-11-08T17:35:03Z",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "summary": "Direct encoding of the 50,000-file kernel graph took 138.8 ms versus 144.8 ms and allocated 105.5 MiB versus 118.9 MiB over 12 samples per revision. All 34 Nginx checkpoints restored and served the verified response. The live checkpoint and HTTP comparison detected no latency difference.",
       "evidence": [
         {
@@ -65986,14 +65992,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
-        "observedAt": "2026-11-08T17:35:03Z",
-        "disposition": "The approved one-commit change is published at google/gvisor#17240.",
-        "nextAction": "Follow upstream review and checks.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 26a561422 on #17240.",
+        "nextAction": "Follow #17240 for its Copybara import.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/26a561422",
-          "https://github.com/google/gvisor/pull/17240"
+          "https://github.com/google/gvisor/pull/17240",
+          "https://github.com/google/gvisor/pull/17240#pullrequestreview-5822054359"
         ]
       },
       "settledReviews": [
@@ -66023,7 +66030,7 @@
       "url": "https://github.com/google/gvisor/pull/17240",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T17:35:03Z",
+      "updatedAt": "2026-11-09T07:51:00+00:00",
       "summary": "Direct encoding of the 50,000-file kernel graph took 138.8 ms versus 144.8 ms and allocated 105.5 MiB versus 118.9 MiB over 12 samples per revision. All 34 Nginx checkpoints restored and served the verified response. The live checkpoint and HTTP comparison detected no latency difference.",
       "evidence": [
         {
@@ -66055,14 +66062,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
-        "observedAt": "2026-11-08T17:35:03Z",
-        "disposition": "The approved one-commit change is published at google/gvisor#17240.",
-        "nextAction": "Follow upstream review and checks.",
+        "observedAt": "2026-11-09T07:51:00+00:00",
+        "disposition": "Ayush approved 26a561422 on #17240.",
+        "nextAction": "Follow #17240 for its Copybara import.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/26a561422",
-          "https://github.com/google/gvisor/pull/17240"
+          "https://github.com/google/gvisor/pull/17240",
+          "https://github.com/google/gvisor/pull/17240#pullrequestreview-5822054359"
         ]
       }
     },
@@ -91722,5 +91730,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T07:39:52.097533+00:00"
+  "updatedAt": "2026-11-09T07:51:00+00:00"
 }
