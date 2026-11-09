@@ -1,0 +1,65 @@
+name: Check conservative returned-pointer lifetime inference
+on:
+  push:
+    branches: [qualification/checklocks-return-borrow-probe]
+permissions: {contents: read}
+jobs:
+  audit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    env:
+      SOURCE: c68f2364977f2885b1357b0bda4e01a8b65bc9c0
+      PROBE: e22d237b3e13ff491b0622fc5d615f76d2716a1f
+      GNU: 680739b629229eb1c8fa91aa1147d1bca71eb04f
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the source, negative controls and GNU platform
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PROBE"
+          test "$(git rev-parse HEAD^^)" = "$SOURCE"
+          git diff --exit-code "$SOURCE" "$PROBE" -- . ':!pkg/sentry/kernel/semaphore/semaphore.go' ':!tools/checklocks'
+          git diff --exit-code "$PROBE" HEAD -- . ':!.github/qualification/sem_borrow_receipt.py' ':!.github/workflows/semaphore-borrow.yml'
+          git fetch --depth=1 origin "$GNU"
+          root="$RUNNER_TEMP/sem-borrow"
+          mkdir -p "$root/gnu"
+          cp .github/qualification/sem_borrow_receipt.py "$root/receipt.py"
+          for name in BUILD.bazel MODULE.bazel; do git show "$GNU:test/rbe/gnu_platform/$name" > "$root/gnu/$name"; done
+          test "$(cat .bazelversion)" = 8.8.1
+      - name: Verify both analyzer architectures on the annotated exact-source controls
+        env:
+          BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BB_KEY:?missing fork credential}"
+          root="$RUNNER_TEMP/sem-borrow"
+          rcfile="$root/remote.bazelrc"
+          trap 'rm -f "$rcfile"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BB_KEY" "$BB_KEY"
+          } > "$rcfile"
+          unset BB_KEY
+          for phase in probe; do
+            git switch --detach "$PROBE"
+            code=0
+            bazel --bazelrc="$rcfile" test --config=x86_64 -c opt --jobs=24 --keep_going \
+              --inject_repository=qualification_gnu="$root/gnu" --host_platform=@qualification_gnu//:gnu --extra_execution_platforms=@qualification_gnu//:gnu \
+              --spawn_strategy=remote --strategy=GoCompilePkg=remote --strategy=GoStaticAnalysis=remote --strategy=TestRunner=remote \
+              --noremote_local_fallback --noremote_upload_local_results --remote_download_outputs=toplevel --remote_timeout=10m \
+              --build_tag_filters= --test_tag_filters= --nocache_test_results --flaky_test_attempts=1 \
+              --build_event_json_file="$root/$phase.bep" //pkg/sentry/kernel/semaphore:semaphore_nogo > "$root/$phase.console" 2>&1 || code=$?
+            echo "$code" > "$root/$phase.exit"
+            python3 -IB "$root/receipt.py" "$phase"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: conservative-borrow-analysis
+          path: |
+            ${{ runner.temp }}/sem-borrow/probe.json
+          if-no-files-found: error
+          retention-days: 14
