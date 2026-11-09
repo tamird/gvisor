@@ -16,6 +16,7 @@ package systrap
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -31,13 +32,13 @@ import (
 	"gvisor.dev/gvisor/pkg/pool"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/platform/systrap/sysmsg"
+	"gvisor.dev/gvisor/pkg/test/testprocess"
 )
 
 // startStuckChild starts a child process that never responds
 // as a stand-in for a stub process.
 func startStuckChild() (*exec.Cmd, error) {
-	cmd := exec.Command(os.Args[0])
-	cmd.Env = append(os.Environ(), childEnv+"=stuck")
+	cmd := testprocess.Pause.Command(context.Background())
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("cannot start stuck child: %w", err)
 	}

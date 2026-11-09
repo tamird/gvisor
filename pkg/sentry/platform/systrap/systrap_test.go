@@ -42,10 +42,6 @@ func TestMain(m *testing.M) {
 	case "":
 		cpuid.Initialize()
 		os.Exit(m.Run())
-	case "stuck":
-		for {
-			unix.Pause()
-		}
 	case "hoststall":
 		if err := hostStallChild(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
