@@ -1,0 +1,70 @@
+--- a/bazel/grpc_build_system.bzl
++++ b/bazel/grpc_build_system.bzl
+@@ -201,6 +201,26 @@
+         linkstatic = linkstatic,
+     )
+ 
++def _plugin_binary_impl(ctx):
++    # The build metadata generators read unconfigured query XML. A label list
++    # exposes both branches of the select there. Each build selects one file.
++    [src] = ctx.files.srcs
++    ctx.actions.symlink(
++        output = ctx.outputs.out,
++        target_file = src,
++        is_executable = True,
++    )
++    return [DefaultInfo(executable = ctx.outputs.out)]
++
++_plugin_binary = rule(
++    implementation = _plugin_binary_impl,
++    executable = True,
++    attrs = {
++        "srcs": attr.label_list(allow_files = True, mandatory = True),
++        "out": attr.output(mandatory = True),
++    },
++)
++
+ def grpc_proto_plugin(name, srcs = [], deps = []):
+     cc_binary(
+         name = name + "_native",
+@@ -212,16 +232,14 @@
+         binary = name + "_native",
+     )
+ 
+-    # In order to avoid warnings from Bazel, names of the rule and its output file must differ.
+-    native.genrule(
++    _plugin_binary(
+         name = name,
+         srcs = select({
+             "@platforms//os:macos": [name + "_universal"],
+             "//conditions:default": [name + "_native"],
+         }),
+-        outs = [name + "_binary"],
+-        cmd = "cp $< $@",
+-        executable = True,
++        # In order to avoid warnings from Bazel, names of the rule and its output file must differ.
++        out = name + "_binary",
+     )
+ 
+ def grpc_internal_proto_library(
+--- a/tools/artifact_gen/extract_metadata_from_bazel_xml.cc
++++ b/tools/artifact_gen/extract_metadata_from_bazel_xml.cc
+@@ -422,7 +422,7 @@
+             bazel_rule.clazz == "upb_c_proto_library" ||
+             bazel_rule.clazz == "upb_proto_reflection_library" ||
+             bazel_rule.clazz == "alias" || bazel_rule.clazz == "bind" ||
+-            bazel_rule.clazz == "genrule") {
++            bazel_rule.clazz == "genrule" || bazel_rule.clazz == "_plugin_binary") {
+           rules_[bazel_rule.name] = bazel_rule;
+         }
+       }
+--- a/tools/buildgen/extract_metadata_from_bazel_xml.py
++++ b/tools/buildgen/extract_metadata_from_bazel_xml.py
+@@ -258,6 +258,7 @@
+                 "alias",
+                 "bind",
+                 "genrule",
++                "_plugin_binary",
+             ]:
+                 if rule_name in result:
+                     raise Exception("Rule %s already present" % rule_name)

@@ -21,6 +21,9 @@ bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "with_cfg.bzl", version = "1.0.2")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
 
+# Select gRPC's c-ares configuration header without a shell.
+bazel_dep(name = "c-ares", version = "1.34.9.bcr.1", repo_name = None)
+
 # gRPC's older minimum imports a removed Google APIs extension repository.
 bazel_dep(name = "envoy_api", version = "0.0.0-20260130-84e8436")
 bazel_dep(name = "protobuf", version = "35.1", repo_name = "com_google_protobuf")
@@ -61,10 +64,21 @@ single_version_override(
     patches = ["//tools:benchmark-umbrella-exports.patch"],
 )
 
+# Use the gRPC plugin symlink until grpc/grpc#43825 ships in the registry.
+single_version_override(
+    module_name = "grpc",
+    patch_strip = 1,
+    patches = ["//tools:grpc_plugin_symlink.patch"],
+)
+
 single_version_override(
     module_name = "protobuf",
     patch_strip = 1,
-    patches = ["//tools:protobuf_authenticity.patch"],
+    patches = [
+        "//tools:protobuf_authenticity.patch",
+        # Drop when the pinned release includes upstream b1f8a6e38.
+        "//tools:protobuf_stage1.patch",
+    ],
 )
 
 # Drop the backport when the llvm module includes kernel_headers.configure.

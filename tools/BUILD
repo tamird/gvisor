@@ -77,7 +77,9 @@ exports_files([
     "benchmark-umbrella-exports.patch",
     "gazelle-native-environment.patch",
     "llvm-linux-header-default.patch",
+    "grpc_plugin_symlink.patch",
     "protobuf_authenticity.patch",
+    "protobuf_stage1.patch",
     "rules_go_bootstrap_shell.patch",
 ])
 
