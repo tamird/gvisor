@@ -1,3 +1,6 @@
+load("//tools:defs.bzl", "namespace_test_exec_properties")
+load("//tools/bazeldefs:presubmit_tests.bzl", "native_test")
+
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = ["//:sandbox"],
@@ -20,6 +23,25 @@ test_suite(
     tests = [
         "//test/syscalls:uname_test_native",
         "//test/syscalls:uname_test_native_presubmit_arm64",
+    ],
+)
+
+# This binary creates its own network namespace. Running it directly lets
+# it retain the native worker's initial user namespace for privileged cases.
+native_test(
+    name = "netfilter_syscalls",
+    src = "//test/syscalls/linux:socket_netlink_netfilter_test",
+    exec_properties = namespace_test_exec_properties,
+    tags = ["manual"],
+)
+
+test_suite(
+    name = "native_syscalls",
+    tags = ["manual"],
+    tests = [
+        ":netfilter_syscalls",
+        ":netfilter_syscalls_presubmit_arm64",
+        ":uname",
     ],
 )
 
