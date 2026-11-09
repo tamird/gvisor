@@ -3299,7 +3299,9 @@ func (e *Endpoint) maybeEnableSACKPermitted(synOpts header.TCPSynOptions) {
 	}
 }
 
-// maxOptionSize return the maximum size of TCP options.
+// maxOptionSize returns the space reserved for IP and TCP options in each
+// segment. The experiment option can be enabled on a connected socket while
+// earlier segments are still outstanding.
 //
 // +checklocks:e.mu
 func (e *Endpoint) maxOptionSize() (size int) {
@@ -3308,6 +3310,14 @@ func (e *Endpoint) maxOptionSize() (size int) {
 	size = len(options)
 	putOptions(options)
 
+	if e.routeSupportsExperimentOption(e.route) {
+		switch e.route.NetProto() {
+		case header.IPv4ProtocolNumber:
+			size += header.IPv4OptionExperimentLength
+		case header.IPv6ProtocolNumber:
+			size += header.IPv6ExperimentHdrLength
+		}
+	}
 	return size
 }
 
@@ -3358,10 +3368,8 @@ func (e *Endpoint) initHostGSO() {
 	switch e.route.NetProto() {
 	case header.IPv4ProtocolNumber:
 		e.gso.Type = stack.GSOTCPv4
-		e.gso.L3HdrLen = header.IPv4MinimumSize
 	case header.IPv6ProtocolNumber:
 		e.gso.Type = stack.GSOTCPv6
-		e.gso.L3HdrLen = header.IPv6MinimumSize
 	default:
 		panic(fmt.Sprintf("Unknown netProto: %v", e.NetProto))
 	}
@@ -3501,10 +3509,15 @@ func (e *Endpoint) GetAcceptConn() bool {
 	return EndpointState(e.State()) == StateListen
 }
 
+func (e *Endpoint) routeSupportsExperimentOption(route *stack.Route) bool {
+	nic, err := e.stack.GetNICByID(route.OutgoingNIC())
+	return err == nil && nic.GetExperimentIPOptionEnabled()
+}
+
 // getExperimentOptionValue returns the experiment option value set on the
 // endpoint if experiment IP options are enabled on outgoing NIC of the route.
 func (e *Endpoint) getExperimentOptionValue(route *stack.Route) uint16 {
-	if nic, err := e.stack.GetNICByID(route.OutgoingNIC()); err == nil && nic.GetExperimentIPOptionEnabled() {
+	if e.routeSupportsExperimentOption(route) {
 		return e.ops.GetExperimentOptionValue()
 	}
 	return 0

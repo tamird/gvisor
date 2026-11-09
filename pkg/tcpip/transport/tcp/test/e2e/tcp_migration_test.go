@@ -243,6 +243,101 @@ func TestTCPMigrationACKAfterMTUReduction(t *testing.T) {
 	}
 }
 
+// TestTCPMigrationPayloadSize checks what reaches the peer after restoring the
+// same connected socket onto NICs with different packet header requirements.
+func TestTCPMigrationPayloadSize(t *testing.T) {
+	const peerMSS = 1200
+	const withOption = peerMSS - header.IPv4OptionExperimentLength
+	for _, tc := range []struct {
+		name     string
+		initial  bool
+		restores []bool
+		want     int
+	}{
+		{"incapable_to_capable", false, []bool{true}, withOption},
+		{"incapable_to_capable_twice", false, []bool{true, true}, withOption},
+		{"capable_to_capable_twice", true, []bool{true, true}, withOption},
+		{"incapable_to_incapable_twice", false, []bool{false, false}, peerMSS},
+		{"capable_to_incapable", true, []bool{false}, withOption},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := testcontext.NewWithOpts(t, testcontext.Options{
+				EnableV4: true, MTU: e2e.DefaultMTU, EnableExperimentIPOption: tc.initial,
+			})
+			defer c.Cleanup()
+			var synOpts [4]byte
+			header.EncodeMSSOption(peerMSS, synOpts[:])
+			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, synOpts[:])
+			c.EP.SocketOptions().SetExperimentOptionValue(99)
+			s := c.Stack()
+			var link *channel.Endpoint
+			for _, capable := range tc.restores {
+				s.SetAllowLiveTCPMigration(true)
+				s.SetRemoveConf(true)
+				var image bytes.Buffer
+				if _, err := state.Save(context.Background(), &image, s); err != nil {
+					t.Fatal(err)
+				}
+				s.Resume()
+				s = stack.New(stack.Options{
+					TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+					NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol},
+				})
+				t.Cleanup(s.Destroy)
+				s.SetAllowLiveTCPMigration(true)
+				if _, err := state.Load(context.Background(), &image, s); err != nil {
+					t.Fatal(err)
+				}
+				link = channel.New(1000, e2e.DefaultMTU, "")
+				if err := s.CreateNICWithOptions(1, link, stack.NICOptions{EnableExperimentIPOption: capable}); err != nil {
+					t.Fatal(err)
+				}
+				if err := s.AddProtocolAddress(1, tcpip.ProtocolAddress{
+					Protocol: header.IPv4ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix,
+				}, stack.AddressProperties{}); err != nil {
+					t.Fatal(err)
+				}
+				s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+				s.Restore()
+				tcpip.AsyncLoading.Wait()
+			}
+
+			endpoints := s.RegisteredEndpoints()
+			if len(endpoints) != 1 {
+				t.Fatalf("restored %d registered endpoints, want 1", len(endpoints))
+			}
+			ep := endpoints[0].(tcpip.Endpoint)
+			if got := tcp.EndpointState(ep.State()); got != tcp.StateEstablished {
+				t.Fatalf("restored TCP state = %s, want established", got)
+			}
+			data := bytes.Repeat([]byte{0x5a}, 2*peerMSS)
+			if n, err := ep.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+				t.Fatalf("Write = %d, %v", n, err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			pkt := link.ReadContext(ctx)
+			if pkt == nil {
+				t.Fatal("restored endpoint did not send data")
+			}
+			defer pkt.DecRef()
+			view := pkt.ToView()
+			defer view.Release()
+			var options header.IPv4Options
+			if tc.restores[len(tc.restores)-1] {
+				options = header.IPv4Options{byte(header.IPv4OptionExperimentType), header.IPv4OptionExperimentLength, 0, 99}
+			}
+			checker.IPv4(t, view, checker.IPv4Options(options))
+			wire := header.TCP(header.IPv4(view.AsSlice()).Payload()).Payload()
+			if got := len(wire); got != tc.want {
+				t.Errorf("restored TCP payload = %d, want %d", got, tc.want)
+			} else if !bytes.Equal(wire, data[:tc.want]) {
+				t.Error("restored TCP payload differs from the queued data")
+			}
+		})
+	}
+}
+
 // TestRestoreListenWithPreexistingConnection tests that a listening endpoint
 // properly enters StateListen and accepts new connections after restore, even
 // when the snapshot contained active or lingering connected TCP endpoints (e.g.
