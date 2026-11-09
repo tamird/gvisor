@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T21:46:42+00:00",
+    "updatedAt": "2026-11-09T21:55:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23641,8 +23641,8 @@
       "url": "https://github.com/tamird/gvisor/commit/768579797",
       "group": "bazel",
       "status": "Waiting for the package release and #17168",
-      "updatedAt": "2026-11-09T21:46:42+00:00",
-      "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR lists only two of the 47 installed packages in the dpkg status file. The revised 225-entry catalog passed Fetch and Verify. Its manually recorded Ubuntu keyring matched the 3,607 bytes in Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.\n\nWith rules_distroless #294 applied to 0.11.1, dpkg lists all 47 installed packages in each image. All versions and architectures matched the signed lock. All 1,882 AMD64 and 1,881 ARM64 regular-file comparisons matched the signed packages. Both Make image archives built and the license check passed. The AMD64 image also ran tcpdump under runc. This run inspected the ARM64 archive.\n\nThe registry’s two macOS jobs stop at the GnuPG setup because brew is missing. Its Bazel 8 jobs on Debian and Ubuntu fail with native repository rules disabled. The generated tar and zstd toolchains still load local_config_platform.",
+      "updatedAt": "2026-11-09T21:55:41+00:00",
+      "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR lists only two of the 47 installed packages in the dpkg status file. The revised 225-entry catalog passed Fetch and Verify. Its manually recorded Ubuntu keyring matched the 3,607 bytes in Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.\n\nWith rules_distroless #294 applied to 0.11.1, dpkg lists all 47 installed packages in each image. All versions and architectures matched the signed lock. All 1,882 AMD64 and 1,881 ARM64 regular-file comparisons matched the signed packages. Both Make image archives built and the license check passed. The AMD64 image also ran tcpdump under runc. This run inspected the ARM64 archive.\n\nThe registry’s two macOS jobs stop at the GnuPG setup because brew is missing. Its Bazel 8 jobs on Debian and Ubuntu fail with native repository rules disabled. The generated tar and zstd toolchains still load local_config_platform. On Bazel 8.8.2, rules_distroless’s direct pin of aspect_bazel_lib 2.14.0 caused both obsolete toolchain loads. Updating that pin to 2.19.1 cleared both. The signed February 2024 Debian snapshot then returned HTTP 503, before any candidate smoke test ran.",
       "links": [
         {
           "label": "Signed Ubuntu package revision",
@@ -23754,6 +23754,14 @@
         {
           "label": "BCR Linux toolchain resolution failure",
           "url": "https://buildkite.com/organizations/bazel/pipelines/bcr-presubmit/builds/44623/jobs/01a19f45-5185-4bea-a72a-1cd5c7f488c5/download.txt"
+        },
+        {
+          "label": "Bazel 8.8.2 release smoke with aspect_bazel_lib 2.14.0",
+          "url": "https://app.buildbuddy.io/invocation/7e482109-aa92-4058-a8a6-9523066a9c0e"
+        },
+        {
+          "label": "Bazel 8.8.2 with 2.19.1 reached the Debian snapshot and received HTTP 503",
+          "url": "https://app.buildbuddy.io/invocation/4844e527-9bf1-4045-a0c7-a902d6e66d4c"
         }
       ]
     },
@@ -63700,9 +63708,13 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T10:42:28+00:00",
-      "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.",
+      "updatedAt": "2026-11-09T21:55:41+00:00",
+      "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire → graph → wire restore verified the guest’s 768 KiB memory mapping.",
       "evidence": [
+        {
+          "label": "Eight restored guest checkpoints, two failing stock header offsets and independently decoded MemoryFile regions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701281118/artifacts/13713937201"
+        },
         {
           "label": "Revised native ARM64 test suites and four mutations rejected for their expected failures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42396550227/artifacts/13583881407"
@@ -94325,9 +94337,18 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T21:19:08+00:00",
-      "summary": "The wire → graph → wire checkpoint test stopped at its first dump on two independent commits. Both logs reported “error printing state: unreachable” and exit 128.",
+      "updatedAt": "2026-11-09T21:55:41+00:00",
+      "summary": "Three Buildkite runs stopped at the first wire dump with “error printing state: unreachable”. A native AMD64 workload reproduced the error on two of eight valid guest checkpoints. Stock mistook saved page data for a stream header. #17208 dumped all eight and the guests restored.",
       "findings": [
+        {
+          "text": "Both failing stock header reads began 8,064 bytes into a 16,384-byte MemoryFile page-data range, at decompressed offsets 321,490 and 3,196,149. Neither header matched the guest’s uniform pixel value. The other six stock dumps exited successfully with different text. The #17208 binary dumped the same eight files and all eight wire → graph → wire restores verified the guest’s 768 KiB mapping. The original CI images are unavailable, so their offsets remain unknown.",
+          "evidence": [
+            {
+              "label": "Eight restored guest checkpoints, two failing stock header offsets and independently decoded MemoryFile regions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42701281118/artifacts/13713937201"
+            }
+          ]
+        },
         {
           "text": "The same container-test shard failed on 87713ade1 and 676e03aa1. The replacement jobs passed the container test target, with seven of eight shards cached. Neither retry log names the individual passing subtest.",
           "evidence": [
@@ -94393,11 +94414,11 @@
           ]
         }
       ],
-      "nextStep": "Compare both printers on the same guest-generated checkpoint and verify a full restore. If the dump fails, locate the failing header relative to the MemoryFile metadata and page boundaries.",
+      "nextStep": "Check the original chained restore test on the first upstream run that includes #17208. If the error recurs, retain the failing header offset and the type of checkpoint region it falls in.",
       "evidence": [
         {
-          "label": "Eight guest-generated checkpoint chains with an offset probe",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42701281118"
+          "label": "Eight restored guest checkpoints, two failing stock header offsets and independently decoded MemoryFile regions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701281118/artifacts/13713937201"
         },
         {
           "label": "gVisor #16851",
@@ -94852,5 +94873,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T21:46:42+00:00"
+  "updatedAt": "2026-11-09T21:55:41+00:00"
 }
