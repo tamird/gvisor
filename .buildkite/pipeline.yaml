@@ -231,8 +231,9 @@ steps:
   - <<: *common
     <<: *source_test_continuous
     label: ":bun: COS Latest Driver Compatibility Test"
-    commands:
-      - tools/gpu/cos_drivers_test.sh
+    env:
+      DOCKER_BUILD: "false"
+    command: make run TARGETS=//test/gpu:cos_gpu_compatibility_test ARGS=-test.v
     agents:
       queue: "cos"
   - <<: *gpu_test

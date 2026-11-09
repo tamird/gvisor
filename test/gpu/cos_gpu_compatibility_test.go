@@ -17,12 +17,14 @@
 package cos_gpu_compatibility_test
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -34,7 +36,7 @@ import (
 )
 
 var (
-	imageJSON          = flag.String("image_json", "", "Path to file containing the list of COS images")
+	imageJSON          = flag.String("image_json", "", "Read the list of COS images from this file instead of querying gcloud")
 	unsupportedDevices = map[string]any{
 		"NVIDIA_TESLA_V100": true,
 		"NVIDIA_TESLA_P100": true,
@@ -43,10 +45,19 @@ var (
 	}
 )
 
+func listImages(ctx context.Context) ([]byte, error) {
+	if *imageJSON != "" {
+		return os.ReadFile(*imageJSON)
+	}
+	cmd := exec.CommandContext(ctx, "gcloud", "compute", "images", "list", "--project", "cos-cloud", "--filter=family:cos*", "--format=json")
+	cmd.Stderr = os.Stderr
+	return cmd.Output()
+}
+
 func TestGPUDriversCompatibility(t *testing.T) {
-	content, err := os.ReadFile(*imageJSON)
+	content, err := listImages(t.Context())
 	if err != nil {
-		t.Fatalf("Failed to read image JSON file: %v", err)
+		t.Fatalf("Failed to list COS images: %v", err)
 	}
 	images := []map[string]any{}
 	if err := json.Unmarshal(content, &images); err != nil {
