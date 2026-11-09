@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T22:10:43+00:00",
+    "updatedAt": "2026-11-09T22:16:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34744,6 +34744,10 @@
       "url": "https://github.com/google/gvisor/pull/16590",
       "evidence": [
         {
+          "label": "14 matching output pairs on AMD64 and ARM64 with #17317",
+          "url": "https://app.buildbuddy.io/invocation/f075d190-453d-4187-bc9e-e861b637fc64"
+        },
+        {
           "label": "Optimized releases and generator traces for both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42364033903/artifacts/13571014685"
         },
@@ -34764,9 +34768,9 @@
           "url": "https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
         }
       ],
-      "updatedAt": "2026-11-07T11:12:45+00:00",
+      "updatedAt": "2026-11-09T22:16:42+00:00",
       "status": "open",
-      "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.",
+      "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.\n\nAll 14 pairs of generator outputs matched across AMD64 and ARM64 when comparing #17317 alone with #17317 plus this change. The two empty fastbuild stubs still use the host marker. This comparison covered generator output only. The full Go export was not run.",
       "refinement": {
         "before": {
           "head": "4598fe8128aed1be205ee8b848c002b7f85bd897"
@@ -68123,37 +68127,39 @@
       "repo": "tamird/gvisor",
       "ref": "research/fuse-create-capability",
       "head": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
-      "url": "https://github.com/tamird/gvisor/commit/e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+      "url": "https://github.com/tamird/gvisor/commit/e6bba3d9b",
       "title": "Synchronize the FUSE create capability across mounts",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T07:37:09+00:00",
-      "summary": "Two FUSE mounts can share a connection. This change stores its FUSE_CREATE capability atomically when the server returns ENOSYS.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T22:16:42+00:00",
+      "summary": "Two filesystems mounted from one FUSE device share a connection. When both receive ENOSYS for FUSE_CREATE, they can write the same capability flag under different filesystem locks. The race detector reported both writes in inode.NewFile.\n\nWith an atomic flag, 12 repetitions completed. Each made two CREATE requests and three MKNOD requests, including a third create that went straight to MKNOD. Wire and graph checkpoints each restored both flag values. AMD64 and ARM64 Nogo passed. The result parser expected PASS on a separate line, which made the enclosing job red.\n\nThe race test used two filesystem objects sharing one connection. The full mount fixture stopped in ptrace task creation before reaching FUSE.",
       "evidence": [
         {
-          "label": "Compiled stock FUSE test",
+          "label": "Stock race, fixed repetitions, checkpoint round trips and both analyzer logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42700746550/artifacts/13714234226"
+        },
+        {
+          "label": "Both writes to the same flag on stock",
+          "url": "https://app.buildbuddy.io/invocation/d103cbb4-c351-4f8f-b406-b4de87a42a8b"
+        },
+        {
+          "label": "Timed-out full mount fixture",
+          "url": "https://app.buildbuddy.io/invocation/4e86dddc-f7d1-4640-a05f-876766ff343b"
+        },
+        {
+          "label": "Earlier stock build receipt",
           "url": "https://github.com/tamird/gvisor/actions/runs/42577842227/artifacts/13655829527"
-        },
-        {
-          "label": "First hosted runner",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42575497106"
-        },
-        {
-          "label": "Recovery runner",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42577842227"
         }
       ],
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
-        "observedAt": "2026-11-09T07:34:05+00:00",
-        "disposition": "Two hosted runners reported shutdown during validation. The second reached the stock TestRunner. Only the compiled stock owner was retained.",
-        "nextAction": "Obtain stock and fixed race results for the two mounts, verify both state-codec round trips, and check the FUSE Nogo results before contributor review.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
-          "https://github.com/tamird/gvisor/actions/runs/42577842227/artifacts/13655829527",
-          "https://github.com/tamird/gvisor/actions/runs/42575497106",
-          "https://github.com/tamird/gvisor/actions/runs/42577842227"
-        ]
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "url": "https://github.com/tamird/gvisor/commit/e6bba3d9b",
+        "title": "Synchronize the FUSE create capability across mounts",
+        "requestedAt": "2026-11-09T22:16:42+00:00",
+        "summary": "Open the standalone PR to synchronize the shared FUSE_CREATE capability?",
+        "body": "Mounting a FUSE device twice creates two kernfs filesystems that share a connection. File creation on those mounts can therefore read or record an ENOSYS response under different filesystem locks.\n\nUse an atomic flag for FUSE_CREATE support, as for FUSE_ACCESS and FUSE_FLUSH. A request already in flight still handles its own reply. After ENOSYS, later creates go through FUSE_MKNOD and FUSE_OPEN."
       }
     },
     {
@@ -94891,5 +94897,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T22:10:43+00:00"
+  "updatedAt": "2026-11-09T22:16:42+00:00"
 }
