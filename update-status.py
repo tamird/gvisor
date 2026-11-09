@@ -1194,6 +1194,14 @@ def main() -> None:
     # Discover requests before spending the optional mergeability recheck budget.
     since = datetime.now(timezone.utc).isoformat()
     incoming, scan = incoming_review_intake(previous, [*prs, *review_prs], since)
+    # Reviewer requests take priority. Give the hourly CI sample a turn before
+    # optional mergeability retries can spend the last request every cycle.
+    scan_flakes = any(item["id"] == "investigation:ci-flakes" and item["status"] == "active"
+                      for item in REGISTRY.get("investigations", []))
+    prior_flakes = previous.get("ciFlakes", {})
+    if scan_flakes:
+        actions = collect_ci_actions(prior_flakes.get("actions", {}), since, budget=min(2, REQUEST_LIMIT - requests))
+        requests += actions["requestsUsed"]
     # Use only the budget left by all repositories and issues. Otherwise
     # UNKNOWNs in the first repository can crowd out required observations.
     for repo, inventory in inventories.items():
@@ -1239,13 +1247,8 @@ def main() -> None:
     if sweep := feedback_sweep(REGISTRY, [*prs, *review_prs], previous, checked_at):
         snapshot["projectFeedbackReview"] = sweep
         print(json.dumps({"projectFeedbackReview": sweep}))
-    if any(item["id"] == "investigation:ci-flakes" and item["status"] == "active"
-           for item in REGISTRY.get("investigations", [])):
-        prior_flakes = previous.get("ciFlakes", {})
+    if scan_flakes:
         flakes = collect_ci_flakes(prior_flakes, checked_at)
-        actions = collect_ci_actions(prior_flakes.get("actions", {}), checked_at, budget=min(2, REQUEST_LIMIT - requests))
-        requests += actions["requestsUsed"]
-        snapshot["limits"]["requests"] = requests
         flakes["actions"] = actions
         snapshot["ciFlakes"] = flakes
         prior_jobs = {row["failedJob"] for row in prior_flakes.get("observations", [])}

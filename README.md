@@ -114,7 +114,7 @@ with a repository (`repo`), PR `numbers`, an `owner`, and `reviewers`. A new
 head or substantive reply then appears in the refresh workflow's review
 report without putting the other author's PR in the contributor delivery queue.
 
-The [CI flakes queue](?view=investigations&q=CI+flakes#investigation%3Aci-flakes)
+The [CI flakes queue](https://tamird.github.io/gvisor/?view=investigations&q=CI+flakes#investigation%3Aci-flakes)
 tracks failures on gVisor PRs from any author, their Copybara imports, and
 integration builds. Start a branchless investigation when a test or failure
 signature needs a closer look. Record the exact commit and failing attempt,
@@ -124,7 +124,9 @@ the same card. Conclude it when the repair has been exercised.
 
 Each scheduled work-map refresh scans the public Buildkite build listings
 and follows job retry IDs. It also samples gVisor PR validation workflows
-on GitHub Actions within the remaining GitHub request budget. The CI flake
+on GitHub Actions and searches gVisor issue and PR titles for flake reports
+within the remaining GitHub request budget. Closed reports are available
+through Show history. The CI flake
 triage owner checks new observations, unrecovered failures and public flake
 reports for repeat symptoms. Look through passing builds as well as failed
 ones. Record service outages, cancellations and persistent failures separately

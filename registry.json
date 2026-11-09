@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T18:35:40+00:00",
+    "updatedAt": "2026-11-09T18:43:26+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5958,6 +5958,14 @@
         {
           "label": "Per-architecture build loop and repository reuse",
           "url": "https://github.com/tamird/gvisor/blob/27a12d5ab/.github/qualification/lean_release_client.py#L411-L448"
+        },
+        {
+          "label": "Unmodified master: AMD64 clang++ built the ARM64 PosixError binary with paired exec and target toolchains",
+          "url": "https://app.buildbuddy.io/invocation/495fbabb-087c-4965-9977-7ce21778192d"
+        },
+        {
+          "label": "Native ARM64 worker ran all three cases from the same executable",
+          "url": "https://app.buildbuddy.io/invocation/676eb0f4-85d3-4806-b106-a2d33f2b9c86"
         }
       ],
       "refinement": {
@@ -59630,6 +59638,10 @@
         {
           "label": "Full ARM64 validation of the 3,246 source-presubmit roots",
           "url": "https://github.com/tamird/gvisor/actions/runs/42656502954"
+        },
+        {
+          "label": "Linux AMD64 and ARM64: all six statefile permission cases ran uncached under UID 65534",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42670825261/artifacts/13699077070"
         }
       ],
       "settledReviews": [
@@ -93283,6 +93295,10 @@
         {
           "label": "gVisor #17208",
           "url": "https://github.com/google/gvisor/pull/17208"
+        },
+        {
+          "label": "Fork comparison using checkpoints from the existing restore test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42676362803"
         }
       ]
     },
@@ -93385,7 +93401,7 @@
       "updatedAt": "2026-11-09T18:35:40+00:00",
       "summary": "TestUnshareUsernsWithoutSetfcap timed out collecting container logs on the cgroup-v1 Docker shard for the import of #17060. The same shard passed on its linked retry.",
       "findings": [],
-      "nextStep": "Check whether the container exited before log collection timed out, and whether the same test has failed on another commit. The passing shard does not identify which individual cases reran.",
+      "nextStep": "Compare the exit status and stderr from unshare -Ur ls with the five-second Docker log wait. The owning target passed uncached on retry in 37.1 seconds. The public log does not record an individual case result.",
       "evidence": [
         {
           "label": "#53945 failed attempt",
@@ -93398,6 +93414,72 @@
         {
           "label": "Source PR #17060",
           "url": "https://github.com/google/gvisor/pull/17060"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-cached-neighbor",
+      "title": "Neighbor-cache test times out waiting for the new MAC",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T18:43:26+00:00",
+      "summary": "The author of #16788 traced an ARP retry racing the test’s MAC change. Their proposed fix sets the address before enabling the NIC.",
+      "findings": [
+        {
+          "text": "With 0–2 ms delays around the operations, the author reported 160 failures in 300 runs before the change and none in 300 afterward. They also distinguished a separate two-second stall that they had only seen with an injected delay.",
+          "evidence": [
+            {
+              "label": "Author’s reproducer and proposed fix",
+              "url": "https://github.com/google/gvisor/pull/16788"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Follow #16788 through review and import, then check for recurrences of the destination-MAC timeout on the landed change.",
+      "evidence": [
+        {
+          "label": "Change under review",
+          "url": "https://github.com/google/gvisor/pull/16788/changes"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-dependency-downloads",
+      "title": "GitHub Actions dependency downloads returned HTTP 504 on three PRs",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T18:46:35+00:00",
+      "summary": "Gazelle and Go generation stopped before testing on three contributors’ PRs. Bazel reported HTTP 504 while fetching bazel-skylib 1.9.2 or protobuf 35.1.",
+      "findings": [
+        {
+          "text": "Each failed fetch had one GitHub release URL. Each workflow failed on its only attempt at that commit. The errors do not identify the intermediary that returned 504.",
+          "evidence": [
+            {
+              "label": "Skylib registry source",
+              "url": "https://bcr.bazel.build/modules/bazel_skylib/1.9.2/source.json"
+            },
+            {
+              "label": "Protobuf registry source",
+              "url": "https://bcr.bazel.build/modules/protobuf/35.1/source.json"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check whether an existing mirror serves these exact artifacts and checksums, and watch for another failure before proposing a change to the download path.",
+      "evidence": [
+        {
+          "label": "#17236 · Gazelle · bazel-skylib",
+          "url": "https://github.com/google/gvisor/actions/runs/42580376773/job/129037393345"
+        },
+        {
+          "label": "#17264 · Go generation · bazel-skylib",
+          "url": "https://github.com/google/gvisor/actions/runs/42580516806/job/129037834922"
+        },
+        {
+          "label": "#17267 · Go generation · protobuf",
+          "url": "https://github.com/google/gvisor/actions/runs/42583801511/job/129048618821"
         }
       ]
     }

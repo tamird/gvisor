@@ -1350,7 +1350,8 @@ function appendCIFlakeScan(card, scan) {
     }
     const head = element("thead"); head.append(header); table.append(caption, head);
     const body = element("tbody");
-    for (const row of [...scan.observations].sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt))) {
+    const sorted = [...scan.observations].sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt));
+    function appendRow(row) {
       const url = `https://buildkite.com/gvisor/${row.pipeline}/builds/${row.build}`;
       const tr = element("tr"), job = element("th", "", row.job); job.scope = "row";
       const build = element("td"); build.append(link(`${row.pipeline} #${row.build}`, url));
@@ -1360,24 +1361,61 @@ function appendCIFlakeScan(card, scan) {
         " → ", link("Passed", `${url}#${row.passedJob}`));
       tr.append(job, build, attempts, element("td", "", date(row.finishedAt))); body.append(tr);
     }
+    sorted.slice(0, 25).forEach(appendRow);
     table.append(body); section.append(table);
+    if (sorted.length > 25) {
+      const older = element("button", "", `Show ${sorted.length - 25} older recoveries`);
+      older.type = "button";
+      older.addEventListener("click", () => {
+        sorted.slice(25).forEach(appendRow);
+        older.remove();
+      });
+      section.append(older);
+    }
   }
   card.append(section);
   if (scan.actions) {
     const actions = element("details", "investigation-comparison");
     actions.append(element("summary", "", `Recovered GitHub Actions jobs (${scan.actions.observations.length})`));
-    const coverage = scan.actions.error || scan.actions.status;
-    actions.append(element("p", "comparison-note", `Rotating sample of PR validation workflows · ${coverage}`));
+    const coverage = [scan.actions.sample || "Rotating sample of PR validation workflows"];
+    if (scan.actions.checkedAt) coverage.push(`Last successful read ${date(scan.actions.checkedAt)}.`);
+    if (scan.actions.pending?.length) coverage.push(`${scan.actions.pending.length} retried runs awaiting job details.`);
+    if (scan.actions.error) coverage.push(scan.actions.error);
+    else if (!scan.actions.checkedAt) coverage.push("Waiting for request budget.");
+    actions.append(element("p", "comparison-note", coverage.join(" ")));
+    if (Number.isSafeInteger(scan.actions.partialRun?.run)) {
+      const line = element("p", "comparison-note");
+      line.append("The available job page was incomplete for ", link(`run #${scan.actions.partialRun.run}`,
+        `https://github.com/google/gvisor/actions/runs/${scan.actions.partialRun.run}`), ".");
+      actions.append(line);
+    }
     for (const row of scan.actions.observations) {
       const p = element("p", "", `${row.workflow} / ${row.job} · `);
       const base = `https://github.com/google/gvisor/actions/runs/${row.run}/job/`;
       p.append(link("Failed", base + row.failedJob), " → ", link("Passed", base + row.passedJob),
-        " · ", link(row.head.slice(0, 9), `https://github.com/google/gvisor/commit/${row.head}`),
+        " · ", link(row.head.slice(0, 9), `https://github.com/google/gvisor/commit/${row.head.slice(0, 9)}`),
         ` · ${date(row.finishedAt)}`);
       if (row.pr) p.append(" · ", link(`PR #${row.pr}`, `https://github.com/google/gvisor/pull/${row.pr}`));
       actions.append(p);
     }
     card.append(actions);
+    const reports = scan.actions.reports;
+    if (reports) {
+      const list = element("details", "investigation-comparison");
+      const visibleReports = reports.items.filter(item => item.state === "open" || $("show-resolved").checked);
+      list.append(element("summary", "", `Reported in issues and PRs (${visibleReports.length})`));
+      list.append(element("p", "comparison-note", reports.sample));
+      if (reports.checkedAt) list.append(element("p", "comparison-note", `Search at ${date(reports.checkedAt)}.`));
+      if (reports.hasMore) list.append(element("p", "comparison-note", `Sampled the latest ${reports.items.length} of ${reports.total} matches.`));
+      if (reports.error) list.append(element("p", "comparison-note", reports.error));
+      const items = element("ul");
+      for (const item of visibleReports) {
+        const row = element("li");
+        row.append(link(`#${item.number} ${item.title}`, item.url), ` · ${item.state} ${item.kind === "pr" ? "PR" : "issue"}`);
+        items.append(row);
+      }
+      list.append(items); card.append(list);
+    }
   }
 }
 function drawInvestigations() {
@@ -2274,6 +2312,12 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
             ![row.workflow, row.job].every(value => typeof value === "string" && value.trim()) ||
             !Number.isFinite(Date.parse(row.finishedAt)) || (row.pr != null && !positive(row.pr))))
         throw new Error("Invalid GitHub Actions retry evidence");
+      const reports = scan.actions.reports;
+      if (reports && (!Array.isArray(reports.items) || typeof reports.sample !== "string" ||
+          reports.items.some(item => !item || !positive(item.number) || !["issue", "pr"].includes(item.kind) ||
+            typeof item.title !== "string" || !item.title.trim() || !["open", "closed", "merged"].includes(item.state) ||
+            item.url !== `https://github.com/google/gvisor/${item.kind === "pr" ? "pull" : "issues"}/${item.number}` ||
+            !Number.isFinite(Date.parse(item.updatedAt))))) throw new Error("Invalid gVisor CI flake report");
     }
   }
   if (snapshot.incomingReviewRequests !== undefined) {

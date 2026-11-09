@@ -35,7 +35,13 @@ test('retry evidence must identify distinct attempts in the scanned pipeline', (
   const validate = () => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
   validate();  // A snapshot collected before CI intake is still usable.
   context.snapshotInput.ciFlakes = scan;
+  const report = { number: 17, title: 'Flaky neighbor test', kind: 'pr', state: 'merged',
+    updatedAt: scan.checkedAt, url: 'https://github.com/google/gvisor/pull/17' };
+  scan.actions = { status: 'ok', observations: [], reports: { sample: 'Recent titles', items: [report] } };
   validate();
+  report.url = 'https://github.com/another/repo/pull/17';
+  assert.throws(validate, /Invalid gVisor CI flake report/);
+  report.url = 'https://github.com/google/gvisor/pull/17';
   scan.observations[0].pipeline = 'another-pipeline';
   assert.throws(validate, /Invalid CI flake scan/);
   scan.observations[0].pipeline = 'pipeline';
