@@ -5,7 +5,7 @@ load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "
 load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "with_test_architecture")
 
 native_arm64_test, _native_arm64_transition = with_test_architecture(native_test, "arm64").build()
-arm64_syscall_filegroup, _arm64_filegroup_transition = with_test_architecture(native.filegroup, "arm64").build()
+arm64_syscall_filegroup, _arm64_filegroup_transition = with_test_architecture(native.filegroup, "arm64").extend("cxxopt", ["-Werror"]).build()
 
 _ARM64_GUEST_SYSCALL = "arm64_guest_syscall"
 
@@ -24,6 +24,12 @@ _platform_support_env_vars = {
     ]))
     for platform, support in platform_capabilities.items()
 }
+
+def _fixture_inputs(runner, test, args, data):
+    return dict(
+        args = ["--syscall-test", "$(rootpath %s)" % runner, "$(rootpath %s)" % test] + args,
+        data = [runner, test] + data,
+    )
 
 def _syscall_test(
         test,
@@ -55,6 +61,7 @@ def _syscall_test(
         data = [],
         runner = Label("//test/runner:runner"),
         arm64_guest_exec_properties = namespace_test_exec_properties,
+        arm64_fixture = None,
         **kwargs):
     limit_ephemeral_ports = limit_ephemeral_ports and (network == "host" or platform == "native")
     if limit_ephemeral_ports:
@@ -166,23 +173,20 @@ def _syscall_test(
     if platform == "ptrace":
         runner_args.append("--trace")
 
-    launch_args = ["--syscall-test", "$(rootpath %s)" % runner, "$(rootpath %s)" % test]
+    args = runner_args + args
 
     # Native always uses a host directory; FUSE variants use guest tmpfs.
     if requires_atime and (platform == "native" or not use_tmpfs):
-        launch_args.append("--require-atime")
+        args = ["--require-atime"] + args
 
     # The native harness creates UTS and network namespaces for the guest.
     if platform == "native":
         kwargs.setdefault("exec_properties", namespace_test_exec_properties)
 
-    kwargs.update(
-        src = Label("//test/runner/setup_container"),
-        args = launch_args + runner_args + args,
-        data = [runner, test] + data,
-        tags = tags,
-    )
+    kwargs.update(_fixture_inputs(runner, test, args, data), src = Label("//test/runner/setup_container"), tags = tags)
     native_test(name = name, out = name, **kwargs)
+    if arm64_fixture:
+        kwargs.update(_fixture_inputs(runner, arm64_fixture, args, data))
     if platform == "native":
         arm64_presubmit_test(name, native_arm64_test, kwargs)
     elif platform in ("ptrace", "systrap") and "allsave" not in tags and "perf" not in tags:
@@ -565,3 +569,20 @@ def syscall_test(
             in_sandbox_cgroup = in_sandbox_cgroup,
             **kwargs
         )
+
+def syscall_cc_test(test, **kwargs):
+    """Uses the Make syscall build's C++ warning policy on the ARM64 fixture.
+
+    Args:
+        test: C++ binary passed to the syscall runner.
+        **kwargs: Arguments for syscall_test.
+    """
+    name = Label(test).name + "_arm64_fixture"
+    arm64_syscall_filegroup(
+        name = name,
+        testonly = True,
+        srcs = [test],
+        tags = ["manual"],
+        visibility = ["//visibility:private"],
+    )
+    syscall_test(test, arm64_fixture = ":" + name, **kwargs)

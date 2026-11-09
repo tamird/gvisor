@@ -1,4 +1,4 @@
-load("//test/runner:defs.bzl", "arm64_syscall_filegroup", "arm64_syscall_suite", "syscall_test")
+load("//test/runner:defs.bzl", "arm64_syscall_filegroup", "arm64_syscall_suite", syscall_test = "syscall_cc_test")
 load("//tools:defs.bzl", "more_shards", "most_shards")
 
 package(
