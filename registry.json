@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T02:54:41+00:00",
+    "updatedAt": "2026-11-09T03:28:20+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37377,9 +37377,25 @@
       "url": "https://github.com/tamird/gvisor/commit/a5afdee61",
       "group": "release",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-04T03:27:58.890694+00:00",
-      "summary": "The GitHub push workflow builds the AMD64 release on its hosted runner. With the exact target-architecture selection from #16753, native AMD64 and ARM64 runners built and re-downloaded the eight binaries then in the release with Docker stopped. Both archives matched the original paths and ZIP modes and contained the expected static ELFs. Without #16753, each build requested the other architecture’s unavailable compiler. The qualification spelled out top-level output downloads. The existing approval remains scoped to a5afdee61 after #16753. The workflow uploads the entire release directory. After runsc-netgofer landed, integration 96057fa92 built the nine-file layout on native workers for both architectures, and Make installed both layouts. The eight-file run remains the archive round-trip check.",
+      "updatedAt": "2026-11-09T03:28:20+00:00",
+      "summary": "On hosted AMD64 with Docker stopped, the approved GitHub workflow ran bazel build //:release and uploaded all nine default outputs, including runsc-netgofer. The raw ZIP matched the current upstream Make archive in member paths and Unix modes (0555). The standard Actions download extracted all nine as 0644. Each member matched the direct build byte-for-byte in both downloads. This run used master 975fb1722 with the approved workflow and #16753. The earlier eight-file ZIP round trip covered AMD64 and ARM64 with explicit top-level output downloads. A separate native build verified the nine-file layout and Make installation on both architectures. Without #16753, each architecture requested the other compiler. The approval to open a5afdee61 after #16753 remains in force.",
       "evidence": [
+        {
+          "label": "Nine default outputs, per-file hashes and ordinary download modes on hosted AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42555203237/artifacts/13647083530"
+        },
+        {
+          "label": "Raw nine-file ZIP uploaded by the approved workflow",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42555203237/artifacts/13646998765"
+        },
+        {
+          "label": "Upstream nine-file ZIP produced by Make on master 975fb1722",
+          "url": "https://github.com/google/gvisor/actions/runs/42483821961/artifacts/13618518716"
+        },
+        {
+          "label": "Exact workflow and architecture-selection patches on master",
+          "url": "https://github.com/tamird/gvisor/commit/55604a485"
+        },
         {
           "label": "Direct Ubuntu build and release artifact",
           "url": "https://github.com/tamird/gvisor/actions/runs/40817414442"
@@ -66795,6 +66811,44 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13646136898"
         }
       ]
+    },
+    {
+      "id": "branch:packetimpact-debug-log-names",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "rbe",
+      "ref": "research/packetimpact-debug-log-names",
+      "head": "4dad1e4b9741b815b3332d75994ee01224602912",
+      "url": "https://github.com/tamird/gvisor/commit/4dad1e4b9",
+      "title": "Fix PacketImpact runsc debug log filenames",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T03:28:20+00:00",
+      "summary": "The Netstack PacketImpact runner left literal percent signs in three debug filenames. Bazel interpreted them while writing the undeclared-output manifest and folded the packet capture into a malformed row. Using runsc’s single percent delimiters produced four distinct rows for boot, gofer, run and the capture. Both uncached ARM64 Firecracker handshake tests passed. The native control had one capture row. Both manifests still reported that the worker lacked the file utility for MIME detection.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "head": "4dad1e4b9741b815b3332d75994ee01224602912",
+        "url": "https://github.com/tamird/gvisor/commit/4dad1e4b9",
+        "title": "Fix PacketImpact runsc debug log filenames",
+        "body": "The Dockerless PacketImpact runner introduced in b318556f8 passes its debug log template directly to runsc. Doubling the percent signs leaves literal percent signs around the expanded timestamp and command.\n\nBazel 9.3.1 uses each output record as a printf format [1]. On a Netstack handshake, the three log names corrupted the manifest entry for the packet capture.\n\nUse the single percent delimiters expected by runsc.\n\n[1]: https://github.com/bazelbuild/bazel/blob/fee2bf2d1/tools/test/test-setup.sh#L333",
+        "summary": "Open this one-line PacketImpact debug log filename fix?",
+        "requestedAt": "2026-11-09T03:28:20+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Original malformed Netstack row and intact packet capture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13645917134"
+        },
+        {
+          "label": "Corrected native and Netstack manifests, logs, XML and captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42555203237/artifacts/13647880100"
+        },
+        {
+          "label": "Bazel 9.3.1 manifest formatter",
+          "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/tools/test/test-setup.sh#L333"
+        }
+      ]
     }
   ],
   "edges": [
@@ -91145,5 +91199,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T02:54:41+00:00"
+  "updatedAt": "2026-11-09T03:28:20+00:00"
 }
