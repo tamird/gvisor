@@ -57,6 +57,7 @@ var (
 	platform           = flag.String("platform", "ptrace", "platform to run on")
 	platformSupport    = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
 	network            = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
+	udpNetwork         = flag.Bool("udp-network", false, "configure a private interface for broadcast and multicast tests")
 	limitPorts         = flag.Bool("limit-ephemeral-ports", false, "constrain the private network namespace's ephemeral port range for exhaustion tests")
 	useTmpfs           = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
 	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
@@ -111,14 +112,25 @@ func getSetupContainerPath() string {
 	return setupContainer
 }
 
-// wrapInSetupContainer configures the already-owned namespaces before exec.
-func wrapInSetupContainer(cmd *exec.Cmd) {
-	cmd.Path = getSetupContainerPath()
-	args := []string{cmd.Path}
-	if *limitPorts {
-		args = append(args, "--limit-ephemeral-ports")
+// wrapInSetupContainer arranges namespace setup in the child before exec.
+func wrapInSetupContainer(cmd *exec.Cmd, setupUDP bool) {
+	if !setupUDP || *limitPorts {
+		cmd.Path = getSetupContainerPath()
+		args := []string{cmd.Path}
+		if *limitPorts {
+			args = append(args, "--limit-ephemeral-ports")
+		}
+		cmd.Args = append(args, cmd.Args...)
 	}
-	cmd.Args = append(args, cmd.Args...)
+	if setupUDP {
+		// The child creates its network namespace after entering the new user
+		// namespace. Other runsc commands may share the original SysProcAttr.
+		attr := *cmd.SysProcAttr
+		attr.Cloneflags &^= unix.CLONE_NEWNET
+		cmd.SysProcAttr = &attr
+		cmd.Args = append([]string{"/proc/self/exe", setupUDPArg, cmd.Path}, cmd.Args...)
+		cmd.Path = "/proc/self/exe"
+	}
 }
 
 func removeShardAndXMLEnvVars(env []string, tc *gtest.TestCase) []string {
@@ -253,8 +265,8 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 	}
 
 	if *container || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
-		wrapInSetupContainer(cmd)
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER | unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
+		wrapInSetupContainer(cmd, *udpNetwork)
 		// Set current user/group as root inside the namespace.
 		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
 			{ContainerID: 0, HostID: os.Getuid(), Size: 1},
@@ -569,9 +581,9 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		createCmd := exec.Command(specutils.ExePath, createArgs...)
 		createCmd.ExtraFiles = extraFiles
 		createCmd.SysProcAttr = sysProcAttr
-		if *limitPorts {
+		if *limitPorts || *udpNetwork {
 			createCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-			wrapInSetupContainer(createCmd)
+			wrapInSetupContainer(createCmd, *udpNetwork)
 		}
 		createCmd.Stdout = os.Stdout
 		createCmd.Stderr = os.Stderr
@@ -617,7 +629,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 	cmd.SysProcAttr = sysProcAttr
 	if *container || *network == "host" || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-		wrapInSetupContainer(cmd)
+		wrapInSetupContainer(cmd, *udpNetwork && *waitForPid == 0)
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -709,7 +721,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			restoreCmd.SysProcAttr = sysProcAttr
 			if *container || *network == "host" || (restoreCmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 				restoreCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-				wrapInSetupContainer(restoreCmd)
+				wrapInSetupContainer(restoreCmd, *udpNetwork)
 			}
 			restoreCmd.Stdout = os.Stdout
 			restoreCmd.Stderr = os.Stderr
@@ -1001,8 +1013,8 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 	// Mark the root as writeable, as some tests attempt to
 	// write to the rootfs, and expect EACCES, not EROFS.
 	spec.Root.Readonly = false
-	if *limitPorts {
-		// Join the namespace prepared by setup_container instead of creating
+	if *limitPorts || *udpNetwork {
+		// Join the namespace prepared for this launch instead of creating
 		// another empty namespace when the sandbox starts.
 		spec.Linux = &specs.Linux{
 			Namespaces: []specs.LinuxNamespace{{
@@ -1156,7 +1168,16 @@ func matchString(a, b string) (bool, error) {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == setupUDPArg {
+		if len(os.Args) < 4 {
+			fatalf("missing UDP setup command")
+		}
+		fatalf("UDP network setup: %v", runWithUDPNetwork(os.Args[2], os.Args[3:]))
+	}
 	flag.Parse()
+	if *udpNetwork && (!*container || (*platform != "native" && *network == "none")) {
+		fatalf("UDP network fixture requires a private container with networking")
+	}
 	if flag.NArg() != 1 {
 		fatalf("test must be provided")
 	}
