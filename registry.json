@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T16:47:29+00:00",
+    "updatedAt": "2026-11-09T17:09:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51729,15 +51729,23 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "checkpoint-page-read-error",
-      "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+      "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
       "number": 16807,
       "title": "Release waiters and page references after a checkpoint read error",
       "url": "https://github.com/google/gvisor/pull/16807",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T18:31:23.952068+00:00",
+      "updatedAt": "2026-11-09T17:07:39+00:00",
       "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The initial race test did not build. On a GNU worker all 69 race cases passed with zero skips.",
       "evidence": [
+        {
+          "label": "Ryan reapproved f054d1f11",
+          "url": "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829594996"
+        },
+        {
+          "label": "Earlier Copybara import names 2d5231b45",
+          "url": "https://github.com/google/gvisor/pull/17285"
+        },
         {
           "label": "Proposed source and permanent three-page test",
           "url": "https://github.com/tamird/gvisor/commit/3adb1aa3b"
@@ -51773,6 +51781,18 @@
         {
           "label": "69 race cases and two analyzers on the rebased commit",
           "url": "https://github.com/tamird/gvisor/actions/runs/41677508668/artifacts/13256418500"
+        },
+        {
+          "label": "Published comment move",
+          "url": "https://github.com/tamird/gvisor/compare/2d5231b45..f054d1f11"
+        },
+        {
+          "label": "Ryan approved 2d5231b45",
+          "url": "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829354526"
+        },
+        {
+          "label": "Reapproval requested on the original thread",
+          "url": "https://github.com/google/gvisor/pull/16807#discussion_r4515548044"
         }
       ],
       "settledReviews": [
@@ -51788,28 +51808,58 @@
           "outcome": "approved",
           "at": "2026-11-03T18:31:23.952068+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16807"
+        },
+        {
+          "kind": "amendment",
+          "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+          "baseHead": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+          "outcome": "approved",
+          "at": "2026-11-09T17:07:39+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/f054d1f11",
+          "postedURL": "https://github.com/google/gvisor/pull/16807",
+          "note": "Ryan requested this comment move. Tamir directed publication on the existing PR."
+        },
+        {
+          "kind": "reply",
+          "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+          "outcome": "approved",
+          "at": "2026-11-09T17:04:23Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16807#discussion_r4515548044",
+          "body": "Moved the waiter comment directly above `finishCompletions()` in f054d1f11. @relkochta, could you re-approve that commit so Copybara picks up the move?\n\nPosted by Codex on behalf of @tamird."
         }
       ],
       "refinement": {
         "before": {
-          "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
-          "base": "aa767e4c43d011121271551fe24da501a56f729d"
+          "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+          "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         },
         "after": {
-          "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+          "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
-        "observedAt": "2026-11-03T18:31:23.952068+00:00",
-        "disposition": "Approved amendment published",
-        "nextAction": "Follow upstream review and CI on the rebased head.",
+        "owner": "Agent",
+        "sourceHead": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+        "observedAt": "2026-11-09T17:07:39+00:00",
+        "disposition": "Ryan reapproved f054d1f11 at 17:05:13 UTC. The ready-to-pull label is present. Open Copybara import #17285 still names 2d5231b45.",
+        "nextAction": "Watch #17285 and its successor until the import carries f054d1f11. If the old import lands, verify the comment above finishCompletions() on master and roll it into the next cleanup only if missing.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2d5231b45",
-          "https://github.com/tamird/gvisor/actions/runs/41677508668/artifacts/13256418500"
+          "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829594996",
+          "https://github.com/google/gvisor/pull/17285",
+          "https://github.com/tamird/gvisor/compare/2d5231b45..f054d1f11",
+          "https://github.com/google/gvisor/pull/16807#pullrequestreview-5829354526",
+          "https://github.com/google/gvisor/pull/16807#discussion_r4515548044"
         ]
+      },
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "f054d1f11141aaf3aae9fb6ec9f6219e9ff2d2ce",
+        "approvedHead": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+        "diffSha256": "27c8f160ad1fabc16a657ab02798adc3890458982c4e958bf58eef5f10c8a8aa",
+        "summary": "Move the two existing waiter-comment lines directly above finishCompletions(). The executable source is unchanged.",
+        "evidence": "https://github.com/google/gvisor/pull/16807#discussion_r4515548044"
       }
     },
     {
@@ -66691,14 +66741,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/tcp-keepalive-sender",
-      "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
-      "title": "Create the TCP keepalive callback when a connection needs a probe",
-      "url": "https://github.com/tamird/gvisor/commit/afabfbaf9",
+      "head": "88bd70024abacac290b21e95597bc43e3dd42454",
+      "title": "Allocate the TCP keepalive timer on demand",
+      "url": "https://github.com/tamird/gvisor/commit/88bd70024",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T16:23:10+00:00",
-      "summary": "Create the keepalive timer when an established sender needs it. In 12 alternating AMD64 pairs, wildcard bind/close fell from 26 allocations to 24, and dial/accept from 168 to 162 with keepalive disabled and 171 to 169 with it enabled. Bytes allocated fell in all three workloads. Elapsed time showed no statistically significant change.\n\nBoth revisions gave the same six packet observations. Accepted, post-connect and explicitly rearmed restored sockets sent their idle probe. The pre-connect, re-enabled and untouched restored sockets missed the observed deadline on both revisions. The TCP analyzer passed for AMD64 and ARM64. The reviewed commit has the same tree and parent as measured 2808320e8.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T17:09:03+00:00",
+      "summary": "The TCP sender allocates its keepalive timer when an idle connection first needs a probe. Twelve paired AMD64 samples showed 2 fewer allocations on bind/close, 6 fewer for a dial/accept handshake with keepalive disabled, and 2 fewer with it enabled. All three packet cases and both architecture analyzers passed on 652abc175; the final revision differs only by two inherited comments.",
       "evidence": [
+        {
+          "label": "Three packet captures, both Nogo architectures and twelve paired allocation samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42655269859/artifacts/13694885819"
+        },
         {
           "label": "TCP timer lifetime issue #7493",
           "url": "https://github.com/google/gvisor/issues/7493"
@@ -66719,18 +66773,14 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656",
-        "observedAt": "2026-11-09T16:23:10+00:00",
-        "disposition": "The sender-owned keepalive callback uses the same short-circuit that can lose a wakeup. The existing allocation measurements cover the independently based proposal.",
-        "nextAction": "Rebase the sender-owned timer on the callback fix and requalify both the wakeup behavior and allocation measurements before requesting review.",
+        "owner": "Tamir",
+        "sourceHead": "88bd70024abacac290b21e95597bc43e3dd42454",
+        "observedAt": "2026-11-09T17:09:03+00:00",
+        "disposition": "Rebased the allocation change onto the verified timer wakeup fix and qualified the combined behavior.",
+        "nextAction": "Review the allocation change for submission after the timer wakeup fix lands.",
         "evidence": [
-          "https://github.com/google/gvisor/issues/7493",
-          "https://github.com/tamird/gvisor/commit/2808320e8",
-          "https://github.com/tamird/gvisor/actions/runs/42516568976/artifacts/13631628379",
-          "https://github.com/tamird/gvisor/commit/38b1dd1da",
-          "https://github.com/tamird/gvisor/commit/ba00452d5",
-          "https://github.com/tamird/gvisor/commit/afabfbaf9"
+          "https://github.com/tamird/gvisor/commit/88bd70024",
+          "https://github.com/tamird/gvisor/actions/runs/42655269859/artifacts/13694885819"
         ]
       },
       "settledReviews": [
@@ -66745,7 +66795,25 @@
           "at": "2026-11-09T16:23:10+00:00",
           "outcome": "superseded"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "afabfbaf9f283a4d9f4c474e0d0c4d445b2ce656"
+        },
+        "after": {
+          "head": "88bd70024abacac290b21e95597bc43e3dd42454"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "88bd70024abacac290b21e95597bc43e3dd42454",
+        "url": "https://github.com/tamird/gvisor/commit/88bd70024",
+        "title": "Allocate the TCP keepalive timer on demand",
+        "summary": "Open this one-commit allocation change after the separate timer wakeup fix lands? It keeps the same three packet outcomes while reducing allocation size and count. The proposed description includes the benchstat output.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 afabfbaf9^! 88bd70024^!",
+        "body": "Sockets that only bind or listen reserve space for a keepalive timer\nand create a callback they never schedule. Connected sockets also pay\nfor the callback when SO_KEEPALIVE is off.\n\nKeep the timer with the TCP sender. Initialize its callback when an\nidle connection first needs a probe. Keep the options on the endpoint\nso applications can configure keepalive before connecting. Remove the\nunused waker that accompanied the timer.\n\nOn AMD64, compare binding and closing a wildcard socket and completing\na dial/accept handshake with keepalive disabled or enabled [1].\n\n                                   │    stock     │                fixed                │\n                                   │     B/op     │     B/op      vs base               │\nWildcardBindClose-2                  4.852Ki ± 0%   4.555Ki ± 0%  -6.12% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   18.14Ki ± 0%   17.47Ki ± 0%  -3.65% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    18.29Ki ± 0%   17.76Ki ± 0%  -2.88% (p=0.000 n=12)\n\n                                   │   stock    │               fixed               │\n                                   │ allocs/op  │ allocs/op   vs base               │\nWildcardBindClose-2                  26.00 ± 0%   24.00 ± 0%  -7.69% (p=0.000 n=12)\nKeepaliveHandshake/enabled=false-2   168.0 ± 0%   162.0 ± 0%  -3.57% (p=0.000 n=12)\nKeepaliveHandshake/enabled=true-2    171.0 ± 0%   169.0 ± 0%  -1.17% (p=0.000 n=12)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42655269859/artifacts/13694885819\n\nFixes #7493",
+        "requestedAt": "2026-11-09T17:09:03+00:00"
+      }
     },
     {
       "id": "branch:gpu-driver-installer-fixture",
@@ -66873,15 +66941,23 @@
       "id": "branch:tcp-keepalive-reenable",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/tcp-keepalive-reenable",
-      "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-      "title": "Restart TCP keepalive after a disabled timer fires",
-      "url": "https://github.com/tamird/gvisor/commit/ba00452d5",
+      "ref": "research/tcp-keepalive-clock-wake",
+      "head": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+      "title": "Consume TCP timer wakeups before handling expiry",
+      "url": "https://github.com/tamird/gvisor/commit/59a8c8cc1",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T16:23:10+00:00",
-      "summary": "An idle connection stopped sending TCP keepalive probes when its timer fired with SO_KEEPALIVE disabled and the application later re-enabled it. The callback now consumes the expired timer before checking the option.\n\nPacketimpact captured three connections per implementation. When keepalive was re-enabled after the old deadline, native Linux and the fix sent one new probe each, and stock gVisor sent none. Re-enabling before that deadline produced one probe on all three. When a probe had already been sent before disabling the option, Linux and the fix sent a second probe after re-enabling it. Stock sent only the first. All disabled intervals stayed quiet.\n\nThe separate allocation proposal afabfbaf9 touches the same callback. An integration needs to retain its sender and timer initialization guards, then consume expiration before checking SO_KEEPALIVE.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T17:07:39+00:00",
+      "summary": "The timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.",
       "evidence": [
+        {
+          "label": "Packet captures, package and analyzer records, and paired benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42654872005/artifacts/13694980473"
+        },
+        {
+          "label": "Exact source changes since the previous proposal",
+          "url": "https://github.com/tamird/gvisor/compare/ba00452d5..59a8c8cc1"
+        },
         {
           "label": "Native Linux, stock gVisor and corrected gVisor: original logs, XML and packet captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991"
@@ -66894,14 +66970,14 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-        "observedAt": "2026-11-09T16:23:10+00:00",
-        "disposition": "Tamir requested that the timer API make the callback side effects clear. isUninitialized is a predicate. checkExpiration can consume an obsolete wakeup, rearm a premature callback, or disable an expired timer.",
-        "nextAction": "Revise the timer callback API and qualify keepalive disable and re-enable before requesting another review.",
+        "owner": "Tamir",
+        "sourceHead": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+        "observedAt": "2026-11-09T17:07:39+00:00",
+        "disposition": "Timer lifecycle revision qualified. The older handler-side design remains recorded in its review history.",
+        "nextAction": "Review the timer API change and its measured allocation cost before opening the PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991",
-          "https://github.com/tamird/gvisor/commit/ba00452d5"
+          "https://github.com/tamird/gvisor/commit/59a8c8cc1",
+          "https://github.com/tamird/gvisor/actions/runs/42654872005/artifacts/13694980473"
         ]
       },
       "settledReviews": [
@@ -66917,9 +66993,23 @@
           "outcome": "changes-requested"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f",
-        "url": "https://github.com/tamird/gvisor/commit/ba00452d5"
+      "refinement": {
+        "before": {
+          "head": "ba00452d5ef8966fb8ee9df0de6330abb45e344f"
+        },
+        "after": {
+          "head": "59a8c8cc138ea704a5e635b794a9e76197faa744"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "59a8c8cc138ea704a5e635b794a9e76197faa744",
+        "url": "https://github.com/tamird/gvisor/commit/59a8c8cc1",
+        "title": "Consume TCP timer wakeups before handling expiry",
+        "summary": "Open this revised timer PR? It moves wakeup consumption into the timer API. All three packet tests, both owning suites, and both analyzers passed. The proposed description reports the two increases in bytes allocated per operation.\n\ngit -C ~/code/gvisor range-diff ba00452d5^! 59a8c8cc1^!",
+        "body": "Turning SO_KEEPALIVE off while a probe is pending leaves a clock\ncallback scheduled. If the callback runs while keepalive is off, the\nnext enable can mistake the spent callback for one that will still\nfire. The connection then sends no more probes.\n\nHave the timer consume each clock wake under the endpoint mutex\nbefore calling the protocol handler. A canceled arm becomes idle,\nan early wake rearms the clock for the current deadline, and only a\ndue arm reaches the handler. This also lets cleanup discard a\ncallback that was already waiting for the mutex.\n\nExercise disabling keepalive, waiting past the old deadline, and\nenabling it again on an idle connection.\n\nBinding and closing a socket, or completing a handshake with keepalive\ndisabled, allocated slightly more memory in six paired runs [1].\n\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42654872005/artifacts/13694980473",
+        "requestedAt": "2026-11-09T17:07:39+00:00"
       }
     },
     {
@@ -72148,10 +72238,10 @@
       "from": "branch:tcp-keepalive-reenable",
       "to": "branch:tcp-keepalive-sender",
       "type": "depends_on",
-      "reason": "The sender-owned timer uses the same callback. Rebase and qualify it on the keepalive wakeup fix before contributor review.",
+      "reason": "The allocation change builds on the corrected timer callback.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/afabfbaf9",
-        "https://github.com/tamird/gvisor/commit/ba00452d5"
+        "https://github.com/tamird/gvisor/commit/59a8c8cc1",
+        "https://github.com/tamird/gvisor/commit/88bd70024"
       ]
     }
   ],
@@ -92788,5 +92878,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T16:47:29+00:00"
+  "updatedAt": "2026-11-09T17:09:03+00:00"
 }
