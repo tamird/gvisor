@@ -1,35 +1,84 @@
-name: CI
-
-"on":
+name: Check PacketImpact testbench exit handling
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/packetimpact-as-type]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  exit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the exact candidate, prior fixture and GNU worker
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/packet-exit"
+          mkdir -p "$w/gnu" "$w/results"
+          product=7e25e0168a6171890c02da0036b6e373fdc74108
+          fixture=ea28258468fd0e728fa9a72e46b80c7d36d3eb5e
+          gnu=680739b629229eb1c8fa91aa1147d1bca71eb04f
+          git init -q
+          git fetch -q --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$fixture" "$gnu"
+          git switch -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse "$product^")" = 975fb172241c7946a9f67b4f52e0349d9240589a
+          git diff --exit-code "$product" HEAD -- . ':!.github/workflows/build.yml' ':!test/packetimpact/runner/exitstatus'
+          git diff --exit-code "$fixture" HEAD -- test/packetimpact/runner/exitstatus
+          git show "$fixture:.github/qualification/packet_exit_control.py" > "$w/packet_exit_control.py"
+          for f in BUILD.bazel MODULE.bazel; do git show "$gnu:test/rbe/gnu_platform/$f" > "$w/gnu/$f"; done
+          test "$(cat .bazelversion)" = 9.3.1
+          grep -Fx 'go 1.27.3' go.mod
+          curl -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          chmod 755 "$w/bazel"
+      - name: Run the six process outcomes on Linux RBE
+        env:
+          BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BB_KEY:?missing existing fork credential}"
+          w="$RUNNER_TEMP/packet-exit"
+          rc="$w/bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BB_KEY" "$BB_KEY"
+          } > "$rc"
+          unset BB_KEY
+          id="$(cat /proc/sys/kernel/random/uuid)"
+          echo "$id" > "$w/invocation"
+          "$w/bazel" --bazelrc="$rc" test --config=x86_64 --jobs=32 \
+            --inject_repository=qualification_gnu="$w/gnu" --host_platform=@qualification_gnu//:gnu --extra_execution_platforms=@qualification_gnu//:gnu \
+            --spawn_strategy=remote --noremote_local_fallback --noremote_upload_local_results --remote_timeout=10m \
+            --remote_download_outputs=toplevel '--remote_download_regex=.*test[.](log|xml)$' \
+            --nocache_test_results --flaky_test_attempts=1 --runs_per_test=1 --test_sharding_strategy=disabled --test_timeout=180 \
+            '--modify_execution_info=^TestRunner$=+no-remote-cache' --nobuild_event_json_file_path_conversion \
+            --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v '--test_filter=^TestRunnerExit$' --test_tag_filters= --build_tag_filters= \
+            --invocation_id="$id" --build_event_json_file="$w/events.json" //test/packetimpact/runner/exitstatus:exitstatus_test \
+            > "$w/bazel.log" 2>&1 || rc_test=$?
+          echo "${rc_test:-0}" > "$w/exit"
+          exit "${rc_test:-0}"
+      - name: Verify the six original uncached test results
+        if: always() && !cancelled()
+        run: |
+          python3 -B - <<'PY'
+          import json, os, pathlib, sys
+          w = pathlib.Path(os.environ["RUNNER_TEMP"]) / "packet-exit"
+          sys.path.insert(0, str(w))
+          from packet_exit_control import inspect_result
+          row = {"candidate": "7e25e0168a6171890c02da0036b6e373fdc74108",
+                 "invocation": (w / "invocation").read_text().strip(),
+                 "exit": int((w / "exit").read_text())}
+          try:
+              inspect_result(w / "events.json", "candidate", row, w / "results")
+          finally:
+              (w / "results" / "receipt.json").write_text(json.dumps(row, indent=2))
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: six-linux-testbench-outcomes
+          path: ${{ runner.temp }}/packet-exit/results/
+          retention-days: 14
+          if-no-files-found: error
