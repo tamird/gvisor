@@ -181,6 +181,9 @@ func (c *delayedAckContext) checkDelayedACK() {
 
 func TestDelayedACK(t *testing.T) {
 	c := newDelayedAckContext(t, nil, nil)
+	// Send the first request before the peer has sent any data. Its reply
+	// should still receive a quick ACK.
+	c.respond()
 	c.warmUp()
 	c.send(1)
 	c.checkDelayedACK()

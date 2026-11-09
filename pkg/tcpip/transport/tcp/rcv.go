@@ -83,8 +83,9 @@ type receiver struct {
 	// are likely to carry ACKs, like Linux's pingpong mode.
 	pingpong bool
 
-	// lastDataRcvdTime is when the last data segment was received.
-	lastDataRcvdTime tcpip.MonotonicTime
+	// Data sent before responseDeadline counts as a prompt response to the
+	// peer. Only incoming payload extends the deadline.
+	responseDeadline tcpip.MonotonicTime
 }
 
 func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale uint8) *receiver {
@@ -102,7 +103,7 @@ func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale
 		quickAcks:        maxQuickAcks,
 		rcvMSS:           min(int(ep.amss), header.TCPDefaultMSS),
 		pingpong:         !ep.ops.GetQuickAck(),
-		lastDataRcvdTime: now,
+		responseDeadline: now,
 	}
 }
 
@@ -590,7 +591,7 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 	r.lastRcvdAckTime = s.rcvdTime
 
 	if segLen > 0 {
-		r.lastDataRcvdTime = s.rcvdTime
+		r.responseDeadline = s.rcvdTime.Add(delayedAckTimeout)
 		r.measureRcvMSS(s)
 	}
 

@@ -1922,7 +1922,7 @@ func (s *sender) sendSegmentFromPacketBuffer(pkt *stack.PacketBuffer, flags head
 
 	// Like Linux's tcp_event_data_sent(), data sent soon after data was
 	// received is taken to be a response.
-	if hasData && s.LastSendTime.Sub(s.ep.rcv.lastDataRcvdTime) < delayedAckTimeout {
+	if hasData && s.LastSendTime.Before(s.ep.rcv.responseDeadline) {
 		s.ep.rcv.pingpong = true
 	}
 	return nil
