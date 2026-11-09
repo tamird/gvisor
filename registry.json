@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T20:31:12+00:00",
+    "updatedAt": "2026-11-09T20:48:02+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -62503,14 +62503,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "research/native-release-archives",
-      "head": "3841547872e7c7f0f665f4d8d08939e8fb3a80d0",
+      "head": "8469c237d9f493a9183f50ea7de304cd13fcf91a",
       "title": "Build release archives without a host shell",
       "url": "https://github.com/google/gvisor/pull/17191",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-09T20:31:12+00:00",
-      "summary": "Use the registered BSD tar toolchain to write release archives without a host shell. On Ubuntu 22.04 with stock GCC 11.4.0, AMD64 built the ordinary bzip2 and zstd releases. Both target-named symlinks resolved, GNU tar extracted the publisher’s literal runsc member, and the nine staged ELFs and archive metadata matched. The canonical audit verified 224 dependencies and its test passed. The standalone ARM64 checks configured both archive writers. In a separate compiler integration, four fresh Tar actions on an empty AMD64 worker wrote both formats for AMD64 and ARM64. The eight flavor/format declarations were compared; archive builds covered the ordinary flavor. The commit applies directly to master 9ee2906f5.",
+      "updatedAt": "2026-11-09T20:48:02+00:00",
+      "summary": "The public release targets build archives with the declared BSD tar tool. Make obtained both ordinary AMD64 downloads from those targets, and GNU tar extracted the publisher’s runsc member. All nine staged executables matched. Both architectures configured eight Tar actions under the public labels. Ryan’s four requested changes are published in one commit.",
       "evidence": [
+        {
+          "label": "Both physical AMD64 archives and sixteen architecture-specific action checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42693686825/artifacts/13708987254"
+        },
+        {
+          "label": "Replies on the four original threads",
+          "url": "https://github.com/google/gvisor/pull/17191#pullrequestreview-5832449994"
+        },
         {
           "label": "Approved amendment for Ryan’s four requests",
           "url": "https://github.com/tamird/gvisor/commit/8469c237d"
@@ -62553,19 +62561,19 @@
           "url": "https://github.com/tamird/gvisor/commit/8469c237d",
           "outcome": "approved",
           "at": "2026-11-09T20:31:12+00:00",
-          "note": "Publish and reply to Ryan’s four threads after the Linux archive checks pass."
+          "note": "Publish and reply to Ryan’s four threads after the Linux archive checks pass.",
+          "postedURL": "https://github.com/google/gvisor/pull/17191#pullrequestreview-5832449994"
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream review",
         "sourceHead": "8469c237d9f493a9183f50ea7de304cd13fcf91a",
-        "observedAt": "2026-11-09T20:31:12+00:00",
-        "disposition": "Contributor approved the removal of the archive aliases, use of the common packaging adapter, and both comment corrections.",
-        "nextAction": "Verify the Linux archive outputs, publish to #17191 and reply to all four original threads.",
+        "observedAt": "2026-11-09T20:48:02+00:00",
+        "disposition": "Published and answered all four requests in one review.",
+        "nextAction": "Ryan can re-review the direct archive targets. GitHub returned HTTP 404 for the additional native re-review request.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8469c237d",
-          "https://github.com/google/gvisor/pull/17191#discussion_r4517580122",
-          "https://github.com/tamird/gvisor/actions/runs/42693686825"
+          "https://github.com/google/gvisor/pull/17191#pullrequestreview-5832449994",
+          "https://github.com/tamird/gvisor/actions/runs/42693686825/artifacts/13708987254"
         ]
       },
       "number": 17191,
@@ -69272,10 +69280,18 @@
       "url": "https://github.com/tamird/gvisor/commit/125585fde",
       "title": "Fetch Bazel modules through the BCR archive mirror",
       "group": "rbe",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T20:40:34+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T20:48:02+00:00",
       "summary": "One workspace option tries the Cloudflare mirror before each module archive’s release host. A caller using a private registry can disable it with --module_mirrors=. The three CI jobs and ordinary local builds use the same setting.",
       "evidence": [
+        {
+          "label": "Six cold archive downloads",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42695096200/artifacts/13709580988"
+        },
+        {
+          "label": "Private registry opt-out and downstream build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42696107096/artifacts/13709766068"
+        },
         {
           "label": "Workspace default, fallback and private-registry qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/42695096200"
@@ -69294,14 +69310,15 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "125585fde855513c1ab42e0574e196e0350030d3",
-        "observedAt": "2026-11-09T20:40:34+00:00",
-        "disposition": "The CI-only proposal was revised after contributor feedback.",
-        "nextAction": "On Linux the three archive downloads passed with GitHub blocked and again with the mirror blocked. Complete the private-registry and downstream checks with a synthetic archive that also contains the required Starlark module.",
+        "observedAt": "2026-11-09T20:48:02+00:00",
+        "disposition": "Qualified the workspace-wide revision and the private-registry opt-out.",
+        "nextAction": "May I open the single workspace-wide mirror PR for ordinary builds and CI?",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/125585fde",
-          "https://github.com/tamird/gvisor/actions/runs/42695096200"
+          "https://github.com/tamird/gvisor/actions/runs/42695096200/artifacts/13709580988",
+          "https://github.com/tamird/gvisor/actions/runs/42696107096/artifacts/13709766068"
         ]
       },
       "settledReviews": [
@@ -69328,6 +69345,66 @@
           "head": "125585fde855513c1ab42e0574e196e0350030d3",
           "base": "d114141c1a06d89f7e920c4d15f7337483739729"
         }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "url": "https://github.com/tamird/gvisor/commit/125585fde",
+        "head": "125585fde855513c1ab42e0574e196e0350030d3",
+        "baseHead": "d114141c1a06d89f7e920c4d15f7337483739729",
+        "title": "Fetch Bazel modules through the BCR archive mirror",
+        "requestedAt": "2026-11-09T20:48:02+00:00",
+        "summary": "May I open the single workspace-wide mirror PR for ordinary builds and CI?",
+        "body": "GitHub release downloads returned HTTP 504 while Gazelle fetched Skylib, Go branch generation fetched Protobuf, and the GPU driver job fetched toml.bzl. Each build stopped before its check could run.\n\nTry the Cloudflare mirror before the source URL from the registry. Bazel verifies the same digest on either route. A build using a private registry can disable the public mirror with --module_mirrors=."
+      }
+    },
+    {
+      "id": "branch:udp-recv-icmp-wakeup",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/udp-recv-icmp-wakeup",
+      "head": "cf2a26737bd6a255ef74c136a3c6fd06f5a5ab30",
+      "url": "https://github.com/tamird/gvisor/commit/cf2a26737",
+      "title": "Wake blocked socket receives on pending errors",
+      "group": "ci-flakes",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T20:50:11+00:00",
+      "summary": "A blocked recv slept until timeout even though poll showed a pending error. Listening for EventErr makes recv return ECONNREFUSED as Linux does. Linux and corrected gVisor each passed all 22 UDP records and eight focused reruns. Withholding ICMP hit the intended failure on both. The native AMD64 comparison used the exact two changed files on the RBE integration tree.",
+      "evidence": [
+        {
+          "label": "Full results, repetitions and missing-ICMP controls",
+          "url": "https://app.buildbuddy.io/invocation/b9e8d9a7-157c-4875-a6e0-e8150c068c25"
+        },
+        {
+          "label": "Same-socket POLLERR and recv comparison",
+          "url": "https://app.buildbuddy.io/invocation/2562d8fb-59d4-4a17-b73e-76e5b58f2b84"
+        },
+        {
+          "label": "Investigation and four upstream CI failures",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation:ci-flake-icmp-udp-recv"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "requestedAt": "2026-11-09T20:50:11+00:00",
+        "head": "cf2a26737bd6a255ef74c136a3c6fd06f5a5ab30",
+        "baseHead": "bfb65009e1ddb6f4f11a7de1ddaf8895ae1d1dff",
+        "title": "Wake blocked socket receives on pending errors",
+        "body": "A connected UDP socket can receive an ICMP port-unreachable error while recv is blocked. The UDP endpoint records ECONNREFUSED and notifies EventErr, but RecvMsg waits only for readable data. Poll then reports POLLERR while recv continues sleeping. With a receive timeout, recv returns EAGAIN even though SO_ERROR still reports ECONNREFUSED.\n\nSubscribe to EventErr when a receive blocks so it retries the read. In the PacketImpact test, wait for the first recv to report the error before sending the datagram for the next recv. That datagram could otherwise wake the reader and hide the missed notification. Bound the first read so a missing ICMP error fails the test.",
+        "url": "https://github.com/tamird/gvisor/commit/cf2a26737",
+        "summary": "May I open the UDP receive wakeup fix found in four failing CI builds?"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "cf2a26737bd6a255ef74c136a3c6fd06f5a5ab30",
+        "observedAt": "2026-11-09T20:50:11+00:00",
+        "disposition": "The blocked reader needs to wake for the error as well as for incoming data.",
+        "nextAction": "May I open the UDP receive wakeup fix found in four failing CI builds?",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/cf2a26737",
+          "https://app.buildbuddy.io/invocation/b9e8d9a7-157c-4875-a6e0-e8150c068c25"
+        ]
       }
     }
   ],
@@ -94080,7 +94157,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T20:40:34+00:00",
+      "updatedAt": "2026-11-09T20:50:11+00:00",
       "summary": "A blocking receive on a connected UDP socket returned data where the test expected ECONNREFUSED. The same assertion failed on four builds.",
       "findings": [
         {
@@ -94151,10 +94228,40 @@
               "url": "https://app.buildbuddy.io/invocation/75010ffe-c554-4a1e-9f57-fe6716972df3"
             }
           ]
+        },
+        {
+          "text": "On four gVisor sockets poll reported POLLERR while recv remained asleep. After the timeout, a fresh recv returned ECONNREFUSED and cleared POLLERR. Reading SO_ERROR first returned ECONNREFUSED and left no error for recv. All four Linux sockets returned ECONNREFUSED from the original blocked call. The gVisor receive waiter registered for readable data, while UDP signaled EventErr.",
+          "evidence": [
+            {
+              "label": "Read first, then SO_ERROR on Linux and gVisor",
+              "url": "https://app.buildbuddy.io/invocation/9e681c4c-831e-4cb7-9462-cb135babb182"
+            },
+            {
+              "label": "SO_ERROR first, then read on Linux and gVisor",
+              "url": "https://app.buildbuddy.io/invocation/1f845020-1274-402d-8f0b-3cf6413f9f21"
+            }
+          ]
+        },
+        {
+          "text": "Adding EventErr to the blocked receive waiter fixed the failure. On native AMD64 the integration tree with the two proposal files passed 22 UDP records and eight focused repeats on each system. Withholding ICMP still produced the expected failing errno assertion on both.",
+          "evidence": [
+            {
+              "label": "Fix and regression",
+              "url": "https://github.com/tamird/gvisor/commit/cf2a26737"
+            },
+            {
+              "label": "Original Linux and gVisor results",
+              "url": "https://app.buildbuddy.io/invocation/b9e8d9a7-157c-4875-a6e0-e8150c068c25"
+            }
+          ]
         }
       ],
-      "nextStep": "After the unexpected timeout, inspect poll and SO_ERROR on the same socket and verify the quoted datagram in the ICMP message. Trace which events the blocking receive registered for and which events UDP signaled.",
+      "nextStep": "The production fix and packet regression are ready for contributor review.",
       "evidence": [
+        {
+          "label": "Socket change and packet regression qualification",
+          "url": "https://app.buildbuddy.io/invocation/b9e8d9a7-157c-4875-a6e0-e8150c068c25"
+        },
         {
           "label": "Fixture correction and withheld-ICMP control",
           "url": "https://app.buildbuddy.io/invocation/ab5169d1-c6b2-4932-8799-33f4caa79131"
@@ -94227,7 +94334,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T20:31:12+00:00",
+      "updatedAt": "2026-11-09T20:48:02+00:00",
       "summary": "Gazelle and Go generation stopped before testing on three contributors’ PRs. Bazel reported HTTP 504 while fetching bazel-skylib 1.9.2 or protobuf 35.1.",
       "findings": [
         {
@@ -94277,9 +94384,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42692991725/artifacts/13707178979"
             }
           ]
+        },
+        {
+          "text": "With only the workspace default, all three archives matched their registry digests through Cloudflare with GitHub blocked and through GitHub with Cloudflare blocked. A synthetic registry confirmed that a private root build can disable the public mirror and that projects importing gVisor use their own workspace settings.",
+          "evidence": [
+            {
+              "label": "Six cold downloads with one host blocked",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42695096200/artifacts/13709580988"
+            },
+            {
+              "label": "Successful private registry, opt-out and downstream controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42696107096/artifacts/13709766068"
+            }
+          ]
         }
       ],
-      "nextStep": "Review the CI-only configuration. The mirror applies to the three public jobs. A separate upstream investigation covers Bazel’s handling of the implicit public registry.",
+      "nextStep": "The workspace-wide proposal is ready for contributor review.",
       "evidence": [
         {
           "label": "#17236 · Gazelle · bazel-skylib",
@@ -94399,5 +94519,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T20:40:34+00:00"
+  "updatedAt": "2026-11-09T20:48:02+00:00"
 }
