@@ -1,0 +1,1569 @@
+#!/bin/bash
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -uo pipefail
+set +e
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks pgo containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-fetch license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
+
+# Planning runs before any host capability checks or Bazel work. The workflow
+# and composer consume the same source-owned row set and routing policy.
+if [[ $# == 1 && $1 == --dispatch-plan ]]; then
+  exec python3 "$(dirname "$0")/unit_matrix.py" dispatch --known-lanes "${lanes[@]}"
+fi
+
+usage() {
+  cat <<'USAGE'
+Usage: test/rbe/qualify.sh --header-base=REV amd64
+       test/rbe/qualify.sh --build-target=LABEL [--build-target=LABEL ...] [--bazel-option=--FLAG ...] build
+       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] [--test-filter=REGEX] [--bazel-option=--FLAG ...] test
+       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=N[,N...]] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
+       test/rbe/qualify.sh --list
+       test/rbe/qualify.sh --dispatch-plan
+
+Run Linux remote lanes using the configured Bazel RBE connection. The default
+target architecture is AMD64. Tests use matching execution workers, except
+syscalls-64k and ARM64 syscalls-rc, whose payloads use QEMU TCG on AMD64 OCI
+workers. AMD64 RC guests run locally with nested KVM. Builds prefer AMD64 workers
+while retaining declared native generator requirements.
+This is partial public CI coverage;
+selecting an architecture does not guarantee worker support. Existing failures
+remain errors.
+The all architecture selection combines unit, release-repository and syscalls
+with the target-configured test lanes described in test/rbe/README.md.
+Presubmit builds run separately for each requested CPU in the same job.
+Clang-tidy retains a separate AMD64 aspect build over its recursive roots.
+ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
+image-source lanes; unavailable workers are reported before execution.
+The remote syscalls-64k lane selects the public ARM64 64K systrap profile.
+The local AMD64 syscalls-rc-pilot lane runs four mincore owners in a pinned
+RC guest, including nested KVM. It does not select the full RC profile.
+The KVM lane uses local AMD64 execution, or remote ARM64 unit payloads in an
+EL2-enabled TCG guest. Guest skips remain incomplete qualification.
+The syscalls-rc lane selects the public ordinary profile for each requested CPU.
+Use remote execution for ARM64, or local AMD64 execution for AMD64 or both CPUs.
+Explicit --test-target owners may span both RC architectures with --arch=all.
+The license-headers lane requires an explicit base and complete Git history.
+The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
+Local execution supports explicit test targets on either architecture, smoke,
+bwrap, ordinary syscalls, ARM64 unit/resume tests and AMD64 container/cgroup-v1 tests, KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
+plugin-network and startup/posture/portforward/root/benchmarks.
+With --arch=all, the unit lane uses an ARM64 coordinator and runs AMD64 and
+ordinary ARM64 tests remotely, with ARM64 namespace tests on the coordinator.
+Compilation remains remote. Hybrid profiles run in one invocation; each
+test uses the execution requirements recorded in its selection report.
+An optional syscall bucket selects one existing hash15 partition, not the full
+profile. Its report retains every unexecuted bucket owner.
+For hybrid unit/container/syscall lanes, --local-test-requirements=NAME[,NAME...] names
+requirements missing from remote workers. The default namespace requirement
+retains architecture-wide Firecracker fallback. An empty list keeps only the
+existing KVM and initial-cgroup local routes. Test selection remains complete.
+The clock source is an explicit runtime qualification setting, defaulting to
+calibrated. Reference mode uses host clocks across the maintained runtime
+fixtures; it does not change production defaults or select different tests.
+Repeat --benchmark-target to select members of the continuous suite, retaining
+their original workloads and timeouts. Other suite members remain unexecuted.
+The test lane runs explicitly selected tests on remote workers, or on the
+matching Actions host with --test-execution=local and architecture frontends.
+With remote --arch=all, explicit tests retain their graph-declared platforms;
+ordinary labels are not duplicated for another architecture.
+The build lane builds explicitly selected targets without running tests.
+Repeat --bazel-option to pass long-form options directly to Bazel in either
+explicit lane. Use --FLAG=VALUE to keep each option and its value together.
+Use build-all for the complete recursive build selection.
+USAGE
+  printf '\nLanes: %s\n' "${lanes[*]}"
+}
+
+gaps() {
+  cat <<'GAPS'
+Environment limits: remote execution does not supply KVM, slimvm, ARM64
+Firecracker, arbitrary alternate kernels, or GPU/TPU runtime environments.
+The syscalls-64k and syscalls-rc routes supply pinned ARM64 kernels through QEMU TCG.
+Selecting a lane does not establish a passing result or full public CI coverage.
+GAPS
+}
+
+if (( $# == 0 )); then
+  usage >&2
+  exit 2
+fi
+if [[ $# == 1 && ( $1 == --list || $1 == --help ) ]]; then
+  usage
+  gaps
+  exit 0
+fi
+arch=amd64
+test_execution=remote
+clock_source=calibrated
+local_test_requirements=namespace
+local_requirements_set=false
+syscall_bucket=
+benchmark_targets=()
+build_targets=()
+test_targets=()
+bazel_options=()
+test_filter=
+header_options=()
+header_base=
+while (( $# > 0 )) && [[ $1 == --* ]]; do
+  case "$1" in
+    --arch=*) arch=${1#--arch=} ;;
+    --test-execution=*) test_execution=${1#--test-execution=} ;;
+    --clock-source=*) clock_source=${1#--clock-source=} ;;
+    --local-test-requirements=*) local_test_requirements=${1#--local-test-requirements=}; local_requirements_set=true ;;
+    --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
+    --benchmark-target=*) benchmark_targets+=("${1#--benchmark-target=}") ;;
+    --build-target=*) build_targets+=("${1#--build-target=}") ;;
+    --test-target=*) test_targets+=("${1#--test-target=}") ;;
+    --bazel-option=--?*) bazel_options+=("${1#--bazel-option=}") ;;
+    --test-filter=*) test_filter=${1#--test-filter=} ;;
+    --header-base=*) header_base=${1#--header-base=} ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
+  esac
+  shift
+done
+if (( ${#bazel_options[@]} )) && [[ $# != 1 || ( $1 != build && $1 != test ) ]]; then
+  printf 'Bazel options require the explicit build or test lane.\n' >&2
+  exit 2
+fi
+case "$arch" in
+  amd64) architecture_config=x86_64 ;;
+  arm64) architecture_config=aarch64 ;;
+  all) architecture_config=x86_64 ;;
+  *) printf 'Unknown architecture: %s\n' "$arch" >&2; exit 2 ;;
+esac
+case "$clock_source" in
+  calibrated|reference) ;;
+  *) printf 'Unknown clock source: %s\n' "$clock_source" >&2; exit 2 ;;
+esac
+runtime_options=(
+  # Passing Go tests otherwise omit named cases from their XML reports.
+  --test_env=GO_TEST_WRAP_TESTV=1
+  "--test_env=GVISOR_TEST_CLOCK_SOURCE=$clock_source"
+  "--define=gvisor_test_clock_source=$clock_source"
+)
+case "$test_execution" in
+  remote) ;;
+  local)
+    case "$arch:$(uname -m)" in
+      amd64:x86_64|arm64:aarch64) ;;
+      all:aarch64)
+        if [[ $# != 1 || $1 != unit ]]; then
+          printf 'Mixed local execution on ARM64 requires the unit profile.\n' >&2
+          exit 2
+        fi
+        ;;
+      all:x86_64)
+        if [[ $# != 1 || $1 != syscalls-rc ]]; then
+          printf 'Mixed local execution is supported only for the RC guest profile.\n' >&2
+          exit 2
+        fi
+        ;;
+      *) printf 'Local tests require a single matching host architecture.\n' >&2; exit 2 ;;
+    esac
+    if (( $# != 1 )); then
+      printf 'Select one lane for local tests.\n' >&2
+      exit 2
+    fi
+    case "$1:$arch" in
+      test:amd64|test:arm64|smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-save:amd64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64|pgo:amd64) ;;
+      *) printf 'Local tests support explicit test targets, smoke, bwrap, ordinary syscalls, AMD64 save/restore, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+    esac
+    ;;
+  *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
+esac
+if [[ $local_requirements_set == true && ( $test_execution != local || $# != 1 || ( ${1:-} != unit && ${1:-} != container && ${1:-} != syscalls && ${1:-} != syscalls-save && ${1:-} != syscalls-resume && ${1:-} != syscalls-kvm ) ) ]]; then
+  printf 'Local test requirements apply only to hybrid unit/container/syscall lanes.\n' >&2
+  exit 2
+fi
+if [[ -n $syscall_bucket ]]; then
+  python3 test/rbe/unit_matrix.py syscall-buckets "$syscall_bucket" > /dev/null || exit 2
+  if [[ $# != 1 || ( $test_execution:$arch:${1:-} != local:arm64:syscalls && $test_execution:$arch:${1:-} != local:arm64:syscalls-resume && $test_execution:$arch:${1:-} != local:amd64:syscalls && $test_execution:$arch:${1:-} != local:amd64:syscalls-kvm && $test_execution:$arch:${1:-} != remote:arm64:syscalls-64k && $test_execution:$arch:${1:-} != remote:arm64:syscalls-rc && $test_execution:$arch:${1:-} != local:amd64:syscalls-rc && $test_execution:$arch:${1:-} != local:all:syscalls-rc ) ]]; then
+    printf 'Syscall buckets require a supported local or guest syscall profile.\n' >&2
+    exit 2
+  fi
+fi
+if (( ${#benchmark_targets[@]} )) && [[ $arch != amd64 || $test_execution != local || $# != 1 || ${1:-} != benchmarks ]]; then
+  printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
+  exit 2
+fi
+if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1 && ${1:-} != docker ) ) ]]; then
+  printf 'A test filter requires the explicit test, container-v1 or Docker lane.\n' >&2
+  exit 2
+fi
+if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
+  if [[ $# != 1 || ( $arch == all && ${1:-} != test && ${1:-} != syscalls-rc ) ]]; then
+    printf 'Explicit targets require one supported lane; all architectures support test or syscalls-rc.\n' >&2
+    exit 2
+  fi
+  case "$1" in
+    build) explicit_targets=("${build_targets[@]}"); conflicting_targets=${#test_targets[@]} ;;
+    test|pgo|docker|cpu-images) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
+    syscalls|syscalls-save|syscalls-kvm|syscalls-rc)
+      if [[ -n $syscall_bucket || ( $1 != syscalls-rc && $test_execution != local ) ]]; then
+        printf 'Explicit syscall owners require a local syscall or RC profile without buckets.\n' >&2
+        exit 2
+      fi
+      explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]}
+      ;;
+    *) printf 'Explicit targets require the matching build or test lane.\n' >&2; exit 2 ;;
+  esac
+  if [[ $1 == build && $test_execution == local ]]; then
+    printf 'Explicit builds require remote execution.\n' >&2
+    exit 2
+  fi
+  if (( ${#explicit_targets[@]} == 0 || conflicting_targets != 0 )); then
+    printf 'Supply only the target option matching the selected lane.\n' >&2
+    exit 2
+  fi
+  for target in "${explicit_targets[@]}"; do
+    # Keep labels separate from command options and response files. Bazel
+    # validates the label itself against the selected repository graph.
+    if [[ $target != //* && $target != @*//* ]] || [[ $target == *[[:space:]]* ]]; then
+      printf 'Expected an absolute Bazel target label: %s\n' "$target" >&2
+      exit 2
+    fi
+  done
+fi
+if [[ $# == 1 && $1 == amd64 ]]; then
+  if [[ $arch != amd64 ]]; then
+    printf 'The amd64 profile requires --arch=amd64.\n' >&2
+    exit 2
+  fi
+  set --
+  for lane in "${lanes[@]}"; do
+    # Explicit-target, host-dependent and alternate-kernel lanes are selected separately.
+    if [[ $lane != build && $lane != test && $lane != pgo && $lane != kvm && $lane != syscalls-kvm && $lane != moby && $lane != syscalls-rc-pilot && $lane != syscalls-64k && $lane != syscalls-rc ]]; then set -- "$@" "$lane"; fi
+  done
+fi
+if (( $# == 0 )); then
+  usage >&2
+  exit 2
+fi
+# Validate every requested lane before starting any work.
+for lane in "$@"; do
+  if [[ $lane == moby && ( $test_execution != local || $arch != amd64 ) ]]; then
+    printf 'The public Moby lane requires local AMD64 execution with the cgroup-v2 Docker fixture.\n' >&2
+    exit 2
+  fi
+  if [[ $lane == syscalls-64k && ( $test_execution != remote || $arch != arm64 ) ]]; then
+    printf 'The 64K syscall lane requires --arch=arm64 and remote TCG execution.\n' >&2
+    exit 2
+  fi
+  if [[ $lane == build && ${#build_targets[@]} == 0 || $lane == test && ${#test_targets[@]} == 0 ]]; then
+    printf 'The build and test lanes require explicit matching targets.\n' >&2
+    exit 2
+  fi
+  if [[ $lane == syscalls-rc && $test_execution:$arch != remote:arm64 && $test_execution:$arch != local:amd64 && $test_execution:$arch != local:all ]]; then
+    printf 'RC guests require remote ARM64 or local AMD64/all execution.\n' >&2
+    exit 2
+  fi
+  if [[ $lane == kvm && $test_execution:$arch != local:amd64 && $test_execution:$arch != remote:arm64 ]]; then
+    printf 'The KVM lane requires local AMD64 or remote ARM64 guest execution.\n' >&2
+    exit 2
+  fi
+  if [[ ( $lane == syscalls-kvm || $lane == syscalls-rc-pilot ) && ( $test_execution != local || $arch != amd64 ) ]]; then
+    printf 'The KVM syscall lane requires local AMD64 execution.\n' >&2
+    exit 2
+  fi
+  if [[ $arch == all ]]; then
+    case "$lane" in
+      test|presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-rc|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|gazelle|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers|lint-cc) ;;
+      *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
+    esac
+  fi
+  case "$lane" in
+    test|build|build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|pgo|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-fetch|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
+    *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
+  esac
+done
+# The coordinator must be Linux; never start Bazel on the macOS host.
+if [[ $(uname -s) != Linux ]]; then
+  printf 'Run this command on a Linux remote coordinator.\n' >&2
+  exit 2
+fi
+cd "$(dirname "${BASH_SOURCE[0]}")/../.." || exit 1
+
+# Resolve the caller's comparison base before any lane can modify generated
+# files. A shallow checkout can give an incomplete merge base and selection.
+for lane in "$@"; do
+  if [[ $lane == license-headers ]]; then
+    if [[ -z $header_base || $(git rev-parse --is-shallow-repository) != false ]]; then
+      printf 'License headers require --header-base=REV and complete local Git history.\n' >&2
+      exit 2
+    fi
+    header_base=$(git rev-parse --verify --end-of-options "$header_base^{commit}") || exit 2
+    header_head=$(git rev-parse --verify HEAD) || exit 2
+    git merge-base "$header_base" "$header_head" >/dev/null || exit 2
+    header_options=("--repo_env=GVISOR_HEADER_BASE=$header_base" "--repo_env=GVISOR_HEADER_HEAD=$header_head")
+    printf 'License header base: %s\n' "$header_base"
+    break
+  fi
+done
+
+printf 'Selected lanes for Linux %s (%s tests, %s clocks): %s\n' "$arch" "$test_execution" "$clock_source" "$*"
+if [[ $test_execution == remote ]]; then
+  gaps
+fi
+
+# Scope remote configuration to direct Bazel calls and Make's Bash recipes
+# without changing user rc files or credentials.
+run_license_check() (
+  set -e
+  local mode=$1 license_rc output arguments
+  case "$mode" in
+    verify) ;;
+    fetch)
+      if [[ -z ${qualification_artifacts:-} ||
+            $qualification_artifacts != /* ||
+            $qualification_artifacts != "${RUNNER_TEMP:-}/qualification" ||
+            ! -d $qualification_artifacts ]]; then
+        printf 'License fetch requires the coordinator evidence directory.\n' >&2
+        return 2
+      fi
+      output=$qualification_artifacts/dependencies.yaml
+      if [[ -e $output || -L $output ]]; then
+        printf 'License fetch output already exists: %s\n' "$output" >&2
+        return 2
+      fi
+      # Preserve unchanged manual audits and retrieval dates in the generated
+      # catalog, without modifying its checked-in source.
+      cp -- tools/licensecheck/dependencies.yaml "$output"
+      printf -v arguments '%q ' --mode=fetch "--yaml=$output"
+      ;;
+    *) printf 'Unknown license mode: %s\n' "$mode" >&2; return 2 ;;
+  esac
+  # BuildBuddy reuses startup options after the lane exits; keep this file.
+  license_rc=$PWD/test/rbe/license.bazelrc
+  if [[ $mode == fetch ]]; then
+    make run DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc" \
+      TARGETS=//tools/licensecheck/main:licensecheck ARGS="$arguments"
+  else
+    make license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc"
+  fi
+)
+
+# Set the caller's targets array from the same owning suites for standalone and
+# combined invocations.
+shared_test_targets() {
+  local target_arch=$2
+  if (( ${#test_targets[@]} )); then
+    targets=("${test_targets[@]}")
+    return
+  fi
+  case "$1" in
+    do) targets=(//:do_tests) ;;
+    docker) targets=(//test/docker:owned_tests) ;;
+    plugin-network) targets=(//test/docker:plugin_network_tests) ;;
+    root)
+      targets=(//test/root:root_test_owned)
+      if [[ $target_arch == amd64 ]]; then
+        targets+=(//test/rbe:systemd_fixture_test)
+      fi
+      ;;
+    posture) targets=(//test/root:sandbox_posture_test_owned) ;;
+    startup) targets=(//test/benchmarks/base:startup_test_owned) ;;
+    benchmarks) targets=(//test/benchmarks:continuous_tests) ;;
+    portforward) targets=(//test/root:portforward_test_owned) ;;
+    bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
+    license-headers) targets=(//tools:license_headers_test) ;;
+    workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
+    governance) targets=(//:governance-check) ;;
+    lint) targets=(//tools/lint:lint_tests) ;;
+    overlay|swgso|hostnet) targets=("//test/docker:${1}_tests") ;;
+    containerd) targets=(//test/root:crictl_test_owned) ;;
+    moby) targets=(//test/moby:moby_owned) ;;
+    kvm)
+      if [[ $target_arch == arm64 ]]; then
+        targets=(
+          //pkg/coretag:coretag_smt_arm64_tcg_test
+          //pkg/pinring:pinring_kvm_arm64_tcg_test
+          //runsc/cmd:boot_posture_kvm_arm64_tcg_test
+        )
+      else
+        local native_suffix=_amd64
+        if [[ $test_execution == local ]]; then
+          # Map the complete owning profile to its native frontends together.
+          native_suffix=
+        fi
+        targets=(
+          "//pkg/coretag:coretag_smt_kvm_test$native_suffix"
+          //pkg/sentry/platform/kvm:kvm_test
+          //test/docker:kvm_tests
+          "//pkg/pinring:pinring_kvm_test$native_suffix"
+          "//runsc/cmd:boot_posture_kvm_test$native_suffix"
+        )
+      fi
+      ;;
+    fsstress) targets=(//test/fsstress:fsstress_test_owned) ;;
+    packetimpact) targets=(//test/packetimpact/tests:all_tests) ;;
+    iptables|nftables|packetdrill) targets=("//test/$1:owned_tests") ;;
+    kubernetes) targets=(//test/kubernetes/tests:kind_test) ;;
+    podman) targets=(//test/podman:podman_test) ;;
+    syzkaller) targets=(//test/syzkaller:smoke_test) ;;
+    go-export) targets=(//tools/go_export:all_test) ;;
+    cpu-images) targets=("//test/docker:cpu_image_sources_${target_arch}_test") ;;
+    gpu-images) targets=("//test/docker:gpu_image_sources_${target_arch}_test") ;;
+    cos-metadata) targets=(//test/gpu:cos_gpu_compatibility_test) ;;
+    language-directfs|language-goferfs) targets=("//test/runtimes:${1#language-}_tests") ;;
+    *) printf 'Unknown shared test lane: %s\n' "$1" >&2; return 2 ;;
+  esac
+}
+
+# The runtime runner owns defaults. Forward only explicit caller settings,
+# including empty values, through Bazel's client environment.
+language_test_options() {
+  local name
+  for name in RUNTIME_TESTS_FILTER RUNTIME_TESTS_PER_TEST_TIMEOUT RUNTIME_TESTS_RUNS_PER_TEST RUNTIME_TESTS_FLAKY_IS_ERROR RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT; do
+    if [[ ${!name+x} ]]; then
+      options+=("--test_env=$name")
+    fi
+  done
+}
+
+# Docker owns the PID/cgroup/network namespaces; the declared fixture prepares
+# their scratch and controllers. Compilation retains the remote-only strategy.
+docker_test_options() {
+  options+=(
+    --local_test_jobs=2
+    --experimental_enable_docker_sandbox
+    --experimental_docker_privileged
+    --noexperimental_docker_use_customized_images
+    --noincompatible_legacy_local_fallback
+    --sandbox_default_allow_network=false
+    "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
+    "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
+  )
+}
+
+# A file keeps large ordered target lists below Linux's argument-size limit.
+# Aquery ignores target_pattern_file; apply this config after the caller's options.
+analyze_profile() {
+  local patterns=$1 events=$2
+  shift 2
+  local rc=$events.bazelrc
+  python3 test/rbe/unit_matrix.py universe-rc "$patterns" > "$rc"
+  bazel "--bazelrc=$rc" aquery "${runtime_options[@]}" "$@" "${header_options[@]}" --config=rbe-selection \
+    "--build_event_json_file=$events" 'set()'
+}
+
+# Let Bazel select each public profile before checking worker capacity.
+# Aquery inherits build options, so the canonical loading filters live there;
+# test inherits the same options. Its ordered universe uses the owning roots.
+select_test_profile() {
+  local selection_dir=$1 lane=$2 target_arch=$3 roots=$4 target_config=x86_64 prefix
+  shift 4
+  local -a selection_options=() page_size_options=() routing_options=() variant_options=()
+  prefix=$selection_dir/$lane-$target_arch
+  if [[ $target_arch == arm64 ]]; then
+    target_config=aarch64
+  fi
+  if [[ $lane == syscalls* ]]; then
+    selection_options=(--syscall-policy)
+    local owner
+    for owner in "${test_targets[@]}"; do
+      selection_options+=("--owner=$owner")
+    done
+    if [[ $lane == syscalls-rc && $arch == all ]]; then
+      selection_options+=(--mixed-rc-owners)
+    fi
+  fi
+  if [[ $lane == syscalls-64k || $lane == syscalls-rc ]]; then
+    if [[ $lane == syscalls-64k ]]; then
+      page_size_options=(--page-size=64k)
+    else
+      page_size_options=(--rc-kernel)
+    fi
+    routing_options=(--//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k)
+    if [[ -n $syscall_bucket ]]; then
+      selection_options+=("--syscall-bucket=$syscall_bucket")
+    fi
+  fi
+  if [[ $test_execution == local && $lane != syscalls-rc ]]; then
+    routing_options=("--//tools/bazeldefs:local_test_architecture=$target_arch"
+      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements")
+    variant_options=(--hybrid)
+    selection_options+=(--hybrid)
+    if [[ $lane == syscalls-kvm ]]; then
+      variant_options+=(--kvm-only)
+      selection_options+=(--kvm-only)
+    elif [[ $lane == syscalls && $target_arch == amd64 ]]; then
+      routing_options+=(--//tools/bazeldefs:local_test_backend=docker)
+    fi
+    if [[ -n $syscall_bucket ]]; then
+      selection_options+=("--syscall-bucket=$syscall_bucket")
+    fi
+  fi
+  analyze_profile "$roots" "$prefix-profile.json" \
+    --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
+  python3 test/rbe/unit_matrix.py profile-actions \
+    "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" "${variant_options[@]}" > "$prefix.query"
+  bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --build_tests_only \
+    "${routing_options[@]}" \
+    --output=jsonproto --include_artifacts=false \
+    "--build_event_json_file=$prefix-routing.json" \
+    "--query_file=$prefix.query" > "$prefix-actions.json"
+  python3 test/rbe/unit_matrix.py select-profile \
+    "$prefix-profile.json" "$target_arch" "$prefix-routing.json" \
+    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}" "${page_size_options[@]}" \
+    "--local-test-requirements=$local_test_requirements"
+}
+
+select_syscall_profile() {
+  local selection_dir=$1 lane=$2 syscall_arch=$3
+  local -a profile_options=()
+  case "$lane" in
+    syscalls|syscalls-kvm) profile_options=("--config=syscalls-$syscall_arch") ;;
+    syscalls-64k) profile_options=(--config=syscalls-arm64-64k) ;;
+    syscalls-rc) profile_options=("--config=syscalls-$syscall_arch" --//tools/bazeldefs:page_size=4k) ;;
+    syscalls-save) profile_options=(--test_tag_filters=save_restore) ;;
+    syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
+    *) printf 'Unknown syscall profile: %s\n' "$lane" >&2; return 2 ;;
+  esac
+  select_test_profile "$selection_dir" "$lane" "$syscall_arch" \
+    test/syscalls.targets "${profile_options[@]}"
+}
+
+# Each selected owner retains its own guest and original test deadline. ARM64
+# uses remote TCG; AMD64 uses local nested KVM. Both payloads compile remotely.
+run_guest_profile() (
+  set -e
+  local lane=$1 selection_dir target_arch
+  local -a architectures=("$arch") options=() selection_options=()
+  if [[ $arch == all ]]; then
+    architectures=(amd64 arm64)
+  fi
+  selection_dir=$(mktemp -d)
+  trap 'rm -rf "$selection_dir"' EXIT
+  for target_arch in "${architectures[@]}"; do
+    select_syscall_profile "$selection_dir" "$lane" "$target_arch" | tee "$selection_dir/$target_arch-selection.json"
+    cat "$selection_dir/$lane-$target_arch-targets" >> "$selection_dir/targets"
+  done
+  if [[ $arch == all ]]; then
+    local owner
+    for owner in "${test_targets[@]}"; do
+      selection_options+=("--owner=$owner")
+    done
+    python3 test/rbe/unit_matrix.py combine-rc-profiles "$selection_dir" "${selection_options[@]}" > "$selection_dir/selection.json"
+    # Reconcile the combined configuration with both independently selected
+    # public profiles before dispatching any TestRunner.
+    python3 test/rbe/unit_matrix.py actions "$selection_dir/targets" --exact > "$selection_dir/combined.query"
+    bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --build_tests_only \
+      --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
+      --output=jsonproto --include_artifacts=false \
+      "--build_event_json_file=$selection_dir/profile.json" \
+      "--query_file=$selection_dir/combined.query" > "$selection_dir/actions.json"
+    python3 test/rbe/unit_matrix.py verify "$selection_dir/targets" "$selection_dir/profile.json"
+  else
+    cp "$selection_dir/$arch-selection.json" "$selection_dir/selection.json"
+    cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
+    cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
+  fi
+  if [[ -n ${RUNNER_TEMP:-} ]]; then
+    save_profile_selection "$selection_dir" "$lane"
+  fi
+  if [[ $test_execution == local ]]; then
+    options=(--config=rbe-hybrid-tests --local_test_jobs=1)
+  fi
+  bazel test "${runtime_options[@]}" --config=rbe --config=x86_64 --keep_going \
+    --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
+    --strip=never --sandbox_add_mount_pair=/tmp --test_output=errors \
+    "${options[@]}" --target_pattern_file="$selection_dir/targets"
+)
+
+# Expand the public unit selection before removing its lane-wide filters from
+# a mixed cgroup invocation. A separate analysis retains non-test build roots;
+# filtered tests' build-only work remains in standalone unit/build-all lanes.
+select_unit_profile() {
+  local selection_dir=$1
+  if [[ -f $selection_dir/unit-profile.json ]]; then
+    return
+  fi
+  analyze_profile test/unit.targets "$selection_dir/unit-profile.json" \
+    --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
+  analyze_profile test/unit.targets "$selection_dir/unit-build-profile.json" \
+    --config=rbe-matrix --config=x86_64 --config=unit --strip=never --nobuild_tests_only
+  python3 test/rbe/unit_matrix.py build-roots "$selection_dir/unit-build-profile.json" \
+    > "$selection_dir/unit-build-targets"
+  cat "$selection_dir/unit-build-targets" >> "$selection_dir/targets"
+}
+
+# These environment-specific frontends reuse the maintained unit executables.
+# Keep them in ordinary qualification, while the KVM lane owns KVM cases.
+unit_environment_targets() {
+  local targets
+  local -a suites=("//test/rbe:unit_environment_tests_$arch")
+  if [[ $arch == all ]]; then
+    suites=(//test/rbe:unit_environment_tests_amd64 //test/rbe:unit_environment_tests_arm64)
+  fi
+  targets=$(bazel query --output=label "tests(set(${suites[*]}))")
+  [[ -n $targets ]]
+  printf '%s\n' "$targets"
+}
+
+save_profile_selection() {
+  local selection_dir=$1 lane=$2
+  # Preserve the selection, but never upload Bazel's parsed credential options.
+  mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
+  printf '%s\n' "$clock_source" > "$RUNNER_TEMP/qualification/$lane-selection/clock-source.txt"
+  cp "$selection_dir/selection.json" "$selection_dir/targets" \
+    "$RUNNER_TEMP/qualification/$lane-selection/"
+  if [[ -f $selection_dir/actions.json ]]; then
+    cp "$selection_dir/actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
+  fi
+  if [[ -f $selection_dir/combined-actions.json ]]; then
+    cp "$selection_dir/combined-actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
+    # Read the heap limit from the same server that analyzed the mixed graph.
+    bazel info max-heap-size > "$RUNNER_TEMP/qualification/$lane-selection/max-heap-size.txt"
+  fi
+  if [[ -f $selection_dir/owners ]]; then
+    cp "$selection_dir/owners" "$RUNNER_TEMP/qualification/$lane-selection/"
+  fi
+  python3 - "$selection_dir" "$RUNNER_TEMP/qualification/$lane-selection" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+keys = {"id", "children", "configured", "finished", "aborted"}
+for source in Path(sys.argv[1]).glob("*.json"):
+    if source.name == "profile.json" or source.name.endswith(("-profile.json", "-routing.json")):
+        with (Path(sys.argv[2]) / source.name).open("w") as output:
+            for line in source.read_text().splitlines():
+                event = json.loads(line)
+                output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
+PY
+}
+
+# Reuse the native graph and canonical profile in one invocation. The
+# frontend owns each test's local namespace and execution requirements.
+run_hybrid_profile() (
+  set -e
+  local lane=$1 selection_dir local_arch=$arch
+  local -a lane_options=() options=()
+  selection_dir=$(mktemp -d)
+  trap 'rm -rf "$selection_dir"' EXIT
+  if [[ $lane == unit ]]; then
+    local_arch=arm64
+    local -a query_options=()
+    if [[ $arch == all ]]; then
+      query_options=(--unit-rc .bazelrc)
+    fi
+    python3 test/rbe/unit_matrix.py query test/unit.targets "${query_options[@]}" > "$selection_dir/owners.query"
+    bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+    unit_environment_targets > "$selection_dir/environment-owners"
+    if [[ $arch == all ]]; then
+      # Loading discovers the declared variants; the one test invocation owns
+      # compatibility, canonical filters and per-target execution requirements.
+      python3 test/rbe/unit_matrix.py unit-patterns test/unit.targets "$selection_dir/targets" \
+        --owners "$selection_dir/owners" --environment-owners "$selection_dir/environment-owners" \
+        | tee "$selection_dir/selection.json"
+      lane_options+=(--config=unit)
+      options+=(--cache_test_results=auto --remote_download_outputs=minimal)
+    else
+      python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" \
+        --additional-owners "$selection_dir/environment-owners" > "$selection_dir/actions.query"
+      bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 \
+        --//tools/bazeldefs:local_test_architecture=arm64 \
+        "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
+        --output=jsonproto --include_artifacts=false \
+        --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+      python3 test/rbe/unit_matrix.py unit-patterns test/unit.targets "$selection_dir/unit-patterns" \
+        --environment-owners "$selection_dir/environment-owners" > /dev/null
+      analyze_profile "$selection_dir/unit-patterns" "$selection_dir/profile.json" \
+        --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
+      python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
+        "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
+        --environment-owners "$selection_dir/environment-owners" \
+        "--local-test-requirements=$local_test_requirements" \
+        | tee "$selection_dir/selection.json"
+    fi
+  else
+    lane_options=(--cxxopt=-Werror)
+    select_syscall_profile "$selection_dir" "$lane" "$arch" | tee "$selection_dir/selection.json"
+    cp "$selection_dir/$lane-$arch-targets" "$selection_dir/targets"
+    cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
+    cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
+  fi
+  save_profile_selection "$selection_dir" "$lane"
+  printf '%s %s profile: test placement follows the recorded per-target requirements; compilation stays remote.\n' "$arch" "$lane"
+  if [[ -n $syscall_bucket ]]; then
+    printf 'Running syscall hash15 buckets %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
+  fi
+  if [[ $lane == syscalls && $arch == amd64 ]]; then
+    docker_test_options
+    options+=("--strategy=TestRunner=remote,docker,local" --//tools/bazeldefs:local_test_backend=docker)
+  fi
+  local initial_cgroup
+  initial_cgroup=$(python3 - "$selection_dir/selection.json" "$selection_dir/targets" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+selection = json.loads(Path(sys.argv[1]).read_text())
+targets = set(Path(sys.argv[2]).read_text().splitlines())
+print("true" if targets.intersection(selection.get("initial_cgroup_owners", [])) else "false")
+PY
+  )
+  if [[ $initial_cgroup == true ]]; then
+    # This route owns global cgroup settings on a disposable hosted VM. The
+    # workflow runs directly on that VM, so PID 1 identifies its namespaces.
+    printf 'github_actions=%s\nrunner_environment=%s\npid1_comm=%s\n' \
+      "${GITHUB_ACTIONS:-}" "${RUNNER_ENVIRONMENT:-}" "$(< /proc/1/comm)" \
+      | tee "$RUNNER_TEMP/qualification/initial-cgroup-namespaces.txt"
+    if [[ ${GITHUB_ACTIONS:-} != true || ${RUNNER_ENVIRONMENT:-} != github-hosted || $(< /proc/1/comm) != systemd ]]; then
+      printf 'Initial cgroup tests require a hosted Actions VM with systemd as PID 1.\n' >&2
+      exit 1
+    fi
+    local coordinator_pid_ns coordinator_cgroup_ns init_pid_ns init_cgroup_ns
+    coordinator_pid_ns=$(readlink -v /proc/self/ns/pid)
+    coordinator_cgroup_ns=$(readlink -v /proc/self/ns/cgroup)
+    # Linux gates another user's namespace links with a ptrace access check.
+    init_pid_ns=$(sudo -n readlink -v /proc/1/ns/pid)
+    init_cgroup_ns=$(sudo -n readlink -v /proc/1/ns/cgroup)
+    printf 'coordinator_pid=%s\ninit_pid=%s\ncoordinator_cgroup=%s\ninit_cgroup=%s\n' \
+      "$coordinator_pid_ns" "$init_pid_ns" "$coordinator_cgroup_ns" "$init_cgroup_ns" \
+      | tee -a "$RUNNER_TEMP/qualification/initial-cgroup-namespaces.txt"
+    if [[ $coordinator_pid_ns != "$init_pid_ns" || $coordinator_cgroup_ns != "$init_cgroup_ns" || -e /sys/fs/cgroup/cgroup.type ]]; then
+      printf 'Initial cgroup tests require the VM PID/cgroup namespaces and hierarchy root.\n' >&2
+      exit 1
+    fi
+    # Other local tests must not overlap changes to the root controllers or
+    # mount flags. Each original shard restores its snapshot before returning.
+    options+=(--local_test_jobs=1
+      "--test_env=GVISOR_HOST_PID_NS=$coordinator_pid_ns"
+      "--test_env=GVISOR_HOST_CGROUP_NS=$coordinator_cgroup_ns"
+      "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
+  fi
+  bazel test "${runtime_options[@]}" --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
+    "--//tools/bazeldefs:local_test_architecture=$local_arch" \
+    "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
+    --strip=never --sandbox_add_mount_pair=/tmp --test_output=errors \
+    "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
+)
+
+select_cgroup_profile() {
+  local selection_dir=$1 lane=$2 profile
+  local -a profile_options=() targets=() container_options=()
+  if [[ $lane == unit-v1 ]]; then
+    select_unit_profile "$selection_dir"
+    python3 test/rbe/unit_matrix.py cgroup-targets "$selection_dir/unit-profile.json" \
+      >> "$selection_dir/explicit-targets"
+    return
+  fi
+  case "$lane" in
+    container|container-v1)
+      targets=(//runsc/container/...)
+      profile_options=(--test_tag_filters=-nogo)
+      ;;
+    docker-v1) shared_test_targets docker amd64 ;;
+  esac
+  printf '%s\n' "${targets[@]}" > "$selection_dir/$lane-roots"
+  analyze_profile "$selection_dir/$lane-roots" "$selection_dir/$lane-profile.json" \
+    --config=rbe-matrix --config=x86_64 --strip=never "${profile_options[@]}" --build_tests_only
+  profile=$selection_dir/$lane-profile.json
+  if [[ $lane == container || $lane == container-v1 ]]; then
+    # Replace the aggregate runtime owner before applying worker policy. Keep
+    # every other public owner, including future additions to the package.
+    python3 test/rbe/unit_matrix.py container-platform-targets "$profile" \
+      > "$selection_dir/$lane-platform-roots"
+    profile=$selection_dir/$lane-platform-profile.json
+    if [[ $test_execution == remote ]]; then
+      profile_options=("--test_tag_filters=-nogo,-requires-kvm")
+    fi
+    analyze_profile "$selection_dir/$lane-platform-roots" "$profile" \
+      --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only \
+      "${profile_options[@]}"
+    if [[ $test_execution == remote ]]; then
+      python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/$lane-platform-roots" \
+        > "$selection_dir/$lane-kvm.query"
+      bazel query --output=label --query_file="$selection_dir/$lane-kvm.query" \
+        > "$selection_dir/$lane-kvm-targets"
+      python3 test/rbe/unit_matrix.py select-filtered "$profile" \
+        "$selection_dir/$lane-kvm-targets" "$selection_dir/$lane-platform-targets"
+    elif [[ $lane == container ]]; then
+      container_options=(--architecture=amd64)
+    else
+      container_options=(--guest-kvm)
+    fi
+  fi
+  if [[ $lane == container ]]; then
+    python3 test/rbe/unit_matrix.py container-targets "$profile" "${container_options[@]}" \
+      >> "$selection_dir/explicit-targets"
+  else
+    python3 test/rbe/unit_matrix.py cgroup-targets "$profile" "${container_options[@]}" \
+      >> "$selection_dir/explicit-targets"
+  fi
+}
+
+# Ordinary unit/syscall combinations retain their canonical build-only roots.
+# Mixing cgroup profiles uses explicit canonical tests so lane-wide filters do
+# not suppress another requested lane's owners. Release owns both CPU builds.
+run_platform_matrix() (
+  set -e
+  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false include_public_profiles=false explicit_unit=false
+  local -a options=() targets=() verification_options=() unit_selection_options=()
+  if [[ -n $test_filter ]]; then
+    options+=("--test_filter=$test_filter")
+  fi
+  selection_dir=$(mktemp -d)
+  trap 'rm -rf "$selection_dir"' EXIT
+  : > "$selection_dir/targets"
+  : > "$selection_dir/explicit-targets"
+  : > "$selection_dir/shared-targets"
+  : > "$selection_dir/filtered-targets"
+  if [[ $test_execution == local ]]; then
+    if [[ $1 == container-v1 ]]; then
+      # Only the declared KVM guest is local. Other cgroup-v1 owners retain
+      # their disposable remote VM and its rule-owned run_under fixture.
+      options+=(--config=rbe-hybrid-tests --local_test_jobs=1)
+    else
+      options+=(--config=rbe-hybrid-tests "--strategy=TestRunner=remote,docker,local"
+        --//tools/bazeldefs:local_test_architecture=amd64
+        --//tools/bazeldefs:local_test_backend=docker
+        "--//tools/bazeldefs:local_test_requirements=$local_test_requirements")
+      # Keep the intended two local slots after nested config expansion.
+      docker_test_options
+    fi
+  fi
+  for lane in "$@"; do
+    case "$lane" in
+      plugin-build|release-artifacts|python-distributions|website|codeql) ;;
+      *) command='test' ;;
+    esac
+    case "$lane" in
+      unit) include_unit=true ;;
+      unit-v1|container|container-v1|docker-v1) explicit_unit=true ;;
+      syscalls-save|syscalls-resume) include_checkpoints=true ;;
+      nogo) include_nogo=true ;;
+    esac
+  done
+  for lane in "$@"; do
+    case "$lane" in
+      test)
+        # Declared frontends own their platform transitions. Expand suites and
+        # compare their configured owners with the final combined selection.
+        include_public_profiles=true
+        options+=("${bazel_options[@]}")
+        language_test_options
+        printf '%s\n' "${test_targets[@]}" >> "$selection_dir/shared-targets"
+        ;;
+      nogo)
+        # Each existing Nogo owner already analyzes both architectures. Select
+        # its leaves without applying the positive tag filter to other lanes.
+        bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --config=nogo \
+          --universe_scope=//... \
+          "--build_event_json_file=$selection_dir/nogo-profile.json" 'set()'
+        python3 test/rbe/unit_matrix.py profile-targets "$selection_dir/nogo-profile.json" amd64 \
+          >> "$selection_dir/explicit-targets"
+        ;;
+      unit)
+        python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
+        bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+        unit_environment_targets > "$selection_dir/environment-owners"
+        python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" \
+          --additional-owners "$selection_dir/environment-owners" > "$selection_dir/actions.query"
+        bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
+          --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+        if [[ $explicit_unit == true ]]; then
+          select_unit_profile "$selection_dir"
+          unit_selection_options=(--profile "$selection_dir/unit-profile.json")
+        fi
+        python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
+          "$selection_dir/actions.json" "$selection_dir/unit-targets" "${unit_selection_options[@]}" \
+          --environment-owners "$selection_dir/environment-owners" | tee "$selection_dir/unit-selection.json"
+        if [[ $explicit_unit == true ]]; then
+          cat "$selection_dir/unit-targets" >> "$selection_dir/explicit-targets"
+        else
+          cat "$selection_dir/unit-targets" >> "$selection_dir/targets"
+          # Also retain these explicit owners in the combined-filter check.
+          python3 - "$selection_dir/unit-selection.json" >> "$selection_dir/explicit-targets" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+selection = json.loads(Path(sys.argv[1]).read_text())
+for owner in selection["additional_environment_owners"]:
+    print(owner)
+PY
+          options+=(--config=unit)
+        fi
+        options+=(--strip=never)
+        if [[ $include_nogo == true && $explicit_unit == false ]]; then
+          # Preserve the original unit selection before allowing Nogo through
+          # its wildcard roots. Verify the complete union before execution.
+          analyze_profile "$selection_dir/unit-targets" "$selection_dir/unit-profile.json" \
+            --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
+          verification_options+=(--profile "$selection_dir/unit-profile.json")
+        fi
+        ;;
+      unit-v1|container|container-v1|docker-v1)
+        select_cgroup_profile "$selection_dir" "$lane"
+        options+=(--strip=never)
+        ;;
+      release-repository)
+        printf '%s\n' '//test/release:repository_test' >> "$selection_dir/explicit-targets"
+        ;;
+      release-artifacts)
+        printf '%s\n' '//test/release:artifacts' >> "$selection_dir/targets"
+        ;;
+      python-distributions)
+        printf '%s\n' '//sandboxexec/sandbox/python:dist' >> "$selection_dir/targets"
+        ;;
+      website)
+        printf '%s\n' '//website:artifact' >> "$selection_dir/targets"
+        ;;
+      syscalls)
+        include_syscalls=true
+        select_syscall_profile "$selection_dir" "$lane" amd64
+        select_syscall_profile "$selection_dir" "$lane" arm64
+        select_syscall_profile "$selection_dir" syscalls-64k arm64
+        if [[ $include_unit == true || $explicit_unit == true || $include_checkpoints == true ]]; then
+          # Global -allsave would discard the explicitly requested checkpoint
+          # profiles. Use their separately selected owners in a combined run.
+          cat "$selection_dir/syscalls-amd64-targets" >> "$selection_dir/explicit-targets"
+        else
+          # Keep the existing standalone syscall roots and RBE exclusions,
+          # including their build-only targets. The ARM additions were selected
+          # by the separate public ARM profile above.
+          cat test/syscalls.targets >> "$selection_dir/targets"
+          options+=(--config=syscalls-amd64 '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm' --strip=never)
+          if [[ $include_nogo == true ]]; then
+            cat "$selection_dir/syscalls-amd64-targets" >> "$selection_dir/explicit-targets"
+          fi
+        fi
+        cat "$selection_dir/syscalls-arm64-targets" >> "$selection_dir/explicit-targets"
+        cat "$selection_dir/syscalls-64k-arm64-targets" >> "$selection_dir/explicit-targets"
+        ;;
+      syscalls-save|syscalls-resume)
+        include_syscalls=true
+        # Match the public continuous jobs' architectures.
+        local checkpoint_arch=amd64
+        if [[ $lane == syscalls-resume ]]; then
+          checkpoint_arch=arm64
+        fi
+        select_syscall_profile "$selection_dir" "$lane" "$checkpoint_arch"
+        cat "$selection_dir/$lane-$checkpoint_arch-targets" >> "$selection_dir/explicit-targets"
+        options+=(--strip=never)
+        ;;
+      smoke|docker|bwrap|cpu-images|gpu-images)
+        include_public_profiles=true
+        # These public lanes run on both CPUs. Expand each owning suite under
+        # that architecture before mapping its declared test variants.
+        local profile_arch
+        for profile_arch in amd64 arm64; do
+          if [[ $lane == smoke ]]; then
+            targets=(//:release_smoke_test)
+          else
+            shared_test_targets "$lane" "$profile_arch"
+          fi
+          printf '%s\n' "${targets[@]}" > "$selection_dir/$lane-$profile_arch-roots"
+          select_test_profile "$selection_dir" "$lane" "$profile_arch" \
+            "$selection_dir/$lane-$profile_arch-roots" --strip=never
+          cat "$selection_dir/$lane-$profile_arch-targets" >> "$selection_dir/explicit-targets"
+        done
+        if [[ $lane == smoke && $test_execution == remote ]]; then
+          # Keep TCG coverage distinct from the ordinary ARM worker selection.
+          printf '%s\n' '//:release_smoke_arm64_tcg_test' >> "$selection_dir/explicit-targets"
+        fi
+        options+=(--strip=never)
+        ;;
+      smoke-race)
+        printf '%s\n' '//:release_smoke_race_test' >> "$selection_dir/explicit-targets"
+        options+=(--strip=never)
+        ;;
+      posture|startup|benchmarks)
+        shared_test_targets "$lane" amd64
+        printf '%s\n' "${targets[@]}" >> "$selection_dir/filtered-targets"
+        printf 'Combined lane %s retains AMD64 execution; no ARM64 coverage is added.\n' "$lane"
+        options+=(--strip=never)
+        ;;
+      codeql)
+        printf '%s\n' '//tools/codeql:all' >> "$selection_dir/targets"
+        ;;
+      plugin-build)
+        # This is a build-only root, not an executable test for the loading
+        # verifier. Its own transition preserves opt/strip=sometimes.
+        printf '%s\n' '//runsc:runsc-plugin-stack-build' >> "$selection_dir/targets"
+        ;;
+      plugin-network|do|root|portforward|workflows|lint|governance|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata|license-headers)
+        shared_test_targets "$lane" amd64
+        if [[ $lane == language-* ]]; then
+          language_test_options
+        fi
+        printf '%s\n' "${targets[@]}" >> "$selection_dir/shared-targets"
+        printf 'Combined lane %s retains AMD64 execution; no ARM64 coverage is added.\n' "$lane"
+        options+=(--strip=never)
+        ;;
+    esac
+  done
+  # Explicit cgroup selections already applied each lane's filters.
+  if [[ $include_nogo == true && $explicit_unit == false ]]; then
+    if [[ $include_unit == true ]]; then
+      options+=(--test_tag_filters=-requires-kvm)
+    elif [[ $include_syscalls == true && $include_checkpoints == false ]]; then
+      options+=('--test_tag_filters=-allsave,-runsc_kvm,-runsc_slimvm')
+    fi
+  fi
+  if [[ -s $selection_dir/filtered-targets ]]; then
+    # Select only these profiles under their KVM policy. Applying it to the final
+    # invocation would also change unrelated lanes' filters.
+    analyze_profile "$selection_dir/filtered-targets" "$selection_dir/filtered-profile.json" \
+      --config=rbe-matrix --config=x86_64 --strip=never \
+      --build_tests_only --test_tag_filters=-requires-kvm
+    python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/filtered-targets" \
+      > "$selection_dir/filtered-kvm.query"
+    bazel query --output=label --query_file="$selection_dir/filtered-kvm.query" \
+      > "$selection_dir/filtered-kvm-targets"
+    python3 test/rbe/unit_matrix.py select-filtered "$selection_dir/filtered-profile.json" \
+      "$selection_dir/filtered-kvm-targets" "$selection_dir/filtered-selected-targets"
+    cat "$selection_dir/filtered-selected-targets" >> "$selection_dir/explicit-targets"
+  fi
+  cat "$selection_dir/explicit-targets" "$selection_dir/shared-targets" > "$selection_dir/combined-targets"
+  if [[ -s $selection_dir/combined-targets ]]; then
+    if [[ $include_nogo == true || $include_syscalls == true || $include_public_profiles == true || $explicit_unit == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
+      if [[ -s $selection_dir/shared-targets ]]; then
+        # Let Bazel expand explicit suites, including their manual members,
+        # before comparing their selection under the combined lane's filters.
+        analyze_profile "$selection_dir/shared-targets" "$selection_dir/shared-profile.json" \
+          --config=rbe-matrix --config=x86_64 --strip=never "${bazel_options[@]}" --build_tests_only
+        verification_options+=(--profile "$selection_dir/shared-profile.json")
+      fi
+      : > "$selection_dir/verification-targets"
+      if [[ $include_nogo == true ]]; then
+        cat "$selection_dir/targets" >> "$selection_dir/verification-targets"
+      fi
+      cat "$selection_dir/combined-targets" >> "$selection_dir/verification-targets"
+      # Verify the final filters with Bazel itself. Never silently lose another
+      # lane's explicit tests when combining it with the unit configuration.
+      analyze_profile "$selection_dir/verification-targets" "$selection_dir/combined-profile.json" \
+        --config=rbe-matrix --config=x86_64 "${options[@]}" --build_tests_only
+      python3 test/rbe/unit_matrix.py verify \
+        "$selection_dir/explicit-targets" "$selection_dir/combined-profile.json" "${verification_options[@]}"
+    fi
+    cat "$selection_dir/combined-targets" >> "$selection_dir/targets"
+  fi
+  if [[ ! -s $selection_dir/targets ]]; then
+    printf 'No requested tests have available remote workers; see the profile exclusions above.\n' >&2
+    return 2
+  fi
+  python3 - "$selection_dir" "$arch" "$@" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+directory = Path(sys.argv[1])
+selection = {
+    "profile_architecture": sys.argv[2],
+    "lanes": sys.argv[3:],
+    "target_patterns": directory.joinpath("targets").read_text().splitlines(),
+    "limitation": "Loading selection only; configured owners, shards and placement come from the actual test results.",
+}
+unit_selection = directory / "unit-selection.json"
+if unit_selection.exists():
+    selection["unit_selection"] = json.loads(unit_selection.read_text())
+text = json.dumps(selection, indent=2) + "\n"
+(directory / "selection.json").write_text(text)
+print(text, end="")
+PY
+  if [[ -n ${RUNNER_TEMP:-} ]]; then
+    save_profile_selection "$selection_dir" "$(IFS=+; printf '%s' "$*")"
+  fi
+  bazel "$command" "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --keep_going \
+    --sandbox_add_mount_pair=/tmp --test_output=errors "${options[@]}" "${header_options[@]}" \
+    --target_pattern_file="$selection_dir/targets"
+)
+
+run_lane() (
+  # Called as a plain command below so errexit also applies inside helpers.
+  # The parent records failures and continues with other requested lanes.
+  set -e
+  local lane=$1
+  local command=test execution_config=rbe mixed_kvm=false
+  local -a options=() targets=()
+  if [[ $lane == unit-v1 || $lane == container-v1 || $lane == docker-v1 ]]; then
+    if [[ $arch != amd64 ]]; then
+      printf 'The public cgroup-v1 lanes are declared for AMD64.\n' >&2
+      return 2
+    fi
+    execution_config=rbe-cgroup-v1
+  fi
+  case "$lane" in
+    presubmit-build)
+      local build_config build_root phase_status status=0
+      local -a build_configs=("$architecture_config")
+      if [[ $arch == all ]]; then
+        build_configs=(x86_64 aarch64)
+      fi
+      for build_config in "${build_configs[@]}"; do
+        for build_root in //pkg/... //runsc/...; do
+          # Match the two public presubmit commands: pkg inherits -nogo;
+          # runsc replaces that filter with -network_plugins.
+          options=()
+          if [[ $build_root == //runsc/... ]]; then
+            options=(--build_tag_filters=-network_plugins)
+          fi
+          phase_status=0
+          bazel build --config=rbe "--config=$build_config" --keep_going \
+            "${options[@]}" -- "$build_root" || phase_status=$?
+          printf 'Presubmit build %s (%s) exited %d\n' "$build_root" "$build_config" "$phase_status"
+          if (( phase_status != 0 )); then
+            status=1
+          fi
+        done
+      done
+      return "$status"
+      ;;
+    test)
+      options=("${bazel_options[@]}")
+      language_test_options
+      targets=("${test_targets[@]}")
+      if [[ $test_execution == local ]]; then
+        # Architecture frontends retain the existing root/nobody test identity;
+        # only TestRunners are local. Compilation remains on the RBE platform.
+        options+=("--//tools/bazeldefs:local_test_architecture=$arch"
+          --//tools/bazeldefs:local_test_requirements=namespace)
+      else
+        options+=(--strategy=TestRunner=remote --noremote_local_fallback)
+      fi
+      ;;
+    build)
+      command=build
+      options=("${bazel_options[@]}")
+      targets=("${build_targets[@]}")
+      ;;
+    build-all)
+      command=build
+      options=(--build_tag_filters=-network_plugins)
+      targets=(//...)
+      ;;
+    plugin-build)
+      if [[ $arch != amd64 ]]; then
+        printf 'The public plugin build is declared for AMD64.\n' >&2
+        return 2
+      fi
+      command=build
+      targets=(//runsc:runsc-plugin-stack-build)
+      ;;
+    codeql)
+      command=build
+      targets=(//tools/codeql:all)
+      ;;
+    lint)
+      if [[ $arch != amd64 ]]; then
+        printf 'Source lint tools run on AMD64 workers.\n' >&2
+        return 2
+      fi
+      shared_test_targets "$lane" "$arch"
+      ;;
+    gazelle)
+      # Match the public source-consistency check; it runs once per checkout.
+      bazel run --config=rbe --config=x86_64 //:gazelle_check || return "$?"
+      local selection_dir
+      selection_dir=$(mktemp -d)
+      trap 'rm -rf "$selection_dir"' EXIT
+      bazel query 'attr("tags", "codeql-go-owner:", //...)' --output=xml \
+        > "$selection_dir/codeql-roots.xml" || return "$?"
+      bazel run --config=rbe --config=x86_64 //tools/codeql:update_go_roots -- \
+        --input "$selection_dir/codeql-roots.xml" --check
+      return "$?"
+      ;;
+    lint-cc)
+      if [[ $arch == arm64 ]]; then
+        printf 'The public clang-tidy lane is declared for AMD64.\n' >&2
+        return 2
+      fi
+      command=build
+      options=(--config=lint-cc)
+      ;;
+    license-check|license-fetch)
+      if [[ $arch != amd64 ]]; then
+        printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
+        return 2
+      fi
+      if [[ $lane == license-fetch ]]; then
+        run_license_check fetch
+      else
+        run_license_check verify
+      fi
+      return "$?"
+      ;;
+    license-headers)
+      shared_test_targets "$lane" "$arch"
+      ;;
+    python-distributions)
+      command=build
+      targets=(//sandboxexec/sandbox/python:dist)
+      ;;
+    nogo)
+      options=(--config=nogo)
+      targets=(//...)
+      ;;
+    unit|unit-v1)
+      if [[ $test_execution == local ]]; then
+        run_hybrid_profile unit
+        return
+      fi
+      # test/unit.targets also retains non-test build targets and the existing
+      # exclusions. Keep its selection separate from Nogo's positive tag filter.
+      options=(--config=unit)
+      if [[ $lane == unit ]]; then
+        local selection_dir
+        selection_dir=$(mktemp -d)
+        trap 'rm -rf "$selection_dir"' EXIT
+        unit_environment_targets > "$selection_dir/environment-owners"
+        python3 test/rbe/unit_matrix.py unit-patterns test/unit.targets "$selection_dir/targets" \
+          --environment-owners "$selection_dir/environment-owners" | tee "$selection_dir/selection.json"
+        if [[ -n ${RUNNER_TEMP:-} ]]; then
+          save_profile_selection "$selection_dir" unit
+        fi
+        options+=("--target_pattern_file=$selection_dir/targets")
+      fi
+      ;;
+    container-v1-pilot)
+      if [[ $arch != amd64 || $test_execution != local ]]; then
+        printf 'The disposable cgroup-v1 KVM probe requires local AMD64 execution.\n' >&2
+        return 2
+      fi
+      targets=(//pkg/sentry/platform/kvm:cgroup_v1_guest_probe)
+      options=(--config=rbe-hybrid-tests --local_test_jobs=1)
+      ;;
+    container|container-v1)
+      if [[ $arch != amd64 ]]; then
+        printf 'The public container lanes are declared for AMD64.\n' >&2
+        return 2
+      fi
+      run_platform_matrix "$lane"
+      return
+      ;;
+    smoke)
+      targets=(//:release_smoke_test)
+      if [[ $test_execution == local ]]; then
+        # The existing variant binds the release and TestRunner to this CPU,
+        # independently of the preferred remote compilation platform.
+        targets=("//:release_smoke_test_$arch")
+      fi
+      ;;
+    smoke-race)
+      targets=(//:release_smoke_race_test)
+      ;;
+    release-artifacts)
+      command=build
+      options+=(-c opt)
+      targets=(//debian:debian //debian:gvisor-release-tar-bz2 //debian:gvisor-release-tar-zstd)
+      ;;
+    release-repository)
+      if [[ $arch != amd64 ]]; then
+        printf 'Release repository tools run on AMD64 and check both package architectures.\n' >&2
+        return 2
+      fi
+      targets=(//test/release:repository_test)
+      ;;
+    docker-v1)
+      shared_test_targets docker "$arch"
+      ;;
+    plugin-network)
+      if [[ $arch != amd64 ]]; then
+        printf 'The public plugin network test is declared for AMD64.\n' >&2
+        return 2
+      fi
+      shared_test_targets "$lane" "$arch"
+      ;;
+    bwrap)
+      shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local ]]; then
+        targets=("${targets[0]}_$arch")
+        # Return root-owned test outputs to Bazel before it validates them.
+        options+=(--run_under=//test/rbe:local_root --test_arg=-test.v)
+      fi
+      ;;
+    kvm)
+      shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local && $arch == amd64 ]]; then
+        mixed_kvm=true
+        local selection_dir
+        selection_dir=$(mktemp -d)
+        trap 'rm -rf "$selection_dir"' EXIT
+        printf '%s\n' "${targets[@]}" > "$selection_dir/roots"
+        analyze_profile "$selection_dir/roots" "$selection_dir/profile.json" \
+          --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only
+        python3 test/rbe/unit_matrix.py profile-targets \
+          "$selection_dir/profile.json" amd64 --hybrid > "$selection_dir/targets"
+        python3 - "$selection_dir" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+directory = Path(sys.argv[1])
+(directory / "selection.json").write_text(json.dumps({
+    "canonical_roots": directory.joinpath("roots").read_text().splitlines(),
+    "selected_owners": directory.joinpath("targets").read_text().splitlines(),
+    "routing": "Declared native frontends select host or Docker execution.",
+}, indent=2) + "\n")
+PY
+        save_profile_selection "$selection_dir" "$lane"
+        mapfile -t targets < "$selection_dir/targets"
+      fi
+      ;;
+    do|docker|root|portforward|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|moby|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
+      if [[ $lane == "do" && $arch != amd64 ]]; then
+        printf 'The public do smoke checks are declared for AMD64.\n' >&2
+        return 2
+      fi
+      shared_test_targets "$lane" "$arch"
+      ;;
+    posture|startup)
+      shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == remote ]]; then
+        options=(--test_tag_filters=-requires-kvm)
+      fi
+      ;;
+    pgo)
+      if [[ $arch != amd64 || ${#test_targets[@]} == 0 ]]; then
+        printf 'PGO requires explicit AMD64 owners.\n' >&2
+        return 2
+      fi
+      targets=("${test_targets[@]}")
+      for target in "${targets[@]}"; do
+        if [[ ( $test_execution == local && $target != *_pgo_kvm_owned ) ||
+              ( $test_execution == remote && $target != *_pgo_systrap_owned ) ]]; then
+          printf 'PGO selects local KVM or remote systrap owners: %s\n' "$target" >&2
+          return 2
+        fi
+      done
+      if [[ $test_execution == local ]]; then
+        options+=(--local_test_jobs=1)
+      fi
+      ;;
+    benchmarks)
+      if [[ $arch != amd64 ]]; then
+        printf 'Continuous CI benchmarks are declared for AMD64; ARM64 workers remain unqualified.\n' >&2
+        return 2
+      fi
+      # CI reports these jobs as soft failures. Keep their status visible here;
+      # --keep_going still collects the other complete benchmark workloads.
+      if [[ $test_execution == remote ]]; then
+        options=(--test_tag_filters=-requires-kvm)
+      fi
+      shared_test_targets "$lane" "$arch"
+      if (( ${#benchmark_targets[@]} )); then
+        local target selection_dir=${RUNNER_TEMP:?}/qualification/benchmarks-selection
+        mkdir -p "$selection_dir"
+        # Query the owning suite rather than maintaining a second target list.
+        bazel query 'tests(//test/benchmarks:continuous_tests)' --output=label \
+          > "$selection_dir/canonical-targets"
+        for target in "${benchmark_targets[@]}"; do
+          if ! grep -Fxq -- "$target" "$selection_dir/canonical-targets"; then
+            printf 'Not a continuous benchmark target: %s\n' "$target" >&2
+            return 2
+          fi
+        done
+        printf '%s\n' "${benchmark_targets[@]}" | sort -u > "$selection_dir/selected-targets"
+        mapfile -t targets < "$selection_dir/selected-targets"
+      fi
+      ;;
+    language-directfs|language-goferfs)
+      if [[ $arch != amd64 ]]; then
+        printf 'Language runtime images are declared only for AMD64.\n' >&2
+        return 1
+      fi
+      language_test_options
+      shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local ]]; then
+        # This fork qualification covers both public PHP filesystem modes in
+        # one invocation, sharing the current source-built image. Preserve each
+        # mode's two public partitions and the owning rules' four shards.
+        local selection_dir=${RUNNER_TEMP:?}/qualification/php-selection
+        mkdir -p "$selection_dir" || return
+        bazel query 'tests(//test/runtimes:php8.5.11_directfs_owned) union tests(//test/runtimes:php8.5.11_goferfs_owned)' \
+          --output=label > "$selection_dir/canonical-targets" || return
+        LC_ALL=C sort "$selection_dir/canonical-targets" > "$selection_dir/selected-targets" || return
+        printf '%s\n' \
+          '//test/runtimes:php8.5.11_directfs_1_owned' \
+          '//test/runtimes:php8.5.11_directfs_2_owned' \
+          '//test/runtimes:php8.5.11_goferfs_1_owned' \
+          '//test/runtimes:php8.5.11_goferfs_2_owned' \
+          > "$selection_dir/expected-targets" || return
+        diff -u "$selection_dir/expected-targets" "$selection_dir/selected-targets" || return
+        mapfile -t targets < "$selection_dir/selected-targets"
+        options+=(--runs_per_test=1)
+      fi
+      ;;
+    kubernetes)
+      if [[ $arch != amd64 ]]; then
+        printf 'The kind tool and node image are declared only for AMD64.\n' >&2
+        return 1
+      fi
+      shared_test_targets "$lane" "$arch"
+      ;;
+    syzkaller)
+      if [[ $arch != amd64 ]]; then
+        printf 'The Syzkaller smoke test is declared only for AMD64.\n' >&2
+        return 2
+      fi
+      shared_test_targets "$lane" "$arch"
+      ;;
+    go-export)
+      if [[ $arch != amd64 ]]; then
+        printf 'The exported-module matrix runs on AMD64 workers.\n' >&2
+        return 2
+      fi
+      shared_test_targets "$lane" "$arch"
+      ;;
+    website)
+      if [[ $arch != amd64 ]]; then
+        printf 'The public website lane is qualified only for AMD64.\n' >&2
+        return 2
+      fi
+      command=build
+      targets=(//website:image)
+      ;;
+    syscalls-rc-pilot)
+      # Preserve original mincore arguments, shards and deadlines. The guest
+      # must exercise runsc's KVM platform, not merely expose /dev/kvm.
+      targets=(
+        //test/syscalls:mincore_test_native_rc_kvm
+        //test/syscalls:mincore_test_runsc_ptrace_rc_kvm
+        //test/syscalls:mincore_test_runsc_systrap_shared_rc_kvm
+        //test/syscalls:mincore_test_runsc_kvm_rc_kvm
+      )
+      options=(--//tools/bazeldefs:page_size=4k --//tools/bazeldefs:local_test_architecture=)
+      ;;
+    syscalls-64k|syscalls-rc)
+      run_guest_profile "$lane"
+      return
+      ;;
+    syscalls|syscalls-kvm|syscalls-save|syscalls-resume)
+      if [[ $test_execution == local ]]; then
+        run_hybrid_profile "$lane"
+        return
+      fi
+      options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror)
+      case "$lane" in
+        syscalls)
+          if [[ $arch == arm64 ]]; then
+            options+=(--config=syscalls-arm64)
+          else
+            # RBE also excludes KVM; test_tag_filters replaces rather than
+            # extends the public syscalls-amd64 config's selection.
+            options+=('--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm')
+          fi
+          ;;
+        syscalls-save) options+=(--test_tag_filters=save_restore) ;;
+        syscalls-resume) options+=(--test_tag_filters=save_resume) ;;
+      esac
+      ;;
+  esac
+  if [[ $command == test ]]; then
+    if [[ -n $test_filter ]]; then
+      options+=("--test_filter=$test_filter")
+    fi
+    # The repository test consumes the public release packages, whose owning
+    # build keeps Bazel's default stripping policy.
+    if [[ $lane != release-repository ]]; then
+      options+=(--strip=never)
+    fi
+    options+=(--sandbox_add_mount_pair=/tmp --test_output=errors)
+    if [[ $test_execution == local ]]; then
+      case "$lane" in
+        plugin-network|nftables|moby|kvm|language-goferfs|startup|posture|portforward|root|benchmarks|pgo|docker|cpu-images|gpu-images)
+          # Each owned daemon needs separate firewall state. The fixture
+          # can attach this private namespace to the job's bridge.
+          docker_test_options
+          if [[ $lane == language-goferfs ]]; then
+            # Keep CPU-heavy PHP shards from competing on the same host.
+            options+=(--local_test_jobs=1)
+          fi
+          if [[ $mixed_kvm == true ]]; then
+            options+=(--config=rbe-hybrid-tests --strategy=TestRunner=remote,docker,local
+              --//tools/bazeldefs:local_test_architecture=amd64
+              --//tools/bazeldefs:local_test_backend=docker)
+          else
+            options+=(--strategy=TestRunner=docker --run_under=//test/rbe:docker_setup)
+          fi
+          if [[ $lane == language-goferfs || $lane == moby || $lane == kvm || $lane == benchmarks || $lane == pgo || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
+            options+=(
+              --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock
+              "--test_env=GVISOR_DOCKER_NETWORK=${GVISOR_DOCKER_NETWORK:?Run local Docker tests through test/rbe/actions.sh}"
+              "--test_env=GVISOR_HOST_NET_NS=$(readlink /proc/self/ns/net)"
+            )
+          fi
+          ;;
+      esac
+      options=(--config=rbe-local-tests "${options[@]}")
+      if [[ ( $lane == docker || $lane == cpu-images || $lane == gpu-images ) && $arch == arm64 ]]; then
+        # The unmodified suite needs native test wrappers and run_under tools.
+        # Prefer ARM remote tools while Docker executes the tests on this host.
+        execution_config=rbe-arm64
+        # Source-image builds need this host's native ARM Docker daemon.
+        options+=(--strategy=SourceImageOCI=local)
+      fi
+    elif [[ $arch == arm64 ]]; then
+      execution_config=rbe-arm64
+      printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
+    fi
+  fi
+  bazel "$command" "${runtime_options[@]}" "--config=$execution_config" "--config=$architecture_config" \
+    --keep_going "${options[@]}" "${header_options[@]}" "${targets[@]}"
+)
+
+run_selection() {
+  local status=0 lane lane_status
+  local -a matrix_lanes=()
+  for lane in "$@"; do
+    # Recursive builds keep their own loading filters and output groups. A test
+    # invocation would also execute unrelated tests below those package roots.
+    if [[ $arch == all && $test_execution == remote && $lane != presubmit-build && $lane != lint-cc && $lane != gazelle && $lane != syscalls-rc ]]; then
+      matrix_lanes+=("$lane")
+      continue
+    fi
+    printf '\nRunning lane: %s\n' "$lane"
+    run_lane "$lane"
+    lane_status=$?
+    printf 'Lane %s exited %d\n' "$lane" "$lane_status"
+    if (( lane_status != 0 )); then
+      status=1
+    fi
+    if [[ -n ${QUALIFICATION_LANE_RESULTS:-} ]]; then
+      python3 test/rbe/unit_matrix.py lane-result --output "$QUALIFICATION_LANE_RESULTS" \
+        "--native-exit=$lane_status" "$lane" || status=1
+    fi
+  done
+  if (( ${#matrix_lanes[@]} )); then
+    run_platform_matrix "${matrix_lanes[@]}"
+    lane_status=$?
+    if (( lane_status != 0 )); then
+      status=1
+    fi
+    if [[ -n ${QUALIFICATION_LANE_RESULTS:-} ]]; then
+      python3 test/rbe/unit_matrix.py lane-result --output "$QUALIFICATION_LANE_RESULTS" \
+        "--native-exit=$lane_status" "${matrix_lanes[@]}" || status=1
+    fi
+  fi
+  return "$status"
+}
+
+for lane in "$@"; do
+  if [[ $lane == cos-metadata ]]; then
+    # Prepare the declared input before any selected lane runs, including the
+    # analyses that establish a combined test selection.
+    source tools/gpu/cos_metadata_input.sh
+    with_cos_metadata_input "${COS_IMAGES_JSON:-}" run_selection "$@"
+    exit "$?"
+  fi
+done
+run_selection "$@"
