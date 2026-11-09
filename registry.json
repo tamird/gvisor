@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T19:26:47+00:00",
+    "updatedAt": "2026-11-09T19:33:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -64471,8 +64471,16 @@
       "url": "https://github.com/tamird/gvisor/commit/885fe8b75",
       "group": "tests",
       "status": "Contributor review requested",
-      "summary": "Use one self-executing test fixture for processes that exit or wait to be killed. Runsc, the shim and systrap share it. The shim timeout cases check that their own command actually died from SIGKILL.",
+      "summary": "Two approved changes in #17053 introduced the specutils and runsc/cmd children. Both landed on November 6. This follow-up keeps those tests and moves their child behavior into the same fixture used by the proposed shim tests and the systrap stuck-child test.",
       "evidence": [
+        {
+          "label": "Both approved lifecycle commits landed in #17053",
+          "url": "https://github.com/google/gvisor/pull/17053"
+        },
+        {
+          "label": "Independent netgofer change with its own shutdown protocol",
+          "url": "https://github.com/google/gvisor/pull/17242"
+        },
         {
           "label": "Single-commit shared process fixture",
           "url": "https://github.com/tamird/gvisor/commit/885fe8b75"
@@ -64506,7 +64514,7 @@
         "sourceHead": "885fe8b752ad2ce4797bed1804cb2fa7950d3559",
         "observedAt": "2026-11-09T19:18:26+00:00",
         "disposition": "Single-commit proposal prepared.",
-        "nextAction": "Review the single process fixture and the shim’s check for a real watchdog kill. The Linux run is testing five packages, a deliberately missing runtime, and the ARM64 builds.",
+        "nextAction": "This supersedes the unsubmitted shim draft 6b2d3261d and follows the two changes already merged in #17053. The separately approved netgofer PR #17242 exercises a child that exits on stdin EOF. Review the shared pause fixture and its watchdog check.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/885fe8b75",
           "https://github.com/tamird/gvisor/actions/runs/42681696570"
@@ -64531,7 +64539,7 @@
         "title": "Use one test process for shim timeouts and runsc lifecycle tests",
         "body": "The shim deadline tests run a fake runtime through /bin/sh and sleep.\nOn a worker without those programs, some tests accept the launch error\nbefore the watchdog has a chance to terminate a running command.\n\nRe-execute the test binary as a process that stays alive until killed.\nThe shim tests observe the runtime being killed, including operations\nthat discard its error. The runsc and systrap tests use the same child\nfor process identity, readiness and an unresponsive sandbox. An\nimmediate exit also lets specutils inspect and reap a zombie.",
         "requestedAt": "2026-11-09T19:18:26+00:00",
-        "summary": "Review the single process fixture and the shim’s check for a real watchdog kill. The Linux run is testing five packages, a deliberately missing runtime, and the ARM64 builds."
+        "summary": "This supersedes the unsubmitted shim draft 6b2d3261d and follows the two changes already merged in #17053. The separately approved netgofer PR #17242 exercises a child that exits on stdin EOF. Review the shared pause fixture and its watchdog check."
       }
     },
     {
@@ -93779,7 +93787,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T19:07:20+00:00",
+      "updatedAt": "2026-11-09T19:33:12+00:00",
       "summary": "The wire → graph → wire checkpoint test stopped at its first dump on two independent commits. Both logs reported “error printing state: unreachable” and exit 128.",
       "findings": [
         {
@@ -93809,6 +93817,23 @@
             {
               "label": "Six checkpoint comparisons and restores",
               "url": "https://github.com/tamird/gvisor/actions/runs/42676362803/artifacts/13702590654"
+            }
+          ]
+        },
+        {
+          "text": "The same wire dump failed before hop 0 on the import of Ayush’s directfs PR. The retry passed the owning target with seven of eight shards cached. Its log does not report the subtest result separately. None of the 67 public job artifacts contained the checkpoint.",
+          "evidence": [
+            {
+              "label": "Source PR #15597",
+              "url": "https://github.com/google/gvisor/pull/15597"
+            },
+            {
+              "label": "#53956 · failed shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53956#01a1c182-ac38-4ead-b66b-9911efedee3c"
+            },
+            {
+              "label": "#53956 · passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53956#01a1c194-4ffa-414a-aa99-252303698e22"
             }
           ]
         }
@@ -93977,11 +94002,11 @@
     },
     {
       "id": "investigation:ci-flake-dependency-downloads",
-      "title": "GitHub Actions dependency downloads returned HTTP 504 on three PRs",
+      "title": "Dependency downloads returned HTTP 504 in GitHub Actions and Buildkite",
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T18:46:35+00:00",
+      "updatedAt": "2026-11-09T19:33:12+00:00",
       "summary": "Gazelle and Go generation stopped before testing on three contributors’ PRs. Bazel reported HTTP 504 while fetching bazel-skylib 1.9.2 or protobuf 35.1.",
       "findings": [
         {
@@ -93994,6 +94019,19 @@
             {
               "label": "Protobuf registry source",
               "url": "https://bcr.bazel.build/modules/protobuf/35.1/source.json"
+            }
+          ]
+        },
+        {
+          "text": "A Buildkite release job also stopped before testing when it received HTTP 504 fetching toml.bzl v0.4.1. Buildkite linked the failure to a passing same-commit retry.",
+          "evidence": [
+            {
+              "label": "Release #7667 · failed download",
+              "url": "https://buildkite.com/gvisor/release/builds/7667#01a1b33c-7361-4185-94cc-ee048f0156f0"
+            },
+            {
+              "label": "Release #7667 · passing retry",
+              "url": "https://buildkite.com/gvisor/release/builds/7667#01a1b4b4-d220-4629-a06e-37c962f2935e"
             }
           ]
         }
@@ -94011,6 +94049,41 @@
         {
           "label": "#17267 · Go generation · protobuf",
           "url": "https://github.com/google/gvisor/actions/runs/42583801511/job/129048618821"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-lisafs-bootstrap",
+      "title": "Sentry waits a minute for the fourth lisafs channel during startup",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-09T19:33:12+00:00",
+      "summary": "All four UDP loopback cases passed on master, but the runner failed the shard after seeing the startup watchdog warning. The single uncached shard passed on retry in 0.5 seconds.",
+      "findings": [
+        {
+          "text": "Three channel requests completed within 1.5 ms. The fourth waited 60.001 seconds. At the 30-second watchdog threshold, the Sentry was still waiting in lisafs.Client.StartChannels. The boot log shows the client stack and the reply time.",
+          "evidence": [
+            {
+              "label": "Sentry boot log with the startup stack",
+              "url": "https://storage.googleapis.com/gvisor-buildkite/01a1c182-8849-41a3-bef7-2ab5c89d9651/01a1c182-c82e-4d75-b893-bbc277703950/home/agent-110926-175801/.cache/bazel/_bazel_agent-110926-175801/52a8e4f6ad486bf61a8b5b225fcafac8/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/socket_ip_udp_loopback_test_runsc_systrap_shared/shard_8_of_8/test.outputs/main.test/runsc1544842315/logs/runsc.log.20261109-182625.322057.boot.txt"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Capture the gofer’s goroutine stack during the delayed request to locate the other end of the channel handshake.",
+      "evidence": [
+        {
+          "label": "Master commit 9832d5d69",
+          "url": "https://github.com/google/gvisor/commit/9832d5d69"
+        },
+        {
+          "label": "#53957 · failed shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53957#01a1c182-c82e-4d75-b893-bbc277703950"
+        },
+        {
+          "label": "#53957 · passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53957#01a1c191-7c7d-499b-af59-45a29b0daa83"
         }
       ]
     }
