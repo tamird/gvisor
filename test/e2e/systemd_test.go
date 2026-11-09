@@ -910,9 +910,80 @@ func TestSystemdMultiUser(t *testing.T) {
 	execOrFatal(ctx, t, d, "mkdir", "-p", "/var/log/journal")
 	execOrFatal(ctx, t, d, "systemctl", "restart", "systemd-journald")
 	execOrFatal(ctx, t, d, "journalctl", "--flush")
+	started := time.Now()
 	execOrFatal(ctx, t, d, "loginctl", "enable-linger", "alice", "bob")
+	t.Log("USERMGR_BEGIN")
+	watch, stop := context.WithCancel(ctx)
+	watched := make(chan struct{})
+	go func() {
+		defer close(watched)
+		for _, at := range []time.Duration{3 * time.Second, 20 * time.Second, 50 * time.Second} {
+			select {
+			case <-watch.Done():
+				return
+			case <-time.After(time.Until(started.Add(at))):
+			}
+			sample, done := context.WithTimeout(watch, 6*time.Second)
+			out, err := d.Exec(sample, dockerutil.ExecOpts{User: "root"}, "sh", "-c", `
+props=$(systemctl show user@1002.service -p MainPID -p ControlPID -p ActiveState -p SubState -p Result)
+printf '%s\n' "$props"
+pid=$(printf '%s\n' "$props" | sed -n 's/^MainPID=//p')
+case "$pid" in ''|0|*[!0-9]*) ;; *)
+    awk '/^State:/ { print "ProcessState=" $2 }' "/proc/$pid/status" 2>/dev/null
+    printf 'WaitChannel=%s\n' "$(cat "/proc/$pid/wchan" 2>/dev/null)"
+esac
+systemctl list-jobs --no-legend --no-pager --plain | head -n 16 | awk 'NF >= 4 { print "Job=" $1 "," $2 "," $3 "," $4 }'
+`)
+			done()
+			if watch.Err() != nil {
+				return
+			}
+			t.Logf("USERMGR_SAMPLE start_ms=%d elapsed_ms=%d completed=%t", at.Milliseconds(), time.Since(started).Milliseconds(), err == nil)
+			for _, line := range strings.Split(out, "\n") {
+				key, value, ok := strings.Cut(line, "=")
+				switch key {
+				case "MainPID", "ControlPID", "ActiveState", "SubState", "Result", "ProcessState", "WaitChannel", "Job":
+					if ok && len(value) <= 160 && strings.IndexFunc(value, func(c rune) bool {
+						return !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || strings.ContainsRune("@,_.:-", c))
+					}) < 0 {
+						t.Logf("USERMGR_FIELD start_ms=%d %s=%s", at.Milliseconds(), key, value)
+					}
+				}
+			}
+		}
+	}()
+	defer func() {
+		stop()
+		<-watched
+	}()
 	waitForUnitActive(ctx, t, d, aliceUnit)
+	t.Logf("USERMGR_OBSERVED uid=1001 elapsed_ms=%d", time.Since(started).Milliseconds())
 	waitForUnitActive(ctx, t, d, bobUnit)
+	t.Logf("USERMGR_OBSERVED uid=1002 elapsed_ms=%d", time.Since(started).Milliseconds())
+	stop()
+	<-watched
+	for _, uid := range []int{aliceUID, bobUID} {
+		unit := fmt.Sprintf("user@%d.service", uid)
+		query, cancel := context.WithTimeout(ctx, 6*time.Second)
+		out, err := d.Exec(query, dockerutil.ExecOpts{User: "root"}, "systemctl", "show", unit, "-p", "InactiveExitTimestampMonotonic", "-p", "ActiveEnterTimestampMonotonic")
+		cancel()
+		var begin, end int64
+		for _, line := range strings.Split(out, "\n") {
+			key, value, _ := strings.Cut(line, "=")
+			us, parseErr := strconv.ParseInt(value, 10, 64)
+			if parseErr == nil {
+				switch key {
+				case "InactiveExitTimestampMonotonic":
+					begin = us
+				case "ActiveEnterTimestampMonotonic":
+					end = us
+				}
+			}
+		}
+		if err == nil && begin > 0 && end >= begin {
+			t.Logf("USERMGR_ACTIVATION uid=%d duration_us=%d", uid, end-begin)
+		}
+	}
 	checkManagerRunning := func(ctx context.Context) error {
 		out, err := userExec(ctx, d, "alice", "systemctl", "--user", "is-system-running")
 		if err != nil || strings.TrimSpace(out) != "running" {
