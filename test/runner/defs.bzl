@@ -1,20 +1,31 @@
 """Defines a rule for syscall test targets."""
 
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
-load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "platform_capabilities", "platforms", "save_restore_platforms")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "namespace_test_properties", "platform_capabilities", "platforms", "save_restore_platforms")
 load("//tools/bazeldefs:test_architectures.bzl", "arm64_presubmit_test", "with_test_architecture")
 
 native_arm64_test, _native_arm64_transition = with_test_architecture(native_test, "arm64").build()
 arm64_syscall_filegroup, _arm64_filegroup_transition = with_test_architecture(native.filegroup, "arm64").extend("cxxopt", ["-Werror"]).build()
 
+# The enclosing test selects the target CPU. Only the mixed presubmit
+# supplies Make's syscall-specific warning policy through the fixture edge.
+_syscall_filegroup, _syscall_filegroup_transition = with_cfg(native.filegroup).extend("cxxopt", select({
+    Label("//test/rbe:mixed_native_tests"): ["-Werror"],
+    "//conditions:default": [],
+})).build()
+
+_MIXED = Label("//test/rbe:mixed_native_tests")
+_AMD64_SYSCALL = "amd64_ordinary_syscall"
 _ARM64_GUEST_SYSCALL = "arm64_guest_syscall"
 
-def arm64_syscall_suite(name):
-    """Groups this package's ARM64 tests for the ordinary syscall presubmit."""
-    native.test_suite(
-        name = name,
-        tags = ["manual", _ARM64_GUEST_SYSCALL],
-    )
+def ordinary_syscall_suites():
+    """Groups original AMD64 and transitioned ARM64 ordinary syscall tests."""
+    for name, tag in [
+        ("amd64_syscalls", _AMD64_SYSCALL),
+        ("arm64_syscalls", _ARM64_GUEST_SYSCALL),
+    ]:
+        native.test_suite(name = name, tags = ["manual", tag])
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {
@@ -60,8 +71,8 @@ def _syscall_test(
         args = [],
         data = [],
         runner = Label("//test/runner:runner"),
-        arm64_guest_exec_properties = namespace_test_exec_properties,
-        arm64_fixture = None,
+        syscall_image = None,
+        fixture = None,
         **kwargs):
     limit_ephemeral_ports = limit_ephemeral_ports and (network == "host" or platform == "native")
     if limit_ephemeral_ports:
@@ -179,22 +190,38 @@ def _syscall_test(
     if requires_atime and (platform == "native" or not use_tmpfs):
         args = ["--require-atime"] + args
 
-    # The native harness creates UTS and network namespaces for the guest.
-    if platform == "native":
-        kwargs.setdefault("exec_properties", namespace_test_exec_properties)
-
+    ordinary = platform in ("native", "ptrace", "systrap") and "allsave" not in tags and "perf" not in tags
     kwargs.update(_fixture_inputs(runner, test, args, data), src = Label("//test/runner/setup_container"), tags = tags)
-    native_test(name = name, out = name, **kwargs)
-    if arm64_fixture:
-        kwargs.update(_fixture_inputs(runner, arm64_fixture, args, data))
+    original = dict(kwargs)
+    if platform == "native":
+        # Native tests already run on a namespace worker in all presubmits.
+        native_properties = namespace_test_exec_properties
+        if ordinary and syscall_image:
+            native_properties = native_properties | select({
+                _MIXED: {"test.container-image": syscall_image},
+                "//conditions:default": {},
+            })
+        original.setdefault("exec_properties", native_properties)
+        kwargs.setdefault("exec_properties", namespace_test_exec_properties)
+    elif ordinary:
+        # Single-architecture callers keep the original placement. The ARM
+        # companion is compatible only in the mixed configuration.
+        properties = namespace_test_properties(syscall_image, condition = _MIXED)
+        original.setdefault("exec_properties", properties)
+        kwargs.setdefault("exec_properties", properties)
+
+    if fixture:
+        strict_inputs = _fixture_inputs(runner, fixture, args, data)
+        kwargs.update(strict_inputs)
+        if ordinary:
+            original.update(strict_inputs)
+    if ordinary:
+        original["tags"] = tags + [_AMD64_SYSCALL]
+    native_test(name = name, out = name, **original)
     if platform == "native":
         arm64_presubmit_test(name, native_arm64_test, kwargs)
-    elif platform in ("ptrace", "systrap") and "allsave" not in tags and "perf" not in tags:
-        # The syscalls-arm64 configuration runs these variants. The runner
-        # starts runsc in a new user namespace and mount namespace.
-        guest = dict(kwargs, tags = tags + [_ARM64_GUEST_SYSCALL])
-        guest.setdefault("exec_properties", arm64_guest_exec_properties)
-        arm64_presubmit_test(name, native_arm64_test, guest)
+    elif ordinary:
+        arm64_presubmit_test(name, native_arm64_test, dict(kwargs, tags = tags + [_ARM64_GUEST_SYSCALL]))
 
 def all_platforms():
     """All platforms returns a list of all platforms."""
@@ -258,7 +285,7 @@ def syscall_test_variants(
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       **kwargs: Additional test arguments. requires_atime enables host atime updates.
-        arm64_guest_exec_properties selects the worker for ordinary ARM64 guest tests.
+        syscall_image sets the mixed syscall TestRunner image.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -447,7 +474,7 @@ def syscall_test(
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       **kwargs: Additional test arguments. requires_atime enables host atime updates.
-        arm64_guest_exec_properties selects the worker for ordinary ARM64 guest tests.
+        syscall_image sets the mixed syscall TestRunner image.
     """
     if not tags:
         tags = []
@@ -571,18 +598,18 @@ def syscall_test(
         )
 
 def syscall_cc_test(test, **kwargs):
-    """Uses the Make syscall build's C++ warning policy on the ARM64 fixture.
+    """Uses the Make syscall build's C++ warning policy on mixed presubmit fixtures.
 
     Args:
         test: C++ binary passed to the syscall runner.
         **kwargs: Arguments for syscall_test.
     """
-    name = Label(test).name + "_arm64_fixture"
-    arm64_syscall_filegroup(
+    name = Label(test).name + "_presubmit_fixture"
+    _syscall_filegroup(
         name = name,
         testonly = True,
         srcs = [test],
         tags = ["manual"],
         visibility = ["//visibility:private"],
     )
-    syscall_test(test, arm64_fixture = ":" + name, **kwargs)
+    syscall_test(test, fixture = ":" + name, **kwargs)

@@ -1,4 +1,4 @@
-load("//test/runner:defs.bzl", "arm64_syscall_filegroup", "arm64_syscall_suite", syscall_test = "syscall_cc_test")
+load("//test/runner:defs.bzl", "arm64_syscall_filegroup", "ordinary_syscall_suites", syscall_test = "syscall_cc_test")
 load("//tools:defs.bzl", "more_shards", "most_shards")
 
 package(
@@ -6,7 +6,7 @@ package(
     licenses = ["notice"],
 )
 
-arm64_syscall_suite(name = "arm64_syscalls")
+ordinary_syscall_suites()
 
 # These binaries have no guest test, but the Make syscall package wildcard builds them.
 arm64_syscall_filegroup(

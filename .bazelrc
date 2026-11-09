@@ -113,3 +113,4 @@ build:source-presubmit-mixed --remote_default_exec_properties=workload-isolation
 build:source-presubmit-mixed --remote_default_exec_properties=container-image=docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18
 build:source-presubmit-mixed --define=mixed_native_tests=true
 test:source-presubmit-mixed --keep_going --test_output=errors --verbose_failures
+test:source-presubmit-mixed --target_pattern_file=test/rbe/source-presubmit-mixed.targets

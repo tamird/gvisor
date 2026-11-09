@@ -79,7 +79,7 @@ platforms = _platforms
 platform_capabilities = _platform_capabilities
 save_restore_platforms = _save_restore_platforms
 
-def namespace_test_properties(image = None):
+def namespace_test_properties(image = None, condition = Label("//test/rbe:source_presubmit")):
     """Selects a namespace-capable worker for the test action.
 
     Only the test creates nested namespaces. Compile and link its executable
@@ -87,6 +87,7 @@ def namespace_test_properties(image = None):
 
     Args:
       image: Optional container image for the test action.
+      condition: Configuration in which to select the namespace worker.
 
     Returns:
       Execution properties for the source presubmit.
@@ -99,7 +100,7 @@ def namespace_test_properties(image = None):
     if image:
         properties["test.container-image"] = image
     return select({
-        "//test/rbe:source_presubmit": properties,
+        condition: properties,
         "//conditions:default": {},
     })
 
