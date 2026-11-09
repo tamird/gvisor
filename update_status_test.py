@@ -350,6 +350,29 @@ class IssueInventoryTest(unittest.TestCase):
             {"issue": node["id"], "gap": issue["url"]}])
         self.assertEqual(list(updater.issue_discussions(after, {"issues": after})), [])
 
+    def test_retry_interrupted_query_within_request_budget(self) -> None:
+        reply = {"data": {"viewer": {"login": "octocat"}, "rateLimit": {"cost": 1, "remaining": 4000}}}
+        success = subprocess.CompletedProcess([], 0, json.dumps(reply), "")
+        for diagnostic in (
+            "unexpected end of JSON input",
+            "gh: Something went wrong while executing your query on 2026-11-09T17:17:37Z. "
+            "Please include `D818:9757:37F92B:3CAE19:6AF20028` when reporting this issue.",
+        ):
+            failure = subprocess.CompletedProcess([], 1, "", diagnostic)
+            with self.subTest(diagnostic=diagnostic), mock.patch.object(updater, "requests", updater.REQUEST_LIMIT - 2), \
+                    mock.patch.object(updater, "query_cost", 0), mock.patch.object(updater, "rate_remaining", None), \
+                    mock.patch.object(updater.subprocess, "run", side_effect=[failure, success]) as run:
+                self.assertEqual(updater.graphql("{ viewer { login } }"), {"viewer": {"login": "octocat"}})
+                first, retry = run.call_args_list
+                self.assertEqual(first, retry)
+                self.assertEqual((updater.requests, updater.query_cost, updater.rate_remaining),
+                                 (updater.REQUEST_LIMIT, 1, 4000))
+            with self.subTest(exhausted=diagnostic), mock.patch.object(updater, "requests", updater.REQUEST_LIMIT - 1), \
+                    mock.patch.object(updater.subprocess, "run", return_value=failure) as run:
+                with self.assertRaises(updater.GitHubTransportError):
+                    updater.graphql("{ viewer { login } }")
+                run.assert_called_once()
+
     def test_partial_gh_exit_retains_missing_issue_and_refreshes_sibling(self) -> None:
         prior = {"githubState": "closed", "updatedAt": OLD, "checkedAt": OLD}
         response = {"data": {"i0": {"issue": None}, "i1": self.rows["i1"],

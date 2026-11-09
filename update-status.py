@@ -108,8 +108,13 @@ def graphql(query: str, variables: dict[str, object] | None = None, *,
                 continue
             raise GitHubTransportError("GitHub query timed out") from None
         if result.returncode:
-            # Retry this read-only query once for transport or gateway errors.
-            interrupted = any(error in result.stderr for error in (
+            # gh reports a truncated response from its JSON decoder. GitHub's
+            # internal query error includes the request ID to report to support.
+            diagnostic = result.stderr.strip()
+            interrupted = diagnostic == "unexpected end of JSON input" or re.fullmatch(
+                r"gh: Something went wrong while executing your query on [\dTZ:-]+\. "
+                r"Please include `[0-9a-fA-F:]+` when reporting this issue\.", diagnostic
+            ) or any(error in diagnostic for error in (
                 "net/http: TLS handshake timeout", "unexpected EOF", "gh: HTTP 499",
                 "i/o timeout", "connection reset by peer", "gh: HTTP 502", "gh: HTTP 504",
             ))
@@ -117,9 +122,9 @@ def graphql(query: str, variables: dict[str, object] | None = None, *,
                 print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)
                 continue
             if interrupted:
-                raise GitHubTransportError(f"GitHub transport failed: {result.stderr.strip()}")
+                raise GitHubTransportError(f"GitHub transport failed: {diagnostic}")
             if result.returncode != 1 or not missing_issue_aliases:
-                raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
+                raise RuntimeError(f"GitHub query failed: {diagnostic or 'gh returned no diagnostic'}")
         response = json.loads(result.stdout)
         errors = response.get("errors")
         # gh exits 1 for a partial GraphQL response. Only an unavailable
