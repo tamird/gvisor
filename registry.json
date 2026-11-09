@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T06:22:09+00:00",
+    "updatedAt": "2026-11-09T06:46:48+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31499,12 +31499,12 @@
       "url": "https://github.com/google/gvisor/issues/16393",
       "group": "runtime",
       "status": "Agent investigation",
-      "summary": "On the M003 Reno replay after #15785, three of five burst-loss transfers on master 975fb1722 stopped at byte 134,684. Two of five stopped at the same byte on 451b92800, before the tail-loss probe timeout floor. Each stalled transfer reached the 35 s deadline with seven retransmission timeouts. With the public #16495 fix (ffac28a03) replayed on that master as 766bc97e9, all five delivered the complete 524,288-byte payload in 0.651–0.787 s with one timeout each. All three no-loss controls verified the payload.\n\nEarlier replay: On 14e1d0324, three of five Reno M003 transfers stalled at byte 134,684 of 524,288 through the 35 s deadline. Two finished. With #16495, all five finished in 0.648–1.211 s and preserved the payload hash. Both no-loss controls passed. The stock result on 597f36270 was five stalls in five runs. The reporter confirmed that their separate FreeBSD connection used Tailscale 1.80.0 without TCP timestamps. Its internal recovery sequence remains unknown.\n\nEarlier Reno/CUBIC comparison: With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
-      "updatedAt": "2026-11-08T17:47:59+00:00",
+      "summary": "Switching master 975fb1722 to CUBIC completed all five 512 KiB transfers in the reporter’s M003 replay in 312–339 ms. Each run dropped the same 24 first transmissions. None reached a retransmission timeout. Stock Reno stalled in three of five runs, while #16495 recovered all five after one timeout each.\n\nOn the M003 Reno replay after #15785, three of five burst-loss transfers on master 975fb1722 stopped at byte 134,684. Two of five stopped at the same byte on 451b92800, before the tail-loss probe timeout floor. Each stalled transfer reached the 35 s deadline with seven retransmission timeouts. With the public #16495 fix (ffac28a03) replayed on that master as 766bc97e9, all five delivered the complete 524,288-byte payload in 0.651–0.787 s with one timeout each. All three no-loss controls verified the payload.\n\nEarlier replay: On 14e1d0324, three of five Reno M003 transfers stalled at byte 134,684 of 524,288 through the 35 s deadline. Two finished. With #16495, all five finished in 0.648–1.211 s and preserved the payload hash. Both no-loss controls passed. The stock result on 597f36270 was five stalls in five runs. The reporter confirmed that their separate FreeBSD connection used Tailscale 1.80.0 without TCP timestamps. Its internal recovery sequence remains unknown.\n\nEarlier Reno/CUBIC comparison: With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
+      "updatedAt": "2026-11-09T06:46:48+00:00",
       "followup": {
         "owner": "Agent",
-        "observedAt": "2026-11-08T17:47:59+00:00",
-        "disposition": "The current M003 replay still stalls on master after #15785. The tested #16495 integration delivered every burst-loss transfer. The separate FreeBSD report still lacks an internal recovery trace.",
+        "observedAt": "2026-11-09T06:46:48+00:00",
+        "disposition": "CUBIC avoided the first retransmission timeout in this replay on master. #16495 addresses what happens once Reno enters that recovery path. The FreeBSD connection still needs a recovery trace.",
         "nextAction": "Track #16495 for the M003 stall. For the FreeBSD report, the negotiated options are known, but attributing the stall to the same recovery path still needs a trace from that connection.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41204594691/artifacts/13044207947",
@@ -31524,10 +31524,15 @@
           "https://github.com/tamird/gvisor/actions/runs/41192834457/artifacts/13039847737",
           "https://github.com/tamird/gvisor/actions/runs/41194692496",
           "https://github.com/tamird/gvisor/actions/runs/41195717107/artifacts/13041122022",
-          "https://github.com/tamird/gvisor/actions/runs/42505838248/artifacts/13627368628"
+          "https://github.com/tamird/gvisor/actions/runs/42505838248/artifacts/13627368628",
+          "https://github.com/tamird/gvisor/actions/runs/42573988211/artifacts/13654582746"
         ]
       },
       "evidence": [
+        {
+          "label": "CUBIC on master and with #16495: ten burst-loss traces and two lossless controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42573988211/artifacts/13654582746"
+        },
         {
           "label": "Independent check of the pinned reports and every first-copy loss, using the twelve original transfers",
           "url": "https://github.com/tamird/gvisor/actions/runs/42314099865/artifacts/13549527554"
@@ -91575,5 +91580,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T06:22:09+00:00"
+  "updatedAt": "2026-11-09T06:46:48+00:00"
 }
