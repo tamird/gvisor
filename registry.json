@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T02:17:56+00:00",
+    "updatedAt": "2026-11-09T02:54:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2962,11 +2962,15 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13603",
       "group": "rbe",
       "status": "Observed on shared workers",
-      "summary": "The shared BuildBuddy pool ran all nine docprocessor cases on an ARM64 Firecracker guest as UID 0 with IPv6 networking requested. A separate shared Linux 5.10.0 guest enforced a seccomp filter on both threads but reported the new filter count on only one. Linux 6.1 was tested under QEMU.\n\nThe earlier ARM64 Podman request was unscheduled and ran zero tests. Podman still needs its own image, nonroot storage and default networking checked. Nested KVM, 64 KiB pages and selection of a particular guest kernel each need separate evidence.",
+      "summary": "Both PacketImpact handshake targets passed uncached on Ubuntu ARM64 Firecracker workers with root and IPv6 requested. The native Linux and Netstack captures each show an IPv4 handshake and the full 11-byte payload. The previous attempt was still building when it timed out.\n\nThe shared BuildBuddy pool ran all nine docprocessor cases on an ARM64 Firecracker guest as UID 0 with IPv6 networking requested. A separate shared Linux 5.10.0 guest enforced a seccomp filter on both threads but reported the new filter count on only one. Linux 6.1 was tested under QEMU.\n\nThe earlier ARM64 Podman request was unscheduled and ran zero tests. Podman still needs its own image, nonroot storage and default networking checked. Nested KVM, 64 KiB pages and selection of a particular guest kernel each need separate evidence.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13603,
-      "updatedAt": "2026-11-09T01:54:29+00:00",
+      "updatedAt": "2026-11-09T02:49:58+00:00",
       "evidence": [
+        {
+          "label": "ARM64 Linux and Netstack handshakes, LLVM actions and both packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13645917134"
+        },
         {
           "label": "Nine docprocessor cases on the native ARM64 Firecracker worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/42455777370/artifacts/13607926451"
@@ -66680,8 +66684,8 @@
       "url": "https://github.com/tamird/gvisor/commit/67f886647",
       "title": "Remove the PacketImpact runner's host tool calls",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T02:15:42+00:00",
-      "summary": "Stock failed before exchanging packets when the worker lacked iptables-nft. With this runner, the native Linux and Netstack handshake targets passed as uncached remote actions. Both packet captures contain the 11-byte payload and no unexpected reset. Six hosted targets passed with host binaries masked. The development-only dependencies preserve the consuming module’s Netlink version; all 225 license records passed. The first ARM64 attempt reached its build time limit and produced no TestResult for either target.",
+      "updatedAt": "2026-11-09T02:49:58+00:00",
+      "summary": "Stock failed on the Ubuntu AMD64 worker when it tried to start iptables-nft. With the proposed runner, the native Linux and Netstack handshake targets passed uncached on both AMD64 and ARM64. On fork integration 43fdbb717, LLVM compiled and linked the AArch64 POSIX server on an AMD64 OCI worker. Both AArch64 test executables ran on ARM64 Firecracker workers with root and IPv6 requested. Each IPv4 capture showed the receive window open from 0 to 32,768 and all 11 bytes of Sample Data. Bazel retained both raw captures. The native manifest recorded 611 bytes without a MIME type. The Netstack wrapper reported three printf warnings and omitted the 505-byte capture from its manifest.\n\nSix hosted targets passed with host binaries masked. The development-only dependencies preserve the consuming module’s Netlink version, and all 225 license records passed. The first ARM64 attempt timed out during the build. It reached 7,685 of 10,907 actions, with 803 remote actions completing in the last five minutes. Neither TestRunner had started.",
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
@@ -66694,6 +66698,10 @@
         "requestedAt": "2026-11-09T01:28:16+00:00"
       },
       "evidence": [
+        {
+          "label": "ARM64 Linux and Netstack handshakes, LLVM actions and both packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13645917134"
+        },
         {
           "label": "Stock failure, both remote TestResults and raw packet captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13642623133"
@@ -66751,6 +66759,40 @@
         {
           "label": "Race and package checks and a uniform-queue comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42540723329/artifacts/13642840434"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcp-segment-experiment-ipv6",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "runtime",
+      "ref": "research/tcp-segment-experiment-ipv6",
+      "head": "4b987cc5bff6ad50d7926db63a7c62625735e9b8",
+      "url": "https://github.com/tamird/gvisor/commit/4b987cc5b",
+      "title": "Split tagged TCPv6 sends before host offload",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T02:54:41+00:00",
+      "summary": "On a private Linux veth with a 1,500-byte MTU, four TCPv6 GSO sends carrying gVisor’s experimental IPv6 header returned ENOMEM. Splitting before host offload delivered the same 10,153 bytes in eight packets with no rejected aggregate. Tagged IPv4 and untagged IPv6 still aggregated. The permanent two-MSS test observed a 1,056-byte payload on the parent where it expected 528 bytes. All six cases and the AMD64 and ARM64 TCP Nogo checks passed on the proposed tree.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "a4ca95b85a9a770e6e01852c30da57ae94f89b52",
+        "head": "4b987cc5bff6ad50d7926db63a7c62625735e9b8",
+        "url": "https://github.com/tamird/gvisor/commit/4b987cc5b",
+        "title": "Split tagged TCPv6 sends before host offload",
+        "body": "On a Linux veth with a 1,500-byte MTU, sendmmsg rejected four TCPv6 GSO writes carrying gVisor's experimental IPv6 header with ENOMEM. Individual segments reached the peer after retries. Tagged IPv4 and untagged IPv6 aggregates succeeded on the same link.\n\nLinux finds TCP for IPv6 GSO by walking registered next-header handlers [1]. gVisor cannot rely on a host handler for its experimental next-header value 253. On a noqueue device, a segmentation error can surface as ENOMEM [2].\n\nLimit a tagged host-GSO IPv6 write to one MSS before TCP accounts for it in the send queue. Use the same socket option value to choose the segment size and build its IP header. The host still completes the TCP checksum on each packet.\n\nExercise a two-MSS write in the existing experiment option tests. Check the payload and sequence range of each segment and retain host aggregation for tagged IPv4 and untagged IPv6.\n\n[1]: https://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-azure/+git/jammy/tree/net/ipv6/ip6_offload.c?id=41da417a5#n137\n[2]: https://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-azure/+git/jammy/tree/net/core/dev.c?id=41da417a5#n4472",
+        "summary": "Open this one-commit PR after the TCP first-use experiment-header change lands?",
+        "requestedAt": "2026-11-09T02:54:41+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Private veth sends, syscall returns and delivered payloads",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644693514"
+        },
+        {
+          "label": "Parent failure, six passing cases and TCP Nogo on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13646136898"
         }
       ]
     }
@@ -70649,6 +70691,17 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16860",
         "https://github.com/tamird/gvisor/commit/be0aab89c"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-experiment-first-use",
+      "to": "branch:tcp-segment-experiment-ipv6",
+      "reason": "The queued-send change builds on the first-use sizing of TCP’s experimental IP headers.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/a4ca95b85",
+        "https://github.com/tamird/gvisor/commit/4b987cc5b",
+        "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13646136898"
       ]
     }
   ],
@@ -84410,7 +84463,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T02:15:42+00:00",
+      "updatedAt": "2026-11-09T02:49:58+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -87201,7 +87254,7 @@
           ]
         },
         {
-          "text": "All 82 PacketImpact targets share the runner. Stock failed on the Ubuntu AMD64 Firecracker worker when it tried to start /sbin/iptables-nft. The corrected native Linux and Netstack test actions ran remotely without a cache hit. Each capture shows the receive window opening from 0 to 32,768, all 11 bytes and no unexpected reset. Bazel’s default unzipped outputs retained the raw captures despite its test wrapper failing to determine their MIME type. The earlier run forced zipped outputs and failed while packaging them.",
+          "text": "All 82 PacketImpact targets share the runner. Stock failed on the Ubuntu AMD64 Firecracker worker when it tried to start /sbin/iptables-nft. The corrected native Linux and Netstack test actions ran remotely without a cache hit. Each capture shows the receive window opening from 0 to 32,768, all 11 bytes and no unexpected reset. Bazel’s default unzipped outputs retained the raw captures despite its test wrapper failing to determine their MIME type. The earlier run forced zipped outputs and failed while packaging them. On fork integration 43fdbb717, fresh LLVM compile and link actions on an Ubuntu AMD64 OCI worker produced an AArch64 POSIX server. The native Linux and Netstack handshake targets then passed uncached on Ubuntu ARM64 Firecracker workers. Both captures contained all 11 bytes. This run exercised the two handshake targets on Ubuntu.",
           "evidence": [
             {
               "label": "Source and catalog",
@@ -87230,6 +87283,10 @@
             {
               "label": "First ARM64 attempt: build time limit, zero TestResults",
               "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644257975"
+            },
+            {
+              "label": "ARM64 Linux and Netstack handshakes, LLVM actions and both packet captures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13645917134"
             }
           ]
         }
@@ -87755,6 +87812,10 @@
         {
           "label": "Development-only modules and the downstream Netlink version",
           "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643111398"
+        },
+        {
+          "label": "ARM64 Linux and Netstack handshakes, LLVM actions and both packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42551311111/artifacts/13645917134"
         }
       ],
       "group": "rbe"
@@ -91084,5 +91145,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T02:17:56+00:00"
+  "updatedAt": "2026-11-09T02:54:41+00:00"
 }
