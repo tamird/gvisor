@@ -53,6 +53,7 @@ def _syscall_test(
         args = [],
         data = [],
         runner = Label("//test/runner:runner"),
+        arm64_guest_exec_properties = namespace_test_exec_properties,
         **kwargs):
     limit_ephemeral_ports = limit_ephemeral_ports and (network == "host" or platform == "native")
     if limit_ephemeral_ports:
@@ -187,7 +188,7 @@ def _syscall_test(
         # The syscalls-arm64 configuration runs these variants. The runner
         # starts runsc in a new user namespace and mount namespace.
         guest = dict(kwargs, tags = tags + [_ARM64_GUEST_SYSCALL])
-        guest.setdefault("exec_properties", namespace_test_exec_properties)
+        guest.setdefault("exec_properties", arm64_guest_exec_properties)
         arm64_presubmit_test(name, native_arm64_test, guest)
 
 def all_platforms():
@@ -251,7 +252,8 @@ def syscall_test_variants(
       nftables: if nftables is true, enable nftables.
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
-      **kwargs: Additional test arguments; requires_atime enables host atime updates.
+      **kwargs: Additional test arguments. requires_atime enables host atime updates.
+        arm64_guest_exec_properties selects the worker for ordinary ARM64 guest tests.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -439,7 +441,8 @@ def syscall_test(
       perf: test is a benchmark.
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
-      **kwargs: Additional test arguments; requires_atime enables host atime updates.
+      **kwargs: Additional test arguments. requires_atime enables host atime updates.
+        arm64_guest_exec_properties selects the worker for ordinary ARM64 guest tests.
     """
     if not tags:
         tags = []

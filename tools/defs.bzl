@@ -79,16 +79,31 @@ platforms = _platforms
 platform_capabilities = _platform_capabilities
 save_restore_platforms = _save_restore_platforms
 
-# Only the test action needs to create nested namespaces. Compile and link
-# its executable on the ordinary worker.
-namespace_test_exec_properties = select({
-    "//test/rbe:source_presubmit": {
+def namespace_test_properties(image = None):
+    """Selects a namespace-capable worker for the test action.
+
+    Only the test creates nested namespaces. Compile and link its executable
+    on the ordinary worker.
+
+    Args:
+      image: Optional container image for the test action.
+
+    Returns:
+      Execution properties for the source presubmit.
+    """
+    properties = {
         "test.dockerUser": "root",
         "test.network-enable-ipv6": "true",
         "test.workload-isolation-type": "firecracker",
-    },
-    "//conditions:default": {},
-})
+    }
+    if image:
+        properties["test.container-image"] = image
+    return select({
+        "//test/rbe:source_presubmit": properties,
+        "//conditions:default": {},
+    })
+
+namespace_test_exec_properties = namespace_test_properties()
 
 # Tags.
 local_test_tags = _local_test_tags
