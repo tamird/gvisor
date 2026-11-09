@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T05:14:37+00:00",
+    "updatedAt": "2026-11-09T05:30:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17323,21 +17323,18 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15940",
       "status": "open",
-      "updatedAt": "2026-10-27T21:20:41.759940+00:00",
-      "summary": "The current source 786caf36a5 needs Etienne to reapprove it so Copybara regenerates its import. His genuine approval predates the source rebase; GitHub reassociated its commit without a new human review. Old export #16324 is open and mergeable with 15 passing public checks, but still names 1e4bf6e. Its actual MODULE.bazel PR delta matches the current source. That equality and the open older export do not replace current-source approval.\n\nSuperseded earlier interpretation and retained source history:\n\nCopybara PR #16324 is open and its checks passed. It contains the same LLVM change that Etienne approved before the rebase.",
+      "updatedAt": "2026-11-09T05:30:03+00:00",
+      "summary": "Etienne reapproved 786caf36a on October 27 and restored the ready to pull label on October 28. Copybara updated #16324 to export that exact revision, then closed it without merging on November 4. #15940 remains open with the label present. Both Copybara status checks report success. No replacement public export has appeared.\n\nBefore the October 27 reapproval, the export referred to 1e4bf6e and Etienne’s October 24 review predated the rebase. The two revisions made the same change to MODULE.bazel.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Current source head needs maintainer reapproval for Copybara",
+        "disposition": "Current source approved and labeled; waiting for a replacement Copybara export",
         "sourceHead": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
-        "observedAt": "2026-10-27T21:20:41.759940+00:00",
-        "nextAction": "Ask the prior approving maintainer to reapprove the current source PR through the existing periodic alarm. The earlier open export is not current-head approval; preserve the three-hour per-PR cooldown and Pacific posting hours.",
+        "observedAt": "2026-11-09T05:30:03+00:00",
+        "nextAction": "Watch for a replacement public export of 786caf36a and follow its checks when it appears.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/39083076451",
-          "https://github.com/tamird/gvisor/commit/1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
-          "https://github.com/google/gvisor/pull/15940#pullrequestreview-5637142088",
-          "https://github.com/google/gvisor/pull/16324",
-          "https://github.com/google/gvisor/pull/15940.diff",
-          "https://github.com/google/gvisor/pull/16324.diff"
+          "https://github.com/google/gvisor/pull/15940#pullrequestreview-5674906523",
+          "https://github.com/google/gvisor/pull/15940#event-34510011808",
+          "https://github.com/google/gvisor/pull/16324#event-35170129357"
         ],
         "attentionDispositions": [
           {
@@ -17401,7 +17398,7 @@
           "url": "https://github.com/tamird/gvisor/commit/1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912"
         },
         {
-          "label": "Open Copybara import",
+          "label": "Copybara export of the current revision, closed unmerged November 4",
           "url": "https://github.com/google/gvisor/pull/16324"
         },
         {
@@ -17411,6 +17408,18 @@
         {
           "label": "Compare reviewed and rebased heads",
           "url": "https://github.com/tamird/gvisor/compare/1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912...786caf36a569a33777cbfb194fcaf19c6bd028a0"
+        },
+        {
+          "label": "Etienne reapproved the current source on October 27",
+          "url": "https://github.com/google/gvisor/pull/15940#pullrequestreview-5674906523"
+        },
+        {
+          "label": "Etienne restored ready to pull on October 28",
+          "url": "https://github.com/google/gvisor/pull/15940#event-34510011808"
+        },
+        {
+          "label": "Copybara closed the export on November 4",
+          "url": "https://github.com/google/gvisor/pull/16324#event-35170129357"
         }
       ],
       "refinement": {
@@ -91466,5 +91475,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T05:14:37+00:00"
+  "updatedAt": "2026-11-09T05:30:03+00:00"
 }
