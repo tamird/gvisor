@@ -427,6 +427,7 @@ use_repo(
     "com_github_google_go_github_v84",
     "com_github_google_go_querystring",
     "com_github_google_gopacket",
+    "com_github_google_nftables",
     "com_github_google_pprof",
     "com_github_google_s2a_go",
     "com_github_google_subcommands",
@@ -747,6 +748,11 @@ go_deps.module(
     version = "v0.0.0-20240912202439-0a2b6291aafd",
 )
 go_deps.module(
+    path = "github.com/google/nftables",
+    sum = "h1:bkyZ0cbpVeMHXOrtlFc8ISmfVqq5gPJukoYieyVmITg=",
+    version = "v0.3.0",
+)
+go_deps.module(
     path = "github.com/google/pprof",
     sum = "h1:xRmpO92tb8y+Z85iUOMOicpCfaYcv7o3Cg3wKrIpg8g=",
     version = "v0.0.0-20240711041743-f6c9dda6c6da",
@@ -830,6 +836,11 @@ go_deps.module(
     path = "github.com/mdlayher/vsock",
     sum = "h1:pC1mTJTvjo1r9n9fbm7S1j04rCgCzhCOS5DY0zqHlnQ=",
     version = "v1.2.1",
+)
+go_deps.module(
+    path = "github.com/mdlayher/netlink",
+    sum = "h1:A1Cq6Ysb0GM0tpKMbdCXCIfBclan4oHk1Jb+Hrejirg=",
+    version = "v1.7.3-0.20250113171957-fbb4dce95f42",
 )
 go_deps.module(
     path = "github.com/mdlayher/socket",
