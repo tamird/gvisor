@@ -62564,7 +62564,8 @@
         "nextAction": "Verify the Linux archive outputs, publish to #17191 and reply to all four original threads.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8469c237d",
-          "https://github.com/google/gvisor/pull/17191#discussion_r4517580122"
+          "https://github.com/google/gvisor/pull/17191#discussion_r4517580122",
+          "https://github.com/tamird/gvisor/actions/runs/42693686825"
         ]
       },
       "number": 17191,
@@ -69266,15 +69267,19 @@
       "id": "branch:public-ci-bcr-mirror",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/bcr-archives-public-ci",
-      "head": "e08a227bdd6d58b014968fe1dd60822e456348ee",
-      "url": "https://github.com/tamird/gvisor/commit/e08a227bd",
-      "title": "Mirror module archives in public CI",
+      "ref": "review/bcr-download-mirror",
+      "head": "125585fde855513c1ab42e0574e196e0350030d3",
+      "url": "https://github.com/tamird/gvisor/commit/125585fde",
+      "title": "Fetch Bazel modules through the BCR archive mirror",
       "group": "rbe",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T20:31:12+00:00",
-      "summary": "With GitHub blocked, Bazel fetched Skylib, Protobuf and toml.bzl from Cloudflare. With Cloudflare blocked, all three came from GitHub. Both runs matched the BCR digests. Only the three public CI jobs select this configuration.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T20:40:34+00:00",
+      "summary": "One workspace option tries the Cloudflare mirror before each module archive’s release host. A caller using a private registry can disable it with --module_mirrors=. The three CI jobs and ordinary local builds use the same setting.",
       "evidence": [
+        {
+          "label": "Workspace default, fallback and private-registry qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42695096200"
+        },
         {
           "label": "Single commit",
           "url": "https://github.com/tamird/gvisor/commit/e08a227bd"
@@ -69288,27 +69293,41 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42692991725/artifacts/13707178979"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "url": "https://github.com/tamird/gvisor/commit/e08a227bd",
-        "head": "e08a227bdd6d58b014968fe1dd60822e456348ee",
-        "baseHead": "d114141c1a06d89f7e920c4d15f7337483739729",
-        "title": "Mirror module archives in public CI",
-        "body": "GitHub release downloads returned HTTP 504 while Gazelle fetched Skylib,\nwhile Go branch generation fetched Protobuf, and while the GPU driver\nrelease job fetched toml.bzl. Each job stopped before running its check.\n\nGive those jobs a Bazel rc that tries the Cloudflare mirror for BCR\narchives before contacting the release host. Bazel verifies the same\nregistry-provided digest for both downloads. Select the rc in the jobs\nso ordinary builds can keep using their own registries.",
-        "requestedAt": "2026-11-09T20:24:14+00:00",
-        "summary": "May I open the CI-only BCR mirror PR for the three jobs that saw GitHub release HTTP 504s?"
-      },
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "e08a227bdd6d58b014968fe1dd60822e456348ee",
-        "observedAt": "2026-11-09T20:24:14+00:00",
-        "disposition": "Ready for contributor review.",
-        "nextAction": "May I open the CI-only BCR mirror PR for the three jobs that saw GitHub release HTTP 504s?",
+        "owner": "Agent",
+        "sourceHead": "125585fde855513c1ab42e0574e196e0350030d3",
+        "observedAt": "2026-11-09T20:40:34+00:00",
+        "disposition": "The CI-only proposal was revised after contributor feedback.",
+        "nextAction": "On Linux the three archive downloads passed with GitHub blocked and again with the mirror blocked. Complete the private-registry and downstream checks with a synthetic archive that also contains the required Starlark module.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/e08a227bd",
-          "https://github.com/tamird/gvisor/actions/runs/42692225274/artifacts/13707033240"
+          "https://github.com/tamird/gvisor/commit/125585fde",
+          "https://github.com/tamird/gvisor/actions/runs/42695096200"
         ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "url": "https://github.com/tamird/gvisor/commit/e08a227bd",
+          "head": "e08a227bdd6d58b014968fe1dd60822e456348ee",
+          "baseHead": "d114141c1a06d89f7e920c4d15f7337483739729",
+          "title": "Mirror module archives in public CI",
+          "body": "GitHub release downloads returned HTTP 504 while Gazelle fetched Skylib,\nwhile Go branch generation fetched Protobuf, and while the GPU driver\nrelease job fetched toml.bzl. Each job stopped before running its check.\n\nGive those jobs a Bazel rc that tries the Cloudflare mirror for BCR\narchives before contacting the release host. Bazel verifies the same\nregistry-provided digest for both downloads. Select the rc in the jobs\nso ordinary builds can keep using their own registries.",
+          "requestedAt": "2026-11-09T20:24:14+00:00",
+          "summary": "May I open the CI-only BCR mirror PR for the three jobs that saw GitHub release HTTP 504s?",
+          "outcome": "changes-requested",
+          "at": "2026-11-09T20:40:34+00:00",
+          "note": "Tamir asked for the mirror to apply to ordinary local builds as well as public CI."
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "e08a227bdd6d58b014968fe1dd60822e456348ee",
+          "base": "d114141c1a06d89f7e920c4d15f7337483739729"
+        },
+        "after": {
+          "head": "125585fde855513c1ab42e0574e196e0350030d3",
+          "base": "d114141c1a06d89f7e920c4d15f7337483739729"
+        }
       }
     }
   ],
@@ -94061,7 +94080,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T20:24:14+00:00",
+      "updatedAt": "2026-11-09T20:40:34+00:00",
       "summary": "A blocking receive on a connected UDP socket returned data where the test expected ECONNREFUSED. The same assertion failed on four builds.",
       "findings": [
         {
@@ -94105,10 +94124,41 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/53975#01a1c1b2-abdb-4b26-b05f-fca67aed7abf"
             }
           ]
+        },
+        {
+          "text": "With marked packets, three of eight gVisor runs returned the data first and retained ECONNREFUSED in SO_ERROR. All eight Linux runs returned the error first. The captures show the ICMP error on the wire before the target data in the three failures. The order inside the receiver was not measured.",
+          "evidence": [
+            {
+              "label": "Marked packet traces and syscall results",
+              "url": "https://app.buildbuddy.io/invocation/82a5df6c-9ea3-4610-9bae-cb8d90652a1e"
+            }
+          ]
+        },
+        {
+          "text": "When poll showed both POLLIN and POLLERR before recv, all four Linux and four gVisor sockets returned ECONNREFUSED first and the marked datagram second.",
+          "evidence": [
+            {
+              "label": "Eight non-consuming readiness checks and both receives",
+              "url": "https://app.buildbuddy.io/invocation/3d5f08d6-0ae9-459d-8d37-516774868e95"
+            }
+          ]
+        },
+        {
+          "text": "With the competing datagram withheld, Linux passed all 22 records. The gVisor socket timed out after ten seconds with EAGAIN instead of waking with ECONNREFUSED. The fixture change alone therefore does not fix the failure.",
+          "evidence": [
+            {
+              "label": "Full Linux and gVisor runs with the error and data separated",
+              "url": "https://app.buildbuddy.io/invocation/75010ffe-c554-4a1e-9f57-fe6716972df3"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture both wire traffic and when the blocking receive returns on a failing run. The test injects the ICMP error and then sends the UDP data that can wake the same socket.",
+      "nextStep": "After the unexpected timeout, inspect poll and SO_ERROR on the same socket and verify the quoted datagram in the ICMP message. Trace which events the blocking receive registered for and which events UDP signaled.",
       "evidence": [
+        {
+          "label": "Fixture correction and withheld-ICMP control",
+          "url": "https://app.buildbuddy.io/invocation/ab5169d1-c6b2-4932-8799-33f4caa79131"
+        },
         {
           "label": "gVisor #17052",
           "url": "https://github.com/google/gvisor/pull/17052"
@@ -94349,5 +94399,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T17:17:34+00:00"
+  "updatedAt": "2026-11-09T20:40:34+00:00"
 }
