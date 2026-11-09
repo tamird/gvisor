@@ -1,0 +1,134 @@
+package tcp_delayed_ack_test
+
+import (
+	"bytes"
+	"testing"
+	"time"
+
+	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
+	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
+	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/test/e2e"
+	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/testing/context"
+)
+
+// Each connection has one outstanding request. Only the explicit socket call
+// differs from its control; the stack clock advances in the fixture.
+func TestACKSocketRequest(t *testing.T) {
+	for _, name := range []string{"control", "quickack", "mss536", "mss1460"} {
+		t.Run(name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: e2e.DefaultMTU, Clock: clock})
+			defer c.Cleanup()
+			// ENABLE_PROPOSAL
+			c.Create(-1)
+			if err := c.EP.SetSockOptInt(tcpip.MaxSegOption, 536); err != nil {
+				t.Fatal(err)
+			}
+			var peerMSS uint32 = 536
+			if name == "mss1460" {
+				peerMSS = 1460
+			}
+			opts := make([]byte, header.TCPOptionMSSLength)
+			header.EncodeMSSOption(peerMSS, opts)
+			c.Connect(context.TestInitialSequenceNumber, 30000, opts)
+			peer := context.RawEndpoint{C: c, SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck | header.TCPFlagPsh, NextSeqNum: context.TestInitialSequenceNumber + 1, AckNum: c.IRS + 1, WndSize: 30000}
+			send := func(n, queued int) {
+				t.Helper()
+				peer.SendPacket(bytes.Repeat([]byte{'q'}, n), nil)
+				until := time.Now().Add(time.Second)
+				for {
+					size, err := c.EP.GetSockOptInt(tcpip.ReceiveQueueSizeOption)
+					if err != nil || time.Now().After(until) {
+						t.Fatalf("receive queue %d, want %d: %v", size, queued, err)
+					}
+					if size == queued {
+						break
+					}
+					time.Sleep(100 * time.Microsecond)
+				}
+			}
+			read := func() {
+				t.Helper()
+				var b bytes.Buffer
+				res, err := c.EP.Read(&b, tcpip.ReadOptions{})
+				if err != nil || res.Count != 1 || b.String() != "q" {
+					t.Fatalf("read %q, %d, %v", b.Bytes(), res.Count, err)
+				}
+			}
+			// Return -1 for no packet and the payload length for an observed
+			// ACK covering exactly this request from the established peer.
+			packet := func(wait time.Duration) int {
+				t.Helper()
+				b := c.GetPacketWithTimeout(wait)
+				if b == nil {
+					return -1
+				}
+				defer b.Release()
+				h := header.TCP(header.IPv4(b.AsSlice()).Payload())
+				if h.SourcePort() != c.Port || h.DestinationPort() != context.TestPort || h.SequenceNumber() != uint32(peer.AckNum) || h.AckNumber() != uint32(peer.NextSeqNum) || h.Flags() & ^header.TCPFlagPsh != header.TCPFlagAck {
+					t.Fatalf("unexpected TCP header %+v", h)
+				}
+				if len(h.Payload()) > 0 && !bytes.Equal(h.Payload(), []byte{'r'}) {
+					t.Fatalf("response: %x", h.Payload())
+				}
+				return len(h.Payload())
+			}
+			for range 32 {
+				send(1, 1)
+				read()
+				if _, err := c.EP.Write(bytes.NewReader([]byte{'r'}), tcpip.WriteOptions{}); err != nil {
+					t.Fatal(err)
+				}
+				n := packet(time.Second)
+				if n == 0 {
+					n = packet(time.Second)
+				}
+				if n != 1 {
+					t.Fatalf("missing response: %d", n)
+				}
+				peer.AckNum++
+			}
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			if name == "mss536" || name == "mss1460" {
+				send(536, 536)
+				first := packet(5 * time.Millisecond)
+				if first > 0 {
+					t.Fatalf("unexpected data: %d", first)
+				}
+				send(536, 1072)
+				t.Logf("MSS peer=%d send_mss=%d first_ack=%t", peerMSS, info.SndMss, first == 0)
+			} else {
+				send(1, 1)
+				read()
+				if n := packet(5 * time.Millisecond); n != -1 {
+					t.Fatalf("request already acknowledged before socket call: payload=%d", n)
+				}
+				if name == "quickack" {
+					c.EP.SocketOptions().SetQuickAck(true)
+				} else {
+					_ = c.EP.SocketOptions().GetQuickAck()
+				}
+			}
+			for _, ms := range []int{0, 39, 40} {
+				switch ms {
+				case 39:
+					clock.Advance(39 * time.Millisecond)
+				case 40:
+					clock.Advance(time.Millisecond)
+				}
+				if got := packet(5 * time.Millisecond); got == 0 {
+					t.Logf("ACK case=%s bytes=%d elapsed_stack_ms=%d", name, peer.NextSeqNum-(context.TestInitialSequenceNumber+1), ms)
+					return
+				} else if got != -1 {
+					t.Fatalf("unexpected payload: %d", got)
+				}
+			}
+			t.Fatal("no cumulative ACK at the delayed-ACK deadline")
+		})
+	}
+}

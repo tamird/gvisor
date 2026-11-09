@@ -1,0 +1,111 @@
+package tcp_delayed_ack_test
+
+import (
+	"fmt"
+	"io"
+	"net"
+	"testing"
+	"time"
+
+	"golang.org/x/sys/unix"
+)
+
+// TCP_INFO.Bytes_acked is sampled on the sender. Only one byte is sent after
+// the last reply, and the receiver sends no further application data.
+func TestNativeACKSocketRequest(t *testing.T) {
+	for trial := 0; trial < 4; trial++ {
+		for _, set := range []bool{trial%2 != 0, trial%2 == 0} {
+			t.Run(fmt.Sprintf("set%t_%d", set, trial), func(t *testing.T) {
+				l, err := net.ListenTCP("tcp4", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer l.Close()
+				client, err := net.DialTCP("tcp4", nil, l.Addr().(*net.TCPAddr))
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer client.Close()
+				server, err := l.AcceptTCP()
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer server.Close()
+				for _, conn := range []*net.TCPConn{client, server} {
+					if err := conn.SetNoDelay(false); err != nil {
+						t.Fatal(err)
+					}
+					if err := conn.SetDeadline(time.Now().Add(3 * time.Second)); err != nil {
+						t.Fatal(err)
+					}
+				}
+				control := func(c *net.TCPConn, fn func(int) error) {
+					t.Helper()
+					raw, err := c.SyscallConn()
+					if err != nil {
+						t.Fatal(err)
+					}
+					var call error
+					if err := raw.Control(func(fd uintptr) { call = fn(int(fd)) }); err != nil {
+						t.Fatal(err)
+					}
+					if call != nil {
+						t.Fatal(call)
+					}
+				}
+				acked := func() uint64 {
+					var n uint64
+					control(client, func(fd int) error {
+						v, err := unix.GetsockoptTCPInfo(fd, unix.IPPROTO_TCP, unix.TCP_INFO)
+						if err == nil {
+							n = v.Bytes_acked
+						}
+						return err
+					})
+					return n
+				}
+				xfer := func(s, r *net.TCPConn, b byte) {
+					t.Helper()
+					if n, err := s.Write([]byte{b}); n != 1 || err != nil {
+						t.Fatalf("write %d: %v", n, err)
+					}
+					var got [1]byte
+					if _, err := io.ReadFull(r, got[:]); err != nil || got[0] != b {
+						t.Fatalf("read %x: %v", got, err)
+					}
+				}
+				for range 32 {
+					xfer(client, server, 'q')
+					xfer(server, client, 'r')
+				}
+				before := acked()
+				start := time.Now()
+				xfer(client, server, 'q')
+				read := time.Since(start)
+				time.Sleep(time.Until(start.Add(time.Duration(6+2*trial) * time.Millisecond)))
+				pre := acked()
+				callStart := time.Since(start)
+				control(server, func(fd int) error {
+					if set {
+						return unix.SetsockoptInt(fd, unix.IPPROTO_TCP, unix.TCP_QUICKACK, 1)
+					}
+					_, err := unix.GetsockoptInt(fd, unix.IPPROTO_TCP, unix.TCP_QUICKACK)
+					return err
+				})
+				callEnd := time.Since(start)
+				lastOutstanding := callStart
+				v := acked()
+				for v == before && time.Since(start) < time.Second {
+					lastOutstanding = time.Since(start)
+					time.Sleep(100 * time.Microsecond)
+					v = acked()
+				}
+				last := time.Since(start)
+				t.Logf("LINUX set=%t trial=%d before=%d pre=%d after=%d read_us=%d call_us=%d return_us=%d last_outstanding_us=%d observed_us=%d", set, trial, before, pre, v, read.Microseconds(), callStart.Microseconds(), callEnd.Microseconds(), lastOutstanding.Microseconds(), last.Microseconds())
+				if v != before+1 {
+					t.Fatalf("ACK counter %d -> %d; expected one request byte", before, v)
+				}
+			})
+		}
+	}
+}

@@ -1,35 +1,115 @@
-name: CI
-
-"on":
+name: Measure TCP_QUICKACK after a short request
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-quickack-on-read]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packets:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the public inputs
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/recvbuf"
+          mkdir -m 700 "$d" "$d/out"
+          for phase in interactive auto; do echo '{"verified":false,"stage":"setup"}' > "$d/out/$phase.json"; done
+          git init -q
+          git fetch -q --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" 135ff0eaa6b549a9dc25a642e08fbfad1699eae4
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = f05cd8923fb8aa27186834df01d7433085db41f1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/ack_socket_receipt.py' ':!test/rbe/ack_socket_linux.go.fixture' ':!test/rbe/ack_socket_packets.go.fixture'
+          cp test/rbe/ack_socket_{receipt.py,linux.go.fixture,packets.go.fixture} "$d/"
+          git fetch -q --no-tags --depth=1 https://github.com/google/gvisor.git b5062f2222f563af2f39c4cc2e57cd1194634146
+          git switch -q --detach 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          test "$(git rev-parse 135ff0eaa:.github/qualification/recvbuf_deps.py)" = 81a54e67c7d2c09d97ac36fec283d946a9c499d7
+          git show 135ff0eaa:.github/qualification/recvbuf_deps.py > "$d/deps.py"
+          python3 -I - "$d/deps.py" <<'PYTHON'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1])
+          s=p.read_text()
+          original='LABELS = ["//test/packetimpact/tests:tcp_rcv_buf_space_" + name + "_test" for name in ("native", "netstack")]'
+          assert s.count(original)==1
+          p.write_text(s.replace(original, 'LABELS = ["//pkg/tcpip/transport/tcp/test/e2e:tcp_test"]'))
+          PYTHON
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --proto '=https' --proto-redir '=https' --retry 2 -fsSL --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/bazel" | sha256sum -c -
+          chmod 755 "$RUNNER_TEMP/bazel"
+      - name: Stage the public archive mirrors seen in the original failures
+        timeout-minutes: 5
+        run: |
+          test "$(git rev-parse HEAD)" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/recvbuf/deps.py" seed
+      - name: Resolve the stock TCP package using the Remote Asset service
+        timeout-minutes: 24
+        env:
+          REMOTE_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          auth="$RUNNER_TEMP/recvbuf/auth"
+          mkdir -m 700 "$auth"
+          clean=(env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP")
+          cleanup() {
+            "${clean[@]}" timeout -k 5s 45s "$RUNNER_TEMP/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g shutdown >"$auth/shutdown.log" 2>&1
+            status=$?
+            rm -f -- "$auth/service.rc" "$auth/build.log" "$auth/shutdown.log" "$auth/prepare.log"
+            rmdir "$auth"
+            return "$status"
+          }
+          trap 'rc=$?; set +e; cleanup; cleanup_rc=$?; (( rc == 0 )) && rc=$cleanup_rc; exit "$rc"' EXIT
+          test -n "$REMOTE_KEY"
+          {
+            echo 'build --remote_cache=grpcs://remote.buildbuddy.io'
+            echo 'build --experimental_remote_downloader=grpcs://remote.buildbuddy.io --noexperimental_remote_downloader_propagate_credentials --experimental_remote_downloader_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$REMOTE_KEY"
+          } > "$auth/service.rc"
+          unset REMOTE_KEY
+          "${clean[@]}" timeout -k 5s 21m python3 -IB "$RUNNER_TEMP/recvbuf/deps.py" prepare >"$auth/prepare.log" 2>&1
+          rm -f -- "$auth/prepare.log"
+      - name: Observe the native Linux and explicitly enabled receiver
+        id: first
+        timeout-minutes: 30
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/recvbuf/auth"
+          git switch -q --detach f05cd8923fb8aa27186834df01d7433085db41f1
+          echo 'entered=true' >> "$GITHUB_OUTPUT"
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/recvbuf/ack_socket_receipt.py" interactive
+      - name: Observe the default receiver on the other proposal
+        if: "!cancelled() && steps.first.outputs.entered == 'true'"
+        timeout-minutes: 30
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/recvbuf/auth"
+          pkg=pkg/tcpip/transport/tcp/test/e2e
+          git restore -- "$pkg/BUILD" pkg/tcpip/transport/tcp/testing/context/context.go
+          rm -f -- "$pkg/ack_socket_linux_test.go" "$pkg/ack_socket_packets_test.go"
+          git switch -q --detach b5062f2222f563af2f39c4cc2e57cd1194634146
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$RUNNER_TEMP/recvbuf/ack_socket_receipt.py" auto
+      - name: Check the public receipt files
+        id: safe
+        if: always()
+        run: |
+          python3 -I - <<'PYTHON'
+          import os, re
+          from pathlib import Path
+          out=Path(os.environ["RUNNER_TEMP"])/"recvbuf/out"
+          assert not out.parent.joinpath("auth").exists()
+          for p in out.iterdir():
+              assert re.fullmatch(r"(interactive|auto)\.(log|xml|json)",p.name) and p.is_file() and not p.is_symlink()
+              assert 0 < p.stat().st_size < 2 << 20
+              assert not re.search(rb"(?i)authorization\s*[:=]|github_pat_|gh[pousr]_",p.read_bytes())
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled() && steps.safe.outcome == 'success'
+        with:
+          name: ack-socket-controls
+          path: ${{ runner.temp }}/recvbuf/out/
+          if-no-files-found: error
+          retention-days: 14
