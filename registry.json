@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T04:15:30+00:00",
+    "updatedAt": "2026-11-09T04:28:47+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -66894,8 +66894,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e18f42092",
       "title": "Retry interrupted PacketImpact address dumps",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T04:15:30+00:00",
-      "summary": "An interrupted IPv6 address dump stopped an upstream PacketImpact DUT before the testbench started. This change discards the partial reply and retries only the affected address family, up to ten attempts. All seven focused Linux controls passed in a private namespace. The kernel interrupted two dumps during 16 successful interface lookups. The original code failed the controlled first IPv6 interruption. A separate build of the uninstrumented SYN-SENT Netstack test timed out after 22 minutes with exit 124. It produced no TestResult, XML, log or packet capture.",
+      "updatedAt": "2026-11-09T04:28:47+00:00",
+      "summary": "An interrupted IPv6 address dump stopped an upstream PacketImpact DUT before its testbench started. The fix discards the partial reply and retries only that address family, up to ten attempts. All seven focused Linux controls passed in a private namespace. Two genuine kernel interruptions occurred during 16 successful lookups. An uninstrumented build on the standalone fork timed out after 22 minutes with no TestResult. A separate replay used the exact revised lookup file and unchanged SYN-SENT test on the previously verified ARM64 Firecracker runner integration. All four cases passed without skips. The capture showed payload in both directions on the queued-send connection, inbound payload on the queued-receive connection, and resets acknowledging the initial SYN on the two refused connections.",
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
@@ -66923,6 +66923,10 @@
         {
           "label": "Uninstrumented Netstack target timed out before a TestResult",
           "url": "https://github.com/tamird/gvisor/actions/runs/42558478722/artifacts/13649088261"
+        },
+        {
+          "label": "Original ARM64 Netstack test log, four passing XML cases and IPv4 capture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42561653833/artifacts/13649910805"
         }
       ]
     }
@@ -84593,7 +84597,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T03:47:47+00:00",
+      "updatedAt": "2026-11-09T04:28:47+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -87441,6 +87445,19 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4d-20ee-44fa-a609-3381762cc6ec"
             }
           ]
+        },
+        {
+          "text": "After the first family run stopped before all 164 tests, the repaired gRPC patch loaded all three expected files. On AMD64 distroless OCI workers, LLVM compiled and linked the PacketImpact POSIX server without cache hits for both AMD64 and ARM64. The default ELF outputs had machine IDs 62 and 183. Each configured graph contained four Protobuf GenUpbStage1 actions, the c-ares header symlink and the gRPC executable symlink. These receipts cover the producers; the full mixed-family runtime is tracked separately.",
+          "evidence": [
+            {
+              "label": "Old and corrected gRPC repository loading with three extracted file hashes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649003135"
+            },
+            {
+              "label": "Uncached LLVM compile and link actions for both target POSIX servers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649572641"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the rules_shell #64 toolchain API through upstream release and reconcile the qualified integrations with their separately tracked product prerequisites.",
@@ -87980,6 +87997,14 @@
         {
           "label": "Retry of the affected Netstack test",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4d-20ee-44fa-a609-3381762cc6ec"
+        },
+        {
+          "label": "Old and corrected gRPC repository loading with three extracted file hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649003135"
+        },
+        {
+          "label": "Uncached LLVM compile and link actions for both target POSIX servers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649572641"
         }
       ],
       "group": "rbe"
@@ -91309,5 +91334,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T04:15:30+00:00"
+  "updatedAt": "2026-11-09T04:28:47+00:00"
 }
