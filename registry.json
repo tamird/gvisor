@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T03:47:47+00:00",
+    "updatedAt": "2026-11-09T04:15:30+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -66883,6 +66883,48 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13647668246"
         }
       ]
+    },
+    {
+      "id": "branch:packetimpact-interrupted-address-dump",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "rbe",
+      "ref": "research/packetimpact-interrupted-address-dump",
+      "head": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
+      "url": "https://github.com/tamird/gvisor/commit/e18f42092",
+      "title": "Retry interrupted PacketImpact address dumps",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-09T04:15:30+00:00",
+      "summary": "An interrupted IPv6 address dump stopped an upstream PacketImpact DUT before the testbench started. This change discards the partial reply and retries only the affected address family, up to ten attempts. All seven focused Linux controls passed in a private namespace. The kernel interrupted two dumps during 16 successful interface lookups. The original code failed the controlled first IPv6 interruption. A separate build of the uninstrumented SYN-SENT Netstack test timed out after 22 minutes with exit 124. It produced no TestResult, XML, log or packet capture.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "975fb172241c7946a9f67b4f52e0349d9240589a",
+        "head": "e18f42092698397c1d1ca248b6bc95bec1c910a2",
+        "url": "https://github.com/tamird/gvisor/commit/e18f42092",
+        "title": "Retry interrupted PacketImpact address dumps",
+        "body": "A PacketImpact DUT stopped during bootstrap when the kernel marked its IPv6 address dump as interrupted [1]. Such a dump may contain one address for the requested link even when another address is missing.\n\nDiscard the incomplete result and retry only the affected family. Bound the number of attempts at ten, as in the netlink library’s opt-in retry [2], and propagate the last error if the dump remains interrupted.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4a-013c-4f0a-aea4-1e82a1d51acf/208978 [2]: https://github.com/vishvananda/netlink/blob/188504cbe/nl/nl_linux.go#L518",
+        "summary": "Open the independent PacketImpact interrupted-address-dump fix?",
+        "requestedAt": "2026-11-09T04:15:30+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Upstream Buildkite failure during DUT address discovery",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4a-013c-4f0a-aea4-1e82a1d51acf/208978"
+        },
+        {
+          "label": "Same upstream Netstack test passed on retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53930#01a1bb4d-20ee-44fa-a609-3381762cc6ec"
+        },
+        {
+          "label": "Native namespace controls, two observed kernel interruptions, original logs and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42558478722/artifacts/13647609165"
+        },
+        {
+          "label": "Uninstrumented Netstack target timed out before a TestResult",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42558478722/artifacts/13649088261"
+        }
+      ]
     }
   ],
   "edges": [
@@ -91267,5 +91309,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T03:47:47+00:00"
+  "updatedAt": "2026-11-09T04:15:30+00:00"
 }
