@@ -8,7 +8,10 @@ package(
 go_binary(
     name = "runner",
     testonly = 1,
-    srcs = ["main.go"],
+    srcs = [
+        "main.go",
+        "udp_network.go",
+    ],
     data = [
         "//:release",
         "//test/runner/fuse",
@@ -28,6 +31,7 @@ go_binary(
         "@com_github_creack_pty//:go_default_library",
         "@com_github_moby_sys_capability//:go_default_library",
         "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
+        "@com_github_vishvananda_netlink//:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
@@ -38,6 +42,7 @@ go_test(
     srcs = [
         "main.go",
         "main_test.go",
+        "udp_network.go",
     ],
     data = ["//:release"],
     deps = [
@@ -56,6 +61,7 @@ go_test(
         "@com_github_creack_pty//:go_default_library",
         "@com_github_moby_sys_capability//:go_default_library",
         "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
+        "@com_github_vishvananda_netlink//:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
