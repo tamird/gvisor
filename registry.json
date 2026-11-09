@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T04:28:47+00:00",
+    "updatedAt": "2026-11-09T04:39:14+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -84597,7 +84597,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T04:28:47+00:00",
+      "updatedAt": "2026-11-09T04:39:14+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -87425,7 +87425,7 @@
           ]
         },
         {
-          "text": "On source integration 61a9e54af, Bazel selected 82 PacketImpact tests in the AMD64 profile, 164 in the mixed profile and 82 in the ARM64 profile. Nine c-ares, Protobuf and gRPC build actions failed before any of the 164 mixed tests ran. Test case outcomes and equivalence across the two native worker architectures remain unmeasured. Excluding the new family, the mixed analysis kept all 728 historical test labels and added two. Of the 2,887 historical build-only roots, 580 were absent and six were new. The upstream changes behind that difference are being checked.",
+          "text": "On source integration 61a9e54af, Bazel selected 82 PacketImpact tests in the AMD64 profile, 164 in the mixed profile and 82 in the ARM64 profile. Nine c-ares, Protobuf and gRPC build actions failed before any of the 164 mixed tests ran. Excluding the new family, the mixed analysis kept all 728 historical test labels and added two. Of the 2,887 historical build-only roots, 580 were absent and six were new.",
           "evidence": [
             {
               "label": "Three source profiles, 164 listed TestRunners, build failures and root-set comparison",
@@ -87447,7 +87447,7 @@
           ]
         },
         {
-          "text": "After the first family run stopped before all 164 tests, the repaired gRPC patch loaded all three expected files. On AMD64 distroless OCI workers, LLVM compiled and linked the PacketImpact POSIX server without cache hits for both AMD64 and ARM64. The default ELF outputs had machine IDs 62 and 183. Each configured graph contained four Protobuf GenUpbStage1 actions, the c-ares header symlink and the gRPC executable symlink. These receipts cover the producers; the full mixed-family runtime is tracked separately.",
+          "text": "After the first family run stopped before all 164 tests, the repaired gRPC patch loaded all three expected files. On AMD64 distroless OCI workers, LLVM compiled and linked the PacketImpact POSIX server without cache hits for both AMD64 and ARM64. The default ELF outputs had machine IDs 62 and 183. Each configured graph contained four Protobuf GenUpbStage1 actions, the c-ares header symlink and the gRPC executable symlink.",
           "evidence": [
             {
               "label": "Old and corrected gRPC repository loading with three extracted file hashes",
@@ -87456,6 +87456,24 @@
             {
               "label": "Uncached LLVM compile and link actions for both target POSIX servers",
               "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649572641"
+            }
+          ]
+        },
+        {
+          "text": "All 164 PacketImpact tests ran without cache hits on rootful Ubuntu Firecracker workers, 82 per architecture. Of those, 162 passed. The ARM64 Netstack retransmission test timed out waiting 2.6 seconds for the third-loop payload. The AMD64 native sequence/ACK test received ACKs in two subcases that expected none. Both expected-failure Netstack tests reached their intended assertions on each architecture. The 24 skips were nested ICMPv4 subtests. Every top-level case ran. The workers used cgroup v2, with Linux 6.18.57 on AMD64 and 5.10.0 on ARM64. The receipt records digests for 172 captures.",
+          "evidence": [
+            {
+              "label": "164 original TestRunner results, logs, XML, manifests and capture hashes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649803459"
+            }
+          ]
+        },
+        {
+          "text": "On the same repaired source, 373937b75, enabling the mixed PacketImpact suite added exactly 164 test owners (730 to 894) and retained all 2,313 build-only roots. Compared with the older inventory, the current source already had two additional test owners and six additional build-only roots. Of the 580 historical build-only labels absent from the current source, 569 ended in _with_imports.",
+          "evidence": [
+            {
+              "label": "Same-source suite selection and comparison with the historical inventory",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13650491042"
             }
           ]
         }
@@ -88005,6 +88023,14 @@
         {
           "label": "Uncached LLVM compile and link actions for both target POSIX servers",
           "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649572641"
+        },
+        {
+          "label": "164 original TestRunner results, logs, XML, manifests and capture hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13649803459"
+        },
+        {
+          "label": "Same-source suite selection and comparison with the historical inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42560324042/artifacts/13650491042"
         }
       ],
       "group": "rbe"
@@ -91334,5 +91360,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T04:28:47+00:00"
+  "updatedAt": "2026-11-09T04:39:14+00:00"
 }
