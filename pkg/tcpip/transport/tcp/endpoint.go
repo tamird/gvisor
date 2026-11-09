@@ -25,7 +25,6 @@ import (
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/buffer"
-	"gvisor.dev/gvisor/pkg/sleep"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -859,9 +858,6 @@ type keepalive struct {
 	interval       time.Duration
 	count          int
 	unacked        int
-	// should never be a zero timer if the endpoint is not closed.
-	timer timer       `state:"nosave"`
-	waker sleep.Waker `state:"nosave"`
 }
 
 func newEndpoint(s *stack.Stack, protocol *protocol, netProto tcpip.NetworkProtocolNumber, waiterQueue *waiter.Queue) *Endpoint {
@@ -936,10 +932,6 @@ func newEndpoint(s *stack.Stack, protocol *protocol, netProto tcpip.NetworkProto
 
 	e.probe = protocol.probe
 	e.segmentQueue.ep = e
-
-	// TODO(https://gvisor.dev/issues/7493): Defer creating the timer until TCP connection becomes
-	// established.
-	e.keepalive.timer.init(e, e.keepaliveTimerExpired)
 
 	return e
 }
@@ -1214,6 +1206,7 @@ func (e *Endpoint) closePendingAcceptableConnectionsLocked() {
 }
 
 // cleanupLocked frees all resources associated with the endpoint.
+//
 // +checklocks:e.mu
 func (e *Endpoint) cleanupLocked() {
 	if e.snd != nil {
@@ -1221,6 +1214,7 @@ func (e *Endpoint) cleanupLocked() {
 		e.snd.probeTimer.cleanup()
 		e.snd.reorderTimer.cleanup()
 		e.snd.corkTimer.cleanup()
+		e.snd.keepaliveTimer.cleanup()
 	}
 
 	if e.finWait2Timer != nil {
@@ -1242,7 +1236,6 @@ func (e *Endpoint) cleanupLocked() {
 	// Close all endpoints that might have been accepted by TCP but not by
 	// the client.
 	e.closePendingAcceptableConnectionsLocked()
-	e.keepalive.timer.cleanup()
 
 	if e.isRegistered {
 		e.stack.StartTransportEndpointCleanup(e.effectiveNetProtos, ProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice)
