@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-08T23:40:10+00:00",
+    "updatedAt": "2026-11-09T00:11:38Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -65169,8 +65169,8 @@
       "head": "fe04aebd118f84df78dc0173e515f854d1809347",
       "title": "Start TCP checksum offload after the serialized IP header",
       "group": "runtime",
-      "updatedAt": "2026-11-08T23:20:59+00:00",
-      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Recording the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth. Full-size IPv6 writes at the route MSS still exceeded the MTU.\n\nTwo Netstack TCP endpoints on a native Linux veth ran 144 transfers to measure packet sizing with the experiment option. With the published checksum fix, four 10,153-byte writes at the route MSS delivered no data on option-capable NICs: IPv4 software segmentation and IPv6 with software, host or no GSO. A fork prototype that reserves option space delivered all 72 transfers on that build. With the socket option off on a capable NIC, each full packet carried 4 fewer data bytes on IPv4 and 8 fewer on IPv6. The first prototype failed IPv4 restore from an incapable NIC to an option-capable NIC. The revised prototype passed that transition, repeated restore and the three other capability combinations. IPv6 restore remains unverified. A separate change corrects how Reno counts acknowledged packets when restore reduces MSS. This study exercised explicit netstack options outside #16393’s default configuration.",
+      "updatedAt": "2026-11-09T00:11:38Z",
+      "summary": "With the experiment option enabled, checksum offload started four bytes early for IPv4 and eight early for IPv6. Using the serialized header length delivered the 21-byte write in all four option-toggle cases over a private veth.\n\nFull-size writes also need room for the option. On a native Linux veth, four 10,153-byte transfers delivered no data with the published checksum fix. A prototype that reserves space delivered all 72 transfers on that build, but also reduced full payloads by four bytes on IPv4 or eight on IPv6 when the socket option was off on a capable NIC.\n\nRestoring onto a NIC that permits the IPv6 option added an eight-byte header. Recomputing the limit changed payloads from 1,200 to 1,192 bytes and preserved the limit through a second restore. The same test exposed a separate Reno accounting error: ACKing one packet sent before restore grew the window from 10 to 12. The sizing prototype and the ACK-accounting fix have been tested separately. These cases require explicit Netstack configuration outside #16393’s default.",
       "evidence": [
         {
           "label": "Original peer and checksum-offset observations",
@@ -65195,6 +65195,10 @@
         {
           "label": "IPv4 checkpoint restore across NIC capability changes and independent Reno accounting observation",
           "url": "https://github.com/tamird/gvisor/actions/runs/42495751919/artifacts/13623572555"
+        },
+        {
+          "label": "IPv6 option sizing and Reno window after one or two restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42537524428/artifacts/13640156885"
         }
       ],
       "settledReviews": [
@@ -65435,8 +65439,8 @@
       "url": "https://github.com/tamird/gvisor/commit/b64ce8320",
       "group": "runtime",
       "status": "Contributor approved; waiting for #15634",
-      "updatedAt": "2026-11-08T17:08:40+00:00",
-      "summary": "With an ordinary IPv4 route, one ACK for a pre-restore 1,200-byte packet grew Reno’s congestion window from 10 to 12 on #15634 after the new route limited payloads to 1,196 bytes. The follow-up counts recorded packet ends for data sent once outside recovery and credited the packet once, growing the window to 11. Three other native cases passed on both sources. A message-only revision preserves the measured source tree.",
+      "updatedAt": "2026-11-09T00:11:38Z",
+      "summary": "With an ordinary IPv4 route, one ACK for a pre-restore 1,200-byte packet grew Reno’s congestion window from 10 to 12 on #15634 after the new route limited payloads to 1,196 bytes. The follow-up counts recorded packet ends for data sent once outside recovery and credited the packet once, growing the window to 11. Three other native cases passed on both sources. A message-only revision preserves the measured source tree. The same one-packet overcount reproduced when an IPv6 restore added an eight-byte experiment option. The combined IPv6 sizing and ACK-accounting revision has not been tested.",
       "evidence": [
         {
           "label": "One commit on the current #15634 head",
@@ -65453,6 +65457,10 @@
         {
           "label": "TCP performance and recovery guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "IPv6 option sizing and Reno window after one or two restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42537524428/artifacts/13640156885"
         }
       ],
       "followup": {
@@ -79496,7 +79504,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-08T15:22:57+00:00",
+      "updatedAt": "2026-11-09T00:11:38Z",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -80179,6 +80187,19 @@
             {
               "label": "Later architecture measurements",
               "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Astate-reflection-design"
+            }
+          ]
+        },
+        {
+          "text": "The 50,000-file checkpoint used 150,919 dependency callback records after #16860. Of those, 50,364 held a sole waiting object. A fork experiment stores that waiter in the existing incoming queue fields. The qualification compares callback order, cycles, and the first guest command after restore with alternating measurements.",
+          "evidence": [
+            {
+              "label": "Single-waiter experiment",
+              "url": "https://github.com/tamird/gvisor/commit/958ce2042"
+            },
+            {
+              "label": "Correctness checks and paired restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42537752922"
             }
           ]
         }
@@ -84121,7 +84142,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-08T19:10:03+00:00",
+      "updatedAt": "2026-11-09T00:11:38Z",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -86910,6 +86931,19 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42512950891/artifacts/13629718592"
             }
           ]
+        },
+        {
+          "text": "All 82 PacketImpact owners share a generated Bash test launcher. The Go runner also invokes the host firewall programs, and both DUTs invoke uname. A fork change runs the existing Go test binary with declared arguments, reads DUT identity with uname(2), and installs the TCP drop rule in the testbench network namespace. Six native and Netstack owners are in qualification, including a three-DUT IPv6 case.",
+          "evidence": [
+            {
+              "label": "PacketImpact runner change",
+              "url": "https://github.com/tamird/gvisor/commit/c3d696ee1"
+            },
+            {
+              "label": "Stock controls and Linux qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42538507534"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the rules_shell #64 toolchain API through upstream release and reconcile the qualified integrations with their separately tracked product prerequisites.",
@@ -88477,7 +88511,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-08T23:40:10+00:00",
+      "updatedAt": "2026-11-09T00:11:38Z",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -89397,6 +89431,19 @@
               "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
+        },
+        {
+          "text": "On an IPv6 restore that enables the experiment option, recomputing the limit produced 1,192-byte payloads instead of 1,200. One Reno ACK still grew the window twice on the sizing prototype. The review guide separates the published checksum fix from sizing and ordinary ACK accounting.",
+          "evidence": [
+            {
+              "label": "IPv6 option sizing and Reno window after one or two restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42537524428/artifacts/13640156885"
+            },
+            {
+              "label": "Configuration and review order",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -89650,8 +89697,8 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-08T23:23:55+00:00",
-      "lastReviewedAt": "2026-11-08T23:07:51.974386+00:00",
+      "updatedAt": "2026-11-09T00:11:38Z",
+      "lastReviewedAt": "2026-11-09T00:06:17.049705+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
         {
@@ -89969,6 +90016,10 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
             }
           ]
+        },
+        {
+          "text": "The 00:06 UTC incremental check covered six entries since the 593-item audit. The builder, poll, overlay, cleanup and FUSE proposals retained their reviewed source revisions and decision states. The iperf entry remained agent work. No additional contributor decisions were found in the six.",
+          "evidence": []
         }
       ],
       "nextStep": "Check the current upstream head and merge state immediately before pushing. For Lucas’s cleanup requests, use a separate follow-up only if the original merged without the change. Honor existing explicit holds and review decisions; check the queue daily.",
@@ -90682,5 +90733,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-08T23:40:10+00:00"
+  "updatedAt": "2026-11-09T00:11:38Z"
 }
