@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T06:59:40+00:00",
+    "updatedAt": "2026-11-09T07:39:52.097533+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -67086,6 +67086,108 @@
         "summary": "Open this two-file PR independently? All 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
         "body": "The Buildkite unit jobs take their package roots and tag filters from\nmake unit-tests. A direct Bazel invocation has to repeat that list,\nincluding the targets built alongside the tests.\n\nPut the same selection in bazel test --config=unit-tests. Keep the\ncgroup mode in the Make caller so builds on cgroup v1 and v2 continue\nto use separate test results."
       }
+    },
+    {
+      "id": "pr:17264",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17264,
+      "ref": "botir/tcp-msg-more-upstream",
+      "head": "5cfcca25071ec797fef13c331e0bf35c0a68ae4e",
+      "title": "Honor MSG_MORE on TCP writes",
+      "url": "https://github.com/google/gvisor/pull/17264",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-09T07:39:52.097533+00:00",
+      "summary": "This change adds a per-write cork. Its restore path overlaps #16671, and the truncated-write test expects the reader to be exhausted after a partial acceptance.",
+      "evidence": [
+        {
+          "label": "Timer restore",
+          "url": "https://github.com/google/gvisor/pull/17264/files#diff-5701ff02ce1d54c6aa9e84d99c60583cd27dec8b7a85efa2abd098f69c32f1e7R277"
+        },
+        {
+          "label": "Partial-write assertion",
+          "url": "https://github.com/google/gvisor/pull/17264/files#diff-69d0fe8d041526004a675c9c0ab7e0c8074772c2d2a82e99086741a0d8b3fde4R4389"
+        },
+        {
+          "label": "Pending cork timer and FIN handling in #16671",
+          "url": "https://github.com/google/gvisor/pull/16671"
+        },
+        {
+          "label": "Sentry retries the same reader",
+          "url": "https://github.com/google/gvisor/blob/975fb1722/pkg/sentry/socket/netstack/netstack.go#L3407-L3442"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "title": "Review the cork timer restore and partial-write assertion",
+        "summary": "Post these two inline comments together as one review on #17264?",
+        "body": "[endpoint_state.go, line 277](https://github.com/google/gvisor/pull/17264/files#diff-5701ff02ce1d54c6aa9e84d99c60583cd27dec8b7a85efa2abd098f69c32f1e7R277)\n\nCould you rearm the timer only if it was armed at checkpoint? An idle socket can have TCP_CORK enabled, and a pending MSG_MORE timer can have TCP_CORK off. #16671 saves whether the timer was armed under the endpoint lock. That bit can cover both cases.\n\nPosted by Codex on behalf of @tamird.\n\n[tcp_test.go, line 4389](https://github.com/google/gvisor/pull/17264/files#diff-69d0fe8d041526004a675c9c0ab7e0c8074772c2d2a82e99086741a0d8b3fde4R4389)\n\nPlease drop this check on payload.Len(). The endpoint accepted five bytes. A blocking Sentry sendmsg retries the same reader for the other five, so an exhausted reader would leave it unable to finish. The return count and wire payload already check the partial push.\n\nPosted by Codex on behalf of @tamird.",
+        "head": "5cfcca25071ec797fef13c331e0bf35c0a68ae4e",
+        "url": "https://github.com/google/gvisor/pull/17264/files#diff-5701ff02ce1d54c6aa9e84d99c60583cd27dec8b7a85efa2abd098f69c32f1e7R277",
+        "requestedAt": "2026-11-09T07:39:52.097533+00:00"
+      }
+    },
+    {
+      "id": "pr:17265",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17265,
+      "ref": "botir/gro-checksum-upstream",
+      "head": "8d1aa2e179cda06eb902a2640087d24e1ba91f9b",
+      "title": "Preserve software-validated receive checksums",
+      "url": "https://github.com/google/gvisor/pull/17265",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-09T07:34:05+00:00",
+      "summary": "The revised IPv4 and IPv6 test injects two adjacent 128-byte TCP segments and requires exactly one outbound reset. This replaced the application read that prompted the earlier review draft.",
+      "evidence": [
+        {
+          "label": "IPv4 and IPv6 segment input and reset count",
+          "url": "https://github.com/google/gvisor/blob/8d1aa2e179cda06eb902a2640087d24e1ba91f9b/pkg/tcpip/stack/gro/gro_test.go#L195-L220"
+        }
+      ]
+    },
+    {
+      "id": "branch:fuse-create-capability",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/fuse-create-capability",
+      "head": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+      "url": "https://github.com/tamird/gvisor/commit/e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+      "title": "Synchronize the FUSE create capability across mounts",
+      "status": "Agent work",
+      "updatedAt": "2026-11-09T07:37:09+00:00",
+      "summary": "Two FUSE mounts can share a connection. This change stores its FUSE_CREATE capability atomically when the server returns ENOSYS.",
+      "evidence": [
+        {
+          "label": "Compiled stock FUSE test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42577842227/artifacts/13655829527"
+        },
+        {
+          "label": "First hosted runner",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42575497106"
+        },
+        {
+          "label": "Recovery runner",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42577842227"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+        "observedAt": "2026-11-09T07:34:05+00:00",
+        "disposition": "Two hosted runners reported shutdown during validation. The second reached the stock TestRunner. Only the compiled stock owner was retained.",
+        "nextAction": "Obtain stock and fixed race results for the two mounts, verify both state-codec round trips, and check the FUSE Nogo results before contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+          "https://github.com/tamird/gvisor/actions/runs/42577842227/artifacts/13655829527",
+          "https://github.com/tamird/gvisor/actions/runs/42575497106",
+          "https://github.com/tamird/gvisor/actions/runs/42577842227"
+        ]
+      }
     }
   ],
   "edges": [
@@ -89341,7 +89443,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-09T02:17:56+00:00",
+      "updatedAt": "2026-11-09T07:34:05+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -90432,7 +90534,9 @@
           16793,
           16887,
           17082,
-          17118
+          17118,
+          17264,
+          17265
         ],
         "owner": "Netstack",
         "reviewers": [
@@ -91618,5 +91722,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T06:59:40+00:00"
+  "updatedAt": "2026-11-09T07:39:52.097533+00:00"
 }
