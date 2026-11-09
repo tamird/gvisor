@@ -49,9 +49,15 @@ type decodeCallback struct {
 	valueLoader ValueLoader
 	value       any
 	slot        int
+}
+
+// decodeLink is an entry in an object's completion queue.
+type decodeLink struct {
+	// callback indexes cbs, or is -1 when only a waiter needs waking.
+	callback int32
 	// waiter is the object to unblock after this callback, or -1.
 	waiter int32
-	// next is the next callback of the same object, or -1.
+	// next indexes the next link for the same object, or is -1.
 	next int32
 }
 
@@ -80,6 +86,7 @@ type graphDecodeState struct {
 	typeNames []string
 	objs      []decObject
 	ods       []graphObjectDecodeState
+	links     []decodeLink
 	cbs       []decodeCallback
 	targets   []unsafe.Pointer
 	// targetObjs are the objects of targets, or -1.
@@ -144,7 +151,8 @@ const (
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
-	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
+	queueBytes := cap(ds.links)*int(unsafe.Sizeof(decodeLink{})) + cap(ds.cbs)*int(unsafe.Sizeof(decodeCallback{}))
+	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || queueBytes > maxPooledBytes {
 		return
 	}
 	clear(ds.types[:cap(ds.types)])
@@ -157,6 +165,7 @@ func (ds *graphDecodeState) release() {
 		typeNames:  ds.typeNames[:0],
 		objs:       ds.objs[:0],
 		ods:        ds.ods[:0],
+		links:      ds.links[:0],
 		cbs:        ds.cbs[:0],
 		targets:    ds.targets[:0],
 		targetObjs: ds.targetObjs[:0],
@@ -414,18 +423,20 @@ func (cb *decodeCallback) user() bool {
 	return cb.fn != nil || cb.afterLoader != nil || cb.valueLoader != nil
 }
 
-func (ds *graphDecodeState) appendCallback(head, tail *int32, cb decodeCallback) {
-	if cb.waiter < 0 || cb.user() {
+func (ds *graphDecodeState) appendLink(head, tail *int32, waiter int32, cb decodeCallback) {
+	link := decodeLink{callback: -1, waiter: waiter, next: -1}
+	if waiter < 0 || cb.user() {
 		ds.hooks++
 		ds.deferred++
+		link.callback = int32(len(ds.cbs))
+		ds.cbs = append(ds.cbs, cb)
 	}
-	cb.next = -1
-	ds.cbs = append(ds.cbs, cb)
-	i := int32(len(ds.cbs) - 1)
+	i := int32(len(ds.links))
+	ds.links = append(ds.links, link)
 	if *tail < 0 {
 		*head = i
 	} else {
-		ds.cbs[*tail].next = i
+		ds.links[*tail].next = i
 	}
 	*tail = i
 }
@@ -433,7 +444,7 @@ func (ds *graphDecodeState) appendCallback(head, tail *int32, cb decodeCallback)
 // addCallback adds a callback to obj's own callbacks.
 func (ds *graphDecodeState) addCallback(obj int32, cb decodeCallback) {
 	o := &ds.ods[obj]
-	ds.appendCallback(&o.cbHead, &o.cbTail, cb)
+	ds.appendLink(&o.cbHead, &o.cbTail, -1, cb)
 }
 
 // runCallback runs cb if it is a user callback.
@@ -467,6 +478,5 @@ func (ds *graphDecodeState) wait(waiter, obj int32, cb decodeCallback) {
 	}
 	ds.ods[waiter].blockedBy++
 	o := &ds.ods[obj]
-	cb.waiter = waiter
-	ds.appendCallback(&o.waitHead, &o.waitTail, cb)
+	ds.appendLink(&o.waitHead, &o.waitTail, waiter, cb)
 }

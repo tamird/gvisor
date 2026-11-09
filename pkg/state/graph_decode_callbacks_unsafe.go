@@ -165,15 +165,15 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	ds.keepZero = keepZero
 	if ds.deferred != deferred {
 		if ds.lastRef >= 0 && ds.lastRef != ds.cur && ds.lastRef != 0 {
-			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, decodeCallback{})
 		}
 		if !ds.noCallbacks {
 			valPtr := p
-			ds.addCallback(ds.cur, decodeCallback{fn: func() { l.StateLoadValue(ds.ctx, slot, makeAny(ti, valPtr)) }, waiter: -1})
+			ds.addCallback(ds.cur, decodeCallback{fn: func() { l.StateLoadValue(ds.ctx, slot, makeAny(ti, valPtr)) }})
 		}
 		return
 	}
-	cb := decodeCallback{valueLoader: l, slot: slot, value: makeAny(ti, p), waiter: -1}
+	cb := decodeCallback{valueLoader: l, slot: slot, value: makeAny(ti, p)}
 	if ds.lastRef >= 0 {
 		if ds.lastRef != ds.cur && ds.lastRef != 0 {
 			ds.wait(ds.cur, ds.lastRef, cb)
@@ -205,7 +205,7 @@ func (ds *graphDecodeState) runCallbacks() {
 			if o.cbTail < 0 {
 				o.cbHead = o.waitHead
 			} else {
-				ds.cbs[o.cbTail].next = o.waitHead
+				ds.links[o.cbTail].next = o.waitHead
 			}
 			o.cbTail = o.waitTail
 		}
@@ -225,16 +225,18 @@ func (ds *graphDecodeState) runCallbacks() {
 			if ds.stats.enabled && o.cbHead >= 0 && ds.objs[cur].ti != nil {
 				ds.stats.start(ds.objs[cur].ti)
 			}
-			for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
-				cb := &ds.cbs[c]
-				ds.runCallback(cb)
-				if cb.waiter >= 0 {
-					w := &ds.ods[cb.waiter]
+			for c := o.cbHead; c >= 0; c = ds.links[c].next {
+				link := ds.links[c]
+				if link.callback >= 0 {
+					ds.runCallback(&ds.cbs[link.callback])
+				}
+				if link.waiter >= 0 {
+					w := &ds.ods[link.waiter]
 					w.blockedBy--
 					if w.blockedBy == 0 {
-						leaves = append(leaves, cb.waiter)
+						leaves = append(leaves, link.waiter)
 					} else if w.blockedBy < 0 {
-						Failf("object %d has negative blockedBy: %d", cb.waiter, w.blockedBy)
+						Failf("object %d has negative blockedBy: %d", link.waiter, w.blockedBy)
 					}
 				}
 			}
@@ -311,8 +313,8 @@ func (ds *graphDecodeState) findCycle() []int32 {
 		if first < 0 {
 			first = int32(i)
 		}
-		for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
-			if w := ds.cbs[c].waiter; w >= 0 {
+		for c := o.cbHead; c >= 0; c = ds.links[c].next {
+			if w := ds.links[c].waiter; w >= 0 {
 				blockers[w] = int32(i)
 			}
 		}
@@ -343,14 +345,13 @@ func (gd *graphStructDecoder) loadWait(slot int, objPtr any) {
 	ds.lastRef = -1
 	ds.decodeValue(ti, e.data)
 	if ds.lastRef >= 0 {
-		ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+		ds.wait(ds.cur, ds.lastRef, decodeCallback{})
 	}
 }
 
 func deferLoadValueCallback(objPtr any, fn func(any)) decodeCallback {
 	return decodeCallback{
-		fn:     func() { fn(reflect.ValueOf(objPtr).Elem().Interface()) },
-		waiter: -1,
+		fn: func() { fn(reflect.ValueOf(objPtr).Elem().Interface()) },
 	}
 }
 
@@ -366,7 +367,7 @@ func (gd *graphStructDecoder) loadValue(slot int, objPtr any, fn func(any)) {
 	ds.keepZero = keepZero
 	if ds.deferred != deferred {
 		if ds.lastRef >= 0 && ds.lastRef != ds.cur && ds.lastRef != 0 {
-			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, decodeCallback{})
 		}
 		if !ds.noCallbacks {
 			ds.addCallback(ds.cur, deferLoadValueCallback(objPtr, fn))
@@ -399,14 +400,14 @@ func (gd *graphStructDecoder) loadValueTo(slot int, typ any, l ValueLoader) {
 func (gd *graphStructDecoder) afterLoad(fn func()) {
 	ds := gd.ds
 	if !ds.noCallbacks {
-		ds.addCallback(ds.cur, decodeCallback{fn: fn, waiter: -1})
+		ds.addCallback(ds.cur, decodeCallback{fn: fn})
 	}
 }
 
 func (gd *graphStructDecoder) afterLoadTo(l AfterLoader) {
 	ds := gd.ds
 	if !ds.noCallbacks {
-		ds.addCallback(ds.cur, decodeCallback{afterLoader: l, waiter: -1})
+		ds.addCallback(ds.cur, decodeCallback{afterLoader: l})
 	}
 }
 
