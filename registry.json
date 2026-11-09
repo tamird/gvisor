@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T15:12:39+00:00",
+    "updatedAt": "2026-11-09T15:36:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55413,7 +55413,7 @@
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T01:14:58+00:00",
+      "updatedAt": "2026-11-09T15:36:41+00:00",
       "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.",
       "evidence": [
         {
@@ -55492,6 +55492,18 @@
           "url": "https://github.com/google/gvisor/pull/16953#discussion_r4471202707",
           "at": "2026-11-04T18:45:33Z",
           "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4471778679"
+        },
+        {
+          "kind": "review",
+          "title": "Keep the pending ACK when the link rejects a response",
+          "summary": "Post this inline review on the timer cancellation in sendSegmentFromPacketBuffer?",
+          "body": "Could you keep the pending ACK until the link accepts the response? This cancels the timer before the link accepts the response. In the test the link rejected a three-byte PSH|ACK at 20 ms, and the peer received nothing at its original 40 ms deadline. Moving the bookkeeping after a successful send gives the peer ACK 1790 at 40 ms. The successful piggyback test still passes. [Packet comparison](https://github.com/tamird/gvisor/actions/runs/42423058508/artifacts/13594880548) · [Tested change](https://github.com/tamird/gvisor/commit/26513de7a)\n\nPosted by Codex on behalf of @tamird.",
+          "head": "f05cd8923fb8aa27186834df01d7433085db41f1",
+          "url": "https://github.com/google/gvisor/pull/16953/files#diff-0912a3274bb72f64af67df685e65186477ca212ce5ad3d655a37ba9872a64fd1R1921",
+          "requestedAt": "2026-11-07T23:05:49+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T15:36:19Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
         }
       ],
       "reviewWatch": {
@@ -55504,16 +55516,6 @@
             "evidence": "https://github.com/google/gvisor/commit/e9a7c24ca"
           }
         ]
-      },
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "title": "Keep the pending ACK when the link rejects a response",
-        "summary": "Post this inline review on the timer cancellation in sendSegmentFromPacketBuffer?",
-        "body": "Could you keep the pending ACK until the link accepts the response? This cancels the timer before the link accepts the response. In the test the link rejected a three-byte PSH|ACK at 20 ms, and the peer received nothing at its original 40 ms deadline. Moving the bookkeeping after a successful send gives the peer ACK 1790 at 40 ms. The successful piggyback test still passes. [Packet comparison](https://github.com/tamird/gvisor/actions/runs/42423058508/artifacts/13594880548) · [Tested change](https://github.com/tamird/gvisor/commit/26513de7a)\n\nPosted by Codex on behalf of @tamird.",
-        "head": "f05cd8923fb8aa27186834df01d7433085db41f1",
-        "url": "https://github.com/google/gvisor/pull/16953/files#diff-0912a3274bb72f64af67df685e65186477ca212ce5ad3d655a37ba9872a64fd1R1921",
-        "requestedAt": "2026-11-07T23:05:49+00:00"
       }
     },
     {
@@ -66249,7 +66251,7 @@
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-09T15:12:39+00:00",
+      "updatedAt": "2026-11-09T15:36:41+00:00",
       "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
       "evidence": [
         {
@@ -66290,28 +66292,31 @@
           "at": "2026-11-08T17:35:07+00:00",
           "outcome": "approved",
           "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        },
+        {
+          "kind": "reply",
+          "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4512715576",
+          "title": "Reply to the Gazelle label-stringification suggestion",
+          "summary": "Post the Bazel 7.6.1 root-repository comparison in the existing review thread?",
+          "body": "I tried this with Gazelle as the root on Bazel 7.6.1. With `--incompatible_unambiguous_label_stringification=false`, `str(Label(...))` writes `//internal:env.bzl` into the generated BUILD. Bazel then looks for `internal` in the generated repository and the query fails in both WORKSPACE and Bzlmod. The explicit `@@//internal:env.bzl` resolves in both modes with either flag setting, so I’d keep it. [Generated BUILDs and query output](https://github.com/tamird/gvisor/actions/runs/42641554508/artifacts/13685996113).\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-09T15:12:39+00:00",
+          "outcome": "approved",
+          "at": "2026-11-09T15:35:35Z",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4514562617"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Gazelle maintainers",
         "sourceHead": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
-        "observedAt": "2026-11-09T15:12:39+00:00",
-        "disposition": "Fabian approved the current commit and suggested writing the full label directly.",
-        "nextAction": "Review the tested reply in the existing thread.",
+        "observedAt": "2026-11-09T15:35:35Z",
+        "disposition": "Fabian approved the current commit. Tamir replied with the generated BUILDs and Bazel 7.6.1 query results.",
+        "nextAction": "Follow any further reviewer response and upstream integration.",
         "evidence": [
           "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4514562617"
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "82ccd87940c2e791d315e82c48a3b5e7704aa24a",
-        "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4512715576",
-        "title": "Reply to the Gazelle label-stringification suggestion",
-        "summary": "Post the Bazel 7.6.1 root-repository comparison in the existing review thread?",
-        "body": "I tried this with Gazelle as the root on Bazel 7.6.1. With `--incompatible_unambiguous_label_stringification=false`, `str(Label(...))` writes `//internal:env.bzl` into the generated BUILD. Bazel then looks for `internal` in the generated repository and the query fails in both WORKSPACE and Bzlmod. The explicit `@@//internal:env.bzl` resolves in both modes with either flag setting, so I’d keep it. [Generated BUILDs and query output](https://github.com/tamird/gvisor/actions/runs/42641554508/artifacts/13685996113).\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-09T15:12:39+00:00"
       }
     },
     {
@@ -92006,5 +92011,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T15:12:39+00:00"
+  "updatedAt": "2026-11-09T15:36:41+00:00"
 }
