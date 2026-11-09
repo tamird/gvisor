@@ -37,6 +37,10 @@ go_test(
     size = "small",
     srcs = ["statefile_test.go"],
     embed = [":forwardcmd"],
+    exec_properties = select({
+        "//test/rbe:source_presubmit": {"test.dockerUser": "65534:65534"},
+        "//conditions:default": {},
+    }),
     deps = [
         "//pkg/state/statefile",
         "//runsc/flag",
