@@ -316,18 +316,26 @@ function reviewAttention(pr, owner) {
     if (!threads.has(item.threadId)) threads.set(item.threadId, []);
     threads.get(item.threadId).push(item);
   }
-  const unanswered = [];
+  const unanswered = [], decision = effectiveReviewDecision(pr);
+  const advisoryApprovers = new Set();
+  if (complete && pr.repo === "google/gvisor" && decision === "REVIEW_REQUIRED" && Array.isArray(pr.maintainerReviewers)) {
+    for (const item of items) if (item.kind === "review" && item.state === "APPROVED" && item.author?.__typename === "User" && !maintainerReview(pr, item))
+      advisoryApprovers.add(item.author.login);
+  }
   let response = false, unknown = !complete;
   for (const comments of threads.values()) {
     comments.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
     const latest = comments.at(-1);
     if (latest.isResolved) continue;
     // A newer head or an outdated location does not answer a finding.
-    if (latest.author?.login === owner) response = true;
-    else if (latest.author?.login) unanswered.push(latest);
+    if (latest.author?.login === owner) {
+      // An answered suggestion from an advisory approver may stay unresolved
+      // on GitHub. Only a maintainer can supply the outstanding approval.
+      const reviewers = comments.filter(item => item.author?.login !== owner);
+      if (!reviewers.length || reviewers.some(item => !advisoryApprovers.has(item.author?.login))) response = true;
+    } else if (latest.author?.login) unanswered.push(latest);
     else unknown = true;
   }
-  const decision = effectiveReviewDecision(pr);
   if (decision === "CHANGES_REQUESTED" && !unanswered.length && !response) {
     const requests = items.filter(item => item.kind === "review" && item.state === "CHANGES_REQUESTED" && item.author?.login !== owner);
     response = Boolean(threads.size && pr.threads.unresolved === 0

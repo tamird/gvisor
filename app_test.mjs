@@ -2163,6 +2163,21 @@ test('the current project roster recognizes maintainers GitHub calls contributor
   assert.equal(vm.runInContext('currentHeadApproval(pr)', context), false);
 });
 
+test('an answered advisory suggestion leaves the first maintainer review outstanding', () => {
+  const node = attentionNode(17048), pr = node.github;
+  const reviewer = { __typename: 'User', login: 'adviser' }, owner = { __typename: 'User', login: 'tamird' };
+  Object.assign(pr, { repo: 'google/gvisor', githubReviewDecision: 'APPROVED', reviewDecision: 'REVIEW_REQUIRED', maintainerReviewers: [] });
+  const suggestion = { kind: 'inline', threadId: 'suggestion', author: reviewer, body: 'Drop this test.', createdAt: '2026-11-09T12:00:00Z' };
+  const reply = { ...suggestion, author: owner, body: 'Removed in the new commit.', createdAt: '2026-11-09T13:00:00Z' };
+  pr.feedback.items = [{ kind: 'review', state: 'APPROVED', author: reviewer }, suggestion, reply];
+  assert.deepEqual(idsFor(node), ['maintainer-review']);
+  pr.feedback.items.push({ ...suggestion, body: 'Which test still covers this?', createdAt: '2026-11-09T14:00:00Z' });
+  assert.ok(idsFor(node).includes('author-feedback'));
+  pr.feedback.items.pop();
+  pr.maintainerReviewers.push(reviewer.login);
+  assert.ok(idsFor(node).includes('maintainer-response'));
+});
+
 test('an advisory review cannot authorize an import or validate a corrupted cached binding', () => {
   const context = client(), node = attentionNode(), pr = node.github;
   node.repo = pr.repo = 'google/gvisor';
