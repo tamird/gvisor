@@ -93,6 +93,17 @@ class OutreachTest(unittest.TestCase):
         row = self.import_plan(p, "2026-11-12T18:00:00Z")
         self.assertEqual((row["lastActivityURL"],row["dueAt"]), (response,"2026-11-19T09:00:00-08:00"))
 
+    def test_existing_maintainer_handoff_uses_the_personal_clock(self):
+        p = self.approved()
+        url = "https://github.com/google/gvisor/pull/14361#issuecomment-1"
+        p["feedback"]["items"].append(comment("alice","cc @bob can you pull this in?", START, url=url))
+        # Same-second approval should still allow the two days promised to
+        # the person asked to handle the import.
+        result = self.import_plan(p, "2026-10-27T20:00:00Z")
+        self.assertEqual((result["lastReviewers"], result["lastContactURL"]), (["bob"],url))
+        self.assertEqual(result["dueAt"], "2026-10-28T09:00:00-07:00")
+        self.assertEqual(self.import_plan(p)["reviewer"], "alice")
+
     def test_import_skips_prior_approval_hold_and_landed_export(self):
         p = self.approved()
         for action in ("maintainer-reapproval","maintainer-import-label"):

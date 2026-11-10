@@ -126,13 +126,14 @@ def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, 
             # Never count quoted requests or an earlier request to restore
             # the label: this clock follows the actual change after approval.
             text = "\n".join(l for l in body.splitlines() if not l.lstrip().startswith(">"))
-            asks = (login == owner.lower() and item["kind"] in {"inline", "comment"}
-                    and re.search(r"\b(?:import|export|copybara|internal change|CL [0-9]+)\b", text, re.I)
+            asks = ((login in history.people or login == owner.lower() or login == approval["author"]["login"].lower())
+                    and item["kind"] in {"inline", "comment"}
+                    and re.search(r"\b(?:import|export|copybara|internal change|CL [0-9]+|pull (?:this|it) in)\b", text, re.I)
                     and re.search(r"\b(?:could|would|can|please|check|what|status)\b", text, re.I)
                     and not re.search(r"(?:restore|reapply|add).*?ready to pull|codex-reapproval", text, re.I))
             if asks:
                 for name in MENTION.findall(text.split("Posted by Codex", 1)[0]):
-                    if name.lower() != owner.lower() and name.lower() in history.people:
+                    if name.lower() not in {login, owner.lower()}:
                         contacts[name.lower()] = max(contacts.get(name.lower(), (at, "")), (at, item["url"]))
                 continue
             if at > activity and (body or item.get("state") in {"APPROVED", "CHANGES_REQUESTED"}):
@@ -152,7 +153,7 @@ def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, 
     if approver in history.people:
         helpers[approver] = (0, approval["url"])
     last = max(contacts.values(), default=None)
-    due = business_deadline(last[0], 2) if last and last[0] > activity else business_deadline(activity, 5)
+    due = business_deadline(last[0], 2) if last and last[0] >= activity else business_deadline(activity, 5)
     info.update(lastActivity=activity.isoformat(), lastActivityURL=activity_url, dueAt=due.isoformat())
     if last:
         info.update(lastContactAt=last[0].isoformat(), lastContactURL=last[1],
@@ -210,8 +211,9 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=trusted)
     # GitHub can associate an old approval with a rebased head. Only trust
     # that association for import follow-up when Copybara exported this head.
-    if not approval and disposition.get("scope") == "exact" and disposition.get("state") == "open":
-        approval = effective_approval(pr, trusted_reviewers=trusted, require_fresh=False)
+    if (not approval and pr.get("githubReviewDecision") == "APPROVED"
+            and disposition.get("scope") == "exact" and disposition.get("state") == "open"):
+        approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=trusted, require_fresh=False)
     if approval:
         return import_status_plan(pr, node, disposition, approval, now, owner, history, planned or {}, preferred)
     if (states.keys() & {"importing", "awaiting-import", "waiting-merge"} or disposition.get("reviewedExport")
