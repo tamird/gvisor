@@ -133,7 +133,8 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
     nodes = {node["number"]: node for node in registry["nodes"] if node.get("type") == "pr" and node.get("repo") == REPO}
     specialties = {name: set(areas) for name, areas in snapshot.get("reviewerSpecialties", {}).items()}
     history = reviewer_history(snapshot["prs"], owner, maintainers=maintainers, specialties=specialties,
-                               observations=snapshot.get("reviewerActivity", {}).get("observations", []))
+                               observations=snapshot.get("reviewerActivity", {}).get("observations", []),
+                               authored=snapshot.get("reviewerActivity", {}).get("authored", []))
     # Leave time for the final GitHub readback before the workflow ends.
     deadline = time.monotonic() + 12 * 60 if os.environ.get("WORK_MAP_SCHEDULED_REVIEW_OUTREACH") == "true" else None
     for index, scheduled in enumerate(plans):

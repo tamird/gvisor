@@ -17,6 +17,7 @@ def pr():
     return {"repo": "google/gvisor", "number": 1, "head": HEAD, "branchHead": HEAD, "status": "open",
             "mergeable": "MERGEABLE", "authorLogin": "tamird", "headOwner": "tamird",
             "reviewsComplete": True, "reviewRequestsComplete": True, "importsComplete": True,
+            "reviewDismissals": {"complete": True, "items": []},
             "headHistoryComplete": True, "files": ["pkg/sentry/kernel/task.go"],
             "headCommittedAt": START, "createdAt": OLD, "feedback": {"complete": True, "items": []},
             "checks": {"complete": True}, "threads": {"complete": True, "unresolved": 0},
@@ -53,6 +54,17 @@ class OutreachTest(unittest.TestCase):
         p=pr()
         p["reviewTimeline"]["items"].append({"kind":"ready","at":"2026-11-06T20:00:00Z"})
         self.assertEqual(action(p)["dueAt"],"2026-11-13T12:00:00-08:00")
+
+    def test_only_certified_unchanged_rebase_inherits_older_review_clock(self):
+        p = pr()
+        p.update(headIntroducedAt="2026-11-09T18:00:00Z", headRebasedFrom="b" * 40)
+        proof = {"head": HEAD, "priorHead": "b" * 40, "method": "reviewed-context-only-rebase",
+                 "changedLinesSha256": "1" * 64, "reviewableSince": START,
+                 "evidence": "https://github.com/google/gvisor/runs/123"}
+        self.assertEqual(action(p)["status"], "waiting")
+        self.assertEqual(action(p, node={"outreachReviewClock": proof})["status"], "due")
+        p["headRebasedFrom"] = "c" * 40
+        self.assertEqual(action(p, node={"outreachReviewClock": proof})["status"], "waiting")
 
     def test_recent_personal_contact_and_rotation(self):
         for channel in ("request", "comment"):
@@ -97,6 +109,20 @@ class OutreachTest(unittest.TestCase):
             with self.subTest(state=state): self.assertIsNone(action(pr(),states={state:{}}))
         p=pr();p["status"]="draft"
         self.assertIsNone(action(p))
+
+    def test_dismissed_approval_stays_with_prior_approver(self):
+        p = pr()
+        old_review = comment("alice", "", OLD, kind="review", state="DISMISSED", submittedAt=OLD,
+                             id="old-approval", authorAssociation="MEMBER", commit={"oid": "b" * 40})
+        p["feedback"]["items"].append(old_review)
+        p["reviewDismissals"]["items"].append({"previousReviewState": "APPROVED", "review": {"id": "old-approval"}})
+        self.assertIsNone(action(p))
+
+    def test_machine_review_under_human_name_does_not_reset_idle_time(self):
+        p = pr()
+        p["feedback"]["items"] = [comment("alice", "[🤖🐸🤖] Review agent has no findings.", NOW,
+                                          kind="review", state="COMMENTED")]
+        self.assertEqual(action(p)["status"], "due")
 
     def test_quoted_request_and_delegation_footer_are_not_contacts(self):
         p=comment("tamird","> @alice please review\n\nPosted by Codex on behalf of @tamird.",NOW)

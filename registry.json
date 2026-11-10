@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T01:27:32+00:00",
+    "updatedAt": "2026-11-10T01:37:45+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -348,6 +348,10 @@
         "after": {
           "head": "eff87694165c245ffac3999d0faf160d6713ba67"
         }
+      },
+      "reviewOutreachHold": {
+        "reason": "Maintainer requested a hold for the internal license exception.",
+        "evidence": "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825"
       }
     },
     {
@@ -4101,7 +4105,15 @@
           "label": "Native AMD64 netstack and stack suite results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42350364656/artifacts/13565357543"
         }
-      ]
+      ],
+      "outreachReviewClock": {
+        "head": "4677b6d5ab8676013afe8e5074ca776e9aabaafd",
+        "priorHead": "1c156e11a9760fb68214c2483493f1d50d8836a9",
+        "reviewableSince": "2026-10-25T12:40:08Z",
+        "changedLinesSha256": "6fe6ca3818bb762ade03531dd2ae7141efcbaa73e2185aa57f03948051f6ade9",
+        "method": "reviewed-context-only-rebase",
+        "evidence": "https://github.com/google/gvisor/runs/121171208659"
+      }
     },
     {
       "id": "pr:15188",
@@ -34699,6 +34711,14 @@
           "https://github.com/tamird/gvisor/commit/66a00cb0a250d468a647dc8e95feaa61f52fe08a",
           "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386"
         ]
+      },
+      "outreachReviewClock": {
+        "head": "6f2f1f4f70be77c329e2be8d92eb5491b238392a",
+        "priorHead": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+        "reviewableSince": "2026-10-28T14:11:02Z",
+        "changedLinesSha256": "f62a0dc4e3786f84a535652201de020ac68385dac727456bb257997ea7287989",
+        "method": "reviewed-context-only-rebase",
+        "evidence": "https://github.com/google/gvisor/runs/122869069993"
       }
     },
     {
@@ -53074,7 +53094,15 @@
           "outcome": "approved",
           "at": "2026-11-02T18:27:13.788641+00:00"
         }
-      ]
+      ],
+      "outreachReviewClock": {
+        "head": "9f3a1efe5acf05722e7910b465d96c8a2c26a637",
+        "priorHead": "3278152c32b9202d21e10cb4949d88b04da03ce7",
+        "reviewableSince": "2026-11-02T18:23:37Z",
+        "changedLinesSha256": "f542f03e70c3a1c9e1e1393531e1fcdc8f0b6dad36f45717aee86930bf6d535c",
+        "method": "reviewed-context-only-rebase",
+        "evidence": "https://github.com/google/gvisor/runs/125465183360"
+      }
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11519",
@@ -53642,7 +53670,15 @@
           "outcome": "approved",
           "at": "2026-11-02T18:30:15.670469+00:00"
         }
-      ]
+      ],
+      "outreachReviewClock": {
+        "head": "022322e790d2d6789549699760edfb482befcf19",
+        "priorHead": "e290b349e0d5d5e92ed816f30599112870f5c811",
+        "reviewableSince": "2026-11-02T18:29:18Z",
+        "changedLinesSha256": "8f59a038d1dcf833944fb10afeb5138257722199096c8bbc574043947a0bf516",
+        "method": "reviewed-context-only-rebase",
+        "evidence": "https://github.com/google/gvisor/runs/125468272525"
+      }
     },
     {
       "id": "pr:16825",
@@ -95376,5 +95412,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T01:27:32+00:00"
+  "updatedAt": "2026-11-10T01:37:45+00:00"
 }

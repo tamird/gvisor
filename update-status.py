@@ -49,7 +49,7 @@ number title url state isDraft headRefName headRefOid headRef { name target { oi
 headRepository { nameWithOwner owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
-  nodes { ... on HeadRefForcePushedEvent { createdAt afterCommit { oid } } }
+  nodes { ... on HeadRefForcePushedEvent { createdAt beforeCommit { oid } afterCommit { oid } } }
 }
 labels(first:100) { nodes { name } pageInfo { hasNextPage } }
 labelHistory:timelineItems(last:100,itemTypes:[LABELED_EVENT,UNLABELED_EVENT]) {
@@ -536,6 +536,9 @@ def normalize(pr: dict) -> dict:
         "ref": pr["headRefName"], "head": pr["headRefOid"], **mergeability_fields(pr),
         "headCommittedAt": commits[0]["commit"]["committedDate"],
         "headHistoryComplete": "headHistory" in pr,
+        "headRebasedFrom": next(((e.get("beforeCommit") or {}).get("oid")
+                                 for e in pr.get("headHistory", {}).get("nodes", [])
+                                 if (e.get("afterCommit") or {}).get("oid") == pr["headRefOid"]), None),
         "headIntroducedAt": max((event["createdAt"] for event in pr.get("headHistory", {}).get("nodes", [])
                                  if (event.get("afterCommit") or {}).get("oid") == pr["headRefOid"]), default=None),
         "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
@@ -1202,12 +1205,6 @@ def main() -> None:
             previous = {}
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
     maintainers, active_reviewers, specialties = fetch_maintainers(include_specialties=True)
-    previous_activity = previous.get("reviewerActivity", {})
-    try:
-        activity = recent_reviewer_work(graphql, active_reviewers, previous_activity, datetime.now(timezone.utc))
-    except GitHubTransportError as error:
-        activity = {**previous_activity, "error": str(error)}
-        print(json.dumps({"reviewerActivityDeferred": str(error)}), flush=True)
     discovery_repositories = set(REGISTRY["meta"].get("repositories", [REPO])) - set(REGISTRY["meta"].get("registeredOnlyRepositories", []))
     registered_repositories = policies.keys() - discovery_repositories
     registered = None
@@ -1233,6 +1230,15 @@ def main() -> None:
     # Discover requests before spending the optional mergeability recheck budget.
     since = datetime.now(timezone.utc).isoformat()
     incoming, scan = incoming_review_intake(previous, [*prs, *review_prs], since)
+    # Optional reviewer sampling must not consume a request needed for source,
+    # issue, or incoming-review discovery. A later refresh can complete it.
+    activity = previous.get("reviewerActivity", {})
+    if requests < REQUEST_LIMIT:
+        try:
+            activity = recent_reviewer_work(graphql, active_reviewers, activity, datetime.now(timezone.utc))
+        except GitHubTransportError as error:
+            activity = {**activity, "error": str(error)}
+            print(json.dumps({"reviewerActivityDeferred": str(error)}), flush=True)
     # Reviewer requests take priority. Give the hourly CI sample a turn before
     # optional mergeability retries can spend the last request every cycle.
     scan_flakes = any(item["id"] == "investigation:ci-flakes" and item["status"] == "active"
@@ -1286,7 +1292,7 @@ def main() -> None:
     snapshot["reviewerSpecialties"] = {path: sorted(logins) for path, logins in specialties.items()}
     snapshot["reviewerActivity"] = activity
     history = reviewer_history(prs, OWNER, maintainers=active_reviewers, specialties=specialties,
-                               observations=activity.get("observations", []))
+                               observations=activity.get("observations", []), authored=activity.get("authored", []))
     source_states = outreach_states(snapshot, REGISTRY)
     snapshot["reviewOutreach"] = {}
     for pr in prs:

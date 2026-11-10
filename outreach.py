@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from reviewer_selection import History, get_reviewer_candidates, reviewer_history
-from work_states import derive_states, effective_approval, landed_patch, matches_feedback_assignment
+from work_states import derive_states, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment
 
 PACIFIC = ZoneInfo("America/Los_Angeles")
 MARKER = re.compile(r"<!-- gvisor-review-outreach (\d+):([0-9a-f]{40}):([A-Za-z0-9-]+) -->")
@@ -114,13 +114,24 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         return None
     if not (pr.get("headHistoryComplete") and pr.get("reviewsComplete") and pr.get("reviewRequestsComplete")
             and pr.get("feedback", {}).get("complete") and pr.get("importsComplete")
+            and pr.get("reviewDismissals", {}).get("complete")
             and pr.get("checks", {}).get("complete") and pr.get("threads", {}).get("complete")
             and pr.get("reviewTimeline", {}).get("complete") and pr.get("files")):
         return {"number": number, "head": head, "status": "incomplete"}
-    if author_work(pr, node, owner):
+    # The existing import/reapproval alarm owns earlier formal approvals,
+    # including reviews GitHub dismissed after a push.
+    decisions = maintainer_review_history(pr)
+    if decisions is None or decisions[1] or author_work(pr, node, owner):
         return None
     timeline = pr["reviewTimeline"]["items"]
-    started = max(instant(t) for t in [pr["createdAt"], pr.get("headCommittedAt"), pr.get("headIntroducedAt"),
+    source = [pr.get("headCommittedAt"), pr.get("headIntroducedAt")]
+    proof = node.get("outreachReviewClock", {})
+    if (proof.get("head") == head and proof.get("method") == "reviewed-context-only-rebase"
+            and pr.get("headRebasedFrom") and proof.get("priorHead") == pr["headRebasedFrom"]
+            and re.fullmatch(r"[0-9a-f]{64}", proof.get("changedLinesSha256", ""))
+            and proof.get("evidence") and proof.get("reviewableSince")):
+        source = [proof["reviewableSince"]]
+    started = max(instant(t) for t in [pr["createdAt"], *source,
                   *(e["at"] for e in timeline if e["kind"] in {"ready", "reopen"})] if t)
     activity = started
     owner_activity = started
@@ -155,7 +166,7 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
             for name in asks:
                 contacts[name] = max(contacts.get(name, asked), asked)
             continue
-        if item.get("state") == "DISMISSED":
+        if item.get("state") == "DISMISSED" or (login != owner.lower() and item.get("body", "").lstrip().startswith("[🤖")):
             continue
         activity = max(activity, at)
         if login == owner.lower():
@@ -178,7 +189,7 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     # A reviewer who responded on a previous revision is eligible again after
     # new source lands. An unanswered or still-pending request is not repeated.
     excluded = prior | removed
-    manual_current = current - automatic | (current & contacts.keys())
+    manual_current = current & prior
     candidates = get_reviewer_candidates(pr, history, excluded | manual_current, current, now, planned=planned)
     candidates = [c for c in candidates if c["login"].lower() not in excluded | manual_current
                   and (c["login"].lower() not in current or c["channel"] == "comment")
