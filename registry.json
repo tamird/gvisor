@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T20:59:05+00:00",
+    "updatedAt": "2026-11-10T21:24:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71958,7 +71958,7 @@
       "url": "https://github.com/google/gvisor/pull/17416",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-10T20:57:16+00:00",
+      "updatedAt": "2026-11-10T21:24:55+00:00",
       "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
       "evidence": [
         {
@@ -71976,6 +71976,14 @@
         {
           "label": "CI flake investigation",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aci-flake-netgofer-udp-idle"
+        },
+        {
+          "label": "Reviewed-test cleanup on the fork",
+          "url": "https://github.com/tamird/gvisor/commit/cda55e165"
+        },
+        {
+          "label": "ARM64 package tests, slow releases and three negative controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42904315957"
         }
       ],
       "settledReviews": [
@@ -71995,17 +72003,25 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent",
         "sourceHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
-        "observedAt": "2026-11-10T20:57:16+00:00",
-        "disposition": "Published the approved test fix as one mergeable commit on #17416. The native ARM64 test passed eight times after the first flow released its slot.",
-        "nextAction": "Follow checks and maintainer review on #17416.",
+        "observedAt": "2026-11-10T21:24:55+00:00",
+        "disposition": "The fork revision checks the two actual UDP exchanges with one deadline and verifies that the first host socket is closed after its slot is released.",
+        "nextAction": "Verify the full native ARM64 package and the retained-slot, retained-socket and oversized-reply controls before submitting the revision for review.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17416",
-          "https://github.com/tamird/gvisor/actions/runs/42893640379/artifacts/13799004508"
+          "https://github.com/tamird/gvisor/commit/cda55e165",
+          "https://github.com/tamird/gvisor/actions/runs/42904315957"
         ]
       },
-      "number": 17416
+      "number": 17416,
+      "refinement": {
+        "before": {
+          "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830"
+        },
+        "after": {
+          "head": "cda55e1657a92d33e76472cb4fc3060469c3961a"
+        }
+      }
     }
   ],
   "edges": [
@@ -97499,7 +97515,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T20:57:16+00:00",
+      "updatedAt": "2026-11-10T21:24:55+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97565,9 +97581,22 @@
               "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54208/jobs/01a1c697-6f9d-4cc4-85bd-9a4941acff68/artifacts/01a1c6b5-8928-4fa6-a3d5-c04e597fc6f0"
             }
           ]
+        },
+        {
+          "text": "Tracing /bin/true as bob with no effective capabilities exited 0 under runc. On the runtime from the systrap merge, the same command was still waiting at 15 seconds. The fork fix reports an existing group-stop to the tracer after PTRACE_SEIZE.",
+          "evidence": [
+            {
+              "label": "Unprivileged strace on runc and the merge runtime",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42901499742/artifacts/13803645583"
+            },
+            {
+              "label": "Report an existing group-stop when seizing a tracee",
+              "url": "https://github.com/tamird/gvisor/commit/71bdb9225"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the fourth exec on deb6b3ea1 and 1b8388552 to identify where the tracer and tracee stop. Reproduce the hang and test a fix against the passing parent.",
+      "nextStep": "Check the stopped tracee with both PTRACE_ATTACH and PTRACE_SEIZE on native Linux and systrap. Then verify the sudo and debugger cases on the revised runtime.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97592,6 +97621,18 @@
         {
           "label": "Third TestSudo timeout on cgroup v1",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c712-c659-4c16-af5e-1efd5d6dfbf7"
+        },
+        {
+          "label": "Report an existing group-stop when seizing a tracee",
+          "url": "https://github.com/tamird/gvisor/commit/71bdb9225"
+        },
+        {
+          "label": "Unprivileged strace on runc and the merge runtime",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42901499742/artifacts/13803645583"
+        },
+        {
+          "label": "Native and systrap attach modes, sudo and debugger tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42903253276"
         }
       ],
       "settledReviews": [
@@ -97609,5 +97650,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T20:59:05+00:00"
+  "updatedAt": "2026-11-10T21:24:55+00:00"
 }
