@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T21:47:21+00:00",
+    "updatedAt": "2026-11-10T21:53:29+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97443,7 +97443,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T21:47:21+00:00",
+      "updatedAt": "2026-11-10T21:53:29+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97546,7 +97546,7 @@
           ]
         }
       ],
-      "nextStep": "Review the tested fix for submission. If the rollback lands first, use the fix when relanding #15938. Sharing the tested commit on @kerumeto’s thread has a separate pending permission. The original issue draft remains on hold.",
+      "nextStep": "Review the tested fix for submission while master is affected. The fix and its results are on @kerumeto’s original thread. If the rollback lands first, the author can cherry-pick the fix when relanding #15938.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97595,6 +97595,10 @@
         {
           "label": "Alexander’s diagnosis of the PTRACE_SEIZE return",
           "url": "https://github.com/google/gvisor/pull/15938#discussion_r4530867035"
+        },
+        {
+          "label": "Tested fix shared on the original review thread",
+          "url": "https://github.com/google/gvisor/pull/15938#discussion_r4530984210"
         }
       ],
       "settledReviews": [
@@ -97608,6 +97612,15 @@
           "outcome": "approved",
           "at": "2026-11-10T20:57:16+00:00",
           "note": "Filing is approved. The contributor asked us to diagnose and fix the traced exec hang first."
+        },
+        {
+          "kind": "reply",
+          "head": "c70baf34b2ddea4aeb7c65e88679bd41d185680b",
+          "url": "https://github.com/google/gvisor/pull/15938#discussion_r4530867035",
+          "body": "@kerumeto, confirmed. With https://github.com/tamird/gvisor/commit/71bdb9225, TestSudo finishes in 1.65 seconds and TestGDBAttach passes. If the rollback lands first, @botirkhaltaev can cherry-pick this when relanding #15938.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-10T21:51:51Z",
+          "postedURL": "https://github.com/google/gvisor/pull/15938#discussion_r4530984210"
         }
       ],
       "contributorReview": {
@@ -97623,5 +97636,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T21:47:21+00:00"
+  "updatedAt": "2026-11-10T21:53:29+00:00"
 }
