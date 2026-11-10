@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T21:24:55+00:00",
+    "updatedAt": "2026-11-10T21:30:20+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71958,7 +71958,7 @@
       "url": "https://github.com/google/gvisor/pull/17416",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-10T21:24:55+00:00",
+      "updatedAt": "2026-11-10T21:30:20+00:00",
       "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
       "evidence": [
         {
@@ -71984,6 +71984,10 @@
         {
           "label": "ARM64 package tests, slow releases and three negative controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42904315957"
+        },
+        {
+          "label": "Original ARM64 results for the revised test and its three controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42904315957/artifacts/13803319428"
         }
       ],
       "settledReviews": [
@@ -72003,14 +72007,15 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
-        "observedAt": "2026-11-10T21:24:55+00:00",
-        "disposition": "The fork revision checks the two actual UDP exchanges with one deadline and verifies that the first host socket is closed after its slot is released.",
-        "nextAction": "Verify the full native ARM64 package and the retained-slot, retained-socket and oversized-reply controls before submitting the revision for review.",
+        "observedAt": "2026-11-10T21:30:20+00:00",
+        "disposition": "All 22 ARM64 package cases passed on the revision. The slow-release case passed eight times. Each of three independent controls failed at its intended assertion.",
+        "nextAction": "Review the single fork revision against the published PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/cda55e165",
-          "https://github.com/tamird/gvisor/actions/runs/42904315957"
+          "https://github.com/tamird/gvisor/actions/runs/42904315957/artifacts/13803319428",
+          "https://github.com/google/gvisor/pull/17416"
         ]
       },
       "number": 17416,
@@ -72021,6 +72026,17 @@
         "after": {
           "head": "cda55e1657a92d33e76472cb4fc3060469c3961a"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "cda55e1657a92d33e76472cb4fc3060469c3961a",
+        "baseHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+        "url": "https://github.com/tamird/gvisor/commit/cda55e165",
+        "title": "Wait for the idle UDP flow to release its netgofer slot",
+        "requestedAt": "2026-11-10T21:30:20+00:00",
+        "summary": "Publish the full UDP idle-timeout test cleanup on #17416?",
+        "body": "Both UDP exchanges now use the same buffer and deadline. The first client stays open while the proxy releases its only slot. A write to the first host socket must then return net.ErrClosed, and the second client must receive exactly its first datagram.\n\nAll 22 package tests passed on native ARM64. Delaying slot release by 250 ms passed eight times. Leaving the first host socket open, retaining the slot, and appending a byte to the second reply each failed at its own assertion."
       }
     }
   ],
@@ -97650,5 +97666,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T21:24:55+00:00"
+  "updatedAt": "2026-11-10T21:30:20+00:00"
 }
