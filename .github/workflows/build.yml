@@ -1,7 +1,7 @@
-name: Read the OpenJDK JDI test result inside gVisor
+name: Run the OpenJDK JDI case alongside its original sibling shards
 on:
   push:
-    branches: [qualification/java21-jdi-guest-receipts]
+    branches: [qualification/java21-jdi-shard-cohort]
 permissions: {}
 jobs:
   linux:
@@ -16,7 +16,7 @@ jobs:
           git init .
           git fetch --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
           git checkout --detach "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = 20cd423ff7b54b6fe9fad7d218c7e12209ff75b4
+          test "$(git rev-parse HEAD~2)" = 20cd423ff7b54b6fe9fad7d218c7e12209ff75b4
           w="$RUNNER_TEMP/java-jdi"
           mkdir -p "$w/receipt" "$w/release" "$w/docker-client"
           echo "JAVA_JDI=$w" >> "$GITHUB_ENV"
@@ -60,7 +60,7 @@ jobs:
           for i in {1..45}; do docker info >/dev/null 2>&1 && break; sleep 1; done
           test "$(docker info --format '{{.DockerRootDir}}')" = "$d/data"
           docker pull --platform=linux/amd64 us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/java21_x86_64@sha256:c5a1419701eea132bc82193018a09a91296a8d9e96492495a72dd84040e0bb47
-      - name: Run both unchanged JDI tests under the archived runsc
+      - name: Compare native and guest JDI with seven real background shard commands
         shell: bash
         run: |
           set -euo pipefail
@@ -80,7 +80,7 @@ jobs:
           python3 - "$b" "$JAVA_JDI/receipt" <<'PY'
           import pathlib, sys, zipfile
           base, out = map(pathlib.Path, sys.argv[1:])
-          names = {f"jdi-{i}-java-jdi-ci.{ext}" for i in (2, 3) for ext in ("json", "jtr", "stdout", "stderr")}
+          names = {f"jdi-{i}-{runtime}.{ext}" for i, runtime in ((0, "runc"), (1, "java-jdi-ci")) for ext in ("json", "jtr", "stdout", "stderr")}
           files = base / "test.outputs"
           if files.is_dir():
               for n in names:
@@ -103,13 +103,13 @@ jobs:
         run: |
           import os, pathlib, re
           root = pathlib.Path(os.environ["JAVA_JDI"]) / "receipt"
-          allowed = {"runtime.json", "test.xml", "test.log"} | {f"jdi-{i}-java-jdi-ci.{ext}" for i in (2, 3) for ext in ("json", "jtr", "stdout", "stderr")}
+          allowed = {"runtime.json", "test.xml", "test.log"} | {f"jdi-{i}-{runtime}.{ext}" for i, runtime in ((0, "runc"), (1, "java-jdi-ci")) for ext in ("json", "jtr", "stdout", "stderr")}
           for p in root.iterdir():
               assert p.name in allowed and not p.is_symlink() and p.is_file() and p.stat().st_size < 700000
               assert not re.search(rb"(?i)(authorization:|bearer |x-buildbuddy-api-key|ghp_|github_pat_|-----BEGIN [A-Z ]*PRIVATE KEY)", p.read_bytes())
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.outputs.outcome == 'success'
         with:
-          name: java21-jdi-guest-receipts
+          name: java21-jdi-shard-cohort
           path: ${{ runner.temp }}/java-jdi/receipt/
           if-no-files-found: error

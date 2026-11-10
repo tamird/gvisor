@@ -35,8 +35,7 @@ func TestJDI(t *testing.T) {
 	oopsFlag := regexp.MustCompile(`(?m)UseCompressedOops\s+(?::?=)\s+(true|false)`)
 	heapFlag := regexp.MustCompile(`(?m)MaxHeapSize\s+(?::?=)\s+(\d+)`)
 	bye := regexp.MustCompile(`Goodbye from ThreadMemoryLeakTarg after ([0-9]+) iterations`)
-	const runtime = "java-jdi-ci"
-	for _, i := range []int{2, 3} {
+	for i, runtime := range []string{"runc", "java-jdi-ci"} {
 		t.Run(fmt.Sprintf("%d-%s", i, runtime), func(t *testing.T) {
 			name := fmt.Sprintf("jdi-%d-%s", i, runtime)
 			docker(t, "run", "-d", "--name", name, "--runtime", runtime, "--network=none", "-v", bin+":/proctor:ro", image, "/proctor", "--pause")
@@ -57,7 +56,16 @@ func TestJDI(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
 			cmd.Stderr = &stderr
-			runErr := cmd.Run()
+			cohort := map[string]any{}
+			peers := startCohort(t, name, bin, cohort)
+			if err := cmd.Start(); err != nil {
+				t.Fatal(err)
+			}
+			done := make(chan struct{})
+			var runErr error
+			go func() { runErr = cmd.Wait(); close(done) }()
+			measureCohort(t, name, peers, done, cohort)
+			<-done
 			outDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
 			write := func(ext string, data []byte) {
 				t.Helper()
@@ -70,7 +78,7 @@ func TestJDI(t *testing.T) {
 			if cmd.ProcessState == nil {
 				t.Fatalf("could not start proctor: %v", runErr)
 			}
-			record := map[string]any{"runtime": runtime, "jdk_test": jdiTest, "compressed_oops": oops[1], "max_heap_bytes": heap[1], "proctor_exit_code": cmd.ProcessState.ExitCode()}
+			record := map[string]any{"cohort": cohort, "runtime": runtime, "jdk_test": jdiTest, "compressed_oops": oops[1], "max_heap_bytes": heap[1], "proctor_exit_code": cmd.ProcessState.ExitCode()}
 			writeRecord := func() {
 				t.Helper()
 				result, err := json.MarshalIndent(record, "", "  ")

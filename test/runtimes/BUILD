@@ -9,9 +9,9 @@ package(
 go_test(
     name = "jdi_runtime_qualification",
     size = "enormous",
-    srcs = ["qualification_jdi_test.go"],
+    srcs = ["qualification_cohort_test.go", "qualification_jdi_test.go"],
     args = ["-proctor=$(rootpath //test/runtimes/proctor:proctor_bin)"],
-    data = ["//test/runtimes/proctor:proctor_bin"],
+    data = ["qualification_jdi_cases.json", "//test/runtimes/proctor:proctor_bin"],
     tags = ["manual"],
 )
 
