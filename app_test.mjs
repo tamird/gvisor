@@ -16,6 +16,22 @@ function client() {
   return context;
 }
 
+test('review outreach follows only the observed open gVisor source', () => {
+  const c = client();
+  c.pr = { type: 'pr', repo: 'google/gvisor', github: { status: 'open', number: 16516, head: 'a'.repeat(40) } };
+  const row = { number: 16516, head: c.pr.github.head, status: 'due', reviewer: 'reviewer', channel: 'comment',
+    reason: 'Reviewed the changed file', evidence: 'https://github.com/google/gvisor/pull/12', dueAt: '2026-11-09T18:00:00Z' };
+  c.snapshotInput.reviewOutreach = { 16516: row };
+  const read = () => vm.runInContext('currentOutreach(pr)', c);
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput); liveSnapshot = snapshotInput;', c);
+  assert.equal(read().reviewer, 'reviewer');
+  c.pr.github.head = 'b'.repeat(40);
+  assert.equal(read(), null);
+  c.pr.github.head = row.head;
+  c.pr.github.status = 'merged';
+  assert.equal(read(), null);
+});
+
 test('an active CI flake investigation belongs to the agent before it has a branch', () => {
   const context = client();
   context.nodeInput = { id: 'investigation:ci-flake-example', type: 'investigation', group: 'ci-flakes',

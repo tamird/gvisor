@@ -252,6 +252,7 @@ const DECISION_REASONS = [
   { id: "post-reply", owner: "user", title: "Approve replies, comments, and issues" },
 ];
 const ATTENTION_REASONS = [
+  { id: "agent-review-outreach", owner: "agent", title: "Find or contact a reviewer" },
   { id: "agent-requested-review", owner: "agent", title: "Incoming PR review requests" },
   { id: "agent-feedback-sweep", owner: "agent", title: "Audit earlier work against contributor guidance" },
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
@@ -589,6 +590,9 @@ function attentionReasons(node, owner) {
   if (node.type === "investigation" && node.group === "ci-flakes" && node.status === "active")
     add("agent-ci-flake", node.nextStep);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
+  const outreach = currentOutreach(node);
+  if (outreach?.status === "due") add("agent-review-outreach", `Review request due for @${outreach.reviewer}.`);
+  else if (outreach?.status === "needs-reviewer") add("agent-review-outreach", "Find another active reviewer with relevant experience.");
   const sweep = liveSnapshot?.projectFeedbackReview;
   if (node.id === "investigation:project-feedback" && node.status === "active" && sweep?.dailyReviewDue === true
       && sweep.lastReviewed && sweep.lastReviewed === node.lastReviewedAt)
@@ -1744,6 +1748,28 @@ function appendSettledPublications(parent, node) {
     }
   }
 }
+function currentOutreach(node) {
+  const pr = node.github;
+  if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open") return null;
+  const row = liveSnapshot?.reviewOutreach?.[pr.number];
+  return row?.head === pr.head ? row : null;
+}
+function appendOutreach(parent, node) {
+  const row = currentOutreach(node);
+  if (!row || row.status === "incomplete") return;
+  const section = element("section", "detail-section");
+  section.append(element("h3", "", "Review outreach"));
+  const due = new Date(row.dueAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  if (row.status === "due") {
+    section.append(element("p", "", `${row.channel === "request" ? "Request a GitHub review from" : "Mention"} @${row.reviewer}. ${row.reason}`), link("Reviewer evidence ↗", row.evidence));
+  } else if (row.status === "needs-reviewer") {
+    section.append(element("p", "", "A review is due. Identify another active reviewer with relevant experience."));
+  } else {
+    const last = row.lastReviewers?.length ? `Asked ${row.lastReviewers.map(who => "@" + who).join(", ")}. ` : "";
+    section.append(element("p", "", `${last}Next eligible review request: ${due}.`));
+  }
+  parent.append(section);
+}
 function drawDetails() {
   if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
   const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
@@ -1806,6 +1832,7 @@ function drawDetails() {
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
+  appendOutreach(details, node);
   const evidenceURL = node.followup?.evidence?.[0];
   if (node.type === "branch" && node.status === "Agent work" && evidenceURL && node.followup.sourceHead === node.head) {
     const source = node.links?.find(item => item.url === evidenceURL) || node.evidence?.find(item => item.url === evidenceURL);
@@ -2318,6 +2345,18 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
             typeof item.title !== "string" || !item.title.trim() || !["open", "closed", "merged"].includes(item.state) ||
             item.url !== `https://github.com/google/gvisor/${item.kind === "pr" ? "pull" : "issues"}/${item.number}` ||
             !Number.isFinite(Date.parse(item.updatedAt))))) throw new Error("Invalid gVisor CI flake report");
+    }
+  }
+  if (snapshot.reviewOutreach !== undefined) {
+    if (!snapshot.reviewOutreach || typeof snapshot.reviewOutreach !== "object" || Array.isArray(snapshot.reviewOutreach))
+      throw new Error("Invalid gVisor review outreach");
+    for (const [id, row] of Object.entries(snapshot.reviewOutreach)) {
+      if (!row || String(row.number) !== id || !/^[1-9]\d*$/.test(id) || !/^[a-f0-9]{40}$/.test(row.head) ||
+          !["due", "waiting", "needs-reviewer", "incomplete"].includes(row.status) ||
+          row.status !== "incomplete" && !Number.isFinite(Date.parse(row.dueAt)) ||
+          row.status === "due" && (!["request", "comment"].includes(row.channel) || !/^[A-Za-z0-9-]+$/.test(row.reviewer) ||
+            !row.reason || !/^https:\/\/github\.com\/google\/gvisor\//.test(row.evidence)))
+        throw new Error("Invalid gVisor review outreach record");
     }
   }
   if (snapshot.incomingReviewRequests !== undefined) {

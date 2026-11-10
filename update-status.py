@@ -2,6 +2,7 @@
 """Publish public GitHub metadata using the existing authenticated gh session."""
 
 import argparse
+from collections import Counter
 import http.client
 import json
 import re
@@ -15,6 +16,8 @@ from ci_actions import collect as collect_ci_actions
 from ci_flakes import collect as collect_ci_flakes
 from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
+from outreach import outreach_states, plan as outreach_plan, reviewer_history
+from reviewer_selection import recent_reviewer_work, reviewer_governance
 from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers
 
 
@@ -76,6 +79,18 @@ reviewThreads(first:100) { totalCount pageInfo { hasNextPage } nodes {
   } }
 } }
 """ + CHECKS
+OUTREACH_FIELDS = """
+files(first:100) { pageInfo { hasNextPage } nodes { path } }
+reviewTimeline:timelineItems(last:100,itemTypes:[REVIEW_REQUESTED_EVENT,REVIEW_REQUEST_REMOVED_EVENT,READY_FOR_REVIEW_EVENT,REOPENED_EVENT]) {
+  pageInfo { hasPreviousPage }
+  nodes { __typename
+    ... on ReviewRequestedEvent { id createdAt actor { login __typename } requestedReviewer { __typename ... on User { login } } }
+    ... on ReviewRequestRemovedEvent { id createdAt actor { login __typename } requestedReviewer { __typename ... on User { login } } }
+    ... on ReadyForReviewEvent { id createdAt actor { login __typename } }
+    ... on ReopenedEvent { id createdAt actor { login __typename } }
+  }
+}
+"""
 TIMELINE = """
 timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
   pageInfo { hasPreviousPage }
@@ -553,6 +568,15 @@ def normalize(pr: dict) -> dict:
                       if (source := event.get("source") or {}).get("__typename") == "PullRequest"
                       and source.get("repository", {}).get("isPrivate") is False],
         }
+    if "reviewTimeline" in pr:
+        timeline = pr["reviewTimeline"]
+        kinds = {"ReviewRequestedEvent": "request", "ReviewRequestRemovedEvent": "remove",
+                 "ReadyForReviewEvent": "ready", "ReopenedEvent": "reopen"}
+        normalized["reviewTimeline"] = {"complete": not timeline["pageInfo"]["hasPreviousPage"],
+            "items": [{"kind": kinds[e["__typename"]], "id": e["id"], "at": e["createdAt"],
+                       "actor": e["actor"], "reviewer": e.get("requestedReviewer")} for e in timeline["nodes"]]}
+        normalized["files"] = [f["path"] for f in pr["files"]["nodes"]]
+        normalized["filesComplete"] = not pr["files"]["pageInfo"]["hasNextPage"]
     normalized["reviewDecision"] = review_decision(normalized)
     normalized["approvedHead"] = normalized["head"] if normalized["reviewDecision"] == "APPROVED" else None
     approval = effective_approval(normalized)
@@ -565,6 +589,8 @@ def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO, *, team_
     owner, name = repo.split("/")
     # Reminder decisions need individual reviews, not organization team names.
     selected_fields = FIELDS if team_details else FIELDS.replace(" ... on Team { name slug }", "")
+    if timeline and repo == "google/gvisor":
+        selected_fields += OUTREACH_FIELDS
     for start in range(0, len(numbers), PR_BATCH_SIZE):
         print(json.dumps({"prBatch": {"repo": repo, "numbers": numbers[start:start + PR_BATCH_SIZE],
                                       "nextRequest": requests + 1}}), flush=True)
@@ -965,16 +991,23 @@ def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
     return records
 
 
-def fetch_maintainers() -> frozenset[str]:
+def fetch_maintainers(*, include_specialties: bool = False):
     """Use project governance, not GitHub repository association, for authority."""
+    area_files = ('areas:object(expression:"HEAD:governance/areas.yaml") { ... on Blob { text } } '
+                  'roster:object(expression:"HEAD:governance/maintainers.yaml") { ... on Blob { text } }'
+                  if include_specialties else "")
     response = graphql('query { repository(owner:"google",name:"gvisor") { '
-                       'object(expression:"HEAD:MAINTAINERS.md") { oid ... on Blob { text } } } }')
+                       'object(expression:"HEAD:MAINTAINERS.md") { oid ... on Blob { text } } ' + area_files + '} }')
     roster = response["repository"]["object"]
     if not roster or not isinstance(roster.get("text"), str):
         raise RuntimeError("Canonical gVisor maintainer roster is unavailable")
     maintainers = maintainer_logins(roster["text"])
     print(json.dumps({"maintainerRoster": {"repo": "google/gvisor", "path": "MAINTAINERS.md",
                                           "blob": roster["oid"], "logins": sorted(maintainers)}}))
+    if include_specialties:
+        repo = response["repository"]
+        active, specialties = reviewer_governance(repo["areas"]["text"], repo["roster"]["text"])
+        return maintainers, active, specialties
     return maintainers
 
 
@@ -1168,7 +1201,13 @@ def main() -> None:
         if not (previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER):
             previous = {}
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
-    maintainers = fetch_maintainers()
+    maintainers, active_reviewers, specialties = fetch_maintainers(include_specialties=True)
+    previous_activity = previous.get("reviewerActivity", {})
+    try:
+        activity = recent_reviewer_work(graphql, active_reviewers, previous_activity, datetime.now(timezone.utc))
+    except GitHubTransportError as error:
+        activity = {**previous_activity, "error": str(error)}
+        print(json.dumps({"reviewerActivityDeferred": str(error)}), flush=True)
     discovery_repositories = set(REGISTRY["meta"].get("repositories", [REPO])) - set(REGISTRY["meta"].get("registeredOnlyRepositories", []))
     registered_repositories = policies.keys() - discovery_repositories
     registered = None
@@ -1244,6 +1283,30 @@ def main() -> None:
                            "nestedPageSize": 100, "requestLimit": REQUEST_LIMIT, "repositories": inventories,
                            **{key: sum(item[key] for item in inventories.values() if item[key] is not None)
                               for key in ("openInventoryTotal", "retainedSources", "retainedImports")}}}
+    snapshot["reviewerSpecialties"] = {path: sorted(logins) for path, logins in specialties.items()}
+    snapshot["reviewerActivity"] = activity
+    history = reviewer_history(prs, OWNER, maintainers=active_reviewers, specialties=specialties,
+                               observations=activity.get("observations", []))
+    source_states = outreach_states(snapshot, REGISTRY)
+    snapshot["reviewOutreach"] = {}
+    for pr in prs:
+        number = str(pr["number"])
+        node = nodes.get((pr.get("repo"), pr["number"]), {})
+        if action := outreach_plan(pr, node, source_states.get(number, {}), checked_at, OWNER, maintainers, history):
+            snapshot["reviewOutreach"][number] = action
+    # Allocate equally qualified reviewers across this batch, in deadline
+    # order. A larger backlog changes the distribution, not the number due.
+    planned = Counter()
+    by_number = {p["number"]: p for p in prs if p.get("repo") == REPO}
+    due = sorted((r for r in snapshot["reviewOutreach"].values() if r["status"] == "due"),
+                 key=lambda r: (datetime.fromisoformat(r["dueAt"]), r["number"]))
+    for row in due:
+        number = row["number"]
+        action = outreach_plan(by_number[number], nodes.get((REPO, number), {}), source_states[str(number)],
+                               checked_at, OWNER, maintainers, history, planned=planned)
+        snapshot["reviewOutreach"][str(number)] = action
+        if action["status"] == "due":
+            planned[action["reviewer"].lower()] += 1
     if sweep := feedback_sweep(REGISTRY, [*prs, *review_prs], previous, checked_at):
         snapshot["projectFeedbackReview"] = sweep
         print(json.dumps({"projectFeedbackReview": sweep}))
@@ -1322,6 +1385,33 @@ def incoming_review_handoff() -> None:
     print(json.dumps({"checkedAt": checked, "repo": REPO, "incomingReviewRequests": rows}))
 
 
+def review_outreach(post: bool = False) -> None:
+    from outreach_delivery import deliver
+
+    snapshot = json.loads((ROOT / "github-status.json").read_text())
+    sources = {pr["number"]: pr for pr in snapshot["prs"] if pr.get("repo") == REPO}
+    maintainers, active_reviewers, specialties = fetch_maintainers(include_specialties=True)
+    snapshot["reviewerSpecialties"] = {path: sorted(logins) for path, logins in specialties.items()}
+
+    def fresh(number: int) -> dict:
+        # This read is the final guard for one delivery. The cap on a full
+        # snapshot must not limit how many separate PRs can receive review.
+        global requests
+        requests = 0
+        raw = fetch_numbers([number], timeline=True, repo=REPO, team_details=False)[number]
+        recheck_unknown_mergeability([raw], repo=REPO)
+        current = with_maintainer_reviewers(normalize(raw), maintainers)
+        current["importPolicy"] = "copybara"
+        current["imports"] = refresh_reminder_imports(raw, sources[number])
+        current["importsComplete"] = not raw["timelineItems"]["pageInfo"]["hasPreviousPage"]
+        node = next((n for n in REGISTRY["nodes"] if n["id"] == f"pr:{number}"), {})
+        current["publicImportDisposition"] = public_import_disposition(current, node.get("approvedPatch"),
+                node.get("landedPatch"), node.get("reapproval"), node.get("importPatchComparison"))
+        return current
+
+    deliver(snapshot, REGISTRY, datetime.now(timezone.utc).isoformat(), OWNER, active_reviewers, fresh, post=post)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group()
@@ -1329,9 +1419,13 @@ if __name__ == "__main__":
                       help="Read gVisor review requests at supervisor startup, including newly opened PRs")
     mode.add_argument("--reapproval-reminders", choices=("plan", "post"),
                         help="Use the existing snapshot and fresh GitHub reads for approved amendments")
+    mode.add_argument("--review-outreach", choices=("plan", "post"),
+                      help="Check and deliver review requests for idle gVisor PRs")
     arguments = parser.parse_args()
     if arguments.incoming_review_handoff:
         incoming_review_handoff()
+    elif arguments.review_outreach:
+        review_outreach(post=arguments.review_outreach == "post")
     elif arguments.reapproval_reminders:
         reapproval_reminders(post=arguments.reapproval_reminders == "post")
     else:

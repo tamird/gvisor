@@ -552,7 +552,11 @@ class CollectorHistoryTest(unittest.TestCase):
                       "Name | GitHub | Areas\n--- | --- | ---\n"
                       "Maintainer | [@kerumeto](https://github.com/kerumeto) | Core\n"
                       "\n## Emeritus Maintainers\n")
-            return {"repository": {"object": {"oid": "b" * 40, "text": roster}}}
+            return {"repository": {"object": {"oid": "b" * 40, "text": roster},
+                                   "areas": {"text": "areas: []"},
+                                   "roster": {"text": 'maintainers: [{github: kerumeto, status: ACTIVE, areas: []}]'}}}
+        if "reviewed-by:" in query:
+            return {alias: {"nodes": []} for alias in re.findall(r"(r\d+):search", query)}
         if "formal:search(" in query:
             self.assertIn("repo:google/gvisor is:pr is:open", query)
             self.assertNotIn("repo:other/", query)

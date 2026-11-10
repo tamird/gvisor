@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T00:33:29+00:00",
+    "updatedAt": "2026-11-10T01:27:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -271,6 +271,10 @@
             "jobURL": "https://github.com/google/gvisor/actions/runs/39366093488/job/118443166330"
           }
         ]
+      },
+      "reviewOutreachHold": {
+        "reason": "Maintainer requested a hold for the internal license exception.",
+        "evidence": "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
       }
     },
     {
@@ -659,7 +663,11 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/636cec92b308662bb2da1b2c325f999c82e9e65a"
         }
-      ]
+      ],
+      "reviewOutreachHold": {
+        "reason": "Maintainer requested a hold for the internal license exception.",
+        "evidence": "https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222"
+      }
     },
     {
       "id": "pr:15111",
@@ -22742,10 +22750,26 @@
       "title": "Build the hackbench image from pinned source",
       "url": "https://github.com/tamird/gvisor/commit/cf59d0c56",
       "group": "bazel",
-      "status": "Approved, checking the images",
-      "updatedAt": "2026-11-09T23:26:09+00:00",
-      "summary": "The rt-tests 2.11 benchmark passes the loop count as --loops=N. The kernel.org release archive resolves at its published location. Both image modes, the benchmark and the license catalog are being checked on this revision.",
+      "status": "Published",
+      "updatedAt": "2026-11-10T01:27:32+00:00",
+      "summary": "Package hackbench from rt-tests 2.11. The verified ARM64 image contains the static AArch64 executable and its license. Running with both argument forms reported 7 and 11 messages. The AMD64 archive and license checks passed. The encompassing Go benchmark run timed out while compiling.",
       "evidence": [
+        {
+          "label": "Published gVisor PR #17343",
+          "url": "https://github.com/google/gvisor/pull/17343"
+        },
+        {
+          "label": "ARM64 executable, license and both real argument forms",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42735420077/artifacts/13726712203"
+        },
+        {
+          "label": "AMD64 release archive",
+          "url": "https://app.buildbuddy.io/invocation/7d1e571f-ef71-4ed2-9bc4-196594914749"
+        },
+        {
+          "label": "Native source licensing",
+          "url": "https://app.buildbuddy.io/invocation/47ddc685-d443-4b36-be85-37cc9d577b6d"
+        },
         {
           "label": "Image, benchmark and license checks for the approved revision",
           "url": "https://github.com/tamird/gvisor/actions/runs/42719543023"
@@ -22854,13 +22878,15 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "cf59d0c561161233a6c8b96557dbb57452a5a301",
-        "observedAt": "2026-11-09T23:26:09+00:00",
-        "disposition": "Approved for submission after the Linux checks pass.",
-        "nextAction": "Check both architecture results and the license audit, then open the PR.",
+        "observedAt": "2026-11-10T01:27:32+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow upstream review on #17343.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42719543023"
+          "https://github.com/google/gvisor/pull/17343",
+          "https://github.com/tamird/gvisor/actions/runs/42735420077/artifacts/13726712203"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:16101",
@@ -95350,5 +95376,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T00:33:29+00:00"
+  "updatedAt": "2026-11-10T01:27:32+00:00"
 }

@@ -321,6 +321,25 @@ comment or approval. Unlike the October examples, these observations record
 internal import success, not merges; they do not establish a general waiver
 of review requirements.
 
+### Review requests on idle gVisor pull requests
+
+The work map checks open gVisor PRs authored by Tamir. After five Pacific
+business days without a source change or human discussion, it looks for an
+active reviewer who has reviewed the affected code or maintains that area.
+It uses that person's history of responding to GitHub review requests and
+mentions. After a personal request, allow two business days before asking
+another reviewer. A bot's initial assignment does not establish personal
+outreach. A pending native request can receive a personal mention.
+
+The PR card shows when the next request is eligible. **Find or contact a
+reviewer** lists requests due and cases where another qualified reviewer is
+needed. Current source, open feedback, prerequisites, checks, approval,
+import state and explicit maintainer holds determine eligibility. Every send
+checks GitHub again. The record of a native request or an author-posted
+mention is the receipt used by subsequent refreshes. The scheduled workflow
+uses its existing posting credential and pause control. The three-hour
+amendment and import reminders have their own eligibility rules.
+
 ### Reapproval after amendments
 
 The existing refresh workflow can remind prior human maintainer approvers with
