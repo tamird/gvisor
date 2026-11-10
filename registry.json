@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T11:14:44+00:00",
+    "updatedAt": "2026-11-10T11:21:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41925,8 +41925,8 @@
       "title": "Remove overlay waiters from the file that accepted them",
       "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-10T11:14:44+00:00",
+      "status": "Contributor approved; awaiting prerequisite",
+      "updatedAt": "2026-11-10T11:21:05+00:00",
       "summary": "Stock overlay could still wake a canceled waiter after chmod copied up its open file. The fix unregisters from the original backing file. If a lower file has waiters at copy-up, the outer overlay can keep one additional backing file open until close, when Release drops it using the caller’s context. The ordinary cancellation test passed and the open file count returned to its starting value.",
       "evidence": [
         {
@@ -42102,18 +42102,34 @@
           "at": "2026-11-10T00:26:34+00:00",
           "outcome": "changes-requested",
           "note": "Use struct{} for sets and preserve the release context for the underlying file description."
+        },
+        {
+          "status": "pending",
+          "kind": "proposal",
+          "head": "d01969e4cf73163e16243bd0d8edb666fce733db",
+          "baseHead": "aaab1ecb082e650ee857a0f8366229a1f37e3143",
+          "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
+          "title": "Remove overlay waiters from the file that accepted them",
+          "requestedAt": "2026-11-10T11:14:44+00:00",
+          "summary": "Open this PR after #17295 lands? Both nested copy-up orders passed under the race detector with 128 reused entries and concurrent notifications. Two task-based race cases remain unverified. The cancellation case timed out creating a ptrace task before reaching poll. The lower-file lifetime case did not start, and the runner could not open /dev/kvm. The ordinary, lockdep, SIGIO checkpoint/restore and AMD64/ARM64 analyzer checks passed.",
+          "body": "An open overlay file can switch from its lower file to its upper file\nafter chmod copies it up. Unregistering a waiter on the upper file\nleaves its original registration active. For example, changing the\nlower proc hostname can still wake a canceled waiter.\n\nKeep the old backing file if it has waiters when the open file\nswitches layers. Track individual upper entries only while lower\nwaiters remain. The overlay file can then keep one extra file open\nuntil close, when Release has the context to drop both references.",
+          "at": "2026-11-10T11:21:05+00:00",
+          "outcome": "approved",
+          "note": "Open after #17295 lands."
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "d01969e4cf73163e16243bd0d8edb666fce733db",
-        "baseHead": "aaab1ecb082e650ee857a0f8366229a1f37e3143",
-        "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
-        "title": "Remove overlay waiters from the file that accepted them",
-        "requestedAt": "2026-11-10T11:14:44+00:00",
-        "summary": "Open this PR after #17295 lands? Both nested copy-up orders passed under the race detector with 128 reused entries and concurrent notifications. Two task-based race cases remain unverified. The cancellation case timed out creating a ptrace task before reaching poll. The lower-file lifetime case did not start, and the runner could not open /dev/kvm. The ordinary, lockdep, SIGIO checkpoint/restore and AMD64/ARM64 analyzer checks passed.",
-        "body": "An open overlay file can switch from its lower file to its upper file\nafter chmod copies it up. Unregistering a waiter on the upper file\nleaves its original registration active. For example, changing the\nlower proc hostname can still wake a canceled waiter.\n\nKeep the old backing file if it has waiters when the open file\nswitches layers. Track individual upper entries only while lower\nwaiters remain. The overlay file can then keep one extra file open\nuntil close, when Release has the context to drop both references."
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "d01969e4cf73163e16243bd0d8edb666fce733db",
+        "observedAt": "2026-11-10T11:21:05+00:00",
+        "disposition": "Approved with the nested race results and the limits of the two task-based race cases documented.",
+        "nextAction": "Open the approved overlay waiter fix after #17295 lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/d01969e4c",
+          "https://github.com/google/gvisor/pull/17295",
+          "https://github.com/tamird/gvisor/actions/runs/42789743043/artifacts/13751382153",
+          "https://github.com/tamird/gvisor/actions/runs/42788104851/artifacts/13750036959"
+        ]
       }
     },
     {
@@ -55875,9 +55891,13 @@
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "updatedAt": "2026-11-10T11:21:05+00:00",
       "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nOn native Linux, the sender observed an ACK 6–14 µs after the receiver started setting TCP_QUICKACK following a read (four trials). Without that request, the ACK arrived 40–41 ms after the data. On controlled packet clocks, #16953 with delayed ACKs enabled waited 40 ms in both cases. #17082 sent the ACK immediately on request. With the receive-side MSS fixed at 536 bytes, both PRs acknowledged the second 536-byte segment immediately when the peer advertised MSS 536. When only the peer’s advertised MSS changed to 1,460, #16953 waited 40 ms and #17082 still acknowledged immediately.",
       "evidence": [
+        {
+          "label": "Andrea’s TamaGo Redis and TCP comparison",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4523498211"
+        },
         {
           "label": "Exact submitted ACK decision, line 1993",
           "url": "https://github.com/google/gvisor/blob/97785277a/pkg/tcpip/transport/tcp/snd.go#L1993"
@@ -56003,15 +56023,15 @@
           }
         ]
       },
-      "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "f05cd8923fb8aa27186834df01d7433085db41f1",
-        "observedAt": "2026-11-09T16:31:03+00:00",
-        "disposition": "The TamaGo comparison request is in the existing inline review alongside the timer finding.",
-        "nextAction": "Follow the author’s benchmark comparison and any revision.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
-        ]
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "f05cd8923fb8aa27186834df01d7433085db41f1",
+        "url": "https://github.com/google/gvisor/pull/16953#discussion_r4523498211",
+        "title": "Reply to Andrea’s TamaGo Redis comparison",
+        "summary": "Post this reply to Andrea on the existing thread? Both delayed-ACK proposals improved Redis SET. The results do not show a consistent advantage for the separately configurable policy.",
+        "body": "Thanks for running both. Redis SET went from 50k requests/s on the go branch to about 67k with either PR. With the send fix, this PR led on SET (70k vs 67k) and #17082 led on pipelined SET (604k vs 582k). I don’t see a consistent gain from a separate `TCPDelayedACKOption` here. I’d use #17082 and keep your Redis workload as a benchmark. In the socket test, #17082 also honored `TCP_QUICKACK` after the application read the request, as Linux did.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-10T11:21:05+00:00"
       }
     },
     {
@@ -94917,6 +94937,37 @@
         {
           "label": "gVisor Actions runs",
           "url": "https://github.com/google/gvisor/actions"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-cuda-no-device",
+      "title": "CUDA vectorAdd cannot see a GPU on the first allocation",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-10T11:21:05+00:00",
+      "summary": "In release build #7690 on 49df41f68, TestGPUHello_12_8 built vectorAdd with driver 615.71.09 installed. Its first cudaMalloc failed with “no CUDA-capable device is detected”. The same sample and driver passed on the same-commit retry. The cause remains unknown.",
+      "findings": [
+        {
+          "text": "The failed log shows the sample linking at line 50433 and reports the device allocation error at line 50438. On retry, vectorAdd and TestGPUHello_12_8 passed at lines 50500 and 50502.",
+          "evidence": [
+            {
+              "label": "Release #7690 · failed allocation",
+              "url": "https://buildkite.com/gvisor/release/builds/7690#01a1c1e9-97bf-4336-a164-fb8b659f69e0"
+            },
+            {
+              "label": "Release #7690 · passing retry",
+              "url": "https://buildkite.com/gvisor/release/builds/7690#01a1c377-7547-4e97-9c4a-20d0b26664b5"
+            }
+          ]
+        }
+      ],
+      "nextStep": "On recurrence, compare GPU visibility on the host and inside the test container immediately before the sample's first allocation.",
+      "evidence": [
+        {
+          "label": "Source revision 49df41f68",
+          "url": "https://github.com/google/gvisor/commit/49df41f686b28afc10031fca10b4e9231b093f32"
         }
       ]
     },
