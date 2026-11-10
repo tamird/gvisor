@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T20:01:16+00:00",
+    "updatedAt": "2026-11-10T20:13:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47839,17 +47839,17 @@
       "title": "Return the page read error when restoring the next memory file",
       "url": "https://github.com/tamird/gvisor/commit/22451846e",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-09T21:42:44+00:00",
-      "summary": "After an asynchronous page read fails, registering the next MemoryFile can return the checkpoint gofer’s closed-handle error. The fix checks the original read error under the same mutex that excludes Close. The regression now uses the landed test helper, and Nogo can check the mutex on the shared file list.\n\nStock returned “file already closed” for the second file. All 72 corrected package cases passed. Both Nogo test targets passed on the AMD64 worker. Each target checks the findings for AMD64 and ARM64 and propagates either failure. A separate ARM64 worker invocation stopped before analysis because its configuration was missing. The race build failed before any test ran because the worker had no C compiler.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T20:13:13+00:00",
+      "summary": "After a short read, the loader closed the pages file. Registering the next memory file hid the original I/O error behind a closed-file error. The change checks the read error while holding the lock that excludes Close. The regression failed on stock. On the proposal, all 72 package cases passed both normally and under the race detector. The owning Nogo targets passed.",
       "evidence": [
+        {
+          "label": "All 72 package cases passed under the race detector on the proposed commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42704817816/artifacts/13715049173"
+        },
         {
           "label": "Original stock, package, Nogo and failed race-build records",
           "url": "https://github.com/tamird/gvisor/actions/runs/42701040726/artifacts/13712601949"
-        },
-        {
-          "label": "Race suite in the gVisor compiler image",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42704817816"
         },
         {
           "label": "Revision on the landed parent",
@@ -47898,16 +47898,27 @@
         }
       },
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "22451846e8248de7c94528de1a39108fd8e34cf1",
-        "observedAt": "2026-11-09T21:42:44+00:00",
-        "disposition": "Stock regression reproduced. Package and Nogo checks passed.",
-        "nextAction": "Verify the full race suite and the second-file regression in the pinned gVisor compiler image.",
+        "observedAt": "2026-11-10T20:13:13+00:00",
+        "disposition": "The prerequisite landed. All 72 package cases passed normally and under the race detector.",
+        "nextAction": "Review the fix for upstream submission.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42704817816/artifacts/13715049173",
           "https://github.com/tamird/gvisor/actions/runs/42701040726/artifacts/13712601949",
-          "https://github.com/tamird/gvisor/actions/runs/42704817816",
           "https://github.com/tamird/gvisor/blob/22451846e/tools/arch.bzl#L12-L23"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "22451846e8248de7c94528de1a39108fd8e34cf1",
+        "baseHead": "6782e66bb04ba41de7da417da53406c2525ac9f1",
+        "url": "https://github.com/tamird/gvisor/commit/22451846e",
+        "title": "Return the page read error when restoring the next memory file",
+        "requestedAt": "2026-11-10T20:13:13+00:00",
+        "summary": "Open this single-commit fix on gVisor? The prerequisite has merged. The existing short-read test now supplies a second memory file after the first reports EIO.",
+        "body": "An asynchronous page read can fail before all memory files have been supplied to LoadFrom. The loader closes the pages file, but LoadFrom tries to register the next destination before checking the read error. With a checkpoint gofer, a truncated pages file consequently reports an invalid server file handle instead of the original I/O error.\n\nUse the loader's file-list mutex to serialize registration with Close. Check the saved read error under that lock before calling the reader."
       }
     },
     {
@@ -97048,6 +97059,57 @@
         }
       ],
       "nextStep": "On the next original failure, capture the debugger’s event progress and the worker’s CPU and memory pressure. The isolated and eight-shard comparisons both passed."
+    },
+    {
+      "id": "investigation:ci-flake-netgofer-udp-idle",
+      "title": "Netgofer UDP idle-timeout test intermittently gets connection refused",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-10T20:13:13+00:00",
+      "summary": "On #17390, the ARM64 TestProxyUDPIdleTimeout failed on its second flow with connection refused. Buildkite reran the same target on the same commit and it passed in 0.2 seconds.",
+      "findings": [
+        {
+          "text": "The test signals that the first connection is closing before closing its host socket. The handler still has to finish both copy loops and release the only connection slot. The failure log does not identify which datagram prompted the refusal.",
+          "evidence": [
+            {
+              "label": "ARM64 test failure on #17390",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
+            },
+            {
+              "label": "Uncached ARM64 retry at the same commit",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6fb-586c-428a-81b1-cb32e0c5f509"
+            },
+            {
+              "label": "Test signals before closing the UDP socket",
+              "url": "https://github.com/google/gvisor/blob/4a8b59ea5/runsc/gofer/net/netgofer_test.go#L924-L932"
+            },
+            {
+              "label": "Forwarder releases its slot on return",
+              "url": "https://github.com/google/gvisor/blob/4a8b59ea5/runsc/gofer/net/netgofer.go#L488-L494"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Wait for the actual connection slot before sending once on the second flow. Check whether holding the first close reproduces the failure and whether withholding the slot still fails the corrected test.",
+      "evidence": [
+        {
+          "label": "ARM64 test failure on #17390",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
+        },
+        {
+          "label": "Uncached ARM64 retry at the same commit",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6fb-586c-428a-81b1-cb32e0c5f509"
+        },
+        {
+          "label": "Test signals before closing the UDP socket",
+          "url": "https://github.com/google/gvisor/blob/4a8b59ea5/runsc/gofer/net/netgofer_test.go#L924-L932"
+        },
+        {
+          "label": "Forwarder releases its slot on return",
+          "url": "https://github.com/google/gvisor/blob/4a8b59ea5/runsc/gofer/net/netgofer.go#L488-L494"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-10T18:08:31+00:00"
