@@ -85,6 +85,7 @@ type Set struct {
 	// initialization; access to mutable fields of its elements requires mu.
 	//
 	// +checklocks:mu
+	// +checklockselements
 	sems []sem
 
 	// dead is set to true when the set is removed and can't be reached anymore.
@@ -807,4 +808,44 @@ func (s *Set) returnedReferenceForTest(other *Set, num int32) {
 	s.mu.Lock()
 	alias.value++ // lifetime: explicit unlock and reacquire
 	s.mu.Unlock()
+}
+
+var savedElementForTest *sem
+
+// +checklocks:s.mu
+// +checklocks:other.mu
+func (s *Set) compareElementOwnersForTest(other *Set, num int32) {
+	member := s.forwardBorrowForTest(num)
+	member.wakeWaiters(s)        // valid: forwarded member and exact owner with both locked
+	member.wakeWaiters(other)    // wrong owner: both sets locked
+	savedElementForTest = member // escape: store forwarded element in global
+}
+
+func (s *Set) projectedElementForTest(num int32) int32 {
+	s.mu.Lock()
+	pid := &s.findSem(num).pid
+	s.mu.Unlock()
+	return *pid // unguarded: load through retained interior address
+}
+
+// A mixed return cannot be summarized with a single owner parameter.
+// +checklocks:s.mu
+// +checklocks:other.mu
+func (s *Set) mixedElementForTest(other *Set, num int32, another bool) *sem {
+	if another {
+		return s.findSem(num) // unproven: first possible owner
+	}
+	return other.findSem(num) // unproven: second possible owner
+}
+
+// +checklocks:set.mu
+func storeGuardedElementForTest(member *sem, set *Set) {
+	savedElementForTest = member
+}
+
+// +checklocks:s.mu
+func (s *Set) calleeEscapeForTest(num int32, opaque func(*sem)) {
+	member := s.findSem(num)
+	storeGuardedElementForTest(member, s) // escape: static callee stores the member
+	opaque(member)                        // unproven: callback may retain the member
 }
