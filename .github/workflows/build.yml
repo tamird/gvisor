@@ -1,35 +1,109 @@
-name: CI
-
-"on":
+name: Check the current TLDK port and Make-installed LLVM plugin
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tldk-musl-current-integrated-check]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  plugin:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 160
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Bind both source trees and the installed traffic test
+        id: setup
+        run: |
+          set -euo pipefail
+          src=f92d56fb9c6f2520e8a5cfa86f4a40a47ae1ac77
+          port=0dfeb41ff8e7ba0a592b54f9a6c846d836ec3dbd
+          tools=5d2fe309d11bb2af1e5ffdb02326f4b1d5f6bfaf
+          old=349ad53210153c2d2266b4db43e87a77ddbba8c7
+          transport=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          seeds=a7cc851b17555ce6daec1391e6e3591270342bdc
+          wire=442ed51f7e10ba007f686cddc12824c47867dabe
+          reports=fb60e127516defd6aab633f80be09a03022f0737
+          d="$RUNNER_TEMP/tldk-llvm"
+          dist="$RUNNER_TEMP/recvbuf/dist"
+          mkdir -p "$d" "$dist" "$RUNNER_TEMP/plugin-evidence"
+          echo '{"status":"INCOMPLETE","phase":"setup"}' > "$d/receipt.json"
+          test "$(git rev-parse HEAD^)" = "$src"
+          test "$(git rev-parse "$src^{tree}")" = 28cc4bdfd80625524cfa58d209d93b0ae3c873f9
+          test "$(git rev-parse "$src^")" = 4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
+          git diff --exit-code "$src" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/tldk_installed.py' ':!test/rbe/plugin_programs/BUILD' ':!test/rbe/plugin_programs/external_traffic.py'
+          cp .github/qualification/tldk_installed.py "$d/"
+          git fetch -q --no-auto-maintenance --depth=1 --no-tags https://github.com/tamird/gvisor.git "$old" "$tools" "$transport" "$seeds" "$wire" "$reports"
+          git fetch -q --depth=2 --no-tags https://github.com/tamird/gvisor.git "$port"
+          test "$(git rev-parse "$port^")" = deb6b3ea1355ea9798c043cf33bc02804e86ed53
+          test "$(git rev-parse "$port^{tree}")" = 950351299d09b633ce7ce3cf9333251af425682e
+          for commit in "$port" "$src"; do
+            test "$(git diff -U0 "$commit^" "$commit" -- MODULE.bazel Makefile external/tools/plugin-stack | git patch-id --stable | cut -d' ' -f1)" = e871d43ba5390ccffa3b12d51209991f6d077028
+          done
+          for f in BUILD external_traffic.py; do
+            test "$(git rev-parse "HEAD:test/rbe/plugin_programs/$f")" = "$(git rev-parse "$wire:test/rbe/plugin_programs/$f")"
+          done
+          for f in consumer qualify; do git show "$wire:test/rbe/plugin_programs/$f.py" > "$d/$f.py"; done
+          for f in qualification_report unit_matrix; do git show "$reports:test/rbe/$f.py" > "$d/$f.py"; done
+          git show "$seeds:.github/qualification/tldk_queue.py" > "$d/tldk_queue.py"
+          git show "$seeds:.github/qualification/tldk_queue_seeds.json" > "$d/tldk_queue_seeds.json"
+          git show "$old:.github/qualification/tldk_musl.py" > "$d/tldk_musl.py"
+          git show "$tools:test/rbe/native_cross_inputs.py" > "$d/native_cross_inputs.py"
+          test "$(git rev-parse "$transport:.github/qualification/recvbuf_deps.py")" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          git show "$transport:.github/qualification/recvbuf_deps.py" > "$d/public_assets.py"
+          git checkout -q --detach "$src"
+          test "$(uname -m)" = x86_64
+          test "$(id -u)" -ne 0
+          test "$(cat .bazelversion)" = 9.3.1
+          cd "$d"
+          api='https://api.github.com/repos'
+          fetch=(curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 --max-time 180)
+          "${fetch[@]}" -H 'Accept: application/octet-stream' "$api/bazelbuild/bazel/releases/assets/661108421" -o bazel
+          "${fetch[@]}" -H 'Accept: application/octet-stream' "$api/cerisier/glibc-headers/releases/assets/253918436" -o "$dist/x86_64-linux-gnu.2.28.tar.zst"
+          "${fetch[@]}" https://codeload.github.com/alipay/tldk/tar.gz/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88 -o "$dist/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88.tar.gz"
+          "${fetch[@]}" https://codeload.github.com/DPDK/dpdk/tar.gz/refs/tags/v18.11 -o "$dist/v18.11.tar.gz"
+          sha256sum -c <<SUMS
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3  $dist/x86_64-linux-gnu.2.28.tar.zst
+          00bc2824cbc3024c4e5514ebac7ecab6598dd60e444af9dfeece079bc5b96980  $dist/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88.tar.gz
+          0026a9bc67f37f07969101bdf72fd5921169b4744f765118e5db57cace645bee  $dist/v18.11.tar.gz
+          feddd4d2b69546c2a422c4aa221fd1ab23e0e51ccdbe94c3bcb33aea1aae8470  tldk_musl.py
+          b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  native_cross_inputs.py
+          1898c68adc3e66fee2a00566ff138c2fecb0a33667e0934d0ff26beea932254a  tldk_queue_seeds.json
+          SUMS
+          chmod 755 bazel
+          if ! test -x /usr/bin/aarch64-linux-gnu-g++; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+            done > "$d/jammy.list"
+            options=(-o "Dir::Etc::sourcelist=$d/jammy.list" -o Dir::Etc::sourceparts=-)
+            sudo -n apt-get "${options[@]}" update -qq
+            sudo -n apt-get "${options[@]}" install --no-install-recommends -qy g++-aarch64-linux-gnu
+          fi
+      - name: Build the existing GNU plugin binaries and exercise DPDK through cgo
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: |
+          git checkout -q --detach 0dfeb41ff8e7ba0a592b54f9a6c846d836ec3dbd
+          env -i HOME="$HOME" PATH="$RUNNER_TEMP/tldk-llvm:$PATH" USER="$USER" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" CARRIER="$GITHUB_SHA" \
+            python3 -B "$RUNNER_TEMP/tldk-llvm/tldk_installed.py" current-gnu
+      - name: Exercise the standalone port with LLVM and musl
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: |
+          git checkout -q --detach 0dfeb41ff8e7ba0a592b54f9a6c846d836ec3dbd
+          env -i HOME="$HOME" PATH="$RUNNER_TEMP/tldk-llvm:$PATH" USER="$USER" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" CARRIER="$GITHUB_SHA" \
+            python3 -B "$RUNNER_TEMP/tldk-llvm/tldk_installed.py" current-musl
+      - name: Install both LLVM plugin binaries and exercise TCP and UDP
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: |
+          git checkout -q --detach f92d56fb9c6f2520e8a5cfa86f4a40a47ae1ac77
+          env -i HOME="$HOME" PATH="$RUNNER_TEMP/tldk-llvm:$PATH" USER="$USER" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" CARRIER="$GITHUB_SHA" \
+            python3 -B "$RUNNER_TEMP/tldk-llvm/tldk_installed.py" integrated
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tldk-current-port-and-installed-packets
+          path: |
+            ${{ runner.temp }}/tldk-llvm/*receipt.json
+            ${{ runner.temp }}/tldk-llvm/test.xml
+            ${{ runner.temp }}/tldk-llvm/*-stack.xml
+          if-no-files-found: error
+          retention-days: 14
