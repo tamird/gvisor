@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T11:31:43+00:00",
+    "updatedAt": "2026-11-10T11:40:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -802,16 +802,16 @@
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
       "updatedAt": "2026-11-10T11:31:43+00:00",
-      "summary": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The Linux check on 4ecb0b121 is running.",
+      "summary": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The revised ZIP contained all 15 netgofer implementation files and the command entrypoint. Go 1.27.3 built an AMD64 executable from the exported sources and ran help netgofer.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "b61651f9371f514411dbb4fc2bd367f860204546",
         "observedAt": "2026-11-10T11:31:43+00:00",
         "disposition": "Prepared 4ecb0b121 on deb6b3ea1.",
-        "nextAction": "Verify the Linux check and publish 4ecb0b121 once reviewed.",
+        "nextAction": "Publish 4ecb0b121 once reviewed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4ecb0b121",
-          "https://github.com/tamird/gvisor/actions/runs/42807933933",
+          "https://github.com/tamird/gvisor/actions/runs/42807933933/artifacts/13761961713",
           "https://github.com/google/gvisor/pull/15106"
         ]
       },
@@ -822,8 +822,8 @@
           "url": "https://github.com/tamird/gvisor/commit/4ecb0b121"
         },
         {
-          "label": "Linux qualification on 4ecb0b121",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42807933933"
+          "label": "Linux archive and executable results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42807933933/artifacts/13761961713"
         },
         {
           "label": "Qualified revised Go-export proposal",
@@ -916,8 +916,8 @@
         "url": "https://github.com/tamird/gvisor/commit/4ecb0b121",
         "title": "Build the Go branch source archive with Bazel",
         "requestedAt": "2026-11-10T11:31:43+00:00",
-        "summary": "Review 4ecb0b121 for publication after the Linux check passes.",
-        "body": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The Linux check on 4ecb0b121 is running.\n\ngit -C ~/code/gvisor range-diff b61651f93^! 4ecb0b121^!"
+        "summary": "Review 4ecb0b121 for publication.",
+        "body": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The revised ZIP contained all 15 netgofer implementation files and the command entrypoint. Go 1.27.3 built an AMD64 executable from the exported sources and ran help netgofer.\n\ngit -C ~/code/gvisor range-diff b61651f93^! 4ecb0b121^!"
       }
     },
     {
@@ -7874,16 +7874,16 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-10T11:31:43+00:00",
-      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The Linux check on f92eae225 is running.",
+      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "133764395c84859cb9c867555c1bac4f91f893cd",
         "observedAt": "2026-11-10T11:31:43+00:00",
-        "disposition": "Prepared f92eae225 on deb6b3ea1.",
-        "nextAction": "Verify the Linux check and publish f92eae225 once reviewed.",
+        "disposition": "The candidate failed to build the UDP forwarder.",
+        "nextAction": "Update the UDP forwarder to use netip.AddrPort and rerun the affected cases.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f92eae225",
-          "https://github.com/tamird/gvisor/actions/runs/42807642218",
+          "https://github.com/tamird/gvisor/actions/runs/42807642218/artifacts/13762237046",
           "https://github.com/google/gvisor/pull/15730"
         ]
       },
@@ -7893,8 +7893,8 @@
           "url": "https://github.com/tamird/gvisor/commit/f92eae225"
         },
         {
-          "label": "Linux qualification on f92eae225",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42807642218"
+          "label": "Linux compile failure and completed package tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42807642218/artifacts/13762237046"
         },
         {
           "label": "Request to reapprove the published head",
@@ -8102,17 +8102,6 @@
         "diffSha256": "23e90471d33fe617ca91ad95bbacd36c1549b9ef82e938f4f81f6e4e6d24d0c5",
         "summary": "New address callers, including the reservation used to release a wildcard-bound port on close, require source adaptations on the rebased commit.",
         "evidence": "https://github.com/google/gvisor/pull/15730#issuecomment-6753476212"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "f92eae2251ded0249b8a5afcd63bed13493a5267",
-        "baseHead": "133764395c84859cb9c867555c1bac4f91f893cd",
-        "url": "https://github.com/tamird/gvisor/commit/f92eae225",
-        "title": "Use netip types throughout the network stack",
-        "requestedAt": "2026-11-10T11:31:43+00:00",
-        "summary": "Review f92eae225 for publication after the Linux check passes.",
-        "body": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The Linux check on f92eae225 is running.\n\ngit -C ~/code/gvisor range-diff 133764395^! f92eae225^!"
       }
     },
     {
@@ -28232,16 +28221,18 @@
       "url": "https://github.com/google/gvisor/pull/16345",
       "group": "analysis",
       "status": "Open; reviewer feedback applied",
-      "summary": "Both the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR’s port validation. The original reviewer received the results. The standalone script correction is #17184. The separate Go replacement is under contributor review.\n\nEarlier record:\n\nThe approved amendment is published at 641a5c300. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nThe amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged.\n\nEarlier source-specific history:\n\nCurrent public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL. The description now makes clear that the client dials and the server listens.",
-      "updatedAt": "2026-11-07T13:07:28+00:00",
+      "summary": "The current source is approved and labeled ready to pull. Copybara reports success for internal change 1012595678. Public export #16894 closed without merging; a replacement has yet to appear.\n\nBoth the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR’s port validation. The original reviewer received the results. The standalone script correction is #17184. The separate Go replacement is under contributor review.\n\nEarlier record:\n\nThe approved amendment is published at 641a5c300. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nThe amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged.\n\nEarlier source-specific history:\n\nCurrent public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL. The description now makes clear that the client dials and the server listens.",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
       "number": 16345,
       "followup": {
-        "owner": "Source PR owner",
+        "owner": "Maintainer",
         "sourceHead": "641a5c300750a72805d4cacbcd71c92f91f5d46f",
-        "observedAt": "2026-11-07T13:07:28+00:00",
-        "disposition": "The requested dual-netstack comparison is complete and the original reviewer has the result.",
-        "nextAction": "Follow the original port-validation PR and #17184 separately. The Go replacement has a separate review card.",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The approved source still has its import label.",
+        "nextAction": "Wait for Copybara to publish the replacement for closed export #16894.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16345",
+          "https://github.com/google/gvisor/pull/16894",
           "https://github.com/google/gvisor/pull/16345#issuecomment-6707013553",
           "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943",
           "https://github.com/tamird/gvisor/actions/runs/42372178933",
@@ -28249,10 +28240,7 @@
           "https://github.com/tamird/gvisor/actions/runs/42371214043/artifacts/13573662056",
           "https://github.com/tamird/gvisor/commit/98fcb4c0d",
           "https://github.com/google/gvisor/commit/30fa3bd85",
-          "https://github.com/google/gvisor/pull/16345",
-          "https://github.com/google/gvisor/pull/16345#discussion_r4382159476",
-          "https://github.com/google/gvisor/pull/16345/commits/641a5c300750a72805d4cacbcd71c92f91f5d46f",
-          "https://github.com/google/gvisor/pull/16345#issuecomment-6593578339"
+          "https://github.com/google/gvisor/pull/16345"
         ]
       },
       "evidence": [
@@ -30845,25 +30833,31 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-mysql-upstream",
-      "head": "1785bfc2680236e91724c0c826379a8c4cf74141",
+      "head": "28035bfa21166cd1fccca0e107aaf56009d707e3",
       "title": "Pin the basic MySQL image",
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T06:50:05+00:00",
-      "summary": "Published the rebase onto the resolver image from #16549. Each original edit, file mode and commit message is preserved. The combined AMD64 check built all five image contexts and exercised their Make content tags. ARM64 verification covered target configuration and image inventories.\n\nRebased the pinned MySQL image on current master. Its pinned image inputs and file edits match the previous PR. GitHub reports the current source is mergeable.",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "summary": "Rebased the MySQL image in 28035bfa2. Ryan approved 1785bfc26, the source that export #17300 still names.\n\nBefore this rebase, the AMD64 check built all five image contexts and exercised their Make content tags. ARM64 checks covered target configuration and image inventories.",
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "1785bfc2680236e91724c0c826379a8c4cf74141",
-        "observedAt": "2026-11-07T06:50:05+00:00",
-        "disposition": "The resolver conflict was repaired on the public PR.",
-        "nextAction": "Review the rebased MySQL image change.",
+        "sourceHead": "28035bfa21166cd1fccca0e107aaf56009d707e3",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase 28035bfa2 applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased MySQL image. Ryan approved the preceding head. Export #17300 still names 1785bfc26.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/28035bfa2",
+          "https://github.com/google/gvisor/pull/16458",
           "https://github.com/tamird/gvisor/commit/1785bfc26",
           "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
         ]
       },
       "evidence": [
+        {
+          "label": "Published rebase 28035bfa2",
+          "url": "https://github.com/tamird/gvisor/commit/28035bfa2"
+        },
         {
           "label": "Published resolver rebase and combined native AMD64 Make and image check",
           "url": "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
@@ -30900,12 +30894,11 @@
       "number": 16458,
       "refinement": {
         "before": {
-          "head": "e0e48066480199426bbcfea4e509f375fbc82e8a",
-          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
-        },
-        "after": {
           "head": "1785bfc2680236e91724c0c826379a8c4cf74141",
           "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95"
+        },
+        "after": {
+          "head": "28035bfa21166cd1fccca0e107aaf56009d707e3"
         }
       }
     },
@@ -30972,25 +30965,31 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-tomcat-upstream-current",
-      "head": "5186abc509b59e4c5a997757db4d87e1e82f49d3",
+      "head": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd",
       "title": "Pin the existing Tomcat fixture images",
       "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T18:50:14.461Z",
-      "summary": "The rebased Tomcat fixture retains the two architecture-specific base images and master’s PostgreSQL context. The source is mergeable.",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "summary": "Rebased in 2eb25a5f1 onto deb6b3ea1.\n\nThe rebased Tomcat fixture retains the two architecture-specific base images and master’s PostgreSQL context. The source is mergeable.",
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "5186abc509b59e4c5a997757db4d87e1e82f49d3",
-        "observedAt": "2026-11-06T18:50:14.461Z",
-        "disposition": "Published the reviewed changes on the current base. GitHub reports the source is mergeable.",
-        "nextAction": "Follow the published source, its checks and import.",
+        "sourceHead": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase 2eb25a5f1 applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased Tomcat image.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/2eb25a5f1",
+          "https://github.com/google/gvisor/pull/16462",
           "https://github.com/google/gvisor/pull/16462",
           "https://github.com/tamird/gvisor/compare/d754a40f1...5186abc50"
         ]
       },
       "evidence": [
+        {
+          "label": "Published rebase 2eb25a5f1",
+          "url": "https://github.com/tamird/gvisor/commit/2eb25a5f1"
+        },
         {
           "label": "Rebase onto the PostgreSQL landing",
           "url": "https://github.com/tamird/gvisor/compare/d754a40f1...5186abc50"
@@ -31023,10 +31022,10 @@
       "number": 16462,
       "refinement": {
         "before": {
-          "head": "d754a40f1fa4dd0be2ac92f7d2c604a6cf02d1c0"
+          "head": "5186abc509b59e4c5a997757db4d87e1e82f49d3"
         },
         "after": {
-          "head": "5186abc509b59e4c5a997757db4d87e1e82f49d3"
+          "head": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd"
         }
       }
     },
@@ -31090,20 +31089,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-httpd-upstream-current",
-      "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
+      "head": "f53888791f36f5ecf1996c08a840b706262b49e3",
       "title": "Pin upstream Apache test images",
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T13:17:28+00:00",
-      "summary": "The Apache fixtures retain their reviewed image pins, configuration and Make names. The rebase preserves master’s resolver-symlink and PostgreSQL contexts. GitHub reports the source is mergeable. Carzh approved c1511cf4b. Copybara import #16879 still names 2595b7928.",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "summary": "Rebased the Apache image in f53888791. Carzh approved c1511cf4b. The export for 2595b7928, #16879, closed without merging.\n\nThe Apache fixtures retain their image pins, configuration and Make names.",
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "f7b488717a001b18d48197e4cbcb0c35bd427e94",
-        "observedAt": "2026-11-07T13:17:28+00:00",
-        "disposition": "The rebase retained the reviewed diff. Etienne invalidated the earlier approval and notified carzh to review the current head.",
-        "nextAction": "Await maintainer review of f7b488717. The existing export #16879 still references 2595b7928 and conflicts.",
+        "sourceHead": "f53888791f36f5ecf1996c08a840b706262b49e3",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase f53888791 applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased Apache image. Export #16879 closed without merging.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/f53888791",
+          "https://github.com/google/gvisor/pull/16466",
           "https://github.com/google/gvisor/pull/16466#issuecomment-6706215297",
           "https://github.com/google/gvisor/pull/16466",
           "https://github.com/tamird/gvisor/compare/c1511cf4b...f7b488717",
@@ -31111,6 +31112,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Published rebase f53888791",
+          "url": "https://github.com/tamird/gvisor/commit/f53888791"
+        },
         {
           "label": "Etienne notified the previous reviewer after the rebase",
           "url": "https://github.com/google/gvisor/pull/16466#issuecomment-6706215297"
@@ -31167,10 +31172,10 @@
       },
       "refinement": {
         "before": {
-          "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a"
+          "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94"
         },
         "after": {
-          "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94"
+          "head": "f53888791f36f5ecf1996c08a840b706262b49e3"
         }
       }
     },
@@ -34126,9 +34131,9 @@
       "title": "Use the official server images in port-forward tests",
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/16551",
-      "head": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
+      "head": "a57c3a82dc51c3b6e60e5844d5eecd0ac49a160b",
       "status": "open",
-      "updatedAt": "2026-11-07T06:53:28+00:00",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
       "links": [
         {
           "label": "Historical Nginx proposal",
@@ -34172,6 +34177,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Published rebase a57c3a82d",
+          "url": "https://github.com/tamird/gvisor/commit/a57c3a82d"
+        },
         {
           "label": "Published resolver rebase and combined native AMD64 Make and image check",
           "url": "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
@@ -34249,7 +34258,7 @@
           "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
       ],
-      "summary": "Published the rebase onto the resolver image from #16549. Each original edit, file mode and commit message is preserved. The combined AMD64 check built all five image contexts and exercised their Make content tags. ARM64 verification covered target configuration and image inventories. The open import #16637 still refers to the earlier approved source.\n\nThe source is mergeable on current master. The patch matches the version approved by @kerumeto. Open import #16637 still names the earlier source.",
+      "summary": "Rebased the port-forwarding image in a57c3a82d. Export #16637 still names the earlier source fa7daa135.\n\nBefore this rebase, the AMD64 check built all five image contexts and exercised their Make content tags. ARM64 checks covered target configuration and image inventories.",
       "approvedPatch": {
         "head": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
         "approvedHead": "fa7daa135f0ca5de5461ac4b27f046632707e5e2",
@@ -34263,21 +34272,22 @@
       },
       "refinement": {
         "before": {
-          "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
-          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
-        },
-        "after": {
           "head": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
           "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95"
+        },
+        "after": {
+          "head": "a57c3a82dc51c3b6e60e5844d5eecd0ac49a160b"
         }
       },
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "96bfe0c7e6cf5d52c57c6654f6632f35c9d2f1c9",
-        "observedAt": "2026-11-07T06:50:05+00:00",
-        "disposition": "The published source is mergeable. The open import has identical edits from the previous approval, but still conflicts. The reapproval reminder is eligible during Pacific business hours.",
-        "nextAction": "Kerem can reapprove the rebased source so Copybara refreshes #16637. The old import conflicts.",
+        "sourceHead": "a57c3a82dc51c3b6e60e5844d5eecd0ac49a160b",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase a57c3a82d applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased port-forwarding image. The open export #16637 still names fa7daa135.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/a57c3a82d",
+          "https://github.com/google/gvisor/pull/16551",
           "https://github.com/tamird/gvisor/commit/96bfe0c7e",
           "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974",
           "https://github.com/google/gvisor/pull/16637"
@@ -34922,10 +34932,14 @@
       "number": 16590,
       "group": "bazel",
       "ref": "review/seccomp-generator-templates",
-      "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
+      "head": "05cb2e39094109989a68ba4eb2236edb56089f65",
       "title": "Generate seccomp program loaders without a shell",
       "url": "https://github.com/google/gvisor/pull/16590",
       "evidence": [
+        {
+          "label": "Published rebase 05cb2e390",
+          "url": "https://github.com/tamird/gvisor/commit/05cb2e390"
+        },
         {
           "label": "14 matching output pairs on AMD64 and ARM64 with #17317",
           "url": "https://app.buildbuddy.io/invocation/f075d190-453d-4187-bc9e-e861b637fc64"
@@ -34951,29 +34965,39 @@
           "url": "https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
         }
       ],
-      "updatedAt": "2026-11-09T22:16:42+00:00",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
       "status": "open",
-      "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.\n\nAll 14 pairs of generator outputs matched across AMD64 and ARM64 when comparing #17317 alone with #17317 plus this change. The two empty fastbuild stubs still use the host marker. This comparison covered generator output only. The full Go export was not run.",
+      "summary": "Etienne requested a rebase. The updated head 05cb2e390 applies to deb6b3ea1.\n\nBazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.\n\nAll 14 pairs of generator outputs matched across AMD64 and ARM64 when comparing #17317 alone with #17317 plus this change. The two empty fastbuild stubs still use the host marker. This comparison covered generator output only. The full Go export was not run.",
       "refinement": {
         "before": {
-          "head": "4598fe8128aed1be205ee8b848c002b7f85bd897"
-        },
-        "after": {
           "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
           "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        },
+        "after": {
+          "head": "05cb2e39094109989a68ba4eb2236edb56089f65"
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow checks, maintainer review and import on #16590.",
+        "owner": "Agent",
+        "sourceHead": "05cb2e39094109989a68ba4eb2236edb56089f65",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase 05cb2e390 applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Once approved, reply to Etienne on the original comment.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16590",
-          "https://github.com/tamird/gvisor/commit/b598877f1cfbf369d9dd1c07758707fadaa990c5",
-          "https://github.com/tamird/gvisor/commit/4598fe8128aed1be205ee8b848c002b7f85bd897"
+          "https://github.com/google/gvisor/pull/16590#issuecomment-6758509238",
+          "https://github.com/tamird/gvisor/commit/05cb2e390",
+          "https://github.com/google/gvisor/pull/16590"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "05cb2e39094109989a68ba4eb2236edb56089f65",
+        "url": "https://github.com/google/gvisor/pull/16590#issuecomment-6758509238",
+        "title": "Reply to Etienne about the rebase",
+        "requestedAt": "2026-11-10T11:40:34+00:00",
+        "summary": "Confirm that the requested rebase is published.",
+        "body": "Rebased onto deb6b3ea1 in 05cb2e390.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -40585,31 +40609,36 @@
       "number": 16677,
       "repo": "google/gvisor",
       "ref": "review/overlay-close-lifetime",
-      "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
+      "head": "a97d208dfc275838f04f18c7367b5b88b7f67260",
       "title": "overlay: retain the backing file selected for close",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-30T20:37:25.878075+00:00",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "url": "https://github.com/google/gvisor/pull/16677",
-      "summary": "Removed the Go unit test at Ayush’s request. With the old interleaving forced, stock gVisor released the FUSE handle before FLUSH and close returned EBADF. The fix kept the handle live. A separate public FUSE test observed close overlap with copy-up on Linux and both gVisor versions.",
+      "summary": "Rebased the FUSE close fix in a97d208df. Ayush approved 0bb7564e8; the PR has no ready to pull label.\n\nRemoved the Go unit test at Ayush’s request. With the old interleaving forced, stock gVisor released the FUSE handle before FLUSH and close returned EBADF. The fix kept the handle live. A separate public FUSE test observed close overlap with copy-up on Linux and both gVisor versions.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
-        "observedAt": "2026-10-30T20:37:25.878075+00:00",
-        "disposition": "Approved test-removal amendment and reply published",
-        "nextAction": "Follow upstream review. The 142-line public FUSE peer passed on stock as well as fixed gVisor, so it adds no regression coverage for this change.",
+        "owner": "Maintainer",
+        "sourceHead": "a97d208dfc275838f04f18c7367b5b88b7f67260",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase a97d208df applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased FUSE close fix. Ayush approved its preceding head; the ready to pull label is absent.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/a97d208df",
+          "https://github.com/google/gvisor/pull/16677",
           "https://github.com/google/gvisor/pull/16677#discussion_r4428087788",
           "https://github.com/google/gvisor/pull/16677#discussion_r4427980717",
           "https://github.com/tamird/gvisor/commit/0bb7564e8",
           "https://app.buildbuddy.io/invocation/910bfa68-aa50-49e8-9658-3a5cc5cd1a68",
           "https://app.buildbuddy.io/invocation/b14cd43e-2399-46fc-91d6-15cd915e3f4c",
-          "https://github.com/tamird/gvisor/actions/runs/41041801101/artifacts/12970144079",
-          "https://github.com/tamird/gvisor/actions/runs/41123144567/artifacts/13010056609"
+          "https://github.com/tamird/gvisor/actions/runs/41041801101/artifacts/12970144079"
         ]
       },
       "evidence": [
+        {
+          "label": "Published rebase a97d208df",
+          "url": "https://github.com/tamird/gvisor/commit/a97d208df"
+        },
         {
           "label": "Public FUSE overlap passed on Linux and both gVisor versions",
           "url": "https://github.com/tamird/gvisor/actions/runs/41123144567/artifacts/13010056609"
@@ -40679,10 +40708,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "e4a78767b89adc5e806334ce41ad5d6c73109927"
+          "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c"
         },
         "after": {
-          "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c"
+          "head": "a97d208dfc275838f04f18c7367b5b88b7f67260"
         }
       }
     },
@@ -47454,14 +47483,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "checkpoint-page-write-error",
-      "head": "adf0d6a67589ad4587ea0c906818b77e40cb089b",
+      "head": "658fc8bc58b1c9dd3f991d302eb722d10e0f8095",
       "title": "Preserve checkpoint write errors across memory files",
       "url": "https://github.com/tamird/gvisor/commit/adf0d6a67",
       "group": "runtime",
       "status": "Published as #16869",
-      "updatedAt": "2026-11-02T21:01:12.442264+00:00",
-      "summary": "When the pages file fills up, registering another memory file can hide ENOSPC behind an invalid checkpoint-gofer handle. The rebased fix keeps ENOSPC. All 69 package cases, all 69 race cases and both analyzers passed on the published source, with no missing or skipped cases.",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "summary": "Rebased in 658fc8bc5 onto deb6b3ea1.\n\nWhen the pages file fills up, registering another memory file can hide ENOSPC behind an invalid checkpoint-gofer handle. The rebased fix keeps ENOSPC. All 69 package cases, all 69 race cases and both analyzers passed on adf0d6a67, with no missing or skipped cases.",
       "evidence": [
+        {
+          "label": "Published rebase 658fc8bc5",
+          "url": "https://github.com/tamird/gvisor/commit/658fc8bc5"
+        },
         {
           "label": "Published checkpoint error fix",
           "url": "https://github.com/google/gvisor/pull/16869"
@@ -47496,22 +47529,24 @@
         }
       ],
       "followup": {
-        "owner": "Workstream owner",
-        "sourceHead": "adf0d6a67589ad4587ea0c906818b77e40cb089b",
-        "observedAt": "2026-11-02T21:01:12.442264+00:00",
-        "disposition": "Approved repair published as #16869",
-        "nextAction": "Follow the published pull request.",
+        "owner": "Maintainer",
+        "sourceHead": "658fc8bc58b1c9dd3f991d302eb722d10e0f8095",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase 658fc8bc5 applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased checkpoint page-write error fix. Both independent pgalloc tests stay in the patch.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/658fc8bc5",
+          "https://github.com/google/gvisor/pull/16869",
           "https://github.com/google/gvisor/pull/16869",
           "https://github.com/tamird/gvisor/actions/runs/41521971926/artifacts/13178816898"
         ]
       },
       "refinement": {
         "before": {
-          "head": "04c66b4d86260991e49c97c7461a04f5f479c823"
+          "head": "adf0d6a67589ad4587ea0c906818b77e40cb089b"
         },
         "after": {
-          "head": "adf0d6a67589ad4587ea0c906818b77e40cb089b"
+          "head": "658fc8bc58b1c9dd3f991d302eb722d10e0f8095"
         }
       }
     },
@@ -54171,14 +54206,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/go-helper-images",
-      "head": "0e306c458b4622a6d580ceb2252994cb3e005908",
+      "head": "20b3a2343097da5c10c138d4cd5cd644c629a2a5",
       "title": "Build the Hey, Ollama client and profiling images with Bazel",
       "url": "https://github.com/tamird/gvisor/commit/0e306c458",
       "group": "bazel",
       "status": "Published as #16871",
-      "updatedAt": "2026-11-08T13:23:10Z",
-      "summary": "The Ollama client, profiling helper and Hey image are published together in one commit. Removing their new Make entries restores the original PostgreSQL context mapping. The earlier six-image output and runtime checks remain tied to the measured source.",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "summary": "Rebased in 20b3a2343 onto deb6b3ea1.\n\nThe Ollama client, profiling helper and Hey image are published together in one commit. Removing their new Make entries restores the original PostgreSQL context mapping. The earlier six-image output and runtime checks remain tied to the measured source.",
       "evidence": [
+        {
+          "label": "Published rebase 20b3a2343",
+          "url": "https://github.com/tamird/gvisor/commit/20b3a2343"
+        },
         {
           "label": "Rebase onto the PostgreSQL landing",
           "url": "https://github.com/tamird/gvisor/compare/cea9b0192...99b9970fb"
@@ -54222,21 +54261,23 @@
       ],
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "0e306c458b4622a6d580ceb2252994cb3e005908",
-        "observedAt": "2026-11-08T13:23:10Z",
-        "disposition": "Published the reviewed changes on the current base. GitHub reports the source is mergeable.",
-        "nextAction": "Follow the published source, its checks and import.",
+        "sourceHead": "20b3a2343097da5c10c138d4cd5cd644c629a2a5",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase 20b3a2343 applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased Go helper images.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/20b3a2343",
+          "https://github.com/google/gvisor/pull/16871",
           "https://github.com/google/gvisor/pull/16871",
           "https://github.com/tamird/gvisor/compare/cea9b0192...99b9970fb"
         ]
       },
       "refinement": {
         "before": {
-          "head": "cea9b0192347cc0ec34ef72f51915ecdf07774c3"
+          "head": "0e306c458b4622a6d580ceb2252994cb3e005908"
         },
         "after": {
-          "head": "0e306c458b4622a6d580ceb2252994cb3e005908"
+          "head": "20b3a2343097da5c10c138d4cd5cd644c629a2a5"
         }
       }
     },
@@ -57420,13 +57461,17 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "review/proc-forwarding-mounts",
-      "head": "83c48b7fa27beb7f00f02c0dbc46cac96d10a61a",
+      "head": "32b85608b36ff7aa43ffac9d702a24bf008cb111",
       "url": "https://github.com/google/gvisor/pull/17051",
       "title": "Read IP forwarding from the network stack",
       "status": "open",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
-      "summary": "Writing 1 to ipv4/ip_forward through a second proc mount left the first mount reporting 0. The same happened with ipv6/conf/all/forwarding. Both mounts were in the same network namespace; each proc inode kept its own copy of the last value written.",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "summary": "Rebased in 32b85608b onto deb6b3ea1.\n\nWriting 1 to ipv4/ip_forward through a second proc mount left the first mount reporting 0. The same happened with ipv6/conf/all/forwarding. Both mounts were in the same network namespace; each proc inode kept its own copy of the last value written.",
       "evidence": [
+        {
+          "label": "Published rebase 32b85608b",
+          "url": "https://github.com/tamird/gvisor/commit/32b85608b"
+        },
         {
           "label": "Identical Linux, original and corrected two-mount cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41091066394/artifacts/12994107918"
@@ -57451,7 +57496,18 @@
           "note": "Published as #17051 after its prerequisite merged. Rebase preserved all added and removed lines.",
           "postedURL": "https://github.com/google/gvisor/pull/17051"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "32b85608b36ff7aa43ffac9d702a24bf008cb111",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase 32b85608b applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased mount forwarding test. Both fields added to TestStack on master are present.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/32b85608b",
+          "https://github.com/google/gvisor/pull/17051"
+        ]
+      }
     },
     {
       "id": "pr:17053",
@@ -69038,10 +69094,14 @@
       "url": "https://github.com/google/gvisor/pull/17283",
       "group": "tests",
       "status": "open",
-      "head": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
-      "updatedAt": "2026-11-09T16:31:03+00:00",
-      "summary": "Two UDP syscall suites skip their broadcast and multicast tests when only loopback is available. This patch creates an addressed bridge without ports in a private network namespace. The corrected mixed build passed 146 ARM64 cases and eight AMD64 cases without skips. Two earlier ARM64 IPv4 controls each passed 38 cases. On the standalone commit, one AMD64 systrap case completed 11 restores from nonempty checkpoints. Its Bazel test exited 0 with a passing TestResult and XML. The reporting script looked for the wrong BEP finish identifier and marked the job failed. KVM execution is unverified.",
+      "head": "4cfea97102a36c4d806acc31c124da6fd75c4b8d",
+      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "summary": "Rebased in 4cfea9710 onto deb6b3ea1.\n\nTwo UDP syscall suites skip their broadcast and multicast tests when only loopback is available. This patch creates an addressed bridge without ports in a private network namespace. The corrected mixed build passed 146 ARM64 cases and eight AMD64 cases without skips. Two earlier ARM64 IPv4 controls each passed 38 cases. On the standalone commit, one AMD64 systrap case completed 11 restores from nonempty checkpoints. Its Bazel test exited 0 with a passing TestResult and XML. The reporting script looked for the wrong BEP finish identifier and marked the job failed. KVM execution is unverified.",
       "evidence": [
+        {
+          "label": "Published rebase 4cfea9710",
+          "url": "https://github.com/tamird/gvisor/commit/4cfea9710"
+        },
         {
           "label": "Standalone commit on current master",
           "url": "https://github.com/tamird/gvisor/commit/e1a7eb4e5"
@@ -69079,12 +69139,14 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "e1a7eb4e59559027881dad66970207ab8b27d2f2",
-        "observedAt": "2026-11-09T16:31:03+00:00",
-        "disposition": "Published the reviewed revision as #17283.",
-        "nextAction": "Follow #17283 for maintainer review and import.",
+        "owner": "Maintainer",
+        "sourceHead": "4cfea97102a36c4d806acc31c124da6fd75c4b8d",
+        "observedAt": "2026-11-10T11:40:34+00:00",
+        "disposition": "The published single-commit rebase 4cfea9710 applies to deb6b3ea1 and GitHub reports it is mergeable.",
+        "nextAction": "Review the rebased UDP multicast interface change.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/4cfea9710",
+          "https://github.com/google/gvisor/pull/17283",
           "https://github.com/google/gvisor/pull/17283",
           "https://github.com/tamird/gvisor/commit/e1a7eb4e5"
         ]
