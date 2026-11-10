@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T20:13:13+00:00",
+    "updatedAt": "2026-11-10T20:37:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7925,26 +7925,50 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcpip-netip-core",
-      "head": "1baff64ef0620dadfddd9161c10f0fdb239feb05",
+      "head": "2772112da4a3490a200f320486b96a8e7a608364",
       "title": "Use netip types throughout the network stack",
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T15:29:56+00:00",
-      "summary": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca.\n\nThe published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\nEarlier qualification:\n\nThe published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker. All 22 netgofer tests and subtests passed on the published 1baff64ef.",
+      "updatedAt": "2026-11-10T20:31:58+00:00",
+      "summary": "Published 2772112da as one mergeable commit after review. It keeps nftables’ explicit output interface when the route is absent or belongs to a different interface. All 83 cases and subtests passed across the five affected native AMD64 test targets.",
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "1baff64ef0620dadfddd9161c10f0fdb239feb05",
-        "observedAt": "2026-11-10T15:29:56+00:00",
-        "disposition": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca.",
-        "nextAction": "Follow the published head’s checks and maintainer review.",
+        "sourceHead": "2772112da4a3490a200f320486b96a8e7a608364",
+        "observedAt": "2026-11-10T20:31:58+00:00",
+        "disposition": "Published 2772112da as one mergeable commit after review. It keeps nftables’ explicit output interface when the route is absent or belongs to a different interface. All 83 cases and subtests passed across the five affected native AMD64 test targets.",
+        "nextAction": "Follow checks, maintainer review of the new head, and the Copybara import.",
         "evidence": [
-          "https://github.com/google/gvisor/commit/1baff64ef0620dadfddd9161c10f0fdb239feb05",
-          "https://github.com/tamird/gvisor/compare/0ef2495ca...1baff64ef",
-          "https://github.com/google/gvisor/pull/15730"
+          "https://github.com/google/gvisor/commit/2772112da",
+          "https://github.com/google/gvisor/pull/15730",
+          "https://github.com/tamird/gvisor/actions/runs/42893197349/artifacts/13800506818"
         ]
       },
       "evidence": [
+        {
+          "label": "Published rebase, one commit",
+          "url": "https://github.com/google/gvisor/commit/2772112da"
+        },
+        {
+          "label": "Original Linux XML and logs for all five affected targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42893197349/artifacts/13800506818"
+        },
+        {
+          "label": "Rebased netip source",
+          "url": "https://github.com/tamird/gvisor/commit/2772112da"
+        },
+        {
+          "label": "Master’s nftables output interface change",
+          "url": "https://github.com/google/gvisor/commit/9d89b3838"
+        },
+        {
+          "label": "Approval of the published head",
+          "url": "https://github.com/google/gvisor/pull/15730#pullrequestreview-5845847373"
+        },
+        {
+          "label": "Linux nftables, IPv4, IPv6, stack and netgofer checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42893197349"
+        },
         {
           "label": "All 22 netgofer cases on the published head",
           "url": "https://github.com/tamird/gvisor/actions/runs/42845639897/artifacts/13779167816"
@@ -8161,11 +8185,11 @@
       "number": 15730,
       "refinement": {
         "before": {
-          "head": "133764395c84859cb9c867555c1bac4f91f893cd"
+          "head": "1baff64ef0620dadfddd9161c10f0fdb239feb05"
         },
         "after": {
-          "head": "0ef2495cae29d3190381a710904f6dbde2c95be3",
-          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+          "head": "2772112da4a3490a200f320486b96a8e7a608364",
+          "base": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f"
         }
       },
       "settledReviews": [
@@ -8194,16 +8218,30 @@
           "outcome": "approved",
           "at": "2026-11-10T15:29:56+00:00",
           "note": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca."
+        },
+        {
+          "kind": "amendment",
+          "head": "2772112da4a3490a200f320486b96a8e7a608364",
+          "baseHead": "1baff64ef0620dadfddd9161c10f0fdb239feb05",
+          "url": "https://github.com/tamird/gvisor/commit/2772112da",
+          "title": "Use netip types throughout the network stack",
+          "requestedAt": "2026-11-10T20:26:01+00:00",
+          "summary": "Publish the tested rebase on #15730? Master added the output interface to nftables after Nayana approved the current head.",
+          "body": "Master now passes the output interface to nftables separately from the route. The rebase keeps masquerading on that interface even when no route is available, and falls back to the packet destination when the route has no next hop. It also converts the new nftables tests to netip.\n\nAll 83 cases and subtests passed across the five affected native AMD64 test targets, including both masquerade expressions with no route or a different output interface. GitHub still reports a conflict on 1baff64ef.",
+          "outcome": "approved",
+          "at": "2026-11-10T20:31:58+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/15730",
+          "note": "Published as the single commit 2772112da. GitHub reported the new head mergeable."
         }
       ],
       "reapproval": {
         "kind": "content-amendment",
         "method": "reviewed-source-diff",
-        "head": "133764395c84859cb9c867555c1bac4f91f893cd",
-        "approvedHead": "6c48739a92438e54d1223a17f1806259d50cba17",
-        "diffSha256": "23e90471d33fe617ca91ad95bbacd36c1549b9ef82e938f4f81f6e4e6d24d0c5",
-        "summary": "New address callers, including the reservation used to release a wildcard-bound port on close, require source adaptations on the rebased commit.",
-        "evidence": "https://github.com/google/gvisor/pull/15730#issuecomment-6753476212"
+        "head": "2772112da4a3490a200f320486b96a8e7a608364",
+        "approvedHead": "1baff64ef0620dadfddd9161c10f0fdb239feb05",
+        "diffSha256": "0e5356af82de29c416e28faf37578cb2d2f7914e351f0e387f9878e235b98080",
+        "summary": "Adapt the approved netip patch to nftables’ new output-interface argument and optional route. Both masquerade expressions retain master’s no-route behavior.",
+        "evidence": "https://github.com/tamird/gvisor/actions/runs/42893197349/artifacts/13800506818"
       }
     },
     {
@@ -47013,9 +47051,13 @@
       "url": "https://github.com/google/gvisor/issues/16742",
       "group": "runtime",
       "status": "open",
-      "summary": "We proposed preserving the source header in DeepCopyForForwarding. A second contributor independently verified the change and reported that the IPv4 and stack tests passed, including under the race detector. On November 10, @prathamhanda reproduced the bug and volunteered to implement the fix and its regression test. Watch for their PR to review.",
-      "updatedAt": "2026-11-10T18:39:36+00:00",
+      "summary": "Pratham Handa opened #17394 with the two-line fix proposed here and a regression test for preserving the source packet header when forwarding. Rahul Rai independently reported 20/20 failures on the old code and 20/20 passes both normally and under the race detector with the fix.",
+      "updatedAt": "2026-11-10T20:23:22+00:00",
       "evidence": [
+        {
+          "label": "Pratham Handa’s fix and regression test",
+          "url": "https://github.com/google/gvisor/pull/17394"
+        },
         {
           "label": "Original TTL report",
           "url": "https://github.com/google/gvisor/issues/16742"
@@ -47839,10 +47881,14 @@
       "title": "Return the page read error when restoring the next memory file",
       "url": "https://github.com/tamird/gvisor/commit/22451846e",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-10T20:13:13+00:00",
-      "summary": "After a short read, the loader closed the pages file. Registering the next memory file hid the original I/O error behind a closed-file error. The change checks the read error while holding the lock that excludes Close. The regression failed on stock. On the proposal, all 72 package cases passed both normally and under the race detector. The owning Nogo targets passed.",
+      "status": "Published",
+      "updatedAt": "2026-11-10T20:29:37+00:00",
+      "summary": "Published as one commit on #17407. Rebasing the approved 22451846e onto dd49ce763 left an empty range-diff. After a short read, the loader closed the pages file. Registering the next memory file hid the original I/O error behind a closed-file error. The change checks the read error while holding the lock that excludes Close. The regression failed on stock. On the proposal, all 72 package cases passed both normally and under the race detector. The owning Nogo targets passed.",
       "evidence": [
+        {
+          "label": "Upstream PR #17407",
+          "url": "https://github.com/google/gvisor/pull/17407"
+        },
         {
           "label": "All 72 package cases passed under the race detector on the proposed commit",
           "url": "https://github.com/tamird/gvisor/actions/runs/42704817816/artifacts/13715049173"
@@ -47885,6 +47931,20 @@
           "outcome": "superseded",
           "at": "2026-11-09T21:19:08+00:00",
           "note": "The parent landed with a different memory-file test helper. The old proposal conflicts in the regression test."
+        },
+        {
+          "kind": "proposal",
+          "head": "22451846e8248de7c94528de1a39108fd8e34cf1",
+          "baseHead": "6782e66bb04ba41de7da417da53406c2525ac9f1",
+          "url": "https://github.com/tamird/gvisor/commit/22451846e",
+          "title": "Return the page read error when restoring the next memory file",
+          "requestedAt": "2026-11-10T20:13:13+00:00",
+          "summary": "Open this single-commit fix on gVisor? The prerequisite has merged. The existing short-read test now supplies a second memory file after the first reports EIO.",
+          "body": "An asynchronous page read can fail before all memory files have been supplied to LoadFrom. The loader closes the pages file, but LoadFrom tries to register the next destination before checking the read error. With a checkpoint gofer, a truncated pages file consequently reports an invalid server file handle instead of the original I/O error.\n\nUse the loader's file-list mutex to serialize registration with Close. Check the saved read error under that lock before calling the reader.",
+          "outcome": "approved",
+          "at": "2026-11-10T20:29:37+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17407",
+          "note": "Published as one commit on #17407. Rebasing the approved 22451846e onto dd49ce763 left an empty range-diff."
         }
       ],
       "refinement": {
@@ -47898,28 +47958,18 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "22451846e8248de7c94528de1a39108fd8e34cf1",
-        "observedAt": "2026-11-10T20:13:13+00:00",
-        "disposition": "The prerequisite landed. All 72 package cases passed normally and under the race detector.",
-        "nextAction": "Review the fix for upstream submission.",
+        "owner": "Upstream review",
+        "sourceHead": "098e0a9a54b8236078bd485221314876364504ab",
+        "observedAt": "2026-11-10T20:29:37+00:00",
+        "disposition": "Published as one commit on #17407. Rebasing the approved 22451846e onto dd49ce763 left an empty range-diff.",
+        "nextAction": "Follow checks and maintainer review on #17407.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42704817816/artifacts/13715049173",
-          "https://github.com/tamird/gvisor/actions/runs/42701040726/artifacts/13712601949",
-          "https://github.com/tamird/gvisor/blob/22451846e/tools/arch.bzl#L12-L23"
+          "https://github.com/google/gvisor/pull/17407",
+          "https://github.com/tamird/gvisor/commit/098e0a9a5",
+          "https://github.com/tamird/gvisor/commit/22451846e"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "22451846e8248de7c94528de1a39108fd8e34cf1",
-        "baseHead": "6782e66bb04ba41de7da417da53406c2525ac9f1",
-        "url": "https://github.com/tamird/gvisor/commit/22451846e",
-        "title": "Return the page read error when restoring the next memory file",
-        "requestedAt": "2026-11-10T20:13:13+00:00",
-        "summary": "Open this single-commit fix on gVisor? The prerequisite has merged. The existing short-read test now supplies a second memory file after the first reports EIO.",
-        "body": "An asynchronous page read can fail before all memory files have been supplied to LoadFrom. The loader closes the pages file, but LoadFrom tries to register the next destination before checking the read error. With a checkpoint gofer, a truncated pages file consequently reports an invalid server file handle instead of the original I/O error.\n\nUse the loader's file-list mutex to serialize registration with Close. Check the saved read error under that lock before calling the reader."
-      }
+      "inactive": true
     },
     {
       "id": "branch:aio-short-submit",
@@ -54721,9 +54771,33 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T18:45:59+00:00",
-      "summary": "The callback analyzer reports one diagnostic for a repeated read and preserves separate guard failures at one call site. The callback fixtures and production overlay passed on AMD64 and ARM64.",
+      "updatedAt": "2026-11-10T20:37:32+00:00",
+      "summary": "Both architecture analyzers reported an unresolved guard for the ignored caller on 6ca7addca. The revision suppressed that finding and preserved it for an ordinary caller. The latest revision also removes explicit String calls from formatted diagnostics.",
       "evidence": [
+        {
+          "label": "Ignored and ordinary callers on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42894329342/artifacts/13800951044"
+        },
+        {
+          "label": "Final formatting and callback revision",
+          "url": "https://github.com/tamird/gvisor/commit/b968f4def"
+        },
+        {
+          "label": "Final suite and original diagnostic text on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42897002914"
+        },
+        {
+          "label": "Review of ignored callback arguments",
+          "url": "https://github.com/google/gvisor/pull/16868#discussion_r4529967286"
+        },
+        {
+          "label": "Ignored-caller revision",
+          "url": "https://github.com/tamird/gvisor/commit/847b09b07"
+        },
+        {
+          "label": "Linux comparison on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42894329342"
+        },
         {
           "label": "Signed amendment 28a833a1d",
           "url": "https://github.com/tamird/gvisor/commit/28a833a1d"
@@ -54771,10 +54845,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "28a833a1de20530ab20efdb3d55b0a76e64276b8"
+          "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0"
         },
         "after": {
-          "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
+          "head": "b968f4defe4632c2f168af37003ca59216fd4027",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
@@ -54816,17 +54890,16 @@
       ],
       "number": 16868,
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Checklocks implementation",
         "sourceHead": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
-        "observedAt": "2026-11-10T18:45:59+00:00",
-        "disposition": "Published the amendment and replied on the original review. The analyzer reports the repeated read once and preserves distinct guard failures at one call site on AMD64 and ARM64.",
-        "nextAction": "Await upstream review of the amended commit.",
+        "observedAt": "2026-11-10T20:37:32+00:00",
+        "disposition": "Both architecture analyzers reported an unresolved guard for the ignored caller on 6ca7addca. The revision suppressed that finding and preserved it for an ordinary caller. The latest revision also removes explicit String calls from formatted diagnostics.",
+        "nextAction": "Check that the final revision passes the callback suite and preserves the full diagnostic text for missing guards and unbalanced callback locks on AMD64 and ARM64.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16868#discussion_r4528075991",
-          "https://github.com/tamird/gvisor/commit/6ca7addca",
-          "https://github.com/tamird/gvisor/actions/runs/42868843500/artifacts/13790280816",
-          "https://github.com/tamird/gvisor/actions/runs/42865806042/artifacts/13788581148",
-          "https://github.com/google/gvisor/pull/16868#discussion_r4529053276"
+          "https://github.com/google/gvisor/pull/16868#discussion_r4529967286",
+          "https://github.com/tamird/gvisor/commit/b968f4def",
+          "https://github.com/tamird/gvisor/actions/runs/42897002914",
+          "https://github.com/tamird/gvisor/actions/runs/42894329342/artifacts/13800951044"
         ]
       }
     },
@@ -71641,6 +71714,165 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42872466725/artifacts/13793085102"
         }
       ]
+    },
+    {
+      "id": "pr:17394",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17394,
+      "ref": "fix/issue-16742-forwarding-header-lifetime",
+      "head": "f20fd589275a6a8bbb60110e4858b5c7159b4893",
+      "title": "pkg/tcpip/stack: Don't move the source packet backing in DeepCopyForForwarding",
+      "url": "https://github.com/google/gvisor/pull/17394",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-10T20:23:22+00:00",
+      "summary": "Pratham Handa’s regression test keeps the source header view alive across forwarding and checks the forwarded packet’s headers with and without a transport header. The two production lines match the independently tested fix from #16742. The author reports that the stack, IPv4 and IPv6 Bazel tests passed. Lucas Manning and Zach Koopmans are the requested reviewers.",
+      "evidence": [
+        {
+          "label": "PR and author’s test results",
+          "url": "https://github.com/google/gvisor/pull/17394"
+        },
+        {
+          "label": "Earlier proposed change",
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6581368835"
+        },
+        {
+          "label": "Independent 20-run ordinary and race checks on the two-line fix",
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6653812487"
+        },
+        {
+          "label": "PR source",
+          "url": "https://github.com/google/gvisor/commit/f20fd5892"
+        }
+      ]
+    },
+    {
+      "id": "branch:netgofer-wait-for-idle-slot",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/netgofer-wait-for-idle-slot",
+      "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+      "title": "Wait for the idle UDP flow to release its netgofer slot",
+      "url": "https://github.com/tamird/gvisor/commit/9401960a0",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T20:27:16+00:00",
+      "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+        "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
+        "title": "Wait for the idle UDP flow to release its netgofer slot",
+        "url": "https://github.com/tamird/gvisor/commit/9401960a0",
+        "requestedAt": "2026-11-10T20:27:16+00:00",
+        "summary": "Open the netgofer test fix? The second flow can start once the first flow releases its slot.",
+        "body": "The host socket closes while the UDP forwarder is still unwinding.\nStarting a second flow at that point can hit the one-connection limit.\nThe ARM64 unit test failed when Write on the second socket returned\nconnection refused. [1]\n\nKeep the first client socket open and wait for the only forwarding\nslot to become available. Then require the second flow to echo its\nfirst datagram. This also reports a leaked slot directly.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
+      },
+      "evidence": [
+        {
+          "label": "Original Buildkite ARM64 failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
+        },
+        {
+          "label": "Original Linux ARM64 test logs and admission counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42893640379/artifacts/13799004508"
+        },
+        {
+          "label": "CI flake investigation",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aci-flake-netgofer-udp-idle"
+        }
+      ]
+    },
+    {
+      "repo": "google/gvisor",
+      "title": "Return the page read error when restoring the next memory file",
+      "group": "runtime",
+      "summary": "Published as one commit on #17407. Rebasing the approved 22451846e onto dd49ce763 left an empty range-diff. After a short read, the loader closed the pages file. Registering the next memory file hid the original I/O error behind a closed-file error. The change checks the read error while holding the lock that excludes Close. The regression failed on stock. On the proposal, all 72 package cases passed both normally and under the race detector. The owning Nogo targets passed.",
+      "updatedAt": "2026-11-10T20:29:37+00:00",
+      "evidence": [
+        {
+          "label": "Upstream PR #17407",
+          "url": "https://github.com/google/gvisor/pull/17407"
+        },
+        {
+          "label": "All 72 package cases passed under the race detector on the proposed commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42704817816/artifacts/13715049173"
+        },
+        {
+          "label": "Original stock, package, Nogo and failed race-build records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701040726/artifacts/13712601949"
+        },
+        {
+          "label": "Revision on the landed parent",
+          "url": "https://github.com/tamird/gvisor/commit/22451846e"
+        },
+        {
+          "label": "Stock error, corrected package and race tests, and both target architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701040726"
+        },
+        {
+          "label": "Proposed source and two-file gofer regression",
+          "url": "https://github.com/tamird/gvisor/commit/211a9e3b9"
+        },
+        {
+          "label": "Intact and truncated files on the original and corrected loaders",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41226335084/artifacts/13052195243"
+        },
+        {
+          "label": "Exact source, original regression failure, 70 package cases and both analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
+          "baseHead": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+          "url": "https://github.com/tamird/gvisor/commit/211a9e3b9",
+          "title": "Preserve read errors across memory files",
+          "requestedAt": "2026-10-31T18:03:49.634+00:00",
+          "summary": "Open this PR after the parent checkpoint page-read fix lands?",
+          "body": "When the checkpoint gofer fails to read a truncated pages file, a\nlater memory file can report an invalid server handle instead of the\noriginal I/O error [1].\n\nCheck the saved read error before registering the next destination.\nThe existing file-list mutex serializes registration with Close.\n\nThe permanent regression uses the same loader for two memory files.\nThe parent reports a closed reader on the second file. The corrected\nloader returns EIO on both. All 70 package cases and both analyzer\ntargets passed [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41226335084/artifacts/13052195243\n[2]: https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306",
+          "outcome": "superseded",
+          "at": "2026-11-09T21:19:08+00:00",
+          "note": "The parent landed with a different memory-file test helper. The old proposal conflicts in the regression test."
+        },
+        {
+          "kind": "proposal",
+          "head": "22451846e8248de7c94528de1a39108fd8e34cf1",
+          "baseHead": "6782e66bb04ba41de7da417da53406c2525ac9f1",
+          "url": "https://github.com/tamird/gvisor/commit/22451846e",
+          "title": "Return the page read error when restoring the next memory file",
+          "requestedAt": "2026-11-10T20:13:13+00:00",
+          "summary": "Open this single-commit fix on gVisor? The prerequisite has merged. The existing short-read test now supplies a second memory file after the first reports EIO.",
+          "body": "An asynchronous page read can fail before all memory files have been supplied to LoadFrom. The loader closes the pages file, but LoadFrom tries to register the next destination before checking the read error. With a checkpoint gofer, a truncated pages file consequently reports an invalid server file handle instead of the original I/O error.\n\nUse the loader's file-list mutex to serialize registration with Close. Check the saved read error under that lock before calling the reader.",
+          "outcome": "approved",
+          "at": "2026-11-10T20:29:37+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17407",
+          "note": "Published as one commit on #17407. Rebasing the approved 22451846e onto dd49ce763 left an empty range-diff."
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "098e0a9a54b8236078bd485221314876364504ab",
+        "observedAt": "2026-11-10T20:29:37+00:00",
+        "disposition": "Published as one commit on #17407. Rebasing the approved 22451846e onto dd49ce763 left an empty range-diff.",
+        "nextAction": "Follow checks and maintainer review on #17407.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17407",
+          "https://github.com/tamird/gvisor/commit/098e0a9a5",
+          "https://github.com/tamird/gvisor/commit/22451846e"
+        ]
+      },
+      "id": "pr:17407",
+      "type": "pr",
+      "number": 17407,
+      "ref": "pgalloc-preserve-page-read-error",
+      "head": "098e0a9a54b8236078bd485221314876364504ab",
+      "url": "https://github.com/google/gvisor/pull/17407",
+      "status": "open"
     }
   ],
   "edges": [
@@ -74792,7 +75024,7 @@
     },
     {
       "from": "pr:16807",
-      "to": "branch:checkpoint-memory-file-registration",
+      "to": "pr:17407",
       "type": "depends_on",
       "reason": "The follow-up builds on the checkpoint reader cleanup. It preserves the first read error when another memory file later registers with the same reader.",
       "evidence": "https://github.com/tamird/gvisor/commit/211a9e3b9"
@@ -97066,7 +97298,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T20:13:13+00:00",
+      "updatedAt": "2026-11-10T20:27:16+00:00",
       "summary": "On #17390, the ARM64 TestProxyUDPIdleTimeout failed on its second flow with connection refused. Buildkite reran the same target on the same commit and it passed in 0.2 seconds.",
       "findings": [
         {
@@ -97089,10 +97321,23 @@
               "url": "https://github.com/google/gvisor/blob/4a8b59ea5/runsc/gofer/net/netgofer.go#L488-L494"
             }
           ]
+        },
+        {
+          "text": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
+          "evidence": [
+            {
+              "label": "Native ARM64 comparison and full package result",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42893640379/artifacts/13799004508"
+            }
+          ]
         }
       ],
-      "nextStep": "Wait for the actual connection slot before sending once on the second flow. Check whether holding the first close reproduces the failure and whether withholding the slot still fails the corrected test.",
+      "nextStep": "Review the single-commit fix that waits for the forwarding slot before sending on the second flow.",
       "evidence": [
+        {
+          "label": "Single-commit netgofer test fix",
+          "url": "https://github.com/tamird/gvisor/commit/9401960a0"
+        },
         {
           "label": "ARM64 test failure on #17390",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
@@ -97110,7 +97355,105 @@
           "url": "https://github.com/google/gvisor/blob/4a8b59ea5/runsc/gofer/net/netgofer.go#L488-L494"
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-sudo-exec-timeout",
+      "title": "Docker integration test times out waiting for sudo",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-10T20:31:58+00:00",
+      "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
+      "findings": [
+        {
+          "text": "The four tests ran for 14m38s to 14m41s. An intervening #54238 attempt exited −1 without this timeout. Passing parallel shards exercised other tests.",
+          "evidence": [
+            {
+              "label": "Cgroup v1 original",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c6d2-5fdc-480a-a444-a8654608dd76"
+            },
+            {
+              "label": "Cgroup v1 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c6fd-8b71-4f21-846b-4017c2b41d5b"
+            },
+            {
+              "label": "Cgroup v2 original",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54238#01a1c6d5-2859-4491-8737-74ec0b05fe7b"
+            },
+            {
+              "label": "Cgroup v2 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54238#01a1c6ff-f080-4e32-ba4d-f0760c17a5b2"
+            }
+          ]
+        },
+        {
+          "text": "The fourth job on #17393 hit the same 15-minute package alarm. TestSudo had been running for 14m39s when it timed out in Process.Logs.",
+          "evidence": [
+            {
+              "label": "Third TestSudo timeout on cgroup v2",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54238#01a1c713-10dc-4aa7-82ca-051caf2b2941"
+            }
+          ]
+        },
+        {
+          "text": "The third cgroup v1 attempt hit the same alarm after TestSudo ran for 14m40s. Both retry chains ended with Bazel exit 2.",
+          "evidence": [
+            {
+              "label": "Third cgroup v1 timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c712-c659-4c16-af5e-1efd5d6dfbf7"
+            }
+          ]
+        },
+        {
+          "text": "On master, the parent of #15938 completed the owning integration suite in 23.5s on cgroup v1 and 26.0s on v2. The merge changed when systrap starts tracing. Both cgroup jobs timed out in the fourth exec, the strace-wrapped sudo command. The three earlier commands completed.",
+          "evidence": [
+            {
+              "label": "Parent completed both suites",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54186#01a1c554-c187-4073-b0d8-caa837c55cf3"
+            },
+            {
+              "label": "First cgroup v1 master failure after the merge",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54208#01a1c697-6f9d-4cc4-85bd-9a4941acff68"
+            },
+            {
+              "label": "Cgroup v2 master failure on the same merge",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54208#01a1c697-6fa0-47d1-9c2d-1b5ae5c9ad75"
+            },
+            {
+              "label": "Systrap tracing change",
+              "url": "https://github.com/google/gvisor/pull/15938"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare the strace-wrapped sudo command on deb6b3ea1 and 1b8388552, and identify which tracer or tracee stops making progress.",
+      "evidence": [
+        {
+          "label": "Cgroup v1 original",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c6d2-5fdc-480a-a444-a8654608dd76"
+        },
+        {
+          "label": "Cgroup v1 retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c6fd-8b71-4f21-846b-4017c2b41d5b"
+        },
+        {
+          "label": "Cgroup v2 original",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54238#01a1c6d5-2859-4491-8737-74ec0b05fe7b"
+        },
+        {
+          "label": "Cgroup v2 retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54238#01a1c6ff-f080-4e32-ba4d-f0760c17a5b2"
+        },
+        {
+          "label": "Third TestSudo timeout on cgroup v2",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54238#01a1c713-10dc-4aa7-82ca-051caf2b2941"
+        },
+        {
+          "label": "Third TestSudo timeout on cgroup v1",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c712-c659-4c16-af5e-1efd5d6dfbf7"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-10T18:08:31+00:00"
+  "updatedAt": "2026-11-10T20:37:32+00:00"
 }
