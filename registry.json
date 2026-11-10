@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T02:54:24+00:00",
+    "updatedAt": "2026-11-10T03:23:16+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41925,8 +41925,8 @@
       "title": "Remove overlay waiters from their original file",
       "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
       "group": "runtime",
-      "status": "Checking overlay waiter ownership",
-      "updatedAt": "2026-11-10T02:54:24+00:00",
+      "status": "Overlay race check outstanding",
+      "updatedAt": "2026-11-10T03:23:16+00:00",
       "summary": "When chmod copies up an open overlay file, its existing waiters still belong to the old backing file. The revision keeps that file open until Release can drop it. Stock notified a canceled waiter. The corrected test passed and close restored the initial file count.",
       "evidence": [
         {
@@ -41938,7 +41938,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094"
         },
         {
-          "label": "Three-case race replay with corrected test setup",
+          "label": "Corrected race fixture started; runner exited 143 without test results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42745547980"
         },
         {
@@ -42091,9 +42091,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "d01969e4cf73163e16243bd0d8edb666fce733db",
-        "observedAt": "2026-11-10T02:54:24+00:00",
-        "disposition": "The native test, lockdep, Nogo and syscall checks passed. The race fixture failed before registration.",
-        "nextAction": "Run the three race cases after making fixture setup and teardown use the task’s thread-safe context.",
+        "observedAt": "2026-11-10T03:23:16+00:00",
+        "disposition": "The native, lockdep, Nogo and syscall checks passed. The corrected race fixture started, but the runner exited 143 and published no test output.",
+        "nextAction": "Obtain the three named race-detector results for the corrected test fixture before proposing the overlay change.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42745547980",
           "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094",
@@ -95447,5 +95447,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T02:54:24+00:00"
+  "updatedAt": "2026-11-10T03:23:16+00:00"
 }
