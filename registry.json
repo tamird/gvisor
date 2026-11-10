@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T17:00:32+00:00",
+    "updatedAt": "2026-11-10T17:29:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44957,18 +44957,31 @@
       "number": 16763,
       "group": "runtime",
       "ref": "review/host-epoll-unchanged-mask",
-      "head": "e1fef1717c9875d137ad593d91dd148aee39df83",
+      "head": "f79be00464e923f09723fc95fbe036d54b34c87e",
       "title": "Keep unchanged host epoll interests armed",
       "url": "https://github.com/google/gvisor/pull/16763",
       "status": "open",
-      "summary": "Master now gives each epoll registration a unique ID. The amendment keeps that ID across interest changes, records the mask after a successful ADD or MOD, skips an unchanged mask, and clears the ID and mask on deletion. Linux and revised systrap passed both stream and seqpacket. Master delivered a second edge to the first watcher in both cases. All six notifier test records and both architecture analyzers passed.",
-      "updatedAt": "2026-11-10T16:52:08+00:00",
+      "summary": "The current public amendment preserves epoll registration IDs across interest changes and skips an unchanged mask. The stream and seqpacket controls passed under Linux and corrected systrap.",
+      "updatedAt": "2026-11-10T17:29:34+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
           "head": "e1fef1717c9875d137ad593d91dd148aee39df83",
           "outcome": "approved",
           "at": "2026-10-30T21:08:14.496709+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "f79be00464e923f09723fc95fbe036d54b34c87e",
+          "baseHead": "e1fef1717c9875d137ad593d91dd148aee39df83",
+          "url": "https://github.com/tamird/gvisor/commit/f79be0046",
+          "requestedAt": "2026-11-10T16:52:08+00:00",
+          "title": "Preserve epoll registration IDs when the host interest mask changes",
+          "summary": "Publish the tested single-commit amendment to #16763.",
+          "body": "Master now gives each epoll registration a unique ID. The amendment keeps that ID across interest changes, records the mask after a successful ADD or MOD, skips an unchanged mask, and clears the ID and mask on deletion. Linux and revised systrap passed both stream and seqpacket. Master delivered a second edge to the first watcher in both cases. All six notifier test records and both architecture analyzers passed.\n\ngit -C ~/code/gvisor range-diff e1fef1717^! f79be0046^!",
+          "outcome": "approved",
+          "at": "2026-11-10T17:29:34+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16763"
         }
       ],
       "evidence": [
@@ -44997,17 +45010,6 @@
           "url": "https://app.buildbuddy.io/invocation/1cada729-e81f-4bc8-9c4b-13a7ec6f5b26"
         }
       ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "f79be00464e923f09723fc95fbe036d54b34c87e",
-        "baseHead": "e1fef1717c9875d137ad593d91dd148aee39df83",
-        "url": "https://github.com/tamird/gvisor/commit/f79be0046",
-        "requestedAt": "2026-11-10T16:52:08+00:00",
-        "title": "Preserve epoll registration IDs when the host interest mask changes",
-        "summary": "Publish the tested single-commit amendment to #16763.",
-        "body": "Master now gives each epoll registration a unique ID. The amendment keeps that ID across interest changes, records the mask after a successful ADD or MOD, skips an unchanged mask, and clears the ID and mask on deletion. Linux and revised systrap passed both stream and seqpacket. Master delivered a second edge to the first watcher in both cases. All six notifier test records and both architecture analyzers passed.\n\ngit -C ~/code/gvisor range-diff e1fef1717^! f79be0046^!"
-      },
       "refinement": {
         "before": {
           "head": "e1fef1717c9875d137ad593d91dd148aee39df83"
@@ -45016,6 +45018,16 @@
           "head": "f79be00464e923f09723fc95fbe036d54b34c87e",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
+      },
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "f79be00464e923f09723fc95fbe036d54b34c87e",
+        "observedAt": "2026-11-10T17:29:34+00:00",
+        "disposition": "Published the single reviewed amendment.",
+        "nextAction": "Follow the upstream checks and maintainer review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16763"
+        ]
       }
     },
     {
@@ -71150,8 +71162,8 @@
       "title": "Exclude OpenJDK’s flaky DatagramChannel descriptor-count test",
       "url": "https://github.com/tamird/gvisor/commit/6dd410ba8",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-10T16:28:34+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-10T17:29:34+00:00",
       "summary": "Four builds failed Unref.java when the JVM-wide descriptor count differed by one. All four passed on a same-head retry. OpenJDK saw the extra descriptor on Linux and excludes the test on all platforms. Adding its one CSV entry changed gVisor’s Java 21 selection from 6,984 tests to 6,983. The pinned image listed 7,078 tests. Applying the whole upstream list would skip 19 additional tests that gVisor still runs. Two of those passed on the original failing build’s runtime, along with the neighboring DatagramChannel/Connect test.",
       "evidence": [
         {
@@ -71173,18 +71185,37 @@
         {
           "label": "Same-head passing Java retry on build 54152",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54152#01a1c399-1eb3-4acf-b48b-92c9eb48e796"
+        },
+        {
+          "label": "Published upstream PR #17377",
+          "url": "https://github.com/google/gvisor/pull/17377"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
-        "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
-        "url": "https://github.com/tamird/gvisor/commit/6dd410ba8",
-        "title": "Exclude OpenJDK’s flaky DatagramChannel descriptor-count test",
-        "requestedAt": "2026-11-10T16:28:34+00:00",
-        "summary": "Four builds failed Unref.java when the JVM-wide descriptor count differed by one. All four passed on a same-head retry. OpenJDK saw the extra descriptor on Linux and excludes the test on all platforms. Adding its one CSV entry changed gVisor’s Java 21 selection from 6,984 tests to 6,983. The pinned image listed 7,078 tests. Applying the whole upstream list would skip 19 additional tests that gVisor still runs. Two of those passed on the original failing build’s runtime, along with the neighboring DatagramChannel/Connect test.",
-        "body": "Four Java 21 builds failed Unref.java and passed when Buildkite reran\nthe failed shard. Two runs counted one fewer open descriptor after\nclosing a channel. Two counted one extra after closing a channel\nregistered with a selector.\n\nOpenJDK saw the latter failure on Linux [1] and excludes this test on\nall platforms in the source used by our Java 21 image [2]. Add the\nsame test to our Java 21 exclusions.\n\n[1]: https://bugs.openjdk.org/browse/JDK-8233437\n[2]: https://github.com/openjdk/jdk21u/blob/05f18b106/test/jdk/ProblemList.txt#L564"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
+          "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
+          "url": "https://github.com/tamird/gvisor/commit/6dd410ba8",
+          "title": "Exclude OpenJDK’s flaky DatagramChannel descriptor-count test",
+          "requestedAt": "2026-11-10T16:28:34+00:00",
+          "summary": "Four builds failed Unref.java when the JVM-wide descriptor count differed by one. All four passed on a same-head retry. OpenJDK saw the extra descriptor on Linux and excludes the test on all platforms. Adding its one CSV entry changed gVisor’s Java 21 selection from 6,984 tests to 6,983. The pinned image listed 7,078 tests. Applying the whole upstream list would skip 19 additional tests that gVisor still runs. Two of those passed on the original failing build’s runtime, along with the neighboring DatagramChannel/Connect test.",
+          "body": "Four Java 21 builds failed Unref.java and passed when Buildkite reran\nthe failed shard. Two runs counted one fewer open descriptor after\nclosing a channel. Two counted one extra after closing a channel\nregistered with a selector.\n\nOpenJDK saw the latter failure on Linux [1] and excludes this test on\nall platforms in the source used by our Java 21 image [2]. Add the\nsame test to our Java 21 exclusions.\n\n[1]: https://bugs.openjdk.org/browse/JDK-8233437\n[2]: https://github.com/openjdk/jdk21u/blob/05f18b106/test/jdk/ProblemList.txt#L564",
+          "outcome": "approved",
+          "at": "2026-11-10T17:29:34+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17377"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
+        "observedAt": "2026-11-10T17:29:34+00:00",
+        "disposition": "Published as the single reviewed commit in #17377.",
+        "nextAction": "Follow the upstream PR checks and review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17377"
+        ]
       }
     },
     {
@@ -71226,25 +71257,20 @@
       "title": "Check the loaded registry before sending reviewer requests and reminders",
       "url": "https://github.com/tamird/gvisor/commit/ad4c3e56b",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-10T16:46:46+00:00",
-      "summary": "The published registry can match HEAD while a process uses uncommitted changes to plan a GitHub message. Comparing the published blob with the bytes actually loaded prevents that write. Deployment of the tested sender to this site’s gh-pages branch is pending.",
+      "status": "Deployed",
+      "updatedAt": "2026-11-10T17:29:34+00:00",
+      "summary": "The published sender verifies the exact registry bytes loaded by the process immediately before a native reviewer request, a direct or fallback mention, and a reapproval reminder. The native Linux regression rejected an uncommitted registry even when the local HEAD matched GitHub.",
       "evidence": [
         {
           "label": "Native Linux suite and before/after dirty-checkout replay",
           "url": "https://github.com/tamird/gvisor/actions/runs/42857435733"
+        },
+        {
+          "label": "Published sender implementation",
+          "url": "https://github.com/tamird/gvisor/commit/55a0a4e21"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "ad4c3e56b9feb96ac2d96b62eea32f44377418c5",
-        "baseHead": "3b8af39acf56436106170d4e0531c63ffb24afff",
-        "url": "https://github.com/tamird/gvisor/commit/ad4c3e56b",
-        "title": "Deploy the tested sender fix to the work map",
-        "summary": "The original sender allowed a write when GitHub and HEAD matched but the loaded registry differed. The revision refused it. Linux passed 185 Python tests, 111 JavaScript tests and the published-data validator.",
-        "body": "Fast-forward the existing work map’s gh-pages code to include this change. Reviewer requests, direct and fallback mentions, and three-hour reapproval reminders check the exact registry blob used to make their decision before writing to GitHub."
-      }
+      "inactive": true
     },
     {
       "id": "pr:17376",
@@ -71283,6 +71309,73 @@
         {
           "label": "Single BCR prerequisite",
           "url": "https://github.com/tamird/bazel-central-registry/commit/a4f336eea"
+        }
+      ]
+    },
+    {
+      "id": "pr:17377",
+      "type": "pr",
+      "number": 17377,
+      "repo": "google/gvisor",
+      "group": "tests",
+      "title": "Exclude OpenJDK’s flaky DatagramChannel descriptor-count test",
+      "url": "https://github.com/google/gvisor/pull/17377",
+      "ref": "research/java21-unref-descriptor-count",
+      "head": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
+      "status": "open",
+      "updatedAt": "2026-11-10T17:29:34+00:00",
+      "summary": "Four builds failed Unref.java when the JVM-wide descriptor count differed by one. All four passed on a same-head retry. OpenJDK saw the extra descriptor on Linux and excludes the test on all platforms. Adding its one CSV entry changed gVisor’s Java 21 selection from 6,984 tests to 6,983. The pinned image listed 7,078 tests. Applying the whole upstream list would skip 19 additional tests that gVisor still runs. Two of those passed on the original failing build’s runtime, along with the neighboring DatagramChannel/Connect test.",
+      "evidence": [
+        {
+          "label": "Exact admission counts and three original passing jtreg results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42849734838/artifacts/13782730527"
+        },
+        {
+          "label": "OpenJDK report of the extra descriptor on Linux",
+          "url": "https://bugs.openjdk.org/browse/JDK-8233437"
+        },
+        {
+          "label": "Pinned OpenJDK 21 exclusion for every platform",
+          "url": "https://github.com/openjdk/jdk21u/blob/05f18b106/test/jdk/ProblemList.txt#L564"
+        },
+        {
+          "label": "Original failure on build 54152",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54152/jobs/01a1c388-76cb-4a4f-8415-b54a867e6378/artifacts/01a1c397-c7b8-4264-89aa-c947cc762a9a"
+        },
+        {
+          "label": "Same-head passing Java retry on build 54152",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54152#01a1c399-1eb3-4acf-b48b-92c9eb48e796"
+        },
+        {
+          "label": "Published upstream PR #17377",
+          "url": "https://github.com/google/gvisor/pull/17377"
+        }
+      ]
+    },
+    {
+      "id": "branch:go-1-27-4",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/go-1.27.4",
+      "head": "d19a818b09dee4dba6b2402222eac801084bc1ce",
+      "title": "Update Go to 1.27.4",
+      "url": "https://github.com/tamird/gvisor/commit/d19a818b0",
+      "group": "bazel",
+      "status": "Approved; qualifying on Linux",
+      "updatedAt": "2026-11-10T17:29:34+00:00",
+      "summary": "Select 1.27.4 for the Bazel SDK and the coverage helper’s patched Go toolchain. Publish the reviewed change after the native Linux checks pass.",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d19a818b09dee4dba6b2402222eac801084bc1ce",
+          "outcome": "approved",
+          "at": "2026-11-10T17:29:34+00:00"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Go release notes",
+          "url": "https://go.dev/doc/devel/release#go1.27.4"
         }
       ]
     }
@@ -96648,5 +96741,5 @@
       "nextStep": "Compare the unchanged test on native Linux and runsc to determine whether the debugger heap and timeout fail on both."
     }
   ],
-  "updatedAt": "2026-11-10T17:00:32+00:00"
+  "updatedAt": "2026-11-10T17:29:34+00:00"
 }

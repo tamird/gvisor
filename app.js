@@ -1107,7 +1107,12 @@ function commitLinkMatches(repo, head, url) {
   const prefix = `https://github.com/${repo}/commit/`;
   return typeof head === "string" && (url === prefix + head || url === prefix + head.slice(0, 9));
 }
+function trackerMaintenance(node) {
+  return node.type === "branch" && node.repo === "tamird/gvisor" &&
+    (node.id?.startsWith("branch:work-map-") || /^(tracker\/|review\/work-map-)/.test(node.ref || ""));
+}
 function pendingDecisions(node) {
+  if (trackerMaintenance(node)) return [];
   const decisions = node.contributorReview ? [node.contributorReview] : [];
   return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head

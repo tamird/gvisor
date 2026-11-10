@@ -27,6 +27,10 @@ facts and unresolved causes in every relationship.
 - `nodes` have a stable `id`, a `type` (`pr`, `branch`, or `issue`), a title,
   HTTPS source URL, workstream `group`, and status. PR and GitHub issue records
   also carry `repo` and `number`; branch and PR records carry `ref`.
+- Maintain the public work map, its scheduler and its senders directly. Use
+  `tracker/` or `review/work-map-` refs for any tracked qualification. Record a
+  running check or published result as agent work. Contributor decisions are
+  for the underlying upstream changes and messages.
 - Add a `contributorReview` to the target PR, branch, or issue when asking
   for a decision, including outgoing reviews on someone else's PR. Record the
   exact proposed text or commit. Use `kind: issue` on the source work item with

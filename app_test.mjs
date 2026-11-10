@@ -30,6 +30,17 @@ test('a requested rebase belongs to its author and source head', () => {
   assert.equal(request(), null);
 });
 
+test('tracker maintenance never requests a contributor decision on a cached registry', () => {
+  const c = client();
+  c.row = { id: 'branch:work-map-published-reminder-registry', type: 'branch', repo: 'tamird/gvisor',
+    ref: 'review/work-map-bound-reminder-registry', head: 'a'.repeat(40),
+    contributorReview: { kind: 'proposal', status: 'pending', head: 'a'.repeat(40) } };
+  assert.equal(vm.runInContext('pendingDecisions(row).length', c), 0);
+  c.row.id = 'branch:upstream-tool';
+  c.row.ref = 'review/upstream-tool';
+  assert.equal(vm.runInContext('pendingDecisions(row).length', c), 1);
+});
+
 test('review outreach follows only the observed open gVisor source', () => {
   const c = client();
   c.pr = { type: 'pr', repo: 'google/gvisor', github: { status: 'open', number: 16516, head: 'a'.repeat(40) } };

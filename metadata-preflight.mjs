@@ -14,6 +14,11 @@ context.candidateRegistry = JSON.parse(bytes['registry.json']);
 context.candidateSnapshot = JSON.parse(bytes['github-status.json']);
 vm.runInContext('validateRegistry(candidateRegistry); validateSnapshot(candidateSnapshot, candidateRegistry);', context);
 for (const node of context.candidateRegistry.nodes) {
+  context.node = node;
+  if (vm.runInContext("trackerMaintenance(node)", context) &&
+      [node.contributorReview, ...(node.additionalReviews || [])].some(item => item?.status === "pending")) {
+    throw new Error(`Record tracker maintenance as agent work: ${node.id}`);
+  }
   const decision = node.contributorReview;
   if (decision?.status !== 'pending') continue;
   if (node.type === 'branch' &&
