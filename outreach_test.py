@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 from outreach import business_deadline, plan, requested_in_comment
+from reviewer_selection import Experience, History, reviewer_history
 
 HEAD = "a" * 40
 OLD = "2026-10-01T16:00:00Z"
@@ -45,6 +46,75 @@ class OutreachTest(unittest.TestCase):
              "evidence": "https://github.com/google/gvisor/pull/1"} for r in ("alice", "bob")])
         self.comp.start()
         self.addCleanup(self.comp.stop)
+
+    def approved(self):
+        p = pr()
+        p.update(url="https://github.com/google/gvisor/pull/1", importPolicy="copybara",
+                 githubReviewDecision="APPROVED", maintainerReviewers=["alice"],
+                 publicImportDisposition={"scope": "none", "state": "absent", "trigger": {"state": "present"}})
+        p["feedback"]["items"].append(comment("alice", "LGTM", START, kind="review", state="APPROVED",
+            submittedAt=START, commit={"oid": HEAD}, authorAssociation="MEMBER", url=p["url"]+"#pullrequestreview-1"))
+        p["checks"]["contexts"] = [{"name": "import/copybara", "state": "SUCCESS", "internalCL": "1010626048"}]
+        return p
+
+    def import_plan(self, p, now=NOW, **kwargs):
+        history = History({who: Experience() for who in ("alice", "bob")}, {}, "tamird",
+                          {"bob": "https://github.com/google/gvisor/pull/99"})
+        return plan(p, kwargs.pop("node", {}), kwargs.pop("states", {}), now, "tamird", set(history.people),
+                    history, **kwargs)
+
+    def test_import_without_export_and_with_failed_internal_feedback(self):
+        p = self.approved()
+        a = self.import_plan(p)
+        self.assertEqual((a["kind"], a["reviewer"], a["channel"]), ("import-status", "alice", "comment"))
+        self.assertIn("CL 1010626048", a["body"])
+        self.assertIn("no public export", a["body"])
+        p["checks"]["contexts"].append({"name": "feedback/copybara", "state": "FAILURE"})
+        self.assertIn("`feedback/copybara` failed", self.import_plan(p)["body"])
+        self.assertNotIn("checks passed", self.import_plan(p)["body"])
+
+    def test_manual_import_status_contact_and_bot_export_on_16586(self):
+        p = self.approved()
+        p.update(number=16586, url="https://github.com/google/gvisor/pull/16586")
+        export = {"number":16983, "status":"open", "sourceHead":HEAD, "feedback":{"complete":True, "items":[]}}
+        p["imports"] = [export]
+        receipt = p["url"] + "#issuecomment-6774296987"
+        p["feedback"]["items"].append(comment("tamird", "@alice, could you check what CL 1010626048 needs to land? "
+             "Copybara imported the change after your October 30 approval, the internal checks passed, and the "
+             "export (#16983) is still open.", "2026-11-10T17:26:13Z", url=receipt))
+        export["feedback"]["items"].append(comment("copybara-service", "Refreshed", "2026-11-11T18:00:00Z",
+            url="https://github.com/google/gvisor/pull/16983"))
+        row = self.import_plan(p, "2026-11-12T17:26:12Z")
+        self.assertEqual((row["status"],row["lastContactURL"],row["dueAt"]),
+                         ("waiting",receipt,"2026-11-12T09:26:13-08:00"))
+        self.assertEqual(self.import_plan(p,"2026-11-12T17:26:13Z")["reviewer"],"bob")
+        response = "https://github.com/google/gvisor/pull/16983#issuecomment-123"
+        export["feedback"]["items"].append(comment("alice","Investigating the integration.", "2026-11-12T17:00:00Z",url=response))
+        row = self.import_plan(p, "2026-11-12T18:00:00Z")
+        self.assertEqual((row["lastActivityURL"],row["dueAt"]), (response,"2026-11-19T09:00:00-08:00"))
+
+    def test_import_skips_prior_approval_hold_and_landed_export(self):
+        p = self.approved()
+        for action in ("maintainer-reapproval","maintainer-import-label"):
+            p["publicImportDisposition"]["action"] = action
+            self.assertIsNone(self.import_plan(p))
+        del p["publicImportDisposition"]["action"]
+        self.assertIsNone(self.import_plan(p, states={"prerequisite":{}}))
+        self.assertIsNone(self.import_plan(p, node={"releaseWait":{"head":HEAD}}))
+        p["imports"] = [{"number":2,"sourceHead":HEAD,"status":"merged"}]
+        self.assertIsNone(self.import_plan(p))
+        p["imports"] = []
+        p["feedback"]["items"][0]["commit"]["oid"] = "b"*40
+        self.assertIsNone(self.import_plan(p))
+
+    def test_only_landed_public_imports_identify_alternates(self):
+        p = self.approved()
+        p["labelHistory"] = {"complete":True, "items":[{"__typename":"LabeledEvent",
+            "actor":{"login":"bob","__typename":"User"},"label":{"name":"ready to pull"}}]}
+        args = {"maintainers":{"alice","bob"}}
+        self.assertEqual(reviewer_history([p],"tamird",**args).importers,{})
+        p["imports"] = [{"status":"merged"}]
+        self.assertEqual(reviewer_history([p],"tamird",**args).importers,{"bob":p["url"]})
 
     def test_waits_five_pacific_business_days_for_the_current_source(self):
         self.assertEqual(business_deadline(START,5).isoformat(), "2026-11-02T09:00:00-08:00")

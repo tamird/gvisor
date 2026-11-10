@@ -10,6 +10,15 @@ upstream source. GitHub Pages publishes the root of this branch with `.nojekyll`
 The fork's default branch owns the scheduled `Refresh work map` workflow;
 there is no package install, bundler, database, or authentication in the browser.
 
+An approved gVisor change gets a separate import status follow-up. Five Pacific
+business days after the latest human action, the sender asks the approving
+maintainer about the current internal change or public export. It checks the
+source and matching export threads for personal requests. An unanswered
+request gets two business days before another active maintainer who has
+handled imports can be contacted. A bot export or a passing check leaves the
+human clock intact. The import-trigger and reapproval reminders continue to
+handle a missing label or amended source.
+
 ## Keeping the map current
 
 Edit [`registry.json`](registry.json) when a dependency, pending branch, or

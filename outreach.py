@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from reapproval import import_author_block
 from reviewer_selection import History, get_reviewer_candidates, reviewer_history
 from work_states import current_rebase_request, derive_states, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment
 
@@ -92,6 +93,99 @@ def author_work(pr: dict, node: dict, owner: str) -> bool:
     )
 
 
+def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, now: datetime, owner: str,
+                       history: History, planned: dict[str, int], preferred: str | None) -> dict | None:
+    """Follow an approved change through the public and internal import steps."""
+    number, head = pr["number"], pr["head"]
+    checks = {c["name"]: c for c in pr.get("checks", {}).get("contexts", [])
+              if c["name"] in {"import/copybara", "feedback/copybara"}}
+    exports = [i for i in pr.get("imports", []) if i.get("sourceHead") == head]
+    if (pr.get("importPolicy") != "copybara" or disposition.get("state") == "merged"
+            or disposition.get("scope") == "amended" or any(i.get("status") == "merged" for i in exports)
+            or import_author_block(pr, node, owner, approval)
+            or pr.get("githubReviewDecision") == "CHANGES_REQUESTED" and author_work(pr, node, owner)):
+        return None
+    info = {"number": number, "head": head, "kind": "import-status"}
+    if (not pr.get("importsComplete") or not pr.get("checks", {}).get("complete")
+            or not pr.get("feedback", {}).get("complete")
+            or any(not i.get("feedback", {}).get("complete") for i in exports)):
+        return {**info, "status": "incomplete"}
+    approved = instant(approval["submittedAt"])
+    activity, activity_url = approved, approval["url"]
+    contacts = {}
+    for source in [pr, *exports]:
+        for item in source.get("feedback", {}).get("items", []):
+            actor = item.get("author") or {}
+            login = actor.get("login", "").lower()
+            body = (item.get("body") or "").strip()
+            at = instant(item.get("submittedAt") or item.get("createdAt"))
+            if (not at or at < approved or actor.get("__typename") != "User" or not login
+                    or login in {"copybara-service", "googlebot"} or body.startswith("[🤖")
+                    or item.get("state") == "DISMISSED" or not item.get("url")):
+                continue
+            # Never count quoted requests or an earlier request to restore
+            # the label: this clock follows the actual change after approval.
+            text = "\n".join(l for l in body.splitlines() if not l.lstrip().startswith(">"))
+            asks = (login == owner.lower() and item["kind"] in {"inline", "comment"}
+                    and re.search(r"\b(?:import|export|copybara|internal change|CL [0-9]+)\b", text, re.I)
+                    and re.search(r"\b(?:could|would|can|please|check|what|status)\b", text, re.I)
+                    and not re.search(r"(?:restore|reapply|add).*?ready to pull|codex-reapproval", text, re.I))
+            if asks:
+                for name in MENTION.findall(text.split("Posted by Codex", 1)[0]):
+                    if name.lower() != owner.lower() and name.lower() in history.people:
+                        contacts[name.lower()] = max(contacts.get(name.lower(), (at, "")), (at, item["url"]))
+                continue
+            if at > activity and (body or item.get("state") in {"APPROVED", "CHANGES_REQUESTED"}):
+                activity, activity_url = at, item["url"]
+    approver = approval["author"]["login"].lower()
+    helpers = {login: (2, url) for login, url in history.importers.items()}
+    for event in pr.get("labelHistory", {}).get("items", []):
+        actor = event.get("actor") or {}
+        if (actor.get("__typename") == "User" and event.get("__typename") == "LabeledEvent"
+                and event.get("label", {}).get("name") == "ready to pull"):
+            login = actor["login"].lower()
+            if login in history.people:
+                helpers[login] = (1, pr["url"])
+                at = instant(event["createdAt"])
+                if at > activity:
+                    activity, activity_url = at, pr["url"]
+    if approver in history.people:
+        helpers[approver] = (0, approval["url"])
+    last = max(contacts.values(), default=None)
+    due = business_deadline(last[0], 2) if last and last[0] > activity else business_deadline(activity, 5)
+    info.update(lastActivity=activity.isoformat(), lastActivityURL=activity_url, dueAt=due.isoformat())
+    if last:
+        info.update(lastContactAt=last[0].isoformat(), lastContactURL=last[1],
+                    lastReviewers=sorted(who for who, (at, _) in contacts.items() if at == last[0]))
+    if now < due or now.astimezone(PACIFIC).weekday() >= 5:
+        return {**info, "status": "waiting"}
+    candidates = [login for login in helpers if login not in contacts and (not preferred or login == preferred)]
+    if not candidates:
+        return {**info, "status": "needs-reviewer"}
+    who = min(candidates, key=lambda login: (helpers[login][0], planned.get(login, 0) + history.people[login].outstanding, login))
+    cl = next((c["internalCL"] for c in checks.values() if c.get("internalCL")), None)
+    internal = f"CL {cl}" if cl else "the internal change"
+    public = max(exports, key=lambda i: (i["status"] == "open", i["number"]), default=None)
+    if public:
+        export = f"The public export (#{public['number']}) is still open." if public["status"] == "open" else f"The last public export (#{public['number']}) closed without merging."
+    else:
+        export = "GitHub shows no public export of this revision."
+    failed = sorted(c["name"] for c in checks.values() if c["state"] in {"FAILURE", "ERROR"})
+    if failed:
+        situation = "GitHub reports " + " and ".join(f"`{name}`" for name in failed) + " failed."
+        question = f"could you check {internal} and share the first error that needs attention?"
+    else:
+        question = f"could you check what {internal} needs to land?" if checks or public else "could you check whether this approved change was picked up for import?"
+        situation = "The internal checks passed." if checks.get("feedback/copybara", {}).get("state") == "SUCCESS" else ""
+    reason = ("You approved this source." if who == approver else "You have handled the gVisor import trigger.")
+    key = f"{number}:{head}:{who}"
+    body = " ".join(part for part in (f"@{who}, {question}", export, situation) if part)
+    return {**info, "status": "due" if pr["mergeable"] == "MERGEABLE" else "verify-mergeability",
+            "base": pr.get("base"), "key": key, "reviewer": who, "channel": "comment",
+            "evidence": helpers[who][1], "reason": reason,
+            "body": f"{body}\n\nPosted by Codex on behalf of @{owner}.\n\n<!-- gvisor-review-outreach {key} -->"}
+
+
 def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, maintainers: set[str],
          history: History, *, planned: dict[str, int] | None = None, preferred: str | None = None) -> dict | None:
     """Decide the next request from the same observations the sender verifies."""
@@ -100,21 +194,28 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
             or pr.get("status") != "open" or pr.get("headOwner") != owner):
         return None
     number, head = pr["number"], pr["head"]
-    blocked = {"prerequisite", "draft", "contributor-review", "failing",
-               "checks-pending", "imported", "importing", "awaiting-import", "waiting-merge"}
-    # A busy master can leave hundreds of PRs UNKNOWN in one snapshot. Keep
-    # their clocks and candidate visible; only a fresh MERGEABLE can be sent.
+    blocked = {"prerequisite", "draft", "contributor-review", "failing", "checks-pending", "imported"}
+    # UNKNOWN may retain its clock. Delivery independently requires MERGEABLE.
     mergeable = pr.get("mergeable")
-    if (states.keys() & blocked or mergeable == "CONFLICTING" or mergeable not in {"MERGEABLE", "UNKNOWN"}
+    disposition = pr.get("publicImportDisposition") or {}
+    if (states.keys() & blocked or mergeable not in {"MERGEABLE", "UNKNOWN"}
             or "conflicts" in states and mergeable != "UNKNOWN"
             or pr.get("branchHead") != head or node.get("reviewOutreachHold")
             or node.get("releaseWait", {}).get("head") == head
-            or node.get("reapproval", {}).get("head") == head
             or node.get("contributorChangesRequested", {}).get("head") == head
-            or effective_approval(pr, require_aggregate=False, trusted_reviewers=set(pr.get("maintainerReviewers", [])) | set(maintainers))
             or landed_patch(pr, node.get("landedPatch"))
-            or (pr.get("publicImportDisposition") or {}).get("reviewedExport")
-            or (pr.get("publicImportDisposition") or {}).get("action") == "maintainer-reapproval"):
+            or disposition.get("action") in {"maintainer-reapproval", "maintainer-import-label"}):
+        return None
+    trusted = set(pr.get("maintainerReviewers", [])) | set(maintainers)
+    approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=trusted)
+    # GitHub can associate an old approval with a rebased head. Only trust
+    # that association for import follow-up when Copybara exported this head.
+    if not approval and disposition.get("scope") == "exact" and disposition.get("state") == "open":
+        approval = effective_approval(pr, trusted_reviewers=trusted, require_fresh=False)
+    if approval:
+        return import_status_plan(pr, node, disposition, approval, now, owner, history, planned or {}, preferred)
+    if (states.keys() & {"importing", "awaiting-import", "waiting-merge"} or disposition.get("reviewedExport")
+            or node.get("reapproval", {}).get("head") == head):
         return None
     if not (pr.get("headHistoryComplete") and pr.get("reviewsComplete") and pr.get("reviewRequestsComplete")
             and pr.get("feedback", {}).get("complete") and pr.get("importsComplete")

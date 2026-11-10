@@ -73,6 +73,7 @@ class History:
     people: dict[str, Experience]
     specialties: dict[str, set[str]]
     owner: str
+    importers: dict[str, str] = field(default_factory=dict)
 
 
 def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime | str) -> dict:
@@ -127,7 +128,16 @@ def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | Non
     if maintainers is None:
         maintainers = {name for p in records for name in p.get("maintainerReviewers", [])}
     people = {login.lower(): Experience() for login in maintainers if login.lower() != owner}
+    importers = {}
     for pr in records:
+        # Applying the import trigger on a change that actually landed is
+        # public evidence that this maintainer can help with another import.
+        if pr.get("mergedAt") or any(i.get("status") == "merged" for i in pr.get("imports", [])):
+            for event in pr.get("labelHistory", {}).get("items", []):
+                actor = (event.get("actor") or {}).get("login", "").lower()
+                if (actor in people and event.get("__typename") == "LabeledEvent"
+                        and event.get("label", {}).get("name") == "ready to pull"):
+                    importers[actor] = pr["url"]
         number = pr["number"]
         author = (pr.get("authorLogin") or "").lower()
         paths = pr.get("files", [])
@@ -186,7 +196,7 @@ def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | Non
         if contribution["login"] in people:
             for path in contribution["paths"]:
                 people[contribution["login"]].sources[path, contribution["number"]] = contribution["url"]
-    return History(people, specialties or {}, owner)
+    return History(people, specialties or {}, owner, importers)
 
 
 def _home(path: str) -> str:

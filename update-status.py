@@ -542,10 +542,14 @@ def normalize(pr: dict, previous: dict | None = None) -> dict:
                 context["purpose"] = check_purpose(context)
                 contexts.append(context)
             else:
-                contexts.append({"id": item["id"], "name": item["context"], "state": item["state"],
-                                 "url": public_url(item["targetUrl"]), "description": item.get("description"),
-                                 "app": None, "kind": "status",
-                                 "purpose": "validation"})
+                context = {"id": item["id"], "name": item["context"], "state": item["state"],
+                           "url": public_url(item["targetUrl"]), "description": item.get("description"),
+                           "app": None, "kind": "status", "purpose": "validation"}
+                if item["context"] in {"import/copybara", "feedback/copybara"}:
+                    internal = re.fullmatch(r"https?://cl/([1-9][0-9]*)/?", item["targetUrl"] or "")
+                    if internal:
+                        context.update(internalCL=internal[1], url=None)
+                contexts.append(context)
         current, superseded = current_check_attempts(contexts)
         checks = {"state": rollup["state"], "total": connection["totalCount"] - len(superseded),
                   "reportedTotal": connection["totalCount"], "supersededContexts": superseded,

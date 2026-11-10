@@ -595,7 +595,7 @@ function attentionReasons(node, owner) {
     add("agent-ci-flake", node.nextStep);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const outreach = currentOutreach(node);
-  if (outreach?.status === "due") add("agent-review-outreach", `Review request due for @${outreach.reviewer}.`);
+  if (outreach?.status === "due") add("agent-review-outreach", `${outreach.kind === "import-status" ? "Import status" : "Review"} request due for @${outreach.reviewer}.`);
   else if (outreach?.status === "verify-mergeability") add("agent-review-outreach", "Check mergeability before sending the due review request.");
   else if (outreach?.status === "needs-reviewer") add("agent-review-outreach", "Find another active reviewer with relevant experience.");
   const sweep = liveSnapshot?.projectFeedbackReview;
@@ -1770,17 +1770,20 @@ function appendOutreach(parent, node) {
   const row = currentOutreach(node);
   if (!row || row.status === "incomplete") return;
   const section = element("section", "detail-section");
-  section.append(element("h3", "", "Review outreach"));
+  const importing = row.kind === "import-status";
+  section.append(element("h3", "", importing ? "Approved import follow-up" : "Review outreach"));
   const due = new Date(row.dueAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
   if (["due", "verify-mergeability"].includes(row.status)) {
     if (row.status === "verify-mergeability") section.append(element("p", "detail-meta", "GitHub is recalculating mergeability. Check the current PR head and base before sending."));
     section.append(element("p", "", `${row.channel === "request" ? "Request a GitHub review from" : "Mention"} @${row.reviewer}. ${row.reason}`), link("Reviewer evidence ↗", row.evidence));
   } else if (row.status === "needs-reviewer") {
-    section.append(element("p", "", "A review is due. Identify another active reviewer with relevant experience."));
+    section.append(element("p", "", importing ? "Find another active maintainer who has handled imports." : "A review is due. Identify another active reviewer with relevant experience."));
   } else {
     const last = row.lastReviewers?.length ? `Asked ${row.lastReviewers.map(who => "@" + who).join(", ")}. ` : "";
-    section.append(element("p", "", `${last}Next eligible review request: ${due}.`));
+    section.append(element("p", "", `${last}Next eligible ${importing ? "import status" : "review"} request: ${due}.`));
   }
+  if (row.lastContactURL) section.append(link("Last personal request ↗", row.lastContactURL));
+  if (row.lastActivityURL && row.lastActivityURL !== row.lastContactURL) section.append(link("Last human activity ↗", row.lastActivityURL));
   parent.append(section);
 }
 function drawDetails() {
@@ -2367,6 +2370,8 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     for (const [id, row] of Object.entries(snapshot.reviewOutreach)) {
       if (!row || String(row.number) !== id || !/^[1-9]\d*$/.test(id) || !/^[a-f0-9]{40}$/.test(row.head) ||
           !["due", "verify-mergeability", "waiting", "needs-reviewer", "incomplete"].includes(row.status) ||
+          row.kind !== undefined && row.kind !== "import-status" ||
+          [row.lastActivityURL, row.lastContactURL].some(url => url !== undefined && !/^https:\/\/github\.com\/google\/gvisor\/pull\/[1-9]\d*(?:#[a-z0-9_-]+)?$/i.test(url)) ||
           row.status !== "incomplete" && !Number.isFinite(Date.parse(row.dueAt)) ||
           ["due", "verify-mergeability"].includes(row.status) && (!["request", "comment"].includes(row.channel) || !/^[A-Za-z0-9-]+$/.test(row.reviewer) ||
             !row.reason || !/^https:\/\/github\.com\/google\/gvisor\//.test(row.evidence)))
