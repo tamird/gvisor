@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T21:53:29+00:00",
+    "updatedAt": "2026-11-10T21:59:50+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71860,9 +71860,17 @@
       "url": "https://github.com/google/gvisor/pull/17416",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-10T21:30:20+00:00",
+      "updatedAt": "2026-11-10T21:59:50+00:00",
       "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
       "evidence": [
+        {
+          "label": "Scoped read results and deadline based on udpIdleTimeout",
+          "url": "https://github.com/tamird/gvisor/commit/79d4294d4"
+        },
+        {
+          "label": "Native ARM64 test of the revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42910167985"
+        },
         {
           "label": "Published netgofer test fix",
           "url": "https://github.com/google/gvisor/pull/17416"
@@ -71906,39 +71914,42 @@
           "at": "2026-11-10T20:57:16+00:00",
           "note": "Published the approved test fix as one mergeable commit on #17416. The native ARM64 test passed eight times after the first flow released its slot.",
           "postedURL": "https://github.com/google/gvisor/pull/17416"
+        },
+        {
+          "kind": "amendment",
+          "head": "cda55e1657a92d33e76472cb4fc3060469c3961a",
+          "baseHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+          "url": "https://github.com/tamird/gvisor/commit/cda55e165",
+          "title": "Wait for the idle UDP flow to release its netgofer slot",
+          "requestedAt": "2026-11-10T21:30:20+00:00",
+          "summary": "Publish the full UDP idle-timeout test cleanup on #17416?",
+          "body": "Both UDP exchanges now use the same buffer and deadline. The first client stays open while the proxy releases its only slot. A write to the first host socket must then return net.ErrClosed, and the second client must receive exactly its first datagram.\n\nAll 22 package tests passed on native ARM64. Delaying slot release by 250 ms passed eight times. Leaving the first host socket open, retaining the slot, and appending a byte to the second reply each failed at its own assertion.",
+          "outcome": "changes-requested",
+          "at": "2026-11-10T21:59:50+00:00",
+          "note": "Tamir requested a deadline derived from udpIdleTimeout, scoped reads, and simpler cleanup."
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
-        "observedAt": "2026-11-10T21:30:20+00:00",
-        "disposition": "All 22 ARM64 package cases passed on the revision. The slow-release case passed eight times. Each of three independent controls failed at its intended assertion.",
-        "nextAction": "Review the single fork revision against the published PR.",
+        "observedAt": "2026-11-10T21:59:50+00:00",
+        "disposition": "The revised test derives its deadline from udpIdleTimeout and scopes each read result to its error check.",
+        "nextAction": "Validate 79d4294d4 on ARM64 before requesting review. The published PR is still 9401960a0.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/79d4294d4",
+          "https://github.com/tamird/gvisor/actions/runs/42910167985",
           "https://github.com/tamird/gvisor/commit/cda55e165",
-          "https://github.com/tamird/gvisor/actions/runs/42904315957/artifacts/13803319428",
           "https://github.com/google/gvisor/pull/17416"
         ]
       },
       "number": 17416,
       "refinement": {
         "before": {
-          "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830"
+          "head": "cda55e1657a92d33e76472cb4fc3060469c3961a"
         },
         "after": {
-          "head": "cda55e1657a92d33e76472cb4fc3060469c3961a"
+          "head": "79d4294d46442fafe7c140f3d28b2a4feb8ffe40"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "cda55e1657a92d33e76472cb4fc3060469c3961a",
-        "baseHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
-        "url": "https://github.com/tamird/gvisor/commit/cda55e165",
-        "title": "Wait for the idle UDP flow to release its netgofer slot",
-        "requestedAt": "2026-11-10T21:30:20+00:00",
-        "summary": "Publish the full UDP idle-timeout test cleanup on #17416?",
-        "body": "Both UDP exchanges now use the same buffer and deadline. The first client stays open while the proxy releases its only slot. A write to the first host socket must then return net.ErrClosed, and the second client must receive exactly its first datagram.\n\nAll 22 package tests passed on native ARM64. Delaying slot release by 250 ms passed eight times. Leaving the first host socket open, retaining the slot, and appending a byte to the second reply each failed at its own assertion."
       }
     }
   ],
@@ -97636,5 +97647,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T21:53:29+00:00"
+  "updatedAt": "2026-11-10T21:59:50+00:00"
 }
