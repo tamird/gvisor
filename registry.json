@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T23:53:15+00:00",
+    "updatedAt": "2026-11-09T23:59:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23242,8 +23242,8 @@
       "title": "Build the wrk2 image from pinned source",
       "url": "https://github.com/tamird/gvisor/commit/bbb847c17",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T23:49:50+00:00",
+      "status": "Revising the wrk2 BUILD file layout",
+      "updatedAt": "2026-11-09T23:59:07+00:00",
       "summary": "Build the wrk2 image with OpenSSL 4.0.3.bcr.1 and LuaJIT 2.1.1794214635. The packaged benchmark completed 584 HTTP and 584 HTTPS requests on native AMD64 and 560 HTTP and 575 HTTPS requests on emulated ARM64. Both reported the upstream LuaJIT version and GC64. All four image notices matched their sources, and the regenerated license catalog matched all 226 entries.",
       "evidence": [
         {
@@ -23288,6 +23288,19 @@
           "outcome": "changes-requested",
           "at": "2026-11-09T23:26:09+00:00",
           "note": "Replace the image-local LuaJIT rules with a registry dependency."
+        },
+        {
+          "kind": "proposal",
+          "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a",
+          "baseHead": "272ad5c729aa522d373a786400c21c2eed198f4d",
+          "url": "https://github.com/tamird/gvisor/commit/bbb847c17",
+          "requestedAt": "2026-11-09T23:49:50+00:00",
+          "title": "Build the wrk2 benchmark image with Bazel",
+          "body": "Building the HTTP benchmark client on ARM64 requires a newer LuaJIT\nthan the one bundled with wrk2. The Dockerfile clones both projects,\npatches wrk2 and installs a compiler and TLS headers with apt.\n\nBuild wrk2 with LuaJIT’s rolling 2.1 release [1] and OpenSSL 4 from\nthe Bazel Central Registry. Compile the embedded Lua module to C so\nthe target compiler emits its object when cross-compiling. Package the\nexecutable and its notices in a pinned Ubuntu image. LuaJIT publishes\nits notice as COPYRIGHT, which the license checker must also recognize.\n\n[1]: https://luajit.org/status.html",
+          "summary": "Open the wrk2 PR after the rolling LuaJIT module is published in BCR? This replaces the image-local LuaJIT build and uses the registry’s OpenSSL module.\n\ngit -C ~/code/gvisor range-diff 5bb80cbb9^! bbb847c17^!",
+          "outcome": "changes-requested",
+          "at": "2026-11-09T23:59:07+00:00",
+          "note": "Rename wrk2.BUILD to BUILD so tools recognize its Starlark syntax."
         }
       ],
       "refinement": {
@@ -23300,16 +23313,16 @@
           "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a",
-        "baseHead": "272ad5c729aa522d373a786400c21c2eed198f4d",
-        "url": "https://github.com/tamird/gvisor/commit/bbb847c17",
-        "requestedAt": "2026-11-09T23:49:50+00:00",
-        "title": "Build the wrk2 benchmark image with Bazel",
-        "body": "Building the HTTP benchmark client on ARM64 requires a newer LuaJIT\nthan the one bundled with wrk2. The Dockerfile clones both projects,\npatches wrk2 and installs a compiler and TLS headers with apt.\n\nBuild wrk2 with LuaJIT’s rolling 2.1 release [1] and OpenSSL 4 from\nthe Bazel Central Registry. Compile the embedded Lua module to C so\nthe target compiler emits its object when cross-compiling. Package the\nexecutable and its notices in a pinned Ubuntu image. LuaJIT publishes\nits notice as COPYRIGHT, which the license checker must also recognize.\n\n[1]: https://luajit.org/status.html",
-        "summary": "Open the wrk2 PR after the rolling LuaJIT module is published in BCR? This replaces the image-local LuaJIT build and uses the registry’s OpenSSL module.\n\ngit -C ~/code/gvisor range-diff 5bb80cbb9^! bbb847c17^!"
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "bbb847c171e47457bb2139f5af42dc6a95a3361a",
+        "observedAt": "2026-11-09T23:59:07+00:00",
+        "disposition": "Revising the wrk2 BUILD file layout",
+        "nextAction": "Move the wrk2 overlay to a file named BUILD, verify the source references and package output, and return the revised single commit for review. The image still needs the published LuaJIT module.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/bbb847c17",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11683"
+        ]
       }
     },
     {
@@ -23945,8 +23958,8 @@
       "title": "Validate restore kinds against destination types",
       "url": "https://github.com/tamird/gvisor/commit/e4c8bd160",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T13:27:04+00:00",
+      "status": "Approved; waiting for reference arrays",
+      "updatedAt": "2026-11-09T23:56:20+00:00",
       "summary": "Three tests used the default encoder to create inputs for the legacy decoder. After graph became the default all three failed. Selecting wire makes Load exercise the intended array-to-slice and interface-to-scalar conversions. All three passed on native AMD64.\n\nThe implementation was approved at 6a5814d55. Only the test revision needs review. The implementation rejected incompatible empty wire values in normal and race tests. The 16-pair comparison detected no timing or allocation change.",
       "links": [
         {
@@ -23971,15 +23984,13 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "e4c8bd1605791c5b9afd48ba81b7966a6bec5ca3",
-        "observedAt": "2026-11-08T13:27:04+00:00",
-        "disposition": "Test revision ready for contributor review",
-        "nextAction": "Include the test revision b3d4c6163 in the approved change after the reference-array change lands?",
+        "observedAt": "2026-11-09T23:56:20+00:00",
+        "disposition": "Contributor approved",
+        "nextAction": "Open the approved destination-type change after the reference-array change lands.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/b45fba8d8...b3d4c6163",
-          "https://github.com/tamird/gvisor/actions/runs/42053810760/artifacts/13429365211",
-          "https://github.com/tamird/gvisor/commit/6a5814d55aa2c2cefc256644c11de8598944c095"
+          "https://github.com/tamird/gvisor/commit/b6df34eba"
         ]
       },
       "settledReviews": [
@@ -23988,19 +23999,20 @@
           "head": "6a5814d55aa2c2cefc256644c11de8598944c095",
           "outcome": "approved",
           "at": "2026-10-22T10:26:32.101647+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "e4c8bd1605791c5b9afd48ba81b7966a6bec5ca3",
+          "baseHead": "b45fba8d8a303c438706d3c00b174f2736193731",
+          "title": "Validate restore kinds against destination types",
+          "url": "https://github.com/tamird/gvisor/commit/e4c8bd160",
+          "requestedAt": "2026-11-05T15:27:44.402237Z",
+          "summary": "Approve the revised tests in this single submission commit, and open the PR after the reference-array change lands?",
+          "body": "Empty arrays and maps could succeed against an incompatible destination\nbecause their element loops never attempted a store. Zero references\ncould likewise bypass destination validation.\n\nSelect the operation from the destination kind before validating its\nwire representation. Keep Nil as a no-op, retain interface delegation\nand manual array-to-slice loading, and use the existing reference\nresolver and collection decoders for the actual stores.\n\nLet Go type assertions validate each destination representation\ndirectly. The existing state error boundary wraps failed assertions with\nthe object context, without a generic helper call for each restored\nvalue.\n\nThe legacy decoder accepts arrays in slices and unwraps interfaces into\nscalar destinations. Save these three inputs with the wire engine so\nLoad exercises those conversions when graph checkpoints are the default.",
+          "outcome": "approved",
+          "at": "2026-11-09T23:56:20+00:00"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "e4c8bd1605791c5b9afd48ba81b7966a6bec5ca3",
-        "baseHead": "b45fba8d8a303c438706d3c00b174f2736193731",
-        "title": "Validate restore kinds against destination types",
-        "url": "https://github.com/tamird/gvisor/commit/e4c8bd160",
-        "requestedAt": "2026-11-05T15:27:44.402237Z",
-        "summary": "Approve the revised tests in this single submission commit, and open the PR after the reference-array change lands?",
-        "body": "Empty arrays and maps could succeed against an incompatible destination\nbecause their element loops never attempted a store. Zero references\ncould likewise bypass destination validation.\n\nSelect the operation from the destination kind before validating its\nwire representation. Keep Nil as a no-op, retain interface delegation\nand manual array-to-slice loading, and use the existing reference\nresolver and collection decoders for the actual stores.\n\nLet Go type assertions validate each destination representation\ndirectly. The existing state error boundary wraps failed assertions with\nthe object context, without a generic helper call for each restored\nvalue.\n\nThe legacy decoder accepts arrays in slices and unwraps interfaces into\nscalar destinations. Save these three inputs with the wire engine so\nLoad exercises those conversions when graph checkpoints are the default."
-      },
       "evidence": [
         {
           "label": "Compare this source with its previously reviewed base",
@@ -24596,19 +24608,17 @@
       "title": "Register restore dependencies during decoding",
       "url": "https://github.com/tamird/gvisor/commit/5f6f4899c",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T13:27:04+00:00",
+      "status": "Approved; waiting for destination-type decoding",
+      "updatedAt": "2026-11-09T23:56:20+00:00",
       "summary": "Two tests passed using graph checkpoints without reaching the legacy decoder being changed. The revised test loads both a value root and a pointer root on each engine. The four native AMD64 cases passed, and the recorded headers confirm which encoder wrote each input.\n\nThe implementation was approved at b9797d128. Only the test revision needs review. The implementation registers dependencies during decoding. Normal and race tests passed; the paired comparison found no timing or allocation change.",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "5f6f4899cb40d9526c3f4a7caf6b7c17f4068555",
-        "observedAt": "2026-11-08T13:27:04+00:00",
-        "disposition": "Test revision ready for contributor review",
-        "nextAction": "Include the test revision 27451d0c2 in the approved change after the destination-type decoder change lands?",
+        "observedAt": "2026-11-09T23:56:20+00:00",
+        "disposition": "Contributor approved",
+        "nextAction": "Open the approved decoder dependency change after the destination-type change lands.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/268638e5a...27451d0c2",
-          "https://github.com/tamird/gvisor/actions/runs/42053810760/artifacts/13429365211",
-          "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962"
+          "https://github.com/tamird/gvisor/commit/e4c8bd160"
         ]
       },
       "links": [
@@ -24635,19 +24645,20 @@
           "head": "b9797d128902a3966efa681c432d2f7a7be36962",
           "outcome": "approved",
           "at": "2026-10-22T20:51:29.370222+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "5f6f4899cb40d9526c3f4a7caf6b7c17f4068555",
+          "baseHead": "268638e5a85cbfe0f0c22e024be79a4e7087748f",
+          "title": "Register restore dependencies during decoding",
+          "url": "https://github.com/tamird/gvisor/commit/5f6f4899c",
+          "requestedAt": "2026-11-05T15:27:44.402237Z",
+          "summary": "Approve the revised tests in this single submission commit, and open the PR after the destination-type decoder change lands?",
+          "body": "Wait-enabled loads previously inspected each wire value again after\ndecoding it to find its dependency root. Return that root from the\nexisting destination-type decoder and pass it to the dependency tracker.\n\nKeep roots at their full wire width until the tracker distinguishes nil\nfrom a reference. Preserve map dependency ordering and defer interface\nassignment before registering its wait.\n\nThe post-load hook must see the initialized object behind a waiting\ninterface. Exercise that ordering for value and pointer roots with each\nengine, including the legacy decoder that registers the dependency.",
+          "outcome": "approved",
+          "at": "2026-11-09T23:56:20+00:00"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "5f6f4899cb40d9526c3f4a7caf6b7c17f4068555",
-        "baseHead": "268638e5a85cbfe0f0c22e024be79a4e7087748f",
-        "title": "Register restore dependencies during decoding",
-        "url": "https://github.com/tamird/gvisor/commit/5f6f4899c",
-        "requestedAt": "2026-11-05T15:27:44.402237Z",
-        "summary": "Approve the revised tests in this single submission commit, and open the PR after the destination-type decoder change lands?",
-        "body": "Wait-enabled loads previously inspected each wire value again after\ndecoding it to find its dependency root. Return that root from the\nexisting destination-type decoder and pass it to the dependency tracker.\n\nKeep roots at their full wire width until the tracker distinguishes nil\nfrom a reference. Preserve map dependency ordering and defer interface\nassignment before registering its wait.\n\nThe post-load hook must see the initialized object behind a waiting\ninterface. Exercise that ordering for value and pointer roots with each\nengine, including the legacy decoder that registers the dependency."
-      },
       "evidence": [
         {
           "label": "Compare this source with its previously reviewed base",
@@ -48175,8 +48186,8 @@
       "head": "c53942792678277f0195068aa41ad17620dd9dd1",
       "title": "hostinet: skip the TCP linger wait on task exit",
       "url": "https://github.com/tamird/gvisor/commit/c53942792",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T05:08:12.703055+00:00",
+      "status": "Approved; waiting for #16787",
+      "updatedAt": "2026-11-09T23:56:20+00:00",
       "summary": "With host networking, a guest process exiting while holding its last TCP socket can wait out a positive SO_LINGER timeout. The host sees a running Sentry thread closing the socket. Disable positive linger for that final close and preserve the peer reset requested by zero linger. All four IPv4/IPv6 cases passed on each of Linux, hostinet and netstack.",
       "evidence": [
         {
@@ -48196,16 +48207,29 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41262136830/artifacts/13065543661"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c53942792678277f0195068aa41ad17620dd9dd1",
-        "baseHead": "c9c954f7e83660917f7c002728bfed64501840c5",
-        "url": "https://github.com/tamird/gvisor/commit/c53942792",
-        "title": "hostinet: skip the TCP linger wait on task exit",
-        "requestedAt": "2026-11-01T05:08:12.703055+00:00",
-        "summary": "Open the host-network fix after #16787 lands with the shared process-exit syscall fixture?",
-        "body": "A guest exiting with the last reference to a TCP socket can wait out\nits entire SO_LINGER timeout. Linux skips that wait when the closing\ntask is exiting [1]. With host networking the sentry thread closes the\nsocket on the guest's behalf and the host sees a running task.\n\nDisable positive linger before the last host close on task exit. Keep\nzero linger enabled so a peer still receives the requested reset [2].\nThe process-exit syscall test checks both cases with host networking.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/af_inet.c#L426-L437\n[2]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L3095-L3101"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c53942792678277f0195068aa41ad17620dd9dd1",
+          "baseHead": "c9c954f7e83660917f7c002728bfed64501840c5",
+          "url": "https://github.com/tamird/gvisor/commit/c53942792",
+          "title": "hostinet: skip the TCP linger wait on task exit",
+          "requestedAt": "2026-11-01T05:08:12.703055+00:00",
+          "summary": "Open the host-network fix after #16787 lands with the shared process-exit syscall fixture?",
+          "body": "A guest exiting with the last reference to a TCP socket can wait out\nits entire SO_LINGER timeout. Linux skips that wait when the closing\ntask is exiting [1]. With host networking the sentry thread closes the\nsocket on the guest's behalf and the host sees a running task.\n\nDisable positive linger before the last host close on task exit. Keep\nzero linger enabled so a peer still receives the requested reset [2].\nThe process-exit syscall test checks both cases with host networking.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/af_inet.c#L426-L437\n[2]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L3095-L3101",
+          "outcome": "approved",
+          "at": "2026-11-09T23:56:20+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "c53942792678277f0195068aa41ad17620dd9dd1",
+        "observedAt": "2026-11-09T23:56:20+00:00",
+        "disposition": "Contributor approved",
+        "nextAction": "Open the approved hostinet exit change after #16787 lands.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16787"
+        ]
       }
     },
     {
@@ -95215,5 +95239,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T23:53:15+00:00"
+  "updatedAt": "2026-11-09T23:59:07+00:00"
 }
