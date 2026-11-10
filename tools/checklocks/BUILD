@@ -11,6 +11,7 @@ go_library(
         "analysis.go",
         "annotations.go",
         "checklocks.go",
+        "elements.go",
         "facts.go",
         "importfacts.go",
         "state.go",

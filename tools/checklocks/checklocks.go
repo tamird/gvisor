@@ -72,6 +72,8 @@ type objectObservations struct {
 
 // passContext is a pass with additional expected failures.
 type passContext struct {
+	elementFields    map[types.Object]*lockGuardFacts
+	elementResults   map[*ssa.Function]elementResult
 	pass             *analysis.Pass
 	failures         map[positionKey]*failData
 	exemptions       map[positionKey]struct{}
@@ -184,6 +186,7 @@ func run(pass *analysis.Pass) (any, error) {
 
 	// Scan all code looking for invalid accesses.
 	state := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
+	pc.inferElementResults(state.SrcFuncs)
 	for _, fn := range state.SrcFuncs {
 		// Import function facts generated above.
 		//
