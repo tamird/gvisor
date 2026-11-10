@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T02:21:24+00:00",
+    "updatedAt": "2026-11-10T02:54:24+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41920,15 +41920,27 @@
       "id": "branch:mutable-overlay-poll-waiter",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/overlay-poll-backing-ownership",
-      "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
+      "ref": "revision/overlay-waiter-current",
+      "head": "d01969e4cf73163e16243bd0d8edb666fce733db",
       "title": "Remove overlay waiters from their original file",
-      "url": "https://github.com/tamird/gvisor/commit/488b298b8",
+      "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
       "group": "runtime",
-      "status": "Revising overlay waiter ownership",
-      "updatedAt": "2026-11-10T00:26:34+00:00",
-      "summary": "After copy-up a waiter must be removed from the file where it was registered. The previous proposal released the old file using a manufactured background context. The revision is tracing that reference to an owner with a real release context.",
+      "status": "Checking overlay waiter ownership",
+      "updatedAt": "2026-11-10T02:54:24+00:00",
+      "summary": "When chmod copies up an open overlay file, its existing waiters still belong to the old backing file. The revision keeps that file open until Release can drop it. Stock notified a canceled waiter. The corrected test passed and close restored the initial file count.",
       "evidence": [
+        {
+          "label": "Revised backing-file ownership on the current overlay lock implementation",
+          "url": "https://github.com/tamird/gvisor/commit/d01969e4c"
+        },
+        {
+          "label": "Stock and fixed waiter, file count, nested lockdep, Nogo and live/restore SIGIO checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094"
+        },
+        {
+          "label": "Three-case race replay with corrected test setup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42745547980"
+        },
         {
           "label": "Standalone poll prerequisite",
           "url": "https://github.com/tamird/gvisor/commit/e39e7d78e"
@@ -42040,12 +42052,13 @@
       ],
       "refinement": {
         "before": {
-          "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654"
+          "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
+          "base": "e39e7d78ecf48665d720b4cd64fea5e888753b9f"
         },
         "after": {
-          "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935"
-        },
-        "command": "git -C ~/code/gvisor range-diff 424cb3f06^! 488b298b8^!"
+          "head": "d01969e4cf73163e16243bd0d8edb666fce733db",
+          "base": "aaab1ecb082e650ee857a0f8366229a1f37e3143"
+        }
       },
       "settledReviews": [
         {
@@ -42077,12 +42090,14 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
-        "observedAt": "2026-11-10T00:26:34+00:00",
-        "disposition": "The proposed release of a VFS file reference from a context-free notification callback needs revision.",
-        "nextAction": "Verify ownership through poll cancellation, copy-up, nested overlays and final close; remove obsolete tracking.",
+        "sourceHead": "d01969e4cf73163e16243bd0d8edb666fce733db",
+        "observedAt": "2026-11-10T02:54:24+00:00",
+        "disposition": "The native test, lockdep, Nogo and syscall checks passed. The race fixture failed before registration.",
+        "nextAction": "Run the three race cases after making fixture setup and teardown use the task’s thread-safe context.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/488b298b8"
+          "https://github.com/tamird/gvisor/actions/runs/42745547980",
+          "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094",
+          "https://github.com/tamird/gvisor/commit/d01969e4c"
         ]
       }
     },
@@ -73208,6 +73223,8 @@
       "to": "branch:mutable-overlay-poll-waiter",
       "reason": "The overlay file counts successful registrations and relies on poll releasing only entries that were accepted. Submit the overlay change after the poll fix lands.",
       "evidence": [
+        "https://github.com/tamird/gvisor/commit/d01969e4c",
+        "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094",
         "https://github.com/tamird/gvisor/commit/e39e7d78e",
         "https://github.com/tamird/gvisor/commit/488b298b8",
         "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
@@ -95430,5 +95447,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T02:21:24+00:00"
+  "updatedAt": "2026-11-10T02:54:24+00:00"
 }
