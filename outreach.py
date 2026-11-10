@@ -101,7 +101,7 @@ def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, 
               if c["name"] in {"import/copybara", "feedback/copybara"}}
     exports = [i for i in pr.get("imports", []) if i.get("sourceHead") == head]
     if (pr.get("importPolicy") != "copybara" or disposition.get("state") == "merged"
-            or disposition.get("scope") == "amended" or any(i.get("status") == "merged" for i in exports)
+            or any(i.get("status") == "merged" for i in exports)
             or import_author_block(pr, node, owner, approval)
             or pr.get("githubReviewDecision") == "CHANGES_REQUESTED" and author_work(pr, node, owner)):
         return None
@@ -171,6 +171,10 @@ def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, 
         export = f"The public export (#{public['number']}) is still open." if public["status"] == "open" else f"The last public export (#{public['number']}) closed without merging."
     else:
         export = "GitHub shows no public export of this revision."
+        earlier = max((i for i in pr.get("imports", []) if i.get("status") == "open" and i.get("sourceHead")),
+                      key=lambda i: i["number"], default=None)
+        if earlier:
+            export = f"The open export (#{earlier['number']}) names {earlier['sourceHead'][:9]}. The approved head is {head[:9]}."
     failed = sorted(c["name"] for c in checks.values() if c["state"] in {"FAILURE", "ERROR"})
     if failed:
         situation = "GitHub reports " + " and ".join(f"`{name}`" for name in failed) + " failed."

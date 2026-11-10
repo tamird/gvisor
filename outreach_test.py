@@ -93,6 +93,19 @@ class OutreachTest(unittest.TestCase):
         row = self.import_plan(p, "2026-11-12T18:00:00Z")
         self.assertEqual((row["lastActivityURL"],row["dueAt"]), (response,"2026-11-19T09:00:00-08:00"))
 
+    def test_freshly_reapproved_source_can_outlive_its_old_export(self):
+        p = self.approved()
+        p["checks"]["contexts"] = []
+        p["publicImportDisposition"].update(scope="amended",state="open")
+        p["imports"] = [{"number":16647,"sourceHead":"b"*40,"status":"open"}]
+        a = self.import_plan(p)
+        self.assertEqual(a["reviewer"],"alice")
+        self.assertIn("#16647",a["body"])
+        self.assertIn("bbbbbbbbb",a["body"])
+        self.assertIn("aaaaaaaaa",a["body"])
+        p["publicImportDisposition"]["action"]="maintainer-reapproval"
+        self.assertIsNone(self.import_plan(p))
+
     def test_existing_maintainer_handoff_uses_the_personal_clock(self):
         p = self.approved()
         url = "https://github.com/google/gvisor/pull/14361#issuecomment-1"
