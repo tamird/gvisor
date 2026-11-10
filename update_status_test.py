@@ -1055,6 +1055,19 @@ class CollectorHistoryTest(unittest.TestCase):
             pr["authorLogin"] = "another-author"
             self.assertEqual(updater.worker_handoff(snap, incoming)["authorFeedback"], [])
 
+    def test_reviewer_edit_releases_a_manually_claimed_comment(self) -> None:
+        pr = retained(raw_pr(5))
+        comment = {"id": "note", "kind": "comment", "createdAt": OLD, "updatedAt": OLD,
+                   "body": "Please update the test.", "url": pr["url"] + "#issuecomment-1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        pr["feedback"]["items"] = [comment]
+        self.registry["nodes"][0]["followup"] = {"owner": "root", "observedAt": OLD,
+            "actionableComment": {"head": pr["head"], "commentId": "note", "url": comment["url"]}}
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            self.assertTrue(updater.reviewer_handoff([pr], {})[0]["claimed"])
+            comment["updatedAt"] = LATER
+            self.assertFalse(updater.reviewer_handoff([pr], {})[0]["claimed"])
+
     def test_import_reviewer_handoff_routes_to_source_owner(self) -> None:
         source = retained(raw_pr(5))
         target = linked(imported(105, 5), 5)

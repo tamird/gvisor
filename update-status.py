@@ -317,10 +317,11 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
             # A PR's old owner or review label does not claim a new thread.
             # Match the current source, linked comment and the reviewer's last edit.
             worker = followup.get("owner")
-            claimed = bool(worker and (assigned or (
-                followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
-                and followup.get("observedAt") and item.get("updatedAt")
-                and datetime.fromisoformat(followup["observedAt"]) >= datetime.fromisoformat(item["updatedAt"]))))
+            observed = bool(followup.get("observedAt") and item.get("updatedAt")
+                            and datetime.fromisoformat(followup["observedAt"]) >= datetime.fromisoformat(item["updatedAt"]))
+            unedited = bool(item.get("createdAt") and item.get("updatedAt") == item["createdAt"])
+            linked = followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
+            claimed = bool(worker and (assigned and (observed or unedited) or observed and linked))
             claim = {}
             if awaiting_author:
                 claim = {"claimed": claimed, "overdue": bool(not claimed and prior_record
