@@ -1,35 +1,37 @@
-name: CI
-
-"on":
+name: Check the compiler in the GCS FUSE test image
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/go-1.27.4-gcs-image]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Check out the fork-only test and install the project Bazel
+        run: |
+          set -euo pipefail
+          git init .
+          git fetch -q --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach FETCH_HEAD
+          test "$(git rev-parse HEAD^)" = 3349d4ca3588b079322e8836942e16dc17843efb
+          git diff --exit-code HEAD^ HEAD -- images/fuse/gcs
+          test "$(cat .bazelversion)" = 9.3.1
+          mkdir -p "$RUNNER_TEMP/gcs-compiler"
+          curl -q -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/gcs-compiler/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/gcs-compiler/bazel" | sha256sum -c
+          chmod +x "$RUNNER_TEMP/gcs-compiler/bazel"
+      - name: Build the Dockerfile and inspect the installed executable
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/gcs-compiler/bazel" test --lockfile_mode=off --test_strategy=standalone --test_timeout=5400 --nocache_test_results --test_output=all //images:gcs_go_image_test
+      - name: Retain the actual compiler and test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcs-fuse-binary-compiler
+          path: |
+            bazel-testlogs/images/gcs_go_image_test/test.log
+            bazel-testlogs/images/gcs_go_image_test/test.xml
+          if-no-files-found: warn

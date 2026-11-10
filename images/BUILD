@@ -1,3 +1,4 @@
+load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
@@ -88,4 +89,12 @@ image_outputs(
         "@platforms//cpu:x86_64": "@benchmark_alpine_amd64",
     }),
     image_name = "benchmarks/alpine",
+)
+
+py_test(
+    name = "gcs_go_image_test",
+    size = "enormous",
+    srcs = ["gcs_go_image_test.py"],
+    data = ["fuse/gcs/Dockerfile", "fuse/gcs/gcsfuse_test.sh"],
+    tags = ["manual", "local"],
 )
