@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T19:23:48+00:00",
+    "updatedAt": "2026-11-10T19:34:48+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30639,39 +30639,89 @@
       "id": "branch:plugin-toolchain-unwind",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/tldk-compiler-musl-upstream-deb6",
-      "head": "641c450420c005c84d09b974388996e39ba177e4",
-      "title": "Build the TLDK network plugin with musl",
-      "url": "https://github.com/tamird/gvisor/commit/641c45042",
+      "ref": "research/tldk-musl-plugin-overlay-reviewed",
+      "head": "882d950e0c7bbf55a63b6adfd853eeac4e72d059",
+      "title": "Allow the TLDK plugin to link against musl",
+      "url": "https://github.com/tamird/gvisor/commit/882d950e0",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-10T19:08:02+00:00",
-      "summary": "The static TLDK plugin needs musl to link with hermetic LLVM. The revised port gets the BSD queue header from the declared toolchain and uses the compiler's unwinder. The stack dump test passed with GNU and musl on this commit. With the compiler switch applied, the installed plugin and runc each exchanged TCP and UDP packets across the Docker bridge.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-10T19:34:48+00:00",
+      "summary": "TLDK passes an already-open packet socket and vhost-net descriptor to DPDK. The revised port explains why gVisor keeps DPDK 18.11, gives each external archive its own BUILD file, and removes the Go stack dump test.",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "641c450420c005c84d09b974388996e39ba177e4",
-        "observedAt": "2026-11-10T19:08:02+00:00",
-        "disposition": "The static TLDK plugin needs musl to link with hermetic LLVM. The revised port gets the BSD queue header from the declared toolchain and uses the compiler's unwinder. The stack dump test passed with GNU and musl on this commit. With the compiler switch applied, the installed plugin and runc each exchanged TCP and UDP packets across the Docker bridge.",
-        "nextAction": "Review 641c45042 for a new gVisor PR. #15153 has merged.",
+        "owner": "root",
+        "sourceHead": "882d950e0c7bbf55a63b6adfd853eeac4e72d059",
+        "observedAt": "2026-11-10T19:34:48+00:00",
+        "disposition": "Tamir requested the DPDK upgrade rationale, standard BUILD names and a review of the proposed cgo test. The two observed addresses could both belong to C, so the revised product drops the test and its Make target.",
+        "nextAction": "Verify the real GNU plugin links, musl archive and stack dump, exported BUILD runfiles, and AMD64 versus ARM64 target selection on 882d950e0.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42886513867",
+          "https://github.com/alipay/tldk/blob/cec8ff773/lib/libtle_glue/gvisor_glue_stackops.c#L665-L669",
+          "https://github.com/DPDK/dpdk/blob/93ecf13ac/drivers/net/virtio/virtio_user_ethdev.c#L341-L366",
           "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787143663",
           "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787653422",
           "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878",
           "https://github.com/tamird/gvisor/actions/runs/42875781068/artifacts/13792309774",
           "https://github.com/alipay/tldk/tree/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88/dpdk/dpdk-v18.11_patches",
           "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038",
-          "https://github.com/tamird/gvisor/commit/b2c944f33",
           "https://github.com/tamird/gvisor/commit/1b1d83bf4",
-          "https://github.com/tamird/gvisor/actions/runs/41384852262",
-          "https://github.com/google/gvisor/pull/15153",
+          "https://github.com/tamird/gvisor/commit/b2c944f33",
+          "https://github.com/DPDK/dpdk/blob/v25.11/lib/eal/linux/include/rte_os.h",
+          "https://github.com/alipay/tldk/compare/cec8ff773...main",
+          "https://github.com/alpinelinux/aports/blob/988f183cc/main/libc-dev/APKBUILD#L42-L51",
+          "https://github.com/tamird/gvisor/actions/runs/42222704007/artifacts/13504744022",
+          "https://github.com/tamird/gvisor/actions/runs/41436977329/artifacts/13136054697",
+          "https://github.com/tamird/gvisor/actions/runs/41384852262/artifacts/13115137890",
+          "https://github.com/tamird/gvisor/actions/runs/41386612459/artifacts/13115383915",
+          "https://github.com/tamird/gvisor/actions/runs/41383490365/artifacts/13114392072",
+          "https://github.com/tamird/gvisor/actions/runs/41380029939/artifacts/13114535148",
+          "https://github.com/tamird/gvisor/commit/ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
+          "https://github.com/tamird/gvisor/compare/85c742f25194e6198c292e099754f09549f09cdf...ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
+          "https://app.buildbuddy.io/invocation/05079e26-0161-42bc-a149-24c66ff93a22",
+          "https://app.buildbuddy.io/invocation/d20507c4-0ce0-44ac-ba95-53845c4d9c16",
+          "https://github.com/tamird/gvisor/commit/d86b92bcd85ce9f2faaf71f0f4336ee60f806540",
+          "https://github.com/tamird/gvisor/compare/7d549676be357bd0829fa863a174091953e34be0...d86b92bcd85ce9f2faaf71f0f4336ee60f806540",
+          "https://github.com/tamird/gvisor/commit/0c0b49881e60c528bca7ac95532cb8a1da475763",
+          "https://github.com/tamird/gvisor/commit/59ed8f8787f37114a56292faf8a742aca8484d5d",
+          "https://github.com/tamird/gvisor/compare/77d1072c593f283ed590d17a51e17cab320abdbf...59ed8f8787f37114a56292faf8a742aca8484d5d",
+          "https://app.buildbuddy.io/invocation/e4b5f62c-239e-4d70-a405-a43e9ca4ef93",
+          "https://app.buildbuddy.io/invocation/ad40358e-a519-421f-a123-23a608202e06",
+          "https://app.buildbuddy.io/invocation/ea12e802-0ac6-491d-a57b-6d490960e626",
+          "https://app.buildbuddy.io/invocation/2f77ca44-a6b2-40ed-909e-b53ef5662a02",
+          "https://app.buildbuddy.io/invocation/c1830b69-d718-44f3-b202-305771b893ae",
+          "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238",
+          "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474197714",
           "https://github.com/tamird/gvisor/actions/runs/42152793818/artifacts/13473926707",
           "https://github.com/tamird/gvisor/actions/runs/42155923250/artifacts/13474517191",
           "https://github.com/tamird/gvisor/actions/runs/42151189673/artifacts/13473036461",
           "https://github.com/tamird/gvisor/commit/dd63198c6",
-          "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258"
+          "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258",
+          "https://github.com/tamird/gvisor/actions/runs/42477797039/artifacts/13616167226",
+          "https://github.com/tamird/gvisor/commit/8aaa1cb43",
+          "https://github.com/tamird/gvisor/actions/runs/42480770982/artifacts/13617812004",
+          "https://github.com/tamird/gvisor/actions/runs/42479825183/artifacts/13617351319",
+          "https://github.com/tamird/gvisor/blob/8aaa1cb43/.buildkite/pipeline.yaml#L120-L124",
+          "https://github.com/tamird/gvisor/blob/8aaa1cb43/.buildkite/pipeline.yaml#L580-L586",
+          "https://github.com/tamird/gvisor/blob/8aaa1cb43/tools/bazel.mk#L121",
+          "https://github.com/tamird/gvisor/blob/8aaa1cb43/images/default/Dockerfile#L49-L54",
+          "https://github.com/google/gvisor/commit/514a1ce4f",
+          "https://github.com/tamird/gvisor/blob/8aaa1cb43/MODULE.bazel#L122-L123",
+          "https://github.com/alipay/tldk/branches",
+          "https://github.com/alipay/tldk/commit/cec8ff773"
         ]
       },
       "evidence": [
+        {
+          "label": "Linux qualification of 882d950e0",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42886513867"
+        },
+        {
+          "label": "TLDK passes the open descriptors to virtio-user",
+          "url": "https://github.com/alipay/tldk/blob/cec8ff773/lib/libtle_glue/gvisor_glue_stackops.c#L665-L669"
+        },
+        {
+          "label": "DPDK 26.07 takes a path in its public virtio-user driver",
+          "url": "https://github.com/DPDK/dpdk/blob/93ecf13ac/drivers/net/virtio/virtio_user_ethdev.c#L341-L366"
+        },
         {
           "label": "Standalone GNU build and stack test on 641c45042",
           "url": "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787143663"
@@ -30875,11 +30925,11 @@
       ],
       "refinement": {
         "before": {
-          "head": "dd63198c66946d7a38279478369bf269243a6ef4",
-          "base": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d"
+          "head": "641c450420c005c84d09b974388996e39ba177e4",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         },
         "after": {
-          "head": "641c450420c005c84d09b974388996e39ba177e4",
+          "head": "882d950e0c7bbf55a63b6adfd853eeac4e72d059",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
@@ -30899,18 +30949,23 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T13:13:00.663Z",
           "note": "The proposed musl port is on hold for a DPDK and toolchain investigation."
+        },
+        {
+          "kind": "proposal",
+          "head": "641c450420c005c84d09b974388996e39ba177e4",
+          "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
+          "url": "https://github.com/tamird/gvisor/commit/641c45042",
+          "title": "Build the TLDK network plugin with musl",
+          "summary": "Open this as a new gVisor PR? #15153 has merged. The port applies cleanly to dd49ce763.\n\ngit -C ~/code/gvisor range-diff dd63198c6^! 641c45042^!",
+          "body": "The static network plugin cannot use hermetic LLVM's GNU sysroot, which supplies shared-library stubs. Building it with musl instead exposes glibc assumptions in TLDK and its patched DPDK 18.11. The vendor patches give DPDK the open device descriptors it needs in the sandbox and do not apply to current DPDK releases.\n\nUse the public IPv6 address members and take the BSD queue header from the already declared GNU sysroot. Use LLVM's linker for DPDK's relocatable objects and its objdump for symbol inspection.\n\nKeep glibc's stack dump. On musl, collect the frame addresses with the compiler unwinder. Exercise the dump from a static Go binary so the test includes the call across the cgo boundary.",
+          "requestedAt": "2026-11-10T19:08:02+00:00",
+          "outcome": "changes-requested",
+          "at": "2026-11-10T19:34:48+00:00"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "contributorChangesRequested": {
         "head": "641c450420c005c84d09b974388996e39ba177e4",
-        "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
-        "url": "https://github.com/tamird/gvisor/commit/641c45042",
-        "title": "Build the TLDK network plugin with musl",
-        "summary": "Open this as a new gVisor PR? #15153 has merged. The port applies cleanly to dd49ce763.\n\ngit -C ~/code/gvisor range-diff dd63198c6^! 641c45042^!",
-        "body": "The static network plugin cannot use hermetic LLVM's GNU sysroot, which supplies shared-library stubs. Building it with musl instead exposes glibc assumptions in TLDK and its patched DPDK 18.11. The vendor patches give DPDK the open device descriptors it needs in the sandbox and do not apply to current DPDK releases.\n\nUse the public IPv6 address members and take the BSD queue header from the already declared GNU sysroot. Use LLVM's linker for DPDK's relocatable objects and its objdump for symbol inspection.\n\nKeep glibc's stack dump. On musl, collect the frame addresses with the compiler unwinder. Exercise the dump from a static Go binary so the test includes the call across the cgo boundary.",
-        "requestedAt": "2026-11-10T19:08:02+00:00"
+        "url": "https://github.com/tamird/gvisor/commit/641c45042"
       }
     },
     {
