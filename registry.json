@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T18:08:31+00:00",
+    "updatedAt": "2026-11-10T18:39:36+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32880,13 +32880,13 @@
       "group": "bazel",
       "status": "open",
       "summary": "Upgrade with_cfg to 1.0.2 and refresh its license catalog entry. On AMD64 and ARM64, the coverage CLI and Sentry built both with and without the race detector. All four pairs ran the KCOV syscall test under systrap. The optional host-kernel control skipped on both workers.",
-      "updatedAt": "2026-11-07T03:08:22+00:00",
+      "updatedAt": "2026-11-10T18:39:36+00:00",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "c2a9426436643ee79e60d34a4e3b6bf4a88decce",
         "observedAt": "2026-11-07T03:08:22+00:00",
         "disposition": "Published the with_cfg 1.0.2 update with its license entry. The four coverage and race+coverage pairs exercised KCOV on native AMD64 and ARM64.",
-        "nextAction": "Watch upstream review and the shared dependency declaration if #15370 lands first.",
+        "nextAction": "Watch upstream review and the shared dependency declaration if #15370 lands first. If #17378 lands first, use the tested deletion of tools/build_cover.sh when rebasing. The new coverage targets read the SDK version from go.mod.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2a942643",
           "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13547220519",
@@ -32938,6 +32938,14 @@
         {
           "label": "Published c2a942643",
           "url": "https://github.com/google/gvisor/pull/16507"
+        },
+        {
+          "label": "Combined source with Go 1.27.4",
+          "url": "https://github.com/tamird/gvisor/commit/e363cea2b"
+        },
+        {
+          "label": "AMD64 KCOV syscall with both Go 1.27.4 coverage binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42872466725/artifacts/13793085102"
         }
       ],
       "number": 16507,
@@ -46887,8 +46895,8 @@
       "url": "https://github.com/google/gvisor/issues/16742",
       "group": "runtime",
       "status": "open",
-      "summary": "We proposed preserving the source header in DeepCopyForForwarding. A second contributor independently verified the change and reported that the IPv4 and stack tests passed, including under the race detector.",
-      "updatedAt": "2026-11-05T09:34:50.317618+00:00",
+      "summary": "We proposed preserving the source header in DeepCopyForForwarding. A second contributor independently verified the change and reported that the IPv4 and stack tests passed, including under the race detector. On November 10, @prathamhanda reproduced the bug and volunteered to implement the fix and its regression test. Watch for their PR to review.",
+      "updatedAt": "2026-11-10T18:39:36+00:00",
       "evidence": [
         {
           "label": "Original TTL report",
@@ -46913,6 +46921,10 @@
         {
           "label": "Independent verification from the contributor offering the fix",
           "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6653812487"
+        },
+        {
+          "label": "Contributor volunteering to implement the forwarding fix",
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6775355542"
         }
       ],
       "settledReviews": [
@@ -71443,8 +71455,8 @@
       "url": "https://github.com/google/gvisor/pull/17378",
       "head": "d19a818b09dee4dba6b2402222eac801084bc1ce",
       "status": "open",
-      "updatedAt": "2026-11-10T17:41:21+00:00",
-      "summary": "Published as #17378 after the normal and patched-coverage Linux runsc binaries both ran with Go 1.27.4 and both Bazel tests passed.",
+      "updatedAt": "2026-11-10T18:39:36+00:00",
+      "summary": "Published as #17378 after the normal and patched-coverage Linux runsc binaries both ran with Go 1.27.4 and both Bazel tests passed. The coverage PR (#16507) deletes the script changed by this upgrade. The combined version builds both coverage binaries with the SDK from go.mod and passes KcovTest.Kcov on AMD64.",
       "evidence": [
         {
           "label": "Go release notes",
@@ -71453,6 +71465,14 @@
         {
           "label": "Published gVisor change",
           "url": "https://github.com/google/gvisor/pull/17378"
+        },
+        {
+          "label": "Combined source with Go 1.27.4",
+          "url": "https://github.com/tamird/gvisor/commit/e363cea2b"
+        },
+        {
+          "label": "AMD64 KCOV syscall with both Go 1.27.4 coverage binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42872466725/artifacts/13793085102"
         }
       ]
     }
@@ -96204,9 +96224,31 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "updatedAt": "2026-11-10T18:39:36+00:00",
       "summary": "Follow intermittent failures on source PRs, Copybara imports, master, and release builds. The individual investigations link to the first useful error and the retry and name the next diagnostic.",
-      "findings": [],
+      "findings": [
+        {
+          "text": "Buildkite #54191 recovered an ARM64 unit job and four syscall shards. Each original log records agent cancellation. The first unit retry also exited −1 and its log ends during compilation. The next unit attempt and all four final syscall attempts passed.",
+          "evidence": [
+            {
+              "label": "Canceled ARM64 unit job",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54191#01a1c620-3b52-4c81-a441-b416afc65dde"
+            },
+            {
+              "label": "Passing ARM64 unit retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54191#01a1c63d-c9a6-4a3f-89bb-73e77b41e404"
+            },
+            {
+              "label": "Canceled AMD64 syscall shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54191#01a1c620-3b54-4c28-87ac-3bc373805de4"
+            },
+            {
+              "label": "Passing syscall retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54191#01a1c63a-2323-417d-89a3-c62badab8d03"
+            }
+          ]
+        }
+      ],
       "nextStep": "Read new failures and recovered jobs across contributors. Group matching test failures by their actual error, check existing issues and fixes, and keep the investigation open until the fix has been exercised.",
       "evidence": [
         {
