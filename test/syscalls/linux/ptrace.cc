@@ -1728,7 +1728,10 @@ TEST(PtraceTest, ChangeRegSetInOptSyscall) {
 }
 #endif
 
-TEST(PtraceTest, AttachingConvertsGroupStopToPtraceStop) {
+using PtraceAttachTest = ::testing::TestWithParam<bool>;
+
+TEST_P(PtraceAttachTest, AttachingConvertsGroupStopToPtraceStop) {
+  const bool seize = GetParam();
   pid_t const child_pid = fork();
   if (child_pid == 0) {
     // In child process.
@@ -1749,7 +1752,8 @@ TEST(PtraceTest, AttachingConvertsGroupStopToPtraceStop) {
 
   // Attach to the child and expect it to re-enter a traced group-stop despite
   // already being stopped.
-  ASSERT_THAT(ptrace(PTRACE_ATTACH, child_pid, 0, 0), SyscallSucceeds());
+  ASSERT_THAT(ptrace(seize ? PTRACE_SEIZE : PTRACE_ATTACH, child_pid, 0, 0),
+              SyscallSucceeds());
   ASSERT_THAT(waitpid(child_pid, &status, 0),
               SyscallSucceedsWithValue(child_pid));
   EXPECT_TRUE(WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP)
@@ -1759,11 +1763,15 @@ TEST(PtraceTest, AttachingConvertsGroupStopToPtraceStop) {
   // ptrace commands requiring a ptrace-stop.
   EXPECT_THAT(ptrace(PTRACE_SETOPTIONS, child_pid, 0, 0), SyscallSucceeds());
 
-  // Group-stop is distinguished from signal-delivery-stop by PTRACE_GETSIGINFO
-  // failing with EINVAL.
-  siginfo_t siginfo = {};
-  EXPECT_THAT(ptrace(PTRACE_GETSIGINFO, child_pid, 0, &siginfo),
-              SyscallFailsWithErrno(EINVAL));
+  if (seize) {
+    EXPECT_EQ(kPtraceEventStop, status >> 16);
+  } else {
+    // PTRACE_ATTACH distinguishes a group-stop from a signal-delivery-stop by
+    // PTRACE_GETSIGINFO failing with EINVAL.
+    siginfo_t siginfo = {};
+    EXPECT_THAT(ptrace(PTRACE_GETSIGINFO, child_pid, 0, &siginfo),
+                SyscallFailsWithErrno(EINVAL));
+  }
 
   // Detach from the child and expect it to stay stopped without a notification.
   ASSERT_THAT(ptrace(PTRACE_DETACH, child_pid, 0, 0), SyscallSucceeds());
@@ -1783,6 +1791,8 @@ TEST(PtraceTest, AttachingConvertsGroupStopToPtraceStop) {
   EXPECT_TRUE(WIFSIGNALED(status) && WTERMSIG(status) == SIGKILL)
       << " status " << status;
 }
+
+INSTANTIATE_TEST_SUITE_P(Seize, PtraceAttachTest, ::testing::Bool());
 
 // Fixture for tests parameterized by whether or not to use PTRACE_O_TRACEEXEC.
 class PtraceExecveTest : public ::testing::TestWithParam<bool> {

@@ -683,12 +683,6 @@ func (t *Task) ptraceAttach(target *Task, seize bool, opts uintptr) error {
 		return linuxerr.EIO
 	}
 
-	// "Unlike PTRACE_ATTACH, PTRACE_SEIZE does not stop the process." -
-	// ptrace(2)
-	if seize {
-		return nil
-	}
-
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	if target.Tracer() != t || target.exitStateLocked() >= TaskExitZombie {
@@ -696,13 +690,16 @@ func (t *Task) ptraceAttach(target *Task, seize bool, opts uintptr) error {
 	}
 	target.tg.signalHandlers.mu.Lock()
 	defer target.tg.signalHandlers.mu.Unlock()
-	target.sendForcedSignalLocked(&linux.SignalInfo{
-		Signo: int32(linux.SIGSTOP),
-		Code:  linux.SI_USER,
-	}, false /* group */)
-	// Undocumented Linux feature: If the tracee is already group-stopped (and
-	// consequently will not report the SIGSTOP just sent), force it to leave
-	// and re-enter the stop so that it will switch to a ptrace-stop.
+	// "Unlike PTRACE_ATTACH, PTRACE_SEIZE does not stop the process." -
+	// ptrace(2)
+	if !seize {
+		target.sendForcedSignalLocked(&linux.SignalInfo{
+			Signo: int32(linux.SIGSTOP),
+			Code:  linux.SI_USER,
+		}, false /* group */)
+	}
+	// For both requests, report an existing group-stop to the new tracer.
+	// Leave and re-enter the stop so that it becomes a waitable ptrace-stop.
 	if target.stop == (*groupStop)(nil) {
 		target.trapStopPending = true
 		target.endInternalStopLocked()
