@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T23:00:22+00:00",
+    "updatedAt": "2026-11-10T23:18:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5375,7 +5375,7 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
-      "updatedAt": "2026-11-10T21:39:45+00:00",
+      "updatedAt": "2026-11-10T23:18:03+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6156,7 +6156,7 @@
         "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
         "title": "Build C and C++ with the declared LLVM toolchains",
         "requestedAt": "2026-11-10T21:39:45+00:00",
-        "summary": "Open this single compiler PR after #16522, #16586, #16516, #17067, #17114 and the TLDK port at 244ef8019 land?",
+        "summary": "Open this single compiler PR after #16522, #16586, #16516, #17067, #17114 and the TLDK port at 05bf77c06 land?",
         "body": "The Coral toolchain looks for GCC and target headers under /usr. An\nAMD64 worker therefore needs an installed cross-compiler to build the\nvDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the LLVM 0.8.24 module already in\nMODULE.bazel. Bazel selects the compiler for the execution platform and\nthe sysroot for the target. Keep GNU17 and C++17 and remove the Coral\nrepositories, toolchain definitions and patches.\n\nThe three runsc sidecars provide their own entry points and use Linux\nUAPI headers. Only the signal stub needs target libc headers for its\nsignal and ucontext types.\n\nThe GNU sysroot has no static libc. The race runtime and the optional\nnetwork stack both link C into the Go executable. Use the LLVM musl\nsysroot for their static links on the default Linux target. Keep an\nexplicitly selected C toolchain or custom platform on its own libc."
       }
     },
@@ -30589,20 +30589,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/tldk-musl-exported-builds",
-      "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
+      "head": "05bf77c06363722bf88804952650daf4c1f357d7",
       "title": "Allow the TLDK plugin to link against musl",
-      "url": "https://github.com/tamird/gvisor/commit/244ef8019",
+      "url": "https://github.com/tamird/gvisor/commit/05bf77c06",
       "group": "bazel",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-10T20:01:16+00:00",
+      "updatedAt": "2026-11-10T23:18:03+00:00",
       "summary": "TLDK passes a packet socket and a vhost-net descriptor to DPDK. Upgrading past the patched 18.11 release requires porting those two driver arguments. This revision gives both vendor files the name BUILD and removes the proposed Go stack test.",
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "244ef8019a851cd26488169e8437e5ea446bfac9",
-        "observedAt": "2026-11-10T20:01:16+00:00",
-        "disposition": "TLDK's two inherited-descriptor arguments still need to be ported to current DPDK. Both external repositories read the exact renamed BUILD files. The main wildcard found 584 packages before and after. The ordinary ARM64 vDSO built; the opt-in plugin still selects AMD64 only. Both GNU plugin executables linked statically and both libc stack dumps passed on the source before its final formatting. A synthetic raw-data runfiles lookup failed on both the old and new labels. The earlier installed traffic comparison used the compiler integration.",
+        "sourceHead": "05bf77c06363722bf88804952650daf4c1f357d7",
+        "observedAt": "2026-11-10T23:18:03+00:00",
+        "disposition": "Upgrading DPDK would require porting support for both inherited-descriptor arguments. Both external repositories read the exact renamed BUILD files. The main wildcard found 584 packages before and after. The ordinary ARM64 vDSO built; the opt-in plugin still selects AMD64 only. Both GNU plugin executables linked statically and both libc stack dumps passed on the source before its final formatting. A synthetic raw-data runfiles lookup failed on both the old and new labels. The earlier installed traffic comparison used the compiler integration.",
         "nextAction": "Review the single commit and proposed PR text. #15153 has landed, and the port applies cleanly to current master dd49ce763.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/05bf77c06",
           "https://github.com/tamird/gvisor/actions/runs/42888337050/artifacts/13797282801",
           "https://github.com/tamird/gvisor/actions/runs/42886513867/artifacts/13796952687",
           "https://github.com/tamird/gvisor/actions/runs/42886513867/artifacts/13798091083",
@@ -30664,6 +30665,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Revised rationale; unchanged tested tree",
+          "url": "https://github.com/tamird/gvisor/commit/05bf77c06"
+        },
         {
           "label": "The formatted revision passes the repository Buildifier check",
           "url": "https://github.com/tamird/gvisor/actions/runs/42888337050/artifacts/13797282801"
@@ -30895,11 +30900,11 @@
       ],
       "refinement": {
         "before": {
-          "head": "641c450420c005c84d09b974388996e39ba177e4",
+          "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         },
         "after": {
-          "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
+          "head": "05bf77c06363722bf88804952650daf4c1f357d7",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
@@ -30931,18 +30936,31 @@
           "requestedAt": "2026-11-10T19:08:02+00:00",
           "outcome": "changes-requested",
           "at": "2026-11-10T19:34:48+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
+          "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
+          "url": "https://github.com/tamird/gvisor/commit/244ef8019",
+          "title": "Allow the TLDK plugin to link against musl",
+          "requestedAt": "2026-11-10T19:53:38+00:00",
+          "summary": "Open this as a new gVisor PR? Both external repositories received the exact BUILD files. The AMD64 plugin remains opt-in, and the ordinary ARM64 vDSO built. The DPDK stack dump passed with glibc and musl.\n\ngit -C ~/code/gvisor range-diff 641c45042^! 244ef8019^!",
+          "body": "gVisor statically links the TLDK plugin into runsc and the Sentry. The GNU sysroot in hermetic LLVM supplies shared-library stubs, so the plugin needs to build with musl before gVisor can switch to LLVM.\n\nKeep DPDK 18.11 for TLDK's virtio-user patch. TLDK passes the sandbox's packet socket and /dev/vhost-net descriptor as fd and vhost_fd [1]. DPDK 26.07 accepts a device path but neither descriptor [2]. Port the two arguments before upgrading DPDK.\n\nUse public IPv6 address fields and take sys/queue.h from the declared GNU sysroot. Use LLVM's linker for DPDK's relocatable objects and its objdump for symbol checks. Collect stack addresses on musl with the compiler unwinder and keep glibc's stack dump.\n\n[1]: https://github.com/alipay/tldk/blob/cec8ff773/lib/libtle_glue/gvisor_glue_stackops.c#L665-L669\n[2]: https://github.com/DPDK/dpdk/blob/93ecf13ac/drivers/net/virtio/virtio_user_ethdev.c#L341-L366",
+          "at": "2026-11-10T23:18:03+00:00",
+          "outcome": "superseded",
+          "note": "The contributor requested a clearer explanation of the DPDK dependency. The revised commit has the same parent and tree."
         }
       ],
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
+        "head": "05bf77c06363722bf88804952650daf4c1f357d7",
         "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
-        "url": "https://github.com/tamird/gvisor/commit/244ef8019",
+        "url": "https://github.com/tamird/gvisor/commit/05bf77c06",
         "title": "Allow the TLDK plugin to link against musl",
-        "requestedAt": "2026-11-10T19:53:38+00:00",
-        "summary": "Open this as a new gVisor PR? Both external repositories received the exact BUILD files. The AMD64 plugin remains opt-in, and the ordinary ARM64 vDSO built. The DPDK stack dump passed with glibc and musl.\n\ngit -C ~/code/gvisor range-diff 641c45042^! 244ef8019^!",
-        "body": "gVisor statically links the TLDK plugin into runsc and the Sentry. The GNU sysroot in hermetic LLVM supplies shared-library stubs, so the plugin needs to build with musl before gVisor can switch to LLVM.\n\nKeep DPDK 18.11 for TLDK's virtio-user patch. TLDK passes the sandbox's packet socket and /dev/vhost-net descriptor as fd and vhost_fd [1]. DPDK 26.07 accepts a device path but neither descriptor [2]. Port the two arguments before upgrading DPDK.\n\nUse public IPv6 address fields and take sys/queue.h from the declared GNU sysroot. Use LLVM's linker for DPDK's relocatable objects and its objdump for symbol checks. Collect stack addresses on musl with the compiler unwinder and keep glibc's stack dump.\n\n[1]: https://github.com/alipay/tldk/blob/cec8ff773/lib/libtle_glue/gvisor_glue_stackops.c#L665-L669\n[2]: https://github.com/DPDK/dpdk/blob/93ecf13ac/drivers/net/virtio/virtio_user_ethdev.c#L341-L366"
+        "requestedAt": "2026-11-10T23:18:03+00:00",
+        "summary": "Open this as a new gVisor PR? Both external repositories received the exact BUILD files. The AMD64 plugin remains opt-in, and the ordinary ARM64 vDSO built. The DPDK stack dump passed with glibc and musl. The commit message now explains that upgrading DPDK would require porting support for both arguments. Its code and parent are unchanged.\n\ngit -C ~/code/gvisor range-diff 244ef8019^! 05bf77c06^!",
+        "body": "gVisor statically links the TLDK plugin into runsc and the Sentry.\nThe GNU sysroot in hermetic LLVM supplies shared-library stubs, so\nthe plugin needs to build with musl before gVisor can switch to LLVM.\n\nTLDK's patch to DPDK 18.11 lets virtio-user accept the sandbox's packet\nsocket and /dev/vhost-net descriptor as fd and vhost_fd [1]. DPDK 26.07\naccepts a device path but neither descriptor [2]. Upgrading DPDK would\nrequire porting support for both arguments.\n\nUse public IPv6 address fields and take sys/queue.h from the declared\nGNU sysroot. Use LLVM's linker for DPDK's relocatable objects and its\nobjdump for symbol checks. Collect stack addresses on musl with the\ncompiler unwinder and keep glibc's stack dump.\n\n[1]: https://github.com/alipay/tldk/blob/cec8ff773/lib/libtle_glue/gvisor_glue_stackops.c#L665-L669\n[2]: https://github.com/DPDK/dpdk/blob/93ecf13ac/drivers/net/virtio/virtio_user_ethdev.c#L341-L366"
       }
     },
     {
@@ -53759,7 +53777,7 @@
       "url": "https://github.com/google/gvisor/pull/16818",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T23:00:22+00:00",
+      "updatedAt": "2026-11-10T23:11:29+00:00",
       "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
       "evidence": [
         {
@@ -53793,6 +53811,20 @@
           "head": "26a76f4a197a1a0629407b72bc746122feeedcf0",
           "outcome": "approved",
           "at": "2026-11-02T18:27:13.788641+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "037c883bda925d55948e055af0dff72c311b49c2",
+          "baseHead": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
+          "url": "https://github.com/tamird/gvisor/commit/037c883bd",
+          "title": "Report poll errors on unattached FUSE devices",
+          "requestedAt": "2026-11-10T23:00:22+00:00",
+          "summary": "Publish the test amendment and reply to Ricardo after the Linux checks pass?",
+          "body": "Ricardo reported that restoring an epoll watch after the mount re-notifies its pending FUSE_INIT request. Across five save targets, epoll_wait returned one event when the test expected zero. The amendment pauses checkpoints after consuming EPOLLERR until the test checks whether mounting notified the original watch. Checkpoints resume before the test removes and adds the watch again. Linux validation is in progress.\n\ngit -C ~/code/gvisor range-diff e561842c9^! 037c883bd^!",
+          "replyBody": "@kerumeto, thanks for catching this. The test now pauses checkpoints between consuming EPOLLERR and checking whether the mount triggered the original watch. It reenables them before deleting and adding the watch again.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-10T23:11:29+00:00",
+          "note": "Approved for publication and an inline reply to Ricardo after the amended tests pass."
         }
       ],
       "refinement": {
@@ -53804,28 +53836,16 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
-        "observedAt": "2026-11-10T23:00:22+00:00",
-        "disposition": "Ricardo reported that restoring an epoll watch can make it ready during the check for a mount notification. The five-line amendment pauses checkpoints just across that observation. Linux validation is running.",
-        "nextAction": "Review the amendment and the reply to Ricardo. Publish and reply when the Linux checks pass.",
+        "observedAt": "2026-11-10T23:11:29+00:00",
+        "disposition": "The contributor approved 037c883bd and the inline reply. Linux validation is running.",
+        "nextAction": "Check the original validation results. After the required cases pass, publish the approved amendment on #16818 and reply to Ricardo’s review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16818#discussion_r4531500824",
           "https://github.com/tamird/gvisor/commit/037c883bd",
           "https://github.com/tamird/gvisor/actions/runs/42919378054"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "037c883bda925d55948e055af0dff72c311b49c2",
-        "baseHead": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
-        "url": "https://github.com/tamird/gvisor/commit/037c883bd",
-        "title": "Report poll errors on unattached FUSE devices",
-        "requestedAt": "2026-11-10T23:00:22+00:00",
-        "summary": "Publish the test amendment and reply to Ricardo after the Linux checks pass?",
-        "body": "Ricardo reported that restoring an epoll watch after the mount re-notifies its pending FUSE_INIT request. Across five save targets, epoll_wait returned one event when the test expected zero. The amendment pauses checkpoints after consuming EPOLLERR until the test checks whether mounting notified the original watch. Checkpoints resume before the test removes and adds the watch again. Linux validation is in progress.\n\ngit -C ~/code/gvisor range-diff e561842c9^! 037c883bd^!",
-        "replyBody": "@kerumeto, thanks for catching this. The test now pauses checkpoints between consuming EPOLLERR and checking whether the mount triggered the original watch. It reenables them before deleting and adding the watch again.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -67923,9 +67943,13 @@
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-09T16:31:03+00:00",
+      "updatedAt": "2026-11-10T23:18:03+00:00",
       "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
       "evidence": [
+        {
+          "label": "Jay’s request for the original failure",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6781073457"
+        },
         {
           "label": "Signed single-commit fork proposal",
           "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794"
@@ -68013,15 +68037,28 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor",
         "sourceHead": "685bcd62bd7bf6a077319f9dd047e2736659663e",
-        "observedAt": "2026-11-09T16:31:03+00:00",
-        "disposition": "Published the direct label and replied on Fabian’s original thread.",
-        "nextAction": "Follow the amended PR for maintainer review.",
+        "observedAt": "2026-11-10T23:18:03+00:00",
+        "disposition": "Jay asked how go_env.bzl can be missing. The original dependency graph failed before go_deps could create the repository.",
+        "nextAction": "Review the reply with the original downstream command and results.",
         "evidence": [
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6781073457",
+          "https://github.com/tamird/gvisor/blob/2eaef0c7d/.github/qualification/supplier_gazelle.py#L48-L66",
+          "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819",
           "https://github.com/tamird/bazel-gazelle/commit/685bcd62b",
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129"
         ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "685bcd62bd7bf6a077319f9dd047e2736659663e",
+        "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6781073457",
+        "title": "Explain why the downstream vDSO build evaluated go_deps",
+        "requestedAt": "2026-11-10T23:18:03+00:00",
+        "summary": "Reply to Jay with the actual failing Bazel command and the downstream module that reproduced it?",
+        "body": "You're right that Gazelle writes `go_env.bzl`. In our case `go_deps` failed before it could create the repository. From a small Bazel module depending on gVisor, I ran:\n\n```sh\nbazel build --platforms=@gvisor//tools/bazeldefs:linux_arm64 @gvisor//vdso:vdso.so\n```\n\nOn Gazelle 8b89ee9f6 the error was `Using the \"go_deps.module_override\" tag in a non-root Bazel module is forbidden, but module \"gvisor\" requests it.` The vDSO is C++, but its BUILD file loads gVisor's common rules, which re-export `gazelle`. Loading that symbol evaluated the Go dependency graph. With the environment lookup deferred, the same command built the ARM64 vDSO. Targets that use those Go dependencies still need a valid override configuration.\n\nThe empty repository in the test was artificial. The [downstream module](https://github.com/tamird/gvisor/blob/2eaef0c7d/.github/qualification/supplier_gazelle.py#L48-L66) and [build results](https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819) show the original case.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -71716,9 +71753,9 @@
       "group": "bazel",
       "title": "Update Go to 1.27.4",
       "url": "https://github.com/google/gvisor/pull/17378",
-      "head": "d19a818b09dee4dba6b2402222eac801084bc1ce",
+      "head": "3349d4ca3588b079322e8836942e16dc17843efb",
       "status": "open",
-      "updatedAt": "2026-11-10T22:40:45+00:00",
+      "updatedAt": "2026-11-10T23:11:29+00:00",
       "summary": "Published as #17378 after the normal and patched-coverage Linux runsc binaries both ran with Go 1.27.4 and both Bazel tests passed. The coverage PR (#16507) deletes the script changed by this upgrade. The combined version builds both coverage binaries with the SDK from go.mod and passes KcovTest.Kcov on AMD64.",
       "evidence": [
         {
@@ -71751,12 +71788,13 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "d19a818b09dee4dba6b2402222eac801084bc1ce",
-        "observedAt": "2026-11-10T22:40:45+00:00",
-        "disposition": "The pinned image index includes Go 1.27.4 builders for AMD64 and ARM64. Rebuilding the GCS fixture on native AMD64 produced a gcsfuse v2.12.2 executable built with go1.27.4.",
-        "nextAction": "Review the single-commit amendment that adds the GCS builder pin to #17378.",
+        "owner": "Upstream review",
+        "sourceHead": "3349d4ca3588b079322e8836942e16dc17843efb",
+        "observedAt": "2026-11-10T23:11:29+00:00",
+        "disposition": "The published one-commit PR now includes all three Go 1.27.4 updates. The rebuilt AMD64 GCS fixture reported the new compiler in both its CLI and executable metadata.",
+        "nextAction": "Follow upstream review and import of the published Go 1.27.4 update.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17378",
           "https://github.com/tamird/gvisor/commit/3349d4ca3",
           "https://github.com/tamird/gvisor/actions/runs/42916186044",
           "https://github.com/tamird/gvisor/actions/runs/42916186044/artifacts/13808968222"
@@ -71770,17 +71808,22 @@
           "head": "3349d4ca3588b079322e8836942e16dc17843efb"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "3349d4ca3588b079322e8836942e16dc17843efb",
-        "baseHead": "d19a818b09dee4dba6b2402222eac801084bc1ce",
-        "url": "https://github.com/tamird/gvisor/commit/3349d4ca3",
-        "title": "Update Go to 1.27.4",
-        "requestedAt": "2026-11-10T22:40:45+00:00",
-        "summary": "Publish the GCS FUSE builder update on #17378? The final AMD64 image ran gcsfuse built with Go 1.27.4.",
-        "body": "The published change updates the Bazel SDK and the coverage toolchain. The GCS FUSE compatibility test also compiles a Go binary in its own Dockerfile. This amendment pins that builder to the published Go 1.27.4 image.\n\nOn native Linux AMD64, the final image ran gcsfuse and reported Go 1.27.4. The installed executable’s metadata showed the same compiler and gcsfuse v2.12.2. ARM64 coverage was limited to checking the registry manifest and image configuration. The test did not mount a live bucket.\n\ngit -C ~/code/gvisor range-diff d19a818b0^! 3349d4ca3^!"
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "3349d4ca3588b079322e8836942e16dc17843efb",
+          "baseHead": "d19a818b09dee4dba6b2402222eac801084bc1ce",
+          "url": "https://github.com/tamird/gvisor/commit/3349d4ca3",
+          "title": "Update Go to 1.27.4",
+          "requestedAt": "2026-11-10T22:40:45+00:00",
+          "summary": "Publish the GCS FUSE builder update on #17378? The final AMD64 image ran gcsfuse built with Go 1.27.4.",
+          "body": "The published change updates the Bazel SDK and the coverage toolchain. The GCS FUSE compatibility test also compiles a Go binary in its own Dockerfile. This amendment pins that builder to the published Go 1.27.4 image.\n\nOn native Linux AMD64, the final image ran gcsfuse and reported Go 1.27.4. The installed executable’s metadata showed the same compiler and gcsfuse v2.12.2. ARM64 coverage was limited to checking the registry manifest and image configuration. The test did not mount a live bucket.\n\ngit -C ~/code/gvisor range-diff d19a818b0^! 3349d4ca3^!",
+          "outcome": "approved",
+          "at": "2026-11-10T23:11:29+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17378",
+          "note": "Published the approved one-commit amendment on #17378."
+        }
+      ]
     },
     {
       "id": "pr:17394",
@@ -97638,8 +97681,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T23:00:22+00:00",
-      "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
+      "updatedAt": "2026-11-10T23:06:34+00:00",
+      "summary": "TestSudo timed out three times each on #17391 and #17393 while the test waited for the traced sudo command. Rollback #17412 removed the regression from master. Botir’s draft reland #17432 includes the checked PTRACE_SEIZE fix and syscall regression.",
       "findings": [
         {
           "text": "The four tests ran for 14m38s to 14m41s. An intervening #54238 attempt exited −1 without this timeout. Passing parallel shards exercised other tests.",
@@ -97766,9 +97809,26 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0104-478a-b673-bf61cb127c67"
             }
           ]
+        },
+        {
+          "text": "The rollback merged at 0b0397ab6. Botir opened draft #17432 on that master to reland #15938 with the fix. Both pkg/sentry/kernel/ptrace.go and test/syscalls/linux/ptrace.cc in f451a1567 are byte-identical to the tested fork commit 71bdb9225. The separate #17428 still targets the pre-rollback source.",
+          "evidence": [
+            {
+              "label": "Merged rollback #17412",
+              "url": "https://github.com/google/gvisor/pull/17412"
+            },
+            {
+              "label": "Botir’s reland #17432 on the new master",
+              "url": "https://github.com/google/gvisor/pull/17432"
+            },
+            {
+              "label": "Tested ptrace fix and syscall cases",
+              "url": "https://github.com/tamird/gvisor/commit/71bdb9225"
+            }
+          ]
         }
       ],
-      "nextStep": "Check the corresponding cgroup v1 partition and verify the traced sudo case on the merged revision of #17428.",
+      "nextStep": "Follow the reland in #17432 and check its own integration results. Once the reland merges, verify the traced sudo case on the merged revision.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97841,6 +97901,14 @@
         {
           "label": "#17428 · ARM64 Docker partition 5",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0104-478a-b673-bf61cb127c67"
+        },
+        {
+          "label": "Merged rollback #17412",
+          "url": "https://github.com/google/gvisor/pull/17412"
+        },
+        {
+          "label": "Botir’s reland #17432 on the new master",
+          "url": "https://github.com/google/gvisor/pull/17432"
         }
       ],
       "settledReviews": [
@@ -97990,7 +98058,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T23:00:22+00:00",
+      "updatedAt": "2026-11-10T23:18:03+00:00",
       "summary": "The Node 22.2.0 test tick-processor/test-tick-processor-preprocess-flag timed out on #17425 (040ae629f) and #17428 (aa0152a6a). The Node target passed on each same-head retry.",
       "findings": [
         {
@@ -98026,9 +98094,27 @@
               "url": "https://github.com/nodejs/node/blob/ab11f834f/test/tick-processor/tick-processor-base.js#L51-L54"
             }
           ]
+        },
+        {
+          "text": "The pristine test passed in the pinned Node image. When one valid JSON result was deliberately suppressed, the stock helper retried without --preprocess. The next processor returned 33,852 bytes of plain text, failed the test’s JSON check, and retried again. Neither original CI timeout recorded what caused its first miss.",
+          "evidence": [
+            {
+              "label": "Original Node 22.2.0 test and forced-miss control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42919285287/artifacts/13810324079"
+            }
+          ]
+        },
+        {
+          "text": "On the same image, forwarding --preprocess let the real test recover from the same forced first miss. The second attempt returned a 5,701,781-byte JSON object and the test exited 0 in 4.35 seconds.",
+          "evidence": [
+            {
+              "label": "Recovered second attempt with the original --preprocess option",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42920261725/artifacts/13811765961"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the original and corrected retry on the same Node version and verify whether the flag loss prevents recovery after the first attempt misses.",
+      "nextStep": "Review the signed fork change for submission to Node. Add your own DCO sign-off and submit the PR in accordance with Node’s contribution policy.",
       "evidence": [
         {
           "label": "Original timeout on #17425",
@@ -98049,9 +98135,45 @@
         {
           "label": "Linux comparison on the original Node version",
           "url": "https://github.com/tamird/gvisor/actions/runs/42919285287"
+        },
+        {
+          "label": "Original Node 22.2.0 test and forced-miss control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42919285287/artifacts/13810324079"
+        },
+        {
+          "label": "Forwarded-option comparison on the same Node image",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42920261725"
+        },
+        {
+          "label": "Recovered second attempt with the original --preprocess option",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42920261725/artifacts/13811765961"
+        },
+        {
+          "label": "Single-commit Node proposal",
+          "url": "https://github.com/tamird/node/commit/604a7a80c"
+        },
+        {
+          "label": "Node DCO requirement",
+          "url": "https://github.com/nodejs/node/blob/ab11f834f/doc/contributing/pull-requests.md#L211-L220"
+        },
+        {
+          "label": "Node policy for opening AI-assisted PRs",
+          "url": "https://github.com/nodejs/node/blob/ab11f834f/doc/contributing/ai-guidelines.md#L13-L38"
         }
-      ]
+      ],
+      "repo": "nodejs/node",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "604a7a80ced810dc9e5cfbc4377767493f308787",
+        "baseHead": "ab11f834fc6102590275461763651b604113ebee",
+        "url": "https://github.com/tamird/node/commit/604a7a80c",
+        "requestedAt": "2026-11-10T23:18:03+00:00",
+        "title": "test: preserve tick processor flags on retry",
+        "summary": "Review and personally submit the one-line Node fix with your DCO sign-off? After one forced miss, the stock helper retried without --preprocess and got plain text. With the flag restored, the second result was JSON and the real test exited 0. The two original CI logs omit the first processor output.",
+        "body": "test-tick-processor-preprocess-flag expects JSON from --prof-process\n--preprocess. If its first profile does not match, the retry drops\n--preprocess and gets a text report. No later report can match the\nopening brace, so the test keeps retrying.\n\nPass the original flags on each attempt. On Linux with Node v22.2.0,\nforcing one first match to fail produced a text report on the next\nattempt. With the flags preserved, the second profile was JSON and the\ntest exited successfully. Two gVisor CI runs timed out in this test;\nneither recorded the output of the first attempt.\n\nAssisted-by: Codex"
+      }
     }
   ],
-  "updatedAt": "2026-11-10T23:00:22+00:00"
+  "updatedAt": "2026-11-10T23:18:03+00:00"
 }
