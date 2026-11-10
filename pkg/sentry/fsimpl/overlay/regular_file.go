@@ -64,6 +64,26 @@ type regularFileFD struct {
 	//
 	// +checklocks:mu
 	cachedFlags uint32
+
+	// lower tracks registrations made before this FD switches backing files.
+	//
+	// +checklocks:mu
+	lower *lowerRegistrations
+}
+
+// lowerRegistrations is protected by the owning regularFileFD.mu.
+//
+// +stateify savable
+type lowerRegistrations struct {
+	// count is the number of active registrations on the lower file.
+	count int
+	// If copy-up occurs with waiters on the lower file, file takes the
+	// cache's reference. Release drops it with the closing context.
+	file *vfs.FileDescription
+
+	// upper distinguishes entries registered after the switch. It is needed
+	// only until the last registration on file has been removed.
+	upper map[*waiter.Entry]struct{}
 }
 
 func (fd *regularFileFD) lockIndex() regularFileFDlockNameIndex {
@@ -105,7 +125,12 @@ func (fd *regularFileFD) currentFDLocked(ctx context.Context) (*vfs.FileDescript
 				return nil, err
 			}
 		}
-		fd.cachedFD.DecRef(ctx)
+		if fd.lower != nil && fd.lower.count != 0 {
+			fd.lower.file = fd.cachedFD
+		} else {
+			fd.cachedFD.DecRef(ctx)
+			fd.lower = nil
+		}
 		fd.copiedUp = true
 		fd.cachedFD = upperFD
 		fd.cachedFlags = statusFlags
@@ -120,7 +145,11 @@ func (fd *regularFileFD) currentFDLocked(ctx context.Context) (*vfs.FileDescript
 
 // Release implements vfs.FileDescriptionImpl.Release.
 func (fd *regularFileFD) Release(ctx context.Context) {
-	// Release owns the cache after the last reference to fd is dropped.
+	// After the last reference to fd is dropped, Release owns both backing files.
+	if lower := fd.lower; lower != nil && lower.file != nil { // +checklocksignore
+		lower.file.DecRef(ctx)
+		lower.file = nil
+	}
 	fd.cachedFD.DecRef(ctx) // +checklocksignore
 	fd.cachedFD = nil       // +checklocksignore
 }
@@ -273,7 +302,21 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 		log.Warningf("overlay.regularFileFD.EventRegister: currentFDLocked failed: %v", err)
 		wrappedFD = fd.cachedFD
 	}
-	return wrappedFD.EventRegister(e)
+	if err := wrappedFD.EventRegister(e); err != nil {
+		return err
+	}
+	if !fd.copiedUp && fd.filesystem().opts.UpperRoot.Ok() {
+		if fd.lower == nil {
+			fd.lower = &lowerRegistrations{}
+		}
+		fd.lower.count++
+	} else if fd.lower != nil && fd.lower.count != 0 {
+		if fd.lower.upper == nil {
+			fd.lower.upper = make(map[*waiter.Entry]struct{})
+		}
+		fd.lower.upper[e] = struct{}{}
+	}
+	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
@@ -281,7 +324,21 @@ func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 	fdIdx := fd.lockIndex()
 	fd.mu.NestedLock(fdIdx)
 	defer fd.mu.NestedUnlock(fdIdx)
-	fd.cachedFD.EventUnregister(e)
+	file := fd.cachedFD
+	if lower := fd.lower; lower != nil && lower.count != 0 {
+		if _, ok := lower.upper[e]; ok {
+			delete(lower.upper, e)
+		} else {
+			if lower.file != nil {
+				file = lower.file
+			}
+			lower.count--
+			if lower.count == 0 {
+				lower.upper = nil
+			}
+		}
+	}
+	file.EventUnregister(e)
 }
 
 // Epollable implements FileDescriptionImpl.Epollable.
