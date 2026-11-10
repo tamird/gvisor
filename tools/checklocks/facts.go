@@ -750,6 +750,16 @@ func (pc *passContext) fillLockGuardFacts(obj types.Object, cg *ast.CommentGroup
 	}
 	for _, l := range cg.List {
 		pc.extractAnnotations(l.Text, map[string]func(string){
+			"// +checklockselements": func(p string) {
+				if _, slice := obj.Type().Underlying().(*types.Slice); p != "" || !slice {
+					pc.maybeFail(obj.Pos(), "checklockselements requires a slice and takes no arguments")
+					return
+				}
+				if pc.elementFields == nil {
+					pc.elementFields = make(map[types.Object]*lockGuardFacts)
+				}
+				pc.elementFields[obj] = lgf
+			},
 			checkLocksReadAny: func(p string) {
 				if field, ok := obj.(*types.Var); !ok || !field.IsField() {
 					pc.maybeFail(obj.Pos(), "checklocksreadany is only valid on fields")

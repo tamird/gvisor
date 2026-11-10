@@ -825,6 +825,9 @@ func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionF
 	// instruction's lock state.
 	var stackLocal [16]*ssa.Value
 	ops := inst.Operands(stackLocal[:])
+	if len(pc.elementFields) != 0 && !lff.Ignore {
+		pc.checkElementUses(inst, ops, ls)
+	}
 	for _, v := range ops {
 		if v == nil {
 			continue
