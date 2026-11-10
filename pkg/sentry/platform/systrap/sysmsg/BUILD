@@ -61,6 +61,8 @@ freestanding_cc_binary(
         # can place globals in .lbss, outside the bytes the Sentry maps.
         "-mcmodel_medium",
     ],
+    # The stub uses libc's signal and ucontext types for the kernel signal frame.
+    libc_headers = True,
     link_extra_lib = None,
     linkopts = [
         "-nostdlib",
