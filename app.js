@@ -592,6 +592,7 @@ function attentionReasons(node, owner) {
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const outreach = currentOutreach(node);
   if (outreach?.status === "due") add("agent-review-outreach", `Review request due for @${outreach.reviewer}.`);
+  else if (outreach?.status === "verify-mergeability") add("agent-review-outreach", "Check mergeability before sending the due review request.");
   else if (outreach?.status === "needs-reviewer") add("agent-review-outreach", "Find another active reviewer with relevant experience.");
   const sweep = liveSnapshot?.projectFeedbackReview;
   if (node.id === "investigation:project-feedback" && node.status === "active" && sweep?.dailyReviewDue === true
@@ -1760,7 +1761,8 @@ function appendOutreach(parent, node) {
   const section = element("section", "detail-section");
   section.append(element("h3", "", "Review outreach"));
   const due = new Date(row.dueAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-  if (row.status === "due") {
+  if (["due", "verify-mergeability"].includes(row.status)) {
+    if (row.status === "verify-mergeability") section.append(element("p", "detail-meta", "GitHub is recalculating mergeability. Check the current PR head and base before sending."));
     section.append(element("p", "", `${row.channel === "request" ? "Request a GitHub review from" : "Mention"} @${row.reviewer}. ${row.reason}`), link("Reviewer evidence ↗", row.evidence));
   } else if (row.status === "needs-reviewer") {
     section.append(element("p", "", "A review is due. Identify another active reviewer with relevant experience."));
@@ -2352,9 +2354,9 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       throw new Error("Invalid gVisor review outreach");
     for (const [id, row] of Object.entries(snapshot.reviewOutreach)) {
       if (!row || String(row.number) !== id || !/^[1-9]\d*$/.test(id) || !/^[a-f0-9]{40}$/.test(row.head) ||
-          !["due", "waiting", "needs-reviewer", "incomplete"].includes(row.status) ||
+          !["due", "verify-mergeability", "waiting", "needs-reviewer", "incomplete"].includes(row.status) ||
           row.status !== "incomplete" && !Number.isFinite(Date.parse(row.dueAt)) ||
-          row.status === "due" && (!["request", "comment"].includes(row.channel) || !/^[A-Za-z0-9-]+$/.test(row.reviewer) ||
+          ["due", "verify-mergeability"].includes(row.status) && (!["request", "comment"].includes(row.channel) || !/^[A-Za-z0-9-]+$/.test(row.reviewer) ||
             !row.reason || !/^https:\/\/github\.com\/google\/gvisor\//.test(row.evidence)))
         throw new Error("Invalid gVisor review outreach record");
     }

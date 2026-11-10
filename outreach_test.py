@@ -120,6 +120,16 @@ class OutreachTest(unittest.TestCase):
         p=pr();p["status"]="draft"
         self.assertIsNone(action(p))
 
+    def test_unknown_mergeability_preserves_contacts_and_requires_a_live_verdict(self):
+        p = pr()
+        p.update(mergeable="UNKNOWN", base="b" * 40)
+        pending = action(p)
+        self.assertEqual((pending["status"], pending["base"]), ("verify-mergeability", "b" * 40))
+        p["feedback"]["items"] = [comment("tamird", pending["body"], NOW)]
+        self.assertEqual(action(p)["status"], "waiting")
+        p["mergeable"] = "CONFLICTING"
+        self.assertIsNone(action(p))
+
     def test_dismissed_approval_stays_with_prior_approver(self):
         p = pr()
         old_review = comment("alice", "", OLD, kind="review", state="DISMISSED", submittedAt=OLD,

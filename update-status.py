@@ -8,6 +8,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1306,14 +1307,14 @@ def main() -> None:
     # order. A larger backlog changes the distribution, not the number due.
     planned = Counter()
     by_number = {p["number"]: p for p in prs if p.get("repo") == REPO}
-    due = sorted((r for r in snapshot["reviewOutreach"].values() if r["status"] == "due"),
+    due = sorted((r for r in snapshot["reviewOutreach"].values() if r["status"] in {"due", "verify-mergeability"}),
                  key=lambda r: (datetime.fromisoformat(r["dueAt"]), r["number"]))
     for row in due:
         number = row["number"]
         action = outreach_plan(by_number[number], nodes.get((REPO, number), {}), source_states[str(number)],
                                checked_at, OWNER, maintainers, history, planned=planned)
         snapshot["reviewOutreach"][str(number)] = action
-        if action["status"] == "due":
+        if action["status"] in {"due", "verify-mergeability"}:
             planned[action["reviewer"].lower()] += 1
     if sweep := feedback_sweep(REGISTRY, [*prs, *review_prs], previous, checked_at):
         snapshot["projectFeedbackReview"] = sweep
@@ -1408,6 +1409,9 @@ def review_outreach(post: bool = False) -> None:
         requests = 0
         raw = fetch_numbers([number], timeline=True, repo=REPO, team_details=False)[number]
         recheck_unknown_mergeability([raw], repo=REPO)
+        if raw["mergeable"] == "UNKNOWN":
+            time.sleep(1)
+            recheck_unknown_mergeability([raw], repo=REPO)
         current = with_maintainer_reviewers(normalize(raw), maintainers)
         current["importPolicy"] = "copybara"
         current["imports"] = refresh_reminder_imports(raw, sources[number])

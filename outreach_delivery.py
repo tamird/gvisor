@@ -60,9 +60,17 @@ def registry_is_published() -> bool:
     return api(f"repos/{FORK}/contents/registry.json?ref=gh-pages").get("sha") == local
 
 
-def matches(scheduled: dict, fresh: dict | None) -> bool:
-    return bool(fresh and fresh.get("status") == "due" and all(
-        fresh.get(key) == scheduled[key] for key in ("number", "head", "reviewer", "channel", "key", "body")))
+def confirmation(scheduled: dict, fresh: dict | None) -> dict:
+    if not fresh or any(fresh.get(key) != scheduled[key] for key in
+                        ("number", "head", "reviewer", "channel", "key", "body")):
+        return {"status": "superseded"}
+    versions = {"head": fresh["head"], "base": fresh.get("base")}
+    if fresh.get("status") == "verify-mergeability" or fresh.get("mergeable") == "UNKNOWN":
+        return {**versions, "status": "mergeability-unavailable"}
+    if (fresh.get("status") != "due" or fresh.get("mergeable") != "MERGEABLE"
+            or not re.fullmatch(r"[0-9a-f]{40}", versions["base"] or "")):
+        return {"status": "superseded"}
+    return {**versions, "status": "due"}
 
 
 def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> dict:
@@ -74,8 +82,9 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> di
             or action["channel"] not in {"request", "comment"} or not action["body"].endswith(marker)
             or f"@{reviewer}" not in action["body"]):
         raise ValueError("Invalid review-outreach destination or body")
-    if not matches(action, refresh()):
-        return {"status": "superseded"}
+    checked = confirmation(action, refresh())
+    if checked["status"] != "due":
+        return checked
     if not registry_is_published():
         return {"status": "registry-changed"}
 
@@ -92,19 +101,20 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> di
                 raise
             # A timeout or 5xx can follow a successful write.
             if pending():
-                return {"status": "request-observed", "reviewer": reviewer}
+                return {**checked, "status": "request-observed", "reviewer": reviewer}
             if error.status not in (403, 404, 422):
                 raise
             # A definite rejection can mean the PR author lacks triage access.
             # Re-read the PR and the registry before falling back to a mention.
-            if not matches(action, refresh()):
-                return {"status": "superseded"}
+            checked = confirmation(action, refresh())
+            if checked["status"] != "due":
+                return checked
             if not registry_is_published():
                 return {"status": "registry-changed"}
         else:
             if not pending():
                 raise GitHubError(None, "Review request was acknowledged but is no longer pending")
-            return {"status": "requested", "reviewer": reviewer}
+            return {**checked, "status": "requested", "reviewer": reviewer}
 
     comments = f"repos/{REPO}/issues/{number}/comments"
     posted = api(comments, {"body": action["body"]})
@@ -115,7 +125,7 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> di
     if (saved.get("id") != comment_id or saved.get("user", {}).get("login") != owner
             or saved.get("body") != action["body"] or saved.get("issue_url") != f"https://api.github.com/repos/{REPO}/issues/{number}"):
         raise GitHubError(None, f"Could not verify the posted comment on #{number}")
-    return {"status": "commented", "url": saved["html_url"], "fallback": action["channel"] == "request"}
+    return {**checked, "status": "commented", "url": saved["html_url"], "fallback": action["channel"] == "request"}
 
 
 def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, maintainers: set[str],
@@ -124,7 +134,7 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
 
     if owner != "tamird" or registry["meta"]["repo"] != REPO:
         raise ValueError("Review outreach is configured only for tamird's gVisor PRs")
-    plans = sorted((a for a in snapshot.get("reviewOutreach", {}).values() if a.get("status") == "due"),
+    plans = sorted((a for a in snapshot.get("reviewOutreach", {}).values() if a.get("status") in {"due", "verify-mergeability"}),
                    key=lambda a: (a["dueAt"], a["number"]))
     if not plans:
         return
@@ -155,11 +165,14 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
             instant = datetime.fromisoformat(at.replace("Z", "+00:00")) if isinstance(at, str) else at
             if instant.astimezone(PACIFIC).weekday() >= 5:
                 return None
-            return plan(pr, nodes.get(number, {}), outreach_states(latest, registry).get(str(number), {}),
-                        at, owner, maintainers, history, preferred=scheduled["reviewer"])
+            current = plan(pr, nodes.get(number, {}), outreach_states(latest, registry).get(str(number), {}),
+                           at, owner, maintainers, history, preferred=scheduled["reviewer"])
+            return {**current, "base": pr.get("base"), "mergeable": pr.get("mergeable")} if current else None
 
         if not post:
-            result = {"status": "would-send" if matches(scheduled, refresh()) else "superseded"}
+            result = confirmation(scheduled, refresh())
+            if result["status"] == "due":
+                result["status"] = "would-send"
         else:
             try:
                 result = send_one(scheduled, refresh, owner)

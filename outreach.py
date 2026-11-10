@@ -100,9 +100,13 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
             or pr.get("status") != "open" or pr.get("headOwner") != owner):
         return None
     number, head = pr["number"], pr["head"]
-    blocked = {"prerequisite", "conflicts", "draft", "contributor-review", "failing",
+    blocked = {"prerequisite", "draft", "contributor-review", "failing",
                "checks-pending", "imported", "importing", "awaiting-import", "waiting-merge"}
-    if (states.keys() & blocked or pr.get("mergeable") != "MERGEABLE"
+    # A busy master can leave hundreds of PRs UNKNOWN in one snapshot. Keep
+    # their clocks and candidate visible; only a fresh MERGEABLE can be sent.
+    mergeable = pr.get("mergeable")
+    if (states.keys() & blocked or mergeable == "CONFLICTING" or mergeable not in {"MERGEABLE", "UNKNOWN"}
+            or "conflicts" in states and mergeable != "UNKNOWN"
             or pr.get("branchHead") != head or node.get("reviewOutreachHold")
             or node.get("releaseWait", {}).get("head") == head
             or node.get("reapproval", {}).get("head") == head
@@ -210,7 +214,8 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     channel = candidate["channel"]
     scope = candidate["scope"]
     key = f"{number}:{head}:{who.lower()}"
-    return {**info, "status": "due", "key": key, "reviewer": who,
+    return {**info, "status": "due" if mergeable == "MERGEABLE" else "verify-mergeability",
+            "base": pr.get("base"), "key": key, "reviewer": who,
             "channel": "request" if channel == "review_request" else channel,
             "evidence": candidate["evidence"], "reason": candidate["reason"],
             "body": f"@{who}, could you review the changes to `{scope}` in this PR? {candidate['reason']}\n\n"

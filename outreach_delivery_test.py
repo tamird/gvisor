@@ -11,7 +11,8 @@ class ReviewDeliveryTest(unittest.TestCase):
     def setUp(self):
         self.number = 123
         self.key = f"123:{'a' * 40}:reviewer"
-        self.action = {"status": "due", "number": self.number, "reviewer": "reviewer", "head": "a" * 40,
+        self.versions = {"head": "a" * 40, "base": "b" * 40}
+        self.action = {**self.versions, "mergeable": "MERGEABLE", "status": "due", "number": self.number, "reviewer": "reviewer", "head": "a" * 40,
                        "channel": "request", "key": self.key,
                        "body": f"@reviewer, could you review this change?\n\nPosted by Codex on behalf of @tamird.\n\n<!-- gvisor-review-outreach {self.key} -->"}
         self.requests = "repos/google/gvisor/pulls/123/requested_reviewers"
@@ -28,13 +29,23 @@ class ReviewDeliveryTest(unittest.TestCase):
 
     def test_confirm_native_request(self):
         self.api.side_effect = [{}, {"users": [{"login": "Reviewer"}]}]
-        self.assertEqual(self.send(), {"status": "requested", "reviewer": "reviewer"})
+        self.assertEqual(self.send(), {**self.versions, "status": "requested", "reviewer": "reviewer"})
         self.assertEqual(self.api.call_args_list[0].args, (self.requests, {"reviewers": ["reviewer"]}))
         self.assertEqual(self.api.call_count, 2)
 
+    def test_unknown_source_is_rechecked_but_cannot_send_until_proven_mergeable(self):
+        self.action["status"] = "verify-mergeability"
+        self.live.return_value = {**self.action, "mergeable": "UNKNOWN"}
+        self.assertEqual(self.send(), {**self.versions, "status": "mergeability-unavailable"})
+        self.api.assert_not_called()
+        self.live.return_value = {**self.action, "status": "due", "mergeable": "MERGEABLE", "base": "c" * 40}
+        self.api.side_effect = [{}, {"users": [{"login": "reviewer"}]}]
+        self.assertEqual(self.send(), {"head": "a" * 40, "base": "c" * 40,
+                                       "status": "requested", "reviewer": "reviewer"})
+
     def test_definite_rejection_rechecks_then_falls_back_once(self):
         self.api.side_effect = [delivery.GitHubError(404, "Not Found"), {"users": []}, {"id": 456}, self.receipt]
-        self.assertEqual(self.send(), {"status": "commented", "url": self.receipt["html_url"], "fallback": True})
+        self.assertEqual(self.send(), {**self.versions, "status": "commented", "url": self.receipt["html_url"], "fallback": True})
         self.assertEqual(self.live.call_count, 2)
         self.assertEqual(self.registry.call_count, 2)
         self.assertEqual(self.api.call_args_list[2].args, (self.comments, {"body": self.action["body"]}))
