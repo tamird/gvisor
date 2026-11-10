@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T01:37:45+00:00",
+    "updatedAt": "2026-11-10T02:21:24+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -12260,6 +12260,15 @@
           "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763"
         ],
         "mergeable": "MERGEABLE"
+      },
+      "outreachReviewClock": {
+        "head": "679d14eed77a4ce6029065d88248c8ce0902c270",
+        "priorHead": "30bc8ce21de213711dd86da5cf607ec5487259ee",
+        "reviewableSince": "2026-10-30T16:55:36Z",
+        "changedLinesSha256": "38f523d78071f3423437ed26e7c5d4cf207c3a9e66f733fc59b364e6b80b800d",
+        "method": "reviewed-context-only-rebase",
+        "evidence": "https://github.com/google/gvisor/runs/124195786128",
+        "reviewedPRHead": "f96afe45777d10e02b6565b76dd255f0062503ec"
       }
     },
     {
@@ -36344,7 +36353,16 @@
           "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362"
         ]
       },
-      "number": 16604
+      "number": 16604,
+      "outreachReviewClock": {
+        "head": "d6275511008e4970b13afec999be79bb8358fd1b",
+        "priorHead": "de106f647e5e2157aa3d6ac91d09727f698daca4",
+        "reviewableSince": "2026-10-28T17:14:35Z",
+        "changedLinesSha256": "bf68aaa973d22bb524bdf3fc5cba15cff91da1826f1671cd6806844444d1b2f1",
+        "method": "reviewed-context-only-rebase",
+        "evidence": "https://github.com/google/gvisor/runs/122976892952",
+        "reviewedPRHead": "de106f647e5e2157aa3d6ac91d09727f698daca4"
+      }
     },
     {
       "id": "pr:16606",
@@ -95412,5 +95430,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T01:37:45+00:00"
+  "updatedAt": "2026-11-10T02:21:24+00:00"
 }
