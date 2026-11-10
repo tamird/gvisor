@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T17:29:34+00:00",
+    "updatedAt": "2026-11-10T17:41:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56396,7 +56396,7 @@
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T11:21:05+00:00",
+      "updatedAt": "2026-11-10T17:41:21+00:00",
       "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nOn native Linux, the sender observed an ACK 6–14 µs after the receiver started setting TCP_QUICKACK following a read (four trials). Without that request, the ACK arrived 40–41 ms after the data. On controlled packet clocks, #16953 with delayed ACKs enabled waited 40 ms in both cases. #17082 sent the ACK immediately on request. With the receive-side MSS fixed at 536 bytes, both PRs acknowledged the second 536-byte segment immediately when the peer advertised MSS 536. When only the peer’s advertised MSS changed to 1,460, #16953 waited 40 ms and #17082 still acknowledged immediately.",
       "evidence": [
         {
@@ -56470,6 +56470,10 @@
         {
           "label": "Published review feedback",
           "url": "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
+        },
+        {
+          "label": "Published response on Andrea’s Redis comparison",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4528257283"
         }
       ],
       "settledReviews": [
@@ -56515,6 +56519,19 @@
           "outcome": "approved",
           "at": "2026-11-09T16:31:03+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4514573379"
+        },
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "f05cd8923fb8aa27186834df01d7433085db41f1",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4523498211",
+          "title": "Reply to Andrea’s TamaGo Redis comparison",
+          "summary": "Post this reply to Andrea on the existing thread? Both delayed-ACK proposals improved Redis SET. The results do not show a consistent advantage for the separately configurable policy.",
+          "body": "Thanks for running both. Redis SET went from 50k requests/s on the go branch to about 67k with either PR. With the send fix, this PR led on SET (70k vs 67k) and #17082 led on pipelined SET (604k vs 582k). I don’t see a consistent gain from a separate `TCPDelayedACKOption` here. I’d use #17082 and keep your Redis workload as a benchmark. In the socket test, #17082 also honored `TCP_QUICKACK` after the application read the request, as Linux did.\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-10T11:21:05+00:00",
+          "outcome": "approved",
+          "at": "2026-11-10T17:41:21+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4528257283"
         }
       ],
       "reviewWatch": {
@@ -56527,16 +56544,6 @@
             "evidence": "https://github.com/google/gvisor/commit/e9a7c24ca"
           }
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "f05cd8923fb8aa27186834df01d7433085db41f1",
-        "url": "https://github.com/google/gvisor/pull/16953#discussion_r4523498211",
-        "title": "Reply to Andrea’s TamaGo Redis comparison",
-        "summary": "Post this reply to Andrea on the existing thread? Both delayed-ACK proposals improved Redis SET. The results do not show a consistent advantage for the separately configurable policy.",
-        "body": "Thanks for running both. Redis SET went from 50k requests/s on the go branch to about 67k with either PR. With the send fix, this PR led on SET (70k vs 67k) and #17082 led on pipelined SET (604k vs 582k). I don’t see a consistent gain from a separate `TCPDelayedACKOption` here. I’d use #17082 and keep your Redis workload as a benchmark. In the socket test, #17082 also honored `TCP_QUICKACK` after the application read the request, as Linux did.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-10T11:21:05+00:00"
       }
     },
     {
@@ -71227,7 +71234,7 @@
       "url": "https://github.com/google/gvisor/issues/16670",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T16:46:46+00:00",
+      "updatedAt": "2026-11-10T17:41:21+00:00",
       "summary": "The TCP review guide asks for a TamaGo Redis comparison that its author has now supplied. The proposed issue-body edit updates the interactive request/response row with those measurements.",
       "evidence": [
         {
@@ -71237,16 +71244,25 @@
         {
           "label": "Author’s measurements on both implementations",
           "url": "https://github.com/google/gvisor/pull/16953#discussion_r4523498211"
+        },
+        {
+          "label": "TCP review guide updated with Andrea’s measured comparison",
+          "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "url": "https://github.com/google/gvisor/issues/16670",
-        "title": "Edit the interactive request/response row in the TCP review guide",
-        "summary": "Replace only this passage in the existing issue body. The author measured 49.6k → 65.0k Redis requests/s on TamaGo. Try that workload on #17082 before adding a separate stack option for [the delayed-ACK problem](https://github.com/google/gvisor/issues/387).",
-        "body": "In the [author’s TamaGo comparison](https://github.com/google/gvisor/pull/16953#discussion_r4523498211), Redis SET reached 50.0k requests/s on the Go branch, 66.6k on #17082 and 66.8k on #16953. The workload supports either implementation. For review, start with #17082, which needs no new public stack option."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "url": "https://github.com/google/gvisor/issues/16670",
+          "title": "Edit the interactive request/response row in the TCP review guide",
+          "summary": "Replace only this passage in the existing issue body. The author measured 49.6k → 65.0k Redis requests/s on TamaGo. Try that workload on #17082 before adding a separate stack option for [the delayed-ACK problem](https://github.com/google/gvisor/issues/387).",
+          "body": "In the [author’s TamaGo comparison](https://github.com/google/gvisor/pull/16953#discussion_r4523498211), Redis SET reached 50.0k requests/s on the Go branch, 66.6k on #17082 and 66.8k on #16953. The workload supports either implementation. For review, start with #17082, which needs no new public stack option.",
+          "outcome": "approved",
+          "at": "2026-11-10T17:41:21+00:00",
+          "postedURL": "https://github.com/google/gvisor/issues/16670"
+        }
+      ]
     },
     {
       "id": "branch:work-map-published-reminder-registry",
@@ -71361,9 +71377,9 @@
       "title": "Update Go to 1.27.4",
       "url": "https://github.com/tamird/gvisor/commit/d19a818b0",
       "group": "bazel",
-      "status": "Approved; qualifying on Linux",
-      "updatedAt": "2026-11-10T17:29:34+00:00",
-      "summary": "Select 1.27.4 for the Bazel SDK and the coverage helper’s patched Go toolchain. Publish the reviewed change after the native Linux checks pass.",
+      "status": "Published",
+      "updatedAt": "2026-11-10T17:41:21+00:00",
+      "summary": "Published as #17378 after the normal and patched-coverage Linux runsc binaries both ran with Go 1.27.4 and both Bazel tests passed.",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -71376,6 +71392,34 @@
         {
           "label": "Go release notes",
           "url": "https://go.dev/doc/devel/release#go1.27.4"
+        },
+        {
+          "label": "Published gVisor change",
+          "url": "https://github.com/google/gvisor/pull/17378"
+        }
+      ],
+      "inactive": true
+    },
+    {
+      "id": "pr:17378",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17378,
+      "group": "bazel",
+      "title": "Update Go to 1.27.4",
+      "url": "https://github.com/google/gvisor/pull/17378",
+      "head": "d19a818b09dee4dba6b2402222eac801084bc1ce",
+      "status": "open",
+      "updatedAt": "2026-11-10T17:41:21+00:00",
+      "summary": "Published as #17378 after the normal and patched-coverage Linux runsc binaries both ran with Go 1.27.4 and both Bazel tests passed.",
+      "evidence": [
+        {
+          "label": "Go release notes",
+          "url": "https://go.dev/doc/devel/release#go1.27.4"
+        },
+        {
+          "label": "Published gVisor change",
+          "url": "https://github.com/google/gvisor/pull/17378"
         }
       ]
     }
@@ -84420,7 +84464,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-09T06:22:09+00:00",
+      "updatedAt": "2026-11-10T17:41:21+00:00",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -85128,6 +85172,19 @@
             {
               "label": "Six ordinary loads, each measured in 16 alternating pairs",
               "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643640390"
+            }
+          ]
+        },
+        {
+          "text": "Draft #17374 saves and reloads a MemoryFile with extra references on 1,024 of 4,096 pages. On native AMD64, eight balanced samples measured save at 250.4/256.4 µs (p=0.328) and reload at 619.6/362.2 µs (−41.54%, p<0.001). Both revisions produced 36,464 bytes and restored the page reference counts and two dirty shared-page bytes. This benchmark does not start a whole guest.",
+          "evidence": [
+            {
+              "label": "Exact parent and draft, benchmark source, eight original samples per revision and benchstat",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42864488095/artifacts/13786374396"
+            },
+            {
+              "label": "MemoryFile representation in draft #17374",
+              "url": "https://github.com/google/gvisor/pull/17374"
             }
           ]
         }
@@ -96711,7 +96768,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T16:46:46+00:00",
+      "updatedAt": "2026-11-10T17:41:21+00:00",
       "summary": "Java 21 com/sun/jdi/ThreadMemoryLeakTest.java failed on two different PR heads. After the target printed goodbye at 25,000 iterations, the JDI Target VM Interface thread reported OutOfMemoryError and jtreg reached its 600-second timeout. Both retried shards passed.",
       "findings": [
         {
@@ -96726,6 +96783,19 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54159#01a1c397-3d60-42dc-bf31-0204787624f3"
             }
           ]
+        },
+        {
+          "text": "The standalone Java 21 test passed twice with the host runtime (966,278 / 959,441 iterations) and twice with the archived #54190 runsc (477,517 / 498,132). All four JTRs report PASS, both JVM probes measured an 8,388,608-byte heap with compressed oops. The two failing builds ran eight Java shards throughout the workload; the passing same-head retries reused seven cached shards. Effective CPU quota and memory limit were unreported. The observed concurrency difference remains an unconfirmed explanation.",
+          "evidence": [
+            {
+              "label": "Native Java JTRs and JVM probe",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42859221469/artifacts/13783434880"
+            },
+            {
+              "label": "Archived runsc guest JTRs and JVM probe",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42861926482/artifacts/13786097020"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -96738,8 +96808,8 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/54159#01a1c397-3d60-42dc-bf31-0204787624f3"
         }
       ],
-      "nextStep": "Compare the unchanged test on native Linux and runsc to determine whether the debugger heap and timeout fail on both."
+      "nextStep": "Compare debugger event progress during the eight-shard workload. The isolated native and guest runs both passed."
     }
   ],
-  "updatedAt": "2026-11-10T17:29:34+00:00"
+  "updatedAt": "2026-11-10T17:41:21+00:00"
 }
