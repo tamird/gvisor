@@ -30,6 +30,57 @@ test('a requested rebase belongs to its author and source head', () => {
   assert.equal(request(), null);
 });
 
+test('an investigation issue has one filing decision and keeps its receipt after filing', () => {
+  const c = client();
+  const url = 'https://github.com/google/gvisor/issues/new';
+  const draft = { kind: 'issue', status: 'pending', title: 'Hanging exec', url, summary: 'Timeout', body: 'The fourth exec hung.' };
+  const row = { id: 'investigation:sudo', title: 'Sudo', owner: 'CI', status: 'active', group: 'ci-flakes',
+    updatedAt: c.registryInput.meta.updatedAt, summary: 'Timed out', evidence: [], findings: [], contributorReview: draft };
+  Object.assign(c.registryInput, { groups: [{ id: 'ci-flakes', label: 'CI' }], nodes: [], edges: [], investigations: [row] });
+  const read = () => vm.runInContext(`(() => {
+    validateRegistry(registry);
+    const rowsForIssue = registryNodes(registry);
+    const issue = rowsForIssue[0];
+    issue.workStates = stateRecords(snapshotInput, issue);
+    return JSON.stringify([rowsForIssue.length, attentionReasons(issue, 'tamird').map(r => r.id), pendingDecisions(issue).length]);
+  })()`, c);
+  assert.deepEqual(JSON.parse(read()), [1, ['post-reply'], 1]);
+  const createElement = () => ({ children: [], dataset: {}, value: '', append(...items) { this.children.push(...items); },
+    replaceChildren() { this.children = []; }, setAttribute() {}, addEventListener() {} });
+  const list = createElement();
+  c.location = new URL('https://tamird.github.io/gvisor/?view=investigations');
+  c.document = { createElement, getElementById: id => id === 'investigation-list' ? list : createElement() };
+  const draw = () => vm.runInContext(`
+    view = 'investigations';
+    model = { ...registry, nodes: registryNodes(registry).map(node => ({ ...node, workStates: stateRecords(snapshotInput, node) })) };
+    drawInvestigations();
+  `, c);
+  draw();
+  assert.equal(list.children.length, 1);
+  const preview = list.children[0].children.find(el => el.className === 'detail-section contributor-decision');
+  const form = new URL(preview.children.find(el => el.textContent === 'Open prefilled issue ↗').href);
+  assert.equal(form.searchParams.get('title'), draft.title);
+  assert.equal(form.searchParams.get('body'), draft.body);
+
+  row.settledReviews = [{ ...draft, title: 'A different draft' }];
+  assert.deepEqual(JSON.parse(read()), [1, ['post-reply'], 1]);
+  row.settledReviews = [{ ...draft, postedURL: 'https://github.com/google/gvisor/issues/42' }];
+  c.snapshotInput.workStates[row.id] = { 'contributor-review': { scope: url, since: row.updatedAt } };
+  assert.deepEqual(JSON.parse(read()), [1, ['agent-ci-flake'], 0]);
+  draw();
+  assert.ok(!list.children[0].children.some(el => el.className === 'detail-section contributor-decision'));
+  assert.ok(list.children[0].children.some(el => el.href === row.settledReviews[0].postedURL));
+  row.status = 'concluded';
+  assert.deepEqual(JSON.parse(read()), [1, [], 0]);
+  delete row.settledReviews;
+  assert.deepEqual(JSON.parse(read()), [1, [], 0]);
+  row.additionalReviews = [draft];
+  assert.throws(read, /Invalid additional review/);
+  delete row.additionalReviews;
+  draft.url = 'https://github.com/other/repo/issues/new';
+  assert.throws(read, /Invalid contributor decision/);
+});
+
 test('tracker maintenance never requests a contributor decision on a cached registry', () => {
   const c = client();
   c.row = { id: 'branch:work-map-published-reminder-registry', type: 'branch', repo: 'tamird/gvisor',

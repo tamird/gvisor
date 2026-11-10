@@ -23,6 +23,25 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_investigation_issue_uses_one_decision_until_settled(self):
+        url = "https://github.com/google/gvisor/issues/new"
+        decision = dict(kind="issue", status="pending", url=url, title="Timeout", body="The exec never finished.")
+        investigation = dict(id="investigation:sudo", group="ci-flakes", status="active", contributorReview=decision)
+        when = "2026-11-10T20:40:00Z"
+        registry = dict(meta=dict(repo="google/gvisor", updatedAt=when), nodes=[], investigations=[investigation])
+        current = record_states([], registry, {}, when)
+        self.assertEqual(set(current), {investigation["id"]})
+        self.assertEqual(current[investigation["id"]]["contributor-review"]["scope"], url)
+
+        # A different issue at the same new-issue URL is still a live decision.
+        investigation["settledReviews"] = [dict(decision, title="Earlier issue")]
+        self.assertEqual(record_states([], registry, {"workStates": current}, when), current)
+        investigation["settledReviews"] = [dict(decision, postedURL="https://github.com/google/gvisor/issues/42")]
+        self.assertEqual(record_states([], registry, {"workStates": current}, when), {})
+        del investigation["settledReviews"]
+        investigation["status"] = "concluded"
+        self.assertEqual(record_states([], registry, {"workStates": current}, when), {})
+
     def test_reassociated_review_and_current_open_export(self):
         pr = original(number=15562, repo="google/gvisor", reviewDecision="APPROVED",
                       githubReviewDecision="APPROVED", mergeable="MERGEABLE",

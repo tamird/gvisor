@@ -614,7 +614,7 @@ function attentionReasons(node, owner) {
     }
   }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
-  if (node.type === "investigation" && node.group === "ci-flakes" && node.status === "active")
+  if (node.type === "investigation" && node.group === "ci-flakes" && node.status === "active" && !contributorDecision(node))
     add("agent-ci-flake", node.nextStep);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const outreach = currentOutreach(node);
@@ -1139,6 +1139,7 @@ function pendingDecisions(node) {
   const decisions = node.contributorReview ? [node.contributorReview] : [];
   return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
+    || node.type === "investigation" && node.status === "active" && decision.kind === "issue"
     || ["pr", "issue"].includes(node.type) && ["reply", "issue"].includes(decision.kind)
     || node.type === "pr" && decision.kind === "review" && !providerClosed(node)));
 }
@@ -1459,6 +1460,7 @@ function appendCIFlakeScan(card, scan) {
 }
 function drawInvestigations() {
   const list = $("investigation-list"); list.replaceChildren();
+  const nodes = nodeMap();
   const items = [...investigationMap().values()].filter(investigationMatches)
     .sort((a, b) => (a.status === "active" ? 0 : 1) - (b.status === "active" ? 0 : 1) || Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
   for (const item of items) {
@@ -1485,6 +1487,11 @@ function drawInvestigations() {
       table.append(caption, header, body);
       section.append(table, element("p", "comparison-note", comparison.note), investigationEvidence(comparison.evidence));
       card.append(section);
+    }
+    const node = nodes.get(item.id);
+    if (node) {
+      appendContributorDecisions(card, node, pendingDecisions(node));
+      appendSettledPublications(card, node);
     }
     if (item.findings.length) card.append(element("h3", "", "Findings"));
     for (const finding of item.findings) {
@@ -1810,27 +1817,9 @@ function appendOutreach(parent, node) {
   if (row.lastActivityURL && row.lastActivityURL !== row.lastContactURL) section.append(link("Last human activity ↗", row.lastActivityURL));
   parent.append(section);
 }
-function drawDetails() {
-  if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
-  const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
-  if (!node) return;
-  if (historical(node)) details.append(element("p", "notice", "History: no current action on this record. Linked active work remains separate."));
-  const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
-  close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
-  details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
-  if (node.incomingReviewRequests?.length) {
-    const section = element("section", "detail-section");
-    section.append(element("h3", "", "Incoming review requests"));
-    for (const request of node.incomingReviewRequests) {
-      const who = request.author ? `@${request.author}` : "GitHub review request";
-      const row = element("p", "detail-meta");
-      row.append(link(`${who} · ${date(request.updatedAt)} ↗`, request.sourceURL || request.url));
-      section.append(row);
-    }
-    details.append(section);
-  }
+function appendContributorDecisions(parent, node, decisions) {
   let showedComparison = false;
-  for (const decision of visibleDecisions(node)) {
+  for (const decision of decisions) {
     const changed = contributorDecisionNeedsRefresh(node, decision);
     if (!states(node)["contributor-review"] && !changed) continue;
     const section = element("section", "detail-section contributor-decision");
@@ -1857,8 +1846,30 @@ function drawDetails() {
       const form = decision.url + "?title=" + encodeURIComponent(decision.title) + "&body=" + encodeURIComponent(decision.body);
       section.append(link("Open prefilled issue ↗", form));
     } else section.append(link(decision.kind === "review" ? "Open original PR ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
+    parent.append(section);
+  }
+  return showedComparison;
+}
+function drawDetails() {
+  if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
+  const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
+  if (!node) return;
+  if (historical(node)) details.append(element("p", "notice", "History: no current action on this record. Linked active work remains separate."));
+  const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
+  close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
+  details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
+  if (node.incomingReviewRequests?.length) {
+    const section = element("section", "detail-section");
+    section.append(element("h3", "", "Incoming review requests"));
+    for (const request of node.incomingReviewRequests) {
+      const who = request.author ? `@${request.author}` : "GitHub review request";
+      const row = element("p", "detail-meta");
+      row.append(link(`${who} · ${date(request.updatedAt)} ↗`, request.sourceURL || request.url));
+      section.append(row);
+    }
     details.append(section);
   }
+  const showedComparison = appendContributorDecisions(details, node, visibleDecisions(node));
   appendSettledPublications(details, node);
   const action = humanAction(node);
   if (action) {
@@ -2152,6 +2163,10 @@ function applyLive(snapshot, nextRegistry = registry) {
   setFreshness(`Work map · ${date(registry.meta.updatedAt)} | GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
   $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot. Scheduled collection publishes new snapshots when its workflow completes; the timestamp remains authoritative. Selected PR details can check conflicts directly on GitHub without a token. Investigations are curated research records with their own update dates.";
 }
+function validIssueDraft(decision) {
+  return decision?.kind === "issue" && /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/new$/.test(decision.url)
+    && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
+}
 function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
@@ -2246,7 +2261,7 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
         && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
       const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review", "issue"].includes(decision?.kind)
         && (node.type === "issue" && decision.head === undefined || /^[a-f0-9]{40}$/.test(decision.head))
-        && (decision.kind === "issue" ? /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/new$/.test(decision.url)
+        && (decision.kind === "issue" ? validIssueDraft(decision)
           : decision.url === node.url || decision.url?.startsWith(node.url + "#") ||
           decision.kind === "review" && decision.url?.startsWith(node.url + "/files#diff-") &&
             /^[a-f0-9]{64}[LR][1-9]\d*$/.test(decision.url.slice((node.url + "/files#diff-").length)))
@@ -2331,6 +2346,11 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
           !Number.isFinite(Date.parse(item.updatedAt)) || (item.nextStep !== undefined && typeof item.nextStep !== "string") || !evidenceValid(item.evidence) ||
           !Array.isArray(item.findings) || !item.findings.every(finding => finding && typeof finding.text === "string" && finding.text.trim() && evidenceValid(finding.evidence)))
         throw new Error("Invalid investigation record");
+      if (item.additionalReviews !== undefined) throw new Error(`Invalid additional review for ${item.id}`);
+      const draft = item.contributorReview;
+      if (draft !== undefined && (!item.group || !validIssueDraft(draft) || draft.status !== "pending"
+          || draft.head !== undefined || draft.url !== `https://github.com/${candidate.meta.repo}/issues/new`))
+        throw new Error(`Invalid contributor decision for ${item.id}`);
       if (item.comparisons !== undefined && (!Array.isArray(item.comparisons) || !item.comparisons.every(comparison => comparison &&
           [comparison.title, comparison.description, comparison.note].every(nonemptyText) &&
           Array.isArray(comparison.columns) && comparison.columns.length >= 2 && comparison.columns.every(nonemptyText) &&

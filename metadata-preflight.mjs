@@ -13,7 +13,7 @@ vm.runInContext(source.slice(0, -'start();\n'.length), context, { filename: 'app
 context.candidateRegistry = JSON.parse(bytes['registry.json']);
 context.candidateSnapshot = JSON.parse(bytes['github-status.json']);
 vm.runInContext('validateRegistry(candidateRegistry); validateSnapshot(candidateSnapshot, candidateRegistry);', context);
-for (const node of context.candidateRegistry.nodes) {
+for (const node of vm.runInContext("registryNodes(candidateRegistry)", context)) {
   context.node = node;
   if (vm.runInContext("trackerMaintenance(node)", context) &&
       [node.contributorReview, ...(node.additionalReviews || [])].some(item => item?.status === "pending")) {
