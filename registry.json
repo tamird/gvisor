@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T14:52:15+00:00",
+    "updatedAt": "2026-11-10T15:11:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5356,8 +5356,8 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942"
         },
         {
-          "label": "In progress: compare the released LLVM musl configuration on both plugin links",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42838544774"
+          "label": "Released LLVM musl: DPDK failed on sys/queue.h and then execinfo.h with declared build inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42838544774/artifacts/13773819869"
         },
         {
           "label": "Paired offset generators: AMD64 and ARM64 ELF, stub bytes and symbol maps",
@@ -6067,6 +6067,7 @@
         "nextAction": "Fix the LLVM static link and build both runsc-plugin-stack and gvisor_sentry_plugin_stack before requesting review.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942",
+          "https://github.com/tamird/gvisor/actions/runs/42838544774/artifacts/13773819869",
           "https://github.com/tamird/gvisor/actions/runs/42838544774",
           "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655",
           "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331",
@@ -7872,15 +7873,16 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T14:50:25+00:00",
-      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
+      "updatedAt": "2026-11-10T15:11:00+00:00",
+      "summary": "The published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\nEarlier qualification:\n\nThe published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
       "followup": {
-        "owner": "Agent",
+        "owner": "root",
         "sourceHead": "133764395c84859cb9c867555c1bac4f91f893cd",
-        "observedAt": "2026-11-10T14:13:03+00:00",
-        "disposition": "The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
-        "nextAction": "Compare the loopback bind on master and on the amendment on the same native worker before requesting review.",
+        "observedAt": "2026-11-10T15:11:00+00:00",
+        "disposition": "The published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.",
+        "nextAction": "Once approved, publish 0ef2495ca on the existing PR.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42839287218/artifacts/13775906827",
           "https://github.com/tamird/gvisor/actions/runs/42832885163/artifacts/13772269407",
           "https://github.com/tamird/gvisor/actions/runs/42830337701/artifacts/13771558704",
           "https://github.com/tamird/gvisor/commit/0ef2495ca",
@@ -7891,6 +7893,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Same native loopback bind failure on master and on the revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42839287218/artifacts/13775906827"
+        },
         {
           "label": "Native VethLinkLocalAddrOnUpDown, IPv6FlushedOnDown and loopback bind results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42832885163/artifacts/13772269407"
@@ -8121,6 +8127,17 @@
         "diffSha256": "23e90471d33fe617ca91ad95bbacd36c1549b9ef82e938f4f81f6e4e6d24d0c5",
         "summary": "New address callers, including the reservation used to release a wildcard-bound port on close, require source adaptations on the rebased commit.",
         "evidence": "https://github.com/google/gvisor/pull/15730#issuecomment-6753476212"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "0ef2495cae29d3190381a710904f6dbde2c95be3",
+        "baseHead": "133764395c84859cb9c867555c1bac4f91f893cd",
+        "url": "https://github.com/tamird/gvisor/commit/0ef2495ca",
+        "title": "Use netip types throughout the network stack",
+        "requestedAt": "2026-11-10T15:11:00+00:00",
+        "summary": "Review the amendment that preserves the new loopback and UDP-forwarder behavior.",
+        "body": "The published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\ngit -C ~/code/gvisor range-diff 133764395^! 0ef2495ca^!"
       }
     },
     {
@@ -22102,20 +22119,21 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nogo-export-data",
-      "head": "cd5e5628a42fa74409864903aae50717b596f214",
+      "head": "66eb2774175258362fb3afaa11d75dec66c3684a",
       "title": "Generate Nogo export data from source",
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T14:48:47+00:00",
-      "summary": "The published cd5e5628a conflicts with master. The amendment passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.\n\nEarlier qualification:\n\nOn AMD64 and ARM64, the checker, eventchannel (generated protobuf), sync (generated constants), and a fixture using the historical Go adapter with two real compiler archives passed. Public source-only and archive-only rules took their respective paths. The private Google build was not exercised.",
+      "updatedAt": "2026-11-10T15:09:56+00:00",
+      "summary": "The approved amendment 66eb27741 is published as one mergeable commit. It passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.\n\nEarlier qualification:\n\nOn AMD64 and ARM64, the checker, eventchannel (generated protobuf), sync (generated constants), and a fixture using the historical Go adapter with two real compiler archives passed. Public source-only and archive-only rules took their respective paths. The private Google build was not exercised.",
       "followup": {
-        "owner": "native_coverage",
-        "sourceHead": "cd5e5628a42fa74409864903aae50717b596f214",
-        "observedAt": "2026-11-10T14:48:47+00:00",
-        "disposition": "The published cd5e5628a conflicts with master. The amendment passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.",
-        "nextAction": "Publish 66eb27741 on the existing PR after contributor review.",
+        "owner": "Agent",
+        "sourceHead": "66eb2774175258362fb3afaa11d75dec66c3684a",
+        "observedAt": "2026-11-10T15:09:56+00:00",
+        "disposition": "Approved amendment 66eb27741 is published on the open, mergeable PR as one commit.",
+        "nextAction": "Follow upstream review and CI on 66eb27741.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
           "https://github.com/tamird/gvisor/actions/runs/42809631266/artifacts/13763175151",
           "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942",
@@ -22287,19 +22305,15 @@
           "outcome": "approved",
           "at": "2026-11-03T14:33:29.484586+00:00",
           "url": "https://github.com/tamird/gvisor/commit/cd5e5628a"
+        },
+        {
+          "kind": "amendment",
+          "head": "66eb2774175258362fb3afaa11d75dec66c3684a",
+          "baseHead": "cd5e5628a42fa74409864903aae50717b596f214",
+          "outcome": "approved",
+          "at": "2026-11-10T15:09:56+00:00"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "66eb2774175258362fb3afaa11d75dec66c3684a",
-        "baseHead": "cd5e5628a42fa74409864903aae50717b596f214",
-        "url": "https://github.com/tamird/gvisor/commit/66eb27741",
-        "title": "Generate Nogo export data from source",
-        "requestedAt": "2026-11-10T14:48:47+00:00",
-        "summary": "Review the amendment to #16098 for publication.",
-        "body": "The published cd5e5628a conflicts with master. The amendment passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.\n\ngit -C ~/code/gvisor range-diff cd5e5628a^! 66eb27741^!"
-      }
+      ]
     },
     {
       "id": "pr:16096",
@@ -51020,9 +51034,17 @@
       "url": "https://github.com/google/gvisor/pull/16844",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
-      "summary": "Wake and requeue used a second pair of pointers to release their locks. Checklocks could not tell that those locks protected the queues being accessed. Returning the locked buckets in argument order removes all four unchecked calls and both same-bucket exceptions.",
+      "updatedAt": "2026-11-10T15:09:56+00:00",
+      "summary": "The published c576f0790 conflicts with the priority-inheritance error paths now on master. The rebased file keeps those paths and the approved ordered bucket locks. An independent reconstruction from master and the approved lock changes matches the complete file. The futex owner checks are running.\n\nWake and requeue used a second pair of pointers to release their locks. Checklocks could not tell that those locks protected the queues being accessed. Returning the locked buckets in argument order removes all four unchecked calls and both same-bucket exceptions.",
       "evidence": [
+        {
+          "label": "Rebased futex lock changes",
+          "url": "https://github.com/tamird/gvisor/commit/f94ef5459"
+        },
+        {
+          "label": "Futex owner and analyzer checks on f94ef5459",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42840500834"
+        },
         {
           "label": "Standalone source, all 65 systrap syscall cases, 13 Go tests and both architecture analyzers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41379815726/artifacts/13113336700"
@@ -51040,7 +51062,27 @@
           "at": "2026-11-02T20:32:43Z"
         }
       ],
-      "number": 16844
+      "number": 16844,
+      "refinement": {
+        "before": {
+          "head": "c576f0790bd336d8ae0ee2dc285feeddabe9e764"
+        },
+        "after": {
+          "head": "f94ef54594d3ab40cd279668a7f8bbae91066cf0",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "c576f0790bd336d8ae0ee2dc285feeddabe9e764",
+        "observedAt": "2026-11-10T15:09:56+00:00",
+        "disposition": "The published c576f0790 conflicts with the priority-inheritance error paths now on master. The rebased file keeps those paths and the approved ordered bucket locks. An independent reconstruction from master and the approved lock changes matches the complete file. The futex owner checks are running.",
+        "nextAction": "Verify the original Bazel futex and analyzer results before publishing the equivalent rebase.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/f94ef5459",
+          "https://github.com/tamird/gvisor/actions/runs/42840500834"
+        ]
+      }
     },
     {
       "id": "branch:buildkite-direct-smoke",
@@ -69974,6 +70016,10 @@
       "summary": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The original compiler logs show all three defers in Requeue were stack-allocated on the public head and open-coded on 8da3e1807. The checkpoint comparison is running.\n\nWith two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
       "evidence": [
         {
+          "label": "Local Linux Bazel recovery for shared/private futex checkpoint cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42840829395"
+        },
+        {
           "label": "Stack-allocated defers on 01a28c6ab",
           "url": "https://app.buildbuddy.io/invocation/2a03e010-694f-42c0-89a7-b97545cdd509"
         },
@@ -70005,6 +70051,7 @@
         "disposition": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The proposed amendment is undergoing its Linux comparison.",
         "nextAction": "Verify the Linux run. Once approved, publish the amendment and reply on the original review threads.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42840829395",
           "https://github.com/google/gvisor/pull/17305#discussion_r4519810874",
           "https://github.com/google/gvisor/pull/17305#discussion_r4519810882",
           "https://github.com/tamird/gvisor/commit/8da3e1807",
@@ -70465,9 +70512,13 @@
       "url": "https://github.com/bazelbuild/bazel/pull/32541",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-10T14:50:25+00:00",
-      "summary": "Fabian asked whether the mirror registry can omit the trailing slash. The rebuilt Bazel listed the mirror with the slashless flag for both implicit and explicit BCR selection. The generated lockfiles matched.\n\nBazel 9.3.2 rejects a mirror scoped to the default BCR unless the same registry is explicitly selected. The rebuilt Bazel accepted both forms and produced identical module URLs and fresh lockfiles. The offline regression and two existing mirror controls passed.",
+      "updatedAt": "2026-11-10T15:09:56+00:00",
+      "summary": "Tamir answered Fabian’s question on the original thread.\n\nFabian asked whether the mirror registry can omit the trailing slash. The rebuilt Bazel listed the mirror with the slashless flag for both implicit and explicit BCR selection. The generated lockfiles matched.\n\nBazel 9.3.2 rejects a mirror scoped to the default BCR unless the same registry is explicitly selected. The rebuilt Bazel accepted both forms and produced identical module URLs and fresh lockfiles. The offline regression and two existing mirror controls passed.",
       "evidence": [
+        {
+          "label": "Published reply confirming the slashless mirror flag",
+          "url": "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4526555413"
+        },
         {
           "label": "Fabian’s question on the mirror flag",
           "url": "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4524518452"
@@ -70513,25 +70564,25 @@
           "body": "Bazel rejects --module_mirrors=https://bcr.bazel.build=<mirror> unless the caller also passes --registry=https://bcr.bazel.build. The scoped mirror lookup introduced in 7c72ade4f strips trailing slashes from option values, but the default registry URL still includes one.\n\nUse the same URL for the default BCR as for an explicit --registry. Registry file URLs in MODULE.bazel.lock already have a slash between the registry host and the file path.",
           "outcome": "approved",
           "at": "2026-11-09T22:32:51+00:00"
+        },
+        {
+          "kind": "reply",
+          "head": "a6d03b87ce5689d871074bce123ebbf25f305933",
+          "url": "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4526555413",
+          "outcome": "posted",
+          "at": "2026-11-10T15:07:10Z",
+          "title": "Reply to Fabian about the mirror registry spelling",
+          "body": "Yes. I ran `bazel mod show_repo @bazel_skylib` with `--module_mirrors=https://bcr.bazel.build=https://mirror.example.com` and no `--registry`. The [repository output](https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143) listed the mirror.\n\nPosted by Codex on behalf of @tamird."
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "a6d03b87ce5689d871074bce123ebbf25f305933",
-        "url": "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4524518452",
-        "title": "Reply to Fabian about the mirror registry spelling",
-        "summary": "Post the verified slashless command result on the existing inline thread.",
-        "body": "Yes. I ran `bazel mod show_repo @bazel_skylib` with `--module_mirrors=https://bcr.bazel.build=https://mirror.example.com` and no `--registry`. The [repository output](https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143) listed the mirror.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-10T14:50:25+00:00"
-      },
       "followup": {
         "owner": "Agent",
         "sourceHead": "a6d03b87ce5689d871074bce123ebbf25f305933",
-        "observedAt": "2026-11-10T14:50:25+00:00",
-        "disposition": "Fabian asked whether the mirror registry can omit the trailing slash. The rebuilt Bazel listed the mirror with the slashless flag for both implicit and explicit BCR selection. The generated lockfiles matched.",
-        "nextAction": "Once approved, answer Fabian on the original inline thread.",
+        "observedAt": "2026-11-10T15:09:56+00:00",
+        "disposition": "Fabian’s question is answered on the original inline thread.",
+        "nextAction": "Follow upstream review and release handling.",
         "evidence": [
+          "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4526555413",
           "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4524518452",
           "https://github.com/tamird/bazel/blob/c46aeb195/.github/workflows/qualify-implicit-bcr.yml#L75-L84",
           "https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143"
