@@ -98,11 +98,19 @@ test('an investigation can review its exact fork fix after an issue was approved
     return JSON.stringify(attentionReasons(item, 'tamird').map(r => r.id));
   })()`, c));
   assert.deepEqual(reasons(), ['review-changes']);
-  row.settledReviews.push({ ...fix, postedURL: 'https://github.com/google/gvisor/pull/42' });
+  c.registryInput.meta.repositories = { 'google/gvisor': 'copybara', 'nodejs/node': 'none' };
+  row.repo = 'nodejs/node';
+  assert.throws(reasons, /Invalid contributor decision/);
+  fix.url = 'https://github.com/tamird/node/commit/aaaaaaaaa';
+  assert.deepEqual(reasons(), ['review-changes']);
+  row.repo = 'other/node';
+  assert.throws(reasons, /Invalid investigation repository/);
+  row.repo = 'nodejs/node';
+  row.settledReviews.push({ ...fix, postedURL: 'https://github.com/nodejs/node/pull/42' });
   assert.deepEqual(reasons(), ['agent-ci-flake']);
   row.status = 'concluded';
   assert.deepEqual(reasons(), []);
-  fix.url = 'https://github.com/other/gvisor/commit/aaaaaaaaa';
+  fix.url = 'https://github.com/other/node/commit/aaaaaaaaa';
   assert.throws(reasons, /Invalid contributor decision/);
 });
 

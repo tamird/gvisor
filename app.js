@@ -2347,13 +2347,15 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
           !Array.isArray(item.findings) || !item.findings.every(finding => finding && typeof finding.text === "string" && finding.text.trim() && evidenceValid(finding.evidence)))
         throw new Error("Invalid investigation record");
       if (item.additionalReviews !== undefined) throw new Error(`Invalid additional review for ${item.id}`);
+      const repo = item.repo === undefined ? candidate.meta.repo : item.repo;
+      if (typeof repo !== "string" || !Object.hasOwn(policies, repo)) throw new Error(`Invalid investigation repository for ${item.id}`);
       const draft = item.contributorReview;
       if (draft !== undefined) {
-        const issue = validIssueDraft(draft) && draft.head === undefined
+        const issue = repo === candidate.meta.repo && validIssueDraft(draft) && draft.head === undefined
           && draft.url === `https://github.com/${candidate.meta.repo}/issues/new`;
         const fix = draft?.kind === "proposal" && [draft.head, draft.baseHead].every(head => /^[a-f0-9]{40}$/.test(head))
           && draft.head !== draft.baseHead && [draft.title, draft.summary, draft.body].every(nonemptyText)
-          && commitLinkMatches(`${candidate.meta.owner}/${candidate.meta.repo.split("/")[1]}`, draft.head, draft.url);
+          && commitLinkMatches(`${candidate.meta.owner}/${repo.split("/")[1]}`, draft.head, draft.url);
         if (!item.group || draft?.status !== "pending" || !issue && !fix)
           throw new Error(`Invalid contributor decision for ${item.id}`);
       }
