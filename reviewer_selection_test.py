@@ -43,7 +43,7 @@ class ReviewerSelectionTest(unittest.TestCase):
         self.assertEqual(self.picks(requested={"casey"}), [])
 
     def test_automated_review_on_human_account(self):
-        self.work["feedback"]["items"][-1]["body"] = "[🤖] Review agent has no findings."
+        self.work["feedback"]["items"][-1]["body"] = "[🤖🐸🤖] Review agent has no findings."
         self.assertEqual(self.picks(), [])
 
     def test_multifile_review_does_not_imply_expertise_in_every_file(self):

@@ -43,7 +43,7 @@ def _time(value: datetime | str) -> datetime:
 def _reviewed_paths(body: str, paths: list[str]) -> list[str]:
     # A general comment on a many-file PR does not establish expertise in
     # every file. Inline comments are passed with their single reviewed path.
-    if not body.strip() or body.lstrip().startswith("[🤖]") or GENERIC_REVIEW.fullmatch(body.strip()):
+    if not body.strip() or body.lstrip().startswith("[🤖") or GENERIC_REVIEW.fullmatch(body.strip()):
         return []
     if len(paths) == 1:
         return paths
@@ -107,7 +107,7 @@ def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime |
                 for review in pr["reviews"]["nodes"]:
                     at = review.get("submittedAt")
                     if (not at or _time(at) < cutoff or review["state"] in {"DISMISSED", "PENDING"}
-                            or review["bodyText"].lstrip().startswith("[🤖]")):
+                            or review["bodyText"].lstrip().startswith("[🤖")):
                         continue
                     files = [f["path"] for f in pr["files"]["nodes"]]
                     paths = {p: review["url"] for p in _reviewed_paths(review["bodyText"], files)}
@@ -158,7 +158,7 @@ def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | Non
                     events.append((when, recipient, "comment"))
             if login not in people or login == author or item["kind"] not in {"inline", "review"}:
                 continue
-            if item.get("state") in {"DISMISSED", "PENDING"} or body.lstrip().startswith("[🤖]"):
+            if item.get("state") in {"DISMISSED", "PENDING"} or body.lstrip().startswith("[🤖"):
                 continue
             person = people[login]
             person.last_review = max(person.last_review or when, when)
