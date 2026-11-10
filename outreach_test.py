@@ -90,6 +90,16 @@ class OutreachTest(unittest.TestCase):
         self.assertEqual(action(p)["status"],"waiting")
         self.assertEqual(action(p,"2026-11-12T20:00:00Z")["reviewer"],"bob")
 
+    def test_initial_author_attributed_codeowner_request_allows_personal_mention(self):
+        p = pr()
+        p.update(createdAt=START, codeOwnerRequests=["alice"], reviewRequests=[{"login": "alice"}])
+        timeline = p["reviewTimeline"]["items"]
+        timeline.append(ask("alice", "2026-10-26T16:00:03Z"))
+        self.assertEqual(action(p)["reviewer"], "alice")
+        timeline.append(ask("alice", "2026-11-06T18:00:00Z"))
+        self.assertEqual(action(p)["dueAt"], "2026-11-10T10:00:00-08:00")
+        self.assertEqual(action(p, "2026-11-10T18:00:00Z")["reviewer"], "bob")
+
     def test_reviewer_work_resumes_after_author_answer(self):
         p=pr();p["githubReviewDecision"]="CHANGES_REQUESTED"
         p["threads"]["unresolved"]=1

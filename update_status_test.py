@@ -556,7 +556,7 @@ class CollectorHistoryTest(unittest.TestCase):
                                    "areas": {"text": "areas: []"},
                                    "roster": {"text": 'maintainers: [{github: kerumeto, status: ACTIVE, areas: []}]'}}}
         if "reviewed-by:" in query:
-            return {alias: {"nodes": []} for alias in re.findall(r"(r\d+):search", query)}
+            return {alias: {"nodes": []} for alias in re.findall(r"([ra]\d+):search", query)}
         if "formal:search(" in query:
             self.assertIn("repo:google/gvisor is:pr is:open", query)
             self.assertNotIn("repo:other/", query)

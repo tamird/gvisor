@@ -140,6 +140,9 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     responses = {}
     automatic = set()
     removed = set()
+    codeowners = {name.lower() for name in pr.get("codeOwnerRequests", [])}
+    seen_requests = set()
+    opening = instant(pr["createdAt"])
     for event in timeline:
         reviewer = (event.get("reviewer") or {}).get("login", "").lower()
         if not reviewer:
@@ -148,7 +151,13 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
             removed.add(reviewer)
         if event["kind"] != "request":
             continue
-        if (event.get("actor") or {}).get("__typename") == "Bot":
+        asked = instant(event["at"])
+        # GitHub can attribute its initial CODEOWNERS request to the PR
+        # author. A later explicit request still starts the personal deadline.
+        opening_codeowner = (reviewer in codeowners and reviewer not in seen_requests
+                             and opening <= asked <= opening + timedelta(minutes=1))
+        seen_requests.add(reviewer)
+        if (event.get("actor") or {}).get("__typename") == "Bot" or opening_codeowner:
             automatic.add(reviewer)
         else:
             contacts[reviewer] = max(contacts.get(reviewer, instant(event["at"])), instant(event["at"]))

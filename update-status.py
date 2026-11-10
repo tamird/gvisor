@@ -69,7 +69,7 @@ reviewDismissals:timelineItems(last:100,itemTypes:[REVIEW_DISMISSED_EVENT]) {
   pageInfo { hasPreviousPage }
   nodes { ... on ReviewDismissedEvent { id createdAt previousReviewState review { id } } }
 }
-reviewRequests(first:100) { pageInfo { hasNextPage } nodes { requestedReviewer {
+reviewRequests(first:100) { pageInfo { hasNextPage } nodes { asCodeOwner requestedReviewer {
   __typename ... on User { login } ... on Team { name slug }
 } } }
 reviewThreads(first:100) { totalCount pageInfo { hasNextPage } nodes {
@@ -553,6 +553,8 @@ def normalize(pr: dict) -> dict:
         "reviewDismissals": {"complete": not pr.get("reviewDismissals", {}).get("pageInfo", {}).get("hasPreviousPage", True),
                              "items": pr.get("reviewDismissals", {}).get("nodes", [])},
         "reviewRequests": [item["requestedReviewer"] for item in pr["reviewRequests"]["nodes"] if item["requestedReviewer"]],
+        "codeOwnerRequests": [(item["requestedReviewer"] or {})["login"] for item in pr["reviewRequests"]["nodes"]
+                              if item.get("asCodeOwner") and (item.get("requestedReviewer") or {}).get("login")],
         "reviewRequestsComplete": not pr["reviewRequests"]["pageInfo"]["hasNextPage"],
         "labels": [label["name"] for label in pr["labels"]["nodes"]],
         "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
