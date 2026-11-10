@@ -42,6 +42,17 @@ class ReviewerSelectionTest(unittest.TestCase):
         self.pr["files"] = ["pkg/unrelated/BUILD"]
         self.assertEqual(self.picks(requested={"casey"}), [])
 
+    def test_automated_review_on_human_account(self):
+        self.work["feedback"]["items"][-1]["body"] = "[🤖] Review agent has no findings."
+        self.assertEqual(self.picks(), [])
+
+    def test_multifile_review_does_not_imply_expertise_in_every_file(self):
+        item = self.work["feedback"]["items"][-1]
+        item["kind"] = "review"
+        del item["path"]
+        self.work["files"].append("runsc/cmd/run.go")
+        self.assertEqual(self.picks(), [])
+
     def test_active_governance(self):
         active, paths = reviewer_governance(
             "areas: [{name: systrap, paths: [/pkg/sentry/platform/systrap]}]",

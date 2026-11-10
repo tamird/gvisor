@@ -40,6 +40,17 @@ def _time(value: datetime | str) -> datetime:
     return value
 
 
+def _reviewed_paths(body: str, paths: list[str]) -> list[str]:
+    # A general comment on a many-file PR does not establish expertise in
+    # every file. Inline comments are passed with their single reviewed path.
+    if not body.strip() or body.lstrip().startswith("[🤖]") or GENERIC_REVIEW.fullmatch(body.strip()):
+        return []
+    if len(paths) == 1:
+        return paths
+    return [p for p in paths if p in body or (p.split("/")[-1] not in {"BUILD", "BUILD.bazel"}
+                                              and p.split("/")[-1] in body)]
+
+
 def _login(actor: dict | None) -> str:
     if not actor or actor.get("__typename", "User") != "User":
         return ""
@@ -69,7 +80,7 @@ def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime |
     now = _time(now)
     logins = sorted(active_logins)
     checked = previous.get("checkedAt")
-    if checked and _time(checked).date() == now.date() and previous.get("logins") == logins:
+    if checked and "authored" in previous and _time(checked).date() == now.date() and previous.get("logins") == logins:
         return previous
     cutoff = now - ACTIVE_WINDOW
     searches = []
@@ -79,30 +90,37 @@ def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime |
                         '{nodes{... on PullRequest {number url author{login} files(first:30){nodes{path}} '
                         f'reviews(last:4,author:{json.dumps(login)}) '
                         '{nodes{url state bodyText submittedAt comments(first:3){nodes{path bodyText url}}}} }}}')
+        by_author = f"repo:{REPO} is:pr author:{login} is:merged sort:updated-desc"
+        searches.append(f'a{i}:search(type:ISSUE, first:4, query:{json.dumps(by_author)}) '
+                        '{nodes{... on PullRequest {number url files(first:40){nodes{path}}}}}')
     observations = []
+    authored = []
     if searches:
         data = graphql("query {" + " ".join(searches) + "}")
         for i, login in enumerate(logins):
+            for pr in data[f"a{i}"]["nodes"]:
+                authored.append({"login": login, "number": pr["number"], "url": pr["url"],
+                                 "paths": [f["path"] for f in pr["files"]["nodes"]]})
             for pr in data[f"r{i}"]["nodes"]:
                 if (pr.get("author") or {}).get("login", "").lower() == login:
                     continue
                 for review in pr["reviews"]["nodes"]:
                     at = review.get("submittedAt")
-                    if not at or _time(at) < cutoff or review["state"] in {"DISMISSED", "PENDING"}:
+                    if (not at or _time(at) < cutoff or review["state"] in {"DISMISSED", "PENDING"}
+                            or review["bodyText"].lstrip().startswith("[🤖]")):
                         continue
-                    paths = {}
-                    if review["bodyText"].strip() and not GENERIC_REVIEW.fullmatch(review["bodyText"].strip()):
-                        paths.update({f["path"]: review["url"] for f in pr["files"]["nodes"]})
+                    files = [f["path"] for f in pr["files"]["nodes"]]
+                    paths = {p: review["url"] for p in _reviewed_paths(review["bodyText"], files)}
                     for comment in review["comments"]["nodes"]:
-                        if comment["bodyText"].strip() and not GENERIC_REVIEW.fullmatch(comment["bodyText"].strip()):
+                        if _reviewed_paths(comment["bodyText"], [comment["path"]]):
                             paths[comment["path"]] = comment["url"]
                     observations.append({"login": login, "number": pr["number"], "at": at,
                                          "url": review["url"], "paths": paths})
-    return {"checkedAt": now.isoformat(), "logins": logins, "observations": observations}
+    return {"checkedAt": now.isoformat(), "logins": logins, "observations": observations, "authored": authored}
 
 
 def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | None = None,
-                     specialties: dict[str, set[str]] | None = None, observations=()) -> History:
+                     specialties: dict[str, set[str]] | None = None, observations=(), authored=()) -> History:
     """Build a shared index once per plan. All input data is public."""
     owner = owner.lower()
     records = {p["number"]: p for p in prs if p.get("repo") == REPO}.values()
@@ -140,15 +158,14 @@ def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | Non
                     events.append((when, recipient, "comment"))
             if login not in people or login == author or item["kind"] not in {"inline", "review"}:
                 continue
-            if item.get("state") in {"DISMISSED", "PENDING"}:
+            if item.get("state") in {"DISMISSED", "PENDING"} or body.lstrip().startswith("[🤖]"):
                 continue
             person = people[login]
             person.last_review = max(person.last_review or when, when)
             events.append((when, login, "answered"))
-            if body.strip() and not GENERIC_REVIEW.fullmatch(body.strip()):
-                reviewed = [item["path"]] if item.get("path") else paths
-                for path in reviewed:
-                    person.sources[path, number] = item["url"]
+            reviewed = [item["path"]] if item.get("path") else paths
+            for path in _reviewed_paths(body, reviewed):
+                person.sources[path, number] = item["url"]
 
         pending = {}
         for _, login, kind in sorted(events, key=lambda e: (e[0], e[2] == "answered")):
@@ -165,6 +182,10 @@ def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | Non
             person.last_review = max(person.last_review or when, when)
             for path, url in observed["paths"].items():
                 person.sources[path, observed["number"]] = url
+    for contribution in authored:
+        if contribution["login"] in people:
+            for path in contribution["paths"]:
+                people[contribution["login"]].sources[path, contribution["number"]] = contribution["url"]
     return History(people, specialties or {}, owner)
 
 
@@ -176,7 +197,10 @@ def _expertise(pr: dict, login: str, person: Experience, specialties: dict) -> t
     paths = set(pr.get("files", []))
     # Root module and checksum edits accompany otherwise unrelated changes.
     paths = {p for p in paths if "/" in p} or paths
-    dirs = {_home(p) for p in paths if _home(p)}
+    implementation = {p for p in paths if not p.startswith(("test/", "g3doc/"))
+                      and not p.endswith(("_test.go", ".md", "/BUILD", "/BUILD.bazel"))}
+    paths = implementation or paths
+    dirs = {_home(p) for p in paths if "/" in _home(p)}
     best = (0, 0, "", "", "")
     for (path, number), url in person.sources.items():
         if number == pr["number"] and path in paths:
