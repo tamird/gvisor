@@ -12,12 +12,12 @@ from work_states import approved_patch, check_purpose, check_qualifier, checks_p
 def original(**changes: object) -> dict:
     pr = {"number": 1, "status": "open", "head": "a" * 40, "ref": "topic", "headOwner": "tamird", "headRepo": "tamird/gvisor",
           "reviewDecision": None, "headHistoryComplete": True, "headCommittedAt": "2026-08-31T00:00:00Z",
-          "imports": [], "importsComplete": True, "sourceHead": "a" * 40,
+          "imports": [], "importsComplete": True, "sourceHead": "a" * 40, "maintainerReviewers": ["reviewer"],
           "labels": [], "labelsComplete": True, "checks": None}
     if changes.get("reviewDecision") == "APPROVED":
         pr.update(reviewsComplete=True, reviewRequestsComplete=True, reviewRequests=[],
                   feedback={"items": [{"kind": "review", "state": "APPROVED", "submittedAt": "2026-09-01T00:00:00Z",
-                                       "author": {"login": "reviewer"}, "commit": {"oid": changes.get("head", pr["head"])}}]})
+                                       "author": {"login": "reviewer", "__typename": "User"}, "commit": {"oid": changes.get("head", pr["head"])}}]})
     pr.update(changes)
     return pr
 
@@ -144,7 +144,7 @@ class WorkStatesTest(unittest.TestCase):
                       headCommittedAt="2026-10-19T18:00:00Z", reviewsComplete=True, reviewRequestsComplete=True,
                       reviewRequests=[], threads={"complete": True, "unresolved": 0},
                       feedback={"complete": True, "items": [{"kind": "review", "id": "review-1", "state": "APPROVED",
-                                "submittedAt": "2026-10-09T12:00:00Z", "author": {"login": "reviewer"},
+                                "submittedAt": "2026-10-09T12:00:00Z", "author": {"login": "reviewer", "__typename": "User"},
                                 "commit": {"oid": "b" * 40}}]})
         proof = {"head": pr["head"], "approvedHead": "b" * 40, "reviewId": "review-1", "reviewer": "reviewer",
                  "submittedAt": "2026-10-09T12:00:00Z", "verifiedAt": "2026-10-19T19:00:00Z",
@@ -174,7 +174,7 @@ class WorkStatesTest(unittest.TestCase):
         pr["imports"] = []
         self.assertEqual(pr, raw)
         later = {"kind": "review", "id": "new-approval", "state": "APPROVED", "body": "",
-                 "submittedAt": "2026-10-19T20:00:00Z", "author": {"login": "reviewer"},
+                 "submittedAt": "2026-10-19T20:00:00Z", "author": {"login": "reviewer", "__typename": "User"},
                  "commit": {"oid": pr["head"]}}
         pr["feedback"]["items"].append(later)
         self.assertTrue(approved_patch(pr, proof))
@@ -211,7 +211,7 @@ class WorkStatesTest(unittest.TestCase):
             candidate = copy.deepcopy(pr)
             candidate["feedback"]["items"][0]["state"] = state
             self.assertFalse(approved_patch(candidate, proof))
-        pr["feedback"]["items"].append({"kind": "comment", "author": {"login": "reviewer"},
+        pr["feedback"]["items"].append({"kind": "comment", "author": {"login": "reviewer", "__typename": "User"},
                                           "createdAt": "2026-10-19T20:00:00Z", "body": "Please hold this."})
         self.assertFalse(approved_patch(pr, proof))
 

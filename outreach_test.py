@@ -26,7 +26,7 @@ def pr():
 
 
 def action(p, when=NOW, **kwargs):
-    return plan(p, kwargs.pop("node", {}), kwargs.pop("states", {}), when, "tamird", {"alice","bob"}, {}, **kwargs)
+    return plan(p, kwargs.pop("node", {}), kwargs.pop("states", {}), when, "tamird", {"alice","bob"}, History({name: Experience() for name in ("alice", "bob")}, {}, "tamird"), **kwargs)
 
 
 def ask(who, at, bot=False, kind="request"):
@@ -224,11 +224,47 @@ class OutreachTest(unittest.TestCase):
         self.assertEqual(action(p)["dueAt"], "2026-11-10T10:00:00-08:00")
         self.assertEqual(action(p, "2026-11-10T18:00:00Z")["reviewer"], "bob")
 
+    def test_advisory_approval_and_withdrawn_reminder_leave_the_source_clock(self):
+        p = pr()
+        p["headCommittedAt"] = "2026-11-09T17:16:59Z"
+        p["githubReviewDecision"] = "APPROVED"
+        old_head = "b" * 40
+        p["feedback"]["items"] = [
+            comment("emeritus", "LGTM", START, kind="review", id="review", state="APPROVED",
+                    submittedAt=START, commit={"oid": old_head}, authorAssociation="COLLABORATOR"),
+            comment("tamird", "@emeritus, please reapprove. <!-- codex-reapproval-reminder:v1 head=" + HEAD + " -->",
+                    "2026-11-10T17:18:00Z")]
+        node = {"reapproval": {"head": HEAD, "kind": "content-amendment", "approvedHead": old_head,
+                               "method": "reviewed-source-diff", "diffSha256": "c" * 64,
+                               "summary": "The source was amended.", "evidence": "https://github.com/google/gvisor/pull/1"}}
+        before = action(p, "2026-11-16T17:16:58Z", node=node)
+        self.assertEqual((before["status"], before["dueAt"]), ("waiting", "2026-11-16T09:16:59-08:00"))
+        self.assertNotIn("lastReviewers", before)
+        self.assertEqual(action(p, "2026-11-16T17:16:59Z", node=node)["reviewer"], "alice")
+        p["feedback"]["items"][1]["author"]["login"] = "alice"
+        self.assertGreater(action(p, "2026-11-16T17:16:59Z", node=node)["dueAt"], before["dueAt"])
+
+    def test_active_replacement_after_a_maintainer_goes_on_hiatus(self):
+        p = self.approved()
+        p["feedback"]["items"][0]["author"]["login"] = "away"
+        active = History({"alice": Experience()}, {}, "tamird", {"alice": "https://github.com/google/gvisor/pull/1"})
+        p["publicImportDisposition"] = {"action": "maintainer-import-label", "state": "absent", "trigger": {"state": "missing"}}
+        def planned():
+            return plan(p, {}, {}, NOW, "tamird", {"away", "alice"}, active)
+        same = planned()
+        self.assertEqual((same["kind"], same["reviewer"]), ("import-status", "alice"))
+        self.assertIn("restore the `ready to pull` label", same["body"])
+        p["feedback"]["items"][0]["commit"]["oid"] = "b" * 40
+        p["publicImportDisposition"]["action"] = "maintainer-reapproval"
+        changed = planned()
+        self.assertNotIn("kind", changed)
+        self.assertEqual(changed["reviewer"], "alice")
+
     def test_reviewer_work_resumes_after_author_answer(self):
         p=pr();p["githubReviewDecision"]="CHANGES_REQUESTED"
         p["threads"]["unresolved"]=1
         p["feedback"]["items"]=[
-            comment("alice","Please move this call.",START,kind="review",state="CHANGES_REQUESTED",commit={"oid":HEAD}),
+            comment("alice","Please move this call.",START,kind="review",state="CHANGES_REQUESTED",submittedAt=START,commit={"oid":HEAD}),
             comment("alice","This breaks restore.",START,kind="inline",threadId="t",isResolved=False)]
         self.assertIsNone(action(p))
         p["feedback"]["items"].append(comment("tamird","Moved the call before save.","2026-10-27T16:00:00Z",

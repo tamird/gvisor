@@ -128,6 +128,8 @@ class TerminalImportHandoffTest(unittest.TestCase):
         pr["feedback"]["items"] = [{"kind": "review", "id": "review", "state": "APPROVED",
                                     "commit": {"oid": imported}, "submittedAt": OLD,
                                     "author": {"login": "EtiennePerot"}}]
+        pr["feedback"]["items"][0]["author"]["__typename"] = "User"
+        pr["maintainerReviewers"] = ["etienneperot"]
         node = {"approvedPatch": proof}
         self.assertIsNone(updater.terminal_import_handoff(pr, {}, node))
         # As on #15981, an approval of another equal revision alone cannot attest to this footer.
@@ -1534,7 +1536,7 @@ class ScopedApprovalTest(unittest.TestCase):
             for submitted, expected in [(LATER, "APPROVED"), (OLD, "REVIEW_REQUIRED")]:
                 with self.subTest(submitted=submitted):
                     review["submittedAt"] = submitted
-                    result = updater.normalize(updater.fetch_numbers([7], timeline=False)[7])
+                    result = updater.with_maintainer_reviewers(updater.normalize(updater.fetch_numbers([7], timeline=False)[7]), frozenset({"reviewer"}))
                     self.assertEqual(result["headHistoryComplete"], True)
                     self.assertEqual(result["headIntroducedAt"], LATER)
                     self.assertEqual(result["reviewDecision"], expected)
@@ -1720,11 +1722,12 @@ class ReapprovalReminderTest(unittest.TestCase):
     def test_import_trigger_alarm_replays_three_actual_missing_labels(self) -> None:
         fixture = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())
         now = datetime.fromisoformat(fixture["cutoff"].replace("Z", "+00:00"))
+        maintainers = frozenset({"etienneperot", "lsfriend", "manninglucas"})
         for row in fixture["rows"]:
             pr, node = row["pr"], row["node"]
             with self.subTest(number=pr["number"]):
                 observed = datetime.fromisoformat(row.get("observedAt", fixture["cutoff"]).replace("Z", "+00:00"))
-                plan = updater.reminder_plan(pr, node, observed, "tamird", frozenset({"etienneperot", "lsfriend"}))
+                plan = updater.reminder_plan(pr, node, observed, "tamird", maintainers)
                 self.assertEqual(plan.get("action"), row["expectedAction"])
                 if row["expectedAction"] == "reapprove-amendment":
                     self.assertEqual(plan["status"], "due")
@@ -1741,24 +1744,24 @@ class ReapprovalReminderTest(unittest.TestCase):
                 self.assertNotIn("please reapprove", plan["body"])
                 self.assertEqual(plan["publicImportDisposition"]["trigger"]["state"], "missing")
                 with mock.patch.dict(pr, {"labels": ["ready to pull"]}):
-                    current = updater.reminder_plan(pr, node, now, "tamird", self.maintainers)
+                    current = updater.reminder_plan(pr, node, now, "tamird", maintainers)
                     self.assertEqual(current["reason"], "import-trigger-present-awaiting-replacement")
                     self.assertIsNone(current["publicImportDisposition"]["action"])
                 for change in ({"labelsComplete": False}, {"labelHistory": {"complete": False, "items": []}},
                                {"importsComplete": False}, {"mergeable": "CONFLICTING"},
                                {"branchHead": "f" * 40}, {"revisionChanged": True}):
                     with self.subTest(change=change), mock.patch.dict(pr, change):
-                        self.assertNotEqual(updater.reminder_plan(pr, node, now, "tamird", self.maintainers)["status"], "due")
+                        self.assertNotEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["status"], "due")
                 with mock.patch.dict(pr, {"labelHistory": {"complete": True, "items": []}}):
-                    self.assertNotEqual(updater.reminder_plan(pr, node, now, "tamird", self.maintainers)["status"], "due")
-                comment = {"kind": "comment", "body": updater.reminder_plan(pr, node, now, "tamird", self.maintainers)["body"],
+                    self.assertNotEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["status"], "due")
+                comment = {"kind": "comment", "body": updater.reminder_plan(pr, node, now, "tamird", maintainers)["body"],
                            "author": {"login": "tamird"}, "createdAt": now.isoformat()}
                 pr["feedback"]["items"].append(comment)
                 try:
                     for hours, expected in [(2.99, "skipped"), (3, "due")]:
-                        result = updater.reminder_plan(pr, node, now + timedelta(hours=hours), "tamird", self.maintainers)
+                        result = updater.reminder_plan(pr, node, now + timedelta(hours=hours), "tamird", maintainers)
                         self.assertEqual(result["status"], expected)
-                    result = updater.reminder_plan(pr, node, datetime(2026, 10, 31, 19, 50, tzinfo=timezone.utc), "tamird", self.maintainers)
+                    result = updater.reminder_plan(pr, node, datetime(2026, 10, 31, 19, 50, tzinfo=timezone.utc), "tamird", maintainers)
                     self.assertEqual(result["reason"], "outside-pacific-business-hours")
                 finally:
                     pr["feedback"]["items"].pop()
@@ -1843,7 +1846,7 @@ class ReapprovalReminderTest(unittest.TestCase):
 
     def test_actual_open_earlier_exports_require_source_reapproval(self) -> None:
         fixture = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())
-        maintainers = frozenset({"etienneperot", "lsfriend"})
+        maintainers = frozenset({"etienneperot", "lsfriend", "manninglucas"})
         for row in fixture["openExportRows"]:
             pr, node = row["pr"], row["node"]
             now = datetime.fromisoformat(row["observedAt"])
@@ -2016,7 +2019,7 @@ class ReapprovalReminderTest(unittest.TestCase):
             (root / "github-status.json").write_text(json.dumps({"checkedAt": self.now.isoformat(), "prs": [source]}))
             registry = {"meta": {"repo": "google/gvisor", "owner": "tamird"}, "nodes": [self.node]}
             with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
-                    mock.patch.object(updater, "fetch_maintainers", return_value=self.maintainers), \
+                    mock.patch.object(updater, "fetch_maintainers", return_value=(self.maintainers, self.maintainers, {})), \
                     mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}) as fetch, \
                     mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "tamird\n", "")) as calls, \
                     mock.patch("sys.stdout", new_callable=io.StringIO) as output:
@@ -2038,7 +2041,37 @@ class ReapprovalReminderTest(unittest.TestCase):
         self.assertEqual([(item["number"], item["matchesSourceHead"]) for item in result], [(107, False), (108, True)])
         fetch.assert_called_once_with([107, 108], timeline=False, repo="google/gvisor", team_details=False)
 
-    def test_canonical_roster_supplements_repository_association(self) -> None:
+    def test_any_active_current_approver_can_restore_the_label(self) -> None:
+        fixture = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())
+        pr = next(row["pr"] for row in fixture["rows"] if row["pr"]["number"] == 16234)
+        original = next(row for row in pr["feedback"]["items"] if row.get("state") == "APPROVED" and row["commit"]["oid"] == pr["head"])
+        original["author"] = {"login": "manninglucas", "__typename": "User"}
+        original["submittedAt"] = original["updatedAt"] = "2026-11-07T21:00:00Z"
+        later = {**original, "id": "later-approval", "author": {"login": "away", "__typename": "User"},
+                 "submittedAt": "2026-11-07T23:00:00Z", "updatedAt": "2026-11-07T23:00:00Z"}
+        pr["feedback"]["items"].append(later)
+        now = datetime(2026, 11, 10, 19, tzinfo=timezone.utc)
+        roster = frozenset({"manninglucas", "away"})
+        plan = updater.reminder_plan(pr, {}, now, "tamird", roster, active_reviewers=frozenset({"manninglucas"}))
+        self.assertEqual((plan.get("action"), plan.get("approvers")), ("restore-import-label", ["manninglucas"]))
+        self.assertEqual(updater.reminder_plan(pr, {}, now, "tamird", roster, active_reviewers=frozenset())["reason"], "approver-on-hiatus")
+
+    def test_governance_separates_approval_from_new_requests(self) -> None:
+        pr = retained(self.raw)
+        self.assertEqual(updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers,
+                                              active_reviewers=frozenset({"another-maintainer"}))["reason"], "approver-on-hiatus")
+        for association in ("NONE", "CONTRIBUTOR", "COLLABORATOR", "MEMBER", "OWNER"):
+            with self.subTest(association=association):
+                self.review.update(commit={"oid": f"{8:040x}"}, submittedAt=LATER, authorAssociation=association)
+                self.raw["reviewDecision"] = "APPROVED"
+                normalized = updater.normalize(self.raw)
+                outside = updater.with_maintainer_reviewers(normalized, frozenset())
+                self.assertEqual((outside["githubReviewDecision"], outside["reviewDecision"], outside["approvedHead"]),
+                                 ("APPROVED", "REVIEW_REQUIRED", None))
+                current = updater.with_maintainer_reviewers(normalized, self.maintainers)
+                self.assertEqual((current["reviewDecision"], current["approvedHead"]), ("APPROVED", current["head"]))
+
+    def test_canonical_roster_controls_approval_regardless_of_repository_association(self) -> None:
         for login, association in [("nybidari", "CONTRIBUTOR"), ("aaltinaydev", "NONE")]:
             with self.subTest(login=login):
                 self.review["author"] = {"login": login, "__typename": "User"}
@@ -2047,12 +2080,9 @@ class ReapprovalReminderTest(unittest.TestCase):
         self.review.update(state="APPROVED", submittedAt=LATER, commit={"oid": f"{8:040x}"})
         self.assertEqual(self.plan()["reason"], "current-head-approved")
         self.review["author"] = {"login": "outside-roster", "__typename": "User"}
-        for association in ["CONTRIBUTOR", "NONE"]:
+        for association in ["CONTRIBUTOR", "NONE", "MEMBER", "OWNER", "COLLABORATOR"]:
             self.review["authorAssociation"] = association
             self.assertEqual(self.plan()["reason"], "no-prior-approval")
-        for association in ["MEMBER", "OWNER", "COLLABORATOR"]:
-            self.review["authorAssociation"] = association
-            self.assertEqual(self.plan()["reason"], "current-head-approved")
 
     def test_generated_roster_excludes_emeritus_and_rejects_malformed_rows(self) -> None:
         text = ("<!-- Generated from governance/maintainers.yaml by\n"
@@ -2259,7 +2289,7 @@ class ReapprovalReminderTest(unittest.TestCase):
             registry, oid = updater.load_registry(registry_file)
             with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry, REGISTRY_OID=oid), \
                     mock.patch.object(updater, "registry_is_published", return_value=False) as published, \
-                    mock.patch.object(updater, "fetch_maintainers", return_value=self.maintainers), \
+                    mock.patch.object(updater, "fetch_maintainers", return_value=(self.maintainers, self.maintainers, {})), \
                     mock.patch.object(updater, "datetime") as clock, \
                     mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}) as fetch, \
                     mock.patch.object(updater.subprocess, "run", side_effect=run) as transport:
@@ -2323,7 +2353,7 @@ class ReapprovalReminderTest(unittest.TestCase):
             (root / "github-status.json").write_text(json.dumps(snapshot))
             registry = {"meta": {"repo": "google/gvisor", "owner": "tamird"}, "nodes": [self.node]}
             with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
-                    mock.patch.object(updater, "fetch_maintainers", return_value=self.maintainers), \
+                    mock.patch.object(updater, "fetch_maintainers", return_value=(self.maintainers, self.maintainers, {})), \
                     mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}), \
                     mock.patch.object(updater, "reminder_plan", wraps=updater.reminder_plan) as planner, \
                     mock.patch("sys.stdout", new_callable=io.StringIO) as output:

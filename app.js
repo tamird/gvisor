@@ -93,6 +93,11 @@ function status(node) {
   }
   return ({ branch: "Working branch", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
 }
+function maintainerReview(pr, item) {
+  const login = item.author?.login?.toLowerCase();
+  return item.author?.__typename === "User" && !!login && login !== (pr.authorLogin || pr.headOwner || "").toLowerCase()
+    && pr.maintainerReviewers?.includes(login) === true;
+}
 function effectiveReviewDecision(pr) {
   if (pr?.reviewDecision !== "APPROVED") return pr?.reviewDecision;
   // Reassociation or editing a review does not make its submission fresh.
@@ -101,9 +106,10 @@ function effectiveReviewDecision(pr) {
   const cutoffs = [pr.headCommittedAt, pr.headIntroducedAt].filter(value => value != null).map(timestamp);
   const submitted = timestamp(pr.approvedAt);
   return pr.headHistoryComplete === true && pr.approvedHead === pr.head && cutoffs.length && cutoffs.every(Number.isFinite)
-    && Number.isFinite(submitted) && submitted >= Math.max(...cutoffs) ? "APPROVED" : "REVIEW_REQUIRED";
+    && Number.isFinite(submitted) && submitted >= Math.max(...cutoffs)
+    && ((pr.repo || "google/gvisor") !== "google/gvisor" || currentHeadApproval(pr, pr.approvedAt)) ? "APPROVED" : "REVIEW_REQUIRED";
 }
-function currentHeadApproval(pr, patch) {
+function currentHeadApproval(pr, approvedAt) {
   if (!pr.reviewsComplete || !pr.reviewRequestsComplete || !pr.headHistoryComplete) return false;
   const timestamp = value => typeof value === "string" && /(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? Date.parse(value) : NaN;
   const cutoffs = [pr.headCommittedAt, pr.headIntroducedAt].filter(value => value != null).map(timestamp);
@@ -116,8 +122,9 @@ function currentHeadApproval(pr, patch) {
   }
   return [...latest.values()].some(item => item.author?.__typename === "User"
     && item.author.login !== (pr.authorLogin || pr.headOwner)
-    && (["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)
-      || pr.maintainerReviewers?.includes(item.author.login.toLowerCase()) || item.author.login.toLowerCase() === patch?.reviewer.toLowerCase())
+    && ((pr.repo || "google/gvisor") === "google/gvisor" ? maintainerReview(pr, item)
+      : ["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation))
+    && (!approvedAt || item.submittedAt === approvedAt && !pr.reviewRequests?.some(r => r.login === item.author.login))
     && item.state === "APPROVED" && item.commit?.oid === pr.head
     && timestamp(item.submittedAt) >= Math.max(...cutoffs));
 }
@@ -134,7 +141,7 @@ function approvedPatch(node) {
   const verified = timestamp(proof.verifiedAt), submitted = timestamp(proof.submittedAt);
   if (!Number.isFinite(verified) || !Number.isFinite(submitted) || verified < submitted) return null;
   const approval = pr.feedback.items.find(item => item.kind === "review" && item.id === proof.reviewId);
-  if (!approval || approval.state !== "APPROVED" || ![proof.approvedHead, proof.head].includes(approval.commit?.oid)
+  if (!approval || !maintainerReview(pr, approval) || approval.state !== "APPROVED" || ![proof.approvedHead, proof.head].includes(approval.commit?.oid)
       || approval.submittedAt !== proof.submittedAt
       || approval.author?.login !== proof.reviewer || pr.reviewRequests.some(item => item.login === proof.reviewer)) return null;
   for (const item of pr.feedback.items) {
@@ -163,7 +170,7 @@ function rebaseNeedsComparison(node) {
     && !(node.reapproval?.head === pr.head && node.reapproval.kind === "content-amendment")
     && pr.imports?.some(item => item.sourceHead !== pr.head)
     && pr.feedback?.items?.some(item => item.kind === "review" && item.state === "APPROVED"
-      && item.commit?.oid === pr.head && Date.parse(item.submittedAt) < Date.parse(pr.headIntroducedAt));
+      && maintainerReview(pr, item) && item.commit?.oid === pr.head && Date.parse(item.submittedAt) < Date.parse(pr.headIntroducedAt));
 }
 function reviewInfo(pr, node) {
   if (releaseWait(node)) return { text: pr.releaseVersion === node.releaseWait.checkedVersion ? "Waiting on upstream" : "Check upstream release", tone: "pending", glyph: "○" };
@@ -479,8 +486,7 @@ function amendmentApprovers(pr, proof) {
     const author = item.author?.login;
     if (item.kind !== "review" || !author || item.author.__typename !== "User"
         || author === (pr.authorLogin || pr.headOwner)
-        || !["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)
-          && !pr.maintainerReviewers?.includes(author.toLowerCase())
+        || !maintainerReview(pr, item)
         || !["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(item.state)) continue;
     if (!item.submittedAt) return [];
     if (!latest.has(author) || item.submittedAt > latest.get(author).submittedAt) latest.set(author, item);
@@ -516,13 +522,13 @@ function importLineage(node, includeAmendment = false) {
   const proof = certifiedEarlierExport(patch);
   return pr.imports.filter(item => proof && item.number === proof.number && item.sourceHead === proof.sourceHead);
 }
-function publicImportDisposition(node) {
+function publicImportDisposition(node, legacySnapshot = false) {
   const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);
   if (!record) return null; // Older paired snapshots use the same direct lineage below.
   // Older snapshots did not classify content amendments. Keep those readable
   // without inventing a newly collected disposition in the browser.
   const amendment = Object.hasOwn(record.binding, "amendment") && !patch ? reviewedAmendment(node) : null;
-  const currentApproval = currentHeadApproval(pr, patch);
+  const currentApproval = currentHeadApproval(pr);
   const binding = { sourceHead: pr.head, approvedHead: patch?.approvedHead ?? null, currentApproval,
     complete: pr.importsComplete === true, labels: [...(pr.labels || [])].sort(), labelsComplete: pr.labelsComplete === true,
     labelHistory: pr.labelHistory ?? null, imports: importLineage(node, !!amendment).map(item => ({
@@ -535,7 +541,16 @@ function publicImportDisposition(node) {
           && amendmentApprovers(pr, amendment).length > 0)
           && (pr.githubReviewDecision ?? pr.reviewDecision) !== "CHANGES_REQUESTED") };
   if (amendment) binding.amendment = amendment;
-  return evidenceJSON(record.binding) === evidenceJSON(binding) ? record : null;
+  if (evidenceJSON(record.binding) === evidenceJSON(binding)) return record;
+  // Old snapshots could attribute approval to a GitHub collaborator. Validate
+  // their other fields, then render from the underlying PR observations.
+  if (legacySnapshot && (pr.repo || node.repo) === "google/gvisor"
+      && pr.feedback?.items?.some(item => item.kind === "review" && item.state === "APPROVED" && !maintainerReview(pr, item))
+      && (record.binding.currentApproval && !binding.currentApproval || record.binding.eligible && !binding.eligible)
+      && (!binding.currentApproval || record.binding.currentApproval) && (!binding.eligible || record.binding.eligible)
+      && evidenceJSON({...record.binding, currentApproval: binding.currentApproval, eligible: binding.eligible}) === evidenceJSON(binding))
+    return record;
+  return null;
 }
 function reviewedExport(node) {
   const pr = node?.github, receipt = pr?.publicImportDisposition?.reviewedExport;
@@ -550,7 +565,7 @@ function reviewedExport(node) {
   if (comparison?.source?.head === pr.head && record.binding.imports.some(item =>
       ["open", "draft"].includes(item.status) && item.head === comparison.export?.head)
       && !(comparison.comparison?.normalized_delta_identical === true && comparison.comparison?.modes_identical === true)) return false;
-  return review?.kind === "review" && review.state === "APPROVED" && review.commit?.oid === pr.head
+  return review?.kind === "review" && maintainerReview(pr, review) && review.state === "APPROVED" && review.commit?.oid === pr.head
     && !pr.reviewRequests?.some(item => item.login === review.author?.login)
     && !pr.feedback.items.some(item => item.kind === "review" && item.author?.login === review.author?.login
       && ["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(item.state) && item.submittedAt > review.submittedAt)
@@ -1764,7 +1779,8 @@ function currentOutreach(node) {
   const pr = node.github;
   if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open") return null;
   const row = liveSnapshot?.reviewOutreach?.[pr.number];
-  return row?.head === pr.head ? row : null;
+  if (row?.head !== pr.head || row?.kind === "import-status" && !currentHeadApproval(pr) && !reviewedExport(node)) return null;
+  return row;
 }
 function appendOutreach(parent, node) {
   const row = currentOutreach(node);
@@ -2448,7 +2464,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         (policy === "none" && (pr.importPolicy !== "none" || pr.imports.length))) throw new Error("Invalid PR inventory");
     numbers.add(identity);
     if (pr.publicImportDisposition !== undefined) {
-      const disposition = publicImportDisposition({ ...nextRegistry.nodes.find(node => node.id === identity), github: pr });
+      const disposition = publicImportDisposition({ ...nextRegistry.nodes.find(node => node.id === identity), github: pr }, snapshot.reviewAuthority === undefined);
       if (!disposition || !["exact", "equivalent", "amended", "none"].includes(disposition.scope)
           || !["conflicting", "open", "draft", "merged", "closed", "absent", "unknown"].includes(disposition.state)
           || ![null, "author-conflicts", "maintainer-import-refresh", "maintainer-reapproval", "maintainer-import-label", "maintainer-reimport", "maintainer-import-landed"].includes(disposition.action)

@@ -135,7 +135,7 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
 
 
 def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, maintainers: set[str],
-            fetch_fresh: Callable[[int], dict], *, post: bool, registry_oid: str) -> None:
+            fetch_fresh: Callable[[int], dict], *, active_reviewers: set[str], post: bool, registry_oid: str) -> None:
     from outreach import outreach_states, plan, reviewer_history
 
     if owner != "tamird" or registry["meta"]["repo"] != REPO:
@@ -148,7 +148,7 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
         raise RuntimeError("Review-outreach credential does not belong to the configured owner")
     nodes = {node["number"]: node for node in registry["nodes"] if node.get("type") == "pr" and node.get("repo") == REPO}
     specialties = {name: set(areas) for name, areas in snapshot.get("reviewerSpecialties", {}).items()}
-    history = reviewer_history(snapshot["prs"], owner, maintainers=maintainers, specialties=specialties,
+    history = reviewer_history(snapshot["prs"], owner, maintainers=active_reviewers, specialties=specialties,
                                observations=snapshot.get("reviewerActivity", {}).get("observations", []),
                                authored=snapshot.get("reviewerActivity", {}).get("authored", []))
     # Leave time for the final GitHub readback before the workflow ends.

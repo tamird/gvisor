@@ -174,8 +174,15 @@ def check_qualifier(pr: dict) -> str:
     return "; ".join(qualifiers)
 
 
+def maintainer_review(pr: dict, item: dict) -> bool:
+    author = item.get("author") or {}
+    login = author.get("login", "").casefold()
+    return (author.get("__typename") == "User" and bool(login)
+            and login != (pr.get("authorLogin") or pr.get("headOwner") or "").casefold()
+            and login in pr.get("maintainerReviewers", ()))
+
+
 def effective_approval(pr: dict, *, require_aggregate: bool = True,
-                       trusted_reviewers: frozenset[str] = frozenset(),
                        require_fresh: bool = True) -> dict | None:
     """Return an approval associated with this head, normally submitted after its publication."""
     decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
@@ -205,11 +212,13 @@ def effective_approval(pr: dict, *, require_aggregate: bool = True,
             latest[author] = item
     approvals = []
     for author, item in latest.items():
-        if not require_aggregate and (
+        if pr.get("repo", "google/gvisor") == "google/gvisor":
+            if not maintainer_review(pr, item):
+                continue
+        elif not require_aggregate and (
                 (item.get("author") or {}).get("__typename") != "User"
                 or author == pr.get("authorLogin", pr.get("headOwner"))
-                or item.get("authorAssociation") not in {"MEMBER", "OWNER", "COLLABORATOR"}
-                and author.casefold() not in trusted_reviewers):
+                or item.get("authorAssociation") not in {"MEMBER", "OWNER", "COLLABORATOR"}):
             continue
         if (require_aggregate and author in requested or item["state"] != "APPROVED"
                 or (item.get("commit") or {}).get("oid") != pr["head"]):
@@ -297,7 +306,7 @@ def approved_patch(pr: dict, evidence: dict | None) -> bool:
     items = pr["feedback"]["items"]
     approval = next((item for item in items if item.get("kind") == "review"
                      and item.get("id") == evidence.get("reviewId")), None)
-    if (not approval or approval.get("state") != "APPROVED"
+    if (not approval or not maintainer_review(pr, approval) or approval.get("state") != "APPROVED"
             or (approval.get("commit") or {}).get("oid") not in {evidence["approvedHead"], evidence["head"]}
             or approval.get("submittedAt") != evidence["submittedAt"]
             or (approval.get("author") or {}).get("login") != evidence.get("reviewer")
@@ -398,10 +407,7 @@ def maintainer_review_history(pr: dict) -> tuple[dict[str, dict], list[dict]] | 
     latest = {}
     for item in pr.get("feedback", {}).get("items", []):
         author = (item.get("author") or {}).get("login")
-        if (item.get("kind") != "review" or not author or (item.get("author") or {}).get("__typename") != "User"
-                or author == pr.get("authorLogin", pr.get("headOwner"))
-                or item.get("authorAssociation") not in {"MEMBER", "OWNER", "COLLABORATOR"}
-                and author.casefold() not in pr.get("maintainerReviewers", [])
+        if (item.get("kind") != "review" or not maintainer_review(pr, item)
                 or item.get("state") not in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}):
             continue
         if not item.get("submittedAt"):
@@ -489,7 +495,15 @@ def with_maintainer_reviewers(pr: dict, maintainers: frozenset[str]) -> dict:
     """Record which review authors appear on the project's current maintainer roster."""
     authors = {(item.get("author") or {}).get("login", "").casefold()
                for item in pr.get("feedback", {}).get("items", []) if item.get("kind") == "review"}
-    return {**pr, "maintainerReviewers": sorted(maintainers & authors)}
+    pr = {**pr, "maintainerReviewers": sorted(maintainers & authors)}
+    return with_review_decision(pr)
+
+
+def with_review_decision(pr: dict) -> dict:
+    approval = effective_approval(pr)
+    decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
+    return {**pr, "reviewDecision": "REVIEW_REQUIRED" if decision == "APPROVED" and not approval else decision,
+            "approvedHead": pr["head"] if approval else None, "approvedAt": approval["submittedAt"] if approval else None}
 
 
 def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict | None = None,
@@ -501,10 +515,7 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     active = [item for item in imports if item["status"] in {"open", "draft"}]
     scope = ("exact" if imports and imports[0]["sourceHead"] == pr["head"]
              else "amended" if imports and amendment else "equivalent" if imports else "none")
-    reviewers = frozenset(pr.get("maintainerReviewers", []))
-    if accepted:
-        reviewers |= {patch["reviewer"].casefold()}
-    approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=reviewers)
+    approval = effective_approval(pr, require_aggregate=False)
     binding = {"sourceHead": pr["head"], "approvedHead": patch["approvedHead"] if accepted else None,
                "currentApproval": approval is not None,
                "complete": pr.get("importsComplete") is True,

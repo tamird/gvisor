@@ -4,9 +4,9 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from reapproval import import_author_block, waiting_for_release
+from reapproval import MARKER as REAPPROVAL_MARKER, import_author_block, waiting_for_release
 from reviewer_selection import History, get_reviewer_candidates, reviewer_history
-from work_states import current_rebase_request, derive_states, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment
+from work_states import current_rebase_request, derive_states, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment, with_maintainer_reviewers
 
 PACIFIC = ZoneInfo("America/Los_Angeles")
 MARKER = re.compile(r"<!-- gvisor-review-outreach (\d+):([0-9a-f]{40}):([A-Za-z0-9-]+) -->")
@@ -182,6 +182,8 @@ def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, 
     else:
         question = f"could you check what {internal} needs to land?" if checks or public else "could you check whether this approved change was picked up for import?"
         situation = "The internal checks passed." if checks.get("feedback/copybara", {}).get("state") == "SUCCESS" else ""
+        if disposition.get("action") in {"maintainer-import-label", "maintainer-reimport"} and disposition.get("trigger", {}).get("state") == "missing":
+            question = "could you restore the `ready to pull` label for this approved change?"
     reason = ("You approved this source." if who == approver else "You have handled the gVisor import trigger.")
     key = f"{number}:{head}:{who}"
     body = " ".join(part for part in (f"@{who}, {question}", export, situation) if part)
@@ -203,25 +205,35 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     # UNKNOWN may retain its clock. Delivery independently requires MERGEABLE.
     mergeable = pr.get("mergeable")
     disposition = pr.get("publicImportDisposition") or {}
+    pr = with_maintainer_reviewers(pr, maintainers)
+    decisions = maintainer_review_history(pr) if pr.get("reviewDismissals", {}).get("complete") else None
+    approvals = decisions[1] if decisions else []
+    approvers = {item["author"]["login"].casefold() for item in approvals}
+    expected = node.get("reapproval", {}).get("approvedHead") or node.get("approvedPatch", {}).get("approvedHead")
+    prior = {item["author"]["login"].casefold() for item in approvals if (item.get("commit") or {}).get("oid") == expected}
+    current = {item["author"]["login"].casefold() for item in approvals if (item.get("commit") or {}).get("oid") == head}
+    recipients = current or prior or approvers
+    # A review from a maintainer on hiatus remains valid. If only they
+    # approved, the next personal request belongs to an active maintainer.
+    needs_replacement = bool(recipients) and recipients.isdisjoint(history.people)
     if (states.keys() & blocked or mergeable not in {"MERGEABLE", "UNKNOWN"}
             or "conflicts" in states and mergeable != "UNKNOWN"
             or pr.get("branchHead") != head or node.get("reviewOutreachHold")
             or waiting_for_release(node, head)
             or node.get("contributorChangesRequested", {}).get("head") == head
             or landed_patch(pr, node.get("landedPatch"))
-            or disposition.get("action") in {"maintainer-reapproval", "maintainer-import-label"}):
+            or not needs_replacement and disposition.get("action") in {"maintainer-reapproval", "maintainer-import-label"}):
         return None
-    trusted = set(pr.get("maintainerReviewers", [])) | set(maintainers)
-    approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=trusted)
+    approval = effective_approval(pr, require_aggregate=False)
     # GitHub can associate an old approval with a rebased head. Only trust
     # that association for import follow-up when Copybara exported this head.
     if (not approval and pr.get("githubReviewDecision") == "APPROVED"
             and disposition.get("scope") == "exact" and disposition.get("state") == "open"):
-        approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=trusted, require_fresh=False)
+        approval = effective_approval(pr, require_aggregate=False, require_fresh=False)
     if approval:
         return import_status_plan(pr, node, disposition, approval, now, owner, history, planned or {}, preferred)
-    if (states.keys() & {"importing", "awaiting-import", "waiting-merge"} or disposition.get("reviewedExport")
-            or node.get("reapproval", {}).get("head") == head):
+    if (not needs_replacement and states.keys() & {"importing", "awaiting-import", "waiting-merge"}
+            or disposition.get("reviewedExport")):
         return None
     if not (pr.get("headHistoryComplete") and pr.get("reviewsComplete") and pr.get("reviewRequestsComplete")
             and pr.get("feedback", {}).get("complete") and pr.get("importsComplete")
@@ -231,8 +243,7 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         return {"number": number, "head": head, "status": "incomplete"}
     # The existing import/reapproval alarm owns earlier formal approvals,
     # including reviews GitHub dismissed after a push.
-    decisions = maintainer_review_history(pr)
-    if decisions is None or decisions[1] or author_work(pr, node, owner):
+    if decisions is None or approvers and not needs_replacement or author_work(pr, node, owner):
         return None
     timeline = pr["reviewTimeline"]["items"]
     source = [pr.get("headCommittedAt"), pr.get("headIntroducedAt")]
@@ -280,6 +291,8 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         if not at:
             continue
         login = who["login"].lower()
+        if login == owner.lower() and REAPPROVAL_MARKER in item.get("body", ""):
+            continue
         asks = requested_in_comment(item, number) if login == owner.lower() and item["kind"] in {"comment","inline"} else set()
         if asks:
             asked = instant(item.get("createdAt")) or at

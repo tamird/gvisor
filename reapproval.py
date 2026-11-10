@@ -88,9 +88,11 @@ def commit_link(head: str) -> str:
 
 
 def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
-                  maintainers: frozenset[str]) -> dict:
+                  maintainers: frozenset[str], *, active_reviewers: frozenset[str] | None = None) -> dict:
     """Plan either an exact amendment review or a verified missing import trigger."""
     pr = with_maintainer_reviewers(pr, maintainers)
+    if active_reviewers is None:
+        active_reviewers = maintainers
     result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head"),
               "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"),
                                                                   node.get("reapproval"), node.get("importPatchComparison"))}
@@ -140,7 +142,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             and disposition["trigger"]["state"] == "present"):
         return skip("import-trigger-present-awaiting-replacement")
     if disposition["action"] == "maintainer-reapproval" and disposition["scope"] == "equivalent":
-        if effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers):
+        if effective_approval(pr, require_aggregate=False):
             return skip("current-head-approved")
         if reason := import_author_block(pr, node, owner):
             return {**skip(reason), "status": "deferred"}
@@ -149,6 +151,9 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                            if item["id"] == patch["reviewId"] and item["state"] == "APPROVED")
         if not approvers:
             return skip("no-matching-prior-maintainer-approval")
+        approvers = [who for who in approvers if who.casefold() in active_reviewers]
+        if not approvers:
+            return skip("approver-on-hiatus")
         if not pr.get("headHistoryComplete") or not pr.get("headIntroducedAt"):
             return {**skip("incomplete-head-time-evidence"), "status": "needs-evidence"}
         if datetime.fromisoformat(patch["submittedAt"].replace("Z", "+00:00")) >= datetime.fromisoformat(pr["headIntroducedAt"].replace("Z", "+00:00")):
@@ -172,7 +177,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                                  approvedHead=old, approvers=approvers, body=body,
                                  importReapproval=True)
     if disposition["action"] in {"maintainer-import-label", "maintainer-reimport"} and disposition["trigger"]["state"] == "missing":
-        current_approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
+        current_approval = effective_approval(pr, require_aggregate=False)
         if reason := import_author_block(pr, node, owner, current_approval):
             return {**skip(reason), "status": "deferred"}
         patch = node.get("approvedPatch", {})
@@ -184,6 +189,11 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
         if not approval or approval["state"] != "APPROVED":
             return skip("no-qualified-import-approver")
         approvers = [approval["author"]["login"]]
+        if approvers[0].casefold() not in active_reviewers:
+            active = {**pr, "maintainerReviewers": active_reviewers}
+            if not (approval := effective_approval(active, require_aggregate=False)):
+                return skip("approver-on-hiatus")
+            approvers = [approval["author"]["login"]]
         trigger = disposition["trigger"]
         imports = disposition["binding"]["imports"]
         if disposition["state"] != "closed":
@@ -249,6 +259,9 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
     approvers = amendment_approvers(pr, proof)
     if not approvers:
         return skip("no-matching-prior-maintainer-approval")
+    approvers = [who for who in approvers if who.casefold() in active_reviewers]
+    if not approvers:
+        return skip("approver-on-hiatus")
     if disposition["scope"] == "exact" and disposition["state"] not in {"closed", "unknown"}:
         return skip("current-head-export-present")
     prior_export = disposition["scope"] == "amended"

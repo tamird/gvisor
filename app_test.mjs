@@ -455,6 +455,7 @@ print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedP
         const current = structuredClone(row);
         current.pr.githubReviewDecision = 'REVIEW_REQUIRED';
         current.pr.labels = labels;
+        current.pr.maintainerReviewers = [...new Set([...current.pr.maintainerReviewers, reviewer.toLowerCase()])];
         const oldReview = current.pr.feedback.items.find(item => item.id === current.node.approvedPatch.reviewId);
         current.pr.feedback.items.push({ ...oldReview, id: 'fresh', author: { ...oldReview.author, login: reviewer },
           commit: { oid: current.pr.head }, submittedAt: current.observedAt, updatedAt: current.observedAt, body: '' });
@@ -1260,9 +1261,12 @@ function attentionNode(number = 1) {
   const head = 'a'.repeat(40), url = `https://github.com/google/gvisor/pull/${number}`;
   return { id: `pr:${number}`, type: 'pr', number, title: `Change ${number}`, url, status: 'open', workStates: {}, github: {
     number, url, head, headOwner: 'tamird', status: 'open', reviewsComplete: true, reviewDecision: 'APPROVED',
+    reviewRequestsComplete: true, maintainerReviewers: ['reviewer'],
     approvedHead: head, approvedAt: '2026-10-13T09:00:00Z', headCommittedAt: '2026-10-13T08:00:00Z',
     headIntroducedAt: '2026-10-13T08:01:00Z', headHistoryComplete: true, mergeable: 'MERGEABLE',
-    importsComplete: true, imports: [], labelsComplete: true, labels: [], threads: { complete: true, unresolved: 0, total: 0 }, feedback: { complete: true, items: [] },
+    importsComplete: true, imports: [], labelsComplete: true, labels: [], threads: { complete: true, unresolved: 0, total: 0 },
+    feedback: { complete: true, items: [{ kind: 'review', id: 'review', state: 'APPROVED', author: { login: 'reviewer', __typename: 'User' },
+      commit: { oid: head }, submittedAt: '2026-10-13T09:00:00Z' }] },
     checks: { complete: true, total: 1, state: 'SUCCESS', contexts: [{ name: 'test', state: 'SUCCESS', purpose: 'validation', kind: 'check-run' }] },
   } };
 }
@@ -1280,7 +1284,8 @@ test('an author’s endorsed alternative routes review attention while both PRs 
   const endorsement = {kind: 'review', id: 'review', url: alternative.url + '#pullrequestreview-22',
     state: 'COMMENTED', author: {__typename: 'User', login: 'tamird'}, commit: {oid: alternative.github.head},
     body: 'I prefer this implementation to #1.', updatedAt: '2026-11-08T12:54:33Z'};
-  alternative.github.feedback.items.push(endorsement);
+  source.github.feedback.items = [];
+  alternative.github.feedback.items = [endorsement];
   context.rows = [source, alternative]; run('model = {nodes: rows}');
   const group = () => run('attentionGroups([rows[0]], "tamird")[0].id');
   const reasons = () => [...run('attentionReasons(rows[0], "tamird").map(item => item.id)')];
@@ -1556,7 +1561,7 @@ function assignedCommentNode() {
   const node = attentionNode(15926); node.repo = 'google/gvisor';
   const comment = { kind: 'comment', id: 'comment-1', url: `${node.url}#issuecomment-6295602307`,
     author: { login: 'reviewer' }, body: 'Please check the partial-segment behavior.' };
-  node.github.feedback.items.push(comment); node.github.imports = [attentionImport(node)];
+  node.github.feedback.items.unshift(comment); node.github.imports = [attentionImport(node)];
   node.followup = { owner: 'hostinet_delivery', sourceHead: node.github.head,
     actionableComment: { head: node.github.head, commentId: comment.id, url: comment.url } };
   return node;
@@ -1568,7 +1573,7 @@ test('a queued nit leaves the approved import on its normal path and reopens on 
   pr.threads = { complete: true, unresolved: 1, total: 1 };
   const comment = { kind: 'inline', id: 'nit', threadId: 'thread', author: { login: 'reviewer' },
     url: `${node.url}#discussion_r1`, body: 'Mention the reserved thread.', isResolved: false };
-  pr.feedback.items = [comment]; context.nodeInput = node;
+  pr.feedback.items.unshift(comment); context.nodeInput = node;
   assert.ok(idsFor(node).includes('author-feedback'));
   const binding = JSON.parse(vm.runInContext('JSON.stringify(attentionDispositionEvidence(nodeInput, "author-feedback"))', context));
   node.followup = { attentionDispositions: [{ reason: 'author-feedback', action: 'batch-cleanup',
@@ -1659,7 +1664,7 @@ test('verified unchanged approval routes imports without rewriting fresh review 
   const pr = node.github;
   pr.githubReviewDecision = 'REVIEW_REQUIRED'; pr.reviewDecision = 'REVIEW_REQUIRED';
   pr.reviewRequestsComplete = true; pr.reviewRequests = [];
-  pr.feedback.items = [{ kind: 'review', id: 'review-1', state: 'APPROVED', author: { login: 'reviewer' },
+  pr.feedback.items = [{ kind: 'review', id: 'review-1', state: 'APPROVED', author: { login: 'reviewer', __typename: 'User' },
     submittedAt: '2026-10-09T12:00:00Z', commit: { oid: 'b'.repeat(40) } }];
   node.approvedPatch = { head: pr.head, approvedHead: 'b'.repeat(40), reviewId: 'review-1', reviewer: 'reviewer',
     submittedAt: '2026-10-09T12:00:00Z', verifiedAt: '2026-10-13T10:00:00Z',
@@ -2158,10 +2163,31 @@ test('the current project roster recognizes maintainers GitHub calls contributor
   assert.equal(vm.runInContext('currentHeadApproval(pr)', context), false);
 });
 
+test('an advisory review cannot authorize an import or validate a corrupted cached binding', () => {
+  const context = client(), node = attentionNode(), pr = node.github;
+  node.repo = pr.repo = 'google/gvisor';
+  pr.maintainerReviewers = [];
+  pr.githubReviewDecision = 'APPROVED';
+  pr.feedback.items[0].authorAssociation = 'COLLABORATOR';
+  context.row = node;
+  const run = code => vm.runInContext(code, context);
+  assert.equal(run('effectiveReviewDecision(row.github)'), 'REVIEW_REQUIRED');
+  const source = "import json,sys; from work_states import public_import_disposition; print(json.dumps(public_import_disposition(json.load(sys.stdin))))";
+  pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-B', '-c', source],
+    { cwd: new URL('.', import.meta.url), input: JSON.stringify(pr), encoding: 'utf8' }));
+  assert.ok(run('publicImportDisposition(row)'));
+  pr.publicImportDisposition.binding.currentApproval = pr.publicImportDisposition.binding.eligible = true;
+  assert.equal(run('publicImportDisposition(row)'), null);
+  assert.ok(run('publicImportDisposition(row, true)'));
+  pr.publicImportDisposition.binding.sourceHead = 'b'.repeat(40);
+  assert.equal(run('publicImportDisposition(row, true)'), null);
+  assert.equal(pr.githubReviewDecision, 'APPROVED');
+});
+
 test('attention uses current approvals and import associations without inventing import failures', () => {
   const node = attentionNode(), imported = attentionImport(node);
   imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false; imported.status = 'closed'; node.github.imports = [imported];
-  node.github.feedback.items = [{ kind: 'comment', body: 'The import failed last week.' }];
+  node.github.feedback.items.push({ kind: 'comment', body: 'The import failed last week.' });
   assert.deepEqual(idsFor(node), ['maintainer-import-label']);
   node.github.labels = ['ready to pull'];
   assert.deepEqual(idsFor(node), ['maintainer-import']);
@@ -2251,7 +2277,7 @@ test('a closed export of a verified unchanged patch calls for re-import, not rev
   const old = 'b'.repeat(40);
   pr.githubReviewDecision = 'APPROVED'; pr.reviewDecision = 'REVIEW_REQUIRED';
   pr.headIntroducedAt = '2026-10-10T11:00:00Z'; pr.reviewRequestsComplete = true; pr.reviewRequests = [];
-  pr.feedback.items = [{ kind: 'review', id: 'review-1', state: 'APPROVED', author: { login: 'reviewer' },
+  pr.feedback.items = [{ kind: 'review', id: 'review-1', state: 'APPROVED', author: { login: 'reviewer', __typename: 'User' },
     submittedAt: '2026-10-09T12:00:00Z', commit: { oid: pr.head } }];
   const attempt = attentionImport(node);
   Object.assign(attempt, { sourceHead: old, matchesSourceHead: false, status: 'closed' });

@@ -20,7 +20,7 @@ from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import load_registry, registry_is_published
 from reviewer_selection import recent_reviewer_work, reviewer_governance
-from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers
+from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -620,11 +620,7 @@ def normalize(pr: dict, previous: dict | None = None) -> dict:
                        "actor": e["actor"], "reviewer": e.get("requestedReviewer")} for e in timeline["nodes"]]}
         normalized["files"] = [f["path"] for f in pr["files"]["nodes"]]
         normalized["filesComplete"] = not pr["files"]["pageInfo"]["hasNextPage"]
-    normalized["reviewDecision"] = review_decision(normalized)
-    normalized["approvedHead"] = normalized["head"] if normalized["reviewDecision"] == "APPROVED" else None
-    approval = effective_approval(normalized)
-    normalized["approvedAt"] = approval["submittedAt"] if approval else None
-    return normalized
+    return with_review_decision(normalized)
 
 
 def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO, *, team_details: bool = True) -> dict[int, dict]:
@@ -1084,7 +1080,7 @@ def reapproval_reminders(post: bool = False) -> None:
                                   text=True, capture_output=True, check=True, timeout=30)
         if identity.stdout.strip() != OWNER:
             raise RuntimeError("Reminder credential does not belong to the configured owner")
-    maintainers = fetch_maintainers()
+    maintainers, active_reviewers, _ = fetch_maintainers(include_specialties=True)
     print("Review-reminder eligibility is separate from public-import progress. A skipped reminder is not an import all-clear.")
     for pr in snapshot["prs"]:
         if pr.get("repo") != "google/gvisor" or pr.get("status") != "open":
@@ -1095,12 +1091,12 @@ def reapproval_reminders(post: bool = False) -> None:
         if disposition["action"]:
             print(json.dumps({"publicImportHandoff": {"number": pr["number"], "url": pr["url"],
                 "snapshotAt": snapshot["checkedAt"], **disposition, "posting": "Diagnostic only; no comment is authorized by this handoff."}}))
-        initial = reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers)
+        initial = reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers, active_reviewers=active_reviewers)
         refresh_imports = initial.get("action") == "restore-import-label" or initial.get("importReapproval") is True
         # Import recovery needs fresh timeline, labels, and export lineage.
         # A new successor suppresses the public reminder.
         if node.get("reapproval", {}).get("head") != pr["head"] and not refresh_imports:
-            print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers)))
+            print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers, active_reviewers=active_reviewers)))
             continue
         raw = fetch_numbers([pr["number"]], timeline=refresh_imports, repo=pr["repo"], team_details=False)[pr["number"]]
         recheck_unknown_mergeability([raw], repo=pr["repo"])
@@ -1112,7 +1108,7 @@ def reapproval_reminders(post: bool = False) -> None:
             current["imports"] = refresh_reminder_imports(raw, pr) if refresh_imports else pr["imports"]
             current["importsComplete"] = (not raw["timelineItems"]["pageInfo"]["hasPreviousPage"]
                                           if refresh_imports else pr.get("importsComplete", False))
-        plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER, maintainers)
+        plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER, maintainers, active_reviewers=active_reviewers)
         plan["importSnapshotAt"] = snapshot["checkedAt"] if current["head"] == pr["head"] else None
         if current["head"] != pr["head"]:
             plan.update(status="skipped", reason="head-changed-since-snapshot")
@@ -1257,6 +1253,10 @@ def main() -> None:
         records, fresh, prior, inventory = collect_repository(repo, policy, previous, registered if repo in registered_repositories else None)
         if repo == "google/gvisor":
             records = [with_maintainer_reviewers(pr, maintainers) if pr["status"] == "open" else pr for pr in records]
+            for pr in records:
+                if pr["status"] == "open":
+                    pr["imports"] = [with_maintainer_reviewers(item, maintainers) if item["status"] == "open" else item
+                                     for item in pr["imports"]]
         # Keep observed human feedback actionable even if a later repository or
         # snapshot validation fails. This log is not a published observation.
         for record in reviewer_handoff(records, previous):
@@ -1317,10 +1317,10 @@ def main() -> None:
         pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"),
                                                                  node.get("reapproval"), node.get("importPatchComparison"))
         if pr["publicImportDisposition"]["action"] == "maintainer-import-label":
-            approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
+            approval = effective_approval(pr, require_aggregate=False)
             pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, OWNER, approval)
     report = check_report(prs, previous)
-    snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
+    snapshot = {"schema": 1, "reviewAuthority": "gvisor-maintainers", "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
                 "incomingReviewRequests": incoming, "incomingReviewScan": scan,
                 "reviewPRs": review_prs, "reviewerHandoff": reviewer_handoff(prs, previous),
@@ -1493,8 +1493,8 @@ def review_outreach(post: bool = False) -> None:
                 node.get("landedPatch"), node.get("reapproval"), node.get("importPatchComparison"))
         return current
 
-    deliver(snapshot, REGISTRY, datetime.now(timezone.utc).isoformat(), OWNER, active_reviewers, fresh,
-            post=post, registry_oid=REGISTRY_OID)
+    deliver(snapshot, REGISTRY, datetime.now(timezone.utc).isoformat(), OWNER, maintainers, fresh,
+            active_reviewers=active_reviewers, post=post, registry_oid=REGISTRY_OID)
 
 
 if __name__ == "__main__":

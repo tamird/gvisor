@@ -352,7 +352,10 @@
               }
             }
           ]
-        }
+        },
+        "maintainerReviewers": [
+          "etienneperot"
+        ]
       },
       "node": {
         "id": "pr:16234",
@@ -726,7 +729,10 @@
               }
             }
           ]
-        }
+        },
+        "maintainerReviewers": [
+          "etienneperot"
+        ]
       },
       "node": {
         "id": "pr:16250",
@@ -1096,7 +1102,10 @@
               }
             }
           ]
-        }
+        },
+        "maintainerReviewers": [
+          "etienneperot"
+        ]
       },
       "node": {
         "id": "pr:16253",
@@ -1444,6 +1453,9 @@
             "sourceHead": "adc403f9444424da967f5262e4d8b649503c3615",
             "matchesSourceHead": false
           }
+        ],
+        "maintainerReviewers": [
+          "etienneperot"
         ]
       },
       "node": {
@@ -1816,6 +1828,9 @@
             "sourceHead": "2e4cf26a2919edfb1c38d2b1b026f9b16e1e8008",
             "matchesSourceHead": false
           }
+        ],
+        "maintainerReviewers": [
+          "manninglucas"
         ]
       },
       "node": {
@@ -2356,6 +2371,10 @@
             "sourceHead": "97aa81bc43f6d417a8a082c48f98adb87bb203ef",
             "matchesSourceHead": true
           }
+        ],
+        "maintainerReviewers": [
+          "etienneperot",
+          "manninglucas"
         ]
       },
       "node": {
@@ -3125,7 +3144,10 @@
             "state": "present"
           },
           "description": "Refresh the earlier equivalent export."
-        }
+        },
+        "maintainerReviewers": [
+          "etienneperot"
+        ]
       },
       "node": {
         "id": "pr:15929",
@@ -3990,7 +4012,10 @@
             "eventId": "UNLE_lADOB9IlXs8AAAABX_TyBs8AAAAH9H7BmA"
           },
           "description": "Waiting for the public export; its checks remain separate."
-        }
+        },
+        "maintainerReviewers": [
+          "etienneperot"
+        ]
       },
       "node": {
         "id": "pr:15940",
@@ -5342,7 +5367,11 @@
             "state": "present"
           },
           "description": "Waiting for the public export; its checks remain separate."
-        }
+        },
+        "maintainerReviewers": [
+          "etienneperot",
+          "manninglucas"
+        ]
       },
       "node": {
         "id": "pr:16382",
@@ -6195,7 +6224,10 @@
             "state": "present"
           },
           "description": "Waiting for the public export; its checks remain separate."
-        }
+        },
+        "maintainerReviewers": [
+          "manninglucas"
+        ]
       },
       "node": {
         "id": "pr:16459",

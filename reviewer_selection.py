@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from fractions import Fraction
 
+from reapproval import MARKER as REAPPROVAL_MARKER
+
 REPO = "google/gvisor"
 ACTIVE_WINDOW = timedelta(days=30)
 GOVERNANCE = "https://github.com/google/gvisor/blob/master/governance/maintainers.yaml"
@@ -163,7 +165,7 @@ def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | Non
             when = _time(at)
             login = _login(item.get("author"))
             body = item.get("body") or ""
-            if login == author and ASK.search(body):
+            if login == author and REAPPROVAL_MARKER not in body and ASK.search(body):
                 for recipient in set(MENTION.findall(body.lower())) & people.keys():
                     events.append((when, recipient, "comment"))
             if login not in people or login == author or item["kind"] not in {"inline", "review"}:
