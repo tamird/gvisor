@@ -1,9 +1,18 @@
 load("//test/runtimes:defs.bzl", "runtime_test")
-load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
+load("//tools:defs.bzl", "bzl_library", "go_test", "more_shards", "most_shards")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+go_test(
+    name = "jdi_runtime_qualification",
+    size = "enormous",
+    srcs = ["qualification_jdi_test.go"],
+    args = ["-proctor=$(rootpath //test/runtimes/proctor:proctor_bin)"],
+    data = ["//test/runtimes/proctor:proctor_bin"],
+    tags = ["manual"],
 )
 
 runtime_test(
