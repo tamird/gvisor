@@ -59,6 +59,11 @@ def approved_after_thread_replies(pr: dict, approval: dict | None) -> bool:
     return True
 
 
+def waiting_for_release(node: dict, head: str) -> bool:
+    wait = node.get("releaseWait", {})
+    return wait.get("head") == head and wait.get("blocking") is not False
+
+
 def import_author_block(pr: dict, node: dict, owner: str, approval: dict | None = None) -> str | None:
     """Leave concrete current-source work with the author before import recovery."""
     if (pr.get("threads", {}).get("complete") is not True
@@ -70,7 +75,7 @@ def import_author_block(pr: dict, node: dict, owner: str, approval: dict | None 
                      and comment.get("nonblockingReviewUpdatedAt") == approval.get("updatedAt")
                      and approval.get("updatedAt"))):
         return "registered-current-author-action"
-    if node.get("releaseWait", {}).get("head") == pr["head"]:
+    if waiting_for_release(node, pr["head"]):
         return "registered-current-release-wait"
     if current_rebase_request(pr, owner):
         return "rebase-request-not-yet-followed-by-source-update"

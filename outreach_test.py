@@ -125,6 +125,8 @@ class OutreachTest(unittest.TestCase):
         del p["publicImportDisposition"]["action"]
         self.assertIsNone(self.import_plan(p, states={"prerequisite":{}}))
         self.assertIsNone(self.import_plan(p, node={"releaseWait":{"head":HEAD}}))
+        self.assertEqual(self.import_plan(p, node={"releaseWait": {"head": HEAD, "blocking": False}}),
+                         self.import_plan(p))
         p["imports"] = [{"number":2,"sourceHead":HEAD,"status":"merged"}]
         self.assertIsNone(self.import_plan(p))
         p["imports"] = []
@@ -233,6 +235,7 @@ class OutreachTest(unittest.TestCase):
                                              kind="inline",threadId="t",isResolved=False))
         self.assertEqual(action(p)["status"],"due")
         self.assertIsNone(action(p,node={"reviewOutreachHold":{"evidence":"documented hold"}}))
+        self.assertEqual(action(p, node={"releaseWait": {"head": HEAD, "blocking": False}}), action(p))
 
     def test_incomplete_history_and_real_blockers(self):
         p=pr();p["reviewRequests"]=[{"login":"bob"}]

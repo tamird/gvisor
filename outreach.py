@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from reapproval import import_author_block
+from reapproval import import_author_block, waiting_for_release
 from reviewer_selection import History, get_reviewer_candidates, reviewer_history
 from work_states import current_rebase_request, derive_states, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment
 
@@ -206,7 +206,7 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     if (states.keys() & blocked or mergeable not in {"MERGEABLE", "UNKNOWN"}
             or "conflicts" in states and mergeable != "UNKNOWN"
             or pr.get("branchHead") != head or node.get("reviewOutreachHold")
-            or node.get("releaseWait", {}).get("head") == head
+            or waiting_for_release(node, head)
             or node.get("contributorChangesRequested", {}).get("head") == head
             or landed_patch(pr, node.get("landedPatch"))
             or disposition.get("action") in {"maintainer-reapproval", "maintainer-import-label"}):
