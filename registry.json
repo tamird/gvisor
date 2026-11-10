@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T22:25:38+00:00",
+    "updatedAt": "2026-11-10T22:30:59+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97488,7 +97488,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T21:53:29+00:00",
+      "updatedAt": "2026-11-10T22:30:59+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97589,9 +97589,18 @@
               "url": "https://github.com/google/gvisor/pull/15938#discussion_r4530867035"
             }
           ]
+        },
+        {
+          "text": "Google’s #17428 applies the same executable ptrace change as the tested fork fix. Both attach requests now report an existing group-stop, while only PTRACE_ATTACH sends a new SIGSTOP. Its SeizeGroupStopped test checks PTRACE_EVENT_STOP, then uses PTRACE_LISTEN and SIGCONT to resume the child and observe its exit.",
+          "evidence": [
+            {
+              "label": "Google’s PTRACE_SEIZE fix and syscall regression",
+              "url": "https://github.com/google/gvisor/pull/17428"
+            }
+          ]
         }
       ],
-      "nextStep": "Review the tested fix for submission while master is affected. The fix and its results are on @kerumeto’s original thread. If the rollback lands first, the author can cherry-pick the fix when relanding #15938.",
+      "nextStep": "Follow #17428 through merge and check the traced sudo case on the merged revision. The fork fix is superseded.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97644,6 +97653,14 @@
         {
           "label": "Tested fix shared on the original review thread",
           "url": "https://github.com/google/gvisor/pull/15938#discussion_r4530984210"
+        },
+        {
+          "label": "Google’s PTRACE_SEIZE fix and syscall regression",
+          "url": "https://github.com/google/gvisor/pull/17428"
+        },
+        {
+          "label": "Presubmit for aa0152a6a",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54309"
         }
       ],
       "settledReviews": [
@@ -97666,19 +97683,21 @@
           "outcome": "approved",
           "at": "2026-11-10T21:51:51Z",
           "postedURL": "https://github.com/google/gvisor/pull/15938#discussion_r4530984210"
+        },
+        {
+          "kind": "proposal",
+          "head": "71bdb92251810c03229d67d0e3bdf2a9c9cba9d2",
+          "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
+          "url": "https://github.com/tamird/gvisor/commit/71bdb9225",
+          "title": "Report an existing group-stop when seizing a tracee",
+          "requestedAt": "2026-11-10T21:34:47+00:00",
+          "summary": "Open the ptrace fix? The traced sudo and debugger tests now finish on systrap, and its stopped-process behavior matches Linux for both attach requests.",
+          "body": "An unprivileged strace of /bin/true can wait indefinitely for its\nchild. When c70baf34b moved the attach logic after address space\npreparation, PTRACE_SEIZE began returning before it reported an\nexisting group-stop to the tracer. [1]\n\nAfter preparation, recheck the tracer relationship and report the\ngroup-stop for either attach request. Linux also makes only the\ninitial SIGSTOP conditional on PTRACE_ATTACH. [2] Exercise both forms\nin the existing group-stop syscall test.\n\n[1]: https://github.com/google/gvisor/commit/c70baf34b\n[2]: https://github.com/torvalds/linux/blob/adc218676/kernel/ptrace.c#L378-L405",
+          "outcome": "superseded",
+          "at": "2026-11-10T22:30:59+00:00",
+          "note": "Google opened #17428 with the same executable fix and regression coverage. No separate PR is needed."
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "71bdb92251810c03229d67d0e3bdf2a9c9cba9d2",
-        "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
-        "url": "https://github.com/tamird/gvisor/commit/71bdb9225",
-        "title": "Report an existing group-stop when seizing a tracee",
-        "requestedAt": "2026-11-10T21:34:47+00:00",
-        "summary": "Open the ptrace fix? The traced sudo and debugger tests now finish on systrap, and its stopped-process behavior matches Linux for both attach requests.",
-        "body": "An unprivileged strace of /bin/true can wait indefinitely for its\nchild. When c70baf34b moved the attach logic after address space\npreparation, PTRACE_SEIZE began returning before it reported an\nexisting group-stop to the tracer. [1]\n\nAfter preparation, recheck the tracer relationship and report the\ngroup-stop for either attach request. Linux also makes only the\ninitial SIGSTOP conditional on PTRACE_ATTACH. [2] Exercise both forms\nin the existing group-stop syscall test.\n\n[1]: https://github.com/google/gvisor/commit/c70baf34b\n[2]: https://github.com/torvalds/linux/blob/adc218676/kernel/ptrace.c#L378-L405"
-      }
+      ]
     },
     {
       "id": "investigation:ci-flake-dind-exec-deadline",
@@ -97786,5 +97805,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T22:25:38+00:00"
+  "updatedAt": "2026-11-10T22:30:59+00:00"
 }
