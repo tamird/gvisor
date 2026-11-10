@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T03:23:16+00:00",
+    "updatedAt": "2026-11-10T08:39:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41926,7 +41926,7 @@
       "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
       "group": "runtime",
       "status": "Overlay race check outstanding",
-      "updatedAt": "2026-11-10T03:23:16+00:00",
+      "updatedAt": "2026-11-10T08:39:00+00:00",
       "summary": "When chmod copies up an open overlay file, its existing waiters still belong to the old backing file. The revision keeps that file open until Release can drop it. Stock notified a canceled waiter. The corrected test passed and close restored the initial file count.",
       "evidence": [
         {
@@ -41936,6 +41936,14 @@
         {
           "label": "Stock and fixed waiter, file count, nested lockdep, Nogo and live/restore SIGIO checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094"
+        },
+        {
+          "label": "Race run receipt contains only the BuildBuddy invocation ID",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42779614942/artifacts/13747263152"
+        },
+        {
+          "label": "BuildBuddy invocation for the three race cases",
+          "url": "https://app.buildbuddy.io/invocation/e2d207c9-5574-467f-b84c-4ab50932a598"
         },
         {
           "label": "Corrected race fixture started; runner exited 143 without test results",
@@ -42091,10 +42099,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "d01969e4cf73163e16243bd0d8edb666fce733db",
-        "observedAt": "2026-11-10T03:23:16+00:00",
-        "disposition": "The native, lockdep, Nogo and syscall checks passed. The corrected race fixture started, but the runner exited 143 and published no test output.",
+        "observedAt": "2026-11-10T08:39:00+00:00",
+        "disposition": "The native, lockdep, Nogo and SIGIO checks passed. The first Linux runner exited 143. BuildBuddy accepted a second run for the three race cases. Its collector timed out after 35 minutes. The artifact contains only the invocation ID. The three race results remain unverified.",
         "nextAction": "Obtain the three named race-detector results for the corrected test fixture before proposing the overlay change.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42779614942/artifacts/13747263152",
+          "https://github.com/tamird/gvisor/actions/runs/42779614942/job/129706215676",
+          "https://app.buildbuddy.io/invocation/e2d207c9-5574-467f-b84c-4ab50932a598",
           "https://github.com/tamird/gvisor/actions/runs/42745547980",
           "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094",
           "https://github.com/tamird/gvisor/commit/d01969e4c"
