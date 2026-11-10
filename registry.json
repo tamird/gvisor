@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T21:39:45+00:00",
+    "updatedAt": "2026-11-10T21:47:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97443,7 +97443,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T21:34:47+00:00",
+      "updatedAt": "2026-11-10T21:47:21+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97531,9 +97531,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42903253276/artifacts/13804074099"
             }
           ]
+        },
+        {
+          "text": "Ryan announced that he was rolling back #15938 after TestSudo timed out. In a separate review, @kerumeto traced the hang to the early return after PTRACE_SEIZE. It left the tracee in a group-stop while the tracer waited for PTRACE_EVENT_STOP. At dd49ce763 the original change was still on master.",
+          "evidence": [
+            {
+              "label": "Ryan’s plan to roll back the systrap change",
+              "url": "https://github.com/google/gvisor/pull/15938#issuecomment-6779585387"
+            },
+            {
+              "label": "Alexander’s diagnosis of the PTRACE_SEIZE return",
+              "url": "https://github.com/google/gvisor/pull/15938#discussion_r4530867035"
+            }
+          ]
         }
       ],
-      "nextStep": "Review the signed fix for submission to gVisor. The original issue draft remains on hold.",
+      "nextStep": "Review the tested fix for submission. If the rollback lands first, use the fix when relanding #15938. Sharing the tested commit on @kerumeto’s thread has a separate pending permission. The original issue draft remains on hold.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97574,6 +97587,14 @@
         {
           "label": "Original results for both ptrace attach modes and the traced programs",
           "url": "https://github.com/tamird/gvisor/actions/runs/42903253276/artifacts/13804074099"
+        },
+        {
+          "label": "Ryan’s plan to roll back the systrap change",
+          "url": "https://github.com/google/gvisor/pull/15938#issuecomment-6779585387"
+        },
+        {
+          "label": "Alexander’s diagnosis of the PTRACE_SEIZE return",
+          "url": "https://github.com/google/gvisor/pull/15938#discussion_r4530867035"
         }
       ],
       "settledReviews": [
@@ -97602,5 +97623,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T21:39:45+00:00"
+  "updatedAt": "2026-11-10T21:47:21+00:00"
 }
