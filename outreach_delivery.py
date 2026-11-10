@@ -1,5 +1,6 @@
 """Deliver one review request to its selected reviewer after refreshing the PR."""
 
+import hashlib
 import json
 import os
 import re
@@ -12,7 +13,6 @@ from zoneinfo import ZoneInfo
 
 REPO = "google/gvisor"
 FORK = "tamird/gvisor"
-ROOT = Path(__file__).resolve().parent
 PACIFIC = ZoneInfo("America/Los_Angeles")
 
 
@@ -54,10 +54,16 @@ def api(path: str, data: dict | None = None) -> dict:
     return body
 
 
-def registry_is_published() -> bool:
-    local = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD:registry.json"],
-                                    text=True, timeout=15).strip()
-    return api(f"repos/{FORK}/contents/registry.json?ref=gh-pages").get("sha") == local
+def load_registry(path: Path) -> tuple[dict, str]:
+    # Git names a blob by hashing its type, byte length and contents.
+    data = path.read_bytes()
+    header = f"blob {len(data)}\0".encode()
+    oid = hashlib.sha1(header + data, usedforsecurity=False).hexdigest()
+    return json.loads(data), oid
+
+
+def registry_is_published(oid: str) -> bool:
+    return api(f"repos/{FORK}/contents/registry.json?ref=gh-pages").get("sha") == oid
 
 
 def confirmation(scheduled: dict, fresh: dict | None) -> dict:
@@ -73,7 +79,7 @@ def confirmation(scheduled: dict, fresh: dict | None) -> dict:
     return {**versions, "status": "due"}
 
 
-def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> dict:
+def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, registry_oid: str) -> dict:
     number = action["number"]
     reviewer = action["reviewer"]
     marker = f"<!-- gvisor-review-outreach {action['key']} -->"
@@ -85,7 +91,7 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> di
     checked = confirmation(action, refresh())
     if checked["status"] != "due":
         return checked
-    if not registry_is_published():
+    if not registry_is_published(registry_oid):
         return {"status": "registry-changed"}
 
     requests = f"repos/{REPO}/pulls/{number}/requested_reviewers"
@@ -109,7 +115,7 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> di
             checked = confirmation(action, refresh())
             if checked["status"] != "due":
                 return checked
-            if not registry_is_published():
+            if not registry_is_published(registry_oid):
                 return {"status": "registry-changed"}
         else:
             if not pending():
@@ -129,7 +135,7 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str) -> di
 
 
 def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, maintainers: set[str],
-            fetch_fresh: Callable[[int], dict], *, post: bool) -> None:
+            fetch_fresh: Callable[[int], dict], *, post: bool, registry_oid: str) -> None:
     from outreach import outreach_states, plan, reviewer_history
 
     if owner != "tamird" or registry["meta"]["repo"] != REPO:
@@ -175,7 +181,7 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
                 result["status"] = "would-send"
         else:
             try:
-                result = send_one(scheduled, refresh, owner)
+                result = send_one(scheduled, refresh, owner, registry_oid)
             except GitHubError as error:
                 print(json.dumps({"reviewOutreach": number, "status": "unconfirmed", "http": error.status,
                                   "error": str(error), "rateLimited": error.limited}), flush=True)
