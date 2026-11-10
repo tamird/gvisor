@@ -500,6 +500,7 @@ docker-tests: integration-test-images $(RUNTIME_BIN)
 .PHONY: docker-tests
 
 plugin-network-tests: integration-test-images $(RUNTIME_BIN)
+	@$(call test,--config plugin-tldk @libpluginstack//:backtrace_test)
 	@$(call install_runtime,$(RUNTIME)-dpdk,--network=plugin)
 	@$(call test_runtime_cached,$(RUNTIME)-dpdk, --test_arg=-test.run=ConnectToSelf //test/e2e:integration_test)
 
