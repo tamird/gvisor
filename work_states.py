@@ -223,6 +223,40 @@ def effective_approval(pr: dict, *, require_aggregate: bool = True,
     return max(approvals, key=lambda item: item["submittedAt"], default=None)
 
 
+def current_rebase_request(pr: dict, owner: str) -> dict | None:
+    """Return the latest explicit source-rebase request still awaiting a push."""
+    if pr.get("repo") != "google/gvisor" or pr.get("status") not in {"open", "draft"} or pr.get("authorLogin") != owner:
+        return None
+    # Force-push events date a rebase even when it preserves the commit date.
+    cutoff = max((datetime.fromisoformat(t) for t in (pr.get("headIntroducedAt"), pr.get("headCommittedAt")) if t),
+                 default=None)
+    request = re.compile(
+        rf"(?:@{re.escape(owner)}[, :]\s*)?(?:(?:(?:can|could|would) you (?:please )?|please )rebase"
+        r"(?: (?:this(?: PR| branch| change)?|it))?(?: (?:on|onto|against) (?:current |latest )?(?:main|master))?"
+        r"|(?:this (?:PR )?)?needs (?:a )?rebase)[.?!]*", re.I)
+    binding = pr.get("rebaseRequest", {})
+    pending = []
+    for item in pr.get("feedback", {}).get("items", []):
+        author = item.get("author") or {}
+        if (item.get("kind") not in {"comment", "review"} or item.get("state") == "DISMISSED"
+                or author.get("__typename") != "User" or not author.get("login") or author["login"] == owner):
+            continue
+        body = item.get("body", "").strip()
+        # Match an explicit request on its own line. Quoted reviews and fenced
+        # command examples may include exactly the same words.
+        prose = re.sub(r"```.*?(?:```|$)|~~~.*?(?:~~~|$)", "", body, flags=re.S)
+        if not (body == "[🤖] Needs rebase." and author["login"] == "EtiennePerot"
+                or any(request.fullmatch(line.strip()) for line in prose.splitlines() if not line.startswith("    "))):
+            continue
+        at = item.get("updatedAt") or item.get("createdAt")
+        if (binding.get("id") == item.get("id") and binding.get("updatedAt") == at
+                and binding.get("head") != pr["head"]):
+            continue
+        if at and (not cutoff or datetime.fromisoformat(at) >= cutoff):
+            pending.append((datetime.fromisoformat(at), item))
+    return max(pending, key=lambda pair: pair[0])[1] if pending else None
+
+
 def matches_feedback_assignment(pr: dict, item: dict, assignment: dict) -> bool:
     """Match a manually assigned top-level message to the observed PR and head."""
     kind = assignment.get("kind", "comment")

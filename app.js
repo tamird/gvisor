@@ -362,6 +362,10 @@ function sourceAuthenticationRecovery(node) {
   return { ids: new Set(recovery.checks.map(item => item.id)),
     detail: `${[...names].join("; ")}: the inspected Actions logs report a missing API key. A maintainer needs to correct CI authentication. The failed check results remain visible.` };
 }
+function requestedRebase(pr, owner) {
+  if (!pr?.rebaseRequest || pr.revisionChanged || pr.authorLogin !== owner || pr.rebaseRequest.head !== pr.head) return null;
+  return pr.feedback?.items?.find(item => item.id === pr.rebaseRequest.id);
+}
 function actionableComment(node) {
   const record = node.followup?.actionableComment, pr = node.github;
   if (!record || !pr || pr.status !== "open" || pr.revisionChanged
@@ -635,6 +639,8 @@ function attentionReasons(node, owner) {
   const comment = actionableComment(node), feedback = [];
   const newWaitComment = node.releaseWait?.head === pr.head && pr.feedback?.items?.findLast(item => (item.kind === "comment" || item.kind === "review" && item.state !== "APPROVED" && item.body?.trim())
     && item.author?.login !== owner && Date.parse(item.updatedAt || item.createdAt) > Date.parse(node.releaseWait.confirmedAt));
+  const rebase = requestedRebase(pr, owner);
+  if (!landed && rebase) feedback.push(`@${rebase.author.login} asked for a rebase: ${rebase.url}.`);
   if (review.unanswered.length) feedback.push("Review the unanswered threads: " + review.unanswered.map(item => safeURL(item.url) || "thread in PR details").join(", ") + ".");
   if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level ${comment.kind}: ${comment.url}. GitHub's review decision is unchanged.`);
   if (newWaitComment) feedback.push(`Triage the comment posted after the release hold was agreed: ${newWaitComment.url}. Reconfirm the hold if it still applies.`);
@@ -2004,7 +2010,7 @@ function stateRecords(snapshot, node) {
     if (conflict && ["open", "draft"].includes(node.github.status)) records.conflicts = { ...conflict,
       since: records.conflicts?.scope === conflict.scope ? records.conflicts.since : conflict.since };
     else delete records.conflicts;
-    if (node.github.mergeable !== "MERGEABLE" || actionableComment(node)) delete records["waiting-merge"];
+    if (node.github.mergeable !== "MERGEABLE" || actionableComment(node) || requestedRebase(node.github, registry.meta.owner)) delete records["waiting-merge"];
     if (node.github.branchHead && node.github.branchHead !== node.github.head) {
       delete records["waiting-merge"]; delete records["awaiting-import"];
     }
@@ -2025,9 +2031,10 @@ function stateRecords(snapshot, node) {
       && (!pr.branchHead || pr.branchHead === pr.head) && !attentionDisposition(node, "author-feedback")) {
     const threads = reviewAttention(pr, registry.meta.owner).unanswered;
     const assigned = actionableComment(node);
-    if (threads.length || assigned) records["author-feedback"] = { scope: pr.head, since: null, basis: "unknown",
+    const rebase = requestedRebase(pr, registry.meta.owner);
+    if (threads.length || assigned || rebase) records["author-feedback"] = { scope: pr.head, since: null, basis: "unknown",
       qualifier: [threads.length && `${threads.length} unanswered review thread${threads.length === 1 ? "" : "s"}`,
-        assigned && "Assigned review follow-up"].filter(Boolean).join("; "), url: safeURL(threads[0]?.url || assigned?.url) };
+        assigned && "Assigned review follow-up", rebase && "Requested rebase"].filter(Boolean).join("; "), url: safeURL(rebase?.url || threads[0]?.url || assigned?.url) };
   }
   if (decision && !contributorDecisionNeedsRefresh(node)) {
     const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];

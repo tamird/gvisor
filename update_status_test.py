@@ -915,6 +915,38 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), self.original_bytes)
         self.assertFalse((self.root / ".github-status.json.tmp").exists())
 
+    def test_explicit_rebase_request_on_mergeable_owned_source_expires_after_push(self) -> None:
+        raw = raw_pr(16590)
+        comment = {"id": "etienne-request", "author": {"login": "EtiennePerot", "__typename": "User"},
+                   "body": "Can you rebase?", "createdAt": "2026-11-10T03:54:04Z",
+                   "updatedAt": "2026-11-10T03:54:04Z", "url": raw["url"] + "#issuecomment-6758509238"}
+        raw["comments"]["nodes"].append(comment)
+        pr = retained(raw)
+        self.assertEqual(pr["mergeable"], "MERGEABLE")
+        self.assertEqual(pr["rebaseRequest"], {"id": comment["id"], "head": pr["head"], "updatedAt": comment["updatedAt"]})
+        rows = updater.reviewer_handoff([pr], {})
+        self.assertEqual([(r["owner"], r["awaitingAuthor"], r["url"]) for r in rows], [("Agent", True, comment["url"])])
+        self.assertEqual(updater.import_author_block(pr, {}, "tamird"), "rebase-request-not-yet-followed-by-source-update")
+
+        previous = {"prs": [pr], "reviewerHandoff": rows}
+        new = raw_pr(16590, head=16591)
+        new["comments"]["nodes"].append(comment)
+        new["headHistory"]["nodes"] = [{"createdAt": "2026-11-10T11:25:00Z", "afterCommit": {"oid": new["headRefOid"]}}]
+        pushed = retained(new)
+        self.assertNotIn("rebaseRequest", pushed)
+        self.assertEqual(updater.reviewer_handoff([pushed], previous), [])
+        self.assertIsNone(updater.import_author_block(pushed, {}, "tamird"))
+
+        new["headHistory"]["nodes"] = []
+        first = updater.normalize(new, pr)
+        for observed in (first, updater.normalize(new, first)):
+            self.assertEqual(observed["rebaseRequest"]["head"], pr["head"])
+            self.assertIsNone(updater.current_rebase_request(observed, "tamird"))
+        raw["author"]["login"] = "other-author"
+        other = retained(raw)
+        self.assertNotIn("rebaseRequest", other)
+        self.assertEqual(updater.reviewer_handoff([other], {}), [])
+
     def test_reviewer_handoff_tracks_latest_reply_and_top_level_events(self) -> None:
         pr = retained(raw_pr(5))
         finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,

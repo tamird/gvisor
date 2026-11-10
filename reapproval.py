@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
-from work_states import amendment_approvers, approved_patch, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment, public_import_disposition, with_maintainer_reviewers
+from work_states import amendment_approvers, approved_patch, current_rebase_request, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment, public_import_disposition, with_maintainer_reviewers
 
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
@@ -59,7 +59,7 @@ def approved_after_thread_replies(pr: dict, approval: dict | None) -> bool:
     return True
 
 
-def import_author_block(pr: dict, node: dict, approval: dict | None = None) -> str | None:
+def import_author_block(pr: dict, node: dict, owner: str, approval: dict | None = None) -> str | None:
     """Leave concrete current-source work with the author before import recovery."""
     if (pr.get("threads", {}).get("complete") is not True
             or pr["threads"].get("unresolved") and not approved_after_thread_replies(pr, approval)):
@@ -72,15 +72,8 @@ def import_author_block(pr: dict, node: dict, approval: dict | None = None) -> s
         return "registered-current-author-action"
     if node.get("releaseWait", {}).get("head") == pr["head"]:
         return "registered-current-release-wait"
-    for item in pr.get("feedback", {}).get("items", []):
-        if (item.get("kind") != "comment" or item.get("body", "").strip() != "[🤖] Needs rebase."
-                or (item.get("author") or {}).get("login") != "EtiennePerot"):
-            continue
-        introduced = pr.get("headIntroducedAt")
-        if (not pr.get("headHistoryComplete") or not introduced
-                or datetime.fromisoformat(item["updatedAt"].replace("Z", "+00:00"))
-                >= datetime.fromisoformat(introduced.replace("Z", "+00:00"))):
-            return "rebase-request-not-yet-followed-by-source-update"
+    if current_rebase_request(pr, owner):
+        return "rebase-request-not-yet-followed-by-source-update"
     return None
 
 
@@ -144,7 +137,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
     if disposition["action"] == "maintainer-reapproval" and disposition["scope"] == "equivalent":
         if effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers):
             return skip("current-head-approved")
-        if reason := import_author_block(pr, node):
+        if reason := import_author_block(pr, node, owner):
             return {**skip(reason), "status": "deferred"}
         patch = node["approvedPatch"]
         approvers = sorted(item["author"]["login"] for item in latest.values()
@@ -175,7 +168,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                                  importReapproval=True)
     if disposition["action"] in {"maintainer-import-label", "maintainer-reimport"} and disposition["trigger"]["state"] == "missing":
         current_approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
-        if reason := import_author_block(pr, node, current_approval):
+        if reason := import_author_block(pr, node, owner, current_approval):
             return {**skip(reason), "status": "deferred"}
         patch = node.get("approvedPatch", {})
         approval = current_approval

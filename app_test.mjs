@@ -16,6 +16,20 @@ function client() {
   return context;
 }
 
+test('a requested rebase belongs to its author and source head', () => {
+  const c = client();
+  c.pr = { authorLogin: 'tamird', head: 'a'.repeat(40),
+    rebaseRequest: { head: 'a'.repeat(40), id: 'request' },
+    feedback: { items: [{ id: 'request', url: 'https://github.com/google/gvisor/pull/16590#issuecomment-6758509238' }] } };
+  const request = () => vm.runInContext("requestedRebase(pr, 'tamird')", c);
+  assert.equal(request().url, c.pr.feedback.items[0].url);
+  c.pr.authorLogin = 'other';
+  assert.equal(request(), null);
+  c.pr.authorLogin = 'tamird';
+  c.pr.head = 'b'.repeat(40);
+  assert.equal(request(), null);
+});
+
 test('review outreach follows only the observed open gVisor source', () => {
   const c = client();
   c.pr = { type: 'pr', repo: 'google/gvisor', github: { status: 'open', number: 16516, head: 'a'.repeat(40) } };

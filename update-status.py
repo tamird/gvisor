@@ -19,7 +19,7 @@ from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from reviewer_selection import recent_reviewer_work, reviewer_governance
-from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers
+from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -278,6 +278,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
                    and pr.get("feedback", {}).get("complete") and node.get("head", pr["head"]) == pr["head"]
                    and any(record.get("reason") == "author-feedback" and record.get("binding") == binding
                            for record in followup.get("attentionDispositions", [])))
+        rebase = current_rebase_request(pr, OWNER) if pr is source else None
         for item in items:
             author = item.get("author") or {}
             if author.get("__typename") != "User" or author.get("login") == OWNER or not item.get("body", "").strip():
@@ -302,8 +303,11 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
                 continue
             assignment = followup.get("actionableComment", {})
             assigned = matches_feedback_assignment(pr, item, assignment)
-            if assigned:
+            is_rebase = item is rebase
+            if is_rebase or assigned:
                 awaiting_author = True
+            elif prior_record and prior_record.get("rebaseRequested") and not changed:
+                continue
             elif triaged:
                 continue
             elif prior_record and prior_record.get("assigned") and not changed:
@@ -311,7 +315,8 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
             if not awaiting_author and not changed and not prior_record:
                 continue
             records.append({"repo": key[0], "number": key[1], "head": pr["head"], "sourceNumber": source["number"],
-                            "owner": followup.get("owner"), "kind": item["kind"], "id": item["id"],
+                            "owner": "Agent" if is_rebase else followup.get("owner"), "kind": item["kind"], "id": item["id"],
+                            **({"rebaseRequested": True} if is_rebase else {}),
                             "url": item["url"], "author": author["login"], "updatedAt": item.get("updatedAt"),
                             "newOrChanged": changed, "awaitingAuthor": awaiting_author, "assigned": assigned,
                             "feedbackComplete": pr.get("feedback", {}).get("complete", False),
@@ -493,7 +498,7 @@ def mergeability_fields(pr: dict) -> dict:
             "mergeabilityCheckedAt": pr.get("_mergeabilityRetrievedAt", pr["_retrievedAt"])}
 
 
-def normalize(pr: dict) -> dict:
+def normalize(pr: dict, previous: dict | None = None) -> dict:
     commits = pr["commits"]["nodes"]
     if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
         raise RuntimeError(f"PR #{pr['number']} head changed during retrieval")
@@ -567,6 +572,19 @@ def normalize(pr: dict) -> dict:
         "checks": checks,
     }
 
+    if request := current_rebase_request(normalized, OWNER):
+        # A normal push can introduce a preexisting commit without producing a
+        # force-push event. A request already observed on the old public head
+        # stays bound to it, including on subsequent snapshots of the new head.
+        prior = previous or {}
+        old_request = next((row for row in prior.get("feedback", {}).get("items", [])
+                            if row.get("id") == request["id"] and row.get("updatedAt") == request["updatedAt"]), None)
+        prior_binding = prior.get("rebaseRequest", {})
+        head = normalized["head"]
+        if old_request and prior.get("head"):
+            head = (prior_binding.get("head") if prior_binding.get("id") == request["id"]
+                    and prior_binding.get("updatedAt") == request["updatedAt"] else prior["head"])
+        normalized["rebaseRequest"] = {"id": request["id"], "head": head, "updatedAt": request["updatedAt"]}
     if timeline := pr.get("timelineItems"):
         normalized["crossReferences"] = {
             "complete": not timeline["pageInfo"]["hasPreviousPage"],
@@ -801,7 +819,7 @@ def collect_repository(repo: str, policy: str, previous: dict,
     fresh = {**originals, **imported}
     refreshed = {}
     for number, raw in fresh.items():
-        item = normalize(raw)
+        item = normalize(raw, prior_prs.get(number))
         item["checkedAt"] = checked_at
         item["mergeabilityObservation"] = remember_mergeability(item, prior_prs.get(number, {}), item["mergeabilityCheckedAt"])
         refreshed[number] = item
@@ -1067,7 +1085,7 @@ def reapproval_reminders(post: bool = False) -> None:
             continue
         raw = fetch_numbers([pr["number"]], timeline=refresh_imports, repo=pr["repo"], team_details=False)[pr["number"]]
         recheck_unknown_mergeability([raw], repo=pr["repo"])
-        current = normalize(raw)
+        current = normalize(raw, pr)
         current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
         if current["head"] == pr["head"]:
             # Amendment-only probes retain the bound snapshot. Import recovery
@@ -1278,7 +1296,7 @@ def main() -> None:
                                                                  node.get("reapproval"), node.get("importPatchComparison"))
         if pr["publicImportDisposition"]["action"] == "maintainer-import-label":
             approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
-            pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, approval)
+            pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, OWNER, approval)
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
@@ -1412,7 +1430,7 @@ def review_outreach(post: bool = False) -> None:
         if raw["mergeable"] == "UNKNOWN":
             time.sleep(1)
             recheck_unknown_mergeability([raw], repo=REPO)
-        current = with_maintainer_reviewers(normalize(raw), maintainers)
+        current = with_maintainer_reviewers(normalize(raw, sources[number]), maintainers)
         current["importPolicy"] = "copybara"
         current["imports"] = refresh_reminder_imports(raw, sources[number])
         current["importsComplete"] = not raw["timelineItems"]["pageInfo"]["hasPreviousPage"]

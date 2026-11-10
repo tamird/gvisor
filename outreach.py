@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from reviewer_selection import History, get_reviewer_candidates, reviewer_history
-from work_states import derive_states, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment
+from work_states import current_rebase_request, derive_states, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment
 
 PACIFIC = ZoneInfo("America/Los_Angeles")
 MARKER = re.compile(r"<!-- gvisor-review-outreach (\d+):([0-9a-f]{40}):([A-Za-z0-9-]+) -->")
@@ -67,7 +67,7 @@ def outreach_states(snapshot: dict, registry: dict) -> dict[str, dict]:
 def author_work(pr: dict, node: dict, owner: str) -> bool:
     feedback = pr["feedback"]["items"]
     assignment = node.get("followup", {}).get("actionableComment", {})
-    if any(matches_feedback_assignment(pr, row, assignment) for row in feedback):
+    if current_rebase_request(pr, owner) or any(matches_feedback_assignment(pr, row, assignment) for row in feedback):
         return True
     threads = {}
     for row in sorted(feedback, key=lambda r: r.get("createdAt") or ""):
