@@ -1,35 +1,113 @@
-name: CI
-
-"on":
+name: Ordinary unprivileged debugger comparison
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/debugger-unprivileged-true-comparison]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 24
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Restore original CI runtime and known Bazel release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git fetch --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 1b838855232bb4a5e6abd55ab4d500aad0353526
+          w="$RUNNER_TEMP/debugger-smoke"
+          mkdir -p "$w/release" "$w/docker-client" "$w/receipt"
+          echo "SMOKE=$w" >> "$GITHUB_ENV"
+          echo "DOCKER_CONFIG=$w/docker-client" >> "$GITHUB_ENV"
+          echo 'DOCKER_HOST=unix:///tmp/gv-debugger-socket' >> "$GITHUB_ENV"
+          curl -fsSL --proto '=https' --proto-redir '=https' --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c
+          chmod +x "$w/bazel"
+          url=https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54208/jobs/01a1c697-6f9d-4cc4-85bd-9a4941acff68/artifacts/01a1c6b5-8928-4fa6-a3d5-c04e597fc6f0
+          curl -fsSL --proto '=https' --proto-redir '=https' --retry 2 "$url" -o "$w/original.tgz"
+          echo "08f49b53edf97f50b803baa458cf3181e7297054dd691b7b3314fdfd38a5338d  $w/original.tgz" | sha256sum -c
+          python3 - "$w" <<'PY'
+          import hashlib, json, pathlib, sys, tarfile
+          w = pathlib.Path(sys.argv[1])
+          names = ["runsc", "containerd-shim-runsc-v1"] + ["gvisor-bin/" + n for n in ("gvisor_sentry", "checkpointgofer", "runsc-netgofer", "runsc-metric-server", "runsc-fd-parking", "gvisor-sentry-prewarmer", "gvisor-proc-umounter")]
+          hashes = {}
+          with tarfile.open(w/"original.tgz", "r:gz") as a:
+              for n in names:
+                  m = a.getmember("buildkite_runtime/" + n)
+                  assert m.isfile() and 0 < m.size < 150_000_000
+                  p = w/"release"/n
+                  p.parent.mkdir(exist_ok=True)
+                  blob = a.extractfile(m).read()
+                  p.write_bytes(blob)
+                  p.chmod(0o755)
+                  hashes[n] = hashlib.sha256(blob).hexdigest()
+          (w/"receipt"/"runtime.json").write_text(json.dumps(hashes, indent=2))
+          PY
+      - name: Start a private runner-local Docker daemon
+        shell: bash
+        run: |
+          set -euo pipefail
+          d=/tmp/gv-debugger
+          sudo -n mkdir "$d"
+          echo '{}' > "$SMOKE/daemon.json"
+          cat >"$SMOKE/original" <<'WRAP'
+          #!/bin/bash
+          set -eu
+          here=$(cd "$(dirname "$0")" && pwd)
+          prev=
+          for a in "$@"; do
+            if [[ "$a" == --root=* ]]; then printf '%s\n' "${a#--root=}" > "$here/oci-root"; break; fi
+            if [[ "$prev" == --root ]]; then printf '%s\n' "$a" > "$here/oci-root"; break; fi
+            prev=$a
+          done
+          exec "$here/release/runsc" "$@"
+          WRAP
+          chmod +x "$SMOKE/original"
+          sudo -n dockerd --config-file="$SMOKE/daemon.json" --host="$DOCKER_HOST" --group="$(id -gn)" \
+            --pidfile="$d/pid" --data-root="$d/data" --exec-root="$d/exec" --bridge=none \
+            --iptables=false --ip-forward=false --ip-masq=false --userland-proxy=false \
+            --add-runtime="original=$SMOKE/original" > "$SMOKE/daemon.log" 2>&1 &
+          for i in {1..45}; do docker info >/dev/null 2>&1 && break; sleep 1; done
+          test "$(docker info --format '{{.DockerRootDir}}')" = "$d/data"
+          image=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/sudo_x86_64@sha256:b3d0b74c37eeec266b9bd38a9b8311287fdf3db5cefa7afc1e3efe9005f366a5
+          docker pull --platform=linux/amd64 "$image"
+      - name: Exercise only unprivileged /bin/true under ordinary strace
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$SMOKE/bazel" --nosystem_rc --nohome_rc test --config=x86_64 --jobs=4 --lockfile_mode=off \
+            --remote_cache= --remote_executor= --bes_backend= --nocache_test_results --flaky_test_attempts=1 \
+            --strategy=TestRunner=local --test_timeout=130 --test_env=SMOKE --test_env=DOCKER_CONFIG --test_env=DOCKER_HOST \
+            --test_output=errors //test/qualify-debugger:unprivileged_debugger_test
+      - name: Retain only the scoped test receipts
+        id: collect
+        if: always()
+        shell: python
+        run: |
+          import os, pathlib, re, zipfile
+          out = pathlib.Path(os.environ["SMOKE"])/"receipt"
+          tests = pathlib.Path("bazel-testlogs/test/qualify-debugger/unprivileged_debugger_test")
+          for n in ("test.xml", "test.log"):
+              if (tests/n).is_file():
+                  (out/n).write_bytes((tests/n).read_bytes())
+          accepted = {f"{r}.{e}" for r in ("original", "runc") for e in ("trace", "identity", "status", "stacks")}
+          if (tests/"test.outputs"/"outputs.zip").is_file():
+              with zipfile.ZipFile(tests/"test.outputs"/"outputs.zip") as a:
+                  for n in accepted & set(a.namelist()):
+                      assert a.getinfo(n).file_size < 8000000
+                      (out/n).write_bytes(a.read(n))
+          else:
+              for n in accepted:
+                  if (tests/"test.outputs"/n).is_file():
+                      (out/n).write_bytes((tests/"test.outputs"/n).read_bytes())
+          for p in out.iterdir():
+              assert p.is_file() and not p.is_symlink() and p.stat().st_size < 8000000
+              assert not re.search(rb"(?i)(authorization:|bearer |x-buildbuddy-api-key|ghp_|github_pat_|-----BEGIN [A-Z ]*PRIVATE KEY)",p.read_bytes())
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled() && steps.collect.outcome == 'success'
+        with:
+          name: ordinary-debugger-comparison
+          path: ${{ runner.temp }}/debugger-smoke/receipt/
+          retention-days: 10
