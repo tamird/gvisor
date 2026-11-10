@@ -2254,12 +2254,21 @@ class ReapprovalReminderTest(unittest.TestCase):
                 return subprocess.CompletedProcess(args, 0, json.dumps({"body": body, "user": {"login": "tamird"},
                         "html_url": "https://github.com/google/gvisor/pull/7#issuecomment-1", "created_at": self.now.isoformat()}), "")
 
-            with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
+            registry_file = root / "registry.json"
+            registry_file.write_text(json.dumps(registry))
+            registry, oid = updater.load_registry(registry_file)
+            with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry, REGISTRY_OID=oid), \
+                    mock.patch.object(updater, "registry_is_published", return_value=False) as published, \
                     mock.patch.object(updater, "fetch_maintainers", return_value=self.maintainers), \
                     mock.patch.object(updater, "datetime") as clock, \
                     mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}) as fetch, \
                     mock.patch.object(updater.subprocess, "run", side_effect=run) as transport:
                 clock.now.return_value = self.now
+                updater.reapproval_reminders(post=True)
+                published.assert_called_once_with(oid)
+                self.assertEqual(comments, [])
+                fetch.reset_mock()
+                published.return_value = True
                 updater.reapproval_reminders(post=True)
                 self.assertEqual(fetch.call_args_list, [
                     mock.call([7], timeline=False, repo="google/gvisor", team_details=False),

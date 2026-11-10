@@ -1,8 +1,10 @@
 import copy
 import json
 import subprocess
+import tempfile
+from pathlib import Path
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import outreach_delivery as delivery
 
@@ -21,11 +23,13 @@ class ReviewDeliveryTest(unittest.TestCase):
                         "issue_url": "https://api.github.com/repos/google/gvisor/issues/123",
                         "html_url": "https://github.com/google/gvisor/pull/123#issuecomment-456"}
         self.api = self.enterContext(patch.object(delivery, "api"))
+        self.registry_oid = "c" * 40
+        self.check_publication = delivery.registry_is_published
         self.registry = self.enterContext(patch.object(delivery, "registry_is_published", return_value=True))
         self.live = MagicMock(return_value=copy.deepcopy(self.action))
 
     def send(self):
-        return delivery.send_one(self.action, self.live, "tamird")
+        return delivery.send_one(self.action, self.live, "tamird", self.registry_oid)
 
     def test_confirm_native_request(self):
         self.api.side_effect = [{}, {"users": [{"login": "Reviewer"}]}]
@@ -47,7 +51,7 @@ class ReviewDeliveryTest(unittest.TestCase):
         self.api.side_effect = [delivery.GitHubError(404, "Not Found"), {"users": []}, {"id": 456}, self.receipt]
         self.assertEqual(self.send(), {**self.versions, "status": "commented", "url": self.receipt["html_url"], "fallback": True})
         self.assertEqual(self.live.call_count, 2)
-        self.assertEqual(self.registry.call_count, 2)
+        self.assertEqual(self.registry.call_args_list, [call(self.registry_oid), call(self.registry_oid)])
         self.assertEqual(self.api.call_args_list[2].args, (self.comments, {"body": self.action["body"]}))
         self.assertEqual(self.api.call_args_list[3].args, ("repos/google/gvisor/issues/comments/456",))
 
@@ -81,6 +85,41 @@ class ReviewDeliveryTest(unittest.TestCase):
         self.registry.return_value = False
         self.assertEqual(self.send()["status"], "registry-changed")
         self.api.assert_not_called()
+
+    def test_worktree_registry_differs_from_published_head(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "registry.json"
+            git = ["git", "-C", tmp]
+            subprocess.run([*git, "init", "--quiet"], check=True)
+            path.write_text('{"blocked": true}\n')
+            subprocess.run([*git, "add", "registry.json"], check=True)
+            subprocess.run([*git, "-c", "user.name=Test", "-c", "user.email=test@example.org",
+                            "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "Published registry"], check=True)
+            published = subprocess.check_output([*git, "rev-parse", "HEAD:registry.json"], text=True).strip()
+            original, original_oid = delivery.load_registry(path)
+            self.assertEqual(original_oid, published)
+            path.write_text('{"blocked": false}\n')
+            local, self.registry_oid = delivery.load_registry(path)
+            self.assertNotEqual(original, local)
+            # The file may even return to HEAD after the planner has read it.
+            subprocess.run([*git, "restore", "registry.json"], check=True)
+            self.api.return_value = {"sha": published}
+            self.registry.side_effect = self.check_publication
+            for channel in ("request", "comment"):
+                with self.subTest(channel=channel):
+                    self.action["channel"] = channel
+                    self.live.return_value = self.action
+                    self.api.reset_mock()
+                    self.assertEqual(self.send()["status"], "registry-changed")
+                    self.api.assert_called_once_with("repos/tamird/gvisor/contents/registry.json?ref=gh-pages")
+
+    def test_fallback_stops_if_registry_changes_after_native_rejection(self):
+        self.api.side_effect = [delivery.GitHubError(403, "Forbidden"), {"users": []}]
+        self.registry.side_effect = [True, False]
+        self.assertEqual(self.send()["status"], "registry-changed")
+        self.assertEqual(self.registry.call_args_list, [call(self.registry_oid), call(self.registry_oid)])
+        self.assertEqual(self.api.call_args_list, [call(self.requests, {"reviewers": ["reviewer"]}),
+                                                 call(self.requests + "?per_page=100")])
 
     def test_permission_error_does_not_bypass_new_activity(self):
         self.api.side_effect = [delivery.GitHubError(403, "Forbidden"), {"users": []}]

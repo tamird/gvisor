@@ -18,12 +18,13 @@ from ci_flakes import collect as collect_ci_flakes
 from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
+from outreach_delivery import load_registry, registry_is_published
 from reviewer_selection import recent_reviewer_work, reviewer_governance
 from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
-REGISTRY = json.loads((ROOT / "registry.json").read_text())
+REGISTRY, REGISTRY_OID = load_registry(ROOT / "registry.json")
 REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
 REQUEST_LIMIT = 64
@@ -1118,6 +1119,9 @@ def reapproval_reminders(post: bool = False) -> None:
         if not post or plan["status"] != "due":
             print(json.dumps(plan))
             continue
+        if not registry_is_published(REGISTRY_OID):
+            print(json.dumps({**plan, "status": "deferred", "reason": "registry-changed"}))
+            return
         # Never retry this mutation: an interrupted response may have posted.
         # The next scheduled run reads the exact marker from GitHub history.
         try:
@@ -1485,7 +1489,8 @@ def review_outreach(post: bool = False) -> None:
                 node.get("landedPatch"), node.get("reapproval"), node.get("importPatchComparison"))
         return current
 
-    deliver(snapshot, REGISTRY, datetime.now(timezone.utc).isoformat(), OWNER, active_reviewers, fresh, post=post)
+    deliver(snapshot, REGISTRY, datetime.now(timezone.utc).isoformat(), OWNER, active_reviewers, fresh,
+            post=post, registry_oid=REGISTRY_OID)
 
 
 if __name__ == "__main__":
