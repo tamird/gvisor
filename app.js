@@ -1139,7 +1139,7 @@ function pendingDecisions(node) {
   const decisions = node.contributorReview ? [node.contributorReview] : [];
   return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
-    || node.type === "investigation" && node.status === "active" && decision.kind === "issue"
+    || node.type === "investigation" && node.status === "active" && ["issue", "proposal"].includes(decision.kind)
     || ["pr", "issue"].includes(node.type) && ["reply", "issue"].includes(decision.kind)
     || node.type === "pr" && decision.kind === "review" && !providerClosed(node)));
 }
@@ -2348,9 +2348,15 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
         throw new Error("Invalid investigation record");
       if (item.additionalReviews !== undefined) throw new Error(`Invalid additional review for ${item.id}`);
       const draft = item.contributorReview;
-      if (draft !== undefined && (!item.group || !validIssueDraft(draft) || draft.status !== "pending"
-          || draft.head !== undefined || draft.url !== `https://github.com/${candidate.meta.repo}/issues/new`))
-        throw new Error(`Invalid contributor decision for ${item.id}`);
+      if (draft !== undefined) {
+        const issue = validIssueDraft(draft) && draft.head === undefined
+          && draft.url === `https://github.com/${candidate.meta.repo}/issues/new`;
+        const fix = draft?.kind === "proposal" && [draft.head, draft.baseHead].every(head => /^[a-f0-9]{40}$/.test(head))
+          && draft.head !== draft.baseHead && [draft.title, draft.summary, draft.body].every(nonemptyText)
+          && commitLinkMatches(`${candidate.meta.owner}/${candidate.meta.repo.split("/")[1]}`, draft.head, draft.url);
+        if (!item.group || draft?.status !== "pending" || !issue && !fix)
+          throw new Error(`Invalid contributor decision for ${item.id}`);
+      }
       if (item.comparisons !== undefined && (!Array.isArray(item.comparisons) || !item.comparisons.every(comparison => comparison &&
           [comparison.title, comparison.description, comparison.note].every(nonemptyText) &&
           Array.isArray(comparison.columns) && comparison.columns.length >= 2 && comparison.columns.every(nonemptyText) &&

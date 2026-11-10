@@ -81,6 +81,31 @@ test('an investigation issue has one filing decision and keeps its receipt after
   assert.throws(read, /Invalid contributor decision/);
 });
 
+test('an investigation can review its exact fork fix after an issue was approved', () => {
+  const c = client();
+  const head = 'a'.repeat(40), baseHead = 'b'.repeat(40);
+  const fix = { kind: 'proposal', status: 'pending', head, baseHead, url: 'https://github.com/tamird/gvisor/commit/aaaaaaaaa',
+    title: 'Report the group stop', summary: 'Open the fix?', body: 'Notify the tracer.' };
+  const oldIssue = { kind: 'issue', head: undefined, url: 'https://github.com/google/gvisor/issues/new' };
+  const row = { id: 'investigation:sudo', title: 'Sudo', owner: 'CI', status: 'active', group: 'ci-flakes',
+    updatedAt: c.registryInput.meta.updatedAt, summary: 'Timed out', evidence: [], findings: [], contributorReview: fix,
+    settledReviews: [oldIssue] };
+  Object.assign(c.registryInput, { groups: [{ id: 'ci-flakes', label: 'CI' }], nodes: [], edges: [], investigations: [row] });
+  const reasons = () => JSON.parse(vm.runInContext(`(() => {
+    validateRegistry(registry);
+    const [item] = registryNodes(registry);
+    item.workStates = stateRecords(snapshotInput, item);
+    return JSON.stringify(attentionReasons(item, 'tamird').map(r => r.id));
+  })()`, c));
+  assert.deepEqual(reasons(), ['review-changes']);
+  row.settledReviews.push({ ...fix, postedURL: 'https://github.com/google/gvisor/pull/42' });
+  assert.deepEqual(reasons(), ['agent-ci-flake']);
+  row.status = 'concluded';
+  assert.deepEqual(reasons(), []);
+  fix.url = 'https://github.com/other/gvisor/commit/aaaaaaaaa';
+  assert.throws(reasons, /Invalid contributor decision/);
+});
+
 test('tracker maintenance never requests a contributor decision on a cached registry', () => {
   const c = client();
   c.row = { id: 'branch:work-map-published-reminder-registry', type: 'branch', repo: 'tamird/gvisor',

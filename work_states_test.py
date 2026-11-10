@@ -6,7 +6,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from work_states import approved_patch, check_purpose, check_qualifier, checks_passed, pr_states, public_import_disposition, record_states, remember_mergeability, review_decision
+from work_states import approved_patch, check_purpose, check_qualifier, checks_passed, derive_states, pr_states, public_import_disposition, record_states, remember_mergeability, review_decision
 
 
 def original(**changes: object) -> dict:
@@ -41,6 +41,17 @@ class WorkStatesTest(unittest.TestCase):
         del investigation["settledReviews"]
         investigation["status"] = "concluded"
         self.assertEqual(record_states([], registry, {"workStates": current}, when), {})
+
+    def test_investigation_code_proposal_has_its_own_commit_scope(self):
+        head = "a" * 40
+        decision = dict(kind="proposal", status="pending", head=head)
+        investigation = dict(id="investigation:sudo", group="ci-flakes", status="active",
+                             contributorReview=decision, settledReviews=[dict(kind="issue")])
+        registry = dict(meta=dict(repo="google/gvisor"), nodes=[], investigations=[investigation])
+        self.assertEqual(derive_states([], registry),
+                         {investigation["id"]: {"contributor-review": {"scope": head}}})
+        investigation["settledReviews"].append(dict(kind="proposal", head=head))
+        self.assertEqual(derive_states([], registry), {})
 
     def test_reassociated_review_and_current_open_export(self):
         pr = original(number=15562, repo="google/gvisor", reviewDecision="APPROVED",

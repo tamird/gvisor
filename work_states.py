@@ -691,7 +691,7 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         decisions = [node["contributorReview"]] if "contributorReview" in node else []
         decisions.extend(node.get("additionalReviews", []))
         attached = any(node["type"] == "pr" and decision.get("kind") == "amendment"
-                       or node["type"] == "investigation" and decision.get("kind") == "issue"
+                       or node["type"] == "investigation" and decision.get("kind") in {"issue", "proposal"}
                        or node["type"] in {"pr", "issue"} and decision.get("kind") in {"reply", "review", "issue"}
                        for decision in decisions)
         if not attached and (node["type"] != "branch" or node["id"] in closed
