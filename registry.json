@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T14:16:59+00:00",
+    "updatedAt": "2026-11-10T14:52:15+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5346,11 +5346,19 @@
       "title": "Build C and C++ with the declared LLVM toolchains",
       "url": "https://github.com/tamird/gvisor/commit/4bee07965",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "summary": "4bee07965 uses the Go offset generator from #16516. An alternative compiler submission on Linux hosts with shell utilities could precede #16516 by declaring @llvm//tools:llvm-nm for the existing script. On an AMD64 host, both generators produced all 10 AMD64 and 11 ARM64 offsets, with every name and value matching the linked ELF. The two arms used identical ELF and stub bytes for each architecture. With implicit $(NM), Bazel previously returned success but both generated Go files contained only a 105-byte header and zero offsets. The comparison covered offset generation. The shell-free build still requires the Go generator.\n\nAn AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.\n\nA subsequent run on this exact proposal booted source-built Sentries on native AMD64 and ARM64 Firecracker workers. Each execution verified the nine release ELFs, ran TestProcessDocuments_BasicTransform uncached, and checked the guest-written output HELLO FROM UNTRUSTED INPUT.\n\nOn c115840f8, an AMD64 Ubuntu builder without Debian’s ARM64 GCC or binutils cross-compiled the nine ARM64 release files. A separate native ARM64 worker verified their hashes and booted the transferred runsc and Sentry under rootless systrap. The guest’s uname -m returned aarch64 and it exited 0.\n\nA second client built both nine-file releases on c115840f8 without installing any packages. All 18 executable hashes matched the compiler-free client, including the nine previously booted on ARM64. The base image supplied shell utilities. Bazel, Git and the public CA bundle were supplied separately.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.\n\nA separate integration at 61ff148f0 supplied the declared shell tools and SDK inputs for a complete local //:release build with empty /bin and /usr/bin. One AMD64 Bazel 9.3.1 client built all nine optimized ELF executables for each target architecture; all 18 SHA-256 digests matched their original remote outputs. The AMD64 build started with an empty repository cache. The ARM64 build reused those repository downloads with a fresh Bazel home. The installed AMD64 runsc and netgofer reported the development version. The client supplied Bazel, its runtime libraries and CA certificates. This qualifies the integrated release executable build; the standalone compiler proposal 4bee07965, packaging, and other builder jobs retain their own evidence and prerequisites.",
-      "updatedAt": "2026-11-08T20:53:15+00:00",
+      "status": "Agent work",
+      "summary": "On 4bee07965, the source-selected LLVM 0.8.24 toolchain could not link either static plugin executable on AMD64. Both final GoLink actions failed under --config=plugin-tldk. The linker reported missing pthread, dl, resolv, m and c libraries. Earlier static plugin builds used a patched GNU sysroot.\n\nEarlier qualification:\n\n4bee07965 uses the Go offset generator from #16516. An alternative compiler submission on Linux hosts with shell utilities could precede #16516 by declaring @llvm//tools:llvm-nm for the existing script. On an AMD64 host, both generators produced all 10 AMD64 and 11 ARM64 offsets, with every name and value matching the linked ELF. The two arms used identical ELF and stub bytes for each architecture. With implicit $(NM), Bazel previously returned success but both generated Go files contained only a 105-byte header and zero offsets. The comparison covered offset generation. The shell-free build still requires the Go generator.\n\nAn AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.\n\nA subsequent run on this exact proposal booted source-built Sentries on native AMD64 and ARM64 Firecracker workers. Each execution verified the nine release ELFs, ran TestProcessDocuments_BasicTransform uncached, and checked the guest-written output HELLO FROM UNTRUSTED INPUT.\n\nOn c115840f8, an AMD64 Ubuntu builder without Debian’s ARM64 GCC or binutils cross-compiled the nine ARM64 release files. A separate native ARM64 worker verified their hashes and booted the transferred runsc and Sentry under rootless systrap. The guest’s uname -m returned aarch64 and it exited 0.\n\nA second client built both nine-file releases on c115840f8 without installing any packages. All 18 executable hashes matched the compiler-free client, including the nine previously booted on ARM64. The base image supplied shell utilities. Bazel, Git and the public CA bundle were supplied separately.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.\n\nA separate integration at 61ff148f0 supplied the declared shell tools and SDK inputs for a complete local //:release build with empty /bin and /usr/bin. One AMD64 Bazel 9.3.1 client built all nine optimized ELF executables for each target architecture; all 18 SHA-256 digests matched their original remote outputs. The AMD64 build started with an empty repository cache. The ARM64 build reused those repository downloads with a fresh Bazel home. The installed AMD64 runsc and netgofer reported the development version. The client supplied Bazel, its runtime libraries and CA certificates. This qualifies the integrated release executable build; the standalone compiler proposal 4bee07965, packaging, and other builder jobs retain their own evidence and prerequisites.",
+      "updatedAt": "2026-11-10T14:48:47+00:00",
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
+        {
+          "label": "Both source-selected LLVM plugin links and their linker errors",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942"
+        },
+        {
+          "label": "In progress: compare the released LLVM musl configuration on both plugin links",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42838544774"
+        },
         {
           "label": "Paired offset generators: AMD64 and ARM64 ELF, stub bytes and symbol maps",
           "url": "https://github.com/tamird/gvisor/actions/runs/42522103104/artifacts/13634310659"
@@ -5876,8 +5884,8 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238"
         },
         {
-          "label": "Ten installed static GNU plugin and release executables",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474197714"
+          "label": "Earlier patched GNU sysroot: inventory of ten plugin and release executables and guest wire test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238"
         },
         {
           "label": "AMD64 runsc-race and gvisor_sentry-race static GNU links and version stamp",
@@ -6052,12 +6060,14 @@
         }
       ],
       "followup": {
-        "owner": "Compiler integration",
+        "owner": "native_coverage",
         "sourceHead": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
-        "disposition": "Single compiler commit verified on its four runtime parents.",
-        "observedAt": "2026-11-08T20:53:15+00:00",
-        "nextAction": "For 4bee07965, track #16522, #16586, #17067, #16516 and #17114 after contributor review. An earlier shell-equipped submission would need its own revision declaring llvm-nm and qualification of that revision.",
+        "disposition": "On 4bee07965, the source-selected LLVM 0.8.24 toolchain could not link either static plugin executable on AMD64. Both final GoLink actions failed under --config=plugin-tldk. The linker reported missing pthread, dl, resolv, m and c libraries. Earlier static plugin builds used a patched GNU sysroot.",
+        "observedAt": "2026-11-10T14:48:47+00:00",
+        "nextAction": "Fix the LLVM static link and build both runsc-plugin-stack and gvisor_sentry_plugin_stack before requesting review.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942",
+          "https://github.com/tamird/gvisor/actions/runs/42838544774",
           "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655",
           "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331",
           "https://github.com/tamird/gvisor/actions/runs/42255872935/artifacts/13525085703",
@@ -6179,17 +6189,6 @@
           "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514",
           "https://github.com/tamird/gvisor/actions/runs/42522103104/artifacts/13634310659"
         ]
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
-        "baseHead": "8bfb2c6d457f38879bb9c4939ed2a2cec8394d98",
-        "url": "https://github.com/tamird/gvisor/commit/4bee07965",
-        "title": "Build C and C++ with the declared LLVM toolchains",
-        "body": "The Coral toolchain looks for GCC and target headers under /usr. An\nAMD64 worker therefore needs an installed cross-compiler to build the\nvDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the LLVM 0.8.24 module already in\nMODULE.bazel. Bazel selects the compiler for the execution platform and\nthe sysroot for the target. Keep GNU17 and C++17 and remove the Coral\nrepositories, toolchain definitions and patches.\n\nThe three runsc sidecars provide their own entry points and use Linux\nUAPI headers. Only the signal stub needs target libc headers for its\nsignal and ucontext types.\n\nThe default GNU sysroot lacks static libc. Build static Go race\nexecutables against musl when the C toolchain and Linux target use the\nproject defaults. Keep an explicitly selected C toolchain or custom\ntarget platform on its own libc.",
-        "summary": "Open the PR after #16522, #16586, #16516, #17067’s freestanding amendment and #17114 land? Compare with the earlier approved compiler proposal.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 4bee07965^!\n\nNative Sentries also passed the original docprocessor guest test on both architectures. [Original measurements](https://github.com/tamird/gvisor/actions/runs/42351465462/artifacts/13565368025).",
-        "requestedAt": "2026-11-07T03:10:46+00:00"
       }
     },
     {
@@ -7873,15 +7872,16 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T14:13:03+00:00",
-      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. A separate run is checking those three cases.",
+      "updatedAt": "2026-11-10T14:50:25+00:00",
+      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "133764395c84859cb9c867555c1bac4f91f893cd",
         "observedAt": "2026-11-10T14:13:03+00:00",
-        "disposition": "The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. A separate run is checking those three cases.",
-        "nextAction": "Check the three native network-namespace cases before requesting review.",
+        "disposition": "The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
+        "nextAction": "Compare the loopback bind on master and on the amendment on the same native worker before requesting review.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42832885163/artifacts/13772269407",
           "https://github.com/tamird/gvisor/actions/runs/42830337701/artifacts/13771558704",
           "https://github.com/tamird/gvisor/commit/0ef2495ca",
           "https://github.com/tamird/gvisor/actions/runs/42830337701",
@@ -7891,6 +7891,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Native VethLinkLocalAddrOnUpDown, IPv6FlushedOnDown and loopback bind results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42832885163/artifacts/13772269407"
+        },
         {
           "label": "Network and proxy tests on 0ef2495ca",
           "url": "https://github.com/tamird/gvisor/actions/runs/42830337701/artifacts/13771558704"
@@ -22103,15 +22107,18 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
-      "summary": "On AMD64 and ARM64, the checker, eventchannel (generated protobuf), sync (generated constants), and a fixture using the historical Go adapter with two real compiler archives passed. Public source-only and archive-only rules took their respective paths. The private Google build was not exercised.",
+      "updatedAt": "2026-11-10T14:48:47+00:00",
+      "summary": "The published cd5e5628a conflicts with master. The amendment passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.\n\nEarlier qualification:\n\nOn AMD64 and ARM64, the checker, eventchannel (generated protobuf), sync (generated constants), and a fixture using the historical Go adapter with two real compiler archives passed. Public source-only and archive-only rules took their respective paths. The private Google build was not exercised.",
       "followup": {
-        "owner": "root",
+        "owner": "native_coverage",
         "sourceHead": "cd5e5628a42fa74409864903aae50717b596f214",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00",
-        "disposition": "Amendment published and all three review threads answered",
-        "nextAction": "Follow the public checks and maintainer review on the published revision.",
+        "observedAt": "2026-11-10T14:48:47+00:00",
+        "disposition": "The published cd5e5628a conflicts with master. The amendment passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.",
+        "nextAction": "Publish 66eb27741 on the existing PR after contributor review.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/66eb27741",
+          "https://github.com/tamird/gvisor/actions/runs/42809631266/artifacts/13763175151",
+          "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942",
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/cd5e5628a",
           "https://github.com/google/gvisor/pull/16098#discussion_r4456035662",
@@ -22120,6 +22127,18 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Public and archive-only test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42809631266/artifacts/13763175151"
+        },
+        {
+          "label": "Original Nogo XML and logs for both architecture filters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942"
+        },
+        {
+          "label": "Amendment on current Bazel Args",
+          "url": "https://github.com/tamird/gvisor/commit/66eb27741"
+        },
         {
           "label": "Exact public amendment: both Nogo owners pass for AMD64 and ARM64",
           "url": "https://app.buildbuddy.io/invocation/4ef5584e-903b-49a8-b745-baf7eaaf8413"
@@ -22247,12 +22266,11 @@
       ],
       "refinement": {
         "before": {
-          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-          "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970"
+          "head": "cd5e5628a42fa74409864903aae50717b596f214"
         },
         "after": {
-          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-          "head": "cd5e5628a42fa74409864903aae50717b596f214"
+          "head": "66eb2774175258362fb3afaa11d75dec66c3684a",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
       "number": 16098,
@@ -22270,7 +22288,18 @@
           "at": "2026-11-03T14:33:29.484586+00:00",
           "url": "https://github.com/tamird/gvisor/commit/cd5e5628a"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "66eb2774175258362fb3afaa11d75dec66c3684a",
+        "baseHead": "cd5e5628a42fa74409864903aae50717b596f214",
+        "url": "https://github.com/tamird/gvisor/commit/66eb27741",
+        "title": "Generate Nogo export data from source",
+        "requestedAt": "2026-11-10T14:48:47+00:00",
+        "summary": "Review the amendment to #16098 for publication.",
+        "body": "The published cd5e5628a conflicts with master. The amendment passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.\n\ngit -C ~/code/gvisor range-diff cd5e5628a^! 66eb27741^!"
+      }
     },
     {
       "id": "pr:16096",
@@ -35064,6 +35093,10 @@
       "url": "https://github.com/google/gvisor/pull/16590",
       "evidence": [
         {
+          "label": "Tamir replied “Rebased.”",
+          "url": "https://github.com/google/gvisor/pull/16590#issuecomment-6766521802"
+        },
+        {
           "label": "Published rebase 05cb2e390",
           "url": "https://github.com/tamird/gvisor/commit/05cb2e390"
         },
@@ -35092,9 +35125,9 @@
           "url": "https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
         }
       ],
-      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "updatedAt": "2026-11-10T14:52:15+00:00",
       "status": "open",
-      "summary": "Etienne requested a rebase. The updated head 05cb2e390 applies to deb6b3ea1.\n\nBazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.\n\nAll 14 pairs of generator outputs matched across AMD64 and ARM64 when comparing #17317 alone with #17317 plus this change. The two empty fastbuild stubs still use the host marker. This comparison covered generator output only. The full Go export was not run.",
+      "summary": "Tamir confirmed the rebase to Etienne.\n\nEtienne requested a rebase. The updated head 05cb2e390 applies to deb6b3ea1.\n\nBazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.\n\nIn matched optimized builds, all nine executables per architecture were byte-identical. The original loader for one filter invoked grep 366 times. Across each release build the number of observed grep invocations fell from 1,964 to four on AMD64 and from 2,012 to four on ARM64.\n\nAll 14 pairs of generator outputs matched across AMD64 and ARM64 when comparing #17317 alone with #17317 plus this change. The two empty fastbuild stubs still use the host marker. This comparison covered generator output only. The full Go export was not run.",
       "refinement": {
         "before": {
           "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
@@ -35107,25 +35140,26 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "05cb2e39094109989a68ba4eb2236edb56089f65",
-        "observedAt": "2026-11-10T11:40:34+00:00",
-        "disposition": "The published single-commit rebase 05cb2e390 applies to deb6b3ea1 and GitHub reports it is mergeable.",
-        "nextAction": "Once approved, reply to Etienne on the original comment.",
+        "observedAt": "2026-11-10T14:52:15+00:00",
+        "disposition": "Tamir confirmed the rebase on 05cb2e390 in the PR conversation.",
+        "nextAction": "Follow upstream review of the rebased commit.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16590#issuecomment-6766521802",
           "https://github.com/google/gvisor/pull/16590#issuecomment-6758509238",
           "https://github.com/tamird/gvisor/commit/05cb2e390",
           "https://github.com/google/gvisor/pull/16590"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "05cb2e39094109989a68ba4eb2236edb56089f65",
-        "url": "https://github.com/google/gvisor/pull/16590#issuecomment-6758509238",
-        "title": "Reply to Etienne about the rebase",
-        "requestedAt": "2026-11-10T11:40:34+00:00",
-        "summary": "Confirm that the requested rebase is published.",
-        "body": "Rebased onto deb6b3ea1 in 05cb2e390.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "05cb2e39094109989a68ba4eb2236edb56089f65",
+          "url": "https://github.com/google/gvisor/pull/16590#issuecomment-6766521802",
+          "outcome": "answered-separately",
+          "at": "2026-11-10T11:48:49Z",
+          "title": "Tamir confirmed the rebase to Etienne"
+        }
+      ]
     },
     {
       "id": "pr:16591",
@@ -69937,8 +69971,16 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-10T14:16:59+00:00",
-      "summary": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The proposed amendment is undergoing its Linux comparison.\n\nWith two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
+      "summary": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The original compiler logs show all three defers in Requeue were stack-allocated on the public head and open-coded on 8da3e1807. The checkpoint comparison is running.\n\nWith two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
       "evidence": [
+        {
+          "label": "Stack-allocated defers on 01a28c6ab",
+          "url": "https://app.buildbuddy.io/invocation/2a03e010-694f-42c0-89a7-b97545cdd509"
+        },
+        {
+          "label": "Open-coded defers on 8da3e1807",
+          "url": "https://app.buildbuddy.io/invocation/effdac13-f9ff-4c48-a634-034ba83f83e6"
+        },
         {
           "label": "Proposed amendment 8da3e1807",
           "url": "https://github.com/tamird/gvisor/commit/8da3e1807"
@@ -69987,7 +70029,7 @@
         "title": "Count each waiter once during futex requeue",
         "requestedAt": "2026-11-10T14:16:59+00:00",
         "summary": "Publish the amendment and reply on the original review threads after its Linux checks pass.",
-        "body": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The proposed amendment is undergoing its Linux comparison.\n\nProposed replies if the Linux comparison confirms both results:\n\nOn the extra return: “I changed the final return to `return done + requeued, err`. If requeue hits a PI waiter, the manager still reports the wakes it completed before the error. The compiler now open-codes all three defers.\n\nPosted by Codex on behalf of @tamird.”\n\nOn save/restore: “I disabled cooperative saves from the first waiter readiness check through the wake on `dst`. A checkpoint in that interval can restart a moved waiter on `src`. Both shared and private cases now pass under save and save/resume.\n\nPosted by Codex on behalf of @tamird.”\n\ngit -C ~/code/gvisor range-diff 01a28c6ab^! 8da3e1807^!"
+        "body": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The original compiler logs show all three defers in Requeue were stack-allocated on the public head and open-coded on 8da3e1807. The checkpoint comparison is running.\n\nProposed replies if the Linux comparison confirms both results:\n\nOn the extra return: “I changed the final return to `return done + requeued, err`. If requeue hits a PI waiter, the manager still reports the wakes it completed before the error. The compiler now open-codes all three defers.\n\nPosted by Codex on behalf of @tamird.”\n\nOn save/restore: “I disabled cooperative saves from the first waiter readiness check through the wake on `dst`. A checkpoint in that interval can restart a moved waiter on `src`. Both shared and private cases now pass under save and save/resume.\n\nPosted by Codex on behalf of @tamird.”\n\ngit -C ~/code/gvisor range-diff 01a28c6ab^! 8da3e1807^!"
       }
     },
     {
@@ -70423,9 +70465,21 @@
       "url": "https://github.com/bazelbuild/bazel/pull/32541",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-09T22:32:51+00:00",
-      "summary": "Bazel 9.3.2 rejects a mirror scoped to the default BCR unless the same registry is explicitly selected. The rebuilt Bazel accepted both forms and produced identical module URLs and fresh lockfiles. The offline regression and two existing mirror controls passed.",
+      "updatedAt": "2026-11-10T14:50:25+00:00",
+      "summary": "Fabian asked whether the mirror registry can omit the trailing slash. The rebuilt Bazel listed the mirror with the slashless flag for both implicit and explicit BCR selection. The generated lockfiles matched.\n\nBazel 9.3.2 rejects a mirror scoped to the default BCR unless the same registry is explicitly selected. The rebuilt Bazel accepted both forms and produced identical module URLs and fresh lockfiles. The offline regression and two existing mirror controls passed.",
       "evidence": [
+        {
+          "label": "Fabian’s question on the mirror flag",
+          "url": "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4524518452"
+        },
+        {
+          "label": "Exact slashless commands in the Linux qualification",
+          "url": "https://github.com/tamird/bazel/blob/c46aeb195/.github/workflows/qualify-implicit-bcr.yml#L75-L84"
+        },
+        {
+          "label": "Repository output and matching lockfile hashes",
+          "url": "https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143"
+        },
         {
           "label": "Published pull request",
           "url": "https://github.com/bazelbuild/bazel/pull/32541"
@@ -70460,7 +70514,29 @@
           "outcome": "approved",
           "at": "2026-11-09T22:32:51+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "a6d03b87ce5689d871074bce123ebbf25f305933",
+        "url": "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4524518452",
+        "title": "Reply to Fabian about the mirror registry spelling",
+        "summary": "Post the verified slashless command result on the existing inline thread.",
+        "body": "Yes. I ran `bazel mod show_repo @bazel_skylib` with `--module_mirrors=https://bcr.bazel.build=https://mirror.example.com` and no `--registry`. The [repository output](https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143) listed the mirror.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-10T14:50:25+00:00"
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "a6d03b87ce5689d871074bce123ebbf25f305933",
+        "observedAt": "2026-11-10T14:50:25+00:00",
+        "disposition": "Fabian asked whether the mirror registry can omit the trailing slash. The rebuilt Bazel listed the mirror with the slashless flag for both implicit and explicit BCR selection. The generated lockfiles matched.",
+        "nextAction": "Once approved, answer Fabian on the original inline thread.",
+        "evidence": [
+          "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4524518452",
+          "https://github.com/tamird/bazel/blob/c46aeb195/.github/workflows/qualify-implicit-bcr.yml#L75-L84",
+          "https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143"
+        ]
+      }
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11683",
