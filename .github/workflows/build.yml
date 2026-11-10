@@ -1,35 +1,118 @@
-name: CI
-
-"on":
+name: Check Java 21 runtime admission for the descriptor-count test
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/java21-unref-descriptor-count]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind sources, Bazel, and the original CI runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git fetch --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 6dd410ba8616363e892d973e770ba8e59d4e4a08
+          test "$(git rev-parse HEAD^^)" = deb6b3ea1355ea9798c043cf33bc02804e86ed53
+          test "$(git rev-parse HEAD:test/runtimes/java21-parent.csv)" = "$(git rev-parse HEAD^^:test/runtimes/exclude/java21.csv)"
+          test "$(git rev-parse HEAD:test/runtimes/exclude/java21.csv)" = "$(git rev-parse HEAD^:test/runtimes/exclude/java21.csv)"
+          w="$RUNNER_TEMP/java-unref"
+          mkdir -p "$w/receipt" "$w/release" "$w/docker-client"
+          echo "JAVA_UNREF=$w" >> "$GITHUB_ENV"
+          echo "DOCKER_CONFIG=$w/docker-client" >> "$GITHUB_ENV"
+          echo "DOCKER_HOST=unix:///tmp/gvjuf-socket" >> "$GITHUB_ENV"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c
+          chmod +x "$w/bazel"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54152/jobs/01a1c388-76cb-4a4f-8415-b54a867e6378/artifacts/01a1c397-fb3f-468b-8076-5a08a09eff50 -o "$w/runtime.tgz"
+          echo "c3440cff05dd58e8babcd13e8833d851efb8f335f5adf18beb870a8014e89ed1  $w/runtime.tgz" | sha256sum -c
+          python3 - "$w" <<'PY'
+          import hashlib, json, pathlib, sys, tarfile
+          work = pathlib.Path(sys.argv[1])
+          names = {"runsc", "containerd-shim-runsc-v1"} | {"gvisor-bin/" + n for n in ("gvisor_sentry","checkpointgofer","runsc-netgofer","runsc-metric-server","runsc-fd-parking","gvisor-sentry-prewarmer","gvisor-proc-umounter")}
+          files = {}
+          with tarfile.open(work / "runtime.tgz", "r:*") as archive:
+              for name in sorted(names):
+                  item = archive.getmember("buildkite_runtime/" + name)
+                  assert item.isfile() and 0 < item.size < 150_000_000
+                  data = archive.extractfile(item).read()
+                  p = work / "release" / name
+                  p.parent.mkdir(exist_ok=True)
+                  p.write_bytes(data)
+                  p.chmod(0o755)
+                  files[name] = hashlib.sha256(data).hexdigest()
+          (work / "receipt" / "runtime.json").write_text(json.dumps({"build":54152, "source":"e53b9ea39", "archive":"c3440cff05dd58e8babcd13e8833d851efb8f335f5adf18beb870a8014e89ed1", "files":files}, indent=2))
+          PY
+          sudo -n apt-get update -qq
+          sudo -n apt-get install -qy build-essential crossbuild-essential-arm64 libnuma-dev
+      - name: Load the Java image in the job-owned Linux daemon
+        shell: bash
+        run: |
+          set -euo pipefail
+          d=/tmp/gvjuf-daemon
+          sudo -n mkdir "$d"
+          echo '{}' > "$JAVA_UNREF/daemon.json"
+          sudo -n dockerd --config-file="$JAVA_UNREF/daemon.json" --host="$DOCKER_HOST" --group="$(id -gn)" \
+            --pidfile="$d/pid" --data-root="$d/data" --exec-root="$d/exec" --bridge=none \
+            --iptables=false --ip-forward=false --ip-masq=false --userland-proxy=false \
+            --add-runtime="java-unref-ci=$JAVA_UNREF/release/runsc" > "$JAVA_UNREF/daemon.log" 2>&1 &
+          for i in {1..45}; do docker info >/dev/null 2>&1 && break; sleep 1; done
+          test "$(docker info --format '{{.DockerRootDir}}')" = "$d/data"
+          docker pull --platform=linux/amd64 us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/java21_x86_64@sha256:c5a1419701eea132bc82193018a09a91296a8d9e96492495a72dd84040e0bb47
+      - name: Compare both production ExcludeFilter results and run three admitted jtreg controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$JAVA_UNREF/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g test \
+            --config=x86_64 -c opt --jobs=4 --lockfile_mode=off --remote_cache= --remote_executor= --bes_backend= \
+            --spawn_strategy=linux-sandbox --strategy=GoStdlib=processwrapper-sandbox \
+            --strategy=GoStdlibList=processwrapper-sandbox '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' \
+            --nocache_test_results --flaky_test_attempts=1 --strategy=TestRunner=local --test_timeout=1800 --test_env=JAVA_UNREF --test_env=DOCKER_HOST --test_env=DOCKER_CONFIG --test_output=errors \
+            --build_event_json_file="$JAVA_UNREF/events.json" //test/runtimes:java_unref_admission_qualification
+      - name: Collect the original test outputs
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          b=bazel-testlogs/test/runtimes/java_unref_admission_qualification
+          for f in test.log test.xml; do if test -f "$b/$f"; then cp "$b/$f" "$JAVA_UNREF/receipt/$f"; fi; done
+          python3 - "$b" "$JAVA_UNREF/receipt" <<'PY'
+          import pathlib, sys, zipfile
+          base, out = map(pathlib.Path, sys.argv[1:])
+          names = {"admission.json", "AsyncShutdownNow.jtr", "Pending.jtr", "Connect.jtr"}
+          files = base / "test.outputs"
+          if files.is_dir():
+              for n in names:
+                  if (files / n).is_file():
+                      (out / n).write_bytes((files / n).read_bytes())
+          arch = files / "outputs.zip"
+          if arch.is_file():
+              with zipfile.ZipFile(arch) as a:
+                  for n in names & set(a.namelist()):
+                      (out / n).write_bytes(a.read(n))
+          PY
+          if sudo -n test -f /tmp/gvjuf-daemon/pid; then
+            pid=$(sudo -n cat /tmp/gvjuf-daemon/pid)
+            if sudo -n cat "/proc/$pid/cmdline" | tr '\0' '\n' | grep -Fxq -- '--data-root=/tmp/gvjuf-daemon/data'; then sudo -n kill -TERM "$pid"; fi
+          fi
+      - name: Validate the bounded public test outputs
+        id: outputs
+        if: always() && !cancelled()
+        shell: python
+        run: |
+          import os, pathlib, re
+          root = pathlib.Path(os.environ["JAVA_UNREF"]) / "receipt"
+          allowed = {"runtime.json", "test.xml", "test.log", "admission.json", "Pending.jtr", "Connect.jtr", "AsyncShutdownNow.jtr"}
+          for p in root.iterdir():
+              assert p.name in allowed and not p.is_symlink() and p.is_file() and p.stat().st_size < 700000
+              assert not re.search(rb"(?i)(authorization:|bearer |x-buildbuddy-api-key|ghp_|github_pat_|-----BEGIN [A-Z ]*PRIVATE KEY)", p.read_bytes())
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.outputs.outcome == 'success'
+        with:
+          name: java21-descriptor-count-admission
+          path: ${{ runner.temp }}/java-unref/receipt/
+          if-no-files-found: error
