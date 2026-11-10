@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T22:49:57+00:00",
+    "updatedAt": "2026-11-10T23:00:22+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2670,16 +2670,17 @@
       "title": "Run clang-tidy through Bazel compile actions",
       "url": "https://github.com/tamird/gvisor/commit/49c4a3a92",
       "group": "release",
-      "status": "Contributor review requested",
+      "status": "Agent work",
       "summary": "Bazel runs clang-tidy for each configured C++ compilation. The revised action calls clang-tidy directly and declares its frontend diagnostics file. On an AMD64 image containing only /hello, two clean actions produced identical files. An invalid include printed its source line and check name in the Bazel log and failed the build. The previous revision covered 371 AMD64 and 370 ARM64 actions.",
-      "updatedAt": "2026-11-03T07:06:47.467598+00:00",
+      "updatedAt": "2026-11-10T23:00:22+00:00",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
-        "observedAt": "2026-11-03T07:06:47.467598+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the direct invocation. #16236 and #16313 have merged. Run the full integrated AMD64 and ARM64 selection before opening this PR after the compiler prerequisite.",
+        "observedAt": "2026-11-10T23:00:22+00:00",
+        "disposition": "On compiler integration 64a78c455, 376 of 384 AMD64 and 375 of 383 ARM64 ClangTidy actions passed. All 767 ran uncached on remote workers. Eight systrap/sysmsg inputs failed on each architecture, including assembly files.",
+        "nextAction": "Diagnose the systrap inputs and rerun the affected actions before requesting review of the clang-tidy change. The compiler remains its prerequisite.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42915366560/artifacts/13810936299",
           "https://github.com/tamird/gvisor/actions/runs/41593214329/artifacts/13211346681",
           "https://app.buildbuddy.io/invocation/65a0825c-34d6-4e58-8bd8-a3eaee9d289e"
         ]
@@ -2705,19 +2706,27 @@
         {
           "label": "Include-cleaner location, check name and exit status",
           "url": "https://app.buildbuddy.io/invocation/65a0825c-34d6-4e58-8bd8-a3eaee9d289e"
+        },
+        {
+          "label": "Full AMD64 and ARM64 selections on the integrated compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42915366560/artifacts/13810936299"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
-        "baseHead": "b4bb99dcbddc1d9de84365d7f62f44e301101eb0",
-        "url": "https://github.com/tamird/gvisor/commit/49c4a3a92",
-        "title": "Run clang-tidy through Bazel compile actions",
-        "summary": "Bazel runs clang-tidy for each configured C++ compilation. The revised action calls clang-tidy directly and declares its frontend diagnostics file. On an AMD64 image containing only /hello, two clean actions produced identical files. An invalid include printed its source line and check name in the Bazel log and failed the build. The previous revision covered 371 AMD64 and 370 ARM64 actions.",
-        "body": "A source file can compile with different flags and headers in different\ntargets. Running clang-tidy once per source in a local execution root\nmisses those differences and keeps Bazel from scheduling lint remotely.\n\nRun the LLVM toolchain's clang-tidy for each configured compilation of\nrepository sources. Pass the compile action's arguments, declared\ninputs and clang-tidy's matching builtin headers. Share header\ndiscovery with the editor's compilation database and include transitive\ngenerated sources in that database. Keep generated and third-party\nsources outside the lint selection.\n\nDeclare a serialized Clang frontend diagnostics file for each action.\nClang writes it even on a clean run, so Bazel can invoke clang-tidy\ndirectly without a shell. Read clang-tidy findings in the Bazel action\nlog. With warnings treated as errors, clang-tidy's exit status replaces\nthe Python diagnostic parser and thread pool.",
-        "requestedAt": "2026-11-03T07:06:47.467598+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
+          "baseHead": "b4bb99dcbddc1d9de84365d7f62f44e301101eb0",
+          "url": "https://github.com/tamird/gvisor/commit/49c4a3a92",
+          "title": "Run clang-tidy through Bazel compile actions",
+          "summary": "Bazel runs clang-tidy for each configured C++ compilation. The revised action calls clang-tidy directly and declares its frontend diagnostics file. On an AMD64 image containing only /hello, two clean actions produced identical files. An invalid include printed its source line and check name in the Bazel log and failed the build. The previous revision covered 371 AMD64 and 370 ARM64 actions.",
+          "body": "A source file can compile with different flags and headers in different\ntargets. Running clang-tidy once per source in a local execution root\nmisses those differences and keeps Bazel from scheduling lint remotely.\n\nRun the LLVM toolchain's clang-tidy for each configured compilation of\nrepository sources. Pass the compile action's arguments, declared\ninputs and clang-tidy's matching builtin headers. Share header\ndiscovery with the editor's compilation database and include transitive\ngenerated sources in that database. Keep generated and third-party\nsources outside the lint selection.\n\nDeclare a serialized Clang frontend diagnostics file for each action.\nClang writes it even on a clean run, so Bazel can invoke clang-tidy\ndirectly without a shell. Read clang-tidy findings in the Bazel action\nlog. With warnings treated as errors, clang-tidy's exit status replaces\nthe Python diagnostic parser and thread pool.",
+          "requestedAt": "2026-11-03T07:06:47.467598+00:00",
+          "outcome": "needs-work",
+          "at": "2026-11-10T23:00:22+00:00",
+          "note": "Withdrawn after the full integrated selection failed on eight systrap inputs per architecture."
+        }
+      ]
     },
     {
       "id": "pr:15307",
@@ -53750,7 +53759,7 @@
       "url": "https://github.com/google/gvisor/pull/16818",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T23:30:58.981Z",
+      "updatedAt": "2026-11-10T23:00:22+00:00",
       "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
       "evidence": [
         {
@@ -53764,6 +53773,18 @@
         {
           "label": "Upstream generate passed after the rules_m4 download recovered",
           "url": "https://github.com/google/gvisor/actions/runs/42310219947/job/128209510760"
+        },
+        {
+          "label": "Ricardo’s five save/restore failures",
+          "url": "https://github.com/google/gvisor/pull/16818#discussion_r4531500824"
+        },
+        {
+          "label": "Five-line amendment to EpollAcrossMount",
+          "url": "https://github.com/tamird/gvisor/commit/037c883bd"
+        },
+        {
+          "label": "Linux qualification of the amendment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42919378054"
         }
       ],
       "settledReviews": [
@@ -53773,7 +53794,39 @@
           "outcome": "approved",
           "at": "2026-11-02T18:27:13.788641+00:00"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2"
+        },
+        "after": {
+          "head": "037c883bda925d55948e055af0dff72c311b49c2"
+        }
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
+        "observedAt": "2026-11-10T23:00:22+00:00",
+        "disposition": "Ricardo reported that restoring an epoll watch can make it ready during the check for a mount notification. The five-line amendment pauses checkpoints just across that observation. Linux validation is running.",
+        "nextAction": "Review the amendment and the reply to Ricardo. Publish and reply when the Linux checks pass.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16818#discussion_r4531500824",
+          "https://github.com/tamird/gvisor/commit/037c883bd",
+          "https://github.com/tamird/gvisor/actions/runs/42919378054"
+        ]
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "037c883bda925d55948e055af0dff72c311b49c2",
+        "baseHead": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
+        "url": "https://github.com/tamird/gvisor/commit/037c883bd",
+        "title": "Report poll errors on unattached FUSE devices",
+        "requestedAt": "2026-11-10T23:00:22+00:00",
+        "summary": "Publish the test amendment and reply to Ricardo after the Linux checks pass?",
+        "body": "Ricardo reported that restoring an epoll watch after the mount re-notifies its pending FUSE_INIT request. Across five save targets, epoll_wait returned one event when the test expected zero. The amendment pauses checkpoints after consuming EPOLLERR until the test checks whether mounting notified the original watch. Checkpoints resume before the test removes and adds the watch again. Linux validation is in progress.\n\ngit -C ~/code/gvisor range-diff e561842c9^! 037c883bd^!",
+        "replyBody": "@kerumeto, thanks for catching this. The test now pauses checkpoints between consuming EPOLLERR and checking whether the mount triggered the original watch. It reenables them before deleting and adding the watch again.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:16823",
@@ -97585,7 +97638,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T22:49:57+00:00",
+      "updatedAt": "2026-11-10T23:00:22+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97704,6 +97757,15 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0102-4ce1-8d2e-9f0f0c06149c"
             }
           ]
+        },
+        {
+          "text": "On the same #17428 head, ARM64 Docker partition 5 of 8 ran the owning integration_test target and passed in 16.8 seconds. Its log does not report an individual TestSudo result.",
+          "evidence": [
+            {
+              "label": "#17428 · ARM64 Docker partition 5",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0104-478a-b673-bf61cb127c67"
+            }
+          ]
         }
       ],
       "nextStep": "Check the corresponding cgroup v1 partition and verify the traced sudo case on the merged revision of #17428.",
@@ -97775,6 +97837,10 @@
         {
           "label": "#17428 · corresponding cgroup v1 partition",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0100-41ed-bfc6-41fe68c43eaa"
+        },
+        {
+          "label": "#17428 · ARM64 Docker partition 5",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0104-478a-b673-bf61cb127c67"
         }
       ],
       "settledReviews": [
@@ -97917,7 +97983,75 @@
         "requestedAt": "2026-11-10T22:11:26+00:00",
         "summary": "Open the single-commit DinD fix so the image test returns at its ten-minute deadline?"
       }
+    },
+    {
+      "id": "investigation:ci-flake-node-tick-processor",
+      "title": "Node tick-processor test times out while checking --preprocess",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-10T23:00:22+00:00",
+      "summary": "The Node 22.2.0 test tick-processor/test-tick-processor-preprocess-flag timed out on #17425 (040ae629f) and #17428 (aa0152a6a). The Node target passed on each same-head retry.",
+      "findings": [
+        {
+          "text": "The original logs identify the same test and record TIMEOUT. On retry, the sharded Node target passed in 181.7 seconds on #17425 and 160.7 seconds on #17428. The retries report target-level timings.",
+          "evidence": [
+            {
+              "label": "Original timeout on #17425",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54303/jobs/01a1c77c-d7ee-46c9-89dd-1d6626a6be65/artifacts/01a1c78c-c3cb-407a-8b8b-f2ac59f26c47"
+            },
+            {
+              "label": "Passing Node target on the same #17425 head",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54303#01a1c78e-31ff-45d1-a536-20b615c4b3d7"
+            },
+            {
+              "label": "Original timeout on #17428",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54309/jobs/01a1c793-011c-414f-9bbb-d2ed4823b709/artifacts/01a1c79e-4a03-4c8d-a228-4324a3f9d88d"
+            },
+            {
+              "label": "Passing Node target on the same #17428 head",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c79f-d7f8-4e27-918d-b91832ae7161"
+            }
+          ]
+        },
+        {
+          "text": "The test asks for --preprocess. The helper passes the flag on its first attempt and drops it when it retries. What triggered the first timeout in either CI job remains unknown.",
+          "evidence": [
+            {
+              "label": "The test requests --preprocess",
+              "url": "https://github.com/nodejs/node/blob/v22.2.0/test/tick-processor/test-tick-processor-preprocess-flag.js#L11-L19"
+            },
+            {
+              "label": "Retry in the Node 22.2.0 helper",
+              "url": "https://github.com/nodejs/node/blob/ab11f834f/test/tick-processor/tick-processor-base.js#L51-L54"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare the original and corrected retry on the same Node version and verify whether the flag loss prevents recovery after the first attempt misses.",
+      "evidence": [
+        {
+          "label": "Original timeout on #17425",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54303/jobs/01a1c77c-d7ee-46c9-89dd-1d6626a6be65/artifacts/01a1c78c-c3cb-407a-8b8b-f2ac59f26c47"
+        },
+        {
+          "label": "Passing Node target on the same #17425 head",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54303#01a1c78e-31ff-45d1-a536-20b615c4b3d7"
+        },
+        {
+          "label": "Original timeout on #17428",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54309/jobs/01a1c793-011c-414f-9bbb-d2ed4823b709/artifacts/01a1c79e-4a03-4c8d-a228-4324a3f9d88d"
+        },
+        {
+          "label": "Passing Node target on the same #17428 head",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c79f-d7f8-4e27-918d-b91832ae7161"
+        },
+        {
+          "label": "Linux comparison on the original Node version",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42919285287"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-10T22:49:57+00:00"
+  "updatedAt": "2026-11-10T23:00:22+00:00"
 }
