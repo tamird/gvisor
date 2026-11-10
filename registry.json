@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T17:59:30+00:00",
+    "updatedAt": "2026-11-10T18:08:31+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54551,7 +54551,7 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T17:59:30+00:00",
+      "updatedAt": "2026-11-10T18:04:33+00:00",
       "summary": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic.",
       "evidence": [
         {
@@ -54581,14 +54581,26 @@
         {
           "label": "Original inference experiment",
           "url": "https://github.com/tamird/gvisor/commit/75000d12b"
+        },
+        {
+          "label": "Duplicate on current source and both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42865806042/artifacts/13788581148"
+        },
+        {
+          "label": "Revised callback fixtures, production overlay and guard diagnostics",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42868843500/artifacts/13790280816"
+        },
+        {
+          "label": "Original report and reproducer",
+          "url": "https://github.com/google/gvisor/pull/16868#discussion_r4528075991"
         }
       ],
       "refinement": {
         "before": {
-          "head": "7563a597b1f2f7a1841d871623837f06a28aab9d"
+          "head": "28a833a1de20530ab20efdb3d55b0a76e64276b8"
         },
         "after": {
-          "head": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
+          "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
@@ -54618,14 +54630,26 @@
       "followup": {
         "owner": "intake",
         "sourceHead": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
-        "observedAt": "2026-11-10T17:59:30+00:00",
-        "disposition": "The reviewer reproduced two diagnostics for one guarded field read. The first comparison confirmed the duplicate on AMD64 and ARM64. The adjusted fixture also checks two distinct guard violations at the same position.",
-        "nextAction": "Check the two-architecture Nogo results for 6ca7addca, then present the single revision and its inline response for contributor review.",
+        "observedAt": "2026-11-10T18:04:33+00:00",
+        "disposition": "A caller-supplied reproducer generated two diagnostics for one field read. On AMD64 and ARM64, the amendment reports it once and preserves distinct guard failures at the same call site. The callback fixtures and production overlay passed on both architectures.",
+        "nextAction": "Once approved, publish the single amendment to #16868 and reply on the original review thread.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16868#discussion_r4528075991",
           "https://github.com/tamird/gvisor/commit/6ca7addca",
-          "https://github.com/tamird/gvisor/actions/runs/42868843500"
+          "https://github.com/tamird/gvisor/actions/runs/42868843500/artifacts/13790280816",
+          "https://github.com/tamird/gvisor/actions/runs/42865806042/artifacts/13788581148"
         ]
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
+        "baseHead": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
+        "url": "https://github.com/tamird/gvisor/commit/6ca7addca",
+        "requestedAt": "2026-11-10T18:04:33+00:00",
+        "title": "Report one checklocks diagnostic per source access and guard",
+        "summary": "Publish 6ca7addca and reply on the original #16868 review thread.",
+        "body": "A caller-supplied reproducer generated two diagnostics for one field read. On AMD64 and ARM64, the amendment reports it once and preserves distinct guard failures at the same call site. The callback fixtures and production overlay passed on both architectures.\n\nProposed reply\n\nYou’re right. The same read of `h.ptr.guardedField` was reported twice when checklocks gave the pointer a new internal name on the second visit. I kept the check and declared guard in the key as well as the position: a callback can call the same helper with an excluded lock held on one visit and a required lock missing on the next. The regression tests cover both cases.\n\nPosted by Codex on behalf of @tamird.\n\ngit -C ~/code/gvisor range-diff 28a833a1d^! 6ca7addca^!"
       }
     },
     {
@@ -71239,8 +71263,8 @@
       "url": "https://github.com/google/gvisor/issues/16670",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T17:50:51+00:00",
-      "summary": "The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option.",
+      "updatedAt": "2026-11-10T18:08:31+00:00",
+      "summary": "The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option. The guide also links Andrea’s decision to close #16953 in favor of #17082.",
       "evidence": [
         {
           "label": "Existing TCP review guide",
@@ -71253,6 +71277,10 @@
         {
           "label": "TCP review guide updated with Andrea’s measured comparison",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Andrea closed #16953 in favor of #17082",
+          "url": "https://github.com/google/gvisor/pull/16953#issuecomment-6774757187"
         }
       ],
       "settledReviews": [
@@ -96825,5 +96853,5 @@
       "nextStep": "On the next original failure, capture the debugger’s event progress and the worker’s CPU and memory pressure. The isolated and eight-shard comparisons both passed."
     }
   ],
-  "updatedAt": "2026-11-10T17:59:30+00:00"
+  "updatedAt": "2026-11-10T18:08:31+00:00"
 }
