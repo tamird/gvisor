@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T20:37:32+00:00",
+    "updatedAt": "2026-11-10T20:59:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54766,14 +54766,26 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/checklocks-callback-facts",
-      "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
+      "head": "b968f4defe4632c2f168af37003ca59216fd4027",
       "title": "checklocks: infer when callbacks can use the caller’s locks",
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T20:37:32+00:00",
-      "summary": "Both architecture analyzers reported an unresolved guard for the ignored caller on 6ca7addca. The revision suppressed that finding and preserved it for an ordinary caller. The latest revision also removes explicit String calls from formatted diagnostics.",
+      "updatedAt": "2026-11-10T20:57:16+00:00",
+      "summary": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
       "evidence": [
+        {
+          "label": "Reply on the ignored callback guard",
+          "url": "https://github.com/google/gvisor/pull/16868#discussion_r4530412516"
+        },
+        {
+          "label": "Full callback suite and four original diagnostic messages per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42897002914/artifacts/13802036928"
+        },
+        {
+          "label": "Published formatting-only revision",
+          "url": "https://github.com/tamird/gvisor/commit/06dd5df8a"
+        },
         {
           "label": "Ignored and ordinary callers on both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42894329342/artifacts/13800951044"
@@ -54845,7 +54857,7 @@
       ],
       "refinement": {
         "before": {
-          "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0"
+          "head": "06dd5df8ae456915c1b659cc1607d15ffc696d3e"
         },
         "after": {
           "head": "b968f4defe4632c2f168af37003ca59216fd4027",
@@ -54886,16 +54898,34 @@
           "at": "2026-11-10T18:45:59+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16868#discussion_r4529053276",
           "note": "Published the amendment and replied on the original review. The analyzer reports the repeated read once and preserves distinct guard failures at one call site on AMD64 and ARM64."
+        },
+        {
+          "kind": "amendment",
+          "head": "b968f4defe4632c2f168af37003ca59216fd4027",
+          "baseHead": "06dd5df8ae456915c1b659cc1607d15ffc696d3e",
+          "url": "https://github.com/tamird/gvisor/commit/b968f4def",
+          "requestedAt": "2026-11-10T20:48:02+00:00",
+          "title": "Honor checklocksignore when checking callbacks",
+          "summary": "The remaining amendment suppresses an unresolved guard in an ignored caller. The same call still reports it in an ordinary caller. Both architectures passed the complete callback suite.",
+          "body": "The three-line guard suppresses callback diagnostics in an ignored caller. Its anonymous callbacks still inherit that annotation. The test exercises the named and anonymous callback cases.\n\nOn AMD64 and ARM64, the published analyzer reported an unresolved guard for the ignored caller. The amended analyzer accepted it. An ordinary caller still reported the same error. Removing four expected-failure annotations on each architecture also produced identical full diagnostic strings before and after the formatting cleanup.",
+          "replyBody": "The ignored caller now passes its guarded predicate to slices.ContainsFunc without reporting the unresolved guard. An ordinary caller still gets the diagnostic for the same call. The regression also covers an ignored caller that reads the field inside an anonymous callback.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-10T20:57:16+00:00",
+          "note": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
+          "postedURL": "https://github.com/google/gvisor/pull/16868#discussion_r4530412516"
         }
       ],
       "number": 16868,
       "followup": {
-        "owner": "Checklocks implementation",
-        "sourceHead": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
-        "observedAt": "2026-11-10T20:37:32+00:00",
-        "disposition": "Both architecture analyzers reported an unresolved guard for the ignored caller on 6ca7addca. The revision suppressed that finding and preserved it for an ordinary caller. The latest revision also removes explicit String calls from formatted diagnostics.",
-        "nextAction": "Check that the final revision passes the callback suite and preserves the full diagnostic text for missing guards and unbalanced callback locks on AMD64 and ARM64.",
+        "owner": "Upstream review",
+        "sourceHead": "b968f4defe4632c2f168af37003ca59216fd4027",
+        "observedAt": "2026-11-10T20:57:16+00:00",
+        "disposition": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
+        "nextAction": "Follow maintainer review of the published amendment and the import.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16868#discussion_r4530412516",
+          "https://github.com/tamird/gvisor/actions/runs/42897002914/artifacts/13802036928",
+          "https://github.com/tamird/gvisor/commit/06dd5df8a",
           "https://github.com/google/gvisor/pull/16868#discussion_r4529967286",
           "https://github.com/tamird/gvisor/commit/b968f4def",
           "https://github.com/tamird/gvisor/actions/runs/42897002914",
@@ -65697,13 +65727,33 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/shared-testprocess-systrap-wait",
-      "head": "122b98abdf94f0000340b489c1da77505051de0d",
+      "head": "6b171e1d51728e414c10e7ba0188f90f8438eb75",
       "title": "Use one test process for shim timeouts and runsc lifecycle tests",
       "url": "https://github.com/tamird/gvisor/commit/122b98abd",
       "group": "tests",
       "status": "Published",
-      "summary": "The systrap test reaps its child after observing the stop. The old cleanup returned ECHILD in 10 of 128 runs; all 128 passed with the change. Across the five native Linux suites, 124 records passed and the process-identity case skipped for lack of pidfs. All five ARM64 test binaries built.",
+      "summary": "Published the patch-equivalent rebase as a single commit on #17336. All 601 changed path and line records across 15 files match the previous PR. All ten specutils cases passed uncached on the pidfs-capable Linux 7.0 worker, including TestProcessIdentity and all three new bundle-validation subcases.",
       "evidence": [
+        {
+          "label": "All ten cases on a pidfs-capable worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42899668212/artifacts/13801594393"
+        },
+        {
+          "label": "Original specutils log and XML: nine passes and one pidfs skip",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42897501213/artifacts/13800339730"
+        },
+        {
+          "label": "Follow-up stopped before Bazel could start the test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42899279610"
+        },
+        {
+          "label": "Published rebase of #17336",
+          "url": "https://github.com/tamird/gvisor/commit/6b171e1d5"
+        },
+        {
+          "label": "Rebased specutils suite and new bundle validation cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42897501213"
+        },
         {
           "label": "Published gVisor PR #17336",
           "url": "https://github.com/google/gvisor/pull/17336"
@@ -65757,7 +65807,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-10T00:33:29+00:00",
+      "updatedAt": "2026-11-10T20:59:05+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -65816,14 +65866,17 @@
         }
       },
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "122b98abdf94f0000340b489c1da77505051de0d",
-        "observedAt": "2026-11-10T00:33:29+00:00",
-        "disposition": "Published",
-        "nextAction": "Follow upstream review on #17336.",
+        "owner": "Upstream review",
+        "sourceHead": "6b171e1d51728e414c10e7ba0188f90f8438eb75",
+        "observedAt": "2026-11-10T20:59:05+00:00",
+        "disposition": "Published the patch-equivalent rebase as a single commit on #17336. All 601 changed path and line records across 15 files match the previous PR. All ten specutils cases passed uncached on the pidfs-capable Linux 7.0 worker, including TestProcessIdentity and all three new bundle-validation subcases.",
+        "nextAction": "Follow maintainer review of the published PR.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42899668212/artifacts/13801594393",
+          "https://github.com/tamird/gvisor/actions/runs/42897501213/artifacts/13800339730",
+          "https://github.com/tamird/gvisor/actions/runs/42899279610",
           "https://github.com/google/gvisor/pull/17336",
-          "https://github.com/tamird/gvisor/actions/runs/42720109893/artifacts/13724170407"
+          "https://github.com/tamird/gvisor/actions/runs/42897501213"
         ]
       },
       "inactive": true
@@ -71756,21 +71809,14 @@
       "title": "Wait for the idle UDP flow to release its netgofer slot",
       "url": "https://github.com/tamird/gvisor/commit/9401960a0",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-10T20:27:16+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-10T20:57:16+00:00",
       "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
-        "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
-        "title": "Wait for the idle UDP flow to release its netgofer slot",
-        "url": "https://github.com/tamird/gvisor/commit/9401960a0",
-        "requestedAt": "2026-11-10T20:27:16+00:00",
-        "summary": "Open the netgofer test fix? The second flow can start once the first flow releases its slot.",
-        "body": "The host socket closes while the UDP forwarder is still unwinding.\nStarting a second flow at that point can hit the one-connection limit.\nThe ARM64 unit test failed when Write on the second socket returned\nconnection refused. [1]\n\nKeep the first client socket open and wait for the only forwarding\nslot to become available. Then require the second flow to echo its\nfirst datagram. This also reports a leaked slot directly.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
-      },
       "evidence": [
+        {
+          "label": "Published netgofer test fix",
+          "url": "https://github.com/google/gvisor/pull/17416"
+        },
         {
           "label": "Original Buildkite ARM64 failure",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
@@ -71783,7 +71829,35 @@
           "label": "CI flake investigation",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aci-flake-netgofer-udp-idle"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+          "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
+          "title": "Wait for the idle UDP flow to release its netgofer slot",
+          "url": "https://github.com/tamird/gvisor/commit/9401960a0",
+          "requestedAt": "2026-11-10T20:27:16+00:00",
+          "summary": "Open the netgofer test fix? The second flow can start once the first flow releases its slot.",
+          "body": "The host socket closes while the UDP forwarder is still unwinding.\nStarting a second flow at that point can hit the one-connection limit.\nThe ARM64 unit test failed when Write on the second socket returned\nconnection refused. [1]\n\nKeep the first client socket open and wait for the only forwarding\nslot to become available. Then require the second flow to echo its\nfirst datagram. This also reports a leaked slot directly.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46",
+          "outcome": "approved",
+          "at": "2026-11-10T20:57:16+00:00",
+          "note": "Published the approved test fix as one mergeable commit on #17416. The native ARM64 test passed eight times after the first flow released its slot.",
+          "postedURL": "https://github.com/google/gvisor/pull/17416"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+        "observedAt": "2026-11-10T20:57:16+00:00",
+        "disposition": "Published the approved test fix as one mergeable commit on #17416. The native ARM64 test passed eight times after the first flow released its slot.",
+        "nextAction": "Follow checks and maintainer review on #17416.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17416",
+          "https://github.com/tamird/gvisor/actions/runs/42893640379/artifacts/13799004508"
+        ]
+      }
     },
     {
       "repo": "google/gvisor",
@@ -71873,6 +71947,65 @@
       "head": "098e0a9a54b8236078bd485221314876364504ab",
       "url": "https://github.com/google/gvisor/pull/17407",
       "status": "open"
+    },
+    {
+      "id": "pr:17416",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/netgofer-wait-for-idle-slot",
+      "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+      "title": "Wait for the idle UDP flow to release its netgofer slot",
+      "url": "https://github.com/google/gvisor/pull/17416",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-10T20:57:16+00:00",
+      "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
+      "evidence": [
+        {
+          "label": "Published netgofer test fix",
+          "url": "https://github.com/google/gvisor/pull/17416"
+        },
+        {
+          "label": "Original Buildkite ARM64 failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46"
+        },
+        {
+          "label": "Original Linux ARM64 test logs and admission counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42893640379/artifacts/13799004508"
+        },
+        {
+          "label": "CI flake investigation",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aci-flake-netgofer-udp-idle"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+          "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
+          "title": "Wait for the idle UDP flow to release its netgofer slot",
+          "url": "https://github.com/tamird/gvisor/commit/9401960a0",
+          "requestedAt": "2026-11-10T20:27:16+00:00",
+          "summary": "Open the netgofer test fix? The second flow can start once the first flow releases its slot.",
+          "body": "The host socket closes while the UDP forwarder is still unwinding.\nStarting a second flow at that point can hit the one-connection limit.\nThe ARM64 unit test failed when Write on the second socket returned\nconnection refused. [1]\n\nKeep the first client socket open and wait for the only forwarding\nslot to become available. Then require the second flow to echo its\nfirst datagram. This also reports a leaked slot directly.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54231#01a1c6cf-60a8-4ce9-97ff-c41d0db01b46",
+          "outcome": "approved",
+          "at": "2026-11-10T20:57:16+00:00",
+          "note": "Published the approved test fix as one mergeable commit on #17416. The native ARM64 test passed eight times after the first flow released its slot.",
+          "postedURL": "https://github.com/google/gvisor/pull/17416"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+        "observedAt": "2026-11-10T20:57:16+00:00",
+        "disposition": "Published the approved test fix as one mergeable commit on #17416. The native ARM64 test passed eight times after the first flow released its slot.",
+        "nextAction": "Follow checks and maintainer review on #17416.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17416",
+          "https://github.com/tamird/gvisor/actions/runs/42893640379/artifacts/13799004508"
+        ]
+      },
+      "number": 17416
     }
   ],
   "edges": [
@@ -97298,7 +97431,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T20:27:16+00:00",
+      "updatedAt": "2026-11-10T20:57:16+00:00",
       "summary": "On #17390, the ARM64 TestProxyUDPIdleTimeout failed on its second flow with connection refused. Buildkite reran the same target on the same commit and it passed in 0.2 seconds.",
       "findings": [
         {
@@ -97332,8 +97465,12 @@
           ]
         }
       ],
-      "nextStep": "Review the single-commit fix that waits for the forwarding slot before sending on the second flow.",
+      "nextStep": "Follow the published test fix on #17416 through upstream review.",
       "evidence": [
+        {
+          "label": "Published netgofer test fix",
+          "url": "https://github.com/google/gvisor/pull/17416"
+        },
         {
           "label": "Single-commit netgofer test fix",
           "url": "https://github.com/tamird/gvisor/commit/9401960a0"
@@ -97362,7 +97499,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T20:31:58+00:00",
+      "updatedAt": "2026-11-10T20:57:16+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97422,11 +97559,15 @@
             {
               "label": "Systrap tracing change",
               "url": "https://github.com/google/gvisor/pull/15938"
+            },
+            {
+              "label": "Original traced exec and exit logs",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54208/jobs/01a1c697-6f9d-4cc4-85bd-9a4941acff68/artifacts/01a1c6b5-8928-4fa6-a3d5-c04e597fc6f0"
             }
           ]
         }
       ],
-      "nextStep": "Compare the strace-wrapped sudo command on deb6b3ea1 and 1b8388552, and identify which tracer or tracee stops making progress.",
+      "nextStep": "Compare the fourth exec on deb6b3ea1 and 1b8388552 to identify where the tracer and tracee stop. Reproduce the hang and test a fix against the passing parent.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97452,8 +97593,21 @@
           "label": "Third TestSudo timeout on cgroup v1",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54234#01a1c712-c659-4c16-af5e-1efd5d6dfbf7"
         }
+      ],
+      "settledReviews": [
+        {
+          "kind": "issue",
+          "title": "systrap: TestSudo hangs in the traced exec after #15938",
+          "url": "https://github.com/google/gvisor/issues/new",
+          "requestedAt": "2026-11-10T20:45:01+00:00",
+          "summary": "Ask the systrap owners to investigate the traced sudo command. Both cgroup suites passed on the parent and timed out on the merge.",
+          "body": "`TestSudo` now hits the 15-minute Docker integration suite timeout on master. The test expects the traced `sudo whoami` invocation to exit with an error. Instead, the Docker client is still waiting for output when the suite times out. Could the systrap owners investigate why this traced exec does not finish? [Test source](https://github.com/google/gvisor/blob/1b8388552/test/e2e/integration_test.go#L1476-L1480)\n\nOn `deb6b3ea1`, the integration target passed in the same Docker partition in 23.5s on [cgroup v1](https://buildkite.com/gvisor/pipeline/builds/54186#01a1c554-c187-4073-b0d8-caa837c55cf3) and 26.0s on [cgroup v2](https://buildkite.com/gvisor/pipeline/builds/54186#01a1c554-c189-4429-9b65-3443d3106142). Its immediate successor, `1b8388552`, merged #15938. On that commit both [v1](https://buildkite.com/gvisor/pipeline/builds/54208#01a1c697-6f9d-4cc4-85bd-9a4941acff68) and [v2](https://buildkite.com/gvisor/pipeline/builds/54208#01a1c697-6fa0-47d1-9c2d-1b5ae5c9ad75) timed out in the same call.\n\nIn the v1 runtime logs, the first three execs completed with their expected statuses (0, 0, 1). The Sentry then logged the traced exec at 18:10:53 UTC. Its waiter is the only one with no exit status. [Original runsc logs](https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54208/jobs/01a1c697-6f9d-4cc4-85bd-9a4941acff68/artifacts/01a1c6b5-8928-4fa6-a3d5-c04e597fc6f0)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-10T20:57:16+00:00",
+          "note": "Filing is approved. The contributor asked us to diagnose and fix the traced exec hang first."
+        }
       ]
     }
   ],
-  "updatedAt": "2026-11-10T20:37:32+00:00"
+  "updatedAt": "2026-11-10T20:59:05+00:00"
 }
