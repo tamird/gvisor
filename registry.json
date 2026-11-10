@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T19:01:16+00:00",
+    "updatedAt": "2026-11-10T19:08:02+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30639,21 +30639,26 @@
       "id": "branch:plugin-toolchain-unwind",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/plugin-musl-current",
-      "head": "dd63198c66946d7a38279478369bf269243a6ef4",
-      "title": "Build the TLDK plugin against musl",
-      "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
+      "ref": "research/tldk-compiler-musl-upstream-deb6",
+      "head": "641c450420c005c84d09b974388996e39ba177e4",
+      "title": "Build the TLDK network plugin with musl",
+      "url": "https://github.com/tamird/gvisor/commit/641c45042",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-10T16:46:46+00:00",
-      "summary": "The installed AMD64 musl TLDK plugin carried TCP and UDP. The integration b2c944f33 combines the hermetic compiler 4bee07965 with the TLDK port 1b1d83bf4. Both Make steps passed. The DPDK Sentry initialized and exchanged a 257-byte request and 383-byte reply on each protocol. The bridge captured all four payloads, and the runc control passed. The external_traffic Bazel test passed 1/1. The wrapper subsequently reported INCOMPLETE while copying an optional test metadata length.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T19:08:02+00:00",
+      "summary": "The static TLDK plugin needs musl to link with hermetic LLVM. The revised port gets the BSD queue header from the declared toolchain and uses the compiler's unwinder. The stack dump test passed with GNU and musl on this commit. With the compiler switch applied, the installed plugin and runc each exchanged TCP and UDP packets across the Docker bridge.",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "dd63198c66946d7a38279478369bf269243a6ef4",
-        "observedAt": "2026-11-10T16:46:46+00:00",
-        "disposition": "The installed AMD64 musl TLDK plugin carried TCP and UDP. The integration b2c944f33 combines the hermetic compiler 4bee07965 with the TLDK port 1b1d83bf4. Both Make steps passed. The DPDK Sentry initialized and exchanged a 257-byte request and 383-byte reply on each protocol. The bridge captured all four payloads, and the runc control passed. The external_traffic Bazel test passed 1/1. The wrapper subsequently reported INCOMPLETE while copying an optional test metadata length.",
-        "nextAction": "Evaluate the optional musl port alongside the compiler migration. It uses the declared supplier BSD queue header and LLVM _Unwind_Backtrace. The separately tested scoped GNU build failed at plugin startup on both its parent and its revision.",
+        "owner": "Contributor",
+        "sourceHead": "641c450420c005c84d09b974388996e39ba177e4",
+        "observedAt": "2026-11-10T19:08:02+00:00",
+        "disposition": "The static TLDK plugin needs musl to link with hermetic LLVM. The revised port gets the BSD queue header from the declared toolchain and uses the compiler's unwinder. The stack dump test passed with GNU and musl on this commit. With the compiler switch applied, the installed plugin and runc each exchanged TCP and UDP packets across the Docker bridge.",
+        "nextAction": "Review 641c45042 for a new gVisor PR. #15153 has merged.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787143663",
+          "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787653422",
+          "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878",
+          "https://github.com/tamird/gvisor/actions/runs/42875781068/artifacts/13792309774",
+          "https://github.com/alipay/tldk/tree/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88/dpdk/dpdk-v18.11_patches",
           "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038",
           "https://github.com/tamird/gvisor/commit/b2c944f33",
           "https://github.com/tamird/gvisor/commit/1b1d83bf4",
@@ -30667,6 +30672,26 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Standalone GNU build and stack test on 641c45042",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787143663"
+        },
+        {
+          "label": "Standalone musl build and stack test on 641c45042",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787653422"
+        },
+        {
+          "label": "Installed plugin and runc TCP and UDP comparison on compiler integration 146a0c060",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878"
+        },
+        {
+          "label": "Make-installed binaries on compiler integration 146a0c060",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42875781068/artifacts/13792309774"
+        },
+        {
+          "label": "TLDK's DPDK patches for plugin device descriptors",
+          "url": "https://github.com/alipay/tldk/tree/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88/dpdk/dpdk-v18.11_patches"
+        },
         {
           "label": "Installed musl DPDK plugin and runc, original TCP and UDP traffic results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038"
@@ -30850,12 +30875,12 @@
       ],
       "refinement": {
         "before": {
-          "head": "603b1231738582ca6559d2a5e098598669842c3c",
-          "base": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa"
-        },
-        "after": {
           "head": "dd63198c66946d7a38279478369bf269243a6ef4",
           "base": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d"
+        },
+        "after": {
+          "head": "641c450420c005c84d09b974388996e39ba177e4",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
       "settledReviews": [
@@ -30876,9 +30901,16 @@
           "note": "The proposed musl port is on hold for a DPDK and toolchain investigation."
         }
       ],
-      "contributorChangesRequested": {
-        "head": "dd63198c66946d7a38279478369bf269243a6ef4",
-        "url": "https://github.com/tamird/gvisor/commit/dd63198c6"
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "641c450420c005c84d09b974388996e39ba177e4",
+        "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
+        "url": "https://github.com/tamird/gvisor/commit/641c45042",
+        "title": "Build the TLDK network plugin with musl",
+        "summary": "Open this as a new gVisor PR? #15153 has merged. The port applies cleanly to dd49ce763.\n\ngit -C ~/code/gvisor range-diff dd63198c6^! 641c45042^!",
+        "body": "The static network plugin cannot use hermetic LLVM's GNU sysroot, which supplies shared-library stubs. Building it with musl instead exposes glibc assumptions in TLDK and its patched DPDK 18.11. The vendor patches give DPDK the open device descriptors it needs in the sandbox and do not apply to current DPDK releases.\n\nUse the public IPv6 address members and take the BSD queue header from the already declared GNU sysroot. Use LLVM's linker for DPDK's relocatable objects and its objdump for symbol inspection.\n\nKeep glibc's stack dump. On musl, collect the frame addresses with the compiler unwinder. Exercise the dump from a static Go binary so the test includes the call across the cgo boundary.",
+        "requestedAt": "2026-11-10T19:08:02+00:00"
       }
     },
     {
