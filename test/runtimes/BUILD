@@ -1,5 +1,5 @@
 load("//test/runtimes:defs.bzl", "runtime_test")
-load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
+load("//tools:defs.bzl", "bzl_library", "go_test", "more_shards", "most_shards")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -46,4 +46,18 @@ bzl_library(
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
     deps = ["//tools:defs_bzl"],
+)
+
+go_test(
+    name = "java_unref_admission_qualification",
+    size = "enormous",
+    srcs = ["qualification_unreffd_test.go"],
+    args = ["-proctor=$(rootpath //test/runtimes/proctor:proctor_bin)"],
+    data = [
+        "exclude/java21.csv",
+        "java21-parent.csv",
+        "//test/runtimes/proctor:proctor_bin",
+    ],
+    tags = ["manual"],
+    deps = ["//test/runtimes/runner/lib"],
 )
