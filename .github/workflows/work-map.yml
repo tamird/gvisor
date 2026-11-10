@@ -15,7 +15,7 @@ jobs:
   refresh:
     if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 360 || 30 }}
     permissions:
       contents: write
       pages: write
@@ -66,18 +66,32 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST repos/tamird/gvisor/pages/builds --jq '{status, url}'
-      - name: Remind approvers of amended source
+      - name: Choose outreach mode
+        id: outreach
         env:
-          GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
           COMMENT_TOKEN_CONFIGURED: ${{ secrets.WORK_MAP_COMMENT_TOKEN != '' }}
           COMMENT_POSTING_PAUSED: ${{ vars.WORK_MAP_POSTING_PAUSED }}
         run: |
           if [[ "$COMMENT_POSTING_PAUSED" == 'true' ]]; then
             echo 'Automatic comments paused; snapshot collection remains enabled.' >> "$GITHUB_STEP_SUMMARY"
-            python3 update-status.py --reapproval-reminders plan
+            mode=plan
           elif [[ "$COMMENT_TOKEN_CONFIGURED" == 'true' ]]; then
-            python3 update-status.py --reapproval-reminders post
+            mode=post
           else
             echo 'Automatic comments disabled: WORK_MAP_COMMENT_TOKEN is not configured.' >> "$GITHUB_STEP_SUMMARY"
-            python3 update-status.py --reapproval-reminders plan
+            mode=plan
           fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+      - name: Remind approvers of amended source
+        env:
+          GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
+          MODE: ${{ steps.outreach.outputs.mode }}
+        run: python3 update-status.py --reapproval-reminders "$MODE"
+      - name: Follow up on outstanding source reviews
+        timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 360 || 15 }}
+        if: ${{ !cancelled() && steps.outreach.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
+          WORK_MAP_SCHEDULED_REVIEW_OUTREACH: ${{ github.event_name == 'schedule' }}
+          MODE: ${{ steps.outreach.outputs.mode }}
+        run: python3 update-status.py --review-outreach "$MODE"
