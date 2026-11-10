@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T17:50:51+00:00",
+    "updatedAt": "2026-11-10T17:59:30+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54551,7 +54551,7 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T15:50:35+00:00",
+      "updatedAt": "2026-11-10T17:59:30+00:00",
       "summary": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic.",
       "evidence": [
         {
@@ -54616,14 +54616,15 @@
       ],
       "number": 16868,
       "followup": {
-        "owner": "Upstream review",
+        "owner": "intake",
         "sourceHead": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
-        "observedAt": "2026-11-10T15:50:35+00:00",
-        "disposition": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic.",
-        "nextAction": "Follow checks and maintainer review on the published head.",
+        "observedAt": "2026-11-10T17:59:30+00:00",
+        "disposition": "The reviewer reproduced two diagnostics for one guarded field read. The first comparison confirmed the duplicate on AMD64 and ARM64. The adjusted fixture also checks two distinct guard violations at the same position.",
+        "nextAction": "Check the two-architecture Nogo results for 6ca7addca, then present the single revision and its inline response for contributor review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42843650249/artifacts/13778675061",
-          "https://github.com/google/gvisor/pull/16868"
+          "https://github.com/google/gvisor/pull/16868#discussion_r4528075991",
+          "https://github.com/tamird/gvisor/commit/6ca7addca",
+          "https://github.com/tamird/gvisor/actions/runs/42868843500"
         ]
       }
     },
@@ -56395,9 +56396,9 @@
       "title": "Review the ACK for a segment that fills a gap",
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-10T17:50:51+00:00",
-      "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nOn native Linux, the sender observed an ACK 6–14 µs after the receiver started setting TCP_QUICKACK following a read (four trials). Without that request, the ACK arrived 40–41 ms after the data. On controlled packet clocks, #16953 with delayed ACKs enabled waited 40 ms in both cases. #17082 sent the ACK immediately on request. With the receive-side MSS fixed at 536 bytes, both PRs acknowledged the second 536-byte segment immediately when the peer advertised MSS 536. When only the peer’s advertised MSS changed to 1,460, #16953 waited 40 ms and #17082 still acknowledged immediately. Andrea supplied the TamaGo comparison; the response on the original thread recommends using #17082 and keeping the Redis benchmark.",
+      "status": "closed",
+      "updatedAt": "2026-11-10T17:59:30+00:00",
+      "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nOn native Linux, the sender observed an ACK 6–14 µs after the receiver started setting TCP_QUICKACK following a read (four trials). Without that request, the ACK arrived 40–41 ms after the data. On controlled packet clocks, #16953 with delayed ACKs enabled waited 40 ms in both cases. #17082 sent the ACK immediately on request. With the receive-side MSS fixed at 536 bytes, both PRs acknowledged the second 536-byte segment immediately when the peer advertised MSS 536. When only the peer’s advertised MSS changed to 1,460, #16953 waited 40 ms and #17082 still acknowledged immediately. Andrea supplied the TamaGo comparison; the response on the original thread recommends using #17082 and keeping the Redis benchmark. Andrea closed this PR in favor of #17082 after comparing both on TamaGo.",
       "evidence": [
         {
           "label": "Andrea’s TamaGo Redis and TCP comparison",
@@ -56474,6 +56475,10 @@
         {
           "label": "Published response on Andrea’s Redis comparison",
           "url": "https://github.com/google/gvisor/pull/16953#discussion_r4528257283"
+        },
+        {
+          "label": "Author closed this proposal in favor of #17082",
+          "url": "https://github.com/google/gvisor/pull/16953#issuecomment-6774757187"
         }
       ],
       "settledReviews": [
@@ -96768,7 +96773,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T17:41:21+00:00",
+      "updatedAt": "2026-11-10T17:59:30+00:00",
       "summary": "Java 21 com/sun/jdi/ThreadMemoryLeakTest.java failed on two different PR heads. After the target printed goodbye at 25,000 iterations, the JDI Target VM Interface thread reported OutOfMemoryError and jtreg reached its 600-second timeout. Both retried shards passed.",
       "findings": [
         {
@@ -96796,6 +96801,15 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42861926482/artifacts/13786097020"
             }
           ]
+        },
+        {
+          "text": "On one 4-CPU worker with 15.61 GiB of RAM, seven other original Java shard proctors ran alongside this test for 110 seconds. Both JTRs passed. The native target completed 253,332 thread iterations and the archived #54190 runsc completed 109,205. The seven siblings used 389 and 376 CPU-seconds respectively. No sibling reached its 1.25 GiB memory cap or was OOM-killed. The original failing workers’ resource limits are unknown.",
+          "evidence": [
+            {
+              "label": "Paired loaded Java JTRs and sibling resource measurements",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42867376567/artifacts/13788601685"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -96808,8 +96822,8 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/54159#01a1c397-3d60-42dc-bf31-0204787624f3"
         }
       ],
-      "nextStep": "Compare debugger event progress during the eight-shard workload. The isolated native and guest runs both passed."
+      "nextStep": "On the next original failure, capture the debugger’s event progress and the worker’s CPU and memory pressure. The isolated and eight-shard comparisons both passed."
     }
   ],
-  "updatedAt": "2026-11-10T17:50:51+00:00"
+  "updatedAt": "2026-11-10T17:59:30+00:00"
 }
