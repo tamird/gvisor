@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T23:18:03+00:00",
+    "updatedAt": "2026-11-10T23:26:20+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5375,7 +5375,7 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
-      "updatedAt": "2026-11-10T23:18:03+00:00",
+      "updatedAt": "2026-11-10T23:22:43+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6138,8 +6138,8 @@
         "owner": "Contributor",
         "sourceHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
         "disposition": "The installed systrap plugin and runc exchanged TCP and UDP. The original workflow failed on an obsolete GCC query label and a query that looked for auto on a pure=True runsc target. The actual release target kept its ordinary mode, and all three corrected GCC queries passed.",
-        "observedAt": "2026-11-10T21:39:45+00:00",
-        "nextAction": "Review the revision for publication after #16522, #16586, #16516, #17067, #17114 and the TLDK port at 244ef8019 land. To compare with the earlier approved source, run git -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 8178e3fe5^!.",
+        "observedAt": "2026-11-10T23:22:43+00:00",
+        "nextAction": "Review the revision for publication after #16522, #16586, #16516, #17067, #17114 and the TLDK port at 05bf77c06 land. To compare with the earlier approved source, run git -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 8178e3fe5^!.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8178e3fe5",
           "https://github.com/tamird/gvisor/actions/runs/42898754604/artifacts/13805865588",
@@ -67938,12 +67938,12 @@
       "repo": "bazel-contrib/bazel-gazelle",
       "number": 2510,
       "ref": "fix/defer-gazelle-runner-go-env",
-      "head": "685bcd62bd7bf6a077319f9dd047e2736659663e",
+      "head": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
       "title": "Load the Go environment when analyzing a runner",
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-10T23:18:03+00:00",
+      "updatedAt": "2026-11-10T23:26:20+00:00",
       "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
       "evidence": [
         {
@@ -67993,6 +67993,18 @@
         {
           "label": "Amendment published and reply to Fabian",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129"
+        },
+        {
+          "label": "Posted response to Jay",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6782048764"
+        },
+        {
+          "label": "Bazel 8.2.1 stock and revised loadfiles results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42922160423/artifacts/13812556771"
+        },
+        {
+          "label": "Single-commit test revision",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/c534b7cb8"
         }
       ],
       "settledReviews": [
@@ -68034,31 +68046,59 @@
           "outcome": "approved",
           "at": "2026-11-09T16:31:03+00:00",
           "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129"
+        },
+        {
+          "kind": "reply",
+          "head": "685bcd62bd7bf6a077319f9dd047e2736659663e",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6781073457",
+          "title": "Explain why the downstream vDSO build evaluated go_deps",
+          "requestedAt": "2026-11-10T23:18:03+00:00",
+          "summary": "Reply to Jay with the actual failing Bazel command and the downstream module that reproduced it?",
+          "body": "You're right that Gazelle writes `go_env.bzl`. In our case `go_deps` failed before it could create the repository. From a small Bazel module depending on gVisor, I ran:\n\n```sh\nbazel build --platforms=@gvisor//tools/bazeldefs:linux_arm64 @gvisor//vdso:vdso.so\n```\n\nOn Gazelle 8b89ee9f6 the error was `Using the \"go_deps.module_override\" tag in a non-root Bazel module is forbidden, but module \"gvisor\" requests it.` The vDSO is C++, but its BUILD file loads gVisor's common rules, which re-export `gazelle`. Loading that symbol evaluated the Go dependency graph. With the environment lookup deferred, the same command built the ARM64 vDSO. Targets that use those Go dependencies still need a valid override configuration.\n\nThe empty repository in the test was artificial. The [downstream module](https://github.com/tamird/gvisor/blob/2eaef0c7d/.github/qualification/supplier_gazelle.py#L48-L66) and [build results](https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819) show the original case.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-10T23:21:45Z",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6782048764",
+          "note": "The contributor approved the response to Jay. The published reply links the original downstream module and evidence."
+        },
+        {
+          "kind": "amendment",
+          "head": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
+          "baseHead": "685bcd62bd7bf6a077319f9dd047e2736659663e",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/c534b7cb8",
+          "requestedAt": "2026-11-10T23:22:43+00:00",
+          "title": "Load the Go environment when analyzing a runner",
+          "summary": "Publish the revised regression on Gazelle #2510? In the ordinary runner workspace, the stock Bazel 8.2.1 query loaded go_env.bzl and failed the new check. With the revision, the same test passed. Jay already has the original downstream failure and command.\n\ngit -C ~/code/bazel-gazelle range-diff 685bcd62b^! c534b7cb8^!",
+          "body": "A downstream build of gVisor's ARM64 vDSO failed while Bazel was\nloading its build rules [1]. Its BUILD file loads cc_binary through a\nmodule that also exports the Gazelle macro. Since 1deae95ac, loading that macro\nreads GO_ENV from bazel_gazelle_go_repository_config. Bazel evaluates\ngo_deps to generate the repository, and the extension rejects gVisor's\nmodule_override for protobuf because gVisor is not the root module.\n\nExpose GO_ENV through a target in the generated configuration repository\nand read it when analyzing a Gazelle runner. Packages can then load the\nmacro without evaluating go_deps. Runner-specific environment values\nstill override the generated values.\n\nQuery loadfiles(//:gazelle) in the existing runner test workspace to\ncheck that loading the target no longer loads go_env.bzl.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819",
+          "outcome": "approved",
+          "at": "2026-11-10T23:26:20+00:00",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
+          "note": "The approved test revision is published as the only commit on #2510. The PR description links both its loadfiles test and the downstream ARM64 vDSO results."
         }
       ],
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "685bcd62bd7bf6a077319f9dd047e2736659663e",
-        "observedAt": "2026-11-10T23:18:03+00:00",
-        "disposition": "Jay asked how go_env.bzl can be missing. The original dependency graph failed before go_deps could create the repository.",
-        "nextAction": "Review the reply with the original downstream command and results.",
+        "owner": "Upstream review",
+        "sourceHead": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
+        "observedAt": "2026-11-10T23:26:20+00:00",
+        "disposition": "Answered Jay and published c534b7cb8. The unchanged WORKSPACE loadfiles regression passed with the revised Gazelle; the PR description also links the original downstream ARM64 vDSO build failure.",
+        "nextAction": "Await maintainer review of the published revision and reply.",
         "evidence": [
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6781073457",
           "https://github.com/tamird/gvisor/blob/2eaef0c7d/.github/qualification/supplier_gazelle.py#L48-L66",
           "https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819",
           "https://github.com/tamird/bazel-gazelle/commit/685bcd62b",
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129"
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6782048764",
+          "https://github.com/tamird/gvisor/actions/runs/42922160423/artifacts/13812556771",
+          "https://github.com/tamird/bazel-gazelle/commit/c534b7cb8"
         ]
       },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "685bcd62bd7bf6a077319f9dd047e2736659663e",
-        "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6781073457",
-        "title": "Explain why the downstream vDSO build evaluated go_deps",
-        "requestedAt": "2026-11-10T23:18:03+00:00",
-        "summary": "Reply to Jay with the actual failing Bazel command and the downstream module that reproduced it?",
-        "body": "You're right that Gazelle writes `go_env.bzl`. In our case `go_deps` failed before it could create the repository. From a small Bazel module depending on gVisor, I ran:\n\n```sh\nbazel build --platforms=@gvisor//tools/bazeldefs:linux_arm64 @gvisor//vdso:vdso.so\n```\n\nOn Gazelle 8b89ee9f6 the error was `Using the \"go_deps.module_override\" tag in a non-root Bazel module is forbidden, but module \"gvisor\" requests it.` The vDSO is C++, but its BUILD file loads gVisor's common rules, which re-export `gazelle`. Loading that symbol evaluated the Go dependency graph. With the environment lookup deferred, the same command built the ARM64 vDSO. Targets that use those Go dependencies still need a valid override configuration.\n\nThe empty repository in the test was artificial. The [downstream module](https://github.com/tamird/gvisor/blob/2eaef0c7d/.github/qualification/supplier_gazelle.py#L48-L66) and [build results](https://github.com/tamird/gvisor/actions/runs/42347782649/artifacts/13564785819) show the original case.\n\nPosted by Codex on behalf of @tamird."
+      "refinement": {
+        "before": {
+          "head": "685bcd62bd7bf6a077319f9dd047e2736659663e"
+        },
+        "after": {
+          "head": "c534b7cb8ce6ebcb424527c99bd1213e5f626645"
+        }
       }
     },
     {
@@ -97681,7 +97721,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T23:06:34+00:00",
+      "updatedAt": "2026-11-10T23:22:43+00:00",
       "summary": "TestSudo timed out three times each on #17391 and #17393 while the test waited for the traced sudo command. Rollback #17412 removed the regression from master. Botir’s draft reland #17432 includes the checked PTRACE_SEIZE fix and syscall regression.",
       "findings": [
         {
@@ -97824,6 +97864,15 @@
             {
               "label": "Tested ptrace fix and syscall cases",
               "url": "https://github.com/tamird/gvisor/commit/71bdb9225"
+            }
+          ]
+        },
+        {
+          "text": "The cgroup v1 AMD64 Docker partition 5 of 8 on #17428 passed all five targets. The owning integration_test completed in 24.1 seconds. Like the other two passing partitions, it reported target-level results only.",
+          "evidence": [
+            {
+              "label": "#17428 · AMD64 cgroup v1 Docker partition 5",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0100-41ed-bfc6-41fe68c43eaa"
             }
           ]
         }
@@ -98175,5 +98224,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T23:18:03+00:00"
+  "updatedAt": "2026-11-10T23:26:20+00:00"
 }
