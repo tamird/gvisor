@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T15:51:32+00:00",
+    "updatedAt": "2026-11-10T15:58:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -817,6 +817,10 @@
       },
       "head": "45137f922cf026cfa764ca3177d624d1b49b5581",
       "evidence": [
+        {
+          "label": "Export and Go-only consumer check on the published combined source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42849078055"
+        },
         {
           "label": "Differences from the reviewed rebase, including the direct assembler",
           "url": "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922"
@@ -70774,19 +70778,35 @@
         {
           "label": "Exact release number, JIT trace, bytecode and C consumer on native ARM64",
           "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42721647380/artifacts/13720581361"
+        },
+        {
+          "label": "Question about the changed flag default",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527082508"
+        },
+        {
+          "label": "First generated-label suggestion",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527098880"
+        },
+        {
+          "label": "Second generated-label suggestion",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527101667"
+        },
+        {
+          "label": "Registry archive URL exception granted",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#issuecomment-6771958199"
         }
       ],
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Agent",
         "sourceHead": "a4947b73f0040e460443984fd486483fa34f2830",
-        "observedAt": "2026-11-10T00:33:29+00:00",
-        "disposition": "The PowerPC fix is published. BCR presubmit stopped at the generated archive URL on the amended head.",
-        "nextAction": "Review the published PowerPC correction. A registry maintainer can grant the unstable_url exception for this LuaJIT snapshot.",
+        "observedAt": "2026-11-10T15:58:34+00:00",
+        "disposition": "David granted the generated-archive URL exception and left three comments on a4947b73f. He asked why a build flag’s default changed and suggested simplifying two generated target labels.",
+        "nextAction": "Check the flag default against upstream LuaJIT and the previous registry overlay, then address David’s three comments.",
         "evidence": [
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4519669799",
-          "https://buildkite.com/bazel/bcr-presubmit/builds/45129#01a1c2dd-d184-4de9-b95b-6fad45e9abd9",
-          "https://buildkite.com/bazel/bcr-presubmit/builds/45123#01a1c2b9-a54c-4233-bddf-99a7be57ef12",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/6931#issuecomment-3685841539"
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527082508",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527098880",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527101667",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#issuecomment-6771958199"
         ]
       },
       "refinement": {
@@ -70814,6 +70834,44 @@
           "note": "The amendment is on the public PR. The response was posted to the original PowerPC review thread."
         }
       ]
+    },
+    {
+      "id": "branch:check-fresh-loopback-addresses",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/check-fresh-loopback-addresses",
+      "head": "40d0c6717988e289c3819b366cc46d1797ccccbc",
+      "title": "Check loopback's assigned IPv4 addresses before bringing it up",
+      "url": "https://github.com/tamird/gvisor/commit/40d0c6717",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T15:58:34+00:00",
+      "summary": "On a fresh Linux namespace, bind accepted both 127.0.0.1 and the unassigned 192.0.2.77 while lo was down and had no addresses. The test now checks the addresses actually assigned to lo before bringing it up. Both native cases passed. Assigning a loopback address in advance made the test fail on the unexpected AF_INET entry. Both systrap cases passed on the same source tree.",
+      "evidence": [
+        {
+          "label": "Native stock and matched comparison, including the unassigned address",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42839287218/artifacts/13775906827"
+        },
+        {
+          "label": "Both native cases and the deliberately assigned IPv4 control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42845639897/artifacts/13779167816"
+        },
+        {
+          "label": "Two passed systrap cases on the identical tree",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42842139256/artifacts/13777915002"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "40d0c6717988e289c3819b366cc46d1797ccccbc",
+        "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
+        "url": "https://github.com/tamird/gvisor/commit/40d0c6717",
+        "title": "Check loopback's assigned IPv4 addresses before bringing it up",
+        "requestedAt": "2026-11-10T15:58:34+00:00",
+        "summary": "On a fresh Linux namespace, bind accepted both 127.0.0.1 and the unassigned 192.0.2.77 while lo was down and had no addresses. The test now checks the addresses actually assigned to lo before bringing it up. Both native cases passed. Assigning a loopback address in advance made the test fail on the unexpected AF_INET entry. Both systrap cases passed on the same source tree.",
+        "body": "LoopbackAddressesAddedOnUp fails on Linux 6.8 before it brings up the\nnew namespace's loopback interface. bind(127.0.0.1) succeeds even\nthough the interface has no addresses. Binding an unassigned 192.0.2.77\nalso succeeds with ip_nonlocal_bind disabled.\n\nUse getifaddrs to check that loopback has no IPv4 address. Keep the\nbind checks after bringing the interface up and down, and the checks\nfor IPv6 throughout.\n\nFixes: 80f80e7ae (\"netstack: fix bubblewrap: add if up/down, add lo address on if up, remove ipv6 on if down\")"
+      }
     }
   ],
   "edges": [
@@ -95448,7 +95506,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T15:24:52+00:00",
+      "updatedAt": "2026-11-10T15:58:34+00:00",
       "summary": "Four different gVisor commits failed the same OpenJDK Unref.java test on Java shard 8. All four passed when Buildkite reran the shard at the same commit. The JDK version gVisor ships already excludes this test on all platforms. Its own Linux failure matches one of the two assertions seen on gVisor.",
       "findings": [
         {
@@ -95511,7 +95569,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify adding only Unref.java to gVisor’s Java 21 exclusion CSV. Compare the admitted test names before and after. The four failures do not identify which JVM descriptor changed.",
+      "nextStep": "Compare the production Java test list with the one-row Unref exclusion, then run still-admitted jtreg cases on the original gVisor runtime.",
       "evidence": [
         {
           "label": "Exact OpenJDK test used by the Java 21 image",
@@ -95520,6 +95578,14 @@
         {
           "label": "gVisor Java 21 image source pin",
           "url": "https://github.com/google/gvisor/blob/deb6b3ea1/images/runtimes/java21/Dockerfile.x86_64#L17"
+        },
+        {
+          "label": "One-line Java 21 exclusion under qualification",
+          "url": "https://github.com/tamird/gvisor/commit/6dd410ba8"
+        },
+        {
+          "label": "Linux admission and gVisor jtreg control run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42849734838"
         }
       ]
     },
@@ -96121,5 +96187,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T15:51:32+00:00"
+  "updatedAt": "2026-11-10T15:58:34+00:00"
 }
