@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Qualify the DinD exec deadline on Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/dind-exec-deadline]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 152
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the fixed runtime, tests and public dependency helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/netip-wildcard"
+          mkdir -m 700 "$w" "$w/receipt"
+          mkdir -p "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"verified":false,"stage":"setup"}' > "$w/receipt/result.json"
+          candidate=b37e519bbf5d14868442a32f336f768d955820b3
+          prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          native=885416118fc84d4ec6ba1cb7629a4f4bd346e051
+          git init -q .
+          git fetch -q --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prep" "$assets" "$inputs" "$native"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$candidate"
+          test "$(git rev-parse "$candidate^{tree}")" = 5ce0876ee6ef67caf273643f2b4fd4eaa3a7775d
+          test "$(git rev-parse "$candidate^")" = dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f
+          git diff --exit-code "$candidate" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/dind_deadline.py' ':!test/image/deadline_qualification_test.go' ':!test/image/BUILD'
+          git show "$GITHUB_SHA:.github/qualification/dind_deadline.py" > "$w/check.py"
+          git show "$native:.github/qualification/netip_wildcard.py" > "$w/native.py"
+          git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$inputs:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --proto '=https' --proto-redir '=https' --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c
+          chmod +x "$w/bazel"
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > "$w/jammy.list"
+          opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+          sudo -n apt-get "${opts[@]}" update -qq
+          sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu libnuma-dev
+          for item in docker@sha256:1f106b293f835ae795c2a83d36e38ea96132fac20515915555b7212a7d688802 alpine@sha256:5c70c48ce39db53248bf8119dd5f34ee95a5b24226f24bb351fb7908bed80da3; do
+            name="${item%@*}"
+            uri="us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/${name}_x86_64@${item#*@}"
+            docker pull --platform=linux/amd64 "$uri"
+            docker tag "$uri" "gvisor.dev/images/basic/$name"
+          done
+      - name: Check both callers and the real bridge workload
+        timeout-minutes: 138
+        shell: bash
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$RUNNER_TEMP/netip-wildcard/check.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled()
+        with:
+          name: dind-exec-deadline-results
+          path: ${{ runner.temp }}/netip-wildcard/receipt/
+          if-no-files-found: error
+          retention-days: 14
