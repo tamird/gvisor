@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T00:26:34+00:00",
+    "updatedAt": "2026-11-10T00:33:29+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -64734,9 +64734,17 @@
       "title": "Use one test process for shim timeouts and runsc lifecycle tests",
       "url": "https://github.com/tamird/gvisor/commit/122b98abd",
       "group": "tests",
-      "status": "Approved, checking the systrap wait",
-      "summary": "The systrap test reaps its child after observing the expected stop. The Linux run includes TestThreadWaitStoppedWhenSignaled, the five fixture owners and the ARM64 builds.",
+      "status": "Published",
+      "summary": "The systrap test reaps its child after observing the stop. The old cleanup returned ECHILD in 10 of 128 runs; all 128 passed with the change. Across the five native Linux suites, 124 records passed and the process-identity case skipped for lack of pidfs. All five ARM64 test binaries built.",
       "evidence": [
+        {
+          "label": "Published gVisor PR #17336",
+          "url": "https://github.com/google/gvisor/pull/17336"
+        },
+        {
+          "label": "128 systrap replays, five native owners and five ARM64 builds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42720109893/artifacts/13724170407"
+        },
         {
           "label": "Five owning suites, systrap wait control and ARM64 builds on the approved revision",
           "url": "https://github.com/tamird/gvisor/actions/runs/42720109893"
@@ -64782,7 +64790,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-09T23:26:09+00:00",
+      "updatedAt": "2026-11-10T00:33:29+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64843,13 +64851,15 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "122b98abdf94f0000340b489c1da77505051de0d",
-        "observedAt": "2026-11-09T23:26:09+00:00",
-        "disposition": "Approved for submission after the updated tests pass.",
-        "nextAction": "Verify the stop and wait case, the owning tests, and the cross-built outputs, then open the PR.",
+        "observedAt": "2026-11-10T00:33:29+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow upstream review on #17336.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42720109893"
+          "https://github.com/google/gvisor/pull/17336",
+          "https://github.com/tamird/gvisor/actions/runs/42720109893/artifacts/13724170407"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:netgofer-shutdown-test",
@@ -70060,14 +70070,34 @@
       "repo": "bazelbuild/bazel-central-registry",
       "number": 11683,
       "ref": "review/luajit-2.1.1794214635",
-      "head": "a4f336eeac836d983cccce0167d321ca423acc91",
+      "head": "a4947b73f0040e460443984fd486483fa34f2830",
       "title": "Publish LuaJIT 2.1.1794214635 in BCR",
       "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683",
       "group": "bazel",
-      "status": "Fixing PowerPC VM generation",
+      "status": "open",
       "summary": "The published 2017 beta builds x86 assembly for an ARM64 target. This module uses the production v2.1 snapshot and the target CPU. The native ARM64 command and an embedded Lua program both reported 2.1.1794214635.",
-      "updatedAt": "2026-11-10T00:21:07+00:00",
+      "updatedAt": "2026-11-10T00:33:29+00:00",
       "evidence": [
+        {
+          "label": "Published PowerPC amendment and tested reply",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4519669799"
+        },
+        {
+          "label": "Current-head registry job requests the unstable_url exception",
+          "url": "https://buildkite.com/bazel/bcr-presubmit/builds/45129#01a1c2dd-d184-4de9-b95b-6fad45e9abd9"
+        },
+        {
+          "label": "PowerPC review",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4519439783"
+        },
+        {
+          "label": "Failing and corrected integer comparisons on 32-bit big-endian PowerPC under QEMU",
+          "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42728572298/artifacts/13724010591"
+        },
+        {
+          "label": "Actual PPC generator arguments and unchanged AMD64/ARM64 VM headers",
+          "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42727854907/artifacts/13722783000"
+        },
         {
           "label": "Registry presubmit rejected the generated archive URL",
           "url": "https://buildkite.com/bazel/bcr-presubmit/builds/45123#01a1c2b9-a54c-4233-bddf-99a7be57ef12"
@@ -70090,17 +70120,43 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "a4f336eeac836d983cccce0167d321ca423acc91",
-        "observedAt": "2026-11-10T00:21:07+00:00",
-        "disposition": "The 32-bit PowerPC generator omits DUALNUM although the C core uses tagged integers. BCR also flagged the archive URL.",
-        "nextAction": "Qualify the PowerPC fix and answer the review. A registry maintainer controls the GitHub archive URL exception.",
+        "owner": "Maintainer",
+        "sourceHead": "a4947b73f0040e460443984fd486483fa34f2830",
+        "observedAt": "2026-11-10T00:33:29+00:00",
+        "disposition": "The PowerPC fix is published. BCR presubmit stopped at the generated archive URL on the amended head.",
+        "nextAction": "Review the published PowerPC correction. A registry maintainer can grant the unstable_url exception for this LuaJIT snapshot.",
         "evidence": [
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4519439783",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4519669799",
+          "https://buildkite.com/bazel/bcr-presubmit/builds/45129#01a1c2dd-d184-4de9-b95b-6fad45e9abd9",
           "https://buildkite.com/bazel/bcr-presubmit/builds/45123#01a1c2b9-a54c-4233-bddf-99a7be57ef12",
           "https://github.com/bazelbuild/bazel-central-registry/pull/6931#issuecomment-3685841539"
         ]
-      }
+      },
+      "refinement": {
+        "before": {
+          "base": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
+          "head": "a4f336eeac836d983cccce0167d321ca423acc91"
+        },
+        "after": {
+          "base": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
+          "head": "a4947b73f0040e460443984fd486483fa34f2830"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "baseHead": "a4f336eeac836d983cccce0167d321ca423acc91",
+          "head": "a4947b73f0040e460443984fd486483fa34f2830",
+          "url": "https://github.com/tamird/bazel-central-registry/commit/a4947b73f",
+          "requestedAt": "2026-11-10T00:31:05+00:00",
+          "title": "Restore dual-number PowerPC VM generation and answer the review",
+          "summary": "Publish the amendment and answer the PowerPC review on #11683? The existing BCR release passed DUALNUM. The new overlay omitted it. The amended generator produces identical AMD64 and ARM64 headers.\n\ngit -C ~/code/bazel-central-registry range-diff a4f336eea^! a4947b73f^!",
+          "body": "Fixed in a4947b73f. I reproduced this on 32-bit big-endian PowerPC under QEMU. Comparing two integers raised “attempt to compare two number values”. With DUALNUM restored, integer and fractional comparisons and addition passed.\n\n[PowerPC results](https://github.com/tamird/bazel-central-registry/actions/runs/42728572298/artifacts/13724010591)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-10T00:33:29+00:00",
+          "note": "The amendment is on the public PR. The response was posted to the original PowerPC review thread."
+        }
+      ]
     }
   ],
   "edges": [
@@ -95294,5 +95350,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T00:26:34+00:00"
+  "updatedAt": "2026-11-10T00:33:29+00:00"
 }
