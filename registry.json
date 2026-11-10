@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T08:39:00+00:00",
+    "updatedAt": "2026-11-10T11:14:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41922,16 +41922,24 @@
       "repo": "tamird/gvisor",
       "ref": "revision/overlay-waiter-current",
       "head": "d01969e4cf73163e16243bd0d8edb666fce733db",
-      "title": "Remove overlay waiters from their original file",
+      "title": "Remove overlay waiters from the file that accepted them",
       "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
       "group": "runtime",
-      "status": "Overlay race check outstanding",
-      "updatedAt": "2026-11-10T08:39:00+00:00",
-      "summary": "When chmod copies up an open overlay file, its existing waiters still belong to the old backing file. The revision keeps that file open until Release can drop it. Stock notified a canceled waiter. The corrected test passed and close restored the initial file count.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T11:14:44+00:00",
+      "summary": "Stock overlay could still wake a canceled waiter after chmod copied up its open file. The fix unregisters from the original backing file. If a lower file has waiters at copy-up, the outer overlay can keep one additional backing file open until close, when Release drops it using the caller’s context. The ordinary cancellation test passed and the open file count returned to its starting value.",
       "evidence": [
         {
           "label": "Revised backing-file ownership on the current overlay lock implementation",
           "url": "https://github.com/tamird/gvisor/commit/d01969e4c"
+        },
+        {
+          "label": "Race detector passed both nested copy-up orders with 128 reused entries under concurrent notification. The runner lacked permission to open /dev/kvm.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42789743043/artifacts/13751382153"
+        },
+        {
+          "label": "The cancellation race case timed out in ptrace task creation before it reached poll. The lower-file lifetime race case did not start.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42788104851/artifacts/13750036959"
         },
         {
           "label": "Stock and fixed waiter, file count, nested lockdep, Nogo and live/restore SIGIO checks",
@@ -42096,20 +42104,16 @@
           "note": "Use struct{} for sets and preserve the release context for the underlying file description."
         }
       ],
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "d01969e4cf73163e16243bd0d8edb666fce733db",
-        "observedAt": "2026-11-10T08:39:00+00:00",
-        "disposition": "The native, lockdep, Nogo and SIGIO checks passed. The first Linux runner exited 143. BuildBuddy accepted a second run for the three race cases. Its collector timed out after 35 minutes. The artifact contains only the invocation ID. The three race results remain unverified.",
-        "nextAction": "Obtain the three named race-detector results for the corrected test fixture before proposing the overlay change.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42779614942/artifacts/13747263152",
-          "https://github.com/tamird/gvisor/actions/runs/42779614942/job/129706215676",
-          "https://app.buildbuddy.io/invocation/e2d207c9-5574-467f-b84c-4ab50932a598",
-          "https://github.com/tamird/gvisor/actions/runs/42745547980",
-          "https://github.com/tamird/gvisor/actions/runs/42741976921/artifacts/13730852094",
-          "https://github.com/tamird/gvisor/commit/d01969e4c"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d01969e4cf73163e16243bd0d8edb666fce733db",
+        "baseHead": "aaab1ecb082e650ee857a0f8366229a1f37e3143",
+        "url": "https://github.com/tamird/gvisor/commit/d01969e4c",
+        "title": "Remove overlay waiters from the file that accepted them",
+        "requestedAt": "2026-11-10T11:14:44+00:00",
+        "summary": "Open this PR after #17295 lands? Both nested copy-up orders passed under the race detector with 128 reused entries and concurrent notifications. Two task-based race cases remain unverified. The cancellation case timed out creating a ptrace task before reaching poll. The lower-file lifetime case did not start, and the runner could not open /dev/kvm. The ordinary, lockdep, SIGIO checkpoint/restore and AMD64/ARM64 analyzer checks passed.",
+        "body": "An open overlay file can switch from its lower file to its upper file\nafter chmod copies it up. Unregistering a waiter on the upper file\nleaves its original registration active. For example, changing the\nlower proc hostname can still wake a canceled waiter.\n\nKeep the old backing file if it has waiters when the open file\nswitches layers. Track individual upper entries only while lower\nwaiters remain. The overlay file can then keep one extra file open\nuntil close, when Release has the context to drop both references."
       }
     },
     {
