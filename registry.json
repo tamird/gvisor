@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T22:30:59+00:00",
+    "updatedAt": "2026-11-10T22:40:45+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71665,7 +71665,7 @@
       "url": "https://github.com/google/gvisor/pull/17378",
       "head": "d19a818b09dee4dba6b2402222eac801084bc1ce",
       "status": "open",
-      "updatedAt": "2026-11-10T18:39:36+00:00",
+      "updatedAt": "2026-11-10T22:40:45+00:00",
       "summary": "Published as #17378 after the normal and patched-coverage Linux runsc binaries both ran with Go 1.27.4 and both Bazel tests passed. The coverage PR (#16507) deletes the script changed by this upgrade. The combined version builds both coverage binaries with the SDK from go.mod and passes KcovTest.Kcov on AMD64.",
       "evidence": [
         {
@@ -71683,8 +71683,51 @@
         {
           "label": "AMD64 KCOV syscall with both Go 1.27.4 coverage binaries",
           "url": "https://github.com/tamird/gvisor/actions/runs/42872466725/artifacts/13793085102"
+        },
+        {
+          "label": "Go 1.27.4 builder for the GCS FUSE fixture",
+          "url": "https://github.com/tamird/gvisor/commit/3349d4ca3"
+        },
+        {
+          "label": "Rebuild the image and inspect the installed gcsfuse compiler version",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42916186044"
+        },
+        {
+          "label": "Final AMD64 image output and installed Go binary metadata",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42916186044/artifacts/13808968222"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "d19a818b09dee4dba6b2402222eac801084bc1ce",
+        "observedAt": "2026-11-10T22:40:45+00:00",
+        "disposition": "The pinned image index includes Go 1.27.4 builders for AMD64 and ARM64. Rebuilding the GCS fixture on native AMD64 produced a gcsfuse v2.12.2 executable built with go1.27.4.",
+        "nextAction": "Review the single-commit amendment that adds the GCS builder pin to #17378.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3349d4ca3",
+          "https://github.com/tamird/gvisor/actions/runs/42916186044",
+          "https://github.com/tamird/gvisor/actions/runs/42916186044/artifacts/13808968222"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "d19a818b09dee4dba6b2402222eac801084bc1ce"
+        },
+        "after": {
+          "head": "3349d4ca3588b079322e8836942e16dc17843efb"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "3349d4ca3588b079322e8836942e16dc17843efb",
+        "baseHead": "d19a818b09dee4dba6b2402222eac801084bc1ce",
+        "url": "https://github.com/tamird/gvisor/commit/3349d4ca3",
+        "title": "Update Go to 1.27.4",
+        "requestedAt": "2026-11-10T22:40:45+00:00",
+        "summary": "Publish the GCS FUSE builder update on #17378? The final AMD64 image ran gcsfuse built with Go 1.27.4.",
+        "body": "The published change updates the Bazel SDK and the coverage toolchain. The GCS FUSE compatibility test also compiles a Go binary in its own Dockerfile. This amendment pins that builder to the published Go 1.27.4 image.\n\nOn native Linux AMD64, the final image ran gcsfuse and reported Go 1.27.4. The installed executable’s metadata showed the same compiler and gcsfuse v2.12.2. ARM64 coverage was limited to checking the registry manifest and image configuration. The test did not mount a live bucket.\n\ngit -C ~/code/gvisor range-diff d19a818b0^! 3349d4ca3^!"
+      }
     },
     {
       "id": "pr:17394",
@@ -97805,5 +97848,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T22:30:59+00:00"
+  "updatedAt": "2026-11-10T22:40:45+00:00"
 }
