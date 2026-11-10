@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T21:59:50+00:00",
+    "updatedAt": "2026-11-10T22:11:26+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71707,14 +71707,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/netgofer-wait-for-idle-slot",
-      "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+      "head": "79d4294d46442fafe7c140f3d28b2a4feb8ffe40",
       "title": "Wait for the idle UDP flow to release its netgofer slot",
-      "url": "https://github.com/tamird/gvisor/commit/9401960a0",
+      "url": "https://github.com/tamird/gvisor/commit/79d4294d4",
       "group": "tests",
       "status": "Published",
-      "updatedAt": "2026-11-10T20:57:16+00:00",
-      "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
+      "updatedAt": "2026-11-10T22:11:26+00:00",
+      "summary": "The test keeps the first client open and checks that the first host socket closed before the second flow receives its first datagram. All 22 native ARM64 package cases passed on the published revision. The normal idle test took 0.15 seconds and all eight delayed releases passed in 0.65–0.66 seconds.",
       "evidence": [
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/79d4294d4"
+        },
+        {
+          "label": "Native ARM64 qualification on the published revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42910167985/artifacts/13806263726"
+        },
         {
           "label": "Published netgofer test fix",
           "url": "https://github.com/google/gvisor/pull/17416"
@@ -71751,13 +71759,14 @@
       "inactive": true,
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
-        "observedAt": "2026-11-10T20:57:16+00:00",
-        "disposition": "Published the approved test fix as one mergeable commit on #17416. The native ARM64 test passed eight times after the first flow released its slot.",
-        "nextAction": "Follow checks and maintainer review on #17416.",
+        "sourceHead": "79d4294d46442fafe7c140f3d28b2a4feb8ffe40",
+        "observedAt": "2026-11-10T22:11:26+00:00",
+        "disposition": "Published the approved one-commit revision on #17416. The retained-slot control failed at the 1.50-second shared deadline. The retained-host and longer-echo controls failed at their own assertions.",
+        "nextAction": "Follow checks and maintainer review on the published revision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17416",
-          "https://github.com/tamird/gvisor/actions/runs/42893640379/artifacts/13799004508"
+          "https://github.com/tamird/gvisor/commit/79d4294d4",
+          "https://github.com/tamird/gvisor/actions/runs/42910167985/artifacts/13806263726"
         ]
       }
     },
@@ -71855,14 +71864,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/netgofer-wait-for-idle-slot",
-      "head": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+      "head": "79d4294d46442fafe7c140f3d28b2a4feb8ffe40",
       "title": "Wait for the idle UDP flow to release its netgofer slot",
       "url": "https://github.com/google/gvisor/pull/17416",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-10T21:59:50+00:00",
-      "summary": "The test now waits for the idle UDP flow to release its forwarding slot before sending the next datagram. With the first close delayed by 250 ms, the second flow failed on all eight runs of the old test and succeeded on all eight with the fix. Deliberately retaining the slot still failed the test. All 22 package cases passed on native ARM64.",
+      "updatedAt": "2026-11-10T22:11:26+00:00",
+      "summary": "The test keeps the first client open and checks that the first host socket closed before the second flow receives its first datagram. All 22 native ARM64 package cases passed on the published revision. The normal idle test took 0.15 seconds and all eight delayed releases passed in 0.65–0.66 seconds.",
       "evidence": [
+        {
+          "label": "All 22 ARM64 cases, eight slower releases and three failing controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42910167985/artifacts/13806263726"
+        },
         {
           "label": "Scoped read results and deadline based on udpIdleTimeout",
           "url": "https://github.com/tamird/gvisor/commit/79d4294d4"
@@ -71927,30 +71940,35 @@
           "outcome": "changes-requested",
           "at": "2026-11-10T21:59:50+00:00",
           "note": "Tamir requested a deadline derived from udpIdleTimeout, scoped reads, and simpler cleanup."
+        },
+        {
+          "kind": "amendment",
+          "head": "79d4294d46442fafe7c140f3d28b2a4feb8ffe40",
+          "baseHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
+          "url": "https://github.com/tamird/gvisor/commit/79d4294d4",
+          "title": "Wait for the idle UDP flow to release its netgofer slot",
+          "requestedAt": "2026-11-10T22:06:32+00:00",
+          "summary": "Publish the revised UDP idle-timeout test on #17416?",
+          "body": "The two UDP exchanges and the slot wait share a deadline of ten idle timeouts. Each read checks its own result. Test cleanup keeps the first client open through the second exchange.\n\nOn native ARM64, all 22 cases passed without skips. The ordinary case took 0.15 seconds. All eight delayed releases passed in 0.65–0.66 seconds. Holding the slot failed at 1.50 seconds. Leaving the first host socket open and appending a byte to the second echo each failed at its own assertion.\n\nTo compare with the last revision you reviewed, run git -C ~/code/gvisor range-diff --creation-factor=999 cda55e165^! 79d4294d4^!",
+          "outcome": "approved",
+          "at": "2026-11-10T22:11:26+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17416",
+          "note": "Published the exact approved revision as the single PR commit."
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "9401960a04b5cfbc6257b375d65888e0a8ff5830",
-        "observedAt": "2026-11-10T21:59:50+00:00",
-        "disposition": "The revised test derives its deadline from udpIdleTimeout and scopes each read result to its error check.",
-        "nextAction": "Validate 79d4294d4 on ARM64 before requesting review. The published PR is still 9401960a0.",
+        "owner": "Upstream review",
+        "sourceHead": "79d4294d46442fafe7c140f3d28b2a4feb8ffe40",
+        "observedAt": "2026-11-10T22:11:26+00:00",
+        "disposition": "Published the approved one-commit revision on #17416. The retained-slot control failed at the 1.50-second shared deadline. The retained-host and longer-echo controls failed at their own assertions.",
+        "nextAction": "Follow checks and maintainer review on the published revision.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17416",
           "https://github.com/tamird/gvisor/commit/79d4294d4",
-          "https://github.com/tamird/gvisor/actions/runs/42910167985",
-          "https://github.com/tamird/gvisor/commit/cda55e165",
-          "https://github.com/google/gvisor/pull/17416"
+          "https://github.com/tamird/gvisor/actions/runs/42910167985/artifacts/13806263726"
         ]
       },
-      "number": 17416,
-      "refinement": {
-        "before": {
-          "head": "cda55e1657a92d33e76472cb4fc3060469c3961a"
-        },
-        "after": {
-          "head": "79d4294d46442fafe7c140f3d28b2a4feb8ffe40"
-        }
-      }
+      "number": 17416
     }
   ],
   "edges": [
@@ -97645,7 +97663,99 @@
         "summary": "Open the ptrace fix? The traced sudo and debugger tests now finish on systrap, and its stopped-process behavior matches Linux for both attach requests.",
         "body": "An unprivileged strace of /bin/true can wait indefinitely for its\nchild. When c70baf34b moved the attach logic after address space\npreparation, PTRACE_SEIZE began returning before it reported an\nexisting group-stop to the tracer. [1]\n\nAfter preparation, recheck the tracer relationship and report the\ngroup-stop for either attach request. Linux also makes only the\ninitial SIGSTOP conditional on PTRACE_ATTACH. [2] Exercise both forms\nin the existing group-stop syscall test.\n\n[1]: https://github.com/google/gvisor/commit/c70baf34b\n[2]: https://github.com/torvalds/linux/blob/adc218676/kernel/ptrace.c#L378-L405"
       }
+    },
+    {
+      "id": "investigation:ci-flake-dind-exec-deadline",
+      "group": "ci-flakes",
+      "title": "Docker-in-Docker commands outlive their exec deadline",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-10T22:11:26+00:00",
+      "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected.",
+      "findings": [
+        {
+          "text": "The matrix specifies a ten-minute command timeout. Reading directly from the Docker process kept the test from returning on time to gather daemon logs and remove the container. The original delay inside the nested command remains unexplained.",
+          "evidence": [
+            {
+              "label": "Master ARM64 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54148#01a1c364-ab83-4e97-9fdd-f027f6597cd2"
+            },
+            {
+              "label": "Passing retry on the same master head",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54148#01a1c37b-d8e0-4842-ae59-7202b44b1bad"
+            },
+            {
+              "label": "ARM64 failure on #17150",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54183#01a1c4c3-de37-4916-86ba-bfe67074a26e"
+            },
+            {
+              "label": "Passing retry on #17150",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54183#01a1c4f2-be40-4f77-b9c2-fca3f84188cb"
+            }
+          ]
+        },
+        {
+          "text": "With the same unresponsive Docker peer, the stock path was still blocked after two seconds. The revision returned context.Canceled while the peer kept the socket open. Both paths preserved stdout, stderr and exit codes 0 and 23.",
+          "evidence": [
+            {
+              "label": "Single-commit DinD deadline fix",
+              "url": "https://github.com/tamird/gvisor/commit/b37e519bb"
+            },
+            {
+              "label": "Native AMD64 cancellation and bridge test results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42909662607/artifacts/13808370395"
+            }
+          ]
+        },
+        {
+          "text": "Both ordinary bridge tests passed with native AMD64 runsc (VFS 8.93 seconds and overlay 8.49 seconds). TestExecCancellation also passed. The overall job was red because a supplementary test expected gVisor’s missing-executable wording from host runc.",
+          "evidence": [
+            {
+              "label": "Native AMD64 cancellation and bridge test results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42909662607/artifacts/13808370395"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Master ARM64 failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54148#01a1c364-ab83-4e97-9fdd-f027f6597cd2"
+        },
+        {
+          "label": "Passing retry on the same master head",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54148#01a1c37b-d8e0-4842-ae59-7202b44b1bad"
+        },
+        {
+          "label": "ARM64 failure on #17150",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54183#01a1c4c3-de37-4916-86ba-bfe67074a26e"
+        },
+        {
+          "label": "Passing retry on #17150",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54183#01a1c4f2-be40-4f77-b9c2-fca3f84188cb"
+        },
+        {
+          "label": "Single-commit DinD deadline fix",
+          "url": "https://github.com/tamird/gvisor/commit/b37e519bb"
+        },
+        {
+          "label": "Native AMD64 cancellation and bridge test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42909662607/artifacts/13808370395"
+        }
+      ],
+      "nextStep": "Review the deadline fix for submission to gVisor. The original cause of the slow command can be investigated separately.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "b37e519bbf5d14868442a32f336f768d955820b3",
+        "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
+        "url": "https://github.com/tamird/gvisor/commit/b37e519bb",
+        "title": "Honor the DinD exec deadline",
+        "body": "The Docker-in-Docker matrix gives its commands ten minutes. On ARM64,\na bridge-network docker run was still reading its output when the Go\ntest binary timed out at fifteen minutes. The timeout interrupted the\nmatrix before it could collect daemon logs or remove its container.\nThe same image test passed on retry. [1]\n\nRun the command with Container.Exec. Since 0b31c2215 it closes the\noutput connection when the context expires, so the test can report\nthe failure and run cleanup. Include the command and output if it\nexits unsuccessfully.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54183#01a1c4c3-de37-4916-86ba-bfe67074a26e",
+        "requestedAt": "2026-11-10T22:11:26+00:00",
+        "summary": "Open the single-commit DinD fix so the image test returns at its ten-minute deadline?"
+      }
     }
   ],
-  "updatedAt": "2026-11-10T21:59:50+00:00"
+  "updatedAt": "2026-11-10T22:11:26+00:00"
 }
