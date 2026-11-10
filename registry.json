@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T11:21:05+00:00",
+    "updatedAt": "2026-11-10T11:31:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -801,29 +801,30 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-08T17:42:17+00:00",
-      "summary": "The maintainer approved b61651f93, and the PR has the ready to pull label. The separate Go archive assembler follow-up leaves that head intact. When its Bazel archive exporter is next updated, go_export_sources also needs the netgofer command, along with its implementation. The existing approved head stays in review.",
+      "updatedAt": "2026-11-10T11:31:43+00:00",
+      "summary": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The Linux check on 4ecb0b121 is running.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "b61651f9371f514411dbb4fc2bd367f860204546",
-        "observedAt": "2026-11-08T17:42:17+00:00",
-        "disposition": "The projected #15106 archive dropped the library and command, and the downstream Go build failed. The archive-specific fix and the approved direct assembler exported identical 2,564-entry ZIPs. The independently built Linux AMD64 executables both ran help netgofer.",
-        "nextAction": "If #17238 lands first, preserve its netgofer implementation and command in go_export_sources; the current upstream head remains under review.",
+        "observedAt": "2026-11-10T11:31:43+00:00",
+        "disposition": "Prepared 4ecb0b121 on deb6b3ea1.",
+        "nextAction": "Verify the Linux check and publish 4ecb0b121 once reviewed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15106",
-          "https://github.com/tamird/gvisor/commit/56ceeb1a04062a78e72d94737b22fceb513ef3ea",
-          "https://github.com/google/gvisor/actions/runs/39438600260/job/118682146746",
-          "https://github.com/google/gvisor/actions/runs/39438600334/job/118682147248",
-          "https://github.com/google/gvisor/pull/15598",
-          "https://github.com/google/gvisor/pull/16048",
-          "https://github.com/google/gvisor/pull/15106#issuecomment-6302575449",
-          "https://github.com/tamird/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d",
-          "https://github.com/tamird/gvisor/commit/e48e4d899",
-          "https://github.com/tamird/gvisor/actions/runs/42505014580/artifacts/13627089013"
+          "https://github.com/tamird/gvisor/commit/4ecb0b121",
+          "https://github.com/tamird/gvisor/actions/runs/42807933933",
+          "https://github.com/google/gvisor/pull/15106"
         ]
       },
       "head": "b61651f9371f514411dbb4fc2bd367f860204546",
       "evidence": [
+        {
+          "label": "Proposed amendment 4ecb0b121",
+          "url": "https://github.com/tamird/gvisor/commit/4ecb0b121"
+        },
+        {
+          "label": "Linux qualification on 4ecb0b121",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42807933933"
+        },
         {
           "label": "Qualified revised Go-export proposal",
           "url": "https://github.com/tamird/gvisor/commit/7709f36fdf"
@@ -897,6 +898,26 @@
         "diffSha256": "375fe1aea30eff9ed64aded58ebedaf0e59924cfc61b7fe1e4796798754f9a4f",
         "summary": "The amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.",
         "evidence": "https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d"
+      },
+      "refinement": {
+        "before": {
+          "head": "b61651f9371f514411dbb4fc2bd367f860204546"
+        },
+        "after": {
+          "head": "4ecb0b121b95836dac48eb7f6c8b6948591004a1",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "4ecb0b121b95836dac48eb7f6c8b6948591004a1",
+        "baseHead": "b61651f9371f514411dbb4fc2bd367f860204546",
+        "url": "https://github.com/tamird/gvisor/commit/4ecb0b121",
+        "title": "Build the Go branch source archive with Bazel",
+        "requestedAt": "2026-11-10T11:31:43+00:00",
+        "summary": "Review 4ecb0b121 for publication after the Linux check passes.",
+        "body": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The Linux check on 4ecb0b121 is running.\n\ngit -C ~/code/gvisor range-diff b61651f93^! 4ecb0b121^!"
       }
     },
     {
@@ -7852,23 +7873,29 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T22:46:01+00:00",
-      "summary": "The source rebase 133764395 is published as the one commit on #15730. GitHub reports it can merge. All 15 selected test targets passed on that source, including wildcard port release on native Linux and gVisor.\n\nNayana’s approval and the open Copybara export #16995 name the earlier commit 6c48739a9. Tamir asked her to reapprove the updated address callers and wildcard port reservation on 133764395. She is also handling the import’s separate internal dependencies.",
+      "updatedAt": "2026-11-10T11:31:43+00:00",
+      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The Linux check on f92eae225 is running.",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Agent",
         "sourceHead": "133764395c84859cb9c867555c1bac4f91f893cd",
-        "observedAt": "2026-11-09T22:46:01+00:00",
-        "disposition": "The public source repair is published and mergeable. Nayana was asked to review the updated commit.",
-        "nextAction": "Review 133764395 and let Copybara replace export #16995, which still names 6c48739a9.",
+        "observedAt": "2026-11-10T11:31:43+00:00",
+        "disposition": "Prepared f92eae225 on deb6b3ea1.",
+        "nextAction": "Verify the Linux check and publish f92eae225 once reviewed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6753476212",
-          "https://github.com/tamird/gvisor/actions/runs/42712318645/artifacts/13716733316",
-          "https://github.com/google/gvisor/pull/15730",
-          "https://github.com/google/gvisor/pull/16995",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6583874239"
+          "https://github.com/tamird/gvisor/commit/f92eae225",
+          "https://github.com/tamird/gvisor/actions/runs/42807642218",
+          "https://github.com/google/gvisor/pull/15730"
         ]
       },
       "evidence": [
+        {
+          "label": "Proposed amendment f92eae225",
+          "url": "https://github.com/tamird/gvisor/commit/f92eae225"
+        },
+        {
+          "label": "Linux qualification on f92eae225",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42807642218"
+        },
         {
           "label": "Request to reapprove the published head",
           "url": "https://github.com/google/gvisor/pull/15730#issuecomment-6753476212"
@@ -8045,11 +8072,11 @@
       "number": 15730,
       "refinement": {
         "before": {
-          "head": "6c48739a92438e54d1223a17f1806259d50cba17"
+          "head": "133764395c84859cb9c867555c1bac4f91f893cd"
         },
         "after": {
-          "head": "133764395c84859cb9c867555c1bac4f91f893cd",
-          "base": "e778721f9443fb7e0b8b642e91ff78d07411b29b"
+          "head": "f92eae2251ded0249b8a5afcd63bed13493a5267",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
       "settledReviews": [
@@ -8075,6 +8102,17 @@
         "diffSha256": "23e90471d33fe617ca91ad95bbacd36c1549b9ef82e938f4f81f6e4e6d24d0c5",
         "summary": "New address callers, including the reservation used to release a wildcard-bound port on close, require source adaptations on the rebased commit.",
         "evidence": "https://github.com/google/gvisor/pull/15730#issuecomment-6753476212"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "f92eae2251ded0249b8a5afcd63bed13493a5267",
+        "baseHead": "133764395c84859cb9c867555c1bac4f91f893cd",
+        "url": "https://github.com/tamird/gvisor/commit/f92eae225",
+        "title": "Use netip types throughout the network stack",
+        "requestedAt": "2026-11-10T11:31:43+00:00",
+        "summary": "Review f92eae225 for publication after the Linux check passes.",
+        "body": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The Linux check on f92eae225 is running.\n\ngit -C ~/code/gvisor range-diff 133764395^! f92eae225^!"
       }
     },
     {
