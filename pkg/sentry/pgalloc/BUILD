@@ -233,6 +233,7 @@ go_test(
         "pgalloc_64k_test.go",
         "pgalloc_test.go",
         "save_restore_test.go",
+        "sparse_checkpoint_benchmark_test.go",
     ],
     embed = [":pgalloc"],
     deps = [
