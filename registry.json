@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T15:11:00+00:00",
+    "updatedAt": "2026-11-10T15:29:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5347,10 +5347,18 @@
       "url": "https://github.com/tamird/gvisor/commit/4bee07965",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "On 4bee07965, the source-selected LLVM 0.8.24 toolchain could not link either static plugin executable on AMD64. Both final GoLink actions failed under --config=plugin-tldk. The linker reported missing pthread, dl, resolv, m and c libraries. Earlier static plugin builds used a patched GNU sysroot.\n\nEarlier qualification:\n\n4bee07965 uses the Go offset generator from #16516. An alternative compiler submission on Linux hosts with shell utilities could precede #16516 by declaring @llvm//tools:llvm-nm for the existing script. On an AMD64 host, both generators produced all 10 AMD64 and 11 ARM64 offsets, with every name and value matching the linked ELF. The two arms used identical ELF and stub bytes for each architecture. With implicit $(NM), Bazel previously returned success but both generated Go files contained only a 105-byte header and zero offsets. The comparison covered offset generation. The shell-free build still requires the Go generator.\n\nAn AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.\n\nA subsequent run on this exact proposal booted source-built Sentries on native AMD64 and ARM64 Firecracker workers. Each execution verified the nine release ELFs, ran TestProcessDocuments_BasicTransform uncached, and checked the guest-written output HELLO FROM UNTRUSTED INPUT.\n\nOn c115840f8, an AMD64 Ubuntu builder without Debian’s ARM64 GCC or binutils cross-compiled the nine ARM64 release files. A separate native ARM64 worker verified their hashes and booted the transferred runsc and Sentry under rootless systrap. The guest’s uname -m returned aarch64 and it exited 0.\n\nA second client built both nine-file releases on c115840f8 without installing any packages. All 18 executable hashes matched the compiler-free client, including the nine previously booted on ARM64. The base image supplied shell utilities. Bazel, Git and the public CA bundle were supplied separately.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.\n\nA separate integration at 61ff148f0 supplied the declared shell tools and SDK inputs for a complete local //:release build with empty /bin and /usr/bin. One AMD64 Bazel 9.3.1 client built all nine optimized ELF executables for each target architecture; all 18 SHA-256 digests matched their original remote outputs. The AMD64 build started with an empty repository cache. The ARM64 build reused those repository downloads with a fresh Bazel home. The installed AMD64 runsc and netgofer reported the development version. The client supplied Bazel, its runtime libraries and CA certificates. This qualifies the integrated release executable build; the standalone compiler proposal 4bee07965, packaging, and other builder jobs retain their own evidence and prerequisites.",
-      "updatedAt": "2026-11-10T14:48:47+00:00",
+      "summary": "The scoped compiler change 1d811002d1 linked both static x86-64 plugin executables, and all ten outputs installed. The Docker plugin boot selected Sentry, initialized TLDK and then reported StartRoot EOF before exchanging packets. The runc control passed.\n\nOn 4bee07965, the source-selected LLVM 0.8.24 toolchain could not link either static plugin executable on AMD64. Both final GoLink actions failed under --config=plugin-tldk. The linker reported missing pthread, dl, resolv, m and c libraries. Earlier static plugin builds used a patched GNU sysroot.\n\nEarlier qualification:\n\n4bee07965 uses the Go offset generator from #16516. An alternative compiler submission on Linux hosts with shell utilities could precede #16516 by declaring @llvm//tools:llvm-nm for the existing script. On an AMD64 host, both generators produced all 10 AMD64 and 11 ARM64 offsets, with every name and value matching the linked ELF. The two arms used identical ELF and stub bytes for each architecture. With implicit $(NM), Bazel previously returned success but both generated Go files contained only a 105-byte header and zero offsets. The comparison covered offset generation. The shell-free build still requires the Go generator.\n\nAn AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.\n\nA downstream AMD64 client built gVisor’s ARM64 vDSO with the declared LLVM compiler. Changing Gazelle 0.51.3 to read its environment only when used produced the same 7,056-byte ELF as the eight-file gVisor workaround and preserved gVisor’s existing Gazelle exports. The Bzlmod and WORKSPACE runners each matched the original generated script. Both real Gazelle invocations and the environment tests passed. The ELF was checked on AMD64. An ordinary upgrade to Gazelle 0.54.0 still fails during analysis of the external module. A focused change on Gazelle master built the same vDSO and preserved both runners. On Bazel 8.2.1 the new query regression reproduced the load of the missing Go environment on master and returned the target label with the change. The proposed supplier report is on #16804.\n\nA subsequent run on this exact proposal booted source-built Sentries on native AMD64 and ARM64 Firecracker workers. Each execution verified the nine release ELFs, ran TestProcessDocuments_BasicTransform uncached, and checked the guest-written output HELLO FROM UNTRUSTED INPUT.\n\nOn c115840f8, an AMD64 Ubuntu builder without Debian’s ARM64 GCC or binutils cross-compiled the nine ARM64 release files. A separate native ARM64 worker verified their hashes and booted the transferred runsc and Sentry under rootless systrap. The guest’s uname -m returned aarch64 and it exited 0.\n\nA second client built both nine-file releases on c115840f8 without installing any packages. All 18 executable hashes matched the compiler-free client, including the nine previously booted on ARM64. The base image supplied shell utilities. Bazel, Git and the public CA bundle were supplied separately.\n\nAn AMD64 Bazel client built the nine optimized release executables for each of AMD64 and ARM64 from a source export with no Git metadata, Git executable, host compiler or APT installation. Bazel resolved LLVM 0.8.24 from the central registry. Installed AMD64 runsc and netgofer both reported release-20261106.0. The trace still recorded host Bash and grep. Three helper binaries per architecture matched the prior release comparison; the six Go executables differed.\n\nA separate integration at 61ff148f0 supplied the declared shell tools and SDK inputs for a complete local //:release build with empty /bin and /usr/bin. One AMD64 Bazel 9.3.1 client built all nine optimized ELF executables for each target architecture; all 18 SHA-256 digests matched their original remote outputs. The AMD64 build started with an empty repository cache. The ARM64 build reused those repository downloads with a fresh Bazel home. The installed AMD64 runsc and netgofer reported the development version. The client supplied Bazel, its runtime libraries and CA certificates. This qualifies the integrated release executable build; the standalone compiler proposal 4bee07965, packaging, and other builder jobs retain their own evidence and prerequisites.",
+      "updatedAt": "2026-11-10T15:29:56+00:00",
       "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
+        {
+          "label": "Installed outputs, plugin boot failure and runc control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42841720605/artifacts/13778285059"
+        },
+        {
+          "label": "Both optional static plugin executables linked",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42841720605/artifacts/13775953557"
+        },
         {
           "label": "Both source-selected LLVM plugin links and their linker errors",
           "url": "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942"
@@ -6062,10 +6070,11 @@
       "followup": {
         "owner": "native_coverage",
         "sourceHead": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
-        "disposition": "On 4bee07965, the source-selected LLVM 0.8.24 toolchain could not link either static plugin executable on AMD64. Both final GoLink actions failed under --config=plugin-tldk. The linker reported missing pthread, dl, resolv, m and c libraries. Earlier static plugin builds used a patched GNU sysroot.",
-        "observedAt": "2026-11-10T14:48:47+00:00",
-        "nextAction": "Fix the LLVM static link and build both runsc-plugin-stack and gvisor_sentry_plugin_stack before requesting review.",
+        "disposition": "The scoped compiler change 1d811002d1 linked both static x86-64 plugin executables, and all ten outputs installed. The Docker plugin boot selected Sentry, initialized TLDK and then reported StartRoot EOF before exchanging packets. The runc control passed.",
+        "observedAt": "2026-11-10T15:29:56+00:00",
+        "nextAction": "Trace StartRoot EOF before offering a compiler change that includes the plugin.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42841720605/artifacts/13778285059",
           "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942",
           "https://github.com/tamird/gvisor/actions/runs/42838544774/artifacts/13773819869",
           "https://github.com/tamird/gvisor/actions/runs/42838544774",
@@ -7868,31 +7877,34 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcpip-netip-core",
-      "head": "133764395c84859cb9c867555c1bac4f91f893cd",
+      "head": "1baff64ef0620dadfddd9161c10f0fdb239feb05",
       "title": "Use netip types throughout the network stack",
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T15:11:00+00:00",
-      "summary": "The published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\nEarlier qualification:\n\nThe published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
+      "updatedAt": "2026-11-10T15:29:56+00:00",
+      "summary": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca.\n\nThe published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\nEarlier qualification:\n\nThe published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "133764395c84859cb9c867555c1bac4f91f893cd",
-        "observedAt": "2026-11-10T15:11:00+00:00",
-        "disposition": "The published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.",
-        "nextAction": "Once approved, publish 0ef2495ca on the existing PR.",
+        "owner": "Upstream review",
+        "sourceHead": "1baff64ef0620dadfddd9161c10f0fdb239feb05",
+        "observedAt": "2026-11-10T15:29:56+00:00",
+        "disposition": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca.",
+        "nextAction": "Follow the published head’s checks and maintainer review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42839287218/artifacts/13775906827",
-          "https://github.com/tamird/gvisor/actions/runs/42832885163/artifacts/13772269407",
-          "https://github.com/tamird/gvisor/actions/runs/42830337701/artifacts/13771558704",
-          "https://github.com/tamird/gvisor/commit/0ef2495ca",
-          "https://github.com/tamird/gvisor/actions/runs/42830337701",
-          "https://github.com/tamird/gvisor/commit/f92eae225",
-          "https://github.com/tamird/gvisor/actions/runs/42807642218/artifacts/13762237046",
+          "https://github.com/google/gvisor/commit/1baff64ef0620dadfddd9161c10f0fdb239feb05",
+          "https://github.com/tamird/gvisor/compare/0ef2495ca...1baff64ef",
           "https://github.com/google/gvisor/pull/15730"
         ]
       },
       "evidence": [
+        {
+          "label": "Published netip amendment 1baff64ef",
+          "url": "https://github.com/google/gvisor/commit/1baff64ef0620dadfddd9161c10f0fdb239feb05"
+        },
+        {
+          "label": "Typed UDP destination change after the qualified revision",
+          "url": "https://github.com/tamird/gvisor/compare/0ef2495ca...1baff64ef"
+        },
         {
           "label": "Same native loopback bind failure on master and on the revision",
           "url": "https://github.com/tamird/gvisor/actions/runs/42839287218/artifacts/13775906827"
@@ -8117,6 +8129,19 @@
           "outcome": "approved",
           "at": "2026-11-09T22:32:51+00:00",
           "note": "All 15 selected tests passed; published 133764395 on #15730. Reapproval requested on the public thread."
+        },
+        {
+          "kind": "amendment",
+          "head": "0ef2495cae29d3190381a710904f6dbde2c95be3",
+          "baseHead": "133764395c84859cb9c867555c1bac4f91f893cd",
+          "url": "https://github.com/tamird/gvisor/commit/0ef2495ca",
+          "title": "Use netip types throughout the network stack",
+          "requestedAt": "2026-11-10T15:11:00+00:00",
+          "summary": "Review the amendment that preserves the new loopback and UDP-forwarder behavior.",
+          "body": "The published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\ngit -C ~/code/gvisor range-diff 133764395^! 0ef2495ca^!",
+          "outcome": "approved",
+          "at": "2026-11-10T15:29:56+00:00",
+          "note": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca."
         }
       ],
       "reapproval": {
@@ -8127,17 +8152,6 @@
         "diffSha256": "23e90471d33fe617ca91ad95bbacd36c1549b9ef82e938f4f81f6e4e6d24d0c5",
         "summary": "New address callers, including the reservation used to release a wildcard-bound port on close, require source adaptations on the rebased commit.",
         "evidence": "https://github.com/google/gvisor/pull/15730#issuecomment-6753476212"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "0ef2495cae29d3190381a710904f6dbde2c95be3",
-        "baseHead": "133764395c84859cb9c867555c1bac4f91f893cd",
-        "url": "https://github.com/tamird/gvisor/commit/0ef2495ca",
-        "title": "Use netip types throughout the network stack",
-        "requestedAt": "2026-11-10T15:11:00+00:00",
-        "summary": "Review the amendment that preserves the new loopback and UDP-forwarder behavior.",
-        "body": "The published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\ngit -C ~/code/gvisor range-diff 133764395^! 0ef2495ca^!"
       }
     },
     {
@@ -13371,36 +13385,34 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fixes/ioctl-sniffer-frames",
-      "head": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
+      "head": "17594d7c0dfc697d7776dcd6dc625086a409ff3c",
       "title": "Preserve ioctl results while reporting",
       "group": "runtime",
-      "summary": "Ayush reported that the sniffer can lose its reporting connection during process teardown. On 17594d7c0, FramesConsecutiveMessages passed in both fast and threadsafe death-test modes. It compared both frames and checked EOF after the sending thread exited. The ioctl test also preserved EBADF.\n\nThe requested post-#16046 rebase is published at 4215bbbbfc1a on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at f6f07b0705. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nThe contributor-approved sniffer refactor is now PR #15668 at exact head f20832e5d, following the requested revision of ce97df04c. The ABI wrapper preserves the real ioctl result and errno while private reporting handles inspection and serialization. Each reporting thread owns its socket and reusable frame buffer, closes it at thread exit and exec, and reconnects after closing the calling thread's inherited descriptor after fork. Checked serialization and complete writes retain the existing reporting policy.\n\nFour fresh native 60-second cases pass across AMD64 and ARM64: the real-hook errno regression and a real-socket consecutive-frame, buffer-reuse and thread-exit EOF test. Both architecture embedded-sniffer and shared-hook builds pass. Eight original core reports, thirty-four source captures, three compacts and selected source/compile/link/test/embed joins are independently closed. The final standalone tree matches the reviewed topic; qualification source 9f7a818e1 retains two pre-existing BUILD adaptations.\n\nThe original parent remains Failed because its final inspector assumed a transitioned ARM output existed locally. Recovery verifies the advertised target/configuration/output identities without repeating workloads or claiming independent full ELF hashing. The earlier errno failure stays at its actual source. GPU execution and forced short-write, interruption, fork, exec or concurrent-initialization coverage are not claimed. Unreadable ioctl arguments and descriptors inherited from other vanished threads remain separate follow-ups. The independent PR is open, ready for upstream review and mergeable; current-head CI is being followed by the existing watcher. The separate unreadable-argument follow-up is not part of this approved PR.",
+      "summary": "Published the one-commit amendment 17594d7c0 and replied to Ayush on his original thread. The bridge test reads the ordinary frame and the exit-handler frame from the same socket. A worker thread still closes its socket on exit.\n\nThe original parent remains Failed because its final inspector assumed a transitioned ARM output existed locally. Recovery verifies the advertised target/configuration/output identities without repeating workloads or claiming independent full ELF hashing. The earlier errno failure stays at its actual source. GPU execution and forced short-write, interruption, fork, exec or concurrent-initialization coverage are not claimed. Unreadable ioctl arguments and descriptors inherited from other vanished threads remain separate follow-ups. The independent PR is open, ready for upstream review and mergeable; current-head CI is being followed by the existing watcher. The separate unreadable-argument follow-up is not part of this approved PR.",
       "url": "https://github.com/google/gvisor/pull/15668",
       "status": "open",
-      "updatedAt": "2026-11-10T14:16:59+00:00",
+      "updatedAt": "2026-11-10T15:29:56+00:00",
       "followup": {
-        "disposition": "Ayush reported that the sniffer can lose its reporting connection during process teardown. On 17594d7c0, FramesConsecutiveMessages passed in both fast and threadsafe death-test modes. It compared both frames and checked EOF after the sending thread exited. The ioctl test also preserved EBADF.",
-        "owner": "root",
-        "sourceHead": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
-        "reviewedAt": "2026-10-12T11:52:13.681917+00:00",
-        "nextAction": "Once approved, publish the amendment and reply to Ayush on the original thread.",
+        "owner": "Upstream review",
+        "sourceHead": "17594d7c0dfc697d7776dcd6dc625086a409ff3c",
+        "observedAt": "2026-11-10T15:29:56+00:00",
+        "disposition": "Published the one-commit amendment 17594d7c0 and replied to Ayush on his original thread. The bridge test reads the ordinary frame and the exit-handler frame from the same socket. A worker thread still closes its socket on exit.",
+        "nextAction": "Follow the amended PR for maintainer review and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42831685416/artifacts/13771418485",
-          "https://github.com/google/gvisor/pull/15668#discussion_r4520653746",
-          "https://github.com/tamird/gvisor/commit/17594d7c0",
-          "https://github.com/tamird/gvisor/actions/runs/42831685416",
-          "https://github.com/google/gvisor/pull/15668",
-          "https://github.com/tamird/gvisor/commit/f20832e5dbc3dde0ee06aba27a7f9480c3076127",
-          "https://app.buildbuddy.io/invocation/aadd4052-fdda-40dc-bca6-2041c8f7feeb",
-          "https://github.com/tamird/gvisor/commit/ce97df04c17acf1c16b7ef072c6f846d57c8fe0e",
-          "https://app.buildbuddy.io/invocation/e336a84e-4547-4b34-869c-5dba78060681",
-          "https://github.com/tamird/gvisor/commit/4215bbbbfc1ac58009b4afe6704d6b06cf64f599"
-        ],
-        "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-10T14:13:03+00:00"
+          "https://github.com/google/gvisor/pull/15668#discussion_r4526788902",
+          "https://github.com/google/gvisor/pull/15668"
+        ]
       },
       "number": 15668,
       "evidence": [
+        {
+          "label": "Published amendment 17594d7c0",
+          "url": "https://github.com/google/gvisor/commit/17594d7c0dfc697d7776dcd6dc625086a409ff3c"
+        },
+        {
+          "label": "Delivered reply on Ayush’s review",
+          "url": "https://github.com/google/gvisor/pull/15668#discussion_r4526788902"
+        },
         {
           "label": "Linux bridge and ioctl test results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42831685416/artifacts/13771418485"
@@ -13427,17 +13439,21 @@
           "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "17594d7c0dfc697d7776dcd6dc625086a409ff3c",
-        "baseHead": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
-        "url": "https://github.com/tamird/gvisor/commit/17594d7c0",
-        "title": "Preserve ioctl results while reporting",
-        "requestedAt": "2026-11-10T14:16:59+00:00",
-        "summary": "Publish the tested amendment and reply to Ayush.",
-        "body": "Ayush reported that the sniffer can lose its reporting connection during process teardown. On 17594d7c0, FramesConsecutiveMessages passed in both fast and threadsafe death-test modes. It compared both frames and checked EOF after the sending thread exited. The ioctl test also preserved EBADF.\n\nProposed reply to Ayush:\n\nThe connection now survives `atexit` and still closes when a worker thread exits. The bridge test writes before `exit(0)` and from an exit handler, then reads both frames from the same socket.\n\nPosted by Codex on behalf of @tamird.\n\ngit -C ~/code/gvisor range-diff 1c5320087^! 17594d7c0^!"
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "17594d7c0dfc697d7776dcd6dc625086a409ff3c",
+          "baseHead": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
+          "url": "https://github.com/tamird/gvisor/commit/17594d7c0",
+          "title": "Preserve ioctl results while reporting",
+          "requestedAt": "2026-11-10T14:16:59+00:00",
+          "summary": "Publish the tested amendment and reply to Ayush.",
+          "body": "Ayush reported that the sniffer can lose its reporting connection during process teardown. On 17594d7c0, FramesConsecutiveMessages passed in both fast and threadsafe death-test modes. It compared both frames and checked EOF after the sending thread exited. The ioctl test also preserved EBADF.\n\nProposed reply to Ayush:\n\nThe connection now survives `atexit` and still closes when a worker thread exits. The bridge test writes before `exit(0)` and from an exit handler, then reads both frames from the same socket.\n\nPosted by Codex on behalf of @tamird.\n\ngit -C ~/code/gvisor range-diff 1c5320087^! 17594d7c0^!",
+          "outcome": "approved",
+          "at": "2026-11-10T15:29:56+00:00",
+          "note": "Published the one-commit amendment 17594d7c0 and replied to Ayush on his original thread. The bridge test reads the ordinary frame and the exit-handler frame from the same socket. A worker thread still closes its socket on exit."
+        }
+      ]
     },
     {
       "id": "pr:15669",
@@ -69190,9 +69206,21 @@
       "group": "bazel",
       "status": "open",
       "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
-      "updatedAt": "2026-11-09T16:31:03+00:00",
-      "summary": "Make owns the eight package patterns and filters used by the unit jobs. The mixed RBE presubmit has to duplicate them. The proposed Bazel configuration supplies that selection to either caller. Make still supplies the cgroup version so v1 and v2 test results cache separately.\n\nAll 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
+      "updatedAt": "2026-11-10T15:24:52+00:00",
+      "summary": "Master added //test/runner/... to the Make unit tests. The rebased Bazel profile includes it. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. The comparison matched labels, configuration, kind and test size. Both --nobuild commands ended with BUILD_FAILURE after analysis. All completion events reported NO_BUILD.\n\nMake owns the eight package patterns and filters used by the unit jobs. The mixed RBE presubmit has to duplicate them. The proposed Bazel configuration supplies that selection to either caller. Make still supplies the cgroup version so v1 and v2 test results cache separately.\n\nAll 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
       "evidence": [
+        {
+          "label": "Signed single-commit amendment 7622671f0",
+          "url": "https://github.com/tamird/gvisor/commit/7622671f0"
+        },
+        {
+          "label": "Paired build-event files for master and amendment, analysis only",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42809893341/artifacts/13760489108"
+        },
+        {
+          "label": "Master adds the test runner to the Make unit tests",
+          "url": "https://github.com/google/gvisor/commit/1cbd8021a"
+        },
         {
           "label": "Original Make and mixed Bazel target selections for both arms",
           "url": "https://github.com/tamird/gvisor/actions/runs/42574603478/artifacts/13654349783"
@@ -69222,17 +69250,38 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "intake",
         "sourceHead": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
-        "observedAt": "2026-11-09T16:31:03+00:00",
-        "disposition": "Published the reviewed revision as #17281.",
-        "nextAction": "Follow #17281 for maintainer review and import.",
+        "observedAt": "2026-11-10T15:24:52+00:00",
+        "disposition": "Master added //test/runner/... to the Make unit tests. The rebased Bazel profile includes it. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. The comparison matched labels, configuration, kind and test size. Both --nobuild commands ended with BUILD_FAILURE after analysis. All completion events reported NO_BUILD.",
+        "nextAction": "Once approved, publish 7622671f0 on #17281.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17281",
-          "https://github.com/tamird/gvisor/commit/3c4df972e"
+          "https://github.com/tamird/gvisor/commit/7622671f0",
+          "https://github.com/tamird/gvisor/actions/runs/42809893341/artifacts/13760489108",
+          "https://github.com/google/gvisor/pull/17281"
         ]
       },
-      "number": 17281
+      "number": 17281,
+      "refinement": {
+        "before": {
+          "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41"
+        },
+        "after": {
+          "head": "7622671f00d19417484fc6538c7a825b48dc496f",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "7622671f00d19417484fc6538c7a825b48dc496f",
+        "baseHead": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+        "url": "https://github.com/tamird/gvisor/commit/7622671f0",
+        "title": "Include the newly selected test runner in the unit-test profile",
+        "requestedAt": "2026-11-10T15:24:52+00:00",
+        "summary": "Publish the rebased unit-test profile on #17281.",
+        "body": "Master added //test/runner/... to the Make unit tests. The rebased Bazel profile includes it. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. The comparison matched labels, configuration, kind and test size. Both --nobuild commands ended with BUILD_FAILURE after analysis. All completion events reported NO_BUILD.\n\ngit -C ~/code/gvisor range-diff 3c4df972e^! 7622671f0^!"
+      }
     },
     {
       "id": "pr:17282",
@@ -70012,12 +70061,12 @@
       "url": "https://github.com/google/gvisor/pull/17305",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T14:16:59+00:00",
-      "summary": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The original compiler logs show all three defers in Requeue were stack-allocated on the public head and open-coded on 8da3e1807. The checkpoint comparison is running.\n\nWith two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
+      "updatedAt": "2026-11-10T15:17:03+00:00",
+      "summary": "The compiler stack-allocated all three Requeue defers on the published head and open-coded all three on 8da3e1807. Both shared and private waiter tests failed on the published head under save and save/resume. All eight cases passed on the amendment across native Linux, systrap, save and save/resume.\n\nWith two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
       "evidence": [
         {
-          "label": "Local Linux Bazel recovery for shared/private futex checkpoint cases",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42840829395"
+          "label": "Original shared and private futex XML on the published head and amendment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42840829395/artifacts/13776082308"
         },
         {
           "label": "Stack-allocated defers on 01a28c6ab",
@@ -70047,11 +70096,11 @@
       "followup": {
         "owner": "intake",
         "sourceHead": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
-        "observedAt": "2026-11-10T14:13:03+00:00",
-        "disposition": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The proposed amendment is undergoing its Linux comparison.",
-        "nextAction": "Verify the Linux run. Once approved, publish the amendment and reply on the original review threads.",
+        "observedAt": "2026-11-10T15:17:03+00:00",
+        "disposition": "The compiler stack-allocated all three Requeue defers on the published head and open-coded all three on 8da3e1807. Both shared and private waiter tests failed on the published head under save and save/resume. All eight cases passed on the amendment across native Linux, systrap, save and save/resume.",
+        "nextAction": "Once approved, publish 8da3e1807 and reply on both original review threads.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42840829395",
+          "https://github.com/tamird/gvisor/actions/runs/42840829395/artifacts/13776082308",
           "https://github.com/google/gvisor/pull/17305#discussion_r4519810874",
           "https://github.com/google/gvisor/pull/17305#discussion_r4519810882",
           "https://github.com/tamird/gvisor/commit/8da3e1807",
@@ -70075,8 +70124,8 @@
         "url": "https://github.com/tamird/gvisor/commit/8da3e1807",
         "title": "Count each waiter once during futex requeue",
         "requestedAt": "2026-11-10T14:16:59+00:00",
-        "summary": "Publish the amendment and reply on the original review threads after its Linux checks pass.",
-        "body": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The original compiler logs show all three defers in Requeue were stack-allocated on the public head and open-coded on 8da3e1807. The checkpoint comparison is running.\n\nProposed replies if the Linux comparison confirms both results:\n\nOn the extra return: “I changed the final return to `return done + requeued, err`. If requeue hits a PI waiter, the manager still reports the wakes it completed before the error. The compiler now open-codes all three defers.\n\nPosted by Codex on behalf of @tamird.”\n\nOn save/restore: “I disabled cooperative saves from the first waiter readiness check through the wake on `dst`. A checkpoint in that interval can restart a moved waiter on `src`. Both shared and private cases now pass under save and save/resume.\n\nPosted by Codex on behalf of @tamird.”\n\ngit -C ~/code/gvisor range-diff 01a28c6ab^! 8da3e1807^!"
+        "summary": "Publish 8da3e1807 and reply on both original review threads.",
+        "body": "The compiler stack-allocated all three Requeue defers on the published head and open-coded all three on 8da3e1807. Both shared and private waiter tests failed on the published head under save and save/resume. All eight cases passed on the amendment across native Linux, systrap, save and save/resume.\n\nProposed replies\n\nOn the extra return: “I changed the final return to `return done + requeued, err`. If requeue hits a PI waiter, the manager still reports the wakes it completed before the error. The compiler now open-codes all three defers.\n\nPosted by Codex on behalf of @tamird.”\n\nOn save/restore: “I disabled cooperative saves from the first waiter readiness check through the wake on `dst`. A checkpoint in that interval can restart a moved waiter on `src`. Both shared and private cases now pass under save and save/resume.\n\nPosted by Codex on behalf of @tamird.”\n\ngit -C ~/code/gvisor range-diff 01a28c6ab^! 8da3e1807^!"
       }
     },
     {
@@ -95307,6 +95356,87 @@
         {
           "label": "Native test suites and four regression controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42396550227/artifacts/13583881407"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-java-datagram-fd-count",
+      "title": "Java DatagramChannel test sees the open descriptor count change by one",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-10T15:24:52+00:00",
+      "summary": "Four different gVisor commits failed the same OpenJDK Unref.java test on Java shard 8. All four passed when Buildkite reran the shard at the same commit. The JDK version gVisor ships already excludes this test on all platforms. Its own Linux failure matches one of the two assertions seen on gVisor.",
+      "findings": [
+        {
+          "text": "Builds 54134 (c7d58cefd) and 54152 (e53b9ea39) started with 11 open descriptors and counted 10 immediately after opening and closing a datagram channel. Both failed line 72.",
+          "evidence": [
+            {
+              "label": "Original Java test log, build 54134",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54134/jobs/01a1c327-6291-4d6c-8da1-8d8db802701e/artifacts/01a1c338-f594-4c86-87b0-b78d4381870a"
+            },
+            {
+              "label": "Same-head Java retry, build 54134",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54134#01a1c33a-4844-43fd-838e-f1840897c85f"
+            },
+            {
+              "label": "Original Java test log, build 54152",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54152/jobs/01a1c388-76cb-4a4f-8415-b54a867e6378/artifacts/01a1c397-c7b8-4264-89aa-c947cc762a9a"
+            },
+            {
+              "label": "Same-head Java retry, build 54152",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54152#01a1c399-1eb3-4acf-b48b-92c9eb48e796"
+            }
+          ]
+        },
+        {
+          "text": "Builds 54135 (cb0b9f167) and 54145 (0fbea3e91) started with 10 and counted 11 after registering a channel with a selector, closing it and flushing the selector. Both failed line 80. Each of the four retries executed shard 8.",
+          "evidence": [
+            {
+              "label": "Original Java test log, build 54135",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54135/jobs/01a1c32e-bdb2-4c0c-bef7-10c6f9520175/artifacts/01a1c338-1253-4253-9b26-3abd9f90cde1"
+            },
+            {
+              "label": "Same-head Java retry, build 54135",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54135#01a1c338-f1f2-477f-9ad3-bdc6f52b2c8d"
+            },
+            {
+              "label": "Original Java test log, build 54145",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54145/jobs/01a1c34e-6c31-40c3-a911-3f8c490b3de4/artifacts/01a1c35c-c4ba-4be4-b28a-63291984974f"
+            },
+            {
+              "label": "Same-head Java retry, build 54145",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54145#01a1c35e-5fc0-4fb7-9356-a1cf18251d3a"
+            }
+          ]
+        },
+        {
+          "text": "OpenJDK lists Unref.java for all platforms under JDK-8233437. The upstream linux-64 failure counted 13 open descriptors against a baseline of 12 after register, close and flush at line 80. The gVisor runner uses a Java-version-specific CSV. Its jtreg commands do not read OpenJDK’s ProblemList.",
+          "evidence": [
+            {
+              "label": "Upstream Linux failure and stack",
+              "url": "https://bugs.openjdk.org/browse/JDK-8233437"
+            },
+            {
+              "label": "ProblemList in gVisor’s pinned OpenJDK source",
+              "url": "https://github.com/openjdk/jdk21u/blob/05f18b106/test/jdk/ProblemList.txt#L564"
+            },
+            {
+              "label": "gVisor jtreg discovery and execution",
+              "url": "https://github.com/google/gvisor/blob/deb6b3ea1/test/runtimes/proctor/lib/java.go#L41"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Qualify adding only Unref.java to gVisor’s Java 21 exclusion CSV. Compare the admitted test names before and after. The four failures do not identify which JVM descriptor changed.",
+      "evidence": [
+        {
+          "label": "Exact OpenJDK test used by the Java 21 image",
+          "url": "https://github.com/openjdk/jdk21u/blob/05f18b10620834883180013bb8873a6b4bdc6df2/test/jdk/java/nio/channels/DatagramChannel/Unref.java#L64-L84"
+        },
+        {
+          "label": "gVisor Java 21 image source pin",
+          "url": "https://github.com/google/gvisor/blob/deb6b3ea1/images/runtimes/java21/Dockerfile.x86_64#L17"
         }
       ]
     },
