@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T16:52:08+00:00",
+    "updatedAt": "2026-11-10T17:00:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23478,10 +23478,14 @@
       "title": "Build the wrk2 image from pinned source",
       "url": "https://github.com/tamird/gvisor/commit/2ed473216",
       "group": "bazel",
-      "status": "Approved; waiting for BCR #11683",
-      "updatedAt": "2026-11-10T00:21:07+00:00",
-      "summary": "Build the wrk2 image with OpenSSL 4.0.3.bcr.1 and LuaJIT 2.1.1794214635. The packaged benchmark completed 584 HTTP and 584 HTTPS requests on native AMD64 and 560 HTTP and 575 HTTPS requests on emulated ARM64. Both reported the upstream LuaJIT version and GC64. All four image notices matched their sources, and the regenerated license catalog matched all 226 entries.",
+      "status": "Published",
+      "updatedAt": "2026-11-10T17:00:32+00:00",
+      "summary": "Published at the reviewed 2ed473216 in #17376 after BCR merged #11683. The image builds wrk2 with LuaJIT 2.1.1794214635 and OpenSSL 4.0.3.bcr.1. Its upstream/BUILD cites the wrk2 Makefile. Native AMD64 and emulated ARM64 ran the packaged HTTP and HTTPS workloads.",
       "evidence": [
+        {
+          "label": "Approved gVisor wrk2 PR",
+          "url": "https://github.com/google/gvisor/pull/17376"
+        },
         {
           "label": "Single wrk2 proposal with an upstream/BUILD overlay",
           "url": "https://github.com/tamird/gvisor/commit/2ed473216"
@@ -23554,7 +23558,8 @@
           "summary": "Open this single commit after BCR #11683 publishes LuaJIT? The wrk2 overlay is now named upstream/BUILD. Both complete image archives and their Make context tars match the previously tested images byte for byte.\n\ngit -C ~/code/gvisor range-diff bbb847c17^! 2ed473216^!",
           "outcome": "approved",
           "at": "2026-11-10T00:21:07+00:00",
-          "note": "Approved to open after BCR #11683 lands."
+          "note": "Approved after BCR #11683. The registry published LuaJIT 2.1.1794214635 and the approved commit opened as gVisor #17376.",
+          "postedURL": "https://github.com/google/gvisor/pull/17376"
         }
       ],
       "refinement": {
@@ -23568,16 +23573,17 @@
         }
       },
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream review",
         "sourceHead": "2ed4732163867b699554c75d7b49c1d8c08d2797",
-        "observedAt": "2026-11-10T00:21:07+00:00",
-        "disposition": "The wrk2 image and its upstream/BUILD layout are approved.",
-        "nextAction": "Open the single-commit gVisor PR when the LuaJIT version is available in BCR.",
+        "observedAt": "2026-11-10T17:00:32+00:00",
+        "disposition": "Published as the single reviewed commit in #17376.",
+        "nextAction": "Follow the new PR’s checks and maintainer review.",
         "evidence": [
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683",
-          "https://github.com/tamird/gvisor/actions/runs/42725321292/artifacts/13723325162"
+          "https://github.com/google/gvisor/pull/17376",
+          "https://bcr.bazel.build/modules/luajit/2.1.1794214635/MODULE.bazel"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:16162",
@@ -70881,10 +70887,22 @@
       "title": "Publish LuaJIT 2.1.1794214635 in BCR",
       "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683",
       "group": "bazel",
-      "status": "open",
-      "summary": "Published one commit at 3f7de0143 and answered David’s three inline comments. Bazel built and ran three Linux x86_64 LuaJIT CLIs. The beta3 default reported gc64=false and fr2=false. The rolling default reported true for both, and explicitly disabling GC64 returned both to false. Each CLI compiled, dumped and reloaded a Lua function. The amendment explains the upstream default change and simplifies the two target labels David identified.",
-      "updatedAt": "2026-11-10T16:16:37+00:00",
+      "status": "merged",
+      "summary": "Merged at 16:41 UTC on November 10. BCR publishes LuaJIT 2.1.1794214635 from c4b1e2f73. Native Linux validated the default GC64 configuration and the explicit Linux x86_64 legacy configuration. gVisor now consumes the release in #17376.",
+      "updatedAt": "2026-11-10T17:00:32+00:00",
       "evidence": [
+        {
+          "label": "Registry merge",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/commit/0fdc87850"
+        },
+        {
+          "label": "Published module",
+          "url": "https://bcr.bazel.build/modules/luajit/2.1.1794214635/MODULE.bazel"
+        },
+        {
+          "label": "wrk2 consumer on the published version",
+          "url": "https://github.com/google/gvisor/pull/17376"
+        },
         {
           "label": "Reply on the generated architecture header label",
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527400910"
@@ -70969,14 +70987,12 @@
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "3f7de0143267b139a2a3ba67ffab037ff4f0b7fc",
-        "observedAt": "2026-11-10T16:16:37+00:00",
-        "disposition": "Published one commit at 3f7de0143 and answered David’s three inline comments. Bazel built and ran three Linux x86_64 LuaJIT CLIs. The beta3 default reported gc64=false and fr2=false. The rolling default reported true for both, and explicitly disabling GC64 returned both to false. Each CLI compiled, dumped and reloaded a Lua function. The amendment explains the upstream default change and simplifies the two target labels David identified.",
-        "nextAction": "Follow checks and maintainer review on the published head.",
+        "observedAt": "2026-11-10T17:00:32+00:00",
+        "disposition": "Merged at 0fdc87850. The public BCR serves the module and source archive metadata.",
+        "nextAction": "Follow the consumer in gVisor #17376.",
         "evidence": [
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527400157",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527400603",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527400910",
-          "https://github.com/tamird/bazel-central-registry/actions/runs/42850720637/artifacts/13779089975",
+          "https://bcr.bazel.build/modules/luajit/2.1.1794214635/MODULE.bazel",
+          "https://github.com/google/gvisor/pull/17376",
           "https://github.com/bazelbuild/bazel-central-registry/pull/11683"
         ]
       },
@@ -71229,6 +71245,46 @@
         "summary": "The original sender allowed a write when GitHub and HEAD matched but the loaded registry differed. The revision refused it. Linux passed 185 Python tests, 111 JavaScript tests and the published-data validator.",
         "body": "Fast-forward the existing work map’s gh-pages code to include this change. Reviewer requests, direct and fallback mentions, and three-hour reapproval reminders check the exact registry blob used to make their decision before writing to GitHub."
       }
+    },
+    {
+      "id": "pr:17376",
+      "type": "pr",
+      "number": 17376,
+      "repo": "google/gvisor",
+      "group": "bazel",
+      "title": "Build the wrk2 benchmark image with Bazel",
+      "url": "https://github.com/google/gvisor/pull/17376",
+      "ref": "review/wrk2-upstream-build-file",
+      "head": "2ed4732163867b699554c75d7b49c1d8c08d2797",
+      "status": "open",
+      "updatedAt": "2026-11-10T17:00:32+00:00",
+      "summary": "Published at the reviewed 2ed473216 in #17376 after BCR merged #11683. The image builds wrk2 with LuaJIT 2.1.1794214635 and OpenSSL 4.0.3.bcr.1. Its upstream/BUILD cites the wrk2 Makefile. Native AMD64 and emulated ARM64 ran the packaged HTTP and HTTPS workloads.",
+      "evidence": [
+        {
+          "label": "Published LuaJIT release",
+          "url": "https://bcr.bazel.build/modules/luajit/2.1.1794214635/MODULE.bazel"
+        },
+        {
+          "label": "Approved gVisor wrk2 PR",
+          "url": "https://github.com/google/gvisor/pull/17376"
+        },
+        {
+          "label": "Single wrk2 proposal with an upstream/BUILD overlay",
+          "url": "https://github.com/tamird/gvisor/commit/2ed473216"
+        },
+        {
+          "label": "Both complete image and context tar comparisons, 8,852 labels and Buildifier",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42725321292/artifacts/13723325162"
+        },
+        {
+          "label": "LuaJIT registry submission #11683",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683"
+        },
+        {
+          "label": "Single BCR prerequisite",
+          "url": "https://github.com/tamird/bazel-central-registry/commit/a4f336eea"
+        }
+      ]
     }
   ],
   "edges": [
@@ -96592,5 +96648,5 @@
       "nextStep": "Compare the unchanged test on native Linux and runsc to determine whether the debugger heap and timeout fail on both."
     }
   ],
-  "updatedAt": "2026-11-10T16:52:08+00:00"
+  "updatedAt": "2026-11-10T17:00:32+00:00"
 }
