@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T22:18:00+00:00",
+    "updatedAt": "2026-11-10T22:25:38+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97686,7 +97686,7 @@
       "title": "Docker-in-Docker commands outlive their exec deadline",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T22:11:26+00:00",
+      "updatedAt": "2026-11-10T22:25:38+00:00",
       "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected.",
       "findings": [
         {
@@ -97731,6 +97731,15 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42909662607/artifacts/13808370395"
             }
           ]
+        },
+        {
+          "text": "Native ARM64 runsc passed the VFS bridge case in 6.99 seconds and the overlay case in 4.84 seconds. TestExecCancellation and TestExecError both passed. With the test peer holding the stream open, the revised call returned context.Canceled and the stock call stayed blocked for two seconds. Both paths preserved the combined output and exit codes 0 and 23. All 12 XML records passed uncached with no skips.",
+          "evidence": [
+            {
+              "label": "Native ARM64 bridge, exec and cancellation results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42912601233/artifacts/13808193511"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -97757,6 +97766,10 @@
         {
           "label": "Native AMD64 cancellation and bridge test results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42909662607/artifacts/13808370395"
+        },
+        {
+          "label": "Native ARM64 bridge, exec and cancellation results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42912601233/artifacts/13808193511"
         }
       ],
       "nextStep": "Review the deadline fix for submission to gVisor. The original cause of the slow command can be investigated separately.",
@@ -97773,5 +97786,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T22:18:00+00:00"
+  "updatedAt": "2026-11-10T22:25:38+00:00"
 }
