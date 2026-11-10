@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T16:20:43+00:00",
+    "updatedAt": "2026-11-10T16:28:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71036,6 +71036,52 @@
           "note": "Published on #17370 at the reviewed single commit."
         }
       ]
+    },
+    {
+      "id": "branch:java21-unref-descriptor-count",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/java21-unref-descriptor-count",
+      "head": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
+      "title": "Exclude OpenJDK’s flaky DatagramChannel descriptor-count test",
+      "url": "https://github.com/tamird/gvisor/commit/6dd410ba8",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T16:28:34+00:00",
+      "summary": "Four builds failed Unref.java when the JVM-wide descriptor count differed by one. All four passed on a same-head retry. OpenJDK saw the extra descriptor on Linux and excludes the test on all platforms. Adding its one CSV entry changed gVisor’s Java 21 selection from 6,984 tests to 6,983. The pinned image listed 7,078 tests. Applying the whole upstream list would skip 19 additional tests that gVisor still runs. Two of those passed on the original failing build’s runtime, along with the neighboring DatagramChannel/Connect test.",
+      "evidence": [
+        {
+          "label": "Exact admission counts and three original passing jtreg results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42849734838/artifacts/13782730527"
+        },
+        {
+          "label": "OpenJDK report of the extra descriptor on Linux",
+          "url": "https://bugs.openjdk.org/browse/JDK-8233437"
+        },
+        {
+          "label": "Pinned OpenJDK 21 exclusion for every platform",
+          "url": "https://github.com/openjdk/jdk21u/blob/05f18b106/test/jdk/ProblemList.txt#L564"
+        },
+        {
+          "label": "Original failure on build 54152",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54152/jobs/01a1c388-76cb-4a4f-8415-b54a867e6378/artifacts/01a1c397-c7b8-4264-89aa-c947cc762a9a"
+        },
+        {
+          "label": "Same-head passing Java retry on build 54152",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54152#01a1c399-1eb3-4acf-b48b-92c9eb48e796"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
+        "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
+        "url": "https://github.com/tamird/gvisor/commit/6dd410ba8",
+        "title": "Exclude OpenJDK’s flaky DatagramChannel descriptor-count test",
+        "requestedAt": "2026-11-10T16:28:34+00:00",
+        "summary": "Four builds failed Unref.java when the JVM-wide descriptor count differed by one. All four passed on a same-head retry. OpenJDK saw the extra descriptor on Linux and excludes the test on all platforms. Adding its one CSV entry changed gVisor’s Java 21 selection from 6,984 tests to 6,983. The pinned image listed 7,078 tests. Applying the whole upstream list would skip 19 additional tests that gVisor still runs. Two of those passed on the original failing build’s runtime, along with the neighboring DatagramChannel/Connect test.",
+        "body": "Four Java 21 builds failed Unref.java and passed when Buildkite reran\nthe failed shard. Two runs counted one fewer open descriptor after\nclosing a channel. Two counted one extra after closing a channel\nregistered with a selector.\n\nOpenJDK saw the latter failure on Linux [1] and excludes this test on\nall platforms in the source used by our Java 21 image [2]. Add the\nsame test to our Java 21 exclusions.\n\n[1]: https://bugs.openjdk.org/browse/JDK-8233437\n[2]: https://github.com/openjdk/jdk21u/blob/05f18b106/test/jdk/ProblemList.txt#L564"
+      }
     }
   ],
   "edges": [
@@ -95670,7 +95716,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T15:58:34+00:00",
+      "updatedAt": "2026-11-10T16:28:34+00:00",
       "summary": "Four different gVisor commits failed the same OpenJDK Unref.java test on Java shard 8. All four passed when Buildkite reran the shard at the same commit. The JDK version gVisor ships already excludes this test on all platforms. Its own Linux failure matches one of the two assertions seen on gVisor.",
       "findings": [
         {
@@ -95731,10 +95777,23 @@
               "url": "https://github.com/google/gvisor/blob/deb6b3ea1/test/runtimes/proctor/lib/java.go#L41"
             }
           ]
+        },
+        {
+          "text": "On the original #54152 runtime, the production filter removed only DatagramChannel/Unref. DatagramChannel/Connect, MemoryMXBean/Pending and forkjoin/AsyncShutdownNow all produced passing jtreg results. The latter two are among the 19 additional Linux-applicable ProblemList entries that the gVisor harness admits.",
+          "evidence": [
+            {
+              "label": "Original Java image, admissions and JTRs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42849734838/artifacts/13782730527"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the production Java test list with the one-row Unref exclusion, then run still-admitted jtreg cases on the original gVisor runtime.",
+      "nextStep": "Review the one-test Java 21 exclusion in the linked proposal.",
       "evidence": [
+        {
+          "label": "Single-commit Java exclusion proposal",
+          "url": "https://github.com/tamird/gvisor/commit/6dd410ba8"
+        },
         {
           "label": "Exact OpenJDK test used by the Java 21 image",
           "url": "https://github.com/openjdk/jdk21u/blob/05f18b10620834883180013bb8873a6b4bdc6df2/test/jdk/java/nio/channels/DatagramChannel/Unref.java#L64-L84"
@@ -96351,5 +96410,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T16:20:43+00:00"
+  "updatedAt": "2026-11-10T16:28:34+00:00"
 }
