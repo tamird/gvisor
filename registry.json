@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T18:39:36+00:00",
+    "updatedAt": "2026-11-10T18:45:59+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47045,10 +47045,10 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "review/inotify-mask-create",
-      "head": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6",
+      "head": "daa2d24389d1fea28197add328e4e875488c306d",
       "title": "Honor IN_MASK_CREATE when adding inotify watches",
       "url": "https://github.com/google/gvisor/pull/16842",
-      "updatedAt": "2026-11-05T11:14:22.277195Z",
+      "updatedAt": "2026-11-10T18:45:59+00:00",
       "status": "open",
       "summary": "A second create-only inotify watch silently replaced IN_OPEN with IN_MODIFY. Linux returns EEXIST and preserves the original watch, even through another hard link. Stock failed three of six shared cases; Linux and fixed gVisor passed all six. The gVisor hard-link comparison used tmpfs.",
       "evidence": [
@@ -47083,6 +47083,18 @@
         {
           "label": "VFS and Linux syscall Nogo owners on 9148a7234 (final revision changes one comment and C++ formatting)",
           "url": "https://app.buildbuddy.io/invocation/ff2f5463-fd6d-4e66-bf60-3f3410dfc192"
+        },
+        {
+          "label": "Alexander’s comment on AddWatch",
+          "url": "https://github.com/google/gvisor/pull/16842#discussion_r4528940949"
+        },
+        {
+          "label": "Comment-only amendment",
+          "url": "https://github.com/tamird/gvisor/commit/daa2d2438"
+        },
+        {
+          "label": "Reply to Alexander on the EEXIST comment",
+          "url": "https://github.com/google/gvisor/pull/16842#discussion_r4529053275"
         }
       ],
       "settledReviews": [
@@ -47101,27 +47113,44 @@
           "body": "When a watch already exists, the create-only request returns EEXIST before changing its mask. The rebase preserves the lock order master uses to update both watch indexes. It also adapts the new watched-dentry eviction test to check whether AddWatch succeeded. That caller would fail to compile if only the marked conflict were resolved.\n\nOn this exact source, six syscall cases ran on native AMD64 Linux, the three affected kernfs tests passed, and both owning Nogo checks passed. The earlier gVisor run exercised all six syscall cases, including two hard links to the same tmpfs inode.\n\ngit -C ~/code/gvisor range-diff 34d137cda^! aab0e06b4^!",
           "outcome": "approved",
           "at": "2026-11-05T11:14:22.277195Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "daa2d24389d1fea28197add328e4e875488c306d",
+          "baseHead": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6",
+          "url": "https://github.com/tamird/gvisor/commit/daa2d2438",
+          "requestedAt": "2026-11-10T18:43:33+00:00",
+          "title": "Move the inotify mask error explanation beside its check",
+          "summary": "Publish the comment change on #16842 and reply to Alexander Cueva.",
+          "body": "The AddWatch function comment describes adding or updating the watch and returning its descriptor. The IN_MASK_CREATE branch explains why a second pathname can still refer to an existing watch. All 534 non-comment lines and all Go directives match the published head.\n\nProposed reply\n\nMoved the IN_MASK_CREATE explanation next to the EEXIST return and restored the inotify_add_watch(2) reference in the function comment.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-10T18:45:59+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16842#discussion_r4529053275",
+          "note": "Published the comment-only amendment and replied to Alexander. AddWatch documents the syscall and explains EEXIST where it is returned."
         }
       ],
       "number": 16842,
       "refinement": {
         "before": {
-          "head": "34d137cdad082fc28278d026400624e8c85ac58f"
+          "head": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6"
         },
         "after": {
-          "head": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6"
+          "head": "daa2d24389d1fea28197add328e4e875488c306d",
+          "base": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d"
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6",
-        "observedAt": "2026-11-05T11:14:22.277195Z",
-        "disposition": "Published the reviewed conflict repair.",
-        "nextAction": "Await upstream review of this revision.",
+        "owner": "Upstream review",
+        "sourceHead": "daa2d24389d1fea28197add328e4e875488c306d",
+        "observedAt": "2026-11-10T18:45:59+00:00",
+        "disposition": "Published the comment-only amendment and replied to Alexander. AddWatch documents the syscall and explains EEXIST where it is returned.",
+        "nextAction": "Await upstream review of the amended commit.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/aab0e06b4",
           "https://github.com/tamird/gvisor/actions/runs/42009462257/artifacts/13407460630",
-          "https://github.com/google/gvisor/commit/aab0e06b4"
+          "https://github.com/google/gvisor/commit/aab0e06b4",
+          "https://github.com/tamird/gvisor/commit/daa2d2438",
+          "https://github.com/google/gvisor/pull/16842#discussion_r4529053275"
         ]
       }
     },
@@ -54558,13 +54587,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/checklocks-callback-facts",
-      "head": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
+      "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
       "title": "checklocks: infer when callbacks can use the caller’s locks",
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T18:04:33+00:00",
-      "summary": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic.",
+      "updatedAt": "2026-11-10T18:45:59+00:00",
+      "summary": "The callback analyzer reports one diagnostic for a repeated read and preserves separate guard failures at one call site. The callback fixtures and production overlay passed on AMD64 and ARM64.",
       "evidence": [
         {
           "label": "Signed amendment 28a833a1d",
@@ -54605,6 +54634,10 @@
         {
           "label": "Original report and reproducer",
           "url": "https://github.com/google/gvisor/pull/16868#discussion_r4528075991"
+        },
+        {
+          "label": "Reply on duplicate callback diagnostics",
+          "url": "https://github.com/google/gvisor/pull/16868#discussion_r4529053276"
         }
       ],
       "refinement": {
@@ -54636,32 +54669,36 @@
           "at": "2026-11-10T15:50:35+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16868",
           "note": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic."
+        },
+        {
+          "kind": "amendment",
+          "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
+          "baseHead": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
+          "url": "https://github.com/tamird/gvisor/commit/6ca7addca",
+          "requestedAt": "2026-11-10T18:04:33+00:00",
+          "title": "Report one checklocks diagnostic per source access and guard",
+          "summary": "Publish 6ca7addca and reply on the original #16868 review thread.",
+          "body": "A caller-supplied reproducer generated two diagnostics for one field read. On AMD64 and ARM64, the amendment reports it once and preserves distinct guard failures at the same call site. The callback fixtures and production overlay passed on both architectures.\n\nProposed reply\n\nYou’re right. The same read of `h.ptr.guardedField` was reported twice when checklocks gave the pointer a new internal name on the second visit. I kept the check and declared guard in the key as well as the position: a callback can call the same helper with an excluded lock held on one visit and a required lock missing on the next. The regression tests cover both cases.\n\nPosted by Codex on behalf of @tamird.\n\ngit -C ~/code/gvisor range-diff 28a833a1d^! 6ca7addca^!",
+          "outcome": "approved",
+          "at": "2026-11-10T18:45:59+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16868#discussion_r4529053276",
+          "note": "Published the amendment and replied on the original review. The analyzer reports the repeated read once and preserves distinct guard failures at one call site on AMD64 and ARM64."
         }
       ],
       "number": 16868,
       "followup": {
-        "owner": "intake",
-        "sourceHead": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
-        "observedAt": "2026-11-10T18:04:33+00:00",
-        "disposition": "A caller-supplied reproducer generated two diagnostics for one field read. On AMD64 and ARM64, the amendment reports it once and preserves distinct guard failures at the same call site. The callback fixtures and production overlay passed on both architectures.",
-        "nextAction": "Once approved, publish the single amendment to #16868 and reply on the original review thread.",
+        "owner": "Upstream review",
+        "sourceHead": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
+        "observedAt": "2026-11-10T18:45:59+00:00",
+        "disposition": "Published the amendment and replied on the original review. The analyzer reports the repeated read once and preserves distinct guard failures at one call site on AMD64 and ARM64.",
+        "nextAction": "Await upstream review of the amended commit.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16868#discussion_r4528075991",
           "https://github.com/tamird/gvisor/commit/6ca7addca",
           "https://github.com/tamird/gvisor/actions/runs/42868843500/artifacts/13790280816",
-          "https://github.com/tamird/gvisor/actions/runs/42865806042/artifacts/13788581148"
+          "https://github.com/tamird/gvisor/actions/runs/42865806042/artifacts/13788581148",
+          "https://github.com/google/gvisor/pull/16868#discussion_r4529053276"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "6ca7addca2c9eb550b56121bcc1749e9402e8db0",
-        "baseHead": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
-        "url": "https://github.com/tamird/gvisor/commit/6ca7addca",
-        "requestedAt": "2026-11-10T18:04:33+00:00",
-        "title": "Report one checklocks diagnostic per source access and guard",
-        "summary": "Publish 6ca7addca and reply on the original #16868 review thread.",
-        "body": "A caller-supplied reproducer generated two diagnostics for one field read. On AMD64 and ARM64, the amendment reports it once and preserves distinct guard failures at the same call site. The callback fixtures and production overlay passed on both architectures.\n\nProposed reply\n\nYou’re right. The same read of `h.ptr.guardedField` was reported twice when checklocks gave the pointer a new internal name on the second visit. I kept the check and declared guard in the key as well as the position: a callback can call the same helper with an excluded lock held on one visit and a required lock missing on the next. The regression tests cover both cases.\n\nPosted by Codex on behalf of @tamird.\n\ngit -C ~/code/gvisor range-diff 28a833a1d^! 6ca7addca^!"
       }
     },
     {
