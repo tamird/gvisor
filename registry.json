@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-09T23:59:07+00:00",
+    "updatedAt": "2026-11-10T00:06:02+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23237,18 +23237,22 @@
       "id": "branch:rules-img-wrk2-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/wrk2-rolling-luajit",
-      "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a",
+      "ref": "review/wrk2-upstream-build-file",
+      "head": "2ed4732163867b699554c75d7b49c1d8c08d2797",
       "title": "Build the wrk2 image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/bbb847c17",
+      "url": "https://github.com/tamird/gvisor/commit/2ed473216",
       "group": "bazel",
-      "status": "Revising the wrk2 BUILD file layout",
-      "updatedAt": "2026-11-09T23:59:07+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T00:06:02+00:00",
       "summary": "Build the wrk2 image with OpenSSL 4.0.3.bcr.1 and LuaJIT 2.1.1794214635. The packaged benchmark completed 584 HTTP and 584 HTTPS requests on native AMD64 and 560 HTTP and 575 HTTPS requests on emulated ARM64. Both reported the upstream LuaJIT version and GC64. All four image notices matched their sources, and the regenerated license catalog matched all 226 entries.",
       "evidence": [
         {
-          "label": "Rolling-version wrk2 change",
-          "url": "https://github.com/tamird/gvisor/commit/bbb847c17"
+          "label": "Single wrk2 proposal with an upstream/BUILD overlay",
+          "url": "https://github.com/tamird/gvisor/commit/2ed473216"
+        },
+        {
+          "label": "Both complete image and context tar comparisons, 8,852 labels and Buildifier",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42725321292/artifacts/13723325162"
         },
         {
           "label": "LuaJIT registry submission #11683",
@@ -23305,24 +23309,24 @@
       ],
       "refinement": {
         "before": {
-          "base": "dbb96525c56acc964ffcc6e5acbfe49baf034c74",
-          "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4"
+          "base": "272ad5c729aa522d373a786400c21c2eed198f4d",
+          "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a"
         },
         "after": {
           "base": "272ad5c729aa522d373a786400c21c2eed198f4d",
-          "head": "bbb847c171e47457bb2139f5af42dc6a95a3361a"
+          "head": "2ed4732163867b699554c75d7b49c1d8c08d2797"
         }
       },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "bbb847c171e47457bb2139f5af42dc6a95a3361a",
-        "observedAt": "2026-11-09T23:59:07+00:00",
-        "disposition": "Revising the wrk2 BUILD file layout",
-        "nextAction": "Move the wrk2 overlay to a file named BUILD, verify the source references and package output, and return the revised single commit for review. The image still needs the published LuaJIT module.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/bbb847c17",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683"
-        ]
+      "contributorReview": {
+        "kind": "proposal",
+        "title": "Build the wrk2 benchmark image with Bazel",
+        "body": "Building the HTTP benchmark client on ARM64 requires a newer LuaJIT\nthan the one bundled with wrk2. The Dockerfile clones both projects,\npatches wrk2 and installs a compiler and TLS headers with apt.\n\nBuild wrk2 with LuaJIT’s rolling 2.1 release [1] and OpenSSL 4 from\nthe Bazel Central Registry. Compile the embedded Lua module to C so\nthe target compiler emits its object when cross-compiling. Package the\nexecutable and its notices in a pinned Ubuntu image. LuaJIT publishes\nits notice as COPYRIGHT, which the license checker must also recognize.\n\n[1]: https://luajit.org/status.html",
+        "baseHead": "272ad5c729aa522d373a786400c21c2eed198f4d",
+        "status": "pending",
+        "head": "2ed4732163867b699554c75d7b49c1d8c08d2797",
+        "url": "https://github.com/tamird/gvisor/commit/2ed473216",
+        "requestedAt": "2026-11-10T00:06:02+00:00",
+        "summary": "Open this single commit after BCR #11683 publishes LuaJIT? The wrk2 overlay is now named upstream/BUILD. Both complete image archives and their Make context tars match the previously tested images byte for byte.\n\ngit -C ~/code/gvisor range-diff bbb847c17^! 2ed473216^!"
       }
     },
     {
@@ -70031,8 +70035,16 @@
       "group": "bazel",
       "status": "open",
       "summary": "The published 2017 beta builds x86 assembly for an ARM64 target. This module uses the production v2.1 snapshot and the target CPU. The native ARM64 command and an embedded Lua program both reported 2.1.1794214635.",
-      "updatedAt": "2026-11-09T23:53:15+00:00",
+      "updatedAt": "2026-11-10T00:03:29+00:00",
       "evidence": [
+        {
+          "label": "Registry presubmit rejected the generated archive URL",
+          "url": "https://buildkite.com/bazel/bcr-presubmit/builds/45123#01a1c2b9-a54c-4233-bddf-99a7be57ef12"
+        },
+        {
+          "label": "Previous LuaJIT archive exception",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/6931#issuecomment-3685841539"
+        },
         {
           "label": "Requested maintainer review",
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#issuecomment-6754674424"
@@ -70045,7 +70057,18 @@
           "label": "Exact release number, JIT trace, bytecode and C consumer on native ARM64",
           "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42721647380/artifacts/13720581361"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "a4f336eeac836d983cccce0167d321ca423acc91",
+        "observedAt": "2026-11-10T00:03:29+00:00",
+        "disposition": "BCR presubmit stopped at the generated GitHub archive URL.",
+        "nextAction": "The registry maintainers can grant the unstable_url exception for this LuaJIT snapshot, as they did for the previous release.",
+        "evidence": [
+          "https://buildkite.com/bazel/bcr-presubmit/builds/45123#01a1c2b9-a54c-4233-bddf-99a7be57ef12",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/6931#issuecomment-3685841539"
+        ]
+      }
     }
   ],
   "edges": [
@@ -73986,7 +74009,7 @@
       "evidence": [
         "https://github.com/bazelbuild/bazel-central-registry/pull/11683",
         "https://github.com/tamird/bazel-central-registry/commit/a4f336eea",
-        "https://github.com/tamird/gvisor/commit/bbb847c17"
+        "https://github.com/tamird/gvisor/commit/2ed473216"
       ]
     }
   ],
@@ -95239,5 +95262,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-09T23:59:07+00:00"
+  "updatedAt": "2026-11-10T00:06:02+00:00"
 }
