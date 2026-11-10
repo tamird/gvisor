@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T21:30:20+00:00",
+    "updatedAt": "2026-11-10T21:34:47+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97531,7 +97531,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T21:24:55+00:00",
+      "updatedAt": "2026-11-10T21:34:47+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97610,9 +97610,18 @@
               "url": "https://github.com/tamird/gvisor/commit/71bdb9225"
             }
           ]
+        },
+        {
+          "text": "On the corrected systrap runtime, TestSudo passed in 1.65 seconds, TestGDBAttach passed in 1.68 seconds, and bob’s unprivileged strace of /bin/true exited 0. Both ways of attaching to an already stopped process and the running-child control passed on native Linux and systrap. None of the nine cases skipped.",
+          "evidence": [
+            {
+              "label": "Original results for both ptrace attach modes and the traced programs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42903253276/artifacts/13804074099"
+            }
+          ]
         }
       ],
-      "nextStep": "Check the stopped tracee with both PTRACE_ATTACH and PTRACE_SEIZE on native Linux and systrap. Then verify the sudo and debugger cases on the revised runtime.",
+      "nextStep": "Review the signed fix for submission to gVisor. The original issue draft remains on hold.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97649,6 +97658,10 @@
         {
           "label": "Native and systrap attach modes, sudo and debugger tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/42903253276"
+        },
+        {
+          "label": "Original results for both ptrace attach modes and the traced programs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42903253276/artifacts/13804074099"
         }
       ],
       "settledReviews": [
@@ -97663,8 +97676,19 @@
           "at": "2026-11-10T20:57:16+00:00",
           "note": "Filing is approved. The contributor asked us to diagnose and fix the traced exec hang first."
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "71bdb92251810c03229d67d0e3bdf2a9c9cba9d2",
+        "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
+        "url": "https://github.com/tamird/gvisor/commit/71bdb9225",
+        "title": "Report an existing group-stop when seizing a tracee",
+        "requestedAt": "2026-11-10T21:34:47+00:00",
+        "summary": "Open the ptrace fix? The traced sudo and debugger tests now finish on systrap, and its stopped-process behavior matches Linux for both attach requests.",
+        "body": "An unprivileged strace of /bin/true can wait indefinitely for its\nchild. When c70baf34b moved the attach logic after address space\npreparation, PTRACE_SEIZE began returning before it reported an\nexisting group-stop to the tracer. [1]\n\nAfter preparation, recheck the tracer relationship and report the\ngroup-stop for either attach request. Linux also makes only the\ninitial SIGSTOP conditional on PTRACE_ATTACH. [2] Exercise both forms\nin the existing group-stop syscall test.\n\n[1]: https://github.com/google/gvisor/commit/c70baf34b\n[2]: https://github.com/torvalds/linux/blob/adc218676/kernel/ptrace.c#L378-L405"
+      }
     }
   ],
-  "updatedAt": "2026-11-10T21:30:20+00:00"
+  "updatedAt": "2026-11-10T21:34:47+00:00"
 }
