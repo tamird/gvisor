@@ -965,11 +965,12 @@ func TestProxyUDPIdleTimeout(t *testing.T) {
 		return conn, nil
 	}
 
-	clientStack := startInProcessProxy(t, &Netgofer{
+	n := Netgofer{
 		maxActiveConns: 1,
 		udpIdleTimeout: 150 * time.Millisecond,
 		dialContext:    trackingDial,
-	})
+	}
+	clientStack := startInProcessProxy(t, &n)
 
 	udpTarget := tcpip.FullAddress{
 		NIC:  1,
@@ -985,13 +986,17 @@ func TestProxyUDPIdleTimeout(t *testing.T) {
 	if err := conn1.SetDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		t.Fatalf("conn1.SetDeadline() failed: %v", err)
 	}
-	if _, err := conn1.Write([]byte("idle-timeout-1")); err != nil {
+	const (
+		firstPayload  = "idle-timeout-1"
+		secondPayload = "idle-timeout-2"
+	)
+	if _, err := conn1.Write([]byte(firstPayload)); err != nil {
 		t.Fatalf("conn1.Write() failed: %v", err)
 	}
-	buf := make([]byte, 256)
+	buf := make([]byte, max(len(firstPayload), len(secondPayload))+1)
 	nr, err := conn1.Read(buf)
-	if err != nil || string(buf[:nr]) != "idle-timeout-1" {
-		t.Fatalf("conn1.Read() = %q, %v; want %q", buf[:nr], err, "idle-timeout-1")
+	if err != nil || string(buf[:nr]) != firstPayload {
+		t.Fatalf("conn1.Read() = %q, %v; want %q", buf[:nr], err, firstPayload)
 	}
 
 	var closed1 chan struct{}
@@ -1008,24 +1013,29 @@ func TestProxyUDPIdleTimeout(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("host UDP connection did not close after udpIdleTimeout")
 	}
+	// The host socket can close before the forwarder releases its slot.
+	select {
+	case n.activeConns <- struct{}{}:
+		<-n.activeConns
+	case <-time.After(5 * time.Second):
+		t.Fatal("first UDP flow did not release its slot after udpIdleTimeout")
+	}
 
 	conn2, err := gonet.DialUDP(clientStack, nil, &udpTarget, ipv4.ProtocolNumber)
 	if err != nil {
 		t.Fatalf("second gonet.DialUDP() failed: %v", err)
 	}
 	defer conn2.Close()
-	for i := 0; i < 40; i++ {
-		_ = conn2.SetDeadline(time.Now().Add(50 * time.Millisecond))
-		if _, err := conn2.Write([]byte("idle-timeout-2")); err != nil {
-			t.Fatalf("conn2.Write() failed: %v", err)
-		}
-		nr, err := conn2.Read(buf)
-		if err == nil && string(buf[:nr]) == "idle-timeout-2" {
-			return
-		}
-		time.Sleep(25 * time.Millisecond)
+	if err := conn2.SetDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		t.Fatalf("conn2.SetDeadline() failed: %v", err)
 	}
-	t.Fatal("second UDP flow failed to acquire activeConns slot after udpIdleTimeout")
+	if _, err := conn2.Write([]byte(secondPayload)); err != nil {
+		t.Fatalf("conn2.Write() failed: %v", err)
+	}
+	nr, err = conn2.Read(buf)
+	if err != nil || string(buf[:nr]) != secondPayload {
+		t.Fatalf("conn2.Read() = %q, %v; want %q", buf[:nr], err, secondPayload)
+	}
 }
 
 func getSocketBroadcastOption(t *testing.T, conn net.Conn) int {
