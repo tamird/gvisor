@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T15:58:34+00:00",
+    "updatedAt": "2026-11-10T16:05:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -801,15 +801,16 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-10T15:51:32+00:00",
-      "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The 2,566-entry ZIP and the Go-only consumer were verified on 4ecb0b121.",
+      "updatedAt": "2026-11-10T16:10:44+00:00",
+      "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "45137f922cf026cfa764ca3177d624d1b49b5581",
-        "observedAt": "2026-11-10T15:51:32+00:00",
-        "disposition": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The 2,566-entry ZIP and the Go-only consumer were verified on 4ecb0b121.",
+        "observedAt": "2026-11-10T16:10:44+00:00",
+        "disposition": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
         "nextAction": "Follow checks and maintainer review on the published head.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
           "https://github.com/tamird/gvisor/actions/runs/42807933933/artifacts/13761961713",
           "https://github.com/google/gvisor/pull/15106"
@@ -818,8 +819,8 @@
       "head": "45137f922cf026cfa764ca3177d624d1b49b5581",
       "evidence": [
         {
-          "label": "Export and Go-only consumer check on the published combined source",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42849078055"
+          "label": "Direct archive action on 45137f922 and byte-for-byte comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760"
         },
         {
           "label": "Differences from the reviewed rebase, including the direct assembler",
@@ -53982,9 +53983,21 @@
       "url": "https://github.com/google/gvisor/pull/16828",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
-      "summary": "FD-based and XDP backends now hand their endpoints to one NIC setup path. The first successfully constructed external endpoint opens the shared capture; later interfaces append their packets.",
+      "updatedAt": "2026-11-10T16:10:44+00:00",
+      "summary": "Master changed the loopback MTU wrapper and added a per-interface multicast flag. The amended shared setup preserves both. One- and two-interface systrap runs each wrote a single PCAP header and captured requests and replies on every veth. Guest ioctls matched the host MTU and multicast flags for lo (65536, off), vg0 (1500, on) and vg1 (1400, off). XDP was source-reviewed. The two cases passed again with fresh echo IDs. The second run retained both XML results and captures. Bazel reported a missing test log after execution and the collector rejected a duplicate TestResult.",
       "evidence": [
+        {
+          "label": "Second run with independent echoes, capture contents and passing XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42849969524/artifacts/13781021188"
+        },
+        {
+          "label": "Original XML, PCAP and interface observations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42847732234/artifacts/13778819585"
+        },
+        {
+          "label": "Preserve per-interface settings when sharing the packet capture",
+          "url": "https://github.com/tamird/gvisor/commit/ea507108f"
+        },
         {
           "label": "Review refactor",
           "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8"
@@ -54021,7 +54034,39 @@
           "outcome": "approved",
           "at": "2026-11-02T18:30:15.670469+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "ea507108f2f2232c88eb3a55128adc986a360d4a",
+        "baseHead": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
+        "url": "https://github.com/tamird/gvisor/commit/ea507108f",
+        "title": "Preserve per-interface settings when sharing the packet capture",
+        "requestedAt": "2026-11-10T16:05:56+00:00",
+        "summary": "Publish the reviewed amendment on #16828 once approved.",
+        "body": "Master changed the loopback MTU wrapper and added a per-interface multicast flag. The amended shared setup preserves both. One- and two-interface systrap runs each wrote a single PCAP header and captured requests and replies on every veth. Guest ioctls matched the host MTU and multicast flags for lo (65536, off), vg0 (1500, on) and vg1 (1400, off). XDP was source-reviewed. The two cases passed again with fresh echo IDs. The second run retained both XML results and captures. Bazel reported a missing test log after execution and the collector rejected a duplicate TestResult.\n\ngit -C ~/code/gvisor range-diff 28cfe8fb8^! ea507108f^!"
+      },
+      "refinement": {
+        "before": {
+          "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe"
+        },
+        "after": {
+          "head": "ea507108f2f2232c88eb3a55128adc986a360d4a",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+        }
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
+        "observedAt": "2026-11-10T16:10:44+00:00",
+        "disposition": "Master changed the loopback MTU wrapper and added a per-interface multicast flag. The amended shared setup preserves both. One- and two-interface systrap runs each wrote a single PCAP header and captured requests and replies on every veth. Guest ioctls matched the host MTU and multicast flags for lo (65536, off), vg0 (1500, on) and vg1 (1400, off). XDP was source-reviewed. The two cases passed again with fresh echo IDs. The second run retained both XML results and captures. Bazel reported a missing test log after execution and the collector rejected a duplicate TestResult.",
+        "nextAction": "Publish the reviewed amendment on #16828 once approved.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/ea507108f",
+          "https://github.com/tamird/gvisor/actions/runs/42847732234/artifacts/13778819585",
+          "https://github.com/tamird/gvisor/actions/runs/42849969524/artifacts/13781021188"
+        ]
+      }
     },
     {
       "id": "pr:16829",
@@ -70736,9 +70781,21 @@
       "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683",
       "group": "bazel",
       "status": "open",
-      "summary": "The published 2017 beta builds x86 assembly for an ARM64 target. This module uses the production v2.1 snapshot and the target CPU. The native ARM64 command and an embedded Lua program both reported 2.1.1794214635.",
-      "updatedAt": "2026-11-10T00:33:29+00:00",
+      "summary": "Bazel built and ran three Linux x86_64 LuaJIT CLIs. The beta3 default reported gc64=false and fr2=false. The rolling default reported true for both, and explicitly disabling GC64 returned both to false. Each CLI compiled, dumped and reloaded a Lua function. The amendment explains the upstream default change and simplifies the two target labels David identified.",
+      "updatedAt": "2026-11-10T16:05:56+00:00",
       "evidence": [
+        {
+          "label": "LuaJIT’s upstream x64 default change",
+          "url": "https://github.com/LuaJIT/LuaJIT/commit/bd00094c3"
+        },
+        {
+          "label": "Three exact integer-layout and bytecode results",
+          "url": "https://github.com/tamird/bazel-central-registry/actions/runs/42850720637/artifacts/13779089975"
+        },
+        {
+          "label": "Explain the LuaJIT GC64 default and simplify two target labels",
+          "url": "https://github.com/tamird/bazel-central-registry/commit/3f7de0143"
+        },
         {
           "label": "Published PowerPC amendment and tested reply",
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4519669799"
@@ -70799,24 +70856,25 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "a4947b73f0040e460443984fd486483fa34f2830",
-        "observedAt": "2026-11-10T15:58:34+00:00",
-        "disposition": "David granted the generated-archive URL exception and left three comments on a4947b73f. He asked why a build flag’s default changed and suggested simplifying two generated target labels.",
-        "nextAction": "Check the flag default against upstream LuaJIT and the previous registry overlay, then address David’s three comments.",
+        "observedAt": "2026-11-10T16:05:56+00:00",
+        "disposition": "Bazel built and ran three Linux x86_64 LuaJIT CLIs. The beta3 default reported gc64=false and fr2=false. The rolling default reported true for both, and explicitly disabling GC64 returned both to false. Each CLI compiled, dumped and reloaded a Lua function. The amendment explains the upstream default change and simplifies the two target labels David identified.",
+        "nextAction": "Publish the amended #11683 and reply on David’s three original threads once approved.",
         "evidence": [
+          "https://github.com/tamird/bazel-central-registry/commit/3f7de0143",
+          "https://github.com/tamird/bazel-central-registry/actions/runs/42850720637/artifacts/13779089975",
+          "https://github.com/LuaJIT/LuaJIT/commit/bd00094c3",
           "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527082508",
           "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527098880",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527101667",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#issuecomment-6771958199"
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11683#discussion_r4527101667"
         ]
       },
       "refinement": {
         "before": {
-          "base": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
-          "head": "a4f336eeac836d983cccce0167d321ca423acc91"
+          "head": "a4947b73f0040e460443984fd486483fa34f2830"
         },
         "after": {
-          "base": "6baf1c4d26772a9ce94a6b368dfc775c57e135c1",
-          "head": "a4947b73f0040e460443984fd486483fa34f2830"
+          "head": "3f7de0143267b139a2a3ba67ffab037ff4f0b7fc",
+          "base": "a820463aba79460b745f877fcb42f74c611ac644"
         }
       },
       "settledReviews": [
@@ -70833,7 +70891,18 @@
           "at": "2026-11-10T00:33:29+00:00",
           "note": "The amendment is on the public PR. The response was posted to the original PowerPC review thread."
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "3f7de0143267b139a2a3ba67ffab037ff4f0b7fc",
+        "baseHead": "a4947b73f0040e460443984fd486483fa34f2830",
+        "url": "https://github.com/tamird/bazel-central-registry/commit/3f7de0143",
+        "title": "Explain the LuaJIT GC64 default and simplify two target labels",
+        "requestedAt": "2026-11-10T16:05:56+00:00",
+        "summary": "Publish the amended #11683 and reply on David’s three original threads once approved.",
+        "body": "Bazel built and ran three Linux x86_64 LuaJIT CLIs. The beta3 default reported gc64=false and fr2=false. The rolling default reported true for both, and explicitly disabling GC64 returned both to false. Each CLI compiled, dumped and reloaded a Lua function. The amendment explains the upstream default change and simplifies the two target labels David identified.\n\ngit -C ~/code/bazel-central-registry range-diff a4947b73f^! 3f7de0143^!\n\nGC64 default\n\nLuaJIT enabled GC64 by default on x64 in LuaJIT/LuaJIT@bd00094c3 (2019), after beta3. I kept the BCR default aligned with the new release. The module README now explains the change in bytecode layout and how Linux x86_64 users can select the old layout with `--@luajit//:gc64=false`.\n\nPosted by Codex on behalf of @tamird.\n\nDynASM input label\n\nDropped the leading colon from `name + \"_dasc\"` in 3f7de0143.\n\nPosted by Codex on behalf of @tamird.\n\nGenerated header label\n\nDropped it from `name + \"_arch_h\"` too in 3f7de0143.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:check-fresh-loopback-addresses",
@@ -96187,5 +96256,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T15:58:34+00:00"
+  "updatedAt": "2026-11-10T16:10:44+00:00"
 }
