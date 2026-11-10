@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T15:35:40+00:00",
+    "updatedAt": "2026-11-10T15:51:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -801,22 +801,26 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-10T11:31:43+00:00",
-      "summary": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The revised ZIP contained all 15 netgofer implementation files and the command entrypoint. Go 1.27.3 built an AMD64 executable from the exported sources and ran help netgofer.",
+      "updatedAt": "2026-11-10T15:51:32+00:00",
+      "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The 2,566-entry ZIP and the Go-only consumer were verified on 4ecb0b121.",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "b61651f9371f514411dbb4fc2bd367f860204546",
-        "observedAt": "2026-11-10T11:31:43+00:00",
-        "disposition": "Prepared 4ecb0b121 on deb6b3ea1.",
-        "nextAction": "Publish 4ecb0b121 once reviewed.",
+        "owner": "Upstream review",
+        "sourceHead": "45137f922cf026cfa764ca3177d624d1b49b5581",
+        "observedAt": "2026-11-10T15:51:32+00:00",
+        "disposition": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The 2,566-entry ZIP and the Go-only consumer were verified on 4ecb0b121.",
+        "nextAction": "Follow checks and maintainer review on the published head.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4ecb0b121",
+          "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
           "https://github.com/tamird/gvisor/actions/runs/42807933933/artifacts/13761961713",
           "https://github.com/google/gvisor/pull/15106"
         ]
       },
-      "head": "b61651f9371f514411dbb4fc2bd367f860204546",
+      "head": "45137f922cf026cfa764ca3177d624d1b49b5581",
       "evidence": [
+        {
+          "label": "Differences from the reviewed rebase, including the direct assembler",
+          "url": "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922"
+        },
         {
           "label": "Proposed amendment 4ecb0b121",
           "url": "https://github.com/tamird/gvisor/commit/4ecb0b121"
@@ -908,17 +912,22 @@
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "4ecb0b121b95836dac48eb7f6c8b6948591004a1",
-        "baseHead": "b61651f9371f514411dbb4fc2bd367f860204546",
-        "url": "https://github.com/tamird/gvisor/commit/4ecb0b121",
-        "title": "Build the Go branch source archive with Bazel",
-        "requestedAt": "2026-11-10T11:31:43+00:00",
-        "summary": "Review 4ecb0b121 for publication.",
-        "body": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The revised ZIP contained all 15 netgofer implementation files and the command entrypoint. Go 1.27.3 built an AMD64 executable from the exported sources and ran help netgofer.\n\ngit -C ~/code/gvisor range-diff b61651f93^! 4ecb0b121^!"
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "4ecb0b121b95836dac48eb7f6c8b6948591004a1",
+          "baseHead": "b61651f9371f514411dbb4fc2bd367f860204546",
+          "url": "https://github.com/tamird/gvisor/commit/4ecb0b121",
+          "title": "Build the Go branch source archive with Bazel",
+          "requestedAt": "2026-11-10T11:31:43+00:00",
+          "summary": "Review 4ecb0b121 for publication.",
+          "body": "The published head b61651f93 conflicts with master. The merged netgofer implementation already exports its Go sources. The amendment also includes the netgofer command entrypoint in the Go archive so downstream users can build the command. The revised ZIP contained all 15 netgofer implementation files and the command entrypoint. Go 1.27.3 built an AMD64 executable from the exported sources and ran help netgofer.\n\ngit -C ~/code/gvisor range-diff b61651f93^! 4ecb0b121^!",
+          "outcome": "approved",
+          "at": "2026-11-10T15:51:32+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/15106",
+          "note": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The 2,566-entry ZIP and the Go-only consumer were verified on 4ecb0b121."
+        }
+      ]
     },
     {
       "id": "pr:15084",
@@ -7888,7 +7897,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-10T15:29:56+00:00",
-      "summary": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca.\n\nThe published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\nEarlier qualification:\n\nThe published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker.",
+      "summary": "Published 1baff64ef as one commit after the reviewed 0ef2495ca was updated to use a typed UDP destination. GitHub reported the published head mergeable. The matched native comparison and systrap results were obtained on 0ef2495ca.\n\nThe published 133764395 conflicts with master. The rebase keeps 127.0.0.1/8 on loopback, masks its connected route, preserves IPv6 removal on link-down, and converts the new UDP forwarder to the same netip.AddrPort port and address checks as TCP. All three interface cases passed under systrap. Native veth, IPv6 link-down and wildcard binding passed. On the same native host, the loopback test on master and on the revision both failed at the initial 127.0.0.1 bind: Linux accepted the bind while lo was down and had no addresses. The 20 affected Bazel targets passed.\n\nEarlier qualification:\n\nThe published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. Two of those three also passed on native Linux. LoopbackAddressesAddedOnUp failed because bind(127.0.0.1) succeeded before lo was brought up. The same test passed under systrap. Intake is running the unmodified master test on the same worker. All 22 netgofer tests and subtests passed on the published 1baff64ef.",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "1baff64ef0620dadfddd9161c10f0fdb239feb05",
@@ -7902,6 +7911,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "All 22 netgofer cases on the published head",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42845639897/artifacts/13779167816"
+        },
         {
           "label": "Published netip amendment 1baff64ef",
           "url": "https://github.com/google/gvisor/commit/1baff64ef0620dadfddd9161c10f0fdb239feb05"
@@ -45239,9 +45252,9 @@
       "title": "Run the Go export assembler directly",
       "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb",
       "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-06T11:59:38.947Z",
-      "summary": "The Go branch exporter in #15106 starts Bash to invoke its ZIP assembler. The approved action runs the assembler directly. The original and direct actions produced identical 2,526-entry ZIPs. With the current compiler integration, the direct action ran uncached on the shell-free AMD64 worker. All 2,546 exported files matched their inputs, including generated Go sources and C sidecars. The existing assembler linked without an ELF interpreter.",
+      "status": "Published in #15106",
+      "updatedAt": "2026-11-10T15:51:32+00:00",
+      "summary": "The approved direct assembler invocation is included in #15106 at 45137f922. The Go branch exporter in #15106 starts Bash to invoke its ZIP assembler. The approved action runs the assembler directly. The original and direct actions produced identical 2,526-entry ZIPs. With the current compiler integration, the direct action ran uncached on the shell-free AMD64 worker. All 2,546 exported files matched their inputs, including generated Go sources and C sidecars. The existing assembler linked without an ELF interpreter.",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -45251,13 +45264,25 @@
         }
       ],
       "followup": {
-        "owner": "coordinator",
+        "owner": "Upstream review",
         "sourceHead": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
-        "observedAt": "2026-11-02T16:20:02.085486+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "After #15106 lands, verify the merged launcher and publish the approved direct Bazel export."
+        "observedAt": "2026-11-10T15:51:32+00:00",
+        "disposition": "Folded the approved direct assembler invocation into #15106.",
+        "nextAction": "Follow the combined change on #15106.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
+          "https://github.com/google/gvisor/pull/15106"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published combined Go export",
+          "url": "https://github.com/google/gvisor/pull/15106"
+        },
+        {
+          "label": "Differences from the reviewed rebase, including the direct assembler",
+          "url": "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922"
+        },
         {
           "label": "Original and direct Go export archives match byte for byte",
           "url": "https://github.com/tamird/gvisor/actions/runs/41150603904/artifacts/13022154932"
@@ -45274,7 +45299,8 @@
           "label": "Uncached public GoExport action on AMD64",
           "url": "https://app.buildbuddy.io/invocation/fecc9107-ccf7-4175-87e7-b17017195cd5"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "pr:15019",
@@ -51050,14 +51076,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/futex-bucket-locks",
-      "head": "c576f0790bd336d8ae0ee2dc285feeddabe9e764",
+      "head": "f94ef54594d3ab40cd279668a7f8bbae91066cf0",
       "title": "Check the bucket locks used by futex wake and requeue",
       "url": "https://github.com/google/gvisor/pull/16844",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T15:09:56+00:00",
-      "summary": "The published c576f0790 conflicts with the priority-inheritance error paths now on master. The rebased file keeps those paths and the approved ordered bucket locks. An independent reconstruction from master and the approved lock changes matches the complete file. The futex owner checks are running.\n\nWake and requeue used a second pair of pointers to release their locks. Checklocks could not tell that those locks protected the queues being accessed. Returning the locked buckets in argument order removes all four unchecked calls and both same-bucket exceptions.",
+      "updatedAt": "2026-11-10T15:51:32+00:00",
+      "summary": "Published f94ef5459 as one commit. The rebased file keeps master’s priority-inheritance error paths and the approved bucket lock ordering. An independent reconstruction matched the complete file. On f94ef5459 all 37 futex tests and subtests and both architecture analyzers passed.",
       "evidence": [
+        {
+          "label": "All 37 futex cases and AMD64 and ARM64 analyzer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42845639897/artifacts/13779167816"
+        },
         {
           "label": "Rebased futex lock changes",
           "url": "https://github.com/tamird/gvisor/commit/f94ef5459"
@@ -51094,14 +51124,14 @@
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "c576f0790bd336d8ae0ee2dc285feeddabe9e764",
-        "observedAt": "2026-11-10T15:09:56+00:00",
-        "disposition": "The published c576f0790 conflicts with the priority-inheritance error paths now on master. The rebased file keeps those paths and the approved ordered bucket locks. An independent reconstruction from master and the approved lock changes matches the complete file. The futex owner checks are running.",
-        "nextAction": "Verify the original Bazel futex and analyzer results before publishing the equivalent rebase.",
+        "owner": "Upstream review",
+        "sourceHead": "f94ef54594d3ab40cd279668a7f8bbae91066cf0",
+        "observedAt": "2026-11-10T15:51:32+00:00",
+        "disposition": "Published f94ef5459 as one commit. The rebased file keeps master’s priority-inheritance error paths and the approved bucket lock ordering. An independent reconstruction matched the complete file. On f94ef5459 all 37 futex tests and subtests and both architecture analyzers passed.",
+        "nextAction": "Follow the published head’s checks and maintainer review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f94ef5459",
-          "https://github.com/tamird/gvisor/actions/runs/42840500834"
+          "https://github.com/tamird/gvisor/actions/runs/42845639897/artifacts/13779167816"
         ]
       }
     },
@@ -54378,13 +54408,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/checklocks-callback-facts",
-      "head": "7563a597b1f2f7a1841d871623837f06a28aab9d",
+      "head": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
       "title": "checklocks: infer when callbacks can use the caller’s locks",
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T15:35:40+00:00",
-      "summary": "Master added NestedRLock and NestedRUnlock in overlay. The rebased callback analyzer recognizes the shared lock. On AMD64 and ARM64, the real overlay package and the existing callback fixtures passed. A write under NestedRLock produced the expected diagnostic on each architecture. A read under the shared lock and a write under the exclusive lock were accepted.\n\nChecklocks now accepts the held method in #15728 and still diagnoses its unlocked call. The revised analyzer checks the SortedFunc iterator before passing caller locks to its comparator. The AMD64 and ARM64 analyzer contrasts passed.",
+      "updatedAt": "2026-11-10T15:50:35+00:00",
+      "summary": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic.",
       "evidence": [
         {
           "label": "Signed amendment 28a833a1d",
@@ -54430,28 +54460,30 @@
           "head": "bf276987f6e86bf80463f97bb35e0b94dca62ae3",
           "outcome": "approved-with-changes",
           "at": "2026-11-02T20:49:05Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
+          "baseHead": "7563a597b1f2f7a1841d871623837f06a28aab9d",
+          "url": "https://github.com/tamird/gvisor/commit/28a833a1d",
+          "title": "Recognize overlay’s nested read lock when checking callbacks",
+          "requestedAt": "2026-11-10T15:35:40+00:00",
+          "summary": "Publish the checklocks amendment to #16868.",
+          "body": "Master added NestedRLock and NestedRUnlock in overlay. The rebased callback analyzer recognizes the shared lock. On AMD64 and ARM64, the real overlay package and the existing callback fixtures passed. A write under NestedRLock produced the expected diagnostic on each architecture. A read under the shared lock and a write under the exclusive lock were accepted.\n\ngit -C ~/code/gvisor range-diff 7563a597b^! 28a833a1d^!",
+          "outcome": "approved",
+          "at": "2026-11-10T15:50:35+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16868",
+          "note": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic."
         }
       ],
       "number": 16868,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
-        "baseHead": "7563a597b1f2f7a1841d871623837f06a28aab9d",
-        "url": "https://github.com/tamird/gvisor/commit/28a833a1d",
-        "title": "Recognize overlay’s nested read lock when checking callbacks",
-        "requestedAt": "2026-11-10T15:35:40+00:00",
-        "summary": "Publish the checklocks amendment to #16868.",
-        "body": "Master added NestedRLock and NestedRUnlock in overlay. The rebased callback analyzer recognizes the shared lock. On AMD64 and ARM64, the real overlay package and the existing callback fixtures passed. A write under NestedRLock produced the expected diagnostic on each architecture. A read under the shared lock and a write under the exclusive lock were accepted.\n\ngit -C ~/code/gvisor range-diff 7563a597b^! 28a833a1d^!"
-      },
       "followup": {
-        "owner": "intake",
-        "sourceHead": "7563a597b1f2f7a1841d871623837f06a28aab9d",
-        "observedAt": "2026-11-10T15:35:40+00:00",
-        "disposition": "Master added NestedRLock and NestedRUnlock in overlay. The rebased callback analyzer recognizes the shared lock. On AMD64 and ARM64, the real overlay package and the existing callback fixtures passed. A write under NestedRLock produced the expected diagnostic on each architecture. A read under the shared lock and a write under the exclusive lock were accepted.",
-        "nextAction": "Once approved, publish 28a833a1d on #16868.",
+        "owner": "Upstream review",
+        "sourceHead": "28a833a1de20530ab20efdb3d55b0a76e64276b8",
+        "observedAt": "2026-11-10T15:50:35+00:00",
+        "disposition": "Published 28a833a1d as one commit. The callback analyzer recognizes overlay’s nested read lock as shared. On AMD64 and ARM64 the overlay and callback fixtures passed, and a deliberate write under the nested read lock produced the expected diagnostic.",
+        "nextAction": "Follow checks and maintainer review on the published head.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/28a833a1d",
           "https://github.com/tamird/gvisor/actions/runs/42843650249/artifacts/13778675061",
           "https://github.com/google/gvisor/pull/16868"
         ]
@@ -69242,9 +69274,9 @@
       "url": "https://github.com/google/gvisor/pull/17281",
       "group": "bazel",
       "status": "open",
-      "head": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
-      "updatedAt": "2026-11-10T15:24:52+00:00",
-      "summary": "Master added //test/runner/... to the Make unit tests. The rebased Bazel profile includes it. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. The comparison matched labels, configuration, kind and test size. Both --nobuild commands ended with BUILD_FAILURE after analysis. All completion events reported NO_BUILD.\n\nMake owns the eight package patterns and filters used by the unit jobs. The mixed RBE presubmit has to duplicate them. The proposed Bazel configuration supplies that selection to either caller. Make still supplies the cgroup version so v1 and v2 test results cache separately.\n\nAll 3,245 configured rows matched for each of cgroup v1 and v2. Adding the syscall and PacketImpact suites to the preset matched all 3,209 mixed rows. The selection job exited red because its reader expected bazel test --nobuild to return zero; the original analysis events were complete. The single admitted AMD64 TestCheckXstateSuccess then ran uncached and passed.",
+      "head": "7622671f00d19417484fc6538c7a825b48dc496f",
+      "updatedAt": "2026-11-10T15:50:35+00:00",
+      "summary": "Published 7622671f0 as one commit. The rebased unit-test profile includes //test/runner/..., which master added to Make. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. Both --nobuild invocations ended with BUILD_FAILURE after analysis. Every completion event reported NO_BUILD.",
       "evidence": [
         {
           "label": "Signed single-commit amendment 7622671f0",
@@ -69284,16 +69316,29 @@
           "outcome": "approved",
           "at": "2026-11-09T16:31:03+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17281"
+        },
+        {
+          "kind": "amendment",
+          "head": "7622671f00d19417484fc6538c7a825b48dc496f",
+          "baseHead": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
+          "url": "https://github.com/tamird/gvisor/commit/7622671f0",
+          "title": "Include the newly selected test runner in the unit-test profile",
+          "requestedAt": "2026-11-10T15:24:52+00:00",
+          "summary": "Publish the rebased unit-test profile on #17281.",
+          "body": "Master added //test/runner/... to the Make unit tests. The rebased Bazel profile includes it. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. The comparison matched labels, configuration, kind and test size. Both --nobuild commands ended with BUILD_FAILURE after analysis. All completion events reported NO_BUILD.\n\ngit -C ~/code/gvisor range-diff 3c4df972e^! 7622671f0^!",
+          "outcome": "approved",
+          "at": "2026-11-10T15:50:35+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17281",
+          "note": "Published 7622671f0 as one commit. The rebased unit-test profile includes //test/runner/..., which master added to Make. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. Both --nobuild invocations ended with BUILD_FAILURE after analysis. Every completion event reported NO_BUILD."
         }
       ],
       "followup": {
-        "owner": "intake",
-        "sourceHead": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
-        "observedAt": "2026-11-10T15:24:52+00:00",
-        "disposition": "Master added //test/runner/... to the Make unit tests. The rebased Bazel profile includes it. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. The comparison matched labels, configuration, kind and test size. Both --nobuild commands ended with BUILD_FAILURE after analysis. All completion events reported NO_BUILD.",
-        "nextAction": "Once approved, publish 7622671f0 on #17281.",
+        "owner": "Upstream review",
+        "sourceHead": "7622671f00d19417484fc6538c7a825b48dc496f",
+        "observedAt": "2026-11-10T15:50:35+00:00",
+        "disposition": "Published 7622671f0 as one commit. The rebased unit-test profile includes //test/runner/..., which master added to Make. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. Both --nobuild invocations ended with BUILD_FAILURE after analysis. Every completion event reported NO_BUILD.",
+        "nextAction": "Follow checks and maintainer review on the published head.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7622671f0",
           "https://github.com/tamird/gvisor/actions/runs/42809893341/artifacts/13760489108",
           "https://github.com/google/gvisor/pull/17281"
         ]
@@ -69307,17 +69352,6 @@
           "head": "7622671f00d19417484fc6538c7a825b48dc496f",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "7622671f00d19417484fc6538c7a825b48dc496f",
-        "baseHead": "3c4df972e49ddaeb43edf2a66fd25ebdda60bb41",
-        "url": "https://github.com/tamird/gvisor/commit/7622671f0",
-        "title": "Include the newly selected test runner in the unit-test profile",
-        "requestedAt": "2026-11-10T15:24:52+00:00",
-        "summary": "Publish the rebased unit-test profile on #17281.",
-        "body": "Master added //test/runner/... to the Make unit tests. The rebased Bazel profile includes it. Master and the amendment selected the same 3,259 configured targets, including 1,095 tests. The comparison matched labels, configuration, kind and test size. Both --nobuild commands ended with BUILD_FAILURE after analysis. All completion events reported NO_BUILD.\n\ngit -C ~/code/gvisor range-diff 3c4df972e^! 7622671f0^!"
       }
     },
     {
@@ -70093,14 +70127,22 @@
       "repo": "google/gvisor",
       "number": 17305,
       "ref": "delivery/futex-requeue-count",
-      "head": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
+      "head": "8da3e1807d1674c69a0d75811e0ee56c3e74cbbe",
       "title": "Count each waiter once during futex requeue",
       "url": "https://github.com/google/gvisor/pull/17305",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T15:17:03+00:00",
-      "summary": "The compiler stack-allocated all three Requeue defers on the published head and open-coded all three on 8da3e1807. Both shared and private waiter tests failed on the published head under save and save/resume. All eight cases passed on the amendment across native Linux, systrap, save and save/resume.\n\nWith two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
+      "updatedAt": "2026-11-10T15:50:35+00:00",
+      "summary": "Published 8da3e1807 as one commit and replied on both original review threads. The compiler open-codes Requeue’s three defers. The old head failed all four cooperative-save cases. The amendment passed all eight shared and private cases across native Linux, systrap, save and save/resume.",
       "evidence": [
+        {
+          "label": "Published reply on checkpointing the waiter",
+          "url": "https://github.com/google/gvisor/pull/17305#discussion_r4527058628"
+        },
+        {
+          "label": "Published reply on requeue’s return and defers",
+          "url": "https://github.com/google/gvisor/pull/17305#discussion_r4527058068"
+        },
         {
           "label": "Original shared and private futex XML on the published head and amendment",
           "url": "https://github.com/tamird/gvisor/actions/runs/42840829395/artifacts/13776082308"
@@ -70131,17 +70173,16 @@
         }
       ],
       "followup": {
-        "owner": "intake",
-        "sourceHead": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
-        "observedAt": "2026-11-10T15:17:03+00:00",
-        "disposition": "The compiler stack-allocated all three Requeue defers on the published head and open-coded all three on 8da3e1807. Both shared and private waiter tests failed on the published head under save and save/resume. All eight cases passed on the amendment across native Linux, systrap, save and save/resume.",
-        "nextAction": "Once approved, publish 8da3e1807 and reply on both original review threads.",
+        "owner": "Upstream review",
+        "sourceHead": "8da3e1807d1674c69a0d75811e0ee56c3e74cbbe",
+        "observedAt": "2026-11-10T15:50:35+00:00",
+        "disposition": "Published 8da3e1807 as one commit and replied on both original review threads. The compiler open-codes Requeue’s three defers. The old head failed all four cooperative-save cases. The amendment passed all eight shared and private cases across native Linux, systrap, save and save/resume.",
+        "nextAction": "Follow checks and maintainer review on the published head.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17305#discussion_r4527058068",
+          "https://github.com/google/gvisor/pull/17305#discussion_r4527058628",
           "https://github.com/tamird/gvisor/actions/runs/42840829395/artifacts/13776082308",
-          "https://github.com/google/gvisor/pull/17305#discussion_r4519810874",
-          "https://github.com/google/gvisor/pull/17305#discussion_r4519810882",
-          "https://github.com/tamird/gvisor/commit/8da3e1807",
-          "https://github.com/tamird/gvisor/actions/runs/42831307796"
+          "https://github.com/google/gvisor/pull/17305"
         ]
       },
       "refinement": {
@@ -70153,17 +70194,22 @@
           "base": "b7697787de12722b9c2a8b065999088ff1a18c44"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "8da3e1807d1674c69a0d75811e0ee56c3e74cbbe",
-        "baseHead": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
-        "url": "https://github.com/tamird/gvisor/commit/8da3e1807",
-        "title": "Count each waiter once during futex requeue",
-        "requestedAt": "2026-11-10T14:16:59+00:00",
-        "summary": "Publish 8da3e1807 and reply on both original review threads.",
-        "body": "The compiler stack-allocated all three Requeue defers on the published head and open-coded all three on 8da3e1807. Both shared and private waiter tests failed on the published head under save and save/resume. All eight cases passed on the amendment across native Linux, systrap, save and save/resume.\n\nProposed replies\n\nOn the extra return: “I changed the final return to `return done + requeued, err`. If requeue hits a PI waiter, the manager still reports the wakes it completed before the error. The compiler now open-codes all three defers.\n\nPosted by Codex on behalf of @tamird.”\n\nOn save/restore: “I disabled cooperative saves from the first waiter readiness check through the wake on `dst`. A checkpoint in that interval can restart a moved waiter on `src`. Both shared and private cases now pass under save and save/resume.\n\nPosted by Codex on behalf of @tamird.”\n\ngit -C ~/code/gvisor range-diff 01a28c6ab^! 8da3e1807^!"
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "8da3e1807d1674c69a0d75811e0ee56c3e74cbbe",
+          "baseHead": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
+          "url": "https://github.com/tamird/gvisor/commit/8da3e1807",
+          "title": "Count each waiter once during futex requeue",
+          "requestedAt": "2026-11-10T14:16:59+00:00",
+          "summary": "Publish 8da3e1807 and reply on both original review threads.",
+          "body": "The compiler stack-allocated all three Requeue defers on the published head and open-coded all three on 8da3e1807. Both shared and private waiter tests failed on the published head under save and save/resume. All eight cases passed on the amendment across native Linux, systrap, save and save/resume.\n\nProposed replies\n\nOn the extra return: “I changed the final return to `return done + requeued, err`. If requeue hits a PI waiter, the manager still reports the wakes it completed before the error. The compiler now open-codes all three defers.\n\nPosted by Codex on behalf of @tamird.”\n\nOn save/restore: “I disabled cooperative saves from the first waiter readiness check through the wake on `dst`. A checkpoint in that interval can restart a moved waiter on `src`. Both shared and private cases now pass under save and save/resume.\n\nPosted by Codex on behalf of @tamird.”\n\ngit -C ~/code/gvisor range-diff 01a28c6ab^! 8da3e1807^!",
+          "outcome": "approved",
+          "at": "2026-11-10T15:50:35+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17305",
+          "note": "Published 8da3e1807 as one commit and replied on both original review threads. The compiler open-codes Requeue’s three defers. The old head failed all four cooperative-save cases. The amendment passed all eight shared and private cases across native Linux, systrap, save and save/resume."
+        }
+      ]
     },
     {
       "id": "branch:public-ci-bcr-mirror",
@@ -96075,5 +96121,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T03:23:16+00:00"
+  "updatedAt": "2026-11-10T15:51:32+00:00"
 }
