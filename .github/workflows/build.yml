@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Verify overlay waiter release context
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/overlay-waiter-close-context]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 110
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Bind reviewed sources and prepare standard Linux worker
+      run: |
+        set -euo pipefail
+        prev=488b298b86176fbb4dd442b9b3c54d4ecfbcc935
+        harness=0d423372840cf49baa3af27956fe7244f5e7bbac
+        assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+        registry=c3569a60dc1836ac6fad05e86d7951866c796b4f
+        git fetch -q --no-tags --depth=2 origin "$prev" "$harness" "$assets" "$registry"
+        test "$(git rev-parse HEAD^)" = 0a282742f8d8352fb40a670637a0d396c29aa7b7
+        test "$(git rev-parse HEAD^^)" = a748da63e1f6a63db80db838d67c0763bd545468
+        test "$(git rev-parse HEAD^^^)" = 70f8576af3ddb78d5bfc9be51b14460a2253a2e4
+        git diff --exit-code HEAD^^ HEAD^ -- pkg/sentry/fsimpl/overlay/regular_file.go
+        cp .github/qualification/overlay_waiter_close.py "$RUNNER_TEMP/check.py"
+        git show "$harness:.github/qualification/timer_teardown.py" > "$RUNNER_TEMP/timer_teardown.py"
+        git show "$assets:.github/qualification/recvbuf_deps.py" > "$RUNNER_TEMP/public_assets.py"
+        git show "$registry:.github/qualification/tldk_installed_inputs.json" > "$RUNNER_TEMP/inputs.json"
+        git show "$registry:.github/qualification/tldk_public_inputs.py" > "$RUNNER_TEMP/tldk_public_inputs.py"
+        curl -q -fsSL --max-time 90 --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/bazel"
+        echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/bazel" | sha256sum -c -
+        chmod 755 "$RUNNER_TEMP/bazel"
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Check real waiter ownership and restored asynchronous signals
+      timeout-minutes: 102
+      run: |
+        set -euo pipefail
+        env -i HOME="$HOME" USER="$USER" LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin RUNNER_TEMP="$RUNNER_TEMP" RBE_RC="$RUNNER_TEMP/overlay.bazelrc" python3 -B "$RUNNER_TEMP/check.py"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && !cancelled()
+      with:
+        name: overlay-waiter-release
+        path: ${{ runner.temp }}/waiter-results/
+        retention-days: 14
+        if-no-files-found: error
