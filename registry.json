@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T21:34:47+00:00",
+    "updatedAt": "2026-11-10T21:39:45+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5360,15 +5360,31 @@
       "id": "branch:hermetic-compiler-review",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/default-llvm-toolchain",
+      "ref": "research/hermetic-compiler-static-cgo-mode",
       "title": "Build C and C++ with the declared LLVM toolchains",
-      "url": "https://github.com/tamird/gvisor/commit/4bee07965",
+      "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
-      "status": "Agent work",
-      "summary": "The installed AMD64 musl TLDK plugin carried TCP and UDP. The integration b2c944f33 combines the hermetic compiler 4bee07965 with the TLDK port 1b1d83bf4. Both Make steps passed. The DPDK Sentry initialized and exchanged a 257-byte request and 383-byte reply on each protocol. The bridge captured all four payloads, and the runc control passed. The external_traffic Bazel test passed 1/1. The wrapper subsequently reported INCOMPLETE while copying an optional test metadata length.",
-      "updatedAt": "2026-11-10T16:46:46+00:00",
-      "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
+      "status": "Contributor review requested",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
+      "updatedAt": "2026-11-10T21:39:45+00:00",
+      "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
+        {
+          "label": "Installed systrap and runc traffic, ELF files and platform selections",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42898754604/artifacts/13805865588"
+        },
+        {
+          "label": "All three corrected GCC queries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42903509344/artifacts/13804725740"
+        },
+        {
+          "label": "Earlier approved compiler revision",
+          "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2"
+        },
+        {
+          "label": "Independent TLDK prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/244ef8019"
+        },
         {
           "label": "Installed musl DPDK plugin and runc, original TCP and UDP traffic results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038"
@@ -6084,10 +6100,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603"
+          "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90"
         },
         "after": {
-          "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90"
+          "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c"
         }
       },
       "settledReviews": [
@@ -6110,143 +6126,29 @@
         }
       ],
       "followup": {
-        "owner": "native_coverage",
-        "sourceHead": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
-        "disposition": "The installed AMD64 musl TLDK plugin carried TCP and UDP. The integration b2c944f33 combines the hermetic compiler 4bee07965 with the TLDK port 1b1d83bf4. Both Make steps passed. The DPDK Sentry initialized and exchanged a 257-byte request and 383-byte reply on each protocol. The bridge captured all four payloads, and the runc control passed. The external_traffic Bazel test passed 1/1. The wrapper subsequently reported INCOMPLETE while copying an optional test metadata length.",
-        "observedAt": "2026-11-10T16:46:46+00:00",
-        "nextAction": "Evaluate the optional musl port alongside the compiler migration. It uses the declared supplier BSD queue header and LLVM _Unwind_Backtrace. The separately tested scoped GNU build failed at plugin startup on both its parent and its revision.",
+        "owner": "Contributor",
+        "sourceHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
+        "disposition": "The installed systrap plugin and runc exchanged TCP and UDP. The original workflow failed on an obsolete GCC query label and a query that looked for auto on a pure=True runsc target. The actual release target kept its ordinary mode, and all three corrected GCC queries passed.",
+        "observedAt": "2026-11-10T21:39:45+00:00",
+        "nextAction": "Review the revision for publication after #16522, #16586, #16516, #17067, #17114 and the TLDK port at 244ef8019 land. To compare with the earlier approved source, run git -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 8178e3fe5^!.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038",
-          "https://github.com/tamird/gvisor/commit/b2c944f33",
-          "https://github.com/tamird/gvisor/commit/1b1d83bf4",
-          "https://github.com/tamird/gvisor/actions/runs/42852995420/artifacts/13782060777",
-          "https://github.com/tamird/gvisor/actions/runs/42852995420/artifacts/13780653366",
-          "https://github.com/tamird/gvisor/actions/runs/42845197332/artifacts/13778371412",
-          "https://github.com/tamird/gvisor/actions/runs/42841720605/artifacts/13778285059",
-          "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942",
-          "https://github.com/tamird/gvisor/actions/runs/42838544774/artifacts/13773819869",
-          "https://github.com/tamird/gvisor/actions/runs/42838544774",
-          "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655",
-          "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331",
-          "https://github.com/tamird/gvisor/actions/runs/42255872935/artifacts/13525085703",
-          "https://github.com/tamird/gvisor/commit/f6df263f8",
-          "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
-          "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629",
-          "https://github.com/tamird/gvisor/actions/runs/41211996909",
-          "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
-          "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767",
-          "https://github.com/tamird/gvisor/actions/runs/41253915451/artifacts/13062846601",
-          "https://github.com/tamird/gvisor/actions/runs/41256718712",
-          "https://github.com/tamird/gvisor/actions/runs/41256718712/artifacts/13063003838",
-          "https://github.com/tamird/gvisor/actions/runs/41265512208/artifacts/13067164785",
-          "https://github.com/tamird/gvisor/actions/runs/41267526547/artifacts/13067558079",
-          "https://github.com/tamird/gvisor/commit/375b2c570",
-          "https://github.com/google/gvisor/pull/15940",
-          "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008",
-          "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel",
-          "https://github.com/tamird/gvisor/actions/runs/41356396814/artifacts/13103082090",
-          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395",
-          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385",
-          "https://github.com/tamird/gvisor/commit/a899bf908",
-          "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359",
-          "https://github.com/google/gvisor/commit/0245c1dfa",
-          "https://github.com/tamird/gvisor/actions/runs/42078042318/artifacts/13439397539",
-          "https://github.com/google/gvisor/pull/15146",
-          "https://github.com/google/gvisor/pull/15153",
-          "https://github.com/tamird/gvisor/actions/runs/42079033262/artifacts/13439813341",
-          "https://github.com/tamird/gvisor/commit/ce2fe79f3",
-          "https://github.com/tamird/gvisor/actions/runs/42080092292/artifacts/13439929508",
-          "https://github.com/tamird/gvisor/actions/runs/42082145768/artifacts/13443015162",
-          "https://github.com/tamird/gvisor/commit/8169ff661",
-          "https://github.com/tamird/gvisor/actions/runs/42087135084/artifacts/13443573566",
-          "https://github.com/tamird/gvisor/actions/runs/42092960755/artifacts/13447805581",
-          "https://github.com/tamird/gvisor/actions/runs/42092960755/artifacts/13447102297",
-          "https://github.com/google/gvisor/pull/16522",
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/909",
-          "https://github.com/tamird/gvisor/commit/820ec5f74ad43b34274840f5768d36fb571c00ca",
-          "https://github.com/tamird/gvisor/commit/4145ade50acb0813d372bc5a8315c516ac5d98b6",
-          "https://github.com/tamird/gvisor/actions/runs/42097395467",
-          "https://github.com/tamird/gvisor/actions/runs/42098073009/artifacts/13448316801",
-          "https://github.com/tamird/gvisor/actions/runs/41975504552/artifacts/13391208856",
-          "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13446659898",
-          "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13448735292",
-          "https://github.com/tamird/gvisor/actions/runs/42097395467/artifacts/13449776074",
-          "https://github.com/tamird/gvisor/actions/runs/42100187104/artifacts/13448427470",
-          "https://github.com/tamird/gvisor/actions/runs/42102214611/artifacts/13450616604",
-          "https://github.com/tamird/gvisor/actions/runs/42102214611/artifacts/13450870587",
-          "https://github.com/tamird/gvisor/actions/runs/42105048733/artifacts/13451318656",
-          "https://github.com/tamird/gvisor/actions/runs/42106951758/artifacts/13451568393",
-          "https://github.com/google/gvisor/pull/17067",
-          "https://github.com/tamird/gvisor/actions/runs/42108464964/artifacts/13453527379",
-          "https://github.com/tamird/gvisor/actions/runs/41608432080/artifacts/13218522690",
-          "https://github.com/tamird/gvisor/actions/runs/42111502777/artifacts/13454667129",
-          "https://github.com/tamird/gvisor/actions/runs/42113608109",
-          "https://github.com/tamird/gvisor/commit/629d27e5f",
-          "https://github.com/tamird/gvisor/actions/runs/42115448931/artifacts/13457565460",
-          "https://github.com/tamird/gvisor/actions/runs/42114412069/artifacts/13455846636",
-          "https://github.com/tamird/gvisor/actions/runs/42113608109/artifacts/13457113552",
-          "https://github.com/tamird/gvisor/actions/runs/42117263417/artifacts/13456983300",
-          "https://github.com/tamird/gvisor/actions/runs/42116658926/artifacts/13457576742",
-          "https://github.com/tamird/gvisor/actions/runs/42119709559/artifacts/13457819044",
-          "https://github.com/tamird/gvisor/actions/runs/42118568590/artifacts/13459111374",
-          "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13459748412",
-          "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13460685269",
-          "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/server/build_event_protocol/event_index/event_index.go#L174-L180",
-          "https://github.com/tamird/gvisor/actions/runs/42117886478/artifacts/13459164255",
-          "https://github.com/tamird/gvisor/actions/runs/42125609399/artifacts/13461362085",
-          "https://github.com/tamird/gvisor/commit/3dab3494e",
-          "https://github.com/tamird/hermetic-llvm/actions/runs/42125450746/artifacts/13461480803",
-          "https://github.com/tamird/hermetic-llvm/actions/runs/42125450746/artifacts/13461465419",
-          "https://github.com/tamird/hermetic-llvm/commit/d779c2896",
-          "https://github.com/tamird/hermetic-llvm/commit/29f9d4664",
-          "https://github.com/tamird/gvisor/actions/runs/42127099486",
-          "https://github.com/tamird/gvisor/actions/runs/42127099486/artifacts/13463448452",
-          "https://github.com/tamird/gvisor/actions/runs/42127099486/artifacts/13466085558",
-          "https://github.com/tamird/gvisor/actions/runs/42152990020/artifacts/13475120488",
-          "https://github.com/tamird/gvisor/actions/runs/42157962719/artifacts/13475689298",
-          "https://github.com/tamird/gvisor/actions/runs/42160377510/artifacts/13476656432",
-          "https://github.com/tamird/hermetic-llvm/commit/1273f916b",
-          {
-            "label": "Four actual scratch source-generation actions and original ELF interpreters",
-            "url": "https://github.com/tamird/gvisor/actions/runs/42160971883/artifacts/13477121576"
-          },
-          {
-            "label": "Three original Nogo process-start failures",
-            "url": "https://github.com/tamird/gvisor/actions/runs/42162984284/artifacts/13477447959"
-          },
-          {
-            "label": "Configured Go tools and their ELF interpreters",
-            "url": "https://github.com/tamird/gvisor/actions/runs/42164046123/artifacts/13478527159"
-          },
-          {
-            "label": "Six matching GNU generator outputs and executed go_merge test",
-            "url": "https://github.com/tamird/gvisor/actions/runs/42162746853/job/127712040459"
-          },
-          {
-            "label": "Standalone GNU standard-library facts and findings",
-            "url": "https://github.com/tamird/gvisor/actions/runs/42164960442/artifacts/13478402785"
-          },
-          {
-            "label": "Uncached scratch Nogo and both ARM64 race links",
-            "url": "https://github.com/tamird/gvisor/actions/runs/42164915209/artifacts/13479570031"
-          },
-          {
-            "label": "Native ARM64 guest using that race installation",
-            "url": "https://github.com/tamird/gvisor/actions/runs/42164915209/artifacts/13477949675"
-          },
-          "https://github.com/hermeticbuild/hermetic-llvm/commit/f9d284160",
-          "https://github.com/tamird/hermetic-llvm/commit/be935b828",
-          "https://github.com/tamird/hermetic-llvm/actions/runs/42167120790/artifacts/13479311572",
-          "https://github.com/tamird/hermetic-llvm/actions/runs/42167414456/artifacts/13480260561",
-          "https://github.com/tamird/gvisor/commit/d5fe3c2ee",
-          "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480633265",
-          "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480568715",
-          "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483092284",
-          "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483037329",
-          "https://app.buildbuddy.io/invocation/31a729dd-af14-48c7-8e2a-a753b09ba34c",
-          "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514",
-          "https://github.com/tamird/gvisor/actions/runs/42522103104/artifacts/13634310659"
+          "https://github.com/tamird/gvisor/commit/8178e3fe5",
+          "https://github.com/tamird/gvisor/actions/runs/42898754604/artifacts/13805865588",
+          "https://github.com/tamird/gvisor/actions/runs/42903509344/artifacts/13804725740",
+          "https://github.com/tamird/gvisor/commit/244ef8019",
+          "https://github.com/tamird/gvisor/commit/bcb5de5b2"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
+        "baseHead": "08d8f2fa224198e1f9b1cd495cfeab50d7ac333f",
+        "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
+        "title": "Build C and C++ with the declared LLVM toolchains",
+        "requestedAt": "2026-11-10T21:39:45+00:00",
+        "summary": "Open this single compiler PR after #16522, #16586, #16516, #17067, #17114 and the TLDK port at 244ef8019 land?",
+        "body": "The Coral toolchain looks for GCC and target headers under /usr. An\nAMD64 worker therefore needs an installed cross-compiler to build the\nvDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the LLVM 0.8.24 module already in\nMODULE.bazel. Bazel selects the compiler for the execution platform and\nthe sysroot for the target. Keep GNU17 and C++17 and remove the Coral\nrepositories, toolchain definitions and patches.\n\nThe three runsc sidecars provide their own entry points and use Linux\nUAPI headers. Only the signal stub needs target libc headers for its\nsignal and ucontext types.\n\nThe GNU sysroot has no static libc. The race runtime and the optional\nnetwork stack both link C into the Go executable. Use the LLVM musl\nsysroot for their static links on the default Linux target. Keep an\nexplicitly selected C toolchain or custom platform on its own libc."
       }
     },
     {
@@ -75982,6 +75884,16 @@
         "https://github.com/tamird/bazel-central-registry/commit/a4f336eea",
         "https://github.com/tamird/gvisor/commit/2ed473216"
       ]
+    },
+    {
+      "from": "branch:plugin-toolchain-unwind",
+      "to": "branch:hermetic-compiler-review",
+      "type": "depends_on",
+      "reason": "The compiler change switches the two static TLDK binaries to musl. The independent TLDK port makes their DPDK stack printer build with that libc.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/244ef8019",
+        "https://github.com/tamird/gvisor/actions/runs/42898754604/artifacts/13805865588"
+      ]
     }
   ],
   "investigations": [
@@ -97690,5 +97602,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T21:34:47+00:00"
+  "updatedAt": "2026-11-10T21:39:45+00:00"
 }
