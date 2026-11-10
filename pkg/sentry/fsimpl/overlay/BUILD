@@ -110,6 +110,7 @@ go_library(
         "maps_mutex.go",
         "overlay.go",
         "regular_file.go",
+        "poll_ownership_probe.go",
         "rename_rwmutex.go",
         "req_file_fd_mutex.go",
         "save_restore.go",
