@@ -1,35 +1,206 @@
-name: CI
-
-"on":
+name: Check Nogo with source and archive-only Go rules
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nogo-source-export-bazel-9]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/nogo-source-export-bazel-9'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    env:
+      SUITE: nogo
+      SOURCE: 66eb2774175258362fb3afaa11d75dec66c3684a
+      FIXTURE: 82efd934ae6e00e3e983cde0c5baa19fdda47e32
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 5
+        persist-credentials: false
+    - name: Run public analyzers and the archive-only consumer
+      timeout-minutes: 100
+      id: compare
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = "$FIXTURE"
+        mkdir -p "$RUNNER_TEMP/checker"
+        tooling=035f7c9b427655dc4d749326b49d385819b5b9cf
+        git fetch --no-tags --depth=1 origin "$tooling"
+        for file in qualify.sh unit_matrix.py qualification_report.py; do
+          git show "$tooling:test/rbe/$file" > "$RUNNER_TEMP/checker/$file"
+        done
+        cp test/rbe/nogo_review.py "$RUNNER_TEMP/checker/nogo_review.py"
+        python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "firecracker",
+                "network-enable-ipv6": "true",
+                "EstimatedMemory": "8GB",
+                "test.EstimatedMemory": "2GB",
+                "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        # Configure the native C/C++ toolchain with the same compiler and
+        # builtin headers that execute the actions on remote workers.
+        image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+        mkdir -p "$RUNNER_TEMP/gnu-home"
+        docker run --init -d --name gnu-coordinator --entrypoint /bin/sleep \
+          --user "$(id -u):$(id -g)" -e HOME="$RUNNER_TEMP/gnu-home" -e USE_BAZEL_VERSION \
+          -e USER="$(id -un)" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+          -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+          -w "$GITHUB_WORKSPACE" "$image" infinity
+        docker exec gnu-coordinator gcc -print-file-name=include
+        if [[ $(docker exec gnu-coordinator /usr/local/bin/bazel --version) != "bazel $USE_BAZEL_VERSION" ]]; then
+          binary=bazel-${USE_BAZEL_VERSION}-linux-x86_64
+          base=https://releases.bazel.build/${USE_BAZEL_VERSION}/release
+          curl -fsSL --retry 3 "$base/$binary" -o "$RUNNER_TEMP/$binary"
+          curl -fsSL --retry 3 "$base/$binary.sha256" -o "$RUNNER_TEMP/$binary.sha256"
+          (cd "$RUNNER_TEMP" && sha256sum -c "$binary.sha256")
+          chmod +x "$RUNNER_TEMP/$binary"
+          docker cp "$RUNNER_TEMP/$binary" gnu-coordinator:/usr/local/bin/bazel
+        fi
+        test "$(docker exec gnu-coordinator /usr/local/bin/bazel --version)" = "bazel $USE_BAZEL_VERSION"
+        test "$(docker exec gnu-coordinator id -un)" = "$(id -un)"
+        output_base=$(docker exec gnu-coordinator /usr/local/bin/bazel --batch --ignore_all_rc_files info output_base)
+        test -d "$output_base" && test -w "$output_base"
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' 'build --jobs=200' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        case "$1" in
+          test)
+            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
+            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
+            status=0
+            docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" "$@" || status=$?
+            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
+            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
+            exit "$status"
+            ;;
+        esac
+        exec docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        for phase in public legacy; do
+          source=$SOURCE
+          if [[ $phase == legacy ]]; then source=$FIXTURE; fi
+          git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          if [[ $phase == legacy ]]; then test "$(git rev-parse HEAD^)" = "$SOURCE"; fi
+          export TCP_EVIDENCE="$RUNNER_TEMP/private-$phase"
+          mkdir -p "$TCP_EVIDENCE" "$RUNNER_TEMP/replay-public" test/rbe
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          chmod +x test/rbe/qualify.sh
+          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+          test ! -s "$TCP_EVIDENCE/source_before"
+          test "$(cat images/default/bazelversion)" = "$USE_BAZEL_VERSION"
+          if [[ $phase == public ]]; then
+            labels=(//tools/nogo/check:check_test //tools/nogo/check:check_test_nogo //pkg/eventchannel:eventchannel_nogo //pkg/sync:sync_nogo)
+          else
+            labels=(//tools/nogo/qualification_legacy:legacy_test)
+          fi
+          printf '%s\n' "${labels[@]}" > "$TCP_EVIDENCE/targets.txt"
+          args=("${labels[@]/#/--test-target=}")
+          raw="$TCP_EVIDENCE/raw.jsonl"
+          code=0
+          bash test/rbe/qualify.sh --arch=amd64 "${args[@]}" \
+            "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
+            --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--remote_download_outputs=toplevel '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
+          echo "$code" > "$TCP_EVIDENCE/runner_exit"
+          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+          report="$RUNNER_TEMP/replay-public/$phase.json"
+          if ! python3 -B "$RUNNER_TEMP/checker/nogo_review.py" native "$TCP_EVIDENCE" "$source" "$report" "$phase"; then
+            result=1
+            continue
+          fi
+          if [[ $phase == public ]]; then
+            for config in x86_64 aarch64; do
+              docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" aquery --config=rbe --config="$config" \
+                --include_aspects --output=jsonproto 'mnemonic("GoStaticAnalysis",//pkg/sync:runtime_constants_go_render)' > "$TCP_EVIDENCE/$config.json"
+            done
+            docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" aquery --config=rbe --config=x86_64 \
+              --include_aspects --output=jsonproto 'mnemonic("GoStaticAnalysis",//pkg/eventchannel:eventchannel_nogo)' > "$TCP_EVIDENCE/filter.json"
+            python3 -B "$RUNNER_TEMP/checker/nogo_review.py" actions public "$report" "$TCP_EVIDENCE/x86_64.json" "$TCP_EVIDENCE/aarch64.json" "$TCP_EVIDENCE/filter.json" || result=1
+          else
+            docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" aquery --config=rbe --config=x86_64 \
+              --include_aspects --noinclude_artifacts --output=jsonproto 'mnemonic("GoStaticAnalysis",deps(//tools/nogo/qualification_legacy:legacy_test))' > "$TCP_EVIDENCE/actions.json"
+            python3 -B "$RUNNER_TEMP/checker/nogo_review.py" actions legacy "$report" "$TCP_EVIDENCE/actions.json" || result=1
+          fi
+        done
+        exit "${result:-0}"
+    - name: Preserve missing results if setup failed
+      if: always()
+      run: |
+        dir="$RUNNER_TEMP/replay-public"
+        mkdir -p "$dir"
+        result=0
+        for phase in public legacy; do
+          if [[ ! -f "$dir/$phase.json" ]]; then
+            sha=$SOURCE
+            if [[ $phase == legacy ]]; then sha=$FIXTURE; fi
+            printf '{"status":"INCOMPLETE","source":"%s","missing":"no full reconciliation"}\n' "$sha" > "$dir/$phase.json"
+            result=1
+          fi
+        done
+        exit "$result"
+    - name: Check the public reports
+      id: scan
+      if: always()
+      env:
+        TOKEN_TO_EXCLUDE: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYSCAN'
+        import os
+        from pathlib import Path
+        for path in (Path(os.environ['RUNNER_TEMP'])/'replay-public').glob('*.json'):
+            data = path.read_bytes()
+            assert not any(s and s in data for s in (os.environ['TOKEN_TO_EXCLUDE'].encode(), b'--remote_header', b'--bes_header', b'authorization:'))
+        PYSCAN
+    - name: Save only the typed results
+      if: ${{ always() && steps.scan.outcome == 'success' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: nogo-build-adapter
+        path: ${{ runner.temp }}/replay-public/*.json
+        if-no-files-found: error
