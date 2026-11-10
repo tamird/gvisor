@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T19:08:02+00:00",
+    "updatedAt": "2026-11-10T19:23:48+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57798,8 +57798,8 @@
       "url": "https://github.com/google/gvisor/pull/17048",
       "title": "Release the sandbox file table when starting a process fails",
       "status": "open",
-      "updatedAt": "2026-11-09T17:17:34+00:00",
-      "summary": "Ayush approved the published head 8f08865cd and asked to remove the added boot test. The proposed replacement fd64b1636 removes only TestFailedRunClosesStdio, restoring loader_test.go to the PR parent. The fix in loader.go is byte-identical to the approved version. On fd64b1636, one uncached native AMD64 run of //runsc/boot:boot_test on Linux 6.8.0-1070-azure passed TestRun, TestRestoreFailBeforeStart and TestStartupHeapReleaseOnStart. The two successful startup cases each ran /bin/true in the guest and verified exit status 0. The earlier missing-executable check ran on both architectures against the same production fix before the test was removed.\n\nA missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.",
+      "updatedAt": "2026-11-10T19:23:48+00:00",
+      "summary": "A missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.\n\nAyush suggested removing TestFailedRunClosesStdio on 8f08865cd. The published amendment fd64b1636 removes that test and keeps the production fix he reviewed. His approval was advisory. The amended head still needs a gVisor maintainer’s review. On native AMD64, the boot tests passed TestRun, TestRestoreFailBeforeStart and TestStartupHeapReleaseOnStart. The two successful starts ran /bin/true and returned 0.",
       "evidence": [
         {
           "label": "Earlier approval on 8f08865cd",
@@ -57871,9 +57871,9 @@
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "fd64b163600256c760b4cea5f8d9992646ad4dc6",
-        "observedAt": "2026-11-09T17:17:34+00:00",
+        "observedAt": "2026-11-10T19:23:48+00:00",
         "disposition": "Published the approved single-commit amendment. Replied to Ayush in the original thread.",
-        "nextAction": "Follow Ayush’s current-head reapproval and the Copybara import using the ordinary three-hour Pacific reminder policy.",
+        "nextAction": "Wait for an active gVisor maintainer to review fd64b1636. The first-review reminder becomes eligible after five business days without human activity.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17048",
           "https://github.com/tamird/gvisor/commit/fd64b1636",
@@ -66849,7 +66849,7 @@
       "head": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
       "title": "Store a single absorbed graph child inline",
       "group": "runtime",
-      "updatedAt": "2026-11-09T15:41:46Z",
+      "updatedAt": "2026-11-10T19:23:48+00:00",
       "summary": "On a kernel with 50,000 tmpfs files, allocations per graph Encode fell from 100,938 to 769. Two independent 16-pair trials of the complete checkpoint found different timing effects: 177.6 to 179.1 ms (p=.696) and 270.6 to 262.2 ms (p=.011). Each trial restored and verified all 34 checkpoints, including the warmups.",
       "evidence": [
         {
@@ -66901,11 +66901,11 @@
         }
       ],
       "followup": {
-        "owner": "Upstream import",
+        "owner": "Upstream review",
         "sourceHead": "4774ec693b5ba804bff5918352ff1ff3722f2f65",
-        "observedAt": "2026-11-09T07:51:00+00:00",
-        "disposition": "Ayush approved 4774ec693 on #17231.",
-        "nextAction": "Follow #17231 for its Copybara import.",
+        "observedAt": "2026-11-10T19:23:48+00:00",
+        "disposition": "Ayush approved 4774ec693 on #17231. His approval is advisory.",
+        "nextAction": "Await a gVisor maintainer’s approval on 4774ec693.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17231",
           "https://github.com/tamird/gvisor/commit/4774ec693",
@@ -66924,7 +66924,7 @@
       "head": "22134a44640f341afc4e3357fae072515dccbbf8",
       "title": "Store zero-sized target pointers separately",
       "group": "runtime",
-      "updatedAt": "2026-11-09T07:51:00+00:00",
+      "updatedAt": "2026-11-10T19:23:48+00:00",
       "summary": "On a live rootless systrap sandbox with 50,000 tmpfs files, the complete checkpoint was 4.55% faster across 16 alternating pairs (p=.014). All 34 restores verified the files, including the two warmups. A separate counting-writer Encode fell from 118.9 to 115.7 MiB per save with one more allocation at the median.",
       "evidence": [
         {
@@ -66960,11 +66960,11 @@
         }
       ],
       "followup": {
-        "owner": "Upstream import",
+        "owner": "Upstream review",
         "sourceHead": "22134a44640f341afc4e3357fae072515dccbbf8",
-        "observedAt": "2026-11-09T07:51:00+00:00",
-        "disposition": "Ayush approved 22134a446 on #17232.",
-        "nextAction": "Follow #17232 for its Copybara import.",
+        "observedAt": "2026-11-10T19:23:48+00:00",
+        "disposition": "Ayush approved 22134a446 on #17232. His approval is advisory.",
+        "nextAction": "Await a gVisor maintainer’s approval on 22134a446.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17232",
           "https://github.com/tamird/gvisor/commit/22134a446",
@@ -66983,7 +66983,7 @@
       "head": "576430c42e0bb216b2611274a20d08463741c8a9",
       "title": "Reserve graph prefixes for inexact values",
       "group": "runtime",
-      "updatedAt": "2026-11-09T07:51:00+00:00",
+      "updatedAt": "2026-11-10T19:23:48+00:00",
       "summary": "The graph encoder writes a length prefix for inexact values. On a real tmpfs checkpoint with 50,000 files, reserving prefixes only for those values reduced the final output buffer by 1,007,616 bytes. Across 12 paired encodes, allocated bytes fell from 118.9 MiB to 117.9 MiB (−0.81%). Allocation count stayed at 100,937 per encode, and the timing difference was inconclusive (p=.551).",
       "evidence": [
         {
@@ -67015,11 +67015,11 @@
         }
       ],
       "followup": {
-        "owner": "Upstream import",
+        "owner": "Upstream review",
         "sourceHead": "576430c42e0bb216b2611274a20d08463741c8a9",
-        "observedAt": "2026-11-09T07:51:00+00:00",
-        "disposition": "Ayush approved 576430c42 on #17233.",
-        "nextAction": "Follow #17233 for its Copybara import.",
+        "observedAt": "2026-11-10T19:23:48+00:00",
+        "disposition": "Ayush approved 576430c42 on #17233. His approval is advisory.",
+        "nextAction": "Await a gVisor maintainer’s approval on 576430c42.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17233",
           "https://github.com/tamird/gvisor/commit/576430c42e0bb216b2611274a20d08463741c8a9",
@@ -67681,7 +67681,7 @@
       "url": "https://github.com/google/gvisor/pull/17240",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T07:51:00+00:00",
+      "updatedAt": "2026-11-10T19:23:48+00:00",
       "summary": "Direct encoding of the 50,000-file kernel graph took 138.8 ms versus 144.8 ms and allocated 105.5 MiB versus 118.9 MiB over 12 samples per revision. All 34 Nginx checkpoints restored and served the verified response. The live checkpoint and HTTP comparison detected no latency difference.",
       "evidence": [
         {
@@ -67713,11 +67713,11 @@
         }
       ],
       "followup": {
-        "owner": "Upstream import",
+        "owner": "Upstream review",
         "sourceHead": "26a5614227cc0f8401458f2d8beab6a5f02abcc1",
-        "observedAt": "2026-11-09T07:51:00+00:00",
-        "disposition": "Ayush approved 26a561422 on #17240.",
-        "nextAction": "Follow #17240 for its Copybara import.",
+        "observedAt": "2026-11-10T19:23:48+00:00",
+        "disposition": "Ayush approved 26a561422 on #17240. His approval is advisory.",
+        "nextAction": "Await a gVisor maintainer’s approval on 26a561422.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/26a561422",
           "https://github.com/google/gvisor/pull/17240",
