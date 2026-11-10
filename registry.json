@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T16:46:46+00:00",
+    "updatedAt": "2026-11-10T16:52:08+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30659,6 +30659,10 @@
       },
       "evidence": [
         {
+          "label": "Installed musl DPDK plugin and runc, original TCP and UDP traffic results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038"
+        },
+        {
           "label": "TLDK port with the declared supplier queue header",
           "url": "https://github.com/tamird/gvisor/commit/1b1d83bf4"
         },
@@ -30785,10 +30789,6 @@
         {
           "label": "TLDK patch application on original DPDK and three later versions",
           "url": "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258"
-        },
-        {
-          "label": "Installed binaries, bridge traffic and XML-copy error",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038"
         },
         {
           "label": "Recovered original XML and four rejected inconsistent records",
@@ -44955,8 +44955,8 @@
       "title": "Keep unchanged host epoll interests armed",
       "url": "https://github.com/google/gvisor/pull/16763",
       "status": "open",
-      "summary": "Adding a second epoll watch repeated the first watch’s readable edge on host Unix stream and sequenced-packet listeners. Linux and the corrected notifier deliver one edge to each watch. This change applies directly to master.",
-      "updatedAt": "2026-10-30T21:08:14.496709+00:00",
+      "summary": "Master now gives each epoll registration a unique ID. The amendment keeps that ID across interest changes, records the mask after a successful ADD or MOD, skips an unchanged mask, and clears the ID and mask on deletion. Linux and revised systrap passed both stream and seqpacket. Master delivered a second edge to the first watcher in both cases. All six notifier test records and both architecture analyzers passed.",
+      "updatedAt": "2026-11-10T16:52:08+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -44966,6 +44966,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Six fdnotifier records, matching Linux/systrap edge delivery, failing master control and both Nogo runs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003"
+        },
         {
           "label": "Six exact Linux and gVisor cases, original records and source hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/41125382329/artifacts/13010008844"
@@ -44986,7 +44990,27 @@
           "label": "fdnotifier Nogo on AMD64",
           "url": "https://app.buildbuddy.io/invocation/1cada729-e81f-4bc8-9c4b-13a7ec6f5b26"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "f79be00464e923f09723fc95fbe036d54b34c87e",
+        "baseHead": "e1fef1717c9875d137ad593d91dd148aee39df83",
+        "url": "https://github.com/tamird/gvisor/commit/f79be0046",
+        "requestedAt": "2026-11-10T16:52:08+00:00",
+        "title": "Preserve epoll registration IDs when the host interest mask changes",
+        "summary": "Publish the tested single-commit amendment to #16763.",
+        "body": "Master now gives each epoll registration a unique ID. The amendment keeps that ID across interest changes, records the mask after a successful ADD or MOD, skips an unchanged mask, and clears the ID and mask on deletion. Linux and revised systrap passed both stream and seqpacket. Master delivered a second edge to the first watcher in both cases. All six notifier test records and both architecture analyzers passed.\n\ngit -C ~/code/gvisor range-diff e1fef1717^! f79be0046^!"
+      },
+      "refinement": {
+        "before": {
+          "head": "e1fef1717c9875d137ad593d91dd148aee39df83"
+        },
+        "after": {
+          "head": "f79be00464e923f09723fc95fbe036d54b34c87e",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+        }
+      }
     },
     {
       "id": "branch:unix-listener-readiness",
@@ -59518,11 +59542,15 @@
       "title": "Release the stack mutex before draining a removed NIC",
       "url": "https://github.com/google/gvisor/pull/17103",
       "group": "runtime",
-      "head": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
+      "head": "4931dbf1aa4c410b19efd980a3cd60b43b1c47d8",
       "status": "open",
-      "updatedAt": "2026-11-06T13:13:00.663Z",
-      "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer. Six lifecycle cases passed under the race detector and 16 real socket transfers completed teardown. After those runtime checks, the only source change removed an obsolete comment. Nogo passed the final revision on AMD64 and ARM64. On both, it rejected moving the unlock below the call to closeRemovedNICs.",
+      "updatedAt": "2026-11-10T16:52:08+00:00",
+      "summary": "Published as one commit at 4931dbf1a. The context-only rebase preserves the approved stack change. All 587 stack test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
       "evidence": [
+        {
+          "label": "Uncached owner tests and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003"
+        },
         {
           "label": "Original TCP transfer and blocked goroutines",
           "url": "https://github.com/tamird/gvisor/actions/runs/42182737590/artifacts/13486607377"
@@ -59564,7 +59592,18 @@
           "note": "Published as #17103.",
           "postedURL": "https://github.com/google/gvisor/pull/17103"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "4931dbf1aa4c410b19efd980a3cd60b43b1c47d8",
+        "observedAt": "2026-11-10T16:52:08+00:00",
+        "disposition": "Published as one commit at 4931dbf1a. The context-only rebase preserves the approved stack change. All 587 stack test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
+        "nextAction": "Follow upstream review on #17103.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17103",
+          "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003"
+        ]
+      }
     },
     {
       "id": "pr:17104",
@@ -61264,14 +61303,18 @@
       "repo": "google/gvisor",
       "number": 17131,
       "ref": "research/fdbased-attached-workers-wg-go",
-      "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+      "head": "98e6e5430c348b8078a6627b227ab342f5388493",
       "title": "fdbased: start packet processors when a receiver attaches",
       "url": "https://github.com/google/gvisor/pull/17131",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T20:55:07.008Z",
-      "summary": "Closing an FD endpoint before its first attachment leaves receive workers asleep. Create the reader managers in one array when the receiver attaches and start each reader with e.wg.Go. With four FDs and two processors per FD, the median fell from 176 to 165 allocations per lifecycle. With a single FD, the median allocation count held steady and allocated bytes fell.",
+      "updatedAt": "2026-11-10T16:52:08+00:00",
+      "summary": "Published as one commit at 98e6e5430. The rebased fd package matches the approved code. All 82 race-enabled fd test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
       "evidence": [
+        {
+          "label": "Uncached owner tests and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003"
+        },
         {
           "label": "Only change from the previously reviewed source",
           "url": "https://github.com/tamird/gvisor/compare/d4e65b135...66eb55f0e"
@@ -61407,7 +61450,18 @@
           "postedURL": "https://github.com/google/gvisor/pull/17131",
           "note": "Published as #17131 at the exact approved head."
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "98e6e5430c348b8078a6627b227ab342f5388493",
+        "observedAt": "2026-11-10T16:52:08+00:00",
+        "disposition": "Published as one commit at 98e6e5430. The rebased fd package matches the approved code. All 82 race-enabled fd test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
+        "nextAction": "Follow upstream review on #17131.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17131",
+          "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003"
+        ]
+      }
     },
     {
       "id": "pr:17118",
@@ -96538,5 +96592,5 @@
       "nextStep": "Compare the unchanged test on native Linux and runsc to determine whether the debugger heap and timeout fail on both."
     }
   ],
-  "updatedAt": "2026-11-10T16:46:46+00:00"
+  "updatedAt": "2026-11-10T16:52:08+00:00"
 }
