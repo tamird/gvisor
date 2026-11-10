@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T14:13:03+00:00",
+    "updatedAt": "2026-11-10T14:16:59+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7874,14 +7874,15 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-10T14:13:03+00:00",
-      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. Linux qualification is in progress.",
+      "summary": "The published head 133764395 conflicts with master. Master now assigns 127.0.0.1/8 and ::1/128 when loopback comes up. The amendment keeps the host bits on the interface, masks the connected route, and removes ::1 when the interface goes down. It also keeps TestSaveStdClock. The new UDP forwarder still uses the removed LocalAddress and LocalPort fields. On f92eae225, runsc/gofer/net failed to compile before the interface and proxy syscall cases could run. The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. A separate run is checking those three cases.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "133764395c84859cb9c867555c1bac4f91f893cd",
         "observedAt": "2026-11-10T14:13:03+00:00",
-        "disposition": "The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. Linux qualification is in progress.",
-        "nextAction": "Verify the interface and proxy cases before requesting review.",
+        "disposition": "The revised amendment 0ef2495ca updates the UDP forwarder to use AddrPort. The interface, proxy and package Bazel commands all exited zero. All four network cases ran under systrap. The native wildcard test passed, and the other three native network cases skipped. A separate run is checking those three cases.",
+        "nextAction": "Check the three native network-namespace cases before requesting review.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42830337701/artifacts/13771558704",
           "https://github.com/tamird/gvisor/commit/0ef2495ca",
           "https://github.com/tamird/gvisor/actions/runs/42830337701",
           "https://github.com/tamird/gvisor/commit/f92eae225",
@@ -7890,6 +7891,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Network and proxy tests on 0ef2495ca",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42830337701/artifacts/13771558704"
+        },
         {
           "label": "Revised amendment 0ef2495ca",
           "url": "https://github.com/tamird/gvisor/commit/0ef2495ca"
@@ -13348,17 +13353,18 @@
       "head": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
       "title": "Preserve ioctl results while reporting",
       "group": "runtime",
-      "summary": "Ayush reported that the sniffer can lose its reporting connection during process teardown. The proposed amendment is undergoing its Linux test.\n\nThe requested post-#16046 rebase is published at 4215bbbbfc1a on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at f6f07b0705. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nThe contributor-approved sniffer refactor is now PR #15668 at exact head f20832e5d, following the requested revision of ce97df04c. The ABI wrapper preserves the real ioctl result and errno while private reporting handles inspection and serialization. Each reporting thread owns its socket and reusable frame buffer, closes it at thread exit and exec, and reconnects after closing the calling thread's inherited descriptor after fork. Checked serialization and complete writes retain the existing reporting policy.\n\nFour fresh native 60-second cases pass across AMD64 and ARM64: the real-hook errno regression and a real-socket consecutive-frame, buffer-reuse and thread-exit EOF test. Both architecture embedded-sniffer and shared-hook builds pass. Eight original core reports, thirty-four source captures, three compacts and selected source/compile/link/test/embed joins are independently closed. The final standalone tree matches the reviewed topic; qualification source 9f7a818e1 retains two pre-existing BUILD adaptations.\n\nThe original parent remains Failed because its final inspector assumed a transitioned ARM output existed locally. Recovery verifies the advertised target/configuration/output identities without repeating workloads or claiming independent full ELF hashing. The earlier errno failure stays at its actual source. GPU execution and forced short-write, interruption, fork, exec or concurrent-initialization coverage are not claimed. Unreadable ioctl arguments and descriptors inherited from other vanished threads remain separate follow-ups. The independent PR is open, ready for upstream review and mergeable; current-head CI is being followed by the existing watcher. The separate unreadable-argument follow-up is not part of this approved PR.",
+      "summary": "Ayush reported that the sniffer can lose its reporting connection during process teardown. On 17594d7c0, FramesConsecutiveMessages passed in both fast and threadsafe death-test modes. It compared both frames and checked EOF after the sending thread exited. The ioctl test also preserved EBADF.\n\nThe requested post-#16046 rebase is published at 4215bbbbfc1a on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at f6f07b0705. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nThe contributor-approved sniffer refactor is now PR #15668 at exact head f20832e5d, following the requested revision of ce97df04c. The ABI wrapper preserves the real ioctl result and errno while private reporting handles inspection and serialization. Each reporting thread owns its socket and reusable frame buffer, closes it at thread exit and exec, and reconnects after closing the calling thread's inherited descriptor after fork. Checked serialization and complete writes retain the existing reporting policy.\n\nFour fresh native 60-second cases pass across AMD64 and ARM64: the real-hook errno regression and a real-socket consecutive-frame, buffer-reuse and thread-exit EOF test. Both architecture embedded-sniffer and shared-hook builds pass. Eight original core reports, thirty-four source captures, three compacts and selected source/compile/link/test/embed joins are independently closed. The final standalone tree matches the reviewed topic; qualification source 9f7a818e1 retains two pre-existing BUILD adaptations.\n\nThe original parent remains Failed because its final inspector assumed a transitioned ARM output existed locally. Recovery verifies the advertised target/configuration/output identities without repeating workloads or claiming independent full ELF hashing. The earlier errno failure stays at its actual source. GPU execution and forced short-write, interruption, fork, exec or concurrent-initialization coverage are not claimed. Unreadable ioctl arguments and descriptors inherited from other vanished threads remain separate follow-ups. The independent PR is open, ready for upstream review and mergeable; current-head CI is being followed by the existing watcher. The separate unreadable-argument follow-up is not part of this approved PR.",
       "url": "https://github.com/google/gvisor/pull/15668",
       "status": "open",
-      "updatedAt": "2026-11-10T14:13:03+00:00",
+      "updatedAt": "2026-11-10T14:16:59+00:00",
       "followup": {
-        "disposition": "Ayush reported that the sniffer can lose its reporting connection during process teardown. The proposed amendment is undergoing its Linux test.",
+        "disposition": "Ayush reported that the sniffer can lose its reporting connection during process teardown. On 17594d7c0, FramesConsecutiveMessages passed in both fast and threadsafe death-test modes. It compared both frames and checked EOF after the sending thread exited. The ioctl test also preserved EBADF.",
         "owner": "root",
         "sourceHead": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
         "reviewedAt": "2026-10-12T11:52:13.681917+00:00",
-        "nextAction": "Check the Linux result on 17594d7c0, then prepare a reply to each original thread.",
+        "nextAction": "Once approved, publish the amendment and reply to Ayush on the original thread.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42831685416/artifacts/13771418485",
           "https://github.com/google/gvisor/pull/15668#discussion_r4520653746",
           "https://github.com/tamird/gvisor/commit/17594d7c0",
           "https://github.com/tamird/gvisor/actions/runs/42831685416",
@@ -13375,6 +13381,10 @@
       "number": 15668,
       "evidence": [
         {
+          "label": "Linux bridge and ioctl test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42831685416/artifacts/13771418485"
+        },
+        {
           "label": "Proposed amendment 17594d7c0",
           "url": "https://github.com/tamird/gvisor/commit/17594d7c0"
         },
@@ -13386,7 +13396,27 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/4215bbbbfc1ac58009b4afe6704d6b06cf64f599"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "1c532008791abca23a5a434c4c71b1bd6ceea0ab"
+        },
+        "after": {
+          "head": "17594d7c0dfc697d7776dcd6dc625086a409ff3c",
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "17594d7c0dfc697d7776dcd6dc625086a409ff3c",
+        "baseHead": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
+        "url": "https://github.com/tamird/gvisor/commit/17594d7c0",
+        "title": "Preserve ioctl results while reporting",
+        "requestedAt": "2026-11-10T14:16:59+00:00",
+        "summary": "Publish the tested amendment and reply to Ayush.",
+        "body": "Ayush reported that the sniffer can lose its reporting connection during process teardown. On 17594d7c0, FramesConsecutiveMessages passed in both fast and threadsafe death-test modes. It compared both frames and checked EOF after the sending thread exited. The ioctl test also preserved EBADF.\n\nProposed reply to Ayush:\n\nThe connection now survives `atexit` and still closes when a worker thread exits. The bridge test writes before `exit(0)` and from an exit handler, then reads both frames from the same socket.\n\nPosted by Codex on behalf of @tamird.\n\ngit -C ~/code/gvisor range-diff 1c5320087^! 17594d7c0^!"
+      }
     },
     {
       "id": "pr:15669",
@@ -69906,7 +69936,7 @@
       "url": "https://github.com/google/gvisor/pull/17305",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T14:13:03+00:00",
+      "updatedAt": "2026-11-10T14:16:59+00:00",
       "summary": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The proposed amendment is undergoing its Linux comparison.\n\nWith two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
       "evidence": [
         {
@@ -69931,13 +69961,33 @@
         "sourceHead": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
         "observedAt": "2026-11-10T14:13:03+00:00",
         "disposition": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The proposed amendment is undergoing its Linux comparison.",
-        "nextAction": "Check the Linux result on 8da3e1807, then prepare a reply to each original thread.",
+        "nextAction": "Verify the Linux run. Once approved, publish the amendment and reply on the original review threads.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17305#discussion_r4519810874",
           "https://github.com/google/gvisor/pull/17305#discussion_r4519810882",
           "https://github.com/tamird/gvisor/commit/8da3e1807",
           "https://github.com/tamird/gvisor/actions/runs/42831307796"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "01a28c6abcf03fcadaeae820a4d7de3bae554007"
+        },
+        "after": {
+          "head": "8da3e1807d1674c69a0d75811e0ee56c3e74cbbe",
+          "base": "b7697787de12722b9c2a8b065999088ff1a18c44"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "8da3e1807d1674c69a0d75811e0ee56c3e74cbbe",
+        "baseHead": "01a28c6abcf03fcadaeae820a4d7de3bae554007",
+        "url": "https://github.com/tamird/gvisor/commit/8da3e1807",
+        "title": "Count each waiter once during futex requeue",
+        "requestedAt": "2026-11-10T14:16:59+00:00",
+        "summary": "Publish the amendment and reply on the original review threads after its Linux checks pass.",
+        "body": "The reviewer raised two points about Requeue: an extra return disables open-coded defers, and the waiter-count test fails under save/restore. The proposed amendment is undergoing its Linux comparison.\n\nProposed replies if the Linux comparison confirms both results:\n\nOn the extra return: “I changed the final return to `return done + requeued, err`. If requeue hits a PI waiter, the manager still reports the wakes it completed before the error. The compiler now open-codes all three defers.\n\nPosted by Codex on behalf of @tamird.”\n\nOn save/restore: “I disabled cooperative saves from the first waiter readiness check through the wake on `dst`. A checkpoint in that interval can restart a moved waiter on `src`. Both shared and private cases now pass under save and save/resume.\n\nPosted by Codex on behalf of @tamird.”\n\ngit -C ~/code/gvisor range-diff 01a28c6ab^! 8da3e1807^!"
       }
     },
     {
