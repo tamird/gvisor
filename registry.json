@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T17:41:21+00:00",
+    "updatedAt": "2026-11-10T17:50:51+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56396,8 +56396,8 @@
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T17:41:21+00:00",
-      "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nOn native Linux, the sender observed an ACK 6–14 µs after the receiver started setting TCP_QUICKACK following a read (four trials). Without that request, the ACK arrived 40–41 ms after the data. On controlled packet clocks, #16953 with delayed ACKs enabled waited 40 ms in both cases. #17082 sent the ACK immediately on request. With the receive-side MSS fixed at 536 bytes, both PRs acknowledged the second 536-byte segment immediately when the peer advertised MSS 536. When only the peer’s advertised MSS changed to 1,460, #16953 waited 40 ms and #17082 still acknowledged immediately.",
+      "updatedAt": "2026-11-10T17:50:51+00:00",
+      "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nOn native Linux, the sender observed an ACK 6–14 µs after the receiver started setting TCP_QUICKACK following a read (four trials). Without that request, the ACK arrived 40–41 ms after the data. On controlled packet clocks, #16953 with delayed ACKs enabled waited 40 ms in both cases. #17082 sent the ACK immediately on request. With the receive-side MSS fixed at 536 bytes, both PRs acknowledged the second 536-byte segment immediately when the peer advertised MSS 536. When only the peer’s advertised MSS changed to 1,460, #16953 waited 40 ms and #17082 still acknowledged immediately. Andrea supplied the TamaGo comparison; the response on the original thread recommends using #17082 and keeping the Redis benchmark.",
       "evidence": [
         {
           "label": "Andrea’s TamaGo Redis and TCP comparison",
@@ -71234,8 +71234,8 @@
       "url": "https://github.com/google/gvisor/issues/16670",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T17:41:21+00:00",
-      "summary": "The TCP review guide asks for a TamaGo Redis comparison that its author has now supplied. The proposed issue-body edit updates the interactive request/response row with those measurements.",
+      "updatedAt": "2026-11-10T17:50:51+00:00",
+      "summary": "The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option.",
       "evidence": [
         {
           "label": "Existing TCP review guide",
@@ -96811,5 +96811,5 @@
       "nextStep": "Compare debugger event progress during the eight-shard workload. The isolated native and guest runs both passed."
     }
   ],
-  "updatedAt": "2026-11-10T17:41:21+00:00"
+  "updatedAt": "2026-11-10T17:50:51+00:00"
 }
