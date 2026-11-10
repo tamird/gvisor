@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T19:34:48+00:00",
+    "updatedAt": "2026-11-10T20:01:16+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30639,27 +30639,31 @@
       "id": "branch:plugin-toolchain-unwind",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/tldk-musl-plugin-overlay-reviewed",
-      "head": "882d950e0c7bbf55a63b6adfd853eeac4e72d059",
+      "ref": "research/tldk-musl-exported-builds",
+      "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
       "title": "Allow the TLDK plugin to link against musl",
-      "url": "https://github.com/tamird/gvisor/commit/882d950e0",
+      "url": "https://github.com/tamird/gvisor/commit/244ef8019",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-10T19:34:48+00:00",
-      "summary": "TLDK passes an already-open packet socket and vhost-net descriptor to DPDK. The revised port explains why gVisor keeps DPDK 18.11, gives each external archive its own BUILD file, and removes the Go stack dump test.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-10T20:01:16+00:00",
+      "summary": "TLDK passes a packet socket and a vhost-net descriptor to DPDK. Upgrading past the patched 18.11 release requires porting those two driver arguments. This revision gives both vendor files the name BUILD and removes the proposed Go stack test.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "882d950e0c7bbf55a63b6adfd853eeac4e72d059",
-        "observedAt": "2026-11-10T19:34:48+00:00",
-        "disposition": "Tamir requested the DPDK upgrade rationale, standard BUILD names and a review of the proposed cgo test. The two observed addresses could both belong to C, so the revised product drops the test and its Make target.",
-        "nextAction": "Verify the real GNU plugin links, musl archive and stack dump, exported BUILD runfiles, and AMD64 versus ARM64 target selection on 882d950e0.",
+        "owner": "Contributor",
+        "sourceHead": "244ef8019a851cd26488169e8437e5ea446bfac9",
+        "observedAt": "2026-11-10T20:01:16+00:00",
+        "disposition": "TLDK's two inherited-descriptor arguments still need to be ported to current DPDK. Both external repositories read the exact renamed BUILD files. The main wildcard found 584 packages before and after. The ordinary ARM64 vDSO built; the opt-in plugin still selects AMD64 only. Both GNU plugin executables linked statically and both libc stack dumps passed on the source before its final formatting. A synthetic raw-data runfiles lookup failed on both the old and new labels. The earlier installed traffic comparison used the compiler integration.",
+        "nextAction": "Review the single commit and proposed PR text. #15153 has landed, and the port applies cleanly to current master dd49ce763.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42886513867",
+          "https://github.com/tamird/gvisor/actions/runs/42888337050/artifacts/13797282801",
+          "https://github.com/tamird/gvisor/actions/runs/42886513867/artifacts/13796952687",
+          "https://github.com/tamird/gvisor/actions/runs/42886513867/artifacts/13798091083",
+          "https://github.com/tamird/gvisor/actions/runs/42890481213/artifacts/13798820816",
+          "https://github.com/tamird/gvisor/actions/runs/42888980945/artifacts/13796987968",
+          "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878",
           "https://github.com/alipay/tldk/blob/cec8ff773/lib/libtle_glue/gvisor_glue_stackops.c#L665-L669",
           "https://github.com/DPDK/dpdk/blob/93ecf13ac/drivers/net/virtio/virtio_user_ethdev.c#L341-L366",
           "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787143663",
           "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787653422",
-          "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878",
           "https://github.com/tamird/gvisor/actions/runs/42875781068/artifacts/13792309774",
           "https://github.com/alipay/tldk/tree/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88/dpdk/dpdk-v18.11_patches",
           "https://github.com/tamird/gvisor/actions/runs/42473888064/artifacts/13615757038",
@@ -30706,13 +30710,34 @@
           "https://github.com/google/gvisor/commit/514a1ce4f",
           "https://github.com/tamird/gvisor/blob/8aaa1cb43/MODULE.bazel#L122-L123",
           "https://github.com/alipay/tldk/branches",
-          "https://github.com/alipay/tldk/commit/cec8ff773"
+          "https://github.com/alipay/tldk/commit/cec8ff773",
+          "https://github.com/tamird/gvisor/actions/runs/42886513867"
         ]
       },
       "evidence": [
         {
-          "label": "Linux qualification of 882d950e0",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42886513867"
+          "label": "The formatted revision passes the repository Buildifier check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42888337050/artifacts/13797282801"
+        },
+        {
+          "label": "Static GNU runsc and Sentry plugin links; glibc stack dump",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42886513867/artifacts/13796952687"
+        },
+        {
+          "label": "DPDK stack dump in a static musl Go binary",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42886513867/artifacts/13798091083"
+        },
+        {
+          "label": "Both archive BUILD files match their inputs; wildcard and ARM64 results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42890481213/artifacts/13798820816"
+        },
+        {
+          "label": "Source-only runfiles consumer on the old and new labels",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42888980945/artifacts/13796987968"
+        },
+        {
+          "label": "Installed compiler-integrated plugin and runc exchange TCP and UDP",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878"
         },
         {
           "label": "TLDK passes the open descriptors to virtio-user",
@@ -30729,10 +30754,6 @@
         {
           "label": "Standalone musl build and stack test on 641c45042",
           "url": "https://github.com/tamird/gvisor/actions/runs/42866320398/artifacts/13787653422"
-        },
-        {
-          "label": "Installed plugin and runc TCP and UDP comparison on compiler integration 146a0c060",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878"
         },
         {
           "label": "Make-installed binaries on compiler integration 146a0c060",
@@ -30929,7 +30950,7 @@
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         },
         "after": {
-          "head": "882d950e0c7bbf55a63b6adfd853eeac4e72d059",
+          "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
@@ -30963,9 +30984,16 @@
           "at": "2026-11-10T19:34:48+00:00"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "641c450420c005c84d09b974388996e39ba177e4",
-        "url": "https://github.com/tamird/gvisor/commit/641c45042"
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "244ef8019a851cd26488169e8437e5ea446bfac9",
+        "baseHead": "deb6b3ea1355ea9798c043cf33bc02804e86ed53",
+        "url": "https://github.com/tamird/gvisor/commit/244ef8019",
+        "title": "Allow the TLDK plugin to link against musl",
+        "requestedAt": "2026-11-10T19:53:38+00:00",
+        "summary": "Open this as a new gVisor PR? Both external repositories received the exact BUILD files. The AMD64 plugin remains opt-in, and the ordinary ARM64 vDSO built. The DPDK stack dump passed with glibc and musl.\n\ngit -C ~/code/gvisor range-diff 641c45042^! 244ef8019^!",
+        "body": "gVisor statically links the TLDK plugin into runsc and the Sentry. The GNU sysroot in hermetic LLVM supplies shared-library stubs, so the plugin needs to build with musl before gVisor can switch to LLVM.\n\nKeep DPDK 18.11 for TLDK's virtio-user patch. TLDK passes the sandbox's packet socket and /dev/vhost-net descriptor as fd and vhost_fd [1]. DPDK 26.07 accepts a device path but neither descriptor [2]. Port the two arguments before upgrading DPDK.\n\nUse public IPv6 address fields and take sys/queue.h from the declared GNU sysroot. Use LLVM's linker for DPDK's relocatable objects and its objdump for symbol checks. Collect stack addresses on musl with the compiler unwinder and keep glibc's stack dump.\n\n[1]: https://github.com/alipay/tldk/blob/cec8ff773/lib/libtle_glue/gvisor_glue_stackops.c#L665-L669\n[2]: https://github.com/DPDK/dpdk/blob/93ecf13ac/drivers/net/virtio/virtio_user_ethdev.c#L341-L366"
       }
     },
     {
