@@ -1,0 +1,87 @@
+name: Verify review outreach without posting
+on:
+  push:
+    branches: [qualification/work-map-approved-older-export-20261110]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the exact site and record the worker
+        run: |
+          set -euo pipefail
+          source=$(git rev-parse HEAD^)
+          test "$source" = 71c1fa63ecbbabd240e7281456936ab66c926abf
+          git diff --quiet "$source" HEAD -- . ':!.github/workflows/build.yml'
+          git checkout -q --detach "$source"
+          mkdir -p "$RUNNER_TEMP/outreach"
+          printf '%s\n' "$source" > "$RUNNER_TEMP/outreach/source"
+          python3 - <<'PY'
+          from importlib.metadata import PackageNotFoundError, version
+          from pathlib import Path
+          import os, platform, sys
+          try:
+              yaml = version("PyYAML")
+          except PackageNotFoundError:
+              yaml = "not installed"
+          text = f"{sys.executable}\nPython {platform.python_version()}\nPyYAML {yaml}\n"
+          print(text, end="")
+          (Path(os.environ["RUNNER_TEMP"]) / "outreach/worker").write_text(text)
+          PY
+      - name: Run the tracker JavaScript tests
+        shell: bash
+        run: node --test app_test.mjs | tee "$RUNNER_TEMP/outreach/node.log"
+      - name: Run the collector and sender unit tests
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: python3 -m unittest discover -p '*_test.py' 2>&1 | tee "$RUNNER_TEMP/outreach/python.log"
+
+      - name: Replay the verified Linux snapshot and the two actual requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/tamird/gvisor/actions/artifacts/13787404345/zip > "$RUNNER_TEMP/previous.zip"
+          echo '2078a2b1a7e2c104b879e2fabd7ca88973203dd9c369685e9c0dde242065f2c6  '"$RUNNER_TEMP/previous.zip" | sha256sum -c -
+          python3 - <<'PY2'
+          import gzip, json, os, pathlib, zipfile
+          from datetime import datetime,timezone
+          from outreach import plan,outreach_states
+          from reviewer_selection import reviewer_history
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])
+          z=zipfile.ZipFile(root/'previous.zip')
+          s=json.loads(gzip.decompress(z.read('github-status.json.gz')))
+          registry=json.loads(pathlib.Path('registry.json').read_bytes())
+          nodes={n.get('number'):n for n in registry["nodes"] if n.get('repo')=='google/gvisor' and n.get('type')=='pr'}
+          activity=s['reviewerActivity']
+          hist=reviewer_history(s['prs'],'tamird',maintainers=set(activity['logins']),specialties={k:set(v) for k,v in s['reviewerSpecialties'].items()},observations=activity['observations'],authored=activity.get('authored',[]))
+          states=outreach_states(s,registry)
+          results={}
+          p=next(p for p in s['prs'] if p.get('repo')=='google/gvisor' and p['number']==16594)
+          assert p['head'].startswith('b2cbea854') and p['imports'][0]['sourceHead'].startswith('6fe570155')
+          for when in (s['checkedAt'], '2026-11-16T18:05:00Z'):
+              a=plan(p,nodes[p['number']],states[str(p['number'])],when,'tamird',set(hist.people),hist)
+              assert a and a['status']==('waiting' if when==s['checkedAt'] else 'due'),a
+              if a['status']=='due':
+                  assert a['reviewer']=='manninglucas' and '#16647' in a['body'] and 'b2cbea854' in a['body'] and '6fe570155' in a['body'],a
+              results[when]=a
+          (root/'outreach/replayed.json').write_text(json.dumps(results,indent=2))
+          PY2
+      - name: Save original read-only results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gvisor-approved-import-followups
+          path: ${{ runner.temp }}/outreach/
+          retention-days: 10
