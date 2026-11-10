@@ -90,6 +90,34 @@ class OutreachTest(unittest.TestCase):
         self.assertEqual(action(p)["status"],"waiting")
         self.assertEqual(action(p,"2026-11-12T20:00:00Z")["reviewer"],"bob")
 
+    def test_personal_request_after_recent_review_has_its_own_two_days(self):
+        p = pr()
+        p["feedback"]["items"] = [
+            comment("alice", "The new test covers the failure.", "2026-11-06T19:24:22Z", kind="review", state="COMMENTED"),
+            comment("tamird", "@alice, could you approve this revision?", "2026-11-07T03:02:36Z"),
+        ]
+        self.assertEqual(action(p, "2026-11-11T03:02:35Z")["status"], "waiting")
+        self.assertEqual(action(p, "2026-11-11T03:02:36Z")["reviewer"], "bob")
+
+    def test_response_after_request_starts_five_idle_days(self):
+        p = pr()
+        p["feedback"]["items"] = [
+            comment("tamird", "@alice, could you approve this revision?", "2026-11-07T03:02:36Z"),
+            comment("alice", "The new test covers the failure.", "2026-11-09T20:00:00Z", kind="review", state="COMMENTED"),
+        ]
+        self.assertEqual(action(p, "2026-11-11T03:02:36Z")["dueAt"], "2026-11-16T12:00:00-08:00")
+
+    def test_personal_request_survives_a_certified_equivalent_squash(self):
+        p = pr()
+        p.update(headIntroducedAt="2026-11-09T18:00:00Z", headRebasedFrom="b" * 40)
+        p["feedback"]["items"] = [comment("tamird", "@alice, could you review?", "2026-11-07T03:02:36Z")]
+        proof = {"head": HEAD, "priorHead": "b" * 40, "method": "reviewed-context-only-rebase",
+                 "changedLinesSha256": "1" * 64, "reviewableSince": START,
+                 "evidence": "https://github.com/google/gvisor/runs/123"}
+        when = "2026-11-11T03:02:36Z"
+        self.assertEqual(action(p, when)["status"], "waiting")
+        self.assertEqual(action(p, when, node={"outreachReviewClock": proof})["reviewer"], "bob")
+
     def test_initial_author_attributed_codeowner_request_allows_personal_mention(self):
         p = pr()
         p.update(createdAt=START, codeOwnerRequests=["alice"], reviewRequests=[{"login": "alice"}])

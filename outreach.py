@@ -186,15 +186,17 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
             owner_activity = max(owner_activity, at)
         else:
             responses[login] = max(responses.get(login, at), at)
-    first_due = business_deadline(activity, 5)
     prior = {name for name, at in contacts.items() if not (
         name in responses and at < responses[name] < owner_activity)}
-    times = [at for name, at in contacts.items() if name in prior and at >= started]
-    due = max(first_due, business_deadline(max(times), 2)) if times else first_due
+    last_contact = max((contacts[name] for name in prior if contacts[name] >= started), default=None)
+    if last_contact is not None and last_contact > activity:
+        due = business_deadline(last_contact, 2)
+    else:
+        due = business_deadline(activity, 5)
     info = {"number": number, "head": head, "lastActivity": activity.isoformat(), "dueAt": due.isoformat()}
-    if times:
-        info["lastContactAt"] = max(times).isoformat()
-        info["lastReviewers"] = sorted(name for name in prior if contacts[name] == max(times))
+    if last_contact is not None:
+        info["lastContactAt"] = last_contact.isoformat()
+        info["lastReviewers"] = sorted(name for name in prior if contacts[name] == last_contact)
     if current - contacts.keys() - automatic:
         return {**info, "status": "incomplete"}
     if now < due or now.astimezone(PACIFIC).weekday() >= 5:
