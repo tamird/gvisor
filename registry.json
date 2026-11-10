@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T22:40:45+00:00",
+    "updatedAt": "2026-11-10T22:49:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97204,12 +97204,12 @@
     },
     {
       "id": "investigation:ci-flake-dependency-downloads",
-      "title": "Dependency downloads returned HTTP 504 in GitHub Actions and Buildkite",
+      "title": "Bazel dependency downloads fail in GitHub Actions and Buildkite",
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T21:00:08+00:00",
-      "summary": "Gazelle and Go generation stopped before testing on three contributors’ PRs. Bazel reported HTTP 504 while fetching bazel-skylib 1.9.2 or protobuf 35.1.",
+      "updatedAt": "2026-11-10T22:49:57+00:00",
+      "summary": "GitHub release downloads stopped independent gVisor jobs before their checks could run. The affected archives include Skylib, Protobuf and toml.bzl (HTTP 504), and rules_foreign_cc (HTTP 500).",
       "findings": [
         {
           "text": "Each failed fetch had one GitHub release URL. Each workflow failed on its only attempt at that commit. The errors do not identify the intermediary that returned 504.",
@@ -97271,9 +97271,43 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42696107096/artifacts/13709766068"
             }
           ]
+        },
+        {
+          "text": "On November 10, GitHub lint for #17395 hit HTTP 500 fetching rules_foreign_cc 0.16.0 at 22:22:36 UTC. Buildkite packetdrill for #17427 hit the same URL at 22:22:56 UTC. Packetdrill then ran and passed all 14 tests on its same-head retry. The GitHub job has one failed attempt.",
+          "evidence": [
+            {
+              "label": "#17395 · GitHub lint · rules_foreign_cc",
+              "url": "https://github.com/google/gvisor/actions/runs/42913746042/job/130170723749"
+            },
+            {
+              "label": "#17427 · Buildkite packetdrill · same failed URL",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54306#01a1c784-e790-4df4-bd70-5507fef1b9d0"
+            },
+            {
+              "label": "#17427 · 14 packetdrill tests passed on retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54306#01a1c78f-25a8-4628-b4d5-7fd263b5d787"
+            }
+          ]
+        },
+        {
+          "text": "The Cloudflare mirror proposed in #17311 served the same rules_foreign_cc archive. Its 476,787 bytes matched the registry SHA-256, 327b3fcacde97b9665424db2b6c37e6f8da59ecc783dc5b8683c69396f820a12.",
+          "evidence": [
+            {
+              "label": "Registry integrity for rules_foreign_cc 0.16.0",
+              "url": "https://bcr.bazel.build/modules/rules_foreign_cc/0.16.0/source.json"
+            },
+            {
+              "label": "Mirror serving the verified archive",
+              "url": "https://bcr.cloudflaremirrors.com/github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz"
+            },
+            {
+              "label": "Proposed workspace module mirror (#17311)",
+              "url": "https://github.com/google/gvisor/pull/17311"
+            }
+          ]
         }
       ],
-      "nextStep": "The workspace mirror is in #17311. After it lands, check Gazelle, Go branch generation and the GPU driver job for further BCR archive download failures.",
+      "nextStep": "Follow the workspace mirror in #17311. Once it lands, inspect new Gazelle, Go generation, GPU driver, lint and packetdrill jobs for registry archive download failures.",
       "evidence": [
         {
           "label": "Independent Bazel fix for registry-scoped mirrors",
@@ -97294,6 +97328,26 @@
         {
           "label": "#17267 · Go generation · protobuf",
           "url": "https://github.com/google/gvisor/actions/runs/42583801511/job/129048618821"
+        },
+        {
+          "label": "#17395 · GitHub lint · rules_foreign_cc",
+          "url": "https://github.com/google/gvisor/actions/runs/42913746042/job/130170723749"
+        },
+        {
+          "label": "#17427 · Buildkite packetdrill · same failed URL",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54306#01a1c784-e790-4df4-bd70-5507fef1b9d0"
+        },
+        {
+          "label": "#17427 · 14 packetdrill tests passed on retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54306#01a1c78f-25a8-4628-b4d5-7fd263b5d787"
+        },
+        {
+          "label": "Registry integrity for rules_foreign_cc 0.16.0",
+          "url": "https://bcr.bazel.build/modules/rules_foreign_cc/0.16.0/source.json"
+        },
+        {
+          "label": "Mirror serving the verified archive",
+          "url": "https://bcr.cloudflaremirrors.com/github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz"
         }
       ]
     },
@@ -97531,7 +97585,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T22:30:59+00:00",
+      "updatedAt": "2026-11-10T22:49:57+00:00",
       "summary": "TestSudo timed out three times on #17391 (d2c9ca498, cgroup v1) and three times on #17393 (5525e83bb, cgroup v2). The 15-minute package alarm fired while each test was reading the container exec output at integration_test.go:1477. Both final jobs exited 2. Neither head has a passing attempt for this shard.",
       "findings": [
         {
@@ -97641,9 +97695,18 @@
               "url": "https://github.com/google/gvisor/pull/17428"
             }
           ]
+        },
+        {
+          "text": "On #17428 (aa0152a6a), cgroup v2 Docker partition 5 of 8 ran //test/e2e:integration_test and passed in 20.0 seconds. This partition contained the earlier TestSudo timeout. Its successful log reports only the target result.",
+          "evidence": [
+            {
+              "label": "#17428 · cgroup v2 Docker partition 5",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0102-4ce1-8d2e-9f0f0c06149c"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow #17428 through merge and check the traced sudo case on the merged revision. The fork fix is superseded.",
+      "nextStep": "Check the corresponding cgroup v1 partition and verify the traced sudo case on the merged revision of #17428.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97704,6 +97767,14 @@
         {
           "label": "Presubmit for aa0152a6a",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54309"
+        },
+        {
+          "label": "#17428 · cgroup v2 Docker partition 5",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0102-4ce1-8d2e-9f0f0c06149c"
+        },
+        {
+          "label": "#17428 · corresponding cgroup v1 partition",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0100-41ed-bfc6-41fe68c43eaa"
         }
       ],
       "settledReviews": [
@@ -97848,5 +97919,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T22:40:45+00:00"
+  "updatedAt": "2026-11-10T22:49:57+00:00"
 }
