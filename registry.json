@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T00:21:07+00:00",
+    "updatedAt": "2026-11-10T00:26:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41861,9 +41861,9 @@
       "title": "Remove overlay waiters from their original file",
       "url": "https://github.com/tamird/gvisor/commit/488b298b8",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T23:18:04+00:00",
-      "summary": "With the poll correction alone, unregistering a waiter after copy-up left the original lower file delivering hostname notifications to it. On this revision the removed waiter stayed quiet and the active hostname waiter was notified. The permanent regression uses gVisor’s VFS notification interface on native AMD64. Both package Nogo owners passed for AMD64 and ARM64.\n\nThe earlier nested-overlay, save/restore, race and benchmark results below were obtained on previous revisions.",
+      "status": "Revising overlay waiter ownership",
+      "updatedAt": "2026-11-10T00:26:34+00:00",
+      "summary": "After copy-up a waiter must be removed from the file where it was registered. The previous proposal released the old file using a manufactured background context. The revision is tracing that reference to an owner with a real release context.",
       "evidence": [
         {
           "label": "Standalone poll prerequisite",
@@ -41983,17 +41983,6 @@
         },
         "command": "git -C ~/code/gvisor range-diff 424cb3f06^! 488b298b8^!"
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
-        "baseHead": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
-        "url": "https://github.com/tamird/gvisor/commit/488b298b8",
-        "title": "Remove overlay waiters from their original file",
-        "body": "A mutable overlay file description can switch from its lower file to its upper file after copy-up. A waiter registered before the switch still belongs to the lower file. Removing it from the current upper file leaves it receiving notifications after cancellation.\n\nKeep the lower reference until its last registration is removed. Track which entries belong to the upper file only while the two sets of registrations overlap. This preserves the backing file across nested overlays and same-version checkpoint and restore.",
-        "summary": "Open this single-commit gVisor PR after the poll registration correction lands?",
-        "requestedAt": "2026-11-08T23:18:04+00:00"
-      },
       "settledReviews": [
         {
           "kind": "proposal",
@@ -42006,18 +41995,30 @@
           "outcome": "superseded",
           "at": "2026-11-08T23:18:04+00:00",
           "note": "The two-commit submission was split into a standalone poll proposal and an overlay change that follows it."
+        },
+        {
+          "status": "pending",
+          "kind": "proposal",
+          "head": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
+          "baseHead": "e39e7d78ecf48665d720b4cd64fea5e888753b9f",
+          "url": "https://github.com/tamird/gvisor/commit/488b298b8",
+          "title": "Remove overlay waiters from their original file",
+          "body": "A mutable overlay file description can switch from its lower file to its upper file after copy-up. A waiter registered before the switch still belongs to the lower file. Removing it from the current upper file leaves it receiving notifications after cancellation.\n\nKeep the lower reference until its last registration is removed. Track which entries belong to the upper file only while the two sets of registrations overlap. This preserves the backing file across nested overlays and same-version checkpoint and restore.",
+          "summary": "Open this single-commit gVisor PR after the poll registration correction lands?",
+          "requestedAt": "2026-11-08T23:18:04+00:00",
+          "at": "2026-11-10T00:26:34+00:00",
+          "outcome": "changes-requested",
+          "note": "Use struct{} for sets and preserve the release context for the underlying file description."
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "488b298b86176fbb4dd442b9b3c54d4ecfbcc935",
-        "observedAt": "2026-11-08T23:18:04+00:00",
-        "disposition": "The overlay fix is one commit on the separate poll proposal and retains the cache locking that landed on master.",
-        "nextAction": "Review the overlay change now for submission after the poll parent lands.",
+        "observedAt": "2026-11-10T00:26:34+00:00",
+        "disposition": "The proposed release of a VFS file reference from a context-free notification callback needs revision.",
+        "nextAction": "Verify ownership through poll cancellation, copy-up, nested overlays and final close; remove obsolete tracking.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/488b298b8",
-          "https://github.com/tamird/gvisor/commit/e39e7d78e",
-          "https://github.com/tamird/gvisor/actions/runs/42533442136/artifacts/13638503356"
+          "https://github.com/tamird/gvisor/commit/488b298b8"
         ]
       }
     },
@@ -49374,18 +49375,34 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41312665985/artifacts/13085841881"
         }
       ],
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T13:49:13.599008+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "70a5246a5c87b1f6dcadef0e9bc580d8842e7238",
-        "baseHead": "00b4278b97991c5885ec17dd13ba0968ff90768c",
-        "url": "https://github.com/tamird/gvisor/commit/70a5246a5",
-        "title": "Bound graph object decoding by its payload length",
-        "requestedAt": "2026-11-01T13:49:13.599008+00:00",
-        "summary": "Open the framing fix after the descriptor change lands?",
-        "body": "Stock Load and Print both accept a checkpoint truncated after the map key. Both reject the same malformed checkpoint with this fix. Eight records passed, including valid map decoding and the 4,096-entry nested-map control."
+      "status": "Approved; waiting for #16840",
+      "updatedAt": "2026-11-10T00:26:34+00:00",
+      "settledReviews": [
+        {
+          "status": "pending",
+          "kind": "proposal",
+          "head": "70a5246a5c87b1f6dcadef0e9bc580d8842e7238",
+          "baseHead": "00b4278b97991c5885ec17dd13ba0968ff90768c",
+          "url": "https://github.com/tamird/gvisor/commit/70a5246a5",
+          "title": "Bound graph object decoding by its payload length",
+          "requestedAt": "2026-11-01T13:49:13.599008+00:00",
+          "summary": "Open the framing fix after the descriptor change lands?",
+          "body": "Stock Load and Print both accept a checkpoint truncated after the map key. Both reject the same malformed checkpoint with this fix. Eight records passed, including valid map decoding and the 4,096-entry nested-map control.",
+          "at": "2026-11-10T00:26:34+00:00",
+          "outcome": "approved",
+          "note": "Approved to open after #16840 lands."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "70a5246a5c87b1f6dcadef0e9bc580d8842e7238",
+        "observedAt": "2026-11-10T00:26:34+00:00",
+        "disposition": "The graph-frame length fix is approved.",
+        "nextAction": "Open the single-commit fix after the graph descriptor change lands.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16840",
+          "https://github.com/tamird/gvisor/commit/70a5246a5"
+        ]
       }
     },
     {
@@ -95277,5 +95294,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-10T00:21:07+00:00"
+  "updatedAt": "2026-11-10T00:26:34+00:00"
 }
