@@ -141,7 +141,10 @@ cp -L libtldk.a $$INSTALLDIR/lib/libpluginstack.a
     toolchains = [":toolchain"],
     visibility = ["//visibility:public"],
     deps = select({
-        ":musl": [":bsd_queue"],
+        ":musl": [
+            ":bsd_queue",
+            "@libunwind//:libunwind",
+        ],
         "//conditions:default": [],
     }),
 )
