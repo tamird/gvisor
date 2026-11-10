@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T18:45:59+00:00",
+    "updatedAt": "2026-11-10T19:01:16+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -14431,25 +14431,28 @@
       "type": "branch",
       "repo": "tamird/go",
       "ref": "benchmark-repeat-failure",
-      "head": "b1bdc6967785c3537e8fe77b3de36fad942c0347",
+      "head": "917d989d720cce334d3c8e909e3fd869a0be5a55",
       "title": "testing: propagate repeated benchmark failures",
       "group": "runtime",
       "url": "https://go-review.googlesource.com/c/go/+/849206",
       "status": "Submitted; Gerrit review pending",
-      "updatedAt": "2026-10-23T16:48:35.250327+00:00",
-      "summary": "October 23 provider read confirms Gerrit CL 849206 remains NEW at b1bdc6967785, without a review score or TryBot result. On October 21 Alan Donovan acknowledged the request and explained the Go team summit and review backlog. This is maintainer review waiting, with no source amendment or further reminder indicated.\n\nPreserved delivery and qualification record:\n\nThe Go fix preserves failure propagation from later benchmark count/CPU repetitions to the original benchmark. Before/after validation reproduces the incorrect native exit 0/PASS after a real failure, then verifies exit 1/FAIL with the fix. The full testing and test2json package checks pass, with one intentional fuzz seed skip retained. The approved patch is submitted as Go Gerrit CL 849206, revision b1bdc6967. The public change remains NEW, with no review score or TryBot result observed yet. The independent containerd upload failure and incomplete Nginx pilot remain separate.",
+      "updatedAt": "2026-11-10T19:01:16+00:00",
+      "summary": "A failure in a later benchmark repetition could leave B.Run reporting true and the process exiting 0. Patch set 2 follows Alan Donovan’s review and extends cmd/go’s existing test_benchmark_fatal script. The -test.count=2 and -test.cpu=1,2 cases each reported false and exited 1 with the fix. TestScript/test_benchmark_fatal passed in 0.73 s with Go 1.27.3 on darwin/arm64, using the revised testing package.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Maintainer acknowledged; awaiting review",
-        "sourceHead": "b1bdc6967785c3537e8fe77b3de36fad942c0347",
-        "observedAt": "2026-10-23T16:48:35.250327+00:00",
-        "nextAction": "Retain the acknowledged review wait. Route a substantive new reviewer event; do not repeat the October 21 reminder.",
+        "owner": "Upstream review",
+        "disposition": "Patch set 2 addresses Alan’s review. All four replies are posted and Gerrit shows zero unresolved comments.",
+        "sourceHead": "917d989d720cce334d3c8e909e3fd869a0be5a55",
+        "observedAt": "2026-11-10T19:01:16+00:00",
+        "nextAction": "Await Alan Donovan’s review of patch set 2.",
         "evidence": [
           "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
           "https://app.buildbuddy.io/invocation/82c9cdb4-a740-4d11-bd23-cb92f07f20a3",
           "https://github.com/golang/go/issues/61767#issuecomment-4939164585",
           "https://go-review.googlesource.com/c/go/+/849206",
-          "https://github.com/tamird/go/commit/b1bdc6967785c3537e8fe77b3de36fad942c0347"
+          "https://github.com/tamird/go/commit/b1bdc6967785c3537e8fe77b3de36fad942c0347",
+          "https://go-review.googlesource.com/c/go/+/849206/2",
+          "https://go-review.googlesource.com/c/go/+/849206/2/src/cmd/go/testdata/script/test_benchmark_fatal.txt",
+          "https://go-review.googlesource.com/c/go/+/849206/comment/d768ccfa_2a7e3461/"
         ]
       }
     },
