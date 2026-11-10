@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T22:11:26+00:00",
+    "updatedAt": "2026-11-10T22:18:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -64119,10 +64119,14 @@
       "title": "Expose manual test binaries as build outputs",
       "url": "https://github.com/tamird/gvisor/commit/6aa8a3a01d6ff61fb7c309f7ae95638c2004d0d3",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-08T13:43:30+00:00",
-      "summary": "The filegroup built all 16 manual binaries directly and caught a broken startup_test under the ordinary root wildcard. With --build_tests_only, the same broken source passed the invocation: Bazel omitted the filegroup and ran seven real tests. The gVisor filegroup is held while a Skylib build_test change is investigated.",
+      "status": "Superseded by bazel-skylib #648",
+      "updatedAt": "2026-11-10T22:18:00+00:00",
+      "summary": "The gVisor filegroup was omitted under --build_tests_only, allowing the invocation to succeed with a broken startup benchmark. The supplier fix in bazel-skylib #648 retains that compile check.",
       "evidence": [
+        {
+          "label": "Explicit suite, real ELF outputs, runfiles and broken-source control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42910130622/artifacts/13807098401"
+        },
         {
           "label": "Mixed fork’s separate root build_test hook",
           "url": "https://github.com/tamird/gvisor/blob/efaf79761/BUILD#L7"
@@ -64167,12 +64171,14 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream review",
         "sourceHead": "6aa8a3a01d6ff61fb7c309f7ae95638c2004d0d3",
-        "observedAt": "2026-11-08T13:43:30+00:00",
-        "disposition": "Investigating the upstream Skylib build_test rule",
-        "nextAction": "Verify the checked outputs still build under --build_tests_only and through an explicit test suite, without adding those binaries to the test runner’s runfiles.",
+        "observedAt": "2026-11-10T22:18:00+00:00",
+        "disposition": "With supplier b2d9986a4, an explicit test_suite under --build_tests_only built all 16 declared gVisor ELF binaries per architecture. Each runner had 16 empty markers in its runfiles and none of the 16 binaries. The uncached AMD64 runner ran natively and the ARM64 runner ran under QEMU on AMD64. The direct AMD64 build_test and the explicit suite both rejected the deliberately broken startup benchmark with the same compiler error.",
+        "nextAction": "Follow bazel-skylib #648 for maintainer review.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42910130622/artifacts/13807098401",
+          "https://github.com/bazelbuild/bazel-skylib/pull/648",
           "https://github.com/tamird/gvisor/actions/runs/42429081768/artifacts/13596209257",
           "https://github.com/bazelbuild/bazel-skylib/issues/480"
         ]
@@ -64184,7 +64190,8 @@
         "after": {
           "head": "6aa8a3a01d6ff61fb7c309f7ae95638c2004d0d3"
         }
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:cares-registry-platform-header",
@@ -67295,9 +67302,13 @@
       "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4",
       "group": "bazel",
       "status": "Published",
-      "updatedAt": "2026-11-09T18:52:37+00:00",
-      "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nOn the earlier supplier revision, each real gVisor build_test built 16 manual binaries and passed: AMD64 natively and ARM64 through QEMU on the same AMD64 host. The receipt retains both test results and 32 link-output/marker-input pairs. The collector failed while reading the action graph, so those two runs do not establish the physical consumer runfiles or payload digests. Both ran through Bazel’s standard POSIX test harness. Replacing Bazel’s own shell wrapper is tracked separately in #30837.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
+      "updatedAt": "2026-11-10T22:18:00+00:00",
+      "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nWith supplier b2d9986a4, an explicit test_suite under --build_tests_only built all 16 declared gVisor ELF binaries per architecture. Each runner had 16 empty markers in its runfiles and none of the 16 binaries. The uncached AMD64 runner ran natively and the ARM64 runner ran under QEMU on AMD64. The direct AMD64 build_test and the explicit suite both rejected the deliberately broken startup benchmark with the same compiler error.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
       "evidence": [
+        {
+          "label": "Explicit suite, real ELF outputs, runfiles and broken-source control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42910130622/artifacts/13807098401"
+        },
         {
           "label": "Single-commit supplier proposal",
           "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4"
@@ -67352,10 +67363,11 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "b2d9986a40604f82df42c322122ad61313104cfa",
-        "observedAt": "2026-11-09T18:52:37+00:00",
-        "disposition": "Published",
+        "observedAt": "2026-11-10T22:18:00+00:00",
+        "disposition": "The exact published supplier passed the explicit-suite and physical runfiles checks on the gVisor consumer.",
         "nextAction": "Follow review on #648.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42910130622/artifacts/13807098401",
           "https://github.com/bazelbuild/bazel-skylib/pull/648"
         ]
       },
@@ -70318,9 +70330,13 @@
       "group": "bazel",
       "head": "b2d9986a40604f82df42c322122ad61313104cfa",
       "status": "open",
-      "updatedAt": "2026-11-09T18:52:37+00:00",
-      "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nOn the earlier supplier revision, each real gVisor build_test built 16 manual binaries and passed: AMD64 natively and ARM64 through QEMU on the same AMD64 host. The receipt retains both test results and 32 link-output/marker-input pairs. The collector failed while reading the action graph, so those two runs do not establish the physical consumer runfiles or payload digests. Both ran through Bazel’s standard POSIX test harness. Replacing Bazel’s own shell wrapper is tracked separately in #30837.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
+      "updatedAt": "2026-11-10T22:18:00+00:00",
+      "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nWith supplier b2d9986a4, an explicit test_suite under --build_tests_only built all 16 declared gVisor ELF binaries per architecture. Each runner had 16 empty markers in its runfiles and none of the 16 binaries. The uncached AMD64 runner ran natively and the ARM64 runner ran under QEMU on AMD64. The direct AMD64 build_test and the explicit suite both rejected the deliberately broken startup benchmark with the same compiler error.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
       "evidence": [
+        {
+          "label": "Explicit suite, real ELF outputs, runfiles and broken-source control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42910130622/artifacts/13807098401"
+        },
         {
           "label": "Single-commit supplier proposal",
           "url": "https://github.com/tamird/bazel-skylib/commit/b2d9986a4"
@@ -97757,5 +97773,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T22:11:26+00:00"
+  "updatedAt": "2026-11-10T22:18:00+00:00"
 }
