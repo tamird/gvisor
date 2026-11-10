@@ -310,21 +310,34 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
                 continue
             elif triaged:
                 continue
-            elif prior_record and prior_record.get("assigned") and not changed:
+            elif prior_record and prior_record.get("assigned") and not awaiting_author and not changed:
                 continue  # An explicit top-level assignment was removed after owner triage.
             if not awaiting_author and not changed and not prior_record:
                 continue
+            # A PR's old owner or review label does not claim a new thread.
+            # Match the current source, linked comment and the reviewer's last edit.
+            worker = followup.get("owner")
+            claimed = bool(worker and (assigned or (
+                followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
+                and followup.get("observedAt") and item.get("updatedAt")
+                and datetime.fromisoformat(followup["observedAt"]) >= datetime.fromisoformat(item["updatedAt"]))))
+            claim = {}
+            if awaiting_author:
+                claim = {"claimed": claimed, "overdue": bool(not claimed and prior_record
+                         and prior_record["awaitingAuthor"] and prior_record.get("feedbackComplete")
+                         and pr.get("feedback", {}).get("complete") and prior_record["head"] == pr["head"] and not changed)}
             records.append({"repo": key[0], "number": key[1], "head": pr["head"], "sourceNumber": source["number"],
-                            "owner": "Agent" if is_rebase else followup.get("owner"), "kind": item["kind"], "id": item["id"],
+                            "owner": "Agent" if awaiting_author and not claimed else worker, **claim, "kind": item["kind"], "id": item["id"],
                             **({"rebaseRequested": True} if is_rebase else {}),
                             "url": item["url"], "author": author["login"], "updatedAt": item.get("updatedAt"),
-                            "newOrChanged": changed, "awaitingAuthor": awaiting_author, "assigned": assigned,
+                            "newOrChanged": changed, "awaitingAuthor": awaiting_author, "assigned": assigned or awaiting_author,
                             "feedbackComplete": pr.get("feedback", {}).get("complete", False),
                             "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."})
         if not pr.get("feedback", {}).get("complete"):
             visible = {item["id"] for item in items}
-            records.extend({**record, "head": pr["head"], "owner": followup.get("owner"),
-                            "newOrChanged": False, "feedbackComplete": False}
+            records.extend({**record, "head": pr["head"], "newOrChanged": False, "feedbackComplete": False,
+                            **({"owner": "Agent", "claimed": False, "overdue": False}
+                               if record.get("awaitingAuthor") and record["head"] != pr["head"] else {})}
                            for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible)
     return sorted(records, key=lambda item: (not item["awaitingAuthor"], item.get("updatedAt") or "", item["url"]))
 
@@ -1360,6 +1373,8 @@ def main() -> None:
     temporary.replace(output)
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
+    worker = worker_handoff(snapshot, snapshot["incomingReviewRequests"])
+    print(json.dumps({"workerHandoff": {k: v for k, v in worker.items() if k != "authorFeedback"}}))
     for record in snapshot["incomingReviewRequests"]:
         print(json.dumps({"incomingReviewRequest": record}))
     for record in snapshot["reviewerHandoff"]:
@@ -1404,12 +1419,42 @@ def incoming_review_intake(previous: dict, rows: list[dict], now: str) -> tuple[
     return incoming_reviews(previous, rows, OWNER, graphql, now, min(6, REQUEST_LIMIT - requests))
 
 
+def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
+    """Select an unclaimed author-side obligation before other work."""
+    by_number = {pr["number"]: pr for pr in snapshot.get("prs", [])
+                 if pr.get("repo", REPO) == REPO and pr.get("authorLogin") == OWNER
+                 and pr.get("status") in {"open", "draft"}}
+    pending = []
+    for row in snapshot.get("reviewerHandoff", []):
+        source = by_number.get(row.get("sourceNumber", row["number"]))
+        if row["repo"] != REPO or not row["awaitingAuthor"] or not source:
+            continue
+        # Ignore a stale assignment after either the source or the import closes.
+        if not any(pr["number"] == row["number"] and pr["head"] == row["head"]
+                   and pr.get("status") in {"open", "draft"} for pr in (source, *source.get("imports", []))):
+            continue
+        pending.append(row)
+    pending.sort(key=lambda row: (bool(row.get("claimed")), not row.get("overdue"),
+                                  row.get("updatedAt") or "", row["url"]))
+    unclaimed = [row for row in pending if not row.get("claimed")]
+    return {"nextWork": unclaimed[0] if unclaimed else next(iter(incoming), None),
+            "authorFeedback": pending, "unclaimed": len(unclaimed),
+            "overdue": sum(bool(row.get("overdue")) for row in unclaimed)}
+
+
 def incoming_review_handoff() -> None:
     """Recheck the first-priority queue when the supervisor starts or resumes."""
     previous = json.loads((ROOT / "github-status.json").read_text())
     checked = datetime.now(timezone.utc).isoformat()
-    rows, _ = incoming_review_intake(previous, [], checked)
-    print(json.dumps({"checkedAt": checked, "repo": REPO, "incomingReviewRequests": rows}))
+    try:
+        rows, _ = incoming_review_intake(previous, [], checked)
+        status = "refreshed"
+    except RuntimeError:
+        rows = previous.get("incomingReviewRequests", [])
+        status = "using last published incoming requests"
+    print(json.dumps({"checkedAt": checked, "repo": REPO, **worker_handoff(previous, rows),
+                      "authorFeedbackCheckedAt": previous.get("checkedAt"),
+                      "incomingReviewStatus": status, "incomingReviewRequests": rows}))
 
 
 def review_outreach(post: bool = False) -> None:

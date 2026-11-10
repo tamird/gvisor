@@ -959,7 +959,7 @@ class CollectorHistoryTest(unittest.TestCase):
         with mock.patch.object(updater, "REGISTRY", self.registry):
             first = updater.reviewer_handoff([pr], {})
             self.assertEqual((first[0]["owner"], first[0]["newOrChanged"], first[0]["awaitingAuthor"]),
-                             ("root", True, True))
+                             ("Agent", True, True))
             previous = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": first}
             self.assertFalse(updater.reviewer_handoff([pr], previous)[0]["newOrChanged"])
             bot = {**finding, "id": "bot", "createdAt": LATER,
@@ -1025,6 +1025,35 @@ class CollectorHistoryTest(unittest.TestCase):
             comment["author"] = finding["author"]
             pr["status"] = "merged"
             self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+
+    def test_worker_selects_unclaimed_feedback_before_new_review_requests(self) -> None:
+        pr = retained(raw_pr(5))
+        incoming = [{"number": 6, "url": "https://github.com/google/gvisor/pull/6"}]
+        finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
+                   "isOutdated": False, "body": "[🤖] This test fails after restore.", "createdAt": OLD,
+                   "updatedAt": OLD, "url": pr["url"] + "#discussion_r1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        pr["feedback"]["items"] = [finding]
+        source = self.registry["nodes"][0]
+        source["followup"] = {"owner": "root", "sourceHead": pr["head"], "observedAt": LATER, "evidence": []}
+        snap = {"prs": [pr]}
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            snap["reviewerHandoff"] = updater.reviewer_handoff([pr], {})
+            work = updater.worker_handoff(snap, incoming)
+            self.assertEqual((work["nextWork"]["id"], work["unclaimed"], work["overdue"]), ("finding", 1, 0))
+            snap["reviewerHandoff"] = updater.reviewer_handoff([pr], snap)
+            self.assertEqual(updater.worker_handoff(snap, incoming)["overdue"], 1)
+            source["followup"]["evidence"] = [finding["url"]]
+            snap["reviewerHandoff"] = updater.reviewer_handoff([pr], snap)
+            work = updater.worker_handoff(snap, incoming)
+            self.assertEqual(work["nextWork"], incoming[0])
+            self.assertTrue(work["authorFeedback"][0]["claimed"])
+            self.assertEqual(work["authorFeedback"][0]["owner"], "root")
+            finding["updatedAt"] = "2000-01-03T00:00:00+00:00"
+            snap["reviewerHandoff"] = updater.reviewer_handoff([pr], snap)
+            self.assertEqual(updater.worker_handoff(snap, incoming)["unclaimed"], 1)
+            pr["authorLogin"] = "another-author"
+            self.assertEqual(updater.worker_handoff(snap, incoming)["authorFeedback"], [])
 
     def test_import_reviewer_handoff_routes_to_source_owner(self) -> None:
         source = retained(raw_pr(5))

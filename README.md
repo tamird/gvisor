@@ -422,8 +422,13 @@ The active gVisor supervisor runs
 `python3 update-status.py --incoming-review-handoff` from this checkout at
 startup, on resumption and before selecting the next batch of engineering
 work. This read-only check is independent of the GitHub Actions timer and
-does not post or reschedule approval reminders. On a scheduled refresh,
-read `github-status.json`'s `incomingReviewRequests` first. The command also
+does not post or reschedule approval reminders. The command selects the oldest unclaimed author-side obligation before an
+incoming request to review someone else’s PR. It lists each open thread once,
+including its source, link and owner. A thread is overdue if a second complete
+refresh sees it still unclaimed. A claim requires the current source head and
+the exact thread URL, observed after the reviewer's latest edit. On each
+continuation read `nextWork` before selecting routine work. On a scheduled
+refresh the same selection is printed as `workerHandoff`. The command also
 checks GitHub directly, so a new request can be handled before the next
 scheduled publication. For each request, read the linked conversation and
 the current PR head, then conduct the requested review.
