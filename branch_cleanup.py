@@ -23,6 +23,9 @@ MANAGED = DISPOSABLE + ("proposal/", "research/", "review/", "integration/",
 PAYLOAD = (".github/workflows/", ".github/qualification/", "test/rbe/")
 ACTIVE = ("queued", "in_progress", "waiting", "requested", "pending")
 FORK_MIRROR = "identical fork branch retained"
+COMPLETED_CI = "retired CI payload with a completed run at the exact tip"
+LOCAL_CI = "local copy of retiring completed CI branch"
+CI_IDLE = dt.timedelta(days=1)
 OID = re.compile(r"[0-9a-f]{40}")
 
 
@@ -125,18 +128,31 @@ def tracker_protections(pages: str, names: set[str], tips: set[str]) -> set[tupl
                 if key.endswith("Handoff") or key in {"incomingReviewRequests", "ciFlakes", "reviewOutreach"}}
     blob = unquote(json.dumps([registry, handoffs]))
     names.update(re.findall(r"(?:github\.com/tamird/gvisor/tree/|\b)((?:qualification|diagnostics|research|review|proposal|integration|tracker|workmap|rebase|delivery)/[\w./-]+)", blob))
-    for target in re.findall(r"github\.com/tamird/gvisor/tree/([\w./-]+)", blob):
-        # A tree route may append a source directory after the branch.
-        parts = target.strip("/").split("/")
-        names.update("/".join(parts[:end]) for end in range(1, len(parts) + 1))
     for match in re.finditer(r"github\.com/(?:tamird|google)/gvisor/(?:commit|compare|blob)/([a-f0-9]{7,40})(?:\.{2,3}([a-f0-9]{7,40}))?", blob):
         tips.update(part for part in match.groups() if part)
     # Prior review heads, inline replies and qualification receipts may live
     # only in the GitHub snapshot. Their commits must stay reachable even
     # when the last published tip is several commits ahead of the citation.
     all_text = unquote(json.dumps([registry, snapshot]))
+    names.update(linked_branches(all_text))
     tips.update(re.findall(r"(?<![A-Za-z0-9])[a-f0-9]{7,40}(?![A-Za-z0-9])", all_text))
     return merged
+
+
+def linked_branches(text: str) -> set[str]:
+    names = set()
+    for owner, route, target in re.findall(
+            r"github\.com/(tamird|google)/gvisor/(tree|blob|commits|compare)/([^\s\"\\<>?#)]+)", text):
+        if route == "compare":
+            for side in re.split(r"\.{2,3}", target):
+                qualifier, sep, ref = side.rpartition(":")
+                if (qualifier.split(":")[0] if sep else owner) == "tamird":
+                    names.add(ref)
+        elif owner == "tamird":
+            # A tree or blob URL may append a path to a branch containing slashes.
+            parts = target.rstrip("/").split("/")
+            names.update("/".join(parts[:end]) for end in range(1, len(parts) + 1))
+    return names
 
 
 def local_activity(refs: dict[str, str], cutoff: dt.datetime) -> set[str]:
@@ -167,17 +183,28 @@ def local_activity(refs: dict[str, str], cutoff: dt.datetime) -> set[str]:
     return protected
 
 
-def completed_runs(cutoff: dt.date) -> set[tuple[str, str]]:
-    # A missing or expired run is never evidence for retirement. Bound the
-    # historical lookup; each day gets its own GitHub search-result limit.
-    result = set()
-    for days in range(28):
-        day = cutoff - dt.timedelta(days=days)
-        rows = api(f"repos/{FORK}/actions/runs?status=completed&created={day}&per_page=100",
-                   f'[.workflow_runs[] | select((.event=="push" or .event=="workflow_dispatch") and .head_repository.full_name=="{FORK}") | [.head_branch,.head_sha]]',
-                   pages=True)
-        result.update(map(tuple, rows))
-    return result
+def completed_runs(now: dt.datetime) -> set[tuple[str, str]]:
+    # GitHub accepts reruns up to day 30 and permits workflows to last 35
+    # days. Include both limits and the idle day, even for an old rerun.
+    # The REST filter is by creation, but the idle clock starts at completion.
+    completed = set()
+    recent = set()
+    cutoff = now - CI_IDLE
+    for days in range(67):
+        day = now.date() - dt.timedelta(days=days)
+        pages = api(f"repos/{FORK}/actions/runs?status=completed&created={day}&per_page=100",
+                    "[[.total_count, [.workflow_runs[] | [.id,.head_branch,.head_sha,.updated_at,.event,.head_repository.full_name]]]]",
+                    pages=True)
+        runs = {row[0]: row for _, rows in pages for row in rows}
+        if len(runs) != pages[0][0]:
+            raise ValueError(f"incomplete completed Actions inventory for {day}")
+        for _, name, oid, updated, event, repo in runs.values():
+            if repo == FORK:
+                if dt.datetime.fromisoformat(updated) > cutoff:
+                    recent.add(name)
+                if event in {"push", "workflow_dispatch"}:
+                    completed.add((name, oid))
+    return {(name, oid) for name, oid in completed if name not in recent}
 
 
 def available(oids: set[str]) -> set[str]:
@@ -237,7 +264,7 @@ class Candidate:
 
 
 def evidence_keepers(fork: dict[str, str], dropping: set[str], upstream: str, evidence: set[str]) -> set[str]:
-    """Return branches containing cited commits that the deletion would orphan."""
+    """Retain a public branch for each citation and each non-CI source commit."""
     if not dropping:
         return set()
     retained = available({oid for name, oid in fork.items() if name not in dropping} | {upstream})
@@ -248,13 +275,16 @@ def evidence_keepers(fork: dict[str, str], dropping: set[str], upstream: str, ev
     # Carry one originating branch down the graph, with the retained roots
     # subtracted by Git. This finds a witness for all citations in one walk.
     inputs = list(origins) + ["^" + oid for oid in retained]
-    graph = git("rev-list", "--topo-order", "--parents", "--stdin", data=lines(inputs)).decode()
+    graph = [line.split() for line in git("rev-list", "--topo-order", "--parents", "--stdin",
+                                          data=lines(inputs)).decode().splitlines()]
+    # A workflow-only tip may be the sole surviving branch for a source
+    # patch beneath it. Check every commit the entire deletion would orphan.
+    payload = payload_paths({oid for oid, *parents in graph if len(parents) == 1})
     lengths = {len(oid) for oid in evidence}
     keep = set()
-    for line in graph.splitlines():
-        oid, *parents = line.split()
+    for oid, *parents in graph:
         name = origins[oid]
-        if any(oid[:size] in evidence for size in lengths):
+        if oid not in payload or any(oid[:size] in evidence for size in lengths):
             keep.add(name)
         for parent in parents:
             origins.setdefault(parent, name)
@@ -309,11 +339,15 @@ def plan(retention: int) -> list[Candidate]:
                     or any(oid[:length] in tips for length in prefix_lengths)):
                 continue
             stamp, author, _ = data[oid]
-            if stamp <= cutoff.timestamp() and author == owner:
+            if author != owner:
+                continue
+            if stamp <= cutoff.timestamp():
                 if scope == "local" and fork.get(name) == oid:
                     mirrors[name] = oid
                 if name.startswith(MANAGED) or (name, oid) in merged_prs:
                     potential.append((scope, name, oid))
+            elif scope == "fork" and name.startswith(DISPOSABLE) and stamp <= (now - CI_IDLE).timestamp():
+                potential.append((scope, name, oid))
     main_tips = {fork["master"], fork["gh-pages"], upstream}
     ancestors = set(git("rev-list", "--stdin", data=lines(main_tips)).decode().splitlines())
     retained = {scope: {oid for name, oid in refs.items() if not name.startswith(MANAGED) or name in names}
@@ -322,7 +356,11 @@ def plan(retention: int) -> list[Candidate]:
     candidates = []
     evidence_lengths = {len(oid) for oid in evidence}
     for scope, name, oid in potential:
-        if oid not in ancestors and any(oid[:length] in evidence for length in evidence_lengths):
+        early = data[oid][0] > cutoff.timestamp()
+        if (early or oid not in ancestors) and any(oid[:length] in evidence for length in evidence_lengths):
+            continue
+        if early:
+            pending.append((scope, name, oid))
             continue
         if not name.startswith(MANAGED):
             if oid in ancestors and (name, oid) in merged_prs:
@@ -334,15 +372,24 @@ def plan(retention: int) -> list[Candidate]:
             pending.append((scope, name, oid))
     paths = payload_paths({oid for _, _, oid in pending if data[oid][2] == 1})
     pairs = {(name, oid) for _, name, oid in pending if oid in paths}
-    completed = pairs & completed_runs(cutoff.date()) if pairs else set()
+    completed = pairs & completed_runs(now) if pairs else set()
     for scope, name, oid in pending:
         if (name, oid) in completed:
-            candidates.append(Candidate(scope, name, oid, "retired CI payload with a completed run at the exact tip"))
+            candidates.append(Candidate(scope, name, oid, COMPLETED_CI))
     dropping = {item.name for item in candidates if item.scope == "fork"}
     keep = evidence_keepers(fork, dropping, upstream, evidence)
     if evidence_keepers(fork, dropping - keep, upstream, evidence):
-        raise ValueError("fork plan still contains the last published branch for cited commits")
+        raise ValueError("fork plan still contains the last published branch for source or cited commits")
     candidates = [item for item in candidates if item.scope != "fork" or item.name not in keep]
+    # A completed CI run can retire a day-old local copy along with its fork
+    # branch. A reset/amend may still leave unpublished work in its reflog.
+    pairs = {i.name: i.oid for i in candidates if i.scope == "fork" and i.reason == COMPLETED_CI
+             and local.get(i.name) == i.oid}
+    candidates = [i for i in candidates if i.scope != "local" or i.name not in pairs]
+    recent_ci = local_activity(pairs, now - CI_IDLE) if pairs else set()
+    pairs = {name: oid for name, oid in pairs.items() if name not in recent_ci}
+    for name in published_reflogs(pairs, set(fork.values()) | {upstream}):
+        candidates.append(Candidate("local", name, pairs[name], LOCAL_CI))
     removing = {item.name for item in candidates}
     # A commit URL still resolves when its same-name fork branch survives.
     # Check reflogs too: a local rebase may have displaced unpublished work.
@@ -390,6 +437,36 @@ def archive(items: list[Candidate]) -> str:
     return last[0]
 
 
+def delete_local(batch: list[Candidate], logs: dict[str, str], cutoff: dt.datetime, ci_cutoff: dt.datetime) -> None:
+    common = Path(os.fsdecode(git("rev-parse", "--path-format=absolute", "--git-common-dir").strip()))
+    # An expected tip catches A -> B, but not A -> B -> A. Under the locks,
+    # compare each reflog against the exact bytes in the recovery archive.
+    with subprocess.Popen(["git", "update-ref", "--stdin"], stdin=subprocess.PIPE, stdout=subprocess.PIPE) as proc:
+        assert proc.stdin is not None and proc.stdout is not None
+        try:
+            proc.stdin.write(b"start\n" + lines(f"delete {HEADS}{i.name} {i.oid}" for i in batch) + b"prepare\n")
+            proc.stdin.flush()
+            if proc.stdout.readline() != b"start: ok\n" or proc.stdout.readline() != b"prepare: ok\n":
+                raise ValueError("a local branch moved; rerun the plan")
+            names, tips = checked_out()
+            for item in batch:
+                path = common / "logs" / "refs" / "heads" / item.name
+                if (item.name in names or item.oid in tips or item.name not in logs or not path.is_file()
+                        or path.read_bytes() != os.fsencode(logs[item.name])):
+                    raise ValueError(f"{item.name} changed since archival or was checked out; rerun the plan")
+            for short, limit in ((False, cutoff), (True, ci_cutoff)):
+                refs = {i.name: i.oid for i in batch if (i.reason == LOCAL_CI) == short}
+                if refs and local_activity(refs, limit):
+                    raise ValueError("a local branch became active; rerun the plan")
+            proc.stdin.write(b"commit\n")
+            proc.stdin.flush()
+            if proc.stdout.readline() != b"commit: ok\n":
+                raise ValueError("local branch deletion did not commit")
+        finally:
+            # EOF without commit aborts a prepared transaction and releases its locks.
+            proc.stdin.close()
+
+
 def apply(items: list[Candidate], retention: int) -> None:
     if not items:
         return
@@ -397,15 +474,31 @@ def apply(items: list[Candidate], retention: int) -> None:
         raise ValueError("local reflog preservation requires Git's files ref backend")
     # The proof search can take minutes. Re-read live exclusions after it.
     check_origin()
+    ci = {(i.name, i.oid) for i in items if i.reason == COMPLETED_CI}
+    if ci and not ci <= completed_runs(dt.datetime.now(dt.timezone.utc)):
+        raise ValueError("a retired CI branch ran again; rerun the plan")
     fork = remote_refs("origin")
     upstream = public_bases(fork)
     names, tips = live_protections()
     evidence = set()
     tracker_protections(fork["gh-pages"], names, evidence)
+    # A checkout may have retained a different version of a planned fork
+    # branch since the plan was constructed.
+    local = dict(row.split("\t") for row in git("for-each-ref", "--format=%(refname:lstrip=2)%09%(objectname)",
+                                                 HEADS).decode().splitlines())
+    names.update(name for name in local.keys() & fork.keys() if local[name] != fork[name])
     evidence_lengths = {len(oid) for oid in evidence}
     lengths = {len(oid) for oid in tips if oid}
-    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=retention)
-    recent = local_activity({i.name: i.oid for i in items if i.scope == "local"}, cutoff)
+    now = dt.datetime.now(dt.timezone.utc)
+    cutoff = now - dt.timedelta(days=retention)
+    local_ci = {i.name: i.oid for i in items if i.reason == LOCAL_CI}
+    recent = local_activity({i.name: i.oid for i in items if i.scope == "local" and i.name not in local_ci}, cutoff)
+    if local_ci:
+        recent.update(local_activity(local_ci, now - CI_IDLE))
+    fork_ci = {i.name: i.oid for i in items if i.scope == "fork" and i.reason == COMPLETED_CI}
+    if (any(fork_ci.get(name) != oid for name, oid in local_ci.items())
+            or published_reflogs(local_ci, set(fork.values()) | {upstream}) != local_ci.keys()):
+        raise ValueError("a paired CI branch or its published history changed; rerun the plan")
     for item in items:
         if (item.name in names or item.scope == "local" and item.name in recent or any(item.oid[:length] in tips for length in lengths)
                 or item.scope == "fork" and fork.get(item.name) != item.oid
@@ -414,14 +507,18 @@ def apply(items: list[Candidate], retention: int) -> None:
             raise ValueError(f"{item.name} changed or became active; rerun the plan")
     dropping = {item.name for item in items if item.scope == "fork"}
     if evidence_keepers(fork, dropping, upstream, evidence):
-        raise ValueError("a candidate now contains the only published copy of cited work; rerun the plan")
+        raise ValueError("a candidate now contains the only published copy of source or cited work; rerun the plan")
     ref = archive(items)
+    logs = json.loads(git("show", ref + ":reflogs.json"))
     print(f"Local recovery manifest: git show {ref}:refs.tsv", file=sys.stderr, flush=True)
     # Remote deletions are atomic per batch. A failed lease leaves later
     # batches untouched. An interrupted run can simply recompute its plan.
     for scope in ("fork", "local"):
         if scope == "local":
             fork = remote_refs("origin")
+            if (local_ci.keys() & fork.keys()
+                    or published_reflogs(local_ci, set(fork.values()) | {ref, upstream}) != local_ci.keys()):
+                raise ValueError("a paired CI branch or its archived history changed; rerun the plan")
             mirrors = {item.name: item.oid for item in items if item.reason == FORK_MIRROR}
             if (any(fork.get(name) != oid for name, oid in mirrors.items())
                     or published_reflogs(mirrors, set(fork.values())) != mirrors.keys()):
@@ -435,13 +532,14 @@ def apply(items: list[Candidate], retention: int) -> None:
                     *(f"--force-with-lease={HEADS}{item.name}:{item.oid}" for item in batch), "origin",
                     *(f":{HEADS}{item.name}" for item in batch))
             else:
-                git("update-ref", "--stdin", data=lines(f"delete {HEADS}{item.name} {item.oid}" for item in batch))
+                delete_local(batch, logs, cutoff, now - CI_IDLE)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", help="archive and delete the freshly planned branches")
-    parser.add_argument("--retention-days", type=int, default=7, help="minimum commit age in days (default 7)")
+    parser.add_argument("--retention-days", type=int, default=7,
+                        help="minimum age in days, except completed disposable CI (default 7)")
     args = parser.parse_args()
     if args.retention_days < 7:
         parser.error("keep at least seven days of recent branches")

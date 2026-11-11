@@ -1036,13 +1036,17 @@ batches. A changed tip fails its batch. Rerun the command after an interruption.
 The tool only pushes deletion refspecs to `tamird/gvisor`. Keep the archive
 local, including when backing up private work.
 
-The default retention is seven days. A disposable qualification needs a
-completed run on its exact branch and commit and a tip confined to validation
-files. The recent run search is bounded. An older validation branch can also
-be redundant when its exact fork copy is retained or its changes are already
-in a retained base. Checked-out heads, live PRs, running workflows, current
-work-map references, divergent copies and unrecognized topic branches remain
-in place.
+A fork branch under `qualification/` or `diagnostics/` can retire 24 hours
+after its last completed run. The tip must change only validation files, and
+a push or dispatch must have finished on that commit. Deletion must leave
+every source change and cited commit reachable on the fork or upstream.
+Its identical local branch can retire with it if its reflog has also been
+idle for a day and every entry is published.
+
+Other local mirrors can retire after seven days by default if the same branch
+and commit remain on the fork and its surviving branches cover the entire
+local reflog. Checked-out branches, open PRs, active workflows, work-map
+branch links and divergent copies stay in place.
 
 The command prints an archive commit. `git show <archive>:refs.tsv` lists
 `local` or `fork`, the original name and its full commit. Restore a local row
