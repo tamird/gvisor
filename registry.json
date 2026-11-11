@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T21:53:08+00:00",
+    "updatedAt": "2026-11-11T22:07:50+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1925,25 +1925,28 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-11T21:53:08+00:00",
-      "summary": "The published context-only rebase 65a54cd87 is mergeable. All 200 added and removed lines match the previous change after accounting for indentation, and the surrounding restore guard remains intact. All three Nogo targets passed using native macOS Bazel launchers, each checking Linux AMD64 and ARM64 findings. Fresh runtime and systrap restore results are pending.\n\nEarlier qualification:\n\nThe requested post-#16046 rebase is published at 048d2635a582 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-approved Unix-only change is delivered at a76235cf8 and PR #14338 is ready for maintainer review. Seven fresh unit, race and analyzer actions passed before delivery. The original b912f6375 source and nine residual TCP/UDP/fragmentation paths remain preserved; no contributor decision remains for this delivery. Current-head GitHub checks and review are tracked separately.\n\nEarlier observations:\n\nThe separate Unix-only proposal at a76235cf8 has passed its seven-action validation and independent reviews. The user has been asked to review that exact proposal and authorize replacing this broad draft. This live b912f6375 PR remains draft and unchanged; its proposed-update link carries the separate contributor decision.\n\nEarlier observations:\n\nA separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366–#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
+      "updatedAt": "2026-11-11T22:07:50+00:00",
+      "summary": "The published context-only rebase 65a54cd87 is mergeable. All 200 added and removed lines match the previous change after accounting for indentation, and the surrounding restore guard remains intact. All three Nogo targets passed using native macOS Bazel launchers, each checking Linux AMD64 and ARM64 findings. Native Linux Bazel passed all five targets uncached. All six abstract socket namespace cases passed in systrap with 142 restore invocations. Each of the three Nogo owners passed its Linux AMD64 and ARM64 checks. The initial Go transport invocation returned PASS with empty nonverbose XML. A second, uncached run of that package produced 13 passing XML records with no skips, including TestEnqueueRightsOwnership and all seven of its subcases.\n\nEarlier qualification:\n\nThe requested post-#16046 rebase is published at 048d2635a582 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-approved Unix-only change is delivered at a76235cf8 and PR #14338 is ready for maintainer review. Seven fresh unit, race and analyzer actions passed before delivery. The original b912f6375 source and nine residual TCP/UDP/fragmentation paths remain preserved; no contributor decision remains for this delivery. Current-head GitHub checks and review are tracked separately.\n\nEarlier observations:\n\nThe separate Unix-only proposal at a76235cf8 has passed its seven-action validation and independent reviews. The user has been asked to review that exact proposal and authorize replacing this broad draft. This live b912f6375 PR remains draft and unchanged; its proposed-update link carries the separate contributor decision.\n\nEarlier observations:\n\nA separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366–#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
       "followup": {
-        "disposition": "Published rebase with native Linux qualification in progress",
+        "disposition": "Native Linux transport, systrap restore and both architecture analyzers verified on the published rebase.",
         "owner": "Agent",
         "sourceHead": "65a54cd879a8ed66ac93d2ec15ab39bbf94e8d95",
         "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
-        "nextAction": "Read the native Linux transport and systrap restore evidence on 65a54cd87, then follow its import.",
+        "nextAction": "Follow maintainer review and the import of the published revision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14338",
           "https://github.com/google/gvisor/pull/14338#issuecomment-6080694275",
           "https://github.com/tamird/gvisor/commit/048d2635a582ab85720274b3cd8e515a781a3409",
           "https://github.com/tamird/gvisor/commit/65a54cd87",
           "https://github.com/tamird/gvisor/actions/runs/43096485597",
-          "https://github.com/tamird/gvisor/actions/runs/43105440950"
+          "https://github.com/tamird/gvisor/actions/runs/43105440950",
+          "https://github.com/tamird/gvisor/actions/runs/43105440950/artifacts/13894402364",
+          "https://github.com/tamird/gvisor/actions/runs/43108334219",
+          "https://github.com/tamird/gvisor/actions/runs/43108334219/artifacts/13894349383"
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-11T21:53:08+00:00"
+        "observedAt": "2026-11-11T22:07:50+00:00"
       },
       "head": "65a54cd879a8ed66ac93d2ec15ab39bbf94e8d95",
       "evidence": [
@@ -1962,6 +1965,18 @@
         {
           "label": "Linux restore, transport and analyzer run after the first job failed to start",
           "url": "https://github.com/tamird/gvisor/actions/runs/43105440950"
+        },
+        {
+          "label": "Six native systrap cases, 142 restores and all three Nogo owners",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43105440950/artifacts/13894402364"
+        },
+        {
+          "label": "Named Linux Unix transport package results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43108334219"
+        },
+        {
+          "label": "Thirteen passing Linux transport records, including the seven SCM-rights subcases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43108334219/artifacts/13894349383"
         }
       ]
     },
@@ -33963,8 +33978,8 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-07T03:03:10+00:00",
-      "summary": "Lucas’s latest review of 11fc65fd9 says the earlier code issues are resolved. It asks for a first-pass rerun. Maintainers have said to ignore that pipeline while it is being set up. Formal approval is outstanding.\n\nThe four commits were squashed to 11fc65fd9 with the same source tree as 244010f9c. The PR awaits maintainer review.\n\nLucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
+      "updatedAt": "2026-11-11T22:04:38+00:00",
+      "summary": "On 11fc65fd9 Lucas confirmed that the first-pass check is nonblocking and recommended approval. His review is recorded as COMMENTED. Formal approval is still outstanding.\n\nThe four commits were squashed to 11fc65fd9 with the same source tree as 244010f9c. The PR awaits maintainer review.\n\nLucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -34097,6 +34112,10 @@
         {
           "label": "Asked Lucas for formal approval of the rebased sidecar PR",
           "url": "https://github.com/google/gvisor/pull/16522#issuecomment-6701385343"
+        },
+        {
+          "label": "Lucas’s review confirming first-pass is nonblocking and recommending approval",
+          "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-5862954807"
         }
       ],
       "number": 16522,
@@ -49633,13 +49652,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/buildkite-source-release-staging",
-      "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
-      "title": "Install runsc with its Sentry in Buildkite source jobs",
+      "head": "5580eac32b0141ea984fae122d52fc30cb13ded7",
+      "title": "Install the release tarball in Buildkite source CI",
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T21:53:08+00:00",
-      "summary": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags. Export #17179 merged the earlier 4ba049ba5 at e18c358d6. The revised source a6e06bb65 now conflicts with master. The fork revision 5580eac32 preserves both approved installer hooks and is being tested against the release archive producer that landed through #17191.",
+      "updatedAt": "2026-11-11T22:04:22+00:00",
+      "summary": "The earlier export #17179 landed at e18c358d6. The remaining release-tarball installation change is published as one mergeable commit, 5580eac32. The native test verified the names, modes and hashes of all nine files from both the source-built bzip2 archive and the staged gzip archive. Both installed runtimes started a guest that exited 0. The post-hooks deregistered runsc, kept the source tree and cleaned the staged directory.",
       "evidence": [
         {
           "label": "Reply to Etienne after publishing the archive install",
@@ -49720,6 +49739,10 @@
         {
           "label": "Native archive-install qualification with the landed release producer",
           "url": "https://github.com/tamird/gvisor/actions/runs/43106141281"
+        },
+        {
+          "label": "The nine files, both installed runtimes and hook cleanup on the published revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43106141281/artifacts/13894876851"
         }
       ],
       "settledReviews": [
@@ -49773,26 +49796,27 @@
       "number": 16843,
       "followup": {
         "owner": "Agent",
-        "sourceHead": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
-        "observedAt": "2026-11-11T21:53:08+00:00",
-        "disposition": "The two installer hooks have been rebased after #17179 landed. Qualification is running.",
-        "nextAction": "Read the native archive-install results on 5580eac32 before updating the source PR.",
+        "sourceHead": "5580eac32b0141ea984fae122d52fc30cb13ded7",
+        "observedAt": "2026-11-11T22:04:22+00:00",
+        "disposition": "Qualified two-hook rebase published on the existing PR.",
+        "nextAction": "Follow checks and review on 5580eac32 and watch for an import of the remaining change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323",
           "https://github.com/tamird/gvisor/commit/a6e06bb65",
           "https://github.com/google/gvisor/pull/17179",
           "https://github.com/google/gvisor/commit/e18c358d6",
           "https://github.com/tamird/gvisor/commit/5580eac32",
-          "https://github.com/tamird/gvisor/actions/runs/43106141281"
+          "https://github.com/tamird/gvisor/actions/runs/43106141281",
+          "https://github.com/tamird/gvisor/actions/runs/43106141281/artifacts/13894876851"
         ],
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       },
       "refinement": {
         "before": {
-          "head": "4ba049ba5c249f885a0a249c921b60931897ea5d"
+          "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a"
         },
         "after": {
-          "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a"
+          "head": "5580eac32b0141ea984fae122d52fc30cb13ded7"
         }
       }
     },
@@ -55056,7 +55080,7 @@
       "url": "https://github.com/google/gvisor/pull/16828",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T16:46:46+00:00",
+      "updatedAt": "2026-11-11T22:04:22+00:00",
       "summary": "Published at ea507108f. On the exact PR head, one uncached Bazel run passed both systrap cases. The one-veth PCAP contained one header and five records (404 bytes). The two-veth PCAP contained one header and eleven records (872 bytes). Each veth carried an echo request and reply. Guest and host MTU and multicast matched on every interface, including loopback. XDP was source-reviewed. The earlier reporting errors were fixed in the qualification harness.",
       "evidence": [
         {
@@ -55102,6 +55126,14 @@
         {
           "label": "Boot analyzer passed, including AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/41332409416/artifacts/13093962996"
+        },
+        {
+          "label": "Qualified packet capture rebase with the proxy loopback option",
+          "url": "https://github.com/tamird/gvisor/commit/6be2cebcb"
+        },
+        {
+          "label": "Native systrap veth captures, RAW header counts and both loopback controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43106955044/artifacts/13894992181"
         }
       ],
       "settledReviews": [
@@ -55136,17 +55168,30 @@
         }
       },
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor",
         "sourceHead": "ea507108f2f2232c88eb3a55128adc986a360d4a",
-        "observedAt": "2026-11-10T16:46:46+00:00",
-        "disposition": "Published at ea507108f. On the exact PR head, one uncached Bazel run passed both systrap cases. The one-veth PCAP contained one header and five records (404 bytes). The two-veth PCAP contained one header and eleven records (872 bytes). Each veth carried an echo request and reply. Guest and host MTU and multicast matched on every interface, including loopback. XDP was source-reviewed. The earlier reporting errors were fixed in the qualification harness.",
-        "nextAction": "Follow checks and maintainer review on the published head.",
+        "observedAt": "2026-11-11T22:04:22+00:00",
+        "disposition": "The published source conflicts with the new proxy-only loopback setting. The revised source is qualified.",
+        "nextAction": "Review the revised source and decide whether to publish it on #16828.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42853172872/artifacts/13780519983",
           "https://github.com/tamird/gvisor/actions/runs/42849969524/artifacts/13781021188",
           "https://github.com/tamird/gvisor/actions/runs/42847732234/artifacts/13778819585",
-          "https://github.com/google/gvisor/pull/16828"
+          "https://github.com/google/gvisor/pull/16828",
+          "https://github.com/tamird/gvisor/commit/6be2cebcb",
+          "https://github.com/tamird/gvisor/actions/runs/43106955044/artifacts/13894992181"
         ]
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "6be2cebcbfba1bb1275ae5b798ac2ee1b27136dc",
+        "baseHead": "ea507108f2f2232c88eb3a55128adc986a360d4a",
+        "url": "https://github.com/tamird/gvisor/commit/6be2cebcb",
+        "title": "Preserve proxy-only loopback routing in the packet capture rebase",
+        "requestedAt": "2026-11-11T22:04:22+00:00",
+        "summary": "Publish the revised single commit on #16828? The existing PR title and description still apply.",
+        "body": "Master added a proxy-only external loopback option. The proposed rebase preserves that option for FD-based endpoints and the existing defaults for XDP. In systrap, independent parsing found one RAW header in each capture, five records with one veth and ten with two. Each physical veth carried a matching echo request and reply. Both upstream loopback-option controls passed. Hardware XDP received source review only.\n\ngit -C ~/code/gvisor range-diff ea507108f^! 6be2cebcb^!"
       }
     },
     {
@@ -103336,6 +103381,54 @@
         "summary": "Review the single Node test commit, add your personal DCO sign-off and submit it through the prefilled form? Node 19.6.0 failed the historical server-name assertion. Node 22.2.0 passed on macOS, native Linux and gVisor systrap with a local TLS server. The cause of the external reset in Buildkite is still open.",
         "body": "The TLS address-selection test connects to nodejs.org twice. A reset\ncan fail the test before the handshake completes, and the addresses\nreturned by DNS determine whether the client ever tries a second one.\n\nRun a TLS server on IPv4 loopback. With address-family selection\nenabled, return IPv6 loopback first so the client has to switch TCP\nhandles. Check which server name reaches the server and keep certificate\nverification enabled on the client.\n\nRefs: https://github.com/nodejs/node/issues/46679\nAssisted-by: Codex"
       }
+    },
+    {
+      "id": "investigation:ci-benchmark-fuse-device",
+      "title": "Native runc filesystem benchmarks cannot start the FUSE server",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T22:04:22+00:00",
+      "summary": "The native runc Ruby benchmark failed while creating its FUSE server on 3238f32db. The helper could see both tmpfs mounts but could not see the host FUSE device.",
+      "findings": [
+        {
+          "text": "The original Ruby and ABSL jobs reported “could not create fuse server: no such file or directory” for fusefs. Other filesystem variants reported benchmark timings. The two logs do not identify the missing path or establish a passing retry.",
+          "evidence": [
+            {
+              "label": "#54492 Ruby benchmark failure",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54492/jobs/01a1cc3e-e685-498a-8705-bd9198893e1a/log"
+            },
+            {
+              "label": "#54479 ABSL benchmark failure",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54479/jobs/01a1cc4c-7bc8-438d-8993-ca21064fbd85/log"
+            }
+          ]
+        },
+        {
+          "text": "On the native Linux replay, /dev/fuse was character device 10:229 on the host. The existing helper saw /data and /fuse as tmpfs, then stat(/dev/fuse) returned ENOENT immediately before fuse.NewServer failed. The stock Bazel benchmark exited 3.",
+          "evidence": [
+            {
+              "label": "Native Ruby test log, XML, host device and container path checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43105062304/artifacts/13893973900"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check whether passing the FUSE device to the native benchmark container is sufficient for the existing helper to mount, run the benchmark and clean up.",
+      "evidence": [
+        {
+          "label": "#54492 Ruby benchmark failure",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54492/jobs/01a1cc3e-e685-498a-8705-bd9198893e1a/log"
+        },
+        {
+          "label": "#54479 ABSL benchmark failure",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54479/jobs/01a1cc4c-7bc8-438d-8993-ca21064fbd85/log"
+        },
+        {
+          "label": "Native Ruby test log, XML, host device and container path checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43105062304/artifacts/13893973900"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
