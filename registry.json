@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T22:24:09+00:00",
+    "updatedAt": "2026-11-11T22:45:40+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44,8 +44,8 @@
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
-      "lastCompletedAt": "2026-11-11T20:18:49+00:00",
-      "lastResult": "Removed 1,445 local branches and 755 fork branches. The verified remaining inventory is 2,765 local and 4,385 fork branches. All 234 open upstream PR head names remained. The merged-source pass kept 41 local branches whose reflogs contain unpublished work. All removed tips and available reflog history remain recoverable in the local archives a7feb108f (955 local mirrors), 5adaaeeef (468 local and 666 fork CI branches), and 5e0d52839 (22 local and 89 fork merged-source branches). No inventoried public commit citation lost its published history. All 658 commits whose last public branch disappeared in the CI pass changed only validation files."
+      "lastCompletedAt": "2026-11-11T22:41:24+00:00",
+      "lastResult": "Removed 33 local branches and 159 fork branches. The local count fell from 2,772 to 2,739. The fork went from 4,394 to 4,236, including one newly published branch. All 233 open upstream PR heads kept their names and commits. Local archive d654f29d0 records the 192 retired refs, all 33 local reflogs and 218 distinct commits. For 147 retired fork branches, a surviving public branch still contains the exact tip. The other 12 were completed CI runs whose unpublished changes touched only uncited validation files. The audit preserved two local branches with unpublished history."
     }
   },
   "groups": [
@@ -7530,6 +7530,14 @@
         {
           "label": "Native Linux architecture tests on the rebased source",
           "url": "https://github.com/tamird/gvisor/actions/runs/43104647743"
+        },
+        {
+          "label": "225 catalog entries, native C++ on AMD64 and ARM64, and native AMD64 Go",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43104647743/artifacts/13896029325"
+        },
+        {
+          "label": "ARM64 Go build reached the harness deadline without a TestResult",
+          "url": "https://app.buildbuddy.io/invocation/5e3089fa-6572-430a-8319-6ec6025ec652"
         }
       ],
       "refinement": {
@@ -7577,15 +7585,17 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "observedAt": "2026-11-11T21:53:08+00:00",
-        "disposition": "Published rebase with native Linux qualification in progress",
-        "nextAction": "Check the native Linux architecture tests on the rebased source, then follow review and import.",
+        "observedAt": "2026-11-11T22:45:40+00:00",
+        "disposition": "Native C++ tests passed on both architectures. Only ARM64 Go has no result.",
+        "nextAction": "Recover the ARM64 Go test result. The harness stopped after 50 minutes without a Bazel TestResult. All 225 catalog entries passed, along with three uncached C++ cases per architecture and 10,933 native AMD64 Go test records.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
           "https://github.com/tamird/gvisor/actions/runs/43095873400",
           "https://github.com/tamird/gvisor/actions/runs/42301517765",
-          "https://github.com/tamird/gvisor/actions/runs/43104647743"
+          "https://github.com/tamird/gvisor/actions/runs/43104647743",
+          "https://github.com/tamird/gvisor/actions/runs/43104647743/artifacts/13896029325",
+          "https://app.buildbuddy.io/invocation/5e3089fa-6572-430a-8319-6ec6025ec652"
         ]
       }
     },
