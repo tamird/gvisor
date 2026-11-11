@@ -1,35 +1,35 @@
-name: CI
-
-"on":
+name: Verify the classifier rebase
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/license-classifier-fixture-1111]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Run the license tests and verify the checked-in catalog
+        env:
+          MAKEFLAGS: -- DOCKER_BUILD=false
+          DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
+        run: |
+          set -euo pipefail
+          git checkout --quiet --detach HEAD^
+          test "$(git rev-parse HEAD)" = "23b8ddf0a62716bb33e251a9cce0a8b9d090c194"
+          if ! command -v bazelisk >/dev/null; then
+            GOBIN="$RUNNER_TEMP" go install github.com/bazelbuild/bazelisk@v1.30.0
+            export PATH="$RUNNER_TEMP:$PATH"
+          fi
+          mkdir -p "$RUNNER_TEMP/license-verify-bin"
+          ln -s "$(command -v bazelisk)" "$RUNNER_TEMP/license-verify-bin/bazel"
+          export PATH="$RUNNER_TEMP/license-verify-bin:$PATH"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          bazel test --jobs=4 --test_output=errors //tools/licensecheck:licensecheck_test
+          python3 -c 'import xml.etree.ElementTree as E; print("License test records:",len(E.parse("bazel-testlogs/tools/licensecheck/licensecheck_test/test.xml").findall(".//testcase")))'
+          bazel run --jobs=4 //tools/licensecheck/main:licensecheck -- --mode=verify
