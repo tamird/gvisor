@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T19:57:39+00:00",
+    "updatedAt": "2026-11-11T20:19:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44,8 +44,8 @@
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
-      "lastCompletedAt": "2026-11-11T19:24:19+00:00",
-      "lastResult": "Removed 2,274 local branches and 1,314 fork branches. After cleanup, 4,210 local and 5,139 fork branches remained; two new local branches appeared during the inventory. Verified all 3,588 removed names were absent and all 3,588 tips recoverable from the local archive. All 235 inventoried open upstream PR heads remained and every inventoried tracker citation retained a publicly reachable commit."
+      "lastCompletedAt": "2026-11-11T20:18:49+00:00",
+      "lastResult": "Removed 1,445 local branches and 755 fork branches. The verified remaining inventory is 2,765 local and 4,385 fork branches. All 234 open upstream PR head names remained. The merged-source pass kept 41 local branches whose reflogs contain unpublished work. All removed tips and available reflog history remain recoverable in the local archives a7feb108f (955 local mirrors), 5adaaeeef (468 local and 666 fork CI branches), and 5e0d52839 (22 local and 89 fork merged-source branches). No inventoried public commit citation lost its published history. All 658 commits whose last public branch disappeared in the CI pass changed only validation files."
     }
   },
   "groups": [
@@ -74368,7 +74368,7 @@
       "head": "d4dbaed9e9758004ee19e96d42dbc9eea7bbf3ba",
       "title": "Expose the toolchain executable to Starlark actions",
       "group": "bazel",
-      "summary": "The public toolchain field gives Starlark actions the Buildifier executable for their execution platform. The revision preserves the interactive CLI and passed Mac-to-Linux and Linux-to-Mac selection on Bazel 7, 8 and 9.",
+      "summary": "Merged in 9cefc248d. The public tool field gives Starlark actions the Buildifier executable for their execution platform. Native and cross-platform tests passed on Bazel 7, 8 and 9.",
       "evidence": [
         {
           "label": "Published platform-selection reply",
@@ -74429,6 +74429,10 @@
         {
           "label": "Reply to Keith on the latest inline request",
           "url": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542584665"
+        },
+        {
+          "label": "Supplier merge on November 11",
+          "url": "https://github.com/keith/buildifier-prebuilt/commit/9cefc248d"
         }
       ],
       "id": "pr:keith/buildifier-prebuilt:180",
@@ -74437,14 +74441,14 @@
       "number": 180,
       "ref": "native-buildifier-tool",
       "url": "https://github.com/keith/buildifier-prebuilt/pull/180",
-      "status": "open",
-      "updatedAt": "2026-11-11T19:52:30+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-11T20:19:44+00:00",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Complete",
         "sourceHead": "d4dbaed9e9758004ee19e96d42dbc9eea7bbf3ba",
-        "observedAt": "2026-11-11T19:52:30+00:00",
-        "disposition": "Published b2af4549b on the existing supplier PR. It replaces the private field and removes the example Keith identified. Native and cross-platform tests passed on Bazel 7, 8 and 9. Keith then removed the README edit in d4dbaed9e. The tested implementation is unchanged. Tamir acknowledged the change on Keith’s original inline thread.",
-        "nextAction": "Await the supplier maintainer’s review of d4dbaed9e.",
+        "observedAt": "2026-11-11T20:19:44+00:00",
+        "disposition": "Published b2af4549b on the existing supplier PR. It replaces the private field and removes the example Keith identified. Native and cross-platform tests passed on Bazel 7, 8 and 9. Keith then removed the README edit in d4dbaed9e. The tested implementation is unchanged. Tamir acknowledged the change on Keith’s original inline thread. The supplier merged d4dbaed9e in 9cefc248d.",
+        "nextAction": "Delivery is complete. The gVisor consumer can remove its pinned patch once a release carries the field.",
         "evidence": [
           "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4541271834",
           "https://github.com/keith/buildifier-prebuilt/pull/180",
@@ -74455,7 +74459,8 @@
           "https://github.com/tamird/buildifier-prebuilt/actions/runs/43089719265",
           "https://github.com/tamird/buildifier-prebuilt/actions/runs/43089719265/artifacts/13889090029",
           "https://github.com/keith/buildifier-prebuilt/commit/d4dbaed9e",
-          "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542584665"
+          "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542584665",
+          "https://github.com/keith/buildifier-prebuilt/commit/9cefc248d"
         ]
       },
       "refinement": {
@@ -74482,6 +74487,17 @@
           "at": "2026-11-11T17:44:03+00:00",
           "postedURL": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4541271834",
           "note": "Published the one-commit toolchain amendment and answered the platform-selection review."
+        },
+        {
+          "kind": "reply",
+          "head": "d4dbaed9e9758004ee19e96d42dbc9eea7bbf3ba",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542446564",
+          "title": "Acknowledge Keith’s requested changes",
+          "summary": "Tamir confirmed the shared tool field and removal of the example.",
+          "body": "Done in b2af4549b. The Buildifier and Buildozer rules now read the same public `tool` field, and I removed the example.",
+          "outcome": "posted",
+          "at": "2026-11-11T19:51:45Z",
+          "postedURL": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542584665"
         }
       ]
     },
@@ -102929,8 +102945,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T19:57:39+00:00",
-      "summary": "The ARM64 TestProxyLimitsConnections on #17384 reached teardown, closed the Unix-domain socket peer, and waited five seconds for runProxyMode to return. The retry on the same commit passed.",
+      "updatedAt": "2026-11-11T20:19:44+00:00",
+      "summary": "TestProxyLimitsConnections on ARM64 intermittently waits five seconds for runProxyMode to return after closing the Unix-domain socket peer. The original Buildkite job passed on retry. A native ARM64 replay on the same source captured the link receive path during a second timeout.",
       "findings": [
         {
           "text": "The original failure at runsc/gofer/net/netgofer_test.go:353 records the shutdown timeout. It does not identify the operation keeping the proxy alive. The earlier UDP idle-slot investigation failed a different assertion.",
@@ -102944,9 +102960,18 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54448#01a1cbfe-def7-41eb-8738-aeed795aab8d"
             }
           ]
+        },
+        {
+          "text": "All 24 ordinary stock repeats passed on d5f35d45b. A separate observer control passed. Of 58 ordinary repeats with the observer, 57 passed and the 58th timed out after 5.02 seconds. runProxyMode at netgofer.go:374 was inside the file-descriptor endpoint’s Wait at endpoint.go:569. Its receive goroutine was just past RecvMMsg at packet_dispatchers.go:307. The deferred worker and stack joins had yet to start. The sampled stack leaves the received bytes and cause of the delayed exit unknown.",
+          "evidence": [
+            {
+              "label": "Native ARM64 repeat logs and goroutine stacks at d5f35d45b",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43092650924/artifacts/13888933799"
+            }
+          ]
         }
       ],
-      "nextStep": "Identify which proxy operation still owns a connection after the Unix-domain peer closes, using goroutine or connection state from a failed teardown.",
+      "nextStep": "Check which receive or shutdown event the link endpoint observes between Unix-domain peer closure and its Wait returning.",
       "evidence": [
         {
           "label": "Original ARM64 test.log from #17384, build 54448",
@@ -102955,6 +102980,10 @@
         {
           "label": "Passing same-head retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54448#01a1cbfe-def7-41eb-8738-aeed795aab8d"
+        },
+        {
+          "label": "Native ARM64 repeat logs and goroutine stacks at d5f35d45b",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43092650924/artifacts/13888933799"
         }
       ]
     }
