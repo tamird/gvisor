@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T12:39:44+00:00",
+    "updatedAt": "2026-11-11T13:06:06+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73517,9 +73517,13 @@
         {
           "label": "containerd/cgroups field-name postprocessing",
           "url": "https://github.com/containerd/cgroups/commit/f0f76178d"
+        },
+        {
+          "label": "Gazelle 761d7b804: 196 of 196 Linux tests passed in 2,650 Bazel actions",
+          "url": "https://github.com/tamird/bazel-gazelle/actions/runs/43023215493/job/130531311355"
         }
       ],
-      "updatedAt": "2026-11-11T12:39:44+00:00",
+      "updatedAt": "2026-11-11T12:57:27+00:00",
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
@@ -100189,8 +100193,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T12:17:56+00:00",
-      "summary": "Three AMD64 cgroup-v2 jobs on separate commits failed while crictl runp was creating a sandbox. All reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Each test target passed on its direct same-commit retry.",
+      "updatedAt": "2026-11-11T13:06:06+00:00",
+      "summary": "Five AMD64 job failures on four commits stopped during crictl runp. Four reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Containerd 2.0.8 reported context deadline exceeded. All five targets passed on their direct same-commit retries.",
       "findings": [
         {
           "text": "On #54388 (gVisor #17433), TestMountOverSymlinks/enableGrouping failed at the start call before reading symlinks. On #54336 (gVisor #16637), TestCrictlPauseResume stopped during the same call. Both used containerd 2.1.7.",
@@ -100264,9 +100268,52 @@
               "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54388/jobs/01a1c97c-2f49-481d-b870-3ae933452936/artifacts/01a1c98a-b166-45d2-b289-60f36a5b983a"
             }
           ]
+        },
+        {
+          "text": "Two jobs on master 3510bd316 (#54401) failed during sandbox creation. TestCrictlUpdateContainerResources on containerd 2.2.3 took 4.13 s and reported RST_STREAM CANCEL. TestCrictlEmptyDirSizeLimit on 2.0.8 took 5.10 s and reported context deadline exceeded. The same tests passed uncached on their direct retries in 1.46 s and 4.38 s respectively. The five original failures preserve the outer test log only.",
+          "evidence": [
+            {
+              "label": "2.2.3 original test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54401/jobs/01a1c9d1-51cd-4ddd-83f5-abeeacae93b9/artifacts/01a1c9d6-c710-4cfb-b9ff-b970b210f0a7"
+            },
+            {
+              "label": "2.2.3 direct retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54401#01a1c9d7-532e-435c-bf28-3fd6fbd11bcf"
+            },
+            {
+              "label": "2.0.8 original test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54401/jobs/01a1c9cf-51dd-4d57-ac5a-32ab222739ed/artifacts/01a1c9d6-b0b1-4768-aa44-dc968d6d4cc8"
+            },
+            {
+              "label": "2.0.8 direct retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54401#01a1c9d7-b4c6-4a11-add6-d18ee520a5ae"
+            }
+          ]
+        },
+        {
+          "text": "In a containerd 2.1.7 control with an intentionally missing handler, 467 µs elapsed from the first runp timestamp through sandbox ID to the RPC error. The test output omitted a seeded annotation. A configured handler served HTTP and emitted no failure timeline. All three diagnostic checks passed. The original four-second timeout did not recur.",
+          "evidence": [
+            {
+              "label": "Native AMD64 diagnostic controls and field-safe output",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43022886472/artifacts/13856466121"
+            }
+          ]
+        },
+        {
+          "text": "The fork control pre-imported pause:3.10.1. Stock Buildkite stages six workload images and lets containerd fetch pause on a local miss. The original failed jobs did not record whether a pull occurred. The existing containerd image-input proposal already stages pause.",
+          "evidence": [
+            {
+              "label": "Declared pause image input",
+              "url": "https://github.com/tamird/gvisor/commit/8f9067baa"
+            },
+            {
+              "label": "Containerd source-image archive investigation",
+              "url": "https://tamird.github.io/gvisor/#branch%3Arbe-source-image-archives"
+            }
+          ]
         }
       ],
-      "nextStep": "Print the existing per-subtest containerd debug log on failure before cleanup removes it. Use its timestamps to identify the sandbox startup step that consumed the four-second client budget on 2.1.7.",
+      "nextStep": "Use the tested failure reporter to retain the existing daemon timestamps when a natural RunPodSandbox timeout recurs. Identify which startup phase consumed the client deadline.",
       "evidence": [
         {
           "label": "#54388 containerd 2.1.7 mount test",
