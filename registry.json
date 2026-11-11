@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T00:54:43+00:00",
+    "updatedAt": "2026-11-11T01:21:31+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53807,12 +53807,12 @@
       "repo": "google/gvisor",
       "number": 16818,
       "ref": "review/fuse-poll-before-mount",
-      "head": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
+      "head": "037c883bda925d55948e055af0dff72c311b49c2",
       "title": "Report poll errors on unattached FUSE devices",
       "url": "https://github.com/google/gvisor/pull/16818",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T00:54:43+00:00",
+      "updatedAt": "2026-11-11T01:21:31+00:00",
       "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
       "evidence": [
         {
@@ -53858,6 +53858,14 @@
         {
           "label": "Recovered five-mode results and KVM device-access failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/42933514079/artifacts/13818141631"
+        },
+        {
+          "label": "Final native KVM/save original XML and logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42936387438/artifacts/13818159617"
+        },
+        {
+          "label": "Reply to Ricardo on the published revision",
+          "url": "https://github.com/google/gvisor/pull/16818#discussion_r4532722608"
         }
       ],
       "settledReviews": [
@@ -53879,7 +53887,8 @@
           "replyBody": "@kerumeto, thanks for catching this. The test now pauses checkpoints between consuming EPOLLERR and checking whether the mount triggered the original watch. It reenables them before deleting and adding the watch again.\n\nPosted by Codex on behalf of @tamird.",
           "outcome": "approved",
           "at": "2026-11-10T23:11:29+00:00",
-          "note": "Approved for publication and an inline reply to Ricardo after the amended tests pass."
+          "note": "Published as one commit on #16818 and replied on Ricardo’s original thread after all 12 revised cases passed.",
+          "postedURL": "https://github.com/google/gvisor/pull/16818#discussion_r4532722608"
         }
       ],
       "refinement": {
@@ -53891,12 +53900,15 @@
         }
       },
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
-        "observedAt": "2026-11-11T00:54:43+00:00",
-        "disposition": "The contributor approved 037c883bd and the reply to Ricardo. The initial RBE attempt stopped on INTERNAL/RST_STREAM before any syscall case. On the native Linux worker, the old directfs/save case expected zero events and got one. The stock control passed. The amendment passed all ten named cases in ordinary systrap and four save configurations. The KVM/save runner could not open /dev/kvm (EACCES) before either case ran.",
-        "nextAction": "Recover the KVM/save cases on a worker with device access. Once the required cases pass, publish the approved amendment and reply to Ricardo.",
+        "owner": "Upstream review",
+        "sourceHead": "037c883bda925d55948e055af0dff72c311b49c2",
+        "observedAt": "2026-11-11T01:21:31+00:00",
+        "disposition": "Published one commit at 037c883bd and replied to Ricardo. Stock reproduced the extra event under directfs/save. All 12 revised syscall cases passed in the six tested configurations, including PollBeforeMount and EpollAcrossMount under KVM/save.",
+        "nextAction": "Follow maintainer review on the published revision.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16818",
+          "https://github.com/google/gvisor/pull/16818#discussion_r4532722608",
+          "https://github.com/tamird/gvisor/actions/runs/42936387438/artifacts/13818159617",
           "https://github.com/google/gvisor/pull/16818#discussion_r4531500824",
           "https://github.com/tamird/gvisor/commit/037c883bd",
           "https://github.com/tamird/gvisor/actions/runs/42919378054",
@@ -98371,7 +98383,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T00:17:51+00:00",
+      "updatedAt": "2026-11-11T01:21:31+00:00",
       "summary": "TestSudo timed out three times each on #17391 and #17393 while the test waited for the traced sudo command. Rollback #17412 removed the regression from master. Botir’s draft reland #17432 includes the checked PTRACE_SEIZE fix and syscall regression.",
       "findings": [
         {
@@ -98538,9 +98550,22 @@
               "url": "https://github.com/google/gvisor/pull/17432"
             }
           ]
+        },
+        {
+          "text": "Tamir approved the author’s reland at fb1d78aea and asked that both sets of regression tests be carried through import. The fresh-sandbox tests check restoration of a previously patched syscall. The group-stop test also covers PTRACE_SEIZE and its reported stop. Copybara #17436 contains the executable change and currently lacks both sets of new cases.",
+          "evidence": [
+            {
+              "label": "Approval on Botir’s source reland",
+              "url": "https://github.com/google/gvisor/pull/17432#pullrequestreview-5851917183"
+            },
+            {
+              "label": "Copybara import",
+              "url": "https://github.com/google/gvisor/pull/17436"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow both #17432 and Copybara #17436. If the import lands without the PTRACE_SEIZE variant, reconcile that regression test as a separate follow-up and verify the traced sudo case on master.",
+      "nextStep": "Follow the source reland #17432 and its import #17436. If the import lands first, compare the merged tests and reconcile any missing fresh-sandbox and PTRACE_SEIZE group-stop cases.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -98625,6 +98650,10 @@
         {
           "label": "New Copybara reland #17436",
           "url": "https://github.com/google/gvisor/pull/17436"
+        },
+        {
+          "label": "Posted approval on the tested reland and request to carry both sets of regression tests",
+          "url": "https://github.com/google/gvisor/pull/17432#pullrequestreview-5851917183"
         }
       ],
       "settledReviews": [
@@ -98660,6 +98689,16 @@
           "outcome": "superseded",
           "at": "2026-11-10T22:30:59+00:00",
           "note": "Google opened #17428 with the same executable fix and regression coverage. No separate PR is needed."
+        },
+        {
+          "kind": "review",
+          "head": "fb1d78aeaeedd56d63facd27db2285687e357813",
+          "url": "https://github.com/google/gvisor/pull/17432",
+          "title": "Approve the systrap reland and ask for both regression tests in the import",
+          "body": "@botirkhaltaev, LGTM. With `PTRACE_SEIZE`, `waitpid` now reports `PTRACE_EVENT_STOP` for an already group-stopped child. Only `PTRACE_ATTACH` sends a new `SIGSTOP`. That matches Linux’s `ptrace_set_stopped` and fixes the wait that hung `TestSudo`.\n\nThe fresh-sandbox tests check that each tracing method restores a previously patched syscall and leaves it restored after the next call. #17436 has the runtime fix but still lacks those tests and the new `PTRACE_SEIZE` group-stop case. Please carry the tests through import too.\n\nReviewed by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T00:54:20Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17432#pullrequestreview-5851917183"
         }
       ]
     },
@@ -98930,5 +98969,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-11T00:54:43+00:00"
+  "updatedAt": "2026-11-11T01:21:31+00:00"
 }
