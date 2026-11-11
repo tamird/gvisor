@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T03:02:13+00:00",
+    "updatedAt": "2026-11-11T03:12:16+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5395,7 +5395,7 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
-      "updatedAt": "2026-11-11T00:47:02+00:00",
+      "updatedAt": "2026-11-11T03:12:16+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -5405,6 +5405,10 @@
         {
           "label": "All three corrected GCC queries",
           "url": "https://github.com/tamird/gvisor/actions/runs/42903509344/artifacts/13804725740"
+        },
+        {
+          "label": "Integration with #15106 on Linux: declared Clang built the x86_64-linux-gnu and aarch64-linux-gnu vDSOs for the 2,566-file Go branch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42949524247/artifacts/13825136656"
         },
         {
           "label": "Earlier approved compiler revision",
@@ -38320,9 +38324,17 @@
       "title": "Build the Go branch archive directly with Bazel",
       "url": "https://github.com/tamird/gvisor/commit/2c1a3542a047545bc949168447c710c686ae361d",
       "group": "release",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
-      "summary": "On a native AMD64 Linux runner the exporter built both architecture variants without Docker. The vDSOs, systrap handlers, and two offset files matched their producers in the archive and the Go commit.",
+      "updatedAt": "2026-11-11T03:12:16+00:00",
+      "summary": "On native AMD64 Linux, integration 6a237fe9f combined the declared compiler (8178e3fe5) and #15106 (45137f922). The Go branch script built //:go_export in one GoExport action and merged the result into a local copy of the real Go branch. All 2,566 archive members matched their Git blobs and mode 100644. The AMD64 and ARM64 vDSOs, systrap stubs and offset files matched their Bazel outputs. The netgofer command and library and all three C sidecars matched their sources.",
       "evidence": [
+        {
+          "label": "Direct //:go_export result, full Git tree and both Clang target triples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42949524247/artifacts/13825136656"
+        },
+        {
+          "label": "Exact integration of #15106 and the declared compiler",
+          "url": "https://github.com/tamird/gvisor/commit/6a237fe9fc"
+        },
         {
           "label": "Build both architectures and compare all six files",
           "url": "https://github.com/tamird/gvisor/actions/runs/40820977414"
@@ -38331,11 +38343,14 @@
       "status": "Contributor approval retained; waiting for prerequisites",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "observedAt": "2026-11-11T03:12:16+00:00",
         "sourceHead": "2c1a3542a047545bc949168447c710c686ae361d",
-        "disposition": "Contributor approval retained; waiting for prerequisites",
-        "nextAction": "Open after the declared compiler lands. If #15106 changes the export target, carry the new target into the direct Bazel invocation.",
+        "disposition": "Contributor approval remains in place. Integration 6a237fe9f verified the direct //:go_export caller with #15106’s assembler and the declared compiler.",
+        "nextAction": "Open after the declared compiler lands. If #15106 has landed, use its verified //:go_export target in the script.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42949524247/artifacts/13825136656",
+          "https://github.com/tamird/gvisor/commit/6a237fe9fc",
+          "https://github.com/google/gvisor/pull/15106",
           "https://github.com/tamird/gvisor/commit/2c1a3542a047545bc949168447c710c686ae361d"
         ]
       }
@@ -75726,7 +75741,8 @@
       "type": "depends_on",
       "reason": "The Go archive includes AMD64 and ARM64 binaries. The native runner built both with the declared cross-compiler.",
       "evidence": [
-        "https://github.com/tamird/gvisor/actions/runs/40820977414"
+        "https://github.com/tamird/gvisor/actions/runs/40820977414",
+        "https://github.com/tamird/gvisor/actions/runs/42949524247/artifacts/13825136656"
       ]
     },
     {
