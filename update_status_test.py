@@ -1151,6 +1151,13 @@ class CollectorHistoryTest(unittest.TestCase):
             node["settledReviews"] = [{"kind": "reply", "url": message["url"], "at": message["updatedAt"],
                                        "postedURL": pr["url"] + "#issuecomment-2"}]
             self.assertIsNone(updater.worker_handoff(advance(claimed), [])["nextWork"])
+            reply = node["settledReviews"][0]
+            del reply["postedURL"]
+            for outcome in ("posted", "answered-separately"):
+                reply["outcome"] = outcome
+                self.assertIsNone(updater.worker_handoff(advance(claimed), [])["nextWork"])
+            reply["outcome"] = "approved"
+            self.assertEqual(updater.worker_handoff(advance(claimed), [])["nextWork"]["id"], message["id"])
             del node["settledReviews"]
             edited = advance(claimed)
             pr["head"] = "a" * 40
@@ -1159,6 +1166,24 @@ class CollectorHistoryTest(unittest.TestCase):
             self.assertEqual((row["head"], row["id"], row["awaitingAuthor"]), (pr["head"], message["id"], False))
             pr["status"] = "merged"
             self.assertIsNone(updater.worker_handoff(advance(moved), [])["nextWork"])
+
+    def test_unread_feedback_on_earlier_open_export_stays_out_of_worker_handoff(self) -> None:
+        source, export = retained(raw_pr(15368)), retained(raw_pr(17430))
+        source["imports"] = [export]
+        export.update(matchesSourceHead=True, sourceHead=source["head"])
+        previous = {"prs": [copy.deepcopy(source)]}
+        export["feedback"]["items"] = [{"id": "export-note", "kind": "comment", "body": "The export changed formatting.",
+            "createdAt": LATER, "updatedAt": LATER, "url": export["url"] + "#issuecomment-1",
+            "author": {"login": "reviewer", "__typename": "User"}}]
+        rows = updater.reviewer_handoff([source], previous)
+        snap = {"prs": [source], "reviewerHandoff": rows}
+        self.assertTrue(updater.worker_handoff(snap, [])["nextWork"]["needsTriage"])
+        source["head"] = "a" * 40
+        export["matchesSourceHead"] = False
+        self.assertIsNone(updater.worker_handoff(snap, [])["nextWork"])
+        self.assertFalse(updater.reviewer_handoff([source], previous)[0]["needsTriage"])
+        export["feedback"].update(complete=False, items=[])
+        self.assertFalse(updater.reviewer_handoff([source], snap)[0]["needsTriage"])
 
     def test_feedback_receipts_and_generic_approvals_remain_quiet(self) -> None:
         for kind, body in [("comment", "[🤖] Invalidating approval due to rebase as a means to notify "

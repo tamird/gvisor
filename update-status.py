@@ -289,6 +289,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         if pr["status"] not in {"open", "draft"}:
             continue
         key = pr.get("repo", REPO), pr["number"]
+        current_discussion = pr is source or pr in import_lineage(source)
         node = nodes.get((source.get("repo", REPO), source["number"]), {})
         followup = node.get("followup", {})
         old = {item["id"]: item for item in prior.get(key, {}).get("feedback", {}).get("items", [])}
@@ -358,9 +359,10 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
             last_scan = previous.get("checkedAt")
             fresh = changed and (key in prior or bool(last_scan and item.get("updatedAt")
                     and datetime.fromisoformat(item["updatedAt"]) > datetime.fromisoformat(last_scan)))
-            inspect = (not awaiting_author and not claimed and top_level_triage(item, prior_record or {}, fresh)
+            inspect = (current_discussion and not awaiting_author and not claimed and top_level_triage(item, prior_record or {}, fresh)
                        and not any(reply.get("kind") == "reply" and reply.get("url") == item["url"]
-                                   and reply.get("postedURL") and reply.get("at")
+                                   and (reply.get("postedURL") or reply.get("outcome") in {"posted", "answered-separately"})
+                                   and reply.get("at")
                                    and datetime.fromisoformat(reply["at"]) >= datetime.fromisoformat(item["updatedAt"])
                                    for reply in node.get("settledReviews", [])))
             claim = {}
@@ -379,6 +381,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         if not pr.get("feedback", {}).get("complete"):
             visible = {item["id"] for item in items}
             records.extend({**record, "head": pr["head"], "newOrChanged": False, "feedbackComplete": False,
+                            **({"needsTriage": False} if record.get("needsTriage") and not current_discussion else {}),
                             **({"owner": "Agent", "claimed": False, "overdue": False}
                                if record.get("awaitingAuthor") and record["head"] != pr["head"] else {})}
                            for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible)
@@ -1553,8 +1556,9 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
         if row["repo"] != REPO or not (row["awaitingAuthor"] or row.get("needsTriage")) or not source:
             continue
         # Ignore a stale assignment after either the source or the import closes.
+        imports = import_lineage(source) if row.get("needsTriage") else source.get("imports", [])
         if not any(pr["number"] == row["number"] and pr["head"] == row["head"]
-                   and pr.get("status") in {"open", "draft"} for pr in (source, *source.get("imports", []))):
+                   and pr.get("status") in {"open", "draft"} for pr in (source, *imports)):
             continue
         pending.append(row)
     pending.sort(key=lambda row: (bool(row.get("claimed")), not row["awaitingAuthor"], not row.get("overdue"),
