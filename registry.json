@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T10:50:43+00:00",
+    "updatedAt": "2026-11-11T11:15:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3720,7 +3720,7 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "Strict disk-backed allocations must reserve space even when zeroing a recycled page succeeds. With #17214 landed, the rebased PR keeps its protected clear and preserves the three approved allocator files byte for byte. All 84 pgalloc and 609 safecopy cases passed without skips on each of native AMD64 and ARM64, including the short-read and restore tests. The pinned-CPU results in the PR description were measured on its earlier revision.",
+      "summary": "Strict disk-backed allocations must reserve space even when zeroing a recycled page succeeds. With #17214 landed, the rebased PR keeps its protected clear and preserves the three approved allocator files byte for byte. All 84 pgalloc and 609 safecopy cases passed without skips on each of native AMD64 and ARM64, including the short-read and restore tests. The pinned-CPU results in the PR description were measured on its earlier revision. On each of AMD64 and ARM64, the published source passed 84 pgalloc and 609 safecopy cases with zero skips.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
@@ -3736,9 +3736,17 @@
           "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13821608693"
         ]
       },
-      "updatedAt": "2026-11-11T10:50:43+00:00",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "evidence": [
+        {
+          "label": "84 pgalloc and 609 safecopy cases on AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43007012855/artifacts/13849326901"
+        },
+        {
+          "label": "84 pgalloc and 609 safecopy cases on ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43007012855/artifacts/13848652665"
+        },
         {
           "label": "Rebased public source at f05d6b909",
           "url": "https://github.com/google/gvisor/pull/15181/commits/f05d6b909334e792bf64f83a3b7abe4c633a32a4"
@@ -12500,26 +12508,30 @@
       "title": "Capture primitive state arrays in typed storage",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/0026a3c3f",
-      "status": "Contributor approved; ready to publish",
-      "updatedAt": "2026-11-11T10:50:43+00:00",
-      "summary": "Both #16380 and #16718 landed. The approved primitive-array source and test revision can now be delivered.\n\nThe wire implementation was approved at 689706c88 and reparented at f76d229c0. The contributor also approved the test revision at e00f572e3. On current master with #16718 applied, the original float32 and complex64 tests each read a 38-byte graph frame as one wire object and failed. The revision selects wire for five codec-specific tests and exercises the ordinary round trips with both engines. All seven selected native AMD64 tests passed, with 1,659 passing records and zero skips. Each engine ran 204 array and 612 slice round trips.\n\nThese array buffers serve the wire codec. The Nginx measurements below apply to wire-format checkpoints.\n\nPrimitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
+      "status": "Published",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "summary": "The single published commit stores primitive state arrays in typed storage. The state and wire test suites on the published tree recorded 12,624 passes and 85 skips.",
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream review",
         "sourceHead": "0026a3c3f9233beb3f0288b06453d4ad8b77c330",
-        "observedAt": "2026-11-11T10:50:43+00:00",
-        "disposition": "Both #16380 and #16718 landed. The approved primitive-array source and test revision can now be delivered.",
-        "nextAction": "Apply the approved single commit to current master, verify any changed integration, and open its upstream pull request.",
+        "observedAt": "2026-11-11T11:11:00+00:00",
+        "disposition": "Published the approved primitive-array change as #17471 on 13c1a3a86 after #16718 merged.",
+        "nextAction": "Follow upstream checks and review on #17471.",
         "evidence": [
-          "https://github.com/google/gvisor/commit/2552c678794e048487e1d18e9c81729b67fc119a",
-          "https://github.com/tamird/gvisor/compare/1368393db...e00f572e3",
-          "https://github.com/tamird/gvisor/actions/runs/42034339074/artifacts/13417921774",
-          "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
-          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
-          "https://app.buildbuddy.io/invocation/8da1f7ff-38b9-42fc-9863-673bb171a228"
+          "https://github.com/google/gvisor/pull/17471",
+          "https://github.com/tamird/gvisor/actions/runs/43008528640/artifacts/13850005693"
         ]
       },
-      "inactive": false,
+      "inactive": true,
       "evidence": [
+        {
+          "label": "Single-commit upstream PR #17471",
+          "url": "https://github.com/google/gvisor/pull/17471"
+        },
+        {
+          "label": "Native state, wire and state/tests results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43008528640/artifacts/13850005693"
+        },
         {
           "label": "Test-only diff against the same rebased implementation",
           "url": "https://github.com/tamird/gvisor/compare/1368393db...e00f572e3"
@@ -13032,15 +13044,16 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/b6df34eba",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-08T13:27:04+00:00",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
       "summary": "The reference-array implementation was approved at 7b4e8579e. The contributor also approved the test revision at e1ec0fd6a. On the rebased implementation, the wire comparison and snapshot test passed using graph frames. The late-parent test failed before Load because its assertion expects the wire encoder to clear the unused slice tail during Save. All three tests passed on native AMD64 after selecting wire. Separate runs read all four output buffers and confirmed that the original tests wrote graph frames and the revised tests wrote wire frames.\n\nThe earlier qualification covered the approved implementation. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. Saving the slice and both array-adoption fixtures with the legacy wire encoder used 1,024 fewer allocations per save. Timing varied across workers.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. In the historical twelve-block comparison with the wire encoder, Slice Save time was -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "b6df34ebaeae02936ac59ea8f9cf802b8ba5fb96",
         "observedAt": "2026-11-08T13:27:04+00:00",
         "disposition": "Implementation and test revision approved",
-        "nextAction": "Open the approved change after the primitive-array change lands.",
+        "nextAction": "Open the approved reference-array change after #17471 merges.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17471",
           "https://github.com/tamird/gvisor/compare/70df168c4...e1ec0fd6a",
           "https://github.com/tamird/gvisor/actions/runs/42037418674/artifacts/13418988079",
           "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
@@ -26429,27 +26442,59 @@
       "id": "branch:rules-img-redis-benchmark-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-redis-benchmark-upstream",
-      "head": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
-      "title": "Use the pinned official Redis image for benchmarks",
-      "url": "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
+      "ref": "review/redis-benchmark-shared-manifest",
+      "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
+      "title": "Reuse the pinned Redis image for benchmarks",
+      "url": "https://github.com/tamird/gvisor/commit/ff8702412",
       "group": "bazel",
-      "status": "Contributor approved; ready to publish",
-      "updatedAt": "2026-11-11T10:50:43+00:00",
-      "summary": "The basic Redis image landed in #16551. The approved benchmark change can now be delivered.\n\nThe contributor approved this benchmark change. It reuses the basic Redis image declaration merged in #16551.\n\nHistorical prerequisite and qualification:\n\nThe contributor approved exact 2b507a7bac for delivery after basic Redis d16b540dc2 after #16097. Deliver after the approved basic Redis prerequisite lands; basic Redis itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image uses the existing pinned Redis 7.0.12 declaration and adds both architecture archives and Make contexts. It removes the one-line Dockerfile without changing Go consumers, Redis binaries or runtime configuration. Native validation passed nine phases, both CPU image/context identities and one uncached AMD64 benchmark owner with SET, LPUSH and LRANGE_100 at 10,000 iterations each. All three raw rows carry eight metrics; cleanup passed. The two image configurations match the qualified basic image, with six upstream layers and no appended layer. This is functional benchmark coverage, not a measured migration speedup or ARM runtime result. The benchmark proposal has its own contributor decision; the existing basic Redis approval remains unchanged.",
+      "status": "Contributor review",
+      "updatedAt": "2026-11-11T11:15:13+00:00",
+      "summary": "The old placement created a Bazel package boundary that removed other test sources. Revision ff8702412 reuses the existing :redis target and preserves all 36 other benchmark sources and their modes. Six config and layer digest comparisons matched the basic Redis image on each architecture. The AMD64 image completed SET and GET.",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
-        "observedAt": "2026-11-11T10:50:43+00:00",
-        "disposition": "The basic Redis image landed in #16551. The approved benchmark change can now be delivered.",
-        "nextAction": "Apply the approved single commit to current master, verify any changed integration, and open its upstream pull request.",
+        "owner": "Contributor",
+        "sourceHead": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
+        "observedAt": "2026-11-11T11:15:13+00:00",
+        "disposition": "The tested target placement preserves the other benchmarks on current master. #16551 has merged.",
+        "nextAction": "Review the revised placement before opening the Redis benchmark PR.",
         "evidence": [
-          "https://github.com/google/gvisor/commit/3510bd31699d481a8adcb6a9ddfc8c0bf7910096",
+          "https://github.com/tamird/gvisor/commit/2b507a7ba",
+          "https://github.com/tamird/gvisor/commit/ff8702412",
           "https://github.com/google/gvisor/pull/16551",
-          "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
-          "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
-          "https://app.buildbuddy.io/invocation/e30ef608-ff4c-441f-834a-a8dcf2cfd512"
+          "https://github.com/tamird/gvisor/actions/runs/43009562796/artifacts/13850860018"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
+        },
+        "after": {
+          "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57"
+        }
+      },
+      "evidence": [
+        {
+          "label": "36 unchanged benchmark sources, matching Redis digests and AMD64 SET/GET",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43009562796/artifacts/13850860018"
+        },
+        {
+          "label": "Revised source using the existing Redis target",
+          "url": "https://github.com/tamird/gvisor/commit/ff8702412"
+        },
+        {
+          "label": "Originally approved source",
+          "url": "https://github.com/tamird/gvisor/commit/2b507a7ba"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/ff8702412",
+        "requestedAt": "2026-11-11T11:15:13+00:00",
+        "title": "Reuse the pinned Redis image for benchmarks",
+        "summary": "Open the revised Redis benchmark change? It reuses the existing manifest on current master without changing the other benchmark inputs.",
+        "body": "The benchmarks/redis Dockerfile consists of FROM redis:7.0.12. The\nbasic Redis image already pins that release for AMD64 and ARM64.\nProduce the benchmark archive and Make context from the same manifest\nso building the benchmark no longer resolves the tag in Docker."
       }
     },
     {
@@ -39199,8 +39244,24 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "The lint amendment runs Buildifier and cpplint on declared inputs. Bazel 9 and bazel_lib 3.4.0 have both landed. The lint-only patch applies cleanly to master at 70008149c. On the qualified tree, the remote checks covered 624 Buildifier inputs and 485 C/C++ inputs. Both tools rejected deliberately malformed files. The proposed commit now applies directly to upstream master 975fb1722 and has the same patch ID as the previously qualified lint-only change.",
+      "summary": "Milan asked for the repair command when Buildifier reports a formatting difference. Fork revision 9ebf90e97 restores the hint and rebases the existing change. Fork revision 9ebf90e97 exited cleanly in both lint actions, but Buildifier’s declared inventory matched only 627 of 629 tracked sources. Two files under external/ were missing. The comparison did not qualify the amendment.",
       "evidence": [
+        {
+          "label": "Uncached Linux actions and 627-of-629 Buildifier inventory check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43009445356/artifacts/13850355782"
+        },
+        {
+          "label": "Maintainer request",
+          "url": "https://github.com/google/gvisor/pull/16663#discussion_r4534723342"
+        },
+        {
+          "label": "Fork revision",
+          "url": "https://github.com/tamird/gvisor/commit/9ebf90e97"
+        },
+        {
+          "label": "Linux qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43009445356"
+        },
         {
           "label": "bazel_lib 3.4.0 on master",
           "url": "https://github.com/google/gvisor/commit/89e0a744e"
@@ -39331,29 +39392,17 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-08T13:49:13+00:00",
+      "updatedAt": "2026-11-11T11:14:40+00:00",
       "followup": {
-        "owner": "Contributor",
+        "owner": "root",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-11-07T01:08:23+00:00",
-        "disposition": "Both prerequisites landed; the lint amendment is awaiting contributor review.",
-        "nextAction": "Publish the reviewed amendment after the contributor approves it.",
+        "observedAt": "2026-11-11T11:11:00+00:00",
+        "disposition": "Fork revision 9ebf90e97 exited cleanly in both lint actions, but Buildifier’s declared inventory matched only 627 of 629 tracked sources. Two files under external/ were missing. The comparison did not qualify the amendment.",
+        "nextAction": "Correct the two missing Starlark source inputs, then verify the failure hint and complete manifest on Linux.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/e216e3075",
-          "https://github.com/tamird/gvisor/commit/0b1ad2d6d",
-          "https://github.com/google/gvisor/pull/16801",
-          "https://github.com/google/gvisor/pull/16736",
-          "https://github.com/google/gvisor/pull/16890",
-          "https://github.com/tamird/gvisor/actions/runs/41775383443/artifacts/13296183401",
-          "https://github.com/tamird/gvisor/actions/runs/41775722478/artifacts/13296792759",
-          "https://github.com/tamird/gvisor/commit/1d96ea04c",
-          "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547",
-          "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680",
-          "https://github.com/tamird/gvisor/actions/runs/41218704000/artifacts/13048449141",
-          "https://github.com/tamird/gvisor/actions/runs/41217794897/artifacts/13047923822",
-          "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950",
-          "https://github.com/bazelbuild/bazel/issues/30883",
-          "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
+          "https://github.com/google/gvisor/pull/16663#discussion_r4534723342",
+          "https://github.com/tamird/gvisor/commit/9ebf90e97",
+          "https://github.com/tamird/gvisor/actions/runs/43009445356"
         ]
       },
       "refinement": {
@@ -39361,19 +39410,8 @@
           "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
         },
         "after": {
-          "head": "7a38c0e2ceac1e7f9b7cc4c51e805e04561a0a67"
+          "head": "9ebf90e97c3a79b3cdd17e89783094aae394b868"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "7a38c0e2ceac1e7f9b7cc4c51e805e04561a0a67",
-        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "url": "https://github.com/tamird/gvisor/commit/7a38c0e2c",
-        "title": "Run Buildifier and cpplint on declared inputs",
-        "requestedAt": "2026-11-01T17:58:13.420713+00:00",
-        "summary": "Publish the lint-only amendment to #16663? Both prerequisites have landed.",
-        "body": "Run both tools through //tools/lint:check with declared tools and inputs. The inventory also handles removal and recreation of a source directory on Bazel 9. The prerequisite supplies bazel_lib 3.4.0. The amendment adds no dependency version change. The qualified tree checked 624 Buildifier files and 485 C/C++ files. Malformed inputs produced Buildifier exit 4 and cpplint exit 1, and Bazel reported failure. The existing public PR is still at 1dac5af96."
       }
     },
     {
@@ -49060,10 +49098,22 @@
       "title": "Install runsc with its Sentry in Buildkite source jobs",
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
-      "status": "Open; cleanup comment published, awaiting review of the new head",
-      "updatedAt": "2026-11-07T12:23:40+00:00",
-      "summary": "The approved staging-directory comment is published at 4ba049ba5. The original PR reply asks Ryan for fresh review. Export #17179 still names e7e0d5319. The independent native-installation amendment d978a4132 retains its own prerequisites.\n\nEarlier native-installation record:\n\nThe native-installation amendment is approved at d978a41320 after wrapping its commit message to 72 columns. Its parent, source tree, words and paragraphs are unchanged from 88cf79c93. That native-installation amendment waits for #16904 and the declared compiler.\n\nThe current PR stages runsc with its sidecars. The approved amendment builds that release on the agent through Make, without starting the Docker builder. On native AMD64 and ARM64, all eight installed executables matched their Bazel outputs and the staged runtime started a Docker container after bazel clean. Both runs used the declared LLVM compiler at a385bd2b0 on integration 2e9e15266. Archive-only installation preserved the same bytes and explicit runtime flags; an invalid Bazel option failed and cleanup removed the job launcher. Other Buildkite commands may still use Make or Docker.\n\ngit -C ~/code/gvisor range-diff 88cf79c93^! d978a41320^!",
+      "status": "open",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "summary": "Etienne asked to use the README archive installation while export #17179 remains open. Fork revision a6e06bb65 installs the archive in source jobs.",
       "evidence": [
+        {
+          "label": "Maintainer request",
+          "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6788222821"
+        },
+        {
+          "label": "Fork revision",
+          "url": "https://github.com/tamird/gvisor/commit/a6e06bb65"
+        },
+        {
+          "label": "Linux qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43008909643"
+        },
         {
           "label": "Published cleanup comment and request for fresh review",
           "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6706880986"
@@ -49147,25 +49197,29 @@
       ],
       "number": 16843,
       "followup": {
-        "owner": "Reviewer",
+        "owner": "root",
         "sourceHead": "4ba049ba5c249f885a0a249c921b60931897ea5d",
-        "observedAt": "2026-11-07T12:23:40+00:00",
-        "disposition": "The original PR now covers both staging paths and its author replied to Ryan.",
-        "nextAction": "Wait for review or an import naming the amended source.",
+        "observedAt": "2026-11-11T11:11:00+00:00",
+        "disposition": "Etienne asked to use the README archive installation while export #17179 remains open. Fork revision a6e06bb65 installs the archive in source jobs.",
+        "nextAction": "Verify the archive installation on a6e06bb65 and prepare the response on the original thread.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16843#issuecomment-6706880986",
-          "https://github.com/google/gvisor/pull/17179",
-          "https://github.com/google/gvisor/pull/16843#pullrequestreview-5810971344",
-          "https://github.com/tamird/gvisor/commit/4ba049ba5"
+          "https://github.com/google/gvisor/pull/16843#issuecomment-6788222821",
+          "https://github.com/tamird/gvisor/commit/a6e06bb65",
+          "https://github.com/tamird/gvisor/actions/runs/43008909643"
         ],
-        "providerHead": "4ba049ba5c249f885a0a249c921b60931897ea5d"
+        "actionableComment": {
+          "kind": "comment",
+          "head": "4ba049ba5c249f885a0a249c921b60931897ea5d",
+          "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6788222821",
+          "commentId": "IC_kwDOB9IlXs8AAAABlJwPZQ"
+        }
       },
       "refinement": {
         "before": {
-          "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca"
+          "head": "4ba049ba5c249f885a0a249c921b60931897ea5d"
         },
         "after": {
-          "head": "4ba049ba5c249f885a0a249c921b60931897ea5d"
+          "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a"
         }
       }
     },
@@ -54907,14 +54961,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/checklocks-callback-facts",
-      "head": "b968f4defe4632c2f168af37003ca59216fd4027",
+      "head": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
       "title": "checklocks: infer when callbacks can use the caller’s locks",
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-11T01:47:46+00:00",
-      "summary": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "summary": "The published analyzer now reports a range callback that changes the caller’s lock state at the range keyword. The owning Nogo test passed on AMD64 and ARM64.",
       "evidence": [
+        {
+          "label": "Published amendment and reply",
+          "url": "https://github.com/google/gvisor/pull/16868#discussion_r4536990180"
+        },
         {
           "label": "Original and revised range-callback diagnostics on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42940229449/artifacts/13820782149"
@@ -55070,40 +55128,35 @@
           "at": "2026-11-10T20:57:16+00:00",
           "note": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
           "postedURL": "https://github.com/google/gvisor/pull/16868#discussion_r4530412516"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
+          "baseHead": "b968f4defe4632c2f168af37003ca59216fd4027",
+          "url": "https://github.com/tamird/gvisor/commit/d5cd4802b",
+          "requestedAt": "2026-11-11T01:47:46+00:00",
+          "title": "Report a range callback’s lock change at its range keyword",
+          "summary": "Publish d5cd4802b on #16868 and reply to Alexander on the original thread.",
+          "body": "The published analyzer accepted a range-over-func loop that released the caller’s lock. On AMD64 and ARM64, the revision reports the lock change at the range keyword (callbacks.go:62:6). The owning test_nogo target passed on both architectures.\n\ngit -C ~/code/gvisor range-diff b968f4def^! d5cd4802b^!",
+          "replyBody": "Thanks, confirmed on both architectures. The published analyzer accepted the loop. I used the yield function’s source position so the diagnostic now points at the `range` keyword, and added that loop to the existing callback tests.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T11:11:00+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16868#discussion_r4536990180",
+          "note": "Published the approved single commit and replied on the original thread."
         }
       ],
       "number": 16868,
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "b968f4defe4632c2f168af37003ca59216fd4027",
-        "observedAt": "2026-11-11T01:47:46+00:00",
-        "disposition": "The previous +checklocksignore correction is published. A new report on the same head shows that a synthesized range-over-func call can produce a lock-change diagnostic at token.NoPos. The configured Nogo filter discards diagnostics printed at that location.",
-        "nextAction": "Review the single amendment and the reply to Alexander. Both architecture checks passed.",
+        "owner": "Upstream review",
+        "sourceHead": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
+        "observedAt": "2026-11-11T11:11:00+00:00",
+        "disposition": "Published d5cd4802b and answered the review.",
+        "nextAction": "Follow upstream checks and review.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16868#discussion_r4531734437",
-          "https://github.com/tamird/gvisor/actions/runs/42940229449/artifacts/13820782149",
-          "https://github.com/tamird/gvisor/commit/d5cd4802b",
-          "https://github.com/tamird/gvisor/actions/runs/42940229449",
-          "https://github.com/google/gvisor/pull/16868#discussion_r4530412516",
-          "https://github.com/tamird/gvisor/actions/runs/42897002914/artifacts/13802036928",
-          "https://github.com/tamird/gvisor/commit/06dd5df8a",
-          "https://github.com/google/gvisor/pull/16868#discussion_r4529967286",
-          "https://github.com/tamird/gvisor/commit/b968f4def",
-          "https://github.com/tamird/gvisor/actions/runs/42897002914",
-          "https://github.com/tamird/gvisor/actions/runs/42894329342/artifacts/13800951044"
+          "https://github.com/google/gvisor/pull/16868#discussion_r4536990180",
+          "https://github.com/google/gvisor/pull/16868"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
-        "baseHead": "b968f4defe4632c2f168af37003ca59216fd4027",
-        "url": "https://github.com/tamird/gvisor/commit/d5cd4802b",
-        "requestedAt": "2026-11-11T01:47:46+00:00",
-        "title": "Report a range callback’s lock change at its range keyword",
-        "summary": "Publish d5cd4802b on #16868 and reply to Alexander on the original thread.",
-        "body": "The published analyzer accepted a range-over-func loop that released the caller’s lock. On AMD64 and ARM64, the revision reports the lock change at the range keyword (callbacks.go:62:6). The owning test_nogo target passed on both architectures.\n\ngit -C ~/code/gvisor range-diff b968f4def^! d5cd4802b^!",
-        "replyBody": "Thanks, confirmed on both architectures. The published analyzer accepted the loop. I used the yield function’s source position so the diagnostic now points at the `range` keyword, and added that loop to the existing callback tests.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -72834,29 +72887,29 @@
       "repo": "google/gvisor",
       "number": 17445,
       "ref": "proposal/dind-exec-deadline",
-      "head": "b37e519bbf5d14868442a32f336f768d955820b3",
+      "head": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
       "title": "Honor the DinD exec deadline",
       "url": "https://github.com/google/gvisor/pull/17445",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-11T03:02:13+00:00",
-      "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected.",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "summary": "The published revision returns completed Docker stdout and stderr alongside read and inspect errors. Its native Linux controls retained output on both cancellation and timeout.",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "b37e519bbf5d14868442a32f336f768d955820b3",
-        "observedAt": "2026-11-11T03:02:13+00:00",
-        "disposition": "The published deadline fix discarded completed output on both read and inspect errors. The Linux comparison reproduced the loss and showed that 4cd80a062 returned the captured bytes with the original error. Both real DinD bridge cases passed.",
-        "nextAction": "Review the tested amendment and reply to the existing output-loss thread.",
+        "owner": "Upstream review",
+        "sourceHead": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
+        "observedAt": "2026-11-11T11:11:00+00:00",
+        "disposition": "Published 4cd80a062 and answered the review.",
+        "nextAction": "Follow upstream checks and review.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17445#discussion_r4533264517",
-          "https://github.com/tamird/gvisor/actions/runs/42948284156/artifacts/13825035276",
-          "https://github.com/tamird/gvisor/commit/4cd80a062",
-          "https://github.com/tamird/gvisor/actions/runs/42948284156",
-          "https://github.com/google/gvisor/pull/17445",
-          "https://github.com/tamird/gvisor/commit/b37e519bb"
+          "https://github.com/google/gvisor/pull/17445#discussion_r4536989728",
+          "https://github.com/google/gvisor/pull/17445"
         ]
       },
       "evidence": [
+        {
+          "label": "Published amendment and reply",
+          "url": "https://github.com/google/gvisor/pull/17445#discussion_r4536989728"
+        },
         {
           "label": "Review on output discarded at cancellation",
           "url": "https://github.com/google/gvisor/pull/17445#discussion_r4533264517"
@@ -72921,6 +72974,22 @@
           "at": "2026-11-11T00:51:01+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17445",
           "note": "Published upstream as one commit on the exact approved head."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
+          "baseHead": "b37e519bbf5d14868442a32f336f768d955820b3",
+          "url": "https://github.com/tamird/gvisor/commit/4cd80a062",
+          "requestedAt": "2026-11-11T03:02:13+00:00",
+          "title": "Preserve Docker exec output on cancellation",
+          "summary": "Publish 4cd80a062 on #17445 and reply on the original output-loss thread.",
+          "body": "The published revision dropped two completed output frames on stream and inspect errors. The amendment returned both frames and the original error in all four controls, including nonzero exit 23. Real Docker commands kept their progress output on explicit cancellation and timeout, and both DinD bridge storage drivers passed.\n\ngit -C ~/code/gvisor range-diff b37e519bb^! 4cd80a062^!",
+          "replyBody": "Both returns now preserve output Docker delivered before the error. I reproduced the empty output on the original revision. Cancellation and timeout now return stdout and stderr with the original error, including against a real Docker daemon.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T11:11:00+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17445#discussion_r4536989728",
+          "note": "Published the approved single commit and replied on the original thread."
         }
       ],
       "refinement": {
@@ -72931,18 +73000,6 @@
           "head": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
           "base": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f"
         }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
-        "baseHead": "b37e519bbf5d14868442a32f336f768d955820b3",
-        "url": "https://github.com/tamird/gvisor/commit/4cd80a062",
-        "requestedAt": "2026-11-11T03:02:13+00:00",
-        "title": "Preserve Docker exec output on cancellation",
-        "summary": "Publish 4cd80a062 on #17445 and reply on the original output-loss thread.",
-        "body": "The published revision dropped two completed output frames on stream and inspect errors. The amendment returned both frames and the original error in all four controls, including nonzero exit 23. Real Docker commands kept their progress output on explicit cancellation and timeout, and both DinD bridge storage drivers passed.\n\ngit -C ~/code/gvisor range-diff b37e519bb^! 4cd80a062^!",
-        "replyBody": "Both returns now preserve output Docker delivered before the error. I reproduced the empty output on the original revision. Cancellation and timeout now return stdout and stderr with the original error, including against a real Docker daemon.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -73104,9 +73161,13 @@
       "url": "https://github.com/google/gvisor/pull/17457",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T03:28:41+00:00",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
       "summary": "The merged #16753 lets each native machine build the documented //debian:gvisor-release-tar-bz2 target with its own GNU tools. The published README is byte-identical to the approved guide. Native AMD64 and ARM64 qualification built and installed all nine executables and ran a systrap guest.",
       "evidence": [
+        {
+          "label": "Milan’s question about the native build",
+          "url": "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654"
+        },
         {
           "label": "Published upstream PR #17457 at 0d46027e6",
           "url": "https://github.com/google/gvisor/pull/17457"
@@ -73138,6 +73199,92 @@
         {
           "label": "README used for the native command and guest checks",
           "url": "https://github.com/tamird/gvisor/commit/a1b8ee4af"
+        }
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "0d46027e654ef56a1f9d2d739358a5200b2da9e5",
+        "url": "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654",
+        "title": "Reply to Milan about the native Bazel install",
+        "summary": "Post the native build and installation results in response to Milan’s question?",
+        "body": "Since #16753, an ARM64 host can build the release with its native GNU compiler. For someone installing from source who already has the build tools, the direct Bazel command builds just the archive they extract and doesn't require Docker. The documented target produced all nine executables and ran a systrap guest on [AMD64](https://github.com/tamird/gvisor/actions/runs/42175442583/artifacts/13482599775) and [ARM64](https://github.com/tamird/gvisor/actions/runs/42174590321/artifacts/13482448479). The Docker instructions still let the builder provide those tools.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-11T11:11:00+00:00"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "0d46027e654ef56a1f9d2d739358a5200b2da9e5",
+        "observedAt": "2026-11-11T11:11:00+00:00",
+        "disposition": "Milan asked why a native Bazel build is recommended for installation.",
+        "nextAction": "Review the reply about both tested native builds and the Docker workflow.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654"
+        ],
+        "actionableComment": {
+          "kind": "review",
+          "head": "0d46027e654ef56a1f9d2d739358a5200b2da9e5",
+          "url": "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654",
+          "commentId": "PRR_kwDOB9IlXs8AAAABXPYGXg"
+        }
+      }
+    },
+    {
+      "id": "pr:17470",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17470,
+      "ref": "proposal/php-runtime-failure-diffs",
+      "head": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
+      "title": "Show output differences for failing PHP runtime tests",
+      "url": "https://github.com/google/gvisor/pull/17470",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "summary": "The PHP runner displays expected and actual output when a test in a multi-test batch fails. Successful batches retain their usual output. The original intermittent upload failure remains under investigation.",
+      "evidence": [
+        {
+          "label": "Published diagnostic change",
+          "url": "https://github.com/google/gvisor/pull/17470"
+        },
+        {
+          "label": "Qualified reporter source",
+          "url": "https://github.com/tamird/gvisor/commit/60ec8592c"
+        },
+        {
+          "label": "Two-test batches and independent passing controls on both revisions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42946840044/artifacts/13824261649"
+        },
+        {
+          "label": "Why a one-test reproduction already prints the diff",
+          "url": "https://github.com/php/php-src/blob/php-8.5.11/run-tests.php#L692-L700"
+        },
+        {
+          "label": "Single-test comparison on the same sources",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42943209689/artifacts/13823555132"
+        }
+      ]
+    },
+    {
+      "id": "pr:17471",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17471,
+      "ref": "proposal/wire-primitive-array-storage",
+      "head": "13c1a3a8640dbb8e8f8ae6d8c5b0a75438662d4d",
+      "title": "Capture primitive state arrays in typed storage",
+      "url": "https://github.com/google/gvisor/pull/17471",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "summary": "The single published commit stores primitive state arrays in typed storage. The state and wire test suites on the published tree recorded 12,624 passes and 85 skips.",
+      "evidence": [
+        {
+          "label": "Single-commit upstream PR #17471",
+          "url": "https://github.com/google/gvisor/pull/17471"
+        },
+        {
+          "label": "Native state, wire and state/tests results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43008528640/artifacts/13850005693"
         }
       ]
     }
@@ -75839,17 +75986,17 @@
     },
     {
       "from": "pr:16380",
-      "to": "branch:state-primitive-array-storage",
+      "to": "pr:17471",
       "type": "depends_on",
       "reason": "The approved primitive-array implementation requires the wire payload loader.",
       "evidence": "https://github.com/google/gvisor/pull/16380"
     },
     {
-      "from": "branch:state-primitive-array-storage",
+      "from": "pr:17471",
       "to": "branch:review/state-reference-arrays",
       "type": "depends_on",
-      "reason": "The approved reference-array implementation follows typed primitive arrays.",
-      "evidence": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b"
+      "reason": "The approved reference-array change can open when #17471 merges.",
+      "evidence": "https://github.com/google/gvisor/pull/17471"
     },
     {
       "from": "pr:16460",
@@ -76073,7 +76220,7 @@
     {
       "type": "depends_on",
       "from": "pr:16718",
-      "to": "branch:state-primitive-array-storage",
+      "to": "pr:17471",
       "reason": "The primitive-array encoding requires the signed-zero correction.",
       "evidence": "https://github.com/google/gvisor/pull/16718"
     },
@@ -98006,9 +98153,26 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T21:55:41+00:00",
+      "updatedAt": "2026-11-11T11:14:40+00:00",
       "summary": "Three Buildkite runs stopped at the first wire dump with “error printing state: unreachable”. A native AMD64 workload reproduced the error on two of eight valid guest checkpoints. Stock mistook saved page data for a stream header. #17208 dumped all eight and the guests restored.",
       "findings": [
+        {
+          "text": "On master 2552c6787, the chained wire → graph → wire restore failed at the first statefile dump with “error printing state: unreachable” under both KVM and systrap. The same shard passed on retry. Both test messages reported retaining the checkpoint image, but the 69 public job artifacts include no .img or .zip. Build 54379 also reproduced the KVM failure.",
+          "evidence": [
+            {
+              "label": "Master failure on KVM and systrap",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9d2-71d7-424c-ba58-681b6a5d12fa"
+            },
+            {
+              "label": "Passing retry on the same master commit",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9d5-eb10-4056-a73c-518afdfba5c2"
+            },
+            {
+              "label": "Earlier independent KVM occurrence",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54379"
+            }
+          ]
+        },
         {
           "text": "Both failing stock header reads began 8,064 bytes into a 16,384-byte MemoryFile page-data range, at decompressed offsets 321,490 and 3,196,149. Neither header matched the guest’s uniform pixel value. The other six stock dumps exited successfully with different text. The #17208 binary dumped the same eight files and all eight wire → graph → wire restores verified the guest’s 768 KiB mapping. The original CI images are unavailable, so their offsets remain unknown.",
           "evidence": [
@@ -98086,6 +98250,18 @@
       "nextStep": "Check the original chained restore test on the first upstream run that includes #17208. If the error recurs, retain the failing header offset and the type of checkpoint region it falls in.",
       "evidence": [
         {
+          "label": "Master failure on KVM and systrap",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9d2-71d7-424c-ba58-681b6a5d12fa"
+        },
+        {
+          "label": "Passing retry on the same master commit",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9d5-eb10-4056-a73c-518afdfba5c2"
+        },
+        {
+          "label": "Earlier independent KVM occurrence",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54379"
+        },
+        {
           "label": "Eight restored guest checkpoints, two failing stock header offsets and independently decoded MemoryFile regions",
           "url": "https://github.com/tamird/gvisor/actions/runs/42701281118/artifacts/13713937201"
         },
@@ -98113,9 +98289,22 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T03:40:43+00:00",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
       "summary": "TestSystemdMultiUser timed out waiting for Bob’s user@1002.service on Buildkite. On a four-CPU AMD64 systrap worker, the same deadline also expired waiting for Alice’s user@1001.service.",
       "findings": [
+        {
+          "text": "On ARM64 build 54383 for #17433, Bob’s PAM session opened and the startup log ended after the libbpf warning. The job passed on retry on the same head. Healthy trials also emitted the warning.",
+          "evidence": [
+            {
+              "label": "ARM64 failed-job artifact on #17433",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54383/jobs/01a1c8fe-4a66-4e14-803d-253b48cafc5b/artifacts/01a1c90a-a7ba-4c05-9eb8-97b301aa38fa"
+            },
+            {
+              "label": "Passing same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54383#01a1c90b-5845-42e6-97e6-60b0e93f857c"
+            }
+          ]
+        },
         {
           "text": "The cgroup-v2 job on the import of #16886 and the ARM64 job on the import of #17060 each passed on retry. The cgroup-v1 run also reached systemd’s 90-second deadline. The ARM64 retry reports the owning target passed in 24.3 seconds.",
           "evidence": [
@@ -98175,6 +98364,14 @@
       ],
       "nextStep": "Capture the user-scoped pending unit, journal and process wait state of both managers when the original CI readiness check times out. The earlier isolated timeout affected Alice and the field failures affected Bob.",
       "evidence": [
+        {
+          "label": "ARM64 failed-job artifact on #17433",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54383/jobs/01a1c8fe-4a66-4e14-803d-253b48cafc5b/artifacts/01a1c90a-a7ba-4c05-9eb8-97b301aa38fa"
+        },
+        {
+          "label": "Passing same-head retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54383#01a1c90b-5845-42e6-97e6-60b0e93f857c"
+        },
         {
           "label": "Sixteen uncached isolated runs with both user managers sampled after the readiness check",
           "url": "https://github.com/tamird/gvisor/actions/runs/42950256234/artifacts/13826291267"
@@ -99218,7 +99415,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "Contributor",
-      "updatedAt": "2026-11-11T00:51:01+00:00",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
       "summary": "The Node 22.2.0 test tick-processor/test-tick-processor-preprocess-flag timed out on #17425 (040ae629f) and #17428 (aa0152a6a). The Node target passed on each same-head retry.",
       "findings": [
         {
@@ -99274,8 +99471,12 @@
           ]
         }
       ],
-      "nextStep": "Add your own DCO sign-off to the approved commit on tamird/node branch test-tick-processor-retry-flags, update that fork branch, and submit the PR to nodejs/node.",
+      "nextStep": "Tamir can open the pull request from the signed-off test-tick-processor-retry-flags branch.",
       "evidence": [
+        {
+          "label": "Signed-off source on Node main",
+          "url": "https://github.com/tamird/node/commit/3fef4a81d"
+        },
         {
           "label": "Open the upstream PR form for the prepared fork branch",
           "url": "https://github.com/nodejs/node/compare/main...tamird:node:test-tick-processor-retry-flags?expand=1"
@@ -99340,18 +99541,32 @@
           "outcome": "approved",
           "at": "2026-11-11T00:51:01+00:00",
           "note": "The contributor approved the code. Node requires personal DCO sign-off and submission."
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "3fef4a81d86844a359984c1b070b3a680665b7eb",
+          "baseHead": "2336a1f005009aa8e9832eaf3b520fa9bc11fecb",
+          "url": "https://github.com/tamird/node/commit/3fef4a81d",
+          "requestedAt": "2026-11-10T23:18:03+00:00",
+          "title": "test: preserve tick processor flags on retry",
+          "summary": "Review and personally submit the one-line Node fix with your DCO sign-off? After one forced miss, the stock helper retried without --preprocess and got plain text. With the flag restored, the second result was JSON and the real test exited 0. The two original CI logs omit the first processor output.",
+          "body": "test-tick-processor-preprocess-flag expects JSON from --prof-process\n--preprocess. If its first profile does not match, the retry drops\n--preprocess and gets a text report. No later report can match the\nopening brace, so the test keeps retrying.\n\nPass the original flags on each attempt. On Linux with Node v22.2.0,\nforcing one first match to fail produced a text report on the next\nattempt. With the flags preserved, the second profile was JSON and the\ntest exited successfully. Two gVisor CI runs timed out in this test;\nneither recorded the output of the first attempt.\n\nAssisted-by: Codex\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+          "outcome": "approved",
+          "at": "2026-11-11T11:11:00+00:00",
+          "note": "Tamir personally signed off the approved one-line patch after rebasing it onto Node main. The resulting helper blob is identical."
         }
       ],
-      "head": "604a7a80ced810dc9e5cfbc4377767493f308787",
+      "head": "3fef4a81d86844a359984c1b070b3a680665b7eb",
       "humanAction": {
         "kind": "submission",
         "status": "pending",
-        "head": "604a7a80ced810dc9e5cfbc4377767493f308787",
-        "title": "Sign off and submit the approved Node change",
-        "summary": "The code is approved. Your personal DCO sign-off and upstream PR submission remain.",
-        "body": "The prepared commit 604a7a80c is on tamird/node branch test-tick-processor-retry-flags. Its message has no Signed-off-by footer. Add your own DCO sign-off, update that fork branch, and submit the pull request to nodejs/node. The comparison link uses this branch and will follow its signed-off commit.",
+        "head": "3fef4a81d86844a359984c1b070b3a680665b7eb",
+        "title": "Submit the signed-off Node pull request",
+        "summary": "Tamir signed off the approved change. Open the pull request from the prepared branch.",
+        "body": "Commit 3fef4a81d carries Tamir’s DCO sign-off and the approved helper change on current Node main. Use the comparison to create the pull request on nodejs/node.",
         "url": "https://github.com/nodejs/node/compare/main...tamird:node:test-tick-processor-retry-flags?expand=1",
-        "policyURL": "https://github.com/nodejs/node/blob/ab11f834f/doc/contributing/pull-requests.md#L211-L220"
+        "policyURL": "https://github.com/nodejs/node/blob/2336a1f00/doc/contributing/ai-guidelines.md#L13-L38"
       }
     },
     {
@@ -99360,7 +99575,7 @@
       "title": "PHP’s 2.15 GB multipart upload fails across master and test builds",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T02:55:20+00:00",
+      "updatedAt": "2026-11-11T11:11:00+00:00",
       "summary": "PHP 8.5.11 reported sapi/cli/tests/upload_2G.phpt as failed in seven attempts across six commits. Two were gVisor master commits (d887f126f and 93713c50f). Four were Google test commits.",
       "findings": [
         {
@@ -99437,8 +99652,12 @@
           ]
         }
       ],
-      "nextStep": "Review 60ec8592c. Once the reporter lands, inspect the expected and actual output from the next failing upload shard to identify the cause.",
+      "nextStep": "When #17470 lands, inspect the expected and actual output from the next failing upload shard.",
       "evidence": [
+        {
+          "label": "PHP failure-reporting change in #17470",
+          "url": "https://github.com/google/gvisor/pull/17470"
+        },
         {
           "label": "Batched failure output and successful controls on stock and revision",
           "url": "https://github.com/tamird/gvisor/actions/runs/42946840044/artifacts/13824261649"
@@ -99468,17 +99687,23 @@
           "url": "https://github.com/php/php-src/blob/php-8.5.11/sapi/cli/tests/upload_2G.phpt"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
-        "baseHead": "46e8f70ffcccbed7159248e4e29d03f16fa58263",
-        "url": "https://github.com/tamird/gvisor/commit/60ec8592c",
-        "title": "Show output differences for failing PHP runtime tests",
-        "body": "The PHP 8.5.11 upload_2G.phpt test failed twice in the same CI shard.\nThe log names the test but omits the response that differed from its\nexpectation [1]. The runner removes the container after the batch, so\nthe PHPT diff is no longer available.\n\nPass --show-diff to PHP's test runner so the failing batch includes\nthe expected and actual lines in its Bazel test log.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54340#01a1c7e8-9007-406b-b565-61701e284168",
-        "requestedAt": "2026-11-11T02:55:20+00:00",
-        "summary": "Open the one-line change that prints a failed PHPT’s expected and actual output in the original batch log?"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
+          "baseHead": "46e8f70ffcccbed7159248e4e29d03f16fa58263",
+          "url": "https://github.com/tamird/gvisor/commit/60ec8592c",
+          "title": "Show output differences for failing PHP runtime tests",
+          "body": "The PHP 8.5.11 upload_2G.phpt test failed twice in the same CI shard.\nThe log names the test but omits the response that differed from its\nexpectation [1]. The runner removes the container after the batch, so\nthe PHPT diff is no longer available.\n\nPass --show-diff to PHP's test runner so the failing batch includes\nthe expected and actual lines in its Bazel test log.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54340#01a1c7e8-9007-406b-b565-61701e284168",
+          "requestedAt": "2026-11-11T02:55:20+00:00",
+          "summary": "Open the one-line change that prints a failed PHPT’s expected and actual output in the original batch log?",
+          "outcome": "approved",
+          "at": "2026-11-11T11:11:00+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17470",
+          "note": "Opened the approved diagnostic change in #17470. The intermittent upload failure remains under investigation."
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-11T01:47:46+00:00"
