@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T16:52:05+00:00",
+    "updatedAt": "2026-11-11T17:16:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39355,11 +39355,11 @@
       "repo": "google/gvisor",
       "number": 16663,
       "ref": "review/buildifier-native-diff",
-      "head": "4cd0185fe40766a4875459239c214253612a1962",
+      "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
       "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "The formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.",
+      "summary": "The formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
       "evidence": [
         {
           "label": "Six-line explanation in the Buildifier patch",
@@ -39524,27 +39524,40 @@
         {
           "label": "One submission commit directly on upstream master",
           "url": "https://github.com/tamird/gvisor/commit/7a38c0e2c"
+        },
+        {
+          "label": "Conditional supplier-toolchain follow-up",
+          "url": "https://github.com/tamird/gvisor/commit/4f7c34244"
+        },
+        {
+          "label": "Pinned supplier action, repair and uncached recheck",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43064629279/artifacts/13875196330"
+        },
+        {
+          "label": "gVisor pinned-version and supplier-default controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43064089886/artifacts/13873914788"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-11T14:48:06+00:00",
+      "updatedAt": "2026-11-11T17:14:06+00:00",
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "4cd0185fe40766a4875459239c214253612a1962",
-        "observedAt": "2026-11-11T14:48:06+00:00",
-        "disposition": "The explanatory Buildifier patch header is published. The PR is open and mergeable.",
+        "sourceHead": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
+        "observedAt": "2026-11-11T17:14:06+00:00",
+        "disposition": "The approved toolchain and launcher amendment is published on the open, mergeable PR.",
         "nextAction": "Follow maintainer review and CI on the published revision.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4cd0185fe",
-          "https://github.com/google/gvisor/pull/16663"
+          "https://github.com/google/gvisor/pull/16663",
+          "https://github.com/tamird/gvisor/commit/4f7c34244"
         ]
       },
       "refinement": {
         "before": {
-          "head": "045005811630722969d77c706fb368b469201863"
+          "head": "4cd0185fe40766a4875459239c214253612a1962"
         },
         "after": {
-          "head": "4cd0185fe40766a4875459239c214253612a1962"
+          "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
+          "base": "2552c678794e048487e1d18e9c81729b67fc119a"
         }
       },
       "settledReviews": [
@@ -39578,6 +39591,21 @@
           "at": "2026-11-11T14:48:06+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16663",
           "note": "The checked patch header is published in the single commit on the existing PR."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "baseHead": "4cd0185fe40766a4875459239c214253612a1962",
+          "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
+          "url": "https://github.com/tamird/gvisor/commit/4f7c34244",
+          "requestedAt": "2026-11-11T17:12:43+00:00",
+          "title": "Run Buildifier and cpplint as Bazel actions",
+          "summary": "Publish this single-commit amendment on #16663 with the platform-selected Buildifier executable and shared source inventory?",
+          "body": "Source lint discovers files in the checkout and installs its tools in\nthe builder. Give each checker one Bazel action with the first-party\nfiles and configuration it needs. A new C++ or BUILD file then joins\nthe check without a test declaration in its package.\n\nExpose both checks through //tools/lint:check. Keep the tools and file\ninventory as development dependencies so importing gVisor does not add\nits lint tools to the consuming module.\n\nRun //tools/lint:format in the writable checkout so Buildifier can fix\nthe same files from any working directory. Include the repair command\nin the formatting diagnostic.\n\nPrepared by Codex on behalf of @tamird.\n\ngit -C ~/code/gvisor range-diff 4cd0185fe^! 4f7c34244^!",
+          "outcome": "approved",
+          "at": "2026-11-11T17:14:06+00:00",
+          "note": "The reviewed amendment is published as the single commit on the existing, mergeable PR.",
+          "postedURL": "https://github.com/google/gvisor/pull/16663"
         }
       ]
     },
@@ -59940,7 +59968,7 @@
       "url": "https://github.com/google/gvisor/pull/17028",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "updatedAt": "2026-11-11T17:16:13+00:00",
       "summary": "The author addressed the container-name failure in 4a7e1de51 by using leave-running-%t before dockerutil.MakeContainer. The author’s reply leaves the full nested Docker checkpoint run pending.\n\nDocker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.\n\nWith hyphenated names and the Docker/containerd test setup corrected, both modes started the inner Moby 29.8.1 daemon. Each daemon exited while creating its default bridge because /proc/sys/net/ipv4/conf/docker0/route_localnet was missing. This gVisor revision exposes route_localnet under all and default. Both tests stopped before checkpoint.",
       "evidence": [
         {
@@ -59974,6 +60002,10 @@
         {
           "label": "Author’s revised implementation and test update",
           "url": "https://github.com/google/gvisor/pull/17028#discussion_r4534767081"
+        },
+        {
+          "label": "Published route_localnet follow-up",
+          "url": "https://github.com/google/gvisor/pull/17028#discussion_r4540977846"
         }
       ],
       "settledReviews": [
@@ -59987,28 +60019,33 @@
           "at": "2026-11-06T13:13:00.663Z",
           "note": "Posted and verified against the approved head.",
           "postedURL": "https://github.com/google/gvisor/pull/17028#pullrequestreview-5800533338"
+        },
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "4a7e1de519aed4a4a27f6430114e03754589ff37",
+          "url": "https://github.com/google/gvisor/pull/17028#discussion_r4534767081",
+          "title": "Ask which per-interface sysctl change belongs in the combined checkpoint test",
+          "summary": "The naming correction reached Moby’s bridge initialization in the earlier combined test. Ask the author about the missing per-interface route_localnet setting before rerunning the revised head.",
+          "body": "@hky1999, the new name fixes container creation. When I tested that rename with #16666, both modes reached Moby 29.8.1 and then stopped creating its default bridge: `open /proc/sys/net/ipv4/conf/docker0/route_localnet: no such file or directory`. The [daemon logs](https://github.com/tamird/gvisor/actions/runs/42204674294/job/127848215695) show this before either checkpoint. The current head still exposes that setting only under [all and default](https://github.com/google/gvisor/blob/4a7e1de51/pkg/sentry/fsimpl/proc/tasks_sys.go#L311-L317). Is there a per-interface sysctl change I should include when testing the combined series?\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T17:16:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17028#discussion_r4540977846",
+          "note": "Posted the approved follow-up on the author’s original thread about the missing per-interface route_localnet setting."
         }
       ],
       "followup": {
         "owner": "Agent",
         "sourceHead": "4a7e1de519aed4a4a27f6430114e03754589ff37",
-        "observedAt": "2026-11-11T16:50:58+00:00",
-        "disposition": "The author corrected the two subtest names. Full checkpoint execution remains pending.",
-        "nextAction": "Record the full nested Docker checkpoint result when available.",
+        "observedAt": "2026-11-11T17:16:13+00:00",
+        "disposition": "The author fixed the container names. The reviewed follow-up supplied the observed Docker bridge error and asked how to test the combined series.",
+        "nextAction": "Follow the author’s answer about the per-interface route_localnet setting before rerunning both checkpoint modes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17028#pullrequestreview-5800533338",
           "https://github.com/google/gvisor/pull/17028#discussion_r4492765208",
-          "https://github.com/google/gvisor/pull/17028#discussion_r4534767081"
+          "https://github.com/google/gvisor/pull/17028#discussion_r4534767081",
+          "https://github.com/google/gvisor/pull/17028#discussion_r4540977846"
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "4a7e1de519aed4a4a27f6430114e03754589ff37",
-        "url": "https://github.com/google/gvisor/pull/17028#discussion_r4534767081",
-        "title": "Ask which per-interface sysctl change belongs in the combined checkpoint test",
-        "summary": "The naming correction reached Moby’s bridge initialization in the earlier combined test. Ask the author about the missing per-interface route_localnet setting before rerunning the revised head.",
-        "body": "@hky1999, the new name fixes container creation. When I tested that rename with #16666, both modes reached Moby 29.8.1 and then stopped creating its default bridge: `open /proc/sys/net/ipv4/conf/docker0/route_localnet: no such file or directory`. The [daemon logs](https://github.com/tamird/gvisor/actions/runs/42204674294/job/127848215695) show this before either checkpoint. The current head still exposes that setting only under [all and default](https://github.com/google/gvisor/blob/4a7e1de51/pkg/sentry/fsimpl/proc/tasks_sys.go#L311-L317). Is there a per-interface sysctl change I should include when testing the combined series?\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -74327,8 +74364,8 @@
       "url": "https://github.com/bazel-contrib/rules_shell/pull/64",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T16:01:07+00:00",
-      "summary": "Fabian Meumertzheim’s proposed file-backed shell toolchain can supply a declared executable and its runfiles to a remote action.",
+      "updatedAt": "2026-11-11T17:12:43+00:00",
+      "summary": "Fabian Meumertzheim’s proposed file-backed shell toolchain can supply a declared executable and its runfiles to a remote action.\n\nThe current rules_go SDK bootstrap used the proposed file-backed interpreter on a Linux worker without a system shell. Both an ordinary SDK and a relative SDK symlink produced byte-identical builder, pack and covdata executables. The latest released rules_shell version checked, v0.8.0, provides an absolute path.",
       "evidence": [
         {
           "label": "Proposed file-backed execution toolchain",
@@ -74337,6 +74374,10 @@
         {
           "label": "Maintainer discussion of a Starlark run_shell action",
           "url": "https://github.com/bazel-contrib/rules_go/issues/4352#issuecomment-3361105198"
+        },
+        {
+          "label": "Stock wrapper and matching native Linux SDK binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43062203909/artifacts/13872799337"
         }
       ]
     },
@@ -74369,6 +74410,30 @@
         {
           "label": "Original contribution",
           "url": "https://github.com/bazelbuild/bazel/pull/32541"
+        }
+      ]
+    },
+    {
+      "id": "pr:17484",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17484,
+      "ref": "review/pty-packet-read-boundary",
+      "head": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
+      "title": "Check the PTY packet header with one payload byte",
+      "url": "https://github.com/google/gvisor/pull/17484",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-11T17:16:13+00:00",
+      "summary": "The packet-header test now reads one data byte with the header. On native Linux a capped first read reproduced the old split. Both the revised case and the neighboring line-translation check passed on Linux and systrap.",
+      "evidence": [
+        {
+          "label": "Published single-commit revision",
+          "url": "https://github.com/google/gvisor/pull/17484"
+        },
+        {
+          "label": "Original native and systrap syscall cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43057467949/artifacts/13872635996"
         }
       ]
     }
@@ -101507,7 +101572,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "updatedAt": "2026-11-11T17:16:13+00:00",
       "summary": "The stock packet-mode test expected a single TIOCPKT_DATA header for a translated line. Limiting its first native read to three bytes reproduced the same byte-comparison failure. The proposed one-byte case and the neighboring newline-translation case both passed on native Linux and systrap.",
       "findings": [
         {
@@ -101537,7 +101602,7 @@
           ]
         }
       ],
-      "nextStep": "Review the single PTY test change and its native and systrap controls.",
+      "nextStep": "Follow review and CI on #17484. Compare a new failure with its one-byte packet read once the test change lands.",
       "evidence": [
         {
           "label": "Original native PTY test.log",
@@ -101558,18 +101623,28 @@
         {
           "label": "One-byte PTY test proposal",
           "url": "https://github.com/tamird/gvisor/commit/8a64c10e3"
+        },
+        {
+          "label": "Published PTY test adjustment, #17484",
+          "url": "https://github.com/google/gvisor/pull/17484"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/8a64c10e3",
-        "title": "Check the PTY packet header with one payload byte",
-        "body": "PacketModeWriteReplicaToMaster failed its byte comparison on native\nLinux [1]. In packet mode, each read of replica data has its own zero\nheader [2]. ReadFd can combine several reads, but the test expected a\nsingle header before the entire translated line.\n\nWrite one payload byte and check it together with TIOCPKT_DATA.\nWriteReplicaToMaster already checks newline translation.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54409#01a1caac-a912-4dfe-a720-1a77435ae5b2\n[2]: https://man7.org/linux/man-pages/man2/TIOCPKT.2const.html\n\nPrepared by Codex on behalf of @tamird.",
-        "summary": "Open the single-commit PTY test correction on google/gvisor?"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/8a64c10e3",
+          "title": "Check the PTY packet header with one payload byte",
+          "body": "PacketModeWriteReplicaToMaster failed its byte comparison on native\nLinux [1]. In packet mode, each read of replica data has its own zero\nheader [2]. ReadFd can combine several reads, but the test expected a\nsingle header before the entire translated line.\n\nWrite one payload byte and check it together with TIOCPKT_DATA.\nWriteReplicaToMaster already checks newline translation.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54409#01a1caac-a912-4dfe-a720-1a77435ae5b2\n[2]: https://man7.org/linux/man-pages/man2/TIOCPKT.2const.html\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Open the single-commit PTY test correction on google/gvisor?",
+          "outcome": "approved",
+          "at": "2026-11-11T17:16:13+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17484",
+          "note": "Opened the approved one-byte PTY packet-header test in #17484."
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-fastlane-token-time",
@@ -101785,7 +101860,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:52:05+00:00",
+      "updatedAt": "2026-11-11T17:16:13+00:00",
       "summary": "The FD-table speedup test timed startup and exit along with three dup3 calls. Timing those calls in the helper preserved the speedup signal under an unrelated post-syscall delay. All eight native FD-table comparisons ran on one AMD64 kernel.",
       "findings": [
         {
@@ -101831,9 +101906,22 @@
               "url": "https://github.com/tamird/gvisor/commit/66172dc09"
             }
           ]
+        },
+        {
+          "text": "On native AMD64, the corrected helper measured a median of 8.653 ms for a cold table and 1.813 µs after prewarming. Delaying process exit by 250 ms made the stock test fail but left the corrected comparison passing. The disabled prewarmer failed all three attempts at 64 slots, before timing. Closing a high FD before launch preserved the cold case; retaining it gave 512 starting slots and an explicit skip. A cold warm-up failed even with an already-expanded direct child, and reversing the measured durations still failed the strict median. The normal case took 0.390 s versus 0.380 s for stock. The separate real-boot test skipped because the hosted runner could not re-execute inside its namespace.",
+          "evidence": [
+            {
+              "label": "Twelve native Bazel controls with original XML and logs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43064713796/artifacts/13874883539"
+            },
+            {
+              "label": "Signed two-file test revision",
+              "url": "https://github.com/tamird/gvisor/commit/997f8b37e"
+            }
+          ]
         }
       ],
-      "nextStep": "Use one direct and one prewarmed helper to check their starting FDSize before measuring speed. A direct helper already at 256 slots cannot exercise expansion. Retain the strict median comparison, then verify the pass-through launcher fails and unrelated post-syscall delay still passes.",
+      "nextStep": "Review the single-commit test adjustment that measures the three dup3 operations and checks the exec’d helper’s initial FD capacity.",
       "evidence": [
         {
           "label": "Failing cgroup v1 integration job",
@@ -101854,8 +101942,31 @@
         {
           "label": "48 original helper capacity and timing records",
           "url": "https://github.com/tamird/gvisor/actions/runs/43061410733/artifacts/13873703225"
+        },
+        {
+          "label": "Proposed check of the exec’d helper’s capacity",
+          "url": "https://github.com/tamird/gvisor/commit/997f8b37e"
+        },
+        {
+          "label": "Native Bazel test and capacity controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43064713796"
+        },
+        {
+          "label": "Twelve native Bazel controls with original XML and logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43064713796/artifacts/13874883539"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "requestedAt": "2026-11-11T17:16:13+00:00",
+        "head": "997f8b37e43ec66fb94ae2d4394168d1685dac8c",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/997f8b37e",
+        "title": "Time FD-table expansion inside the test helper",
+        "body": "The prewarmer speedup test timed the whole child process. In one CI\nrun the prewarmed child took 139 ms and the standalone child 136 ms.\nThe same test passed on retry [1]. These times include startup and\nexit as well as the three dup3 calls that grow the FD table.\n\nHave the helper report its starting FDSize and the time spent in\ndup3. Skip comparisons where the standalone helper already has room\nfor FD 255. Check that the prewarmed helper starts with that room,\nsince equal-cost medians can otherwise let a no-op prewarmer pass.\nKeep the strict comparison of the 32 interleaved samples.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54410#01a1cad8-74b0-47f8-9ff0-c7aefef44dbb\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Open this test-only change against gVisor?"
+      }
     },
     {
       "id": "investigation:rules-shell-run-shell-release",
@@ -101863,7 +101974,7 @@
       "status": "active",
       "group": "bazel",
       "owner": "rules_shell maintainers",
-      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "updatedAt": "2026-11-11T17:14:06+00:00",
       "summary": "The rules_go bootstrap needs a published rules_shell module that provides the file-backed shell toolchain proposed in #64. The native worker experiment pinned the PR’s source directly.",
       "findings": [
         {
@@ -101878,9 +101989,39 @@
               "url": "https://github.com/bazel-contrib/rules_shell/releases/tag/v0.8.0"
             }
           ]
+        },
+        {
+          "text": "Released rules_shell v0.8.0 supplies an absolute interpreter path. Open #64 supplies a file that Bazel can stage on the worker. It received an approval on 3146d6f35 in June. The native Linux SDK comparison exercised the proposed API on a worker without a system shell.",
+          "evidence": [
+            {
+              "label": "File-backed interpreter proposed in rules_shell #64",
+              "url": "https://github.com/bazel-contrib/rules_shell/pull/64"
+            },
+            {
+              "label": "Released rules_shell v0.8.0",
+              "url": "https://github.com/bazel-contrib/rules_shell/releases/tag/v0.8.0"
+            },
+            {
+              "label": "Stock wrapper and matching native Linux SDK binaries",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43062203909/artifacts/13872799337"
+            }
+          ]
+        },
+        {
+          "text": "A second native check used the exact rules_go supplier archive at 2b0358c4e and the proposed rules_shell API. The stock shebang failed to launch. With the declared shell, ordinary and relative SDK paths produced the same builder, pack and covdata bytes in uncached actions.",
+          "evidence": [
+            {
+              "label": "Exact rules_go supplier source",
+              "url": "https://github.com/tamird/rules_go/commit/2b0358c4e"
+            },
+            {
+              "label": "Uncached native supplier bootstrap and relative-SDK comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43065323600/artifacts/13876390564"
+            }
+          ]
         }
       ],
-      "nextStep": "Identify the first published rules_shell module that contains the execution-toolchain API once #64 lands.",
+      "nextStep": "Watch for #64 to land and for the first published rules_shell module that includes the file-backed interpreter.",
       "evidence": [
         {
           "label": "Proposed file-backed execution toolchain",
@@ -101893,6 +102034,22 @@
         {
           "label": "rules_go 0.65 integration with the execution-platform interpreter",
           "url": "https://github.com/tamird/gvisor/commit/9e1db6e55"
+        },
+        {
+          "label": "Released rules_shell v0.8.0",
+          "url": "https://github.com/bazel-contrib/rules_shell/releases/tag/v0.8.0"
+        },
+        {
+          "label": "Stock wrapper and matching native Linux SDK binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43062203909/artifacts/13872799337"
+        },
+        {
+          "label": "Exact rules_go supplier source",
+          "url": "https://github.com/tamird/rules_go/commit/2b0358c4e"
+        },
+        {
+          "label": "Uncached native supplier bootstrap and relative-SDK comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43065323600/artifacts/13876390564"
         }
       ]
     },
@@ -101902,7 +102059,7 @@
       "status": "active",
       "group": "bazel",
       "owner": "root",
-      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "updatedAt": "2026-11-11T17:14:06+00:00",
       "summary": "On empty AMD64 and ARM64 Linux workers, rules_go 0.65 could not start its SDK builder wrapper. Supplying the interpreter as an execution-platform tool produced builder, pack and covdata on both workers. The supplier change depends on rules_shell #64 and a release containing its API.",
       "findings": [
         {
@@ -101959,9 +102116,35 @@
               "url": "https://github.com/bazel-contrib/rules_go/pull/4767"
             }
           ]
+        },
+        {
+          "text": "On the minimal native AMD64 worker, the stock wrapper failed to execute because its shebang interpreter was missing. Supplying the declared BusyBox shell built builder, pack and covdata uncached. The same three ELF files matched byte for byte when the SDK was reached through a real relative symbolic link, with no additional readlink or dirname tools staged.",
+          "evidence": [
+            {
+              "label": "Stock wrapper and matching native Linux SDK binaries",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43062203909/artifacts/13872799337"
+            },
+            {
+              "label": "File-backed interpreter proposed in rules_shell #64",
+              "url": "https://github.com/bazel-contrib/rules_shell/pull/64"
+            }
+          ]
+        },
+        {
+          "text": "A second native check used the exact rules_go supplier archive at 2b0358c4e and the proposed rules_shell API. The stock shebang failed to launch. With the declared shell, ordinary and relative SDK paths produced the same builder, pack and covdata bytes in uncached actions.",
+          "evidence": [
+            {
+              "label": "Exact rules_go supplier source",
+              "url": "https://github.com/tamird/rules_go/commit/2b0358c4e"
+            },
+            {
+              "label": "Uncached native supplier bootstrap and relative-SDK comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43065323600/artifacts/13876390564"
+            }
+          ]
         }
       ],
-      "nextStep": "Revalidate the current rules_go wrapper with a symlinked SDK on a tool-free worker. Use the existing design discussion for supplier feedback. Prepare the change against the released rules_shell API when available.",
+      "nextStep": "When rules_shell releases the file-backed interpreter from #64, prepare the rules_go change against that released API and follow up in the existing supplier discussion.",
       "evidence": [
         {
           "label": "rules_go 0.65 integration with the execution-platform interpreter",
@@ -102006,9 +102189,97 @@
         {
           "label": "Stock Go temporary files on a worker with writable /tmp",
           "url": "https://github.com/tamird/gvisor/commit/5850173fc"
+        },
+        {
+          "label": "Stock wrapper and matching native Linux SDK binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43062203909/artifacts/13872799337"
+        },
+        {
+          "label": "Exact rules_go supplier source",
+          "url": "https://github.com/tamird/rules_go/commit/2b0358c4e"
+        },
+        {
+          "label": "Uncached native supplier bootstrap and relative-SDK comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43065323600/artifacts/13876390564"
+        }
+      ]
+    },
+    {
+      "id": "investigation:master-pgo-profile-refresh",
+      "title": "Master PGO profile refresh has failed since Go 1.27.2",
+      "status": "active",
+      "group": "tests",
+      "owner": "root",
+      "updatedAt": "2026-11-11T17:12:43+00:00",
+      "summary": "The master PGO pipeline reported 608 consecutive failures, from build #3174 through #3781. The previous build passed. Master still contains profiles through Go 1.27.1. The public statuses do not identify the failing benchmark or publication stage.",
+      "findings": [
+        {
+          "text": "A scan of 1,019 published commits found every numbered build in that interval. Build #3173 on 689b011dd passed in 17m31s. Build #3174 on d39e500a2, the Go 1.27.2 upgrade, failed in 3h55m. Build #3781 on 2552c6787 failed in 4h30m.",
+          "evidence": [
+            {
+              "label": "Last successful master PGO build, #3173",
+              "url": "https://api.github.com/repos/google/gvisor/commits/689b011dd/status"
+            },
+            {
+              "label": "First failing master PGO build, #3174",
+              "url": "https://api.github.com/repos/google/gvisor/commits/d39e500a2/status"
+            },
+            {
+              "label": "Master PGO failure #3781",
+              "url": "https://api.github.com/repos/google/gvisor/commits/2552c6787/status"
+            },
+            {
+              "label": "Go 1.27.2 upgrade, #15560",
+              "url": "https://github.com/google/gvisor/pull/15560"
+            }
+          ]
+        },
+        {
+          "text": "The refresh keys its output directory on the Go runtime. The first failing commit selects a new version directory. Existing KVM and systrap profiles on 2552c6787 stop at Go 1.27.1. A missing previous profile causes the Make target to run the benchmark and save the newly merged profile.",
+          "evidence": [
+            {
+              "label": "Go 1.27.2 upgrade, #15560",
+              "url": "https://github.com/google/gvisor/pull/15560"
+            },
+            {
+              "label": "Profile key, benchmark execution and publication stages",
+              "url": "https://github.com/google/gvisor/blob/2552c6787/Makefile#L788-L825"
+            },
+            {
+              "label": "Earlier published Go 1.27.1 profiles, #15489",
+              "url": "https://github.com/google/gvisor/pull/15489"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Identify the first failing benchmark, merge or publication step in the Go 1.27.2 refresh. The public Buildkite status exposes the final outcome and duration only.",
+      "evidence": [
+        {
+          "label": "Last successful master PGO build, #3173",
+          "url": "https://api.github.com/repos/google/gvisor/commits/689b011dd/status"
+        },
+        {
+          "label": "First failing master PGO build, #3174",
+          "url": "https://api.github.com/repos/google/gvisor/commits/d39e500a2/status"
+        },
+        {
+          "label": "Master PGO failure #3781",
+          "url": "https://api.github.com/repos/google/gvisor/commits/2552c6787/status"
+        },
+        {
+          "label": "Go 1.27.2 upgrade, #15560",
+          "url": "https://github.com/google/gvisor/pull/15560"
+        },
+        {
+          "label": "Profile key, benchmark execution and publication stages",
+          "url": "https://github.com/google/gvisor/blob/2552c6787/Makefile#L788-L825"
+        },
+        {
+          "label": "Earlier published Go 1.27.1 profiles, #15489",
+          "url": "https://github.com/google/gvisor/pull/15489"
         }
       ]
     }
   ],
-  "updatedAt": "2026-11-11T01:47:46+00:00"
+  "updatedAt": "2026-11-11T17:16:13+00:00"
 }
