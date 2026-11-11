@@ -71,6 +71,7 @@ go_test(
     ],
     data = [
         "//:release",
+        "//test/root/pause:archives",
     ],
     embed = [":root"],
     local = True,

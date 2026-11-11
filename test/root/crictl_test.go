@@ -597,6 +597,11 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 	// Create the crictl interface.
 	cc := criutil.NewCrictl(t, sockAddr)
 	cu.Add(cc.CleanUp)
+	if inHarness() {
+		if err := cc.ImportArchive(path.Join(runtimeDir, "pause.tar")); err != nil {
+			return nil, nil, err
+		}
+	}
 
 	return cc, cu.Release(), nil
 }
