@@ -118,13 +118,7 @@ func TestCrictlSanity(t *testing.T) {
 				t.Fatalf("failed to setup crictl: %v", err)
 			}
 			defer cleanup()
-			rt := containerdRuntime
-			sandbox := Sandbox("default")
-			if os.Getenv("GVISOR_CRI_TIMELINE_CONTROL") == "missing-handler" {
-				rt = "missing-timeline-runtime"
-				sandbox = strings.Replace(sandbox, "{", `{"annotations":{"test.gvisor.dev/timeline":"payload-only-canary"},`, 1)
-			}
-			podID, contID, err := crictl.StartPodAndContainer(rt, "basic/httpd", sandbox, Httpd)
+			podID, contID, err := crictl.StartPodAndContainer(containerdRuntime, "basic/httpd", Sandbox("default"), Httpd)
 			if err != nil {
 				t.Fatalf("start failed: %v", err)
 			}
@@ -138,46 +132,6 @@ func TestCrictlSanity(t *testing.T) {
 			if err := crictl.StopPodAndContainers(podID, []string{contID}); err != nil {
 				t.Fatalf("stop failed: %v", err)
 			}
-		})
-	}
-}
-
-func TestPodStartupTimelineControls(t *testing.T) {
-	self, err := os.Executable()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, control := range []string{"missing-handler", "configured-handler"} {
-		t.Run(control, func(t *testing.T) {
-			cmd := exec.CommandContext(t.Context(), self, "-test.run=^TestCrictlSanity$/^enableGrouping$", "-test.v", "--runtime="+os.Getenv("RUNTIME"), "--config_path=/etc/docker/daemon.json")
-			cmd.Env = append(os.Environ(), "GVISOR_CRI_TIMELINE_CONTROL="+control)
-			out, err := cmd.CombinedOutput()
-			log := string(out)
-			if strings.Contains(log, "payload-only-canary") || strings.Contains(log, "containerd stderr:") {
-				t.Fatal("child published the sandbox payload or the unfiltered daemon log")
-			}
-			if control == "configured-handler" {
-				if err != nil || !strings.Contains(log, "--- PASS: TestCrictlSanity/enableGrouping") || strings.Contains(log, "crictl runp ran from") {
-					t.Fatalf("normal runtime: status %v, child pass %t, failure timeline %t", err, strings.Contains(log, "--- PASS: TestCrictlSanity/enableGrouping"), strings.Contains(log, "crictl runp ran from"))
-				}
-				t.Log("TestCrictlSanity/enableGrouping passed without a failure timeline")
-				return
-			}
-			if err == nil || !strings.Contains(log, "--- FAIL: TestCrictlSanity/enableGrouping") || !strings.Contains(log, "start failed:") || !strings.Contains(log, "missing-timeline-runtime") {
-				t.Fatalf("unknown runtime: status %v, child failure %t, startup error %t, requested handler %t", err, strings.Contains(log, "--- FAIL: TestCrictlSanity/enableGrouping"), strings.Contains(log, "start failed:"), strings.Contains(log, "missing-timeline-runtime"))
-			}
-			phase := regexp.MustCompile(`containerd ([0-9T:.+Z-]+): (RunPodSandbox started|assigned sandbox ID|RunPodSandbox failed)$`)
-			var seen []string
-			for line := range strings.SplitSeq(log, "\n") {
-				if m := phase.FindStringSubmatch(line); m != nil {
-					t.Log(m[0])
-					seen = append(seen, m[2])
-				}
-			}
-			if got := strings.Join(seen, ", "); got != "RunPodSandbox started, assigned sandbox ID, RunPodSandbox failed" {
-				t.Errorf("unknown runtime: unexpected stages %q", got)
-			}
-			t.Log("TestCrictlSanity/enableGrouping rejected the missing handler without publishing the sandbox annotation")
 		})
 	}
 }

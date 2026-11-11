@@ -851,7 +851,7 @@ run_platform_matrix() (
         # Declared frontends own their platform transitions. Expand suites and
         # compare their configured owners with the final combined selection.
         include_public_profiles=true
-        options+=("${bazel_options[@]}")
+        options+=("${bazel_options[@]}" --runs_per_test=8 --nocache_test_results --flaky_test_attempts=1 --test_output=summary)
         language_test_options
         printf '%s\n' "${test_targets[@]}" >> "$selection_dir/shared-targets"
         ;;
