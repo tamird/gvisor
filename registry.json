@@ -2252,7 +2252,7 @@
       "title": "Remove builder cross-compilers",
       "url": "https://github.com/tamird/gvisor/commit/d38b53857",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Contributor approved; awaiting prerequisites",
       "summary": "The README now describes the archive build after the declared LLVM toolchain and #17457 land. On a native AMD64 worker with stock Ubuntu 22.04, Bazel 9.3.1, Git and the certificate store, bazel build -c opt //debian:gvisor-release-tar-bz2 produced all nine x86-64 executables with mode 0755. The client had no compiler, binutils, Make, Python, bzip2 or zip. This packaging run used c115840f8. Compared with that source, d38b53857 changes README text and Dockerfile comments. Every executable Dockerfile line and other build input is identical.\n\nThe two-line Dockerfile change c115840f8 built //:release for AMD64 and ARM64 on stock Ubuntu 22.04 without cc, gcc, ld, make, zip or Python. The process trace included /bin/bash, /bin/grep and git. These checks exercised the release executables.\n\nThe empty-/bin and empty-/usr/bin builds used 61ff148f0, which includes eight more integration commits covering Git-free stamping, Gazelle, Go SDK bootstrap, stateify and direct ELF extraction. Native AMD64 and ARM64 clients supplied Bazel 9.3.1, its runtime libraries and CA certificates. Both built nine optimized executables per target and matched all 18 hashes. The integration includes the rules_go #4774 SDK source fix for Nogo. Its ARM64 execution log identifies native ARM64 Clang, the vDSO link wrapper and Nogo for both targets. A separate native ARM64 worker booted the AMD64-built Sentry under rootless systrap on the earlier reduced Ubuntu builder.",
       "evidence": [
         {
@@ -2328,19 +2328,8 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42388512100/artifacts/13582280090"
         }
       ],
-      "updatedAt": "2026-11-11T03:34:53+00:00",
+      "updatedAt": "2026-11-11T14:32:14+00:00",
       "head": "d38b53857505f9b22eb8d046231ff6d8915b851d",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d38b53857505f9b22eb8d046231ff6d8915b851d",
-        "baseHead": "e24bc77cb7fb4a1b8ae589adb55728f87cced47b",
-        "url": "https://github.com/tamird/gvisor/commit/d38b53857",
-        "title": "Drop Ubuntu's cross compilers from the builder",
-        "body": "8de562b79 added a cross compiler for the ARM smoke test. Bazel selects\nLLVM and the target sysroot for both native and cross builds. The\nsystrap rules use LLVM objcopy and read the signal-handler offsets\nfrom the linked ELF.\n\nRemove the two crossbuild-essential packages from the builder and\ndocument how to build the Linux release archive with the toolchain\nBazel provides.",
-        "requestedAt": "2026-11-11T03:34:53+00:00",
-        "summary": "Open d38b53857 after the declared LLVM compiler and the native installation instructions in #17457 land? This revision removes the two cross-compiler packages and updates the README to build the release archive with Bazel’s toolchain."
-      },
       "settledReviews": [
         {
           "kind": "proposal",
@@ -2363,6 +2352,19 @@
           "summary": "Open c115840f8 after the default LLVM compiler lands? This Dockerfile revision built //:release on stock Jammy for both targets, using bash, grep and git. The successful empty-/bin builds used a separate integration with eight further commits. The Debian release tarball was outside both checks.",
           "at": "2026-11-11T03:34:53+00:00",
           "outcome": "superseded"
+        },
+        {
+          "kind": "proposal",
+          "head": "d38b53857505f9b22eb8d046231ff6d8915b851d",
+          "baseHead": "e24bc77cb7fb4a1b8ae589adb55728f87cced47b",
+          "url": "https://github.com/tamird/gvisor/commit/d38b53857",
+          "title": "Drop Ubuntu's cross compilers from the builder",
+          "body": "8de562b79 added a cross compiler for the ARM smoke test. Bazel selects\nLLVM and the target sysroot for both native and cross builds. The\nsystrap rules use LLVM objcopy and read the signal-handler offsets\nfrom the linked ELF.\n\nRemove the two crossbuild-essential packages from the builder and\ndocument how to build the Linux release archive with the toolchain\nBazel provides.",
+          "requestedAt": "2026-11-11T03:34:53+00:00",
+          "summary": "Open d38b53857 after the declared LLVM compiler and the native installation instructions in #17457 land? This revision removes the two cross-compiler packages and updates the README to build the release archive with Bazel’s toolchain.",
+          "outcome": "approved",
+          "at": "2026-11-11T14:32:14+00:00",
+          "note": "Approved for publication after the declared LLVM toolchain and #17457 land."
         }
       ],
       "refinement": {
@@ -2372,6 +2374,17 @@
         "after": {
           "head": "d38b53857505f9b22eb8d046231ff6d8915b851d"
         }
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "d38b53857505f9b22eb8d046231ff6d8915b851d",
+        "observedAt": "2026-11-11T14:32:14+00:00",
+        "disposition": "Approved for publication after the declared LLVM toolchain and #17457 land.",
+        "nextAction": "Open the reviewed builder change after the LLVM toolchain and the native installation instructions in #17457 land.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/d38b53857",
+          "https://github.com/google/gvisor/pull/17457"
+        ]
       }
     },
     {
@@ -36416,9 +36429,17 @@
       "url": "https://github.com/google/gvisor/pull/16597",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
-      "summary": "The published RSEQ helper disables implicit C++ runtime linkage. GNU linked the static helpers for AMD64 and ARM64, and the amended source passed all 14 AMD64 native cases. The earlier LLVM build linked both helpers with the hermetic-llvm #909 backport. With unmodified BCR LLVM 0.8.24, both fresh links failed to find dl and pthread before either syscall test started.\n\nApplying only the #909 backport to that release, with the published gVisor BUILD file unchanged, produced both static helpers on AMD64 LLVM workers. The ARM64 helper was cross-linked. Each linked ELF matched the digest of the helper used by its native syscall test. All 14 AMD64 and 13 ARM64 RSEQ cases passed with zero skips. Bazel exited zero. The reporting step missed the compact TestRunner rows, so this run did not verify the per-test worker image. On export #17474 C++ lint attempts to parse both AMD64 assembly sources. Skipping them exposes separate include-cleaner findings for rseq.cc. The unchanged fixture built as a static binary.",
+      "updatedAt": "2026-11-11T14:27:56+00:00",
+      "summary": "The published RSEQ helper disables implicit C++ runtime linkage. GNU linked the static helpers for AMD64 and ARM64, and the amended source passed all 14 AMD64 native cases. The earlier LLVM build linked both helpers with the hermetic-llvm #909 backport. With unmodified BCR LLVM 0.8.24, both fresh links failed to find dl and pthread before either syscall test started.\n\nApplying only the #909 backport to that release, with the published gVisor BUILD file unchanged, produced both static helpers on AMD64 LLVM workers. The ARM64 helper was cross-linked. Each linked ELF matched the digest of the helper used by its native syscall test. All 14 AMD64 and 13 ARM64 RSEQ cases passed with zero skips. Bazel exited zero. The reporting step missed the compact TestRunner rows, so this run did not verify the per-test worker image.\n\nOn export #17474, clang-tidy parsed both AMD64 assembly files as C. Skipping assembly exposed nine missing-header diagnostics in rseq.cc. With the lint filter, a direct integer header and Linux UAPI error constants, clang-tidy passed the C++ source. Removing the integer header brought back four diagnostics. The stock and revised static AMD64 binaries had byte-identical .text and .rodata sections and each passed registration, duplicate registration and unregistration.",
       "evidence": [
+        {
+          "label": "Tested lint and freestanding header changes",
+          "url": "https://github.com/tamird/gvisor/commit/0bb367479"
+        },
+        {
+          "label": "Native AMD64 lint controls, ELF comparisons and registration results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43037553668/artifacts/13864580728"
+        },
         {
           "label": "C++ lint on the current Copybara export",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54408#01a1ca8e-9e75-4211-ac58-ecf64c284f7b"
@@ -36491,10 +36512,12 @@
       "followup": {
         "owner": "Agent qualification",
         "sourceHead": "9751bfaf98742849046e9b4e9178f3db32f846b2",
-        "observedAt": "2026-11-11T14:01:21+00:00",
-        "disposition": "Export #17474 failed C++ lint on three attempts.",
-        "nextAction": "Check the direct-header findings and the analyzer change on this export before requesting a review.",
+        "observedAt": "2026-11-11T14:27:56+00:00",
+        "disposition": "The export’s lint failure is reproduced and the correction passed on the exact exported sources.",
+        "nextAction": "Publish the folded amendment on the fork so the contributor can review the exact commit.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43037553668/artifacts/13864580728",
+          "https://github.com/tamird/gvisor/commit/0bb367479",
           "https://buildkite.com/gvisor/pipeline/builds/54408#01a1ca8e-9e75-4211-ac58-ecf64c284f7b"
         ]
       },
@@ -97399,10 +97422,31 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-09T16:38:36+00:00",
-      "lastReviewedAt": "2026-11-09T00:06:17.049705+00:00",
+      "updatedAt": "2026-11-11T14:29:43+00:00",
+      "lastReviewedAt": "2026-11-11T14:29:43+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
+        {
+          "text": "On November 11, a targeted check of recent review guidance covered 220 tracked URLs representing 187 distinct commit heads. Local Git supplied 180 diffs and GitHub supplied the remaining seven. The six shell matches specified executables in OCI command arrays. The three adjacent checklocks or prose matches belonged to the external delayed-ACK proposals #16953 and #17082. When revising our ACK-accounting and nvproxy prerequisite changes, use t.Context() where the argument type allows and clean up the flagged formatting. Other review guidance remains outside this check.",
+          "evidence": [
+            {
+              "label": "External delayed-ACK proposal",
+              "url": "https://github.com/google/gvisor/pull/16953"
+            },
+            {
+              "label": "External delayed-ACK follow-up",
+              "url": "https://github.com/google/gvisor/pull/17082"
+            },
+            {
+              "label": "ACK-accounting proposal",
+              "url": "https://github.com/tamird/gvisor/commit/b64ce8320"
+            },
+            {
+              "label": "nvproxy prerequisite proposal",
+              "url": "https://github.com/tamird/gvisor/commit/73a5b30ce"
+            }
+          ]
+        },
         {
           "text": "Routine build and test validation on the existing RBE service has standing authorization. The work owner runs it and checks the outputs. Keep the resulting evidence with the change the contributor reviews.",
           "evidence": [
