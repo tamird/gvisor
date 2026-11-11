@@ -1,0 +1,11 @@
+--- a/go/private/rules/binary.bzl
++++ b/go/private/rules/binary.bzl
+@@ -641,7 +641,7 @@
+                 "GOEXPERIMENT": sdk.experiments,
+                 "GO_BINARY": sdk.go.path,
+                 "LD_FLAGS": ctx.attr.ldflags,
+-            },
++            } | ({"PATH": sdk.go.dirname + "/helpers"} if ctx.var.get("SDK_LINK_PATH") else {}),
+             inputs = depset(
+                 ctx.files.srcs,
+                 transitive = [sdk.headers, sdk.srcs, sdk.libs, sdk.tools],
