@@ -87,6 +87,12 @@ def is_approval_gate(pr: dict, check: dict) -> bool:
                                      "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"})
 
 
+def is_private_buildkite_check(pr: dict, check: dict) -> bool:
+    return (pr.get("repo") == "google/gvisor" and check.get("kind") == "status"
+            and check.get("name") == "buildkite/internal"
+            and (not check.get("url") or bool(re.fullmatch(r"https://buildkite\.com/gvisor/internal/builds/\d+", check["url"]))))
+
+
 def is_canceled_validation_check(check: dict) -> bool:
     if check.get("kind") == "check-run" and check.get("state") == "CANCELLED":
         return True

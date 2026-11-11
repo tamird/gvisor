@@ -189,6 +189,10 @@ function completeChecks(pr) {
   return Boolean(checks?.complete && Array.isArray(checks.contexts) && checks.contexts.length === checks.total
     && (checks.total > 0 || checks.state === null && checks.reportedTotal === 0));
 }
+function isPrivateBuildkiteCheck(pr, check) {
+  return pr.repo === "google/gvisor" && check.kind === "status" && check.name === "buildkite/internal"
+    && (!check.url || /^https:\/\/buildkite\.com\/gvisor\/internal\/builds\/\d+$/.test(check.url));
+}
 function isImportStatus(check) { return check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name); }
 function isAdvisoryCheck(pr, check) { return pr?.repo === "google/gvisor" && check.kind === "status" && check.name === "buildkite/first-pass"; }
 function isApprovalGate(pr, check) {
@@ -657,7 +661,7 @@ function attentionReasons(node, owner) {
   const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
   const sourceRecovery = sourceAuthenticationRecovery(node);
-  const publicFailures = failedValidationChecks(pr);
+  const publicFailures = failedValidationChecks(pr).filter(check => !isPrivateBuildkiteCheck(pr, check));
   const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id));
   if (!landed && authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const reviewHold = node.reviewOutreachHold;
@@ -730,7 +734,7 @@ function attentionReasons(node, owner) {
   if (retryDetails.length) add("maintainer-ci-retry", retryDetails.join(" "), sourceRecovery && retryDetails.length === 1 ? "Maintainer CI configuration" : undefined);
   if (cancellationDetails.length) add("maintainer-ci-canceled", cancellationDetails.join(" "));
   const publicImportFailures = failed.flatMap(item => failedValidationChecks(item)
-    .filter(check => !recoveries.get(item.number)?.ids.has(check.id))
+    .filter(check => !isPrivateBuildkiteCheck(item, check) && !recoveries.get(item.number)?.ids.has(check.id))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state} (${safeURL(check.url) || "direct link not recorded"})`));
   for (const item of failed) if (!completeChecks(item) || !failedValidationChecks(item).length)
     publicImportFailures.push(`Import #${item.number}: failure evidence is incomplete; refresh and investigate its public check records`);
@@ -738,9 +742,15 @@ function attentionReasons(node, owner) {
     .filter(check => isImportStatus(check) && FAILURE_STATES.has(check.state))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state}`));
   if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) internalImportFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
-  if (publicImportFailures.length)
+  const importDiagnosis = failed.length && attentionDisposition(node, "maintainer-import-checks");
+  const privateChecks = [pr, ...(importDiagnosis ? [] : failed)].flatMap(item => failedValidationChecks(item)
+    .filter(check => isPrivateBuildkiteCheck(item, check))
+    .map(check => `${item === pr ? "Source" : "Import"} #${item.number}: ${check.name}: ${check.state}`));
+  if (publicImportFailures.length || importDiagnosis)
     add("maintainer-import-checks", `${[...publicImportFailures, ...internalImportFailures].join(". ")}. Investigate the import’s CI logs.`);
-  else if (internalImportFailures.length)
+  if (privateChecks.length)
+    add("maintainer-internal-feedback", `${[...privateChecks, ...internalImportFailures].join(". ")}. The internal Buildkite pipeline requires project access to diagnose.`);
+  else if (!publicImportFailures.length && internalImportFailures.length)
     add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Internal checks failed; public validation results remain separate. ${[pr, ...active].some(item => (item.checks?.contexts || []).some(check => isImportStatus(check) && FAILURE_STATES.has(check.state) && check.url)) ? "Inspect the reported service link." : "No public log URL was reported; internal diagnostics are needed."}`);
   if (pr.mergeable === "UNKNOWN" || active.some(item => item.mergeable === "UNKNOWN"))
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
@@ -748,7 +758,7 @@ function attentionReasons(node, owner) {
       || checkInfo(item).tone === "unknown" && validationChecks(item).length > 0)
       || approved && (usesImports(pr) && !pr.importsComplete || pr.labelsComplete !== true))
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
-  if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
+  if (checkInfo(pr).tone === "bad" && !failedValidationChecks(pr).length && !importStatus && !feedbackStatus)
     add("agent-refresh", "GitHub reports a source check failure without its failing context. Investigate the public check records.");
   const wait = releaseWait(node);
   if (wait) {

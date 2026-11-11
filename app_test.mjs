@@ -1920,6 +1920,33 @@ test('Copybara failures remain import attention without a public validation fail
   assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
 });
 
+test('an approved source routes readable export lint to the agent and private Buildkite logs to maintainers', () => {
+  const node = attentionNode(15368), pr = node.github, exported = attentionImport(node, 17430);
+  pr.repo = exported.repo = 'google/gvisor';
+  exported.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [
+    { ...serviceStatus('lint', 'FAILURE'), kind: 'check-run', id: 'CR_kwDOB9IlXs8AAAAeT8W9-A',
+      url: 'https://github.com/google/gvisor/actions/runs/42918605079/job/130187378168' },
+  ] };
+  pr.imports = [exported];
+  const context = client(); context.nodeInput = node;
+  const primary = () => vm.runInContext('primaryAttention(attentionReasons(nodeInput, "tamird"))', context);
+  assert.equal(primary().owner, 'agent');
+  assert.match(primary().detail, /Import #17430: lint: FAILURE/);
+  const internal = { ...serviceStatus('buildkite/internal', 'FAILURE'), url: 'https://buildkite.com/gvisor/internal/builds/36116' };
+  exported.checks.contexts.push(internal);
+  exported.checks.total++;
+  assert.equal(primary().owner, 'agent');
+  assert.doesNotMatch(primary().detail, /buildkite\/internal/);
+  assert.equal(reasonsFor(node).find(r => r.id === 'maintainer-internal-feedback').owner, 'maintainer');
+  exported.checks.contexts = [internal]; exported.checks.total = 1;
+  assert.equal(primary().id, 'maintainer-internal-feedback');
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  pr.imports = []; pr.checks = exported.checks;
+  assert.equal(primary().id, 'maintainer-internal-feedback');
+  assert.ok(!idsFor(node).includes('agent-refresh'));
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+});
+
 test('internal import success and opaque feedback failure remain distinct from public checks', () => {
   const node = attentionNode(16097), context = client();
   node.github.checks.contexts.push(serviceStatus('import/copybara', 'SUCCESS'), serviceStatus('feedback/copybara', 'SUCCESS'));

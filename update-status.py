@@ -20,7 +20,7 @@ from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import load_registry, registry_is_published
 from reviewer_selection import needs_reviewer_paths, recent_reviewer_work, reviewer_governance
-from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
+from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -960,12 +960,16 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                     imports.append(observation)
             if active and (failed or check_states(pr) & FAILURES):
                 failure = {**observation, "recordedFollowup": assignment}
-                if (is_source and source["status"] == "open" and source.get("head") and not delivered
-                        and not source.get("revisionChanged") and not observation["sourceBranchMismatch"]):
-                    source_checks = [check["id"] for check in validation_checks(source)
-                                     if check in failed and check.get("id") and check.get("url")]
-                    if source_checks:
-                        failure["actionCheckIds"] = source_checks
+                if (source["status"] == "open" and pr["status"] == "open" and source.get("head") and not delivered
+                        and (is_source or pr.get("sourceHead") == source["head"])
+                        and not source.get("revisionChanged") and not pr.get("revisionChanged")
+                        and (not source.get("branchHead") or source["branchHead"] == source["head"])
+                        and not observation["sourceBranchMismatch"]):
+                    actionable = [check["id"] for check in validation_checks(pr)
+                                  if check in failed and check.get("id") and check.get("url")
+                                  and not is_private_buildkite_check(pr, check)]
+                    if actionable:
+                        failure["actionCheckIds"] = actionable
                         failure["action"] = ("Use the diagnosis for these exact checks, or read their original results "
                                              "and identify the source repair or CI recovery.")
                 failures.append(failure)

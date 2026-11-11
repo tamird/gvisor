@@ -1308,6 +1308,46 @@ class CollectorHistoryTest(unittest.TestCase):
 
 
 class CheckReportTest(unittest.TestCase):
+    def test_actionable_checks_on_matching_open_copybara_export(self) -> None:
+        source = retained(raw_pr(15368))
+        source.update(repo="google/gvisor", head="403195966ebb7900501ebb8ef40fa859c12fe71c")
+        source["branchHead"] = source["head"]
+        imported = retained(raw_pr(17430))
+        imported.update(repo="google/gvisor", head="649ad252f2c93094fad7ff627e962ca487ee70db", sourceHead=source["head"])
+        imported["branchHead"] = imported["head"]
+        lint = {"id": "CR_kwDOB9IlXs8AAAAeT8W9-A", "kind": "check-run", "name": "lint", "state": "FAILURE",
+                "url": "https://github.com/google/gvisor/actions/runs/42918605079/job/130187378168"}
+        pipeline = {"id": "SC_kwDOB9IlXs8AAAANo-xg0g", "kind": "status", "name": "buildkite/pipeline",
+                    "state": "FAILURE", "url": "https://buildkite.com/gvisor/pipeline/builds/54318"}
+        imported["checks"] = {"state": "FAILURE", "complete": True, "total": 2, "contexts": [lint, pipeline]}
+        source["imports"] = [imported]
+        source["checks"] = {"state": "SUCCESS", "complete": True, "total": 1, "contexts": [dict(lint, state="SUCCESS")]}
+        waiting = {"owner": "Upstream review", "sourceHead": "886a52af8c85864aa628d04550ce5508dd91e8bc"}
+        node = {"type": "pr", "repo": "google/gvisor", "number": 15368, "followup": waiting}
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
+            row, = updater.check_report([source], {"prs": [copy.deepcopy(source)]})["checkFailures"]
+            self.assertEqual((row["scope"], row["source"], row["number"]), ("current-source-import", 15368, 17430))
+            self.assertEqual(row["actionCheckIds"], [lint["id"], pipeline["id"]])
+            self.assertEqual(row["recordedFollowup"], waiting)
+            for record, changes in [(source, {"branchHead": "d" * 40}), (imported, {"branchHead": "e" * 40}),
+                                    (imported, {"sourceHead": "a" * 40}), (imported, {"revisionChanged": True}),
+                                    (imported, {"status": "draft"})]:
+                with self.subTest(changes=changes), mock.patch.dict(record, changes):
+                    row, = updater.check_report([source], {})["checkFailures"]
+                    self.assertNotIn("actionCheckIds", row)
+                    self.assertEqual(row["failedChecks"], [lint, pipeline])
+
+            private = dict(pipeline, id="internal", name="buildkite/internal",
+                           url="https://buildkite.com/gvisor/internal/builds/36116")
+            linkless = dict(pipeline, id="go", name="go tests", url=None)
+            imported["checks"].update(total=5, contexts=[lint, pipeline, private, linkless, dict(lint, state="SUCCESS")])
+            row, = updater.check_report([source], {})["checkFailures"]
+            self.assertEqual(row["actionCheckIds"], [lint["id"], pipeline["id"]])
+            self.assertIn(private, row["failedChecks"])
+            imported["checks"].update(total=2, contexts=[private, linkless])
+            row, = updater.check_report([source], {})["checkFailures"]
+            self.assertNotIn("action", row)
+
     def test_failed_source_check_after_recorded_review_wait(self) -> None:
         source = retained(raw_pr(17181))
         waiting = {"owner": "Upstream review", "sourceHead": source["head"],
