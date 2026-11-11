@@ -1,0 +1,30 @@
+On Linux, buildifier_prebuilt's //buildifier:buildifier runs a Bash
+wrapper so `bazel run` can switch to the caller's working directory.
+gVisor's lint action runs on workers without Bash. Expose the executable
+selected by the toolchain as //buildifier:native so the action can run
+Buildifier directly.
+
+diff --git a/buildifier/buildifier_binary.bzl b/buildifier/buildifier_binary.bzl
+--- a/buildifier/buildifier_binary.bzl
++++ b/buildifier/buildifier_binary.bzl
+@@ -27,4 +27,5 @@
+             runfiles = ctx.runfiles(files = [buildifier]),
+             executable = script,
+         ),
++        OutputGroupInfo(native_binary = depset([buildifier])),
+     ]
+diff --git a/buildifier/BUILD b/buildifier/BUILD
+--- a/buildifier/BUILD
++++ b/buildifier/BUILD
+@@ -23,3 +23,11 @@
++# Native executable for build actions; the interactive CLI changes directory.
++filegroup(
++    name = "native",
++    srcs = [":buildifier"],
++    output_group = "native_binary",
++    visibility = ["//visibility:public"],
++)
++
+ filegroup(
+     name = "all_files",
+     srcs = glob(["*"]),
