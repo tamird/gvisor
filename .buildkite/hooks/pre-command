@@ -98,13 +98,14 @@ if [[ "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == "true" ]]; then
     gcloud storage cat "$STAGED_BINARIES" \
       | tar -C "$BUILDKITE_STAGED_BINARIES_DIRECTORY" -zxvf -
     chmod -R +x "$BUILDKITE_STAGED_BINARIES_DIRECTORY"
-    sudo "$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc" install \
-      --experimental=true --runtime="${RUNTIME}" \
-      -- "${RUNTIME_ARGS:-}"
+    runsc="$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc"
   else
-    make sudo TARGETS=//runsc:runsc \
-      ARGS="install --experimental=true --runtime=${RUNTIME} -- ${RUNTIME_ARGS:-}"
+    make release-tarball DESTINATION=bin/
+    sudo tar -C /usr/local/bin -xf bin/gvisor.tar.bz2
+    runsc=/usr/local/bin/runsc
   fi
+  read -r -a runtime_args <<< "${RUNTIME_ARGS:-}"
+  sudo "$runsc" install --experimental=true --runtime="${RUNTIME}" -- "${runtime_args[@]}"
   if [[ "$HAD_EXPERIMENTAL" != true ]]; then
     # WARNING: We may be running in a container when this command executes.
     # This only makes sense if Docker's `live-restore` feature is enabled.
