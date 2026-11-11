@@ -330,8 +330,11 @@ func TestSystemdNginx(t *testing.T) {
 // TestSystemdApache verifies that Apache httpd serves HTTP as a systemd service.
 func TestSystemdApache(t *testing.T) {
 	t.Parallel()
+	t.Logf("USERMGR_PEER %s begin %d", t.Name(), time.Now().UnixMilli())
+	defer func() { t.Logf("USERMGR_PEER %s end %d", t.Name(), time.Now().UnixMilli()) }()
 	ctx := t.Context()
 	d := spawnSystemdContainer(ctx, t, "systemd-services")
+	t.Logf("USERMGR_PEER %s booted %d", t.Name(), time.Now().UnixMilli())
 	defer d.CleanUp(ctx)
 
 	startService(ctx, t, d, "apache2.service")
@@ -387,8 +390,11 @@ func waitForSSH(ctx context.Context, t *testing.T, d *dockerutil.Container) {
 // systemd service. This also exercises PAM and the pam_systemd/logind interaction.
 func TestSystemdSSH(t *testing.T) {
 	t.Parallel()
+	t.Logf("USERMGR_PEER %s begin %d", t.Name(), time.Now().UnixMilli())
+	defer func() { t.Logf("USERMGR_PEER %s end %d", t.Name(), time.Now().UnixMilli()) }()
 	ctx := t.Context()
 	d := spawnSystemdContainer(ctx, t, "systemd-services")
+	t.Logf("USERMGR_PEER %s booted %d", t.Name(), time.Now().UnixMilli())
 	defer d.CleanUp(ctx)
 
 	setupSSHKeys(ctx, t, d)
@@ -413,8 +419,11 @@ func TestSystemdSSH(t *testing.T) {
 // and can execute a create/insert/select round trip.
 func TestSystemdPostgreSQL(t *testing.T) {
 	t.Parallel()
+	t.Logf("USERMGR_PEER %s begin %d", t.Name(), time.Now().UnixMilli())
+	defer func() { t.Logf("USERMGR_PEER %s end %d", t.Name(), time.Now().UnixMilli()) }()
 	ctx := t.Context()
 	d := spawnSystemdContainer(ctx, t, "systemd-services")
+	t.Logf("USERMGR_PEER %s booted %d", t.Name(), time.Now().UnixMilli())
 	defer d.CleanUp(ctx)
 
 	startService(ctx, t, d, "postgresql.service")
@@ -910,9 +919,96 @@ func TestSystemdMultiUser(t *testing.T) {
 	execOrFatal(ctx, t, d, "mkdir", "-p", "/var/log/journal")
 	execOrFatal(ctx, t, d, "systemctl", "restart", "systemd-journald")
 	execOrFatal(ctx, t, d, "journalctl", "--flush")
+	started := time.Now()
 	execOrFatal(ctx, t, d, "loginctl", "enable-linger", "alice", "bob")
+	t.Logf("USERMGR_BEGIN at_ms=%d", started.UnixMilli())
+	watch, stop := context.WithCancel(ctx)
+	watched := make(chan struct{})
+	go func() {
+		defer close(watched)
+		for _, at := range []time.Duration{3 * time.Second, 20 * time.Second, 50 * time.Second} {
+			select {
+			case <-watch.Done():
+				return
+			case <-time.After(time.Until(started.Add(at))):
+			}
+			sample, done := context.WithTimeout(watch, 6*time.Second)
+			out, err := d.Exec(sample, dockerutil.ExecOpts{User: "root"}, "sh", "-c", `
+props=$(systemctl show user@1002.service -p MainPID -p ControlPID -p ActiveState -p SubState -p Result)
+printf '%s\n' "$props"
+pid=$(printf '%s\n' "$props" | sed -n 's/^MainPID=//p')
+case "$pid" in ''|0|*[!0-9]*) ;; *)
+    awk '/^State:/ { print "ProcessState=" $2 }' "/proc/$pid/status" 2>/dev/null
+    printf 'WaitChannel=%s\n' "$(cat "/proc/$pid/wchan" 2>/dev/null)"
+esac
+systemctl list-jobs --no-legend --no-pager --plain | head -n 16 | awk 'NF >= 4 { print "Job=" $1 "," $2 "," $3 "," $4 }'
+if [ -S /run/user/1002/systemd/private ]; then echo ManagerSocket=present; else echo ManagerSocket=absent; fi
+if [ -S /run/user/1002/bus ]; then echo UserBusSocket=present; else echo UserBusSocket=absent; fi
+bobctl() {
+    timeout 1s setpriv --reuid=1002 --regid=1002 --clear-groups env XDG_RUNTIME_DIR=/run/user/1002 systemctl --user "$@"
+}
+state=$(bobctl show basic.target --no-pager --property=ActiveState --value 2>/dev/null)
+printf 'BasicQueryExit=%s\n' "$?"
+case "$state" in active|inactive|activating|failed) printf 'BasicState=%s\n' "$state";; esac
+userjobs=$(bobctl list-jobs --no-legend --plain --no-pager 2>/dev/null)
+printf 'UserJobQueryExit=%s\n' "$?"
+printf '%s\n' "$userjobs" | head -16 | awk 'NF >= 4 { print "UserJob=" $1 "," $2 "," $3 "," $4 }'
+
+`)
+			done()
+			if watch.Err() != nil {
+				return
+			}
+			t.Logf("USERMGR_SAMPLE start_ms=%d elapsed_ms=%d completed=%t", at.Milliseconds(), time.Since(started).Milliseconds(), err == nil)
+			for _, line := range strings.Split(out, "\n") {
+				key, value, ok := strings.Cut(line, "=")
+				switch key {
+				case "MainPID", "ControlPID", "ActiveState", "SubState", "Result", "ProcessState", "WaitChannel", "Job", "ManagerSocket", "UserBusSocket", "BasicQueryExit", "BasicState", "UserJobQueryExit", "UserJob":
+					if ok && len(value) <= 160 && strings.IndexFunc(value, func(c rune) bool {
+						return !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || strings.ContainsRune("@,_.:-", c))
+					}) < 0 {
+						t.Logf("USERMGR_FIELD start_ms=%d %s=%s", at.Milliseconds(), key, value)
+					}
+				}
+			}
+		}
+	}()
+	defer func() {
+		stop()
+		<-watched
+	}()
 	waitForUnitActive(ctx, t, d, aliceUnit)
+	t.Logf("USERMGR_OBSERVED uid=1001 elapsed_ms=%d", time.Since(started).Milliseconds())
 	waitForUnitActive(ctx, t, d, bobUnit)
+	t.Logf("USERMGR_OBSERVED uid=1002 elapsed_ms=%d", time.Since(started).Milliseconds())
+	stop()
+	<-watched
+	for _, uid := range []int{aliceUID, bobUID} {
+		unit := fmt.Sprintf("user@%d.service", uid)
+		query, cancel := context.WithTimeout(ctx, 6*time.Second)
+		out, err := d.Exec(query, dockerutil.ExecOpts{User: "root"}, "systemctl", "show", unit, "-p", "InactiveExitTimestampMonotonic", "-p", "ActiveEnterTimestampMonotonic")
+		cancel()
+		var begin, end int64
+		for _, line := range strings.Split(out, "\n") {
+			key, value, _ := strings.Cut(line, "=")
+			us, parseErr := strconv.ParseInt(value, 10, 64)
+			if parseErr == nil {
+				switch key {
+				case "InactiveExitTimestampMonotonic":
+					begin = us
+				case "ActiveEnterTimestampMonotonic":
+					end = us
+				}
+			}
+		}
+		journalCtx, cancelJournal := context.WithTimeout(ctx, 3*time.Second)
+		journal, journalErr := d.Exec(journalCtx, dockerutil.ExecOpts{User: "root"}, "journalctl", "-u", unit, "--no-pager")
+		cancelJournal()
+		t.Logf("USERMGR_JOURNAL uid=%d read=%t libbpf_warning=%t", uid, journalErr == nil, strings.Contains(journal, "cgroup BPF features disabled"))
+		if err == nil && begin > 0 && end >= begin {
+			t.Logf("USERMGR_ACTIVATION uid=%d duration_us=%d", uid, end-begin)
+		}
+	}
 	checkManagerRunning := func(ctx context.Context) error {
 		out, err := userExec(ctx, d, "alice", "systemctl", "--user", "is-system-running")
 		if err != nil || strings.TrimSpace(out) != "running" {
