@@ -96,6 +96,7 @@ containerd_test(
     name = "crictl_test",
     size = "large",
     srcs = [
+        "cri_pause_qualification_test.go",
         "crictl_emptydir_test.go",
         "crictl_main_test.go",
         "crictl_sandbox_test.go",

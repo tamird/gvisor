@@ -115,6 +115,32 @@ jobs:
         ref: ${{ github.sha }}
         persist-credentials: false
 
+    - name: Build the actual archives from the standalone change
+      shell: bash
+      run: |
+        set -euo pipefail
+        candidate=1ebf12a6e1f0d9ea11d26bed4b40b590029f85c7
+        git fetch --no-tags --depth=1 origin "$candidate"
+        git switch --detach "$candidate"
+        bazelisk query 'somepath(//test/root:crictl_test, //test/root/pause:archives)'
+        bazelisk build //test/root/pause:archives
+        python3 - <<'PYARCHIVE'
+        import hashlib, json, os, tarfile
+        from pathlib import Path
+        rows = {}
+        for version, tag in {"1.7.31": "3.8", "2.0.8": "3.10", "2.1.7": "3.10", "2.2.3": "3.10.1"}.items():
+            path = Path("bazel-bin/test/root/pause") / (version + ".tar")
+            with tarfile.open(path) as tar:
+                manifests = json.load(tar.extractfile("manifest.json"))
+                assert any("registry.k8s.io/pause:" + tag in image["RepoTags"] for image in manifests)
+                rows[version] = {"tag": tag, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        (Path(os.environ["RUNNER_TEMP"]) / "pause-archives.json").write_text(json.dumps(rows, indent=2) + "\n")
+        PYARCHIVE
+        cp -L bazel-bin/test/root/pause/2.2.3.tar "$RUNNER_TEMP/pause-2.2.3.tar"
+        git switch --detach "$GITHUB_SHA"
+        mkdir -p test/root/pause
+        cp "$RUNNER_TEMP/pause-2.2.3.tar" test/root/pause/2.2.3.tar
+
     - name: Download the pinned BuildBuddy CLI
       if: env.QUALIFICATION_EXECUTION == 'remote'
       shell: bash
@@ -161,17 +187,19 @@ jobs:
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: >-
-        bash test/rbe/actions.sh --bazel-option=--runs_per_test=7
+        bash test/rbe/actions.sh
         --bazel-option=--nocache_test_results --bazel-option=--flaky_test_attempts=1
 
-    - name: Collect each named case and its startup phase timestamps
+    - name: Collect the resource update and registry results
       if: always()
       run: python3 test/rbe/cri_startup_results.py
 
-    - name: Retain only the seven case records
+    - name: Retain only the image tags, digests and case outcomes
       if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: qualification-${{ inputs.architecture }}-attempt-${{ github.run_attempt }}
-        path: ${{ runner.temp }}/cri-startup-results.json
+        path: |
+          ${{ runner.temp }}/cri-startup-results.json
+          ${{ runner.temp }}/pause-archives.json
         if-no-files-found: error

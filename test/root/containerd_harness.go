@@ -263,6 +263,14 @@ func stageRuntime(dir, self string) error {
 		return fmt.Errorf("release tree %q is empty", root)
 	}
 
+	archive, err := testutil.FindFile(filepath.Join("test/root/pause", *containerdVersion+".tar"))
+	if err != nil {
+		return fmt.Errorf("locating sandbox image for containerd %s: %w", *containerdVersion, err)
+	}
+	if err := copyFile(archive, filepath.Join(dir, "pause.tar"), 0644); err != nil {
+		return fmt.Errorf("staging sandbox image: %w", err)
+	}
+
 	// The caller already resolved the test binary's symlinks.
 	binName := filepath.Base(self)
 	if err := copyFile(self, filepath.Join(dir, binName), 0755); err != nil {
@@ -322,6 +330,9 @@ func stageImages(dir string, logger testutil.Logger) ([]mount.Mount, string, err
 		}
 		var mounts []mount.Mount
 		for _, image := range slices.Sorted(maps.Keys(inputs.Images)) {
+			if image == inputs.SandboxImage {
+				continue
+			}
 			archive, err := filepath.Abs(inputs.Images[image])
 			if err != nil {
 				return nil, "", err

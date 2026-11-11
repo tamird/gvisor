@@ -597,11 +597,9 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 		})
 	}
 	cu.Add(cc.CleanUp)
-	// Each fresh containerd needs its version's sandbox image before CRI can
-	// create pods. Declared harness inputs supply it through the ordinary import.
-	if image := os.Getenv(sandboxImageEnv); image != "" {
-		if err := cc.Import(image); err != nil {
-			t.Fatalf("importing sandbox image %q: %v", image, err)
+	if inHarness() && os.Getenv("CRI_PAUSE_TRIAL") == "declared-denied" {
+		if err := cc.ImportArchive(path.Join(runtimeDir, "pause.tar")); err != nil {
+			return nil, nil, err
 		}
 	}
 
