@@ -20,11 +20,19 @@
 // import loops.
 package version
 
-// version is the version string.
-// It is initialized by the runsc main() function.
-var version = "VERSION_MISSING"
+// Development is the version reported by binaries built without a release label.
+const Development = "(devel)"
 
-// Version returns the version string.
+// Bazel sets version to --embed_label when stamping the binary.
+var version string
+
+// Version returns the release label, or Development for an unnamed build.
 func Version() string {
-	return version
+	switch version {
+	case "", "0.0.0", "VERSION_MISSING":
+		// Older source builds used these placeholders when they had no revision.
+		return Development
+	default:
+		return version
+	}
 }

@@ -60,7 +60,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/inet"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
-	"gvisor.dev/gvisor/pkg/sentry/kernel/version"
+	kernelversion "gvisor.dev/gvisor/pkg/sentry/kernel/version"
 	"gvisor.dev/gvisor/pkg/sentry/loader"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/platform"
@@ -106,6 +106,7 @@ import (
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/profile"
 	"gvisor.dev/gvisor/runsc/specutils"
+	"gvisor.dev/gvisor/runsc/version"
 )
 
 type containerInfo struct {
@@ -207,6 +208,11 @@ func (s loaderState) String() string {
 type Loader struct {
 	// k is the kernel.
 	k *kernel.Kernel
+
+	// checkpointVersion is the release label, or the linked Sentry's build ID
+	// for an unnamed build. A failed lookup is reported on save or restore.
+	checkpointVersion    string
+	checkpointVersionErr error
 
 	// ctrl is the control server.
 	ctrl *controller
@@ -691,7 +697,7 @@ func New(args Args) (*Loader, error) {
 		cxproxy.Init()
 		efaproxy.Init()
 		genericproxy.Init()
-		version.UseRDMARelease()
+		kernelversion.UseRDMARelease()
 		args.StartupTimer.Reached("RDMA proxy initialized")
 	}
 
@@ -729,6 +735,10 @@ func New(args Args) (*Loader, error) {
 		saveCheckpointGofer:   args.SaveCheckpointGofer,
 		fsSaveFDs:             args.FSSaveFDs,
 		fsSaveCheckpointGofer: args.FSSaveCheckpointGofer,
+	}
+	l.checkpointVersion = version.Version()
+	if l.checkpointVersion == version.Development {
+		l.checkpointVersion, l.checkpointVersionErr = sentryBuildID()
 	}
 	l.restoreDone = sync.NewCond(&l.mu)
 

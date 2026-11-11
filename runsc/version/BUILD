@@ -10,4 +10,5 @@ go_library(
     srcs = ["version.go"],
     importpath = "gvisor.dev/gvisor/runsc/version",
     visibility = ["//:sandbox"],
+    x_defs = {"version": "{BUILD_EMBED_LABEL}"},
 )

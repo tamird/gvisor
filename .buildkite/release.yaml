@@ -52,8 +52,14 @@ steps:
     commands:
       # Stamps the binaries below with release-<name>.
       - ./.buildkite/scripts/release/tag.sh stage
-      - "make BAZEL_OPTIONS='--config=x86_64 --compilation_mode=opt' artifacts/x86_64"
-      - "make BAZEL_OPTIONS='--config=aarch64 --compilation_mode=opt' artifacts/aarch64"
+      - |
+        if [[ "$${BUILDKITE_TAG:-}" == release-*-staging ]]; then
+          label="$${BUILDKITE_TAG%-staging}"
+        else
+          # Untagged master and nightly packages use the nearest release.
+          label="$$(git describe --always --tags --exclude 'release-*-staging' --abbrev=12 --dirty)"
+        fi
+        make release-artifacts RELEASE_VERSION="$$label" BAZEL_OPTIONS=--compilation_mode=opt
       - make artifacts-python
       - make release RELEASE_NIGHTLY=$$RELEASE_NIGHTLY
       - (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)

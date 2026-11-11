@@ -15,6 +15,7 @@
 package boot
 
 import (
+	"debug/elf"
 	"fmt"
 	"math/bits"
 	"os"
@@ -57,12 +58,11 @@ import (
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/specutils"
 	"gvisor.dev/gvisor/runsc/starttime"
-	"gvisor.dev/gvisor/runsc/version"
 )
 
 const (
-	// VersionKey is the key used to save runsc version in the save metadata and compare
-	// it across checkpoint restore.
+	// VersionKey identifies the release, or the linked sentry when no
+	// release label was supplied, that produced the checkpoint.
 	VersionKey = "runsc_version"
 	// ContainerCountKey is the key used to save number of containers in the save metadata.
 	ContainerCountKey = "container_count"
@@ -865,6 +865,41 @@ func tscOffsetFromSnapshot(baseCycle, baseFreq, baseRealtime, curCycle, curRealt
 	return oldMachineCycles - curCycle, true
 }
 
+// sentryBuildID identifies the linked executable for checkpoints from an
+// unnamed build. Read it while the loader still has access to /proc/self/exe.
+func sentryBuildID() (string, error) {
+	f, err := elf.Open("/proc/self/exe")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	s := f.Section(".note.go.buildid")
+	if s == nil {
+		return "", fmt.Errorf("sentry executable has no Go build ID")
+	}
+	note, err := s.Data()
+	if err != nil {
+		return "", err
+	}
+	// The ELF note header is three uint32s (name size, descriptor size,
+	// type), followed by the four-byte Go owner and the build ID itself.
+	if len(note) < 16 || f.ByteOrder.Uint32(note[:4]) != 4 ||
+		f.ByteOrder.Uint32(note[8:12]) != 4 || string(note[12:16]) != "Go\x00\x00" {
+		return "", fmt.Errorf("invalid Go build ID note")
+	}
+	size := f.ByteOrder.Uint32(note[4:8])
+	desc := note[16:]
+	if size == 0 || uint64(size) > uint64(len(desc)) {
+		return "", fmt.Errorf("invalid Go build ID size %d", size)
+	}
+	id := string(desc[:size])
+	// Linking with -buildid=redacted gives unrelated executables this same ID.
+	if id == "redacted" {
+		return "", fmt.Errorf("sentry executable has a redacted Go build ID")
+	}
+	return "go-buildid:" + id, nil
+}
+
 func (l *Loader) save(o *controlapi.SaveOpts) error {
 	saveOpts, err := control.ConvertToStateSaveOpts(o)
 	if err != nil {
@@ -904,8 +939,11 @@ func (l *Loader) saveWithOpts(saveOpts *state.SaveOpts, execOpts *controlapi.Sav
 	}
 	saveOpts.Metadata[ContainerCountKey] = strconv.Itoa(l.containerCount())
 
-	// Save runsc version.
-	saveOpts.Metadata[VersionKey] = version.Version()
+	// Save the identity checked before restoring the kernel.
+	if l.checkpointVersionErr != nil {
+		return fmt.Errorf("identifying checkpoint producer: %w", l.checkpointVersionErr)
+	}
+	saveOpts.Metadata[VersionKey] = l.checkpointVersion
 
 	saveOpts.Metadata[networkKey] = l.root.conf.Network.String()
 	if l.noRootContainer.enabled {

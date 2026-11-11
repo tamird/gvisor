@@ -95,9 +95,6 @@ const (
 	enforceReleaseTestonlySkip = "TESTONLY_SKIP"
 )
 
-// Special release name used in CI that is also ignored.
-const buildkiteTestVersion = "buildkite-test-branch-dirty"
-
 // cutSkip returns the expected release embedded in `val` (env var).
 func cutSkip(val, prefix string) (string, bool) {
 	if val == prefix {
@@ -128,7 +125,7 @@ func WithEnforceRelease(envv []string) []string {
 	value := version.Version()
 	if prefix != "" {
 		if want == "" {
-			want = version.Version()
+			want = value
 		}
 		value = prefix + ":" + want
 	}
@@ -145,13 +142,13 @@ func WithEnforceRelease(envv []string) []string {
 // match this binary's build label.
 // See `gvisorbinaries` top-level package comment for full semantics.
 func VerifyMatchingRelease(b *Binary) {
-	val := os.Getenv(enforceReleaseEnv)
+	val, present := os.LookupEnv(enforceReleaseEnv)
 	got := version.Version()
 	var who string
 	if b != nil {
 		who = fmt.Sprintf(" in sidecar %q", b.Name)
 	}
-	if val == "" {
+	if !present {
 		if b != nil {
 			log.Warningf("Release match check not enforced%s (did you start this sidecar binary manually?); this build is %q.", who, got)
 		}
@@ -163,8 +160,8 @@ func VerifyMatchingRelease(b *Binary) {
 		want, skip = wantTest, true
 	}
 	if !skip {
-		if got != val {
-			errMsg := fmt.Sprintf("this binary's build label %q%s does not match the expected release %q; all gVisor binaries must come from the same release (fix your gVisor installation deployment, or disable enforcement with `--sidecar-release-enforcement-policy=...` at your own risk)", got, who, val)
+		if got == version.Development || got != val {
+			errMsg := fmt.Sprintf("this binary reports %q%s and cannot verify the expected release %q; all gVisor binaries must come from the same release (fix your gVisor installation deployment, or disable enforcement with `--sidecar-release-enforcement-policy=...` at your own risk)", got, who, val)
 			log.Warningf("Release check: %s.", errMsg)
 			panic(errMsg)
 		}
@@ -178,17 +175,13 @@ func VerifyMatchingRelease(b *Binary) {
 	if b == nil {
 		return
 	}
-	if got == buildkiteTestVersion {
-		log.Infof("Sidecar release match check not enforced%s; this build is %q.", who, got)
-		return
-	}
 	var msg string
 	info := testOnly
 	switch want {
 	case "":
 		msg = fmt.Sprintf("Sidecar release match check not enforced%s; this build is %q.", who, got)
 	case got:
-		msg = fmt.Sprintf("Sidecar release match check not enforced%s; build label %q matches the expected release.", who, got)
+		msg = fmt.Sprintf("Sidecar release match check not enforced%s; both builds report %q.", who, got)
 		info = true
 	default:
 		msg = fmt.Sprintf("Sidecar release match check not enforced%s; this build is %q but the expected release is %q.", who, got, want)
