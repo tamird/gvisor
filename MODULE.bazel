@@ -8,6 +8,34 @@ bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "bazel_lib", version = "3.4.0")
+
+bazel_dep(name = "cpplint", version = "2.0.2", dev_dependency = True)
+
+lint_go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps", dev_dependency = True)
+
+# The Go proxy records Buildifier v8.5.1 as a pseudo-version.
+lint_go_deps.module(
+    path = "github.com/bazelbuild/buildtools",
+    sum = "h1:EXAnYUhGsKLMIkLIqkvdXA/P+SfnU57ampI+5FBBn8U=",
+    version = "v0.0.0-20260128144711-f6a198225003",
+)
+
+# Buildtools ships generated Go protobufs. Its own BUILD files regenerate them
+# with rules_proto, which the Go module does not declare.
+lint_go_deps.gazelle_override(
+    build_file_generation = "clean",
+    directives = ["gazelle:proto disable"],
+    path = "github.com/bazelbuild/buildtools",
+)
+use_repo(lint_go_deps, "com_github_bazelbuild_buildtools")
+
+lint_sources = use_repo_rule("//tools:lint_sources.bzl", "lint_sources")
+
+lint_sources(
+    name = "lint_inputs",
+    dev_dependency = True,
+)
+
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
