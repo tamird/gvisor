@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T12:32:04+00:00",
+    "updatedAt": "2026-11-11T12:39:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52877,6 +52877,10 @@
         {
           "label": "Published upstream Gazelle PR",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        },
+        {
+          "label": "Downstream AF_XDP build on b01b6c0c7: the stock Gazelle override check stopped rule loading. With c534b7cb8, Clang 23 and the consumer’s 4.19.325 headers produced a 952-byte BPF ELF with xdp_prog, sock_map and .relxdp.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43022620738/artifacts/13855921447"
         }
       ],
       "settledReviews": [
@@ -68448,6 +68452,10 @@
         {
           "label": "Single-commit test revision",
           "url": "https://github.com/tamird/bazel-gazelle/commit/c534b7cb8"
+        },
+        {
+          "label": "Downstream AF_XDP build on b01b6c0c7: the stock Gazelle override check stopped rule loading. With c534b7cb8, Clang 23 and the consumer’s 4.19.325 headers produced a 952-byte BPF ELF with xdp_prog, sock_map and .relxdp.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43022620738/artifacts/13855921447"
         }
       ],
       "settledReviews": [
@@ -73485,6 +73493,44 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43009693434/artifacts/13850012545"
         }
       ]
+    },
+    {
+      "id": "branch:gazelle-cgroups-go-metrics",
+      "type": "branch",
+      "repo": "tamird/bazel-gazelle",
+      "ref": "fix/containerd-cgroups-generated-metrics",
+      "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
+      "title": "Build the shipped Go metrics for cgroups v3",
+      "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
+      "group": "bazel",
+      "status": "Ready for contributor review",
+      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The proposed upstream revision and the earlier preview have identical trees.",
+      "evidence": [
+        {
+          "label": "Exact one-commit fork proposal",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804faacf022c6c593703d2da28e4e4c495"
+        },
+        {
+          "label": "Original Gazelle 0.51.3 metrics, descriptors and shim qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41404466409/artifacts/13121904786"
+        },
+        {
+          "label": "containerd/cgroups field-name postprocessing",
+          "url": "https://github.com/containerd/cgroups/commit/f0f76178d"
+        }
+      ],
+      "updatedAt": "2026-11-11T12:39:44+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
+        "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
+        "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
+        "title": "Build the shipped Go metrics for cgroups v3",
+        "body": "Building github.com/containerd/cgroups/v3 with go_deps fails with\n\"undefined: v1.Metrics\". Both metrics schemas specify Go import paths\nwithout the /v3 suffix [1][2]. Gazelle generates the protobuf bindings\nat those paths, leaving only doc.go in the two /v3 stats packages that\ncgroups imports.\n\nCompile the metrics.pb.go files that cgroups ships. They preserve field\nnames such as Metrics.CPU because cgroups runs go-fix-acronym after\nprotoc [3]. Disable only Go proto generation so other languages can\nstill import both schemas through their stats_proto targets.\n\n[1]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup1/stats/metrics.proto#L5\n[2]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup2/stats/metrics.proto#L5\n[3]: https://github.com/containerd/cgroups/blob/076b5e0e6/Makefile#L29",
+        "requestedAt": "2026-11-11T12:39:44+00:00",
+        "summary": "Open this single-commit PR in bazel-contrib/bazel-gazelle? The original gVisor qualification exercised the directive on Gazelle 0.51.3."
+      }
     }
   ],
   "edges": [
@@ -97465,7 +97511,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-11T12:32:04+00:00",
+      "updatedAt": "2026-11-11T12:39:44+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -97634,7 +97680,7 @@
           ]
         },
         {
-          "text": "containerd/cgroups rewrites generated Go field names in all ten published v3 releases. Gazelle 0.51.3 with the registry directive selected both checked-in metrics.pb.go inputs and kept both language-neutral protobuf descriptor targets. The tested directive matches the proposal in 9e4aff6b5 apart from a comment. The shim linked, started, and read its executable eight times. The stock gVisor build applies a protobuf patch and makes zero such reads. In that run, building protoc in the external consumer failed on C++ header paths.",
+          "text": "containerd/cgroups rewrites generated Go field names in all ten published v3 releases. Gazelle 0.51.3 with the registry directive selected both checked-in metrics.pb.go inputs and kept both language-neutral protobuf descriptor targets. The tested directive matches the proposal in 761d7b804 apart from a comment. The shim linked, started, and read its executable eight times. The stock gVisor build applies a protobuf patch and makes zero such reads. In that run, building protoc in the external consumer failed on C++ header paths.",
           "evidence": [
             {
               "label": "Both descriptor actions and the real shim startup",
@@ -97777,8 +97823,8 @@
           "url": "https://go-review.googlesource.com/c/tools/+/858482"
         },
         {
-          "label": "Gazelle proposal for containerd/cgroups’ published metrics types",
-          "url": "https://github.com/tamird/bazel-gazelle/commit/9e4aff6b5"
+          "label": "Current Gazelle proposal for containerd/cgroups metrics",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804faacf022c6c593703d2da28e4e4c495"
         }
       ]
     },
