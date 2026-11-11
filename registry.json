@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T02:24:40+00:00",
+    "updatedAt": "2026-11-11T03:02:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2228,8 +2228,12 @@
       "url": "https://github.com/tamird/gvisor/commit/c115840f8",
       "group": "bazel",
       "status": "Contributor review requested",
-      "summary": "Native Linux AMD64 and ARM64 clients each built the nine optimized //:release executables for both architectures from LLVM integration 61ff148f0. All 18 SHA-256 digests matched across clients and against the earlier remote builds. Both clients had empty /bin and /usr/bin. Bazel used its declared compiler and shell. On ARM64, the execution log identifies native ARM64 Clang, the vDSO link wrapper and Nogo for both target architectures.\n\nThe integration includes the rules_go #4774 SDK source fix for Nogo. The clients supplied Bazel 9.3.1, its runtime libraries and CA certificates. On the earlier reduced Ubuntu builder, a native ARM64 worker also booted the AMD64-built Sentry under rootless systrap. Packaging, signing and other builder jobs have separate requirements.",
+      "summary": "The two-line Dockerfile change c115840f8 built //:release for AMD64 and ARM64 on stock Ubuntu 22.04 without cc, gcc, ld, make, zip or Python. The process trace included /bin/bash, /bin/grep and git. These checks exercised the release executables. The README’s //debian:gvisor-release-tar-bz2 packaging target and signing have separate requirements.\n\nThe empty-/bin and empty-/usr/bin builds used 61ff148f0, which includes eight more integration commits covering Git-free stamping, Gazelle, Go SDK bootstrap, stateify and direct ELF extraction. Native AMD64 and ARM64 clients supplied Bazel 9.3.1, its runtime libraries and CA certificates. Both built nine optimized executables per target and matched all 18 hashes. The integration includes the rules_go #4774 SDK source fix for Nogo. Its ARM64 execution log identifies native ARM64 Clang, the vDSO link wrapper and Nogo for both targets. A separate native ARM64 worker booted the AMD64-built Sentry under rootless systrap on the earlier reduced Ubuntu builder.",
       "evidence": [
+        {
+          "label": "Exact two-line revision on stock Jammy, both release builds and traced host tools",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42358228468/artifacts/13569595351"
+        },
         {
           "label": "All 18 executables built on ARM64 match the AMD64 client’s release hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42529199061/artifacts/13637052197"
@@ -2237,10 +2241,6 @@
         {
           "label": "Optimized release from a Git-free source export with registry LLVM 0.8.24",
           "url": "https://github.com/tamird/gvisor/actions/runs/42361840401/artifacts/13571015047"
-        },
-        {
-          "label": "Release file hashes and observed host tools for both architectures on stock Jammy without APT installs",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42358228468/artifacts/13569595351"
         },
         {
           "label": "Without a certificate bundle, both targets failed at HTTPS module download",
@@ -2295,7 +2295,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42388512100/artifacts/13582280090"
         }
       ],
-      "updatedAt": "2026-11-08T23:23:55+00:00",
+      "updatedAt": "2026-11-11T02:51:17+00:00",
       "head": "c115840f8a85010111fa5d72b611d7d9ab1df34b",
       "contributorReview": {
         "status": "pending",
@@ -2305,7 +2305,7 @@
         "url": "https://github.com/tamird/gvisor/commit/c115840f8",
         "title": "Drop Ubuntu's cross compilers from the builder",
         "requestedAt": "2026-11-07T04:07:52+00:00",
-        "summary": "Open after the default LLVM compiler lands? The Dockerfile deletions were tested on Ubuntu 22.04. In the LLVM integration, native AMD64 and ARM64 clients each built all nine release executables for both targets with empty /bin and /usr/bin. All 18 file digests matched across clients. Packaging and signing were outside this comparison.",
+        "summary": "Open c115840f8 after the default LLVM compiler lands? This Dockerfile revision built //:release on stock Jammy for both targets, using bash, grep and git. The successful empty-/bin builds used a separate integration with eight further commits. The Debian release tarball was outside both checks.",
         "body": "The ARM smoke test added a cross compiler to the Ubuntu builder in\n8de562b79. Bazel now selects LLVM and the target sysroot when an AMD64\nbuilder compiles and links ARM64 code. The systrap rules use LLVM\nobjcopy for the raw signal handler and read its offsets directly from\nthe linked ELF.\n\nDrop crossbuild-essential-arm64 and crossbuild-essential-amd64 from\nthe default image. Keep build-essential for native Make builds."
       },
       "settledReviews": [
@@ -38715,13 +38715,17 @@
       "id": "branch:declared-codespell",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/codespell-bazel9",
-      "head": "c28bb7409901425e94c7fdf7a293c792c87a731c",
+      "ref": "review/codespell-upstream-build",
+      "head": "d25ca53f67e4380d62aee94150abd4166ff69228",
       "title": "Run the source spelling check with the declared Python toolchain",
-      "url": "https://github.com/tamird/gvisor/commit/c28bb7409",
+      "url": "https://github.com/tamird/gvisor/commit/d25ca53f6",
       "group": "analysis",
-      "summary": "The repository spelling action checked 3,329 declared files on a remote worker. A typo in a new Bazel package failed with its path and suggestion, and a request to edit sources in place failed before the file changed. The wheel contains GPL program code and CC-BY-SA dictionaries.",
+      "summary": "The overlay now uses an upstream/BUILD file. Both revisions selected the same 13 wheel files, with matching contents, and the same 17 lint targets. Buildifier checked the new file. On a Linux AMD64 worker, codespell checked 3,329 sources, flagged a seeded typo, rejected write-enabled configuration and accepted the configured exception. The wheel contains GPL program code and CC-BY-SA dictionaries.",
       "evidence": [
+        {
+          "label": "Old and new wheel labels and bytes, Buildifier, and Linux AMD64 remote lint controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42947587726/artifacts/13823134252"
+        },
         {
           "label": "All six Bazel lint actions and the goimports executable recovered from its scratch worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/41399910347/artifacts/13120089067"
@@ -38748,24 +38752,24 @@
         }
       ],
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T06:33:17+00:00",
+      "updatedAt": "2026-11-11T02:45:00+00:00",
       "refinement": {
         "before": {
-          "head": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
+          "head": "c28bb7409901425e94c7fdf7a293c792c87a731c"
         },
         "after": {
-          "head": "c28bb7409901425e94c7fdf7a293c792c87a731c"
+          "head": "d25ca53f67e4380d62aee94150abd4166ff69228"
         }
       },
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "c28bb7409901425e94c7fdf7a293c792c87a731c",
-        "url": "https://github.com/tamird/gvisor/commit/c28bb7409",
+        "head": "d25ca53f67e4380d62aee94150abd4166ff69228",
+        "url": "https://github.com/tamird/gvisor/commit/d25ca53f6",
         "title": "Run the repository spelling check as a Bazel action",
-        "requestedAt": "2026-11-02T05:56:23+00:00",
-        "summary": "Open the revised spelling check after the shared Bazel lint rules land?",
-        "body": "Bazel runs the pinned codespell wheel against 3,329 declared sources. A typo fails the action with a filename and suggestion. The check rejects configuration that could edit the sources. Canonical Verify passed all 223 license entries. With the separate static interpreter registration, the same action also passed on AMD64 and ARM64 scratch workers."
+        "requestedAt": "2026-11-11T02:45:00+00:00",
+        "summary": "Open the revised codespell proposal after the shared Bazel lint rules land?",
+        "body": "Give codespell the repository’s C, C++, Go, Markdown and HTML files\nthrough the same source inventory as the other formatters. Run its\npinned wheel with the declared Python interpreter so the action can run\non a remote worker. A spelling error prints the path and suggestion and\nfails the build.\n\nReject configuration that enables in-place fixes. The lint target\nreads source files, including when Bazel runs the action locally."
       }
     },
     {
@@ -72741,20 +72745,40 @@
       "url": "https://github.com/google/gvisor/pull/17445",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-11T00:51:01+00:00",
+      "updatedAt": "2026-11-11T03:02:13+00:00",
       "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected.",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor",
         "sourceHead": "b37e519bbf5d14868442a32f336f768d955820b3",
-        "observedAt": "2026-11-11T00:51:01+00:00",
-        "disposition": "Published as one commit on #17445 at the exact approved head.",
-        "nextAction": "Follow checks and maintainer review on #17445.",
+        "observedAt": "2026-11-11T03:02:13+00:00",
+        "disposition": "The published deadline fix discarded completed output on both read and inspect errors. The Linux comparison reproduced the loss and showed that 4cd80a062 returned the captured bytes with the original error. Both real DinD bridge cases passed.",
+        "nextAction": "Review the tested amendment and reply to the existing output-loss thread.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17445#discussion_r4533264517",
+          "https://github.com/tamird/gvisor/actions/runs/42948284156/artifacts/13825035276",
+          "https://github.com/tamird/gvisor/commit/4cd80a062",
+          "https://github.com/tamird/gvisor/actions/runs/42948284156",
           "https://github.com/google/gvisor/pull/17445",
           "https://github.com/tamird/gvisor/commit/b37e519bb"
         ]
       },
       "evidence": [
+        {
+          "label": "Review on output discarded at cancellation",
+          "url": "https://github.com/google/gvisor/pull/17445#discussion_r4533264517"
+        },
+        {
+          "label": "Four original output-loss controls, native Docker cancellations, and both passing bridge tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42948284156/artifacts/13825035276"
+        },
+        {
+          "label": "Linux check for both output-loss paths, errors, native commands and bridge tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42948284156"
+        },
+        {
+          "label": "Fork amendment retaining output on read and inspect errors",
+          "url": "https://github.com/tamird/gvisor/commit/4cd80a062"
+        },
         {
           "label": "Published upstream PR #17445",
           "url": "https://github.com/google/gvisor/pull/17445"
@@ -72804,7 +72828,28 @@
           "postedURL": "https://github.com/google/gvisor/pull/17445",
           "note": "Published upstream as one commit on the exact approved head."
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "b37e519bbf5d14868442a32f336f768d955820b3"
+        },
+        "after": {
+          "head": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
+          "base": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
+        "baseHead": "b37e519bbf5d14868442a32f336f768d955820b3",
+        "url": "https://github.com/tamird/gvisor/commit/4cd80a062",
+        "requestedAt": "2026-11-11T03:02:13+00:00",
+        "title": "Preserve Docker exec output on cancellation",
+        "summary": "Publish 4cd80a062 on #17445 and reply on the original output-loss thread.",
+        "body": "The published revision dropped two completed output frames on stream and inspect errors. The amendment returned both frames and the original error in all four controls, including nonzero exit 23. Real Docker commands kept their progress output on explicit cancellation and timeout, and both DinD bridge storage drivers passed.\n\ngit -C ~/code/gvisor range-diff b37e519bb^! 4cd80a062^!",
+        "replyBody": "Both returns now preserve output Docker delivered before the error. I reproduced the empty output on the original revision. Cancellation and timeout now return stdout and stderr with the original error, including against a real Docker daemon.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:17446",
@@ -97823,8 +97868,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T02:19:56+00:00",
-      "summary": "TestSystemdMultiUser timed out waiting for Bob’s user@1002.service before it could exercise cross-user isolation.",
+      "updatedAt": "2026-11-11T02:58:05+00:00",
+      "summary": "TestSystemdMultiUser timed out waiting for Bob’s user@1002.service on Buildkite. On a four-CPU AMD64 systrap worker, the same deadline also expired waiting for Alice’s user@1001.service.",
       "findings": [
         {
           "text": "The cgroup-v2 job on the import of #16886 and the ARM64 job on the import of #17060 each passed on retry. The cgroup-v1 run also reached systemd’s 90-second deadline. The ARM64 retry reports the owning target passed in 24.3 seconds.",
@@ -97863,10 +97908,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42709502602/artifacts/13715004946"
             }
           ]
+        },
+        {
+          "text": "One of three isolated runs timed out. At 3, 20 and 50 seconds, the only remaining system job was the start of user@1001.service. Bob’s basic.target was already active and his user manager had no pending job. The other two isolated runs and all three runs alongside SSH, Apache and PostgreSQL passed. Bob activated in 355–356 ms alone and 705–795 ms with the service tests. Both healthy users’ journals contained the libbpf warning in all five passing runs. The timeout occurred without the service peers; the samples captured Bob’s user-scoped state while Alice was stuck.",
+          "evidence": [
+            {
+              "label": "Three isolated and three concurrent multi-user runs with manager samples and journals",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42946174439/artifacts/13824456202"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture pending systemd jobs, the unit’s MainPID/SubState/Result, and Bob’s process wait state while user@1002.service is activating. Alice became active in under three seconds. Bob opened his PAM session but remained unready across 379 is-active polls on ARM64 and 291 on AMD64.",
+      "nextStep": "Capture the pending unit and process wait state inside whichever user manager remains unready. The isolated timeout selected Alice, while the original Buildkite failures selected Bob.",
       "evidence": [
+        {
+          "label": "Three isolated and three concurrent multi-user runs with manager samples and journals",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42946174439/artifacts/13824456202"
+        },
         {
           "label": "gVisor #16886",
           "url": "https://github.com/google/gvisor/pull/16886"
@@ -99044,11 +99102,11 @@
       "title": "PHP’s 2.15 GB multipart upload fails across master and test builds",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T02:10:26+00:00",
+      "updatedAt": "2026-11-11T02:55:20+00:00",
       "summary": "PHP 8.5.11 reported sapi/cli/tests/upload_2G.phpt as failed in seven attempts across six commits. Two were gVisor master commits (d887f126f and 93713c50f). Four were Google test commits.",
       "findings": [
         {
-          "text": "The master goferfs jobs failed in builds #54352 and #54360. The #54360 retry used a cached result. A fresh passing execution of this individual case has yet to be verified.",
+          "text": "The master goferfs jobs failed in builds #54352 and #54360. The #54360 retry used a cached result. The Buildkite retry produced no fresh result for this individual case.",
           "evidence": [
             {
               "label": "Master build #54360",
@@ -99102,10 +99160,31 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42941830920/artifacts/13820553894"
             }
           ]
+        },
+        {
+          "text": "PHP 8.5.11 automatically prints a diff for a single selected test. The original failing shard selected 50 tests. In a controlled two-test batch, both the published runner and 60ec8592c returned 1 with one pass, one failure and zero skips. Only the revision printed the expected and actual lines. Each separate passing case returned 0 with the same short summary and no diff.",
+          "evidence": [
+            {
+              "label": "Two-test batches and independent passing controls on both revisions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42946840044/artifacts/13824261649"
+            },
+            {
+              "label": "Why a one-test reproduction already prints the diff",
+              "url": "https://github.com/php/php-src/blob/php-8.5.11/run-tests.php#L692-L700"
+            },
+            {
+              "label": "Single-test comparison on the same sources",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42943209689/artifacts/13823555132"
+            }
+          ]
         }
       ],
-      "nextStep": "Check that 60ec8592c shows a failing PHPT's expected and actual output in the batch log. Use that output from the next field failure to identify its cause.",
+      "nextStep": "Review 60ec8592c. Once the reporter lands, inspect the expected and actual output from the next failing upload shard to identify the cause.",
       "evidence": [
+        {
+          "label": "Batched failure output and successful controls on stock and revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42946840044/artifacts/13824261649"
+        },
         {
           "label": "Runtime upload comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42941830920/artifacts/13820553894"
@@ -99113,10 +99192,6 @@
         {
           "label": "Print a failing PHP test’s diff in its Bazel log",
           "url": "https://github.com/tamird/gvisor/commit/60ec8592c"
-        },
-        {
-          "label": "Qualification of the PHP failure reporter",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42943209689"
         },
         {
           "label": "Same-case Linux and gVisor comparison",
@@ -99134,7 +99209,18 @@
           "label": "PHP 8.5.11 test",
           "url": "https://github.com/php/php-src/blob/php-8.5.11/sapi/cli/tests/upload_2G.phpt"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
+        "baseHead": "46e8f70ffcccbed7159248e4e29d03f16fa58263",
+        "url": "https://github.com/tamird/gvisor/commit/60ec8592c",
+        "title": "Show output differences for failing PHP runtime tests",
+        "body": "The PHP 8.5.11 upload_2G.phpt test failed twice in the same CI shard.\nThe log names the test but omits the response that differed from its\nexpectation [1]. The runner removes the container after the batch, so\nthe PHPT diff is no longer available.\n\nPass --show-diff to PHP's test runner so the failing batch includes\nthe expected and actual lines in its Bazel test log.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54340#01a1c7e8-9007-406b-b565-61701e284168",
+        "requestedAt": "2026-11-11T02:55:20+00:00",
+        "summary": "Open the one-line change that prints a failed PHPT’s expected and actual output in the original batch log?"
+      }
     }
   ],
   "updatedAt": "2026-11-11T01:47:46+00:00"
