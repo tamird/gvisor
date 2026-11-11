@@ -1,0 +1,15 @@
+Buildifier's CLI wraps its executable in a shell script. The lint action
+needs the executable registered for its execution platform. Backport the
+toolchain field from keith/buildifier-prebuilt#180 until its next release.
+
+diff --git a/toolchain.bzl b/toolchain.bzl
+--- a/toolchain.bzl
++++ b/toolchain.bzl
+@@ -7,6 +7,7 @@ load("//:buildtools.bzl", "buildtools")
+ def _buildifier_toolchain(ctx):
+     return [
+         platform_common.ToolchainInfo(
++            tool = ctx.executable.tool,
+             _binary_runner = ctx.attr.binary_runner,
+             _tool = ctx.executable.tool,
+             _runner = ctx.attr.runner,
