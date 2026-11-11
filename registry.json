@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T11:49:23+00:00",
+    "updatedAt": "2026-11-11T12:02:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31272,7 +31272,7 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-11T11:48:58+00:00",
-      "summary": "The rebased MySQL source 25b9e2c26 is open as one mergeable commit. Konstantin approved the previous revision, 28035bfa2. Open export #17300 still names that revision and conflicts with master.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.",
+      "summary": "The rebased MySQL source 25b9e2c26 is open as one mergeable commit. Konstantin approved the previous revision, 28035bfa2. Open export #17300 still names that revision and conflicts with master.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.\n\nRyan’s approval covered 1785bfc26. Earlier native AMD64 checks built all five image contexts and exercised their Make content tags. ARM64 checks covered target configuration and image inventories.",
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "25b9e2c269c513045f9c0f9232ae5b9846d2facb",
@@ -31420,7 +31420,7 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-11T11:48:58+00:00",
-      "summary": "The rebased Tomcat source 71dff5de7 is open as one mergeable commit. GitHub lists @relkochta and @zkoopmans as requested reviewers.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.",
+      "summary": "The rebased Tomcat source 71dff5de7 is open as one mergeable commit. GitHub lists @relkochta and @zkoopmans as requested reviewers.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.\n\nThe Tomcat fixture retains both architecture-specific base images and master’s PostgreSQL context.",
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "71dff5de7d5ed7441915d2425b7ba64c19de1c13",
@@ -31556,7 +31556,7 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-11T11:48:58+00:00",
-      "summary": "The rebased Apache source 31a34e576 is open as one mergeable commit. GitHub lists @zkoopmans and @carzh as requested reviewers. The previous export #16879 closed.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.",
+      "summary": "The rebased Apache source 31a34e576 is open as one mergeable commit. GitHub lists @zkoopmans and @carzh as requested reviewers. The previous export #16879 closed.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.\n\nCarzh’s approval covered c1511cf4b. The Apache fixtures retain their image pins, configuration and Make names.",
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
@@ -55715,9 +55715,13 @@
       "url": "https://github.com/google/gvisor/issues/16878",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T12:18:32.411Z",
-      "summary": "On a single Go processor, a busy packet worker can keep an endpoint timer from releasing its lock. Giving already-queued peers one turn before yielding serviced 100 packets on AMD64. Yielding immediately serviced zero. Martijn asked for the proposed change to be submitted. In three one-CPU AMD64 TamaGo boots at the reporter’s revision, the ready listener ran but the lock holder went five seconds without running. Both queues drained on all three boots with #17045.",
+      "updatedAt": "2026-11-11T12:02:09+00:00",
+      "summary": "On a single Go processor, a busy packet worker can keep an endpoint timer from releasing its lock. Giving already-queued peers one turn before yielding serviced 100 packets on AMD64. Yielding immediately serviced zero. Martijn asked for the proposed change to be submitted. In three one-CPU AMD64 TamaGo boots at the reporter’s revision, the ready listener ran but the lock holder went five seconds without running. Both queues drained on all three boots with #17045.\n\nMartijn repeated the original 64 MiB TamaGo echo workload on one vCPU with Firecracker and QEMU. Four connections stalled in all 7 stock runs and none of the 7 patched runs. One connection passed with either version. On Linux with GOMAXPROCS=1, stock missed the 5 ms bound in 5 of 5 runs and the patch met it in all 30. Under wasip1 without preemption, stock hung until the 60-second cutoff and the patch passed.",
       "evidence": [
+        {
+          "label": "Martijn’s original four-connection echo workload and two scheduler controls",
+          "url": "https://github.com/google/gvisor/pull/17045#issuecomment-6793796098"
+        },
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
           "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6657846358"
@@ -58146,9 +58150,13 @@
       "url": "https://github.com/google/gvisor/pull/17045",
       "title": "tcp: retry a contended endpoint after serving its queued peers",
       "status": "open",
-      "updatedAt": "2026-11-06T12:18:32.411Z",
-      "summary": "PR #17045 now publishes the qualified dispatcher amendment at 5d6ca5025, with the two existing blank lines restored in dispatcher.go as requested. The approved description is live and the reply was posted in the reviewer’s thread.\n\nThe dispatcher gives queued peers a turn, retries a contended endpoint immediately if its lock has become available, and queues new arrivals behind the retry. On the previous head 2ec7b59ad with the regression test, it yielded after the listener unlocked and processed no packets. Candidate ba2c7a721 processed the packet without yielding. All 47 TCP case records (33 top-level tests) and both AMD64 and ARM64 Nogo sections passed on an AMD64 Linux runner. The only changes between that tested candidate and the public head are the two blank lines.\n\nOn one virtual AMD64 CPU running TamaGo Go 1.27.3, the reporter’s revision 1cea747ef serviced the ready listener in all three trials. The goroutine holding the other listener’s lock then went five seconds without running. With this PR, the lock holder resumed and both queues drained in all three trials. All six unlocked controls completed.",
+      "updatedAt": "2026-11-11T12:02:09+00:00",
+      "summary": "PR #17045 now publishes the qualified dispatcher amendment at 5d6ca5025, with the two existing blank lines restored in dispatcher.go as requested. The approved description is live and the reply was posted in the reviewer’s thread.\n\nThe dispatcher gives queued peers a turn, retries a contended endpoint immediately if its lock has become available, and queues new arrivals behind the retry. On the previous head 2ec7b59ad with the regression test, it yielded after the listener unlocked and processed no packets. Candidate ba2c7a721 processed the packet without yielding. All 47 TCP case records (33 top-level tests) and both AMD64 and ARM64 Nogo sections passed on an AMD64 Linux runner. The only changes between that tested candidate and the public head are the two blank lines.\n\nOn one virtual AMD64 CPU running TamaGo Go 1.27.3, the reporter’s revision 1cea747ef serviced the ready listener in all three trials. The goroutine holding the other listener’s lock then went five seconds without running. With this PR, the lock holder resumed and both queues drained in all three trials. All six unlocked controls completed.\n\nMartijn repeated the original 64 MiB TamaGo echo workload on one vCPU with Firecracker and QEMU. Four connections stalled in all 7 stock runs and none of the 7 patched runs. One connection passed with either version. On Linux with GOMAXPROCS=1, stock missed the 5 ms bound in 5 of 5 runs and the patch met it in all 30. Under wasip1 without preemption, stock hung until the 60-second cutoff and the patch passed.",
       "evidence": [
+        {
+          "label": "Martijn’s original four-connection echo workload and two scheduler controls",
+          "url": "https://github.com/google/gvisor/pull/17045#issuecomment-6793796098"
+        },
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
           "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6657846358"
@@ -77468,9 +77476,18 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-09T22:10:43+00:00",
+      "updatedAt": "2026-11-11T12:02:21+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "Across eight alternating pairs of parent 990581308 and #16495 ffac28a03 against Linux, the gVisor sender sent first in all 16 runs. The propagation queues recorded no drops. The receiver rate was 1.252 MiB/s on the parent and 1.208 MiB/s on the candidate (benchstat p = 0.721). The longest new-data gap was 112.5 ms and 108.7 ms, respectively (p = 0.574). One parent run had a 27.7-second gap. Two candidate runs had 1.16- and 1.69-second gaps. The paired measurements did not establish a throughput improvement. Cumulative ACKs continued during the 27.7-second gap. Across the three gaps, some repeated ranges had earlier SACK coverage, but none had already been cumulatively acknowledged.",
+          "evidence": [
+            {
+              "label": "Eight alternating pairs with receiver, packet and queue records",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42708554879/artifacts/13716646876"
+            }
+          ]
+        },
         {
           "text": "A fork-only endpoint test on master 9ee2906f5 exercised the CUBIC restart callback through the real sender. After 30 seconds with no outstanding data and a 3-second RTO, cwnd fell from 11 to 10. The first ACK for two segments kept it at 10. Removing only the call to HandleWindowRestart still reduced cwnd to 10, then the same ACK raised it to 11. Both 1 ms idle controls held at 11.",
           "evidence": [
@@ -79540,8 +79557,12 @@
           ]
         }
       ],
-      "nextStep": "Compare #16495 at ffac28a03, now ready for review, with its parent over eight alternating pairs against a Linux sender. Check bottleneck drops, propagation drops and first-data order before interpreting throughput or the longest gap in new data.",
+      "nextStep": "Use the recovery-event trace to align the first repeated SACK-covered range with a sender timeout or scoreboard reset.",
       "evidence": [
+        {
+          "label": "Eight alternating pairs with receiver, packet and queue records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42708554879/artifacts/13716646876"
+        },
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
           "url": "https://github.com/tamird/gvisor/actions/runs/41360715303"
@@ -99954,7 +99975,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T11:29:35+00:00",
+      "updatedAt": "2026-11-11T12:02:09+00:00",
       "summary": "Two Node 22.2.0 debugger tests timed out in Buildkite build 54379. Both failing shards ran again and passed on the same source.",
       "findings": [
         {
@@ -99982,10 +100003,27 @@
               "url": "https://github.com/nodejs/node/commit/d5958888c"
             }
           ]
+        },
+        {
+          "text": "The gVisor runtime images allow 10 seconds for the Node 22 debugger prompt and 20 seconds for Node 26. Node 26 also installs the process-close listener at spawn. The two original scripts make the same debugger requests. The field logs do not identify which behavior, if either, caused their timeouts.",
+          "evidence": [
+            {
+              "label": "Node doubled the base debugger wait",
+              "url": "https://github.com/nodejs/node/commit/de1b34557"
+            },
+            {
+              "label": "Node observes child closure at spawn",
+              "url": "https://github.com/nodejs/node/commit/fbdca3a12"
+            }
+          ]
         }
       ],
       "nextStep": "Compare the two named tests independently on Node 22.2.0 and the proposed 26.12.0 runtime with the existing timeout. Capture the last debugger prompt or process state if a case stalls.",
       "evidence": [
+        {
+          "label": "Paired Linux comparison of the two Node versions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43014104301"
+        },
         {
           "label": "Heap-profiler timeout and snapshot output",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54379/jobs/01a1c8cd-2f1b-4788-8ca6-ae0656202cb9/artifacts/01a1c8d3-a6d1-45fe-b4a5-1e5f717ac80c"
