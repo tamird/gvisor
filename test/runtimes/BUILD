@@ -1,9 +1,21 @@
+load("@rules_python//python:defs.bzl", "py_test")
 load("//test/runtimes:defs.bzl", "runtime_test")
 load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+py_test(
+    name = "qualify_php_diff",
+    srcs = ["qualify_php_diff.py"],
+    args = ["$(rootpath //test/runtimes/runner:runner)"],
+    data = [
+        "//test/runtimes/proctor:proctor_bin",
+        "//test/runtimes/runner:runner",
+    ],
+    tags = ["local", "manual", "no-sandbox"],
 )
 
 runtime_test(

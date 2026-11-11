@@ -1,35 +1,95 @@
-name: CI
-
-"on":
+name: Compare PHP runtime failure reporting
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/php85-phpt-failure-diff]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the one-line proposal and create two PHPT controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git fetch --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 60ec8592c1c5fcec63846664b77a1bec5018b97c
+          test "$(git rev-parse HEAD^^)" = 46e8f70ffcccbed7159248e4e29d03f16fa58263
+          test "$(git diff --name-only HEAD^^ HEAD^)" = test/runtimes/proctor/lib/php.go
+          git diff --quiet HEAD^ HEAD -- ':!.github/workflows/build.yml' ':!test/runtimes/BUILD' ':!test/runtimes/qualify_php_diff.py'
+          work="$RUNNER_TEMP/php-diff"
+          mkdir -p "$work/receipt" "$work/fixtures"
+          echo "PHP_DIFF=$work" >> "$GITHUB_ENV"
+          git log -3 --format=%H > "$work/receipt/sources.txt"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$work/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $work/bazel" | sha256sum -c
+          chmod +x "$work/bazel"
+          sudo -n apt-get update -qq
+          sudo -n apt-get install -qy build-essential crossbuild-essential-arm64 libnuma-dev
+          img=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/php8.5.11_x86_64@sha256:d39b395906d819848f39fe53b73d8fc55485ba452bf7c506d36406a83a4ab64b
+          docker pull "$img"
+          docker image inspect "$img" --format '{{.Id}} {{.Config.WorkingDir}}' > "$work/receipt/php-image.txt"
+          test "$(docker image inspect "$img" --format '{{.Config.WorkingDir}}')" = /root/php-8.5.11
+          echo "FROM $img" > "$work/fixtures/Dockerfile"
+          echo "COPY mismatch.phpt match.phpt ./qa/" >> "$work/fixtures/Dockerfile"
+          cat > "$work/fixtures/mismatch.phpt" <<'PHPT'
+          --TEST--
+          PHP log mismatch control
+          --FILE--
+          <?php echo "QA_OBSERVED_PAYLOAD\n"; ?>
+          --EXPECT--
+          QA_EXPECTED_PAYLOAD
+          PHPT
+          cat > "$work/fixtures/match.phpt" <<'PHPT'
+          --TEST--
+          PHP log success control
+          --FILE--
+          <?php echo "QA_PASS_PAYLOAD\n"; ?>
+          --EXPECT--
+          QA_PASS_PAYLOAD
+          PHPT
+          docker build -t gvisor.dev/images/runtimes/php-diff-qa "$work/fixtures"
+      - name: Exercise the normal runtime runner, proctor, and PHP make target
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          testpath=test/runtimes/proctor/lib/php.go
+          for arm in stock candidate; do
+            commit=HEAD^
+            if [[ "$arm" == stock ]]; then commit=HEAD^^; fi
+            git show "$commit:$testpath" > "$testpath"
+            git diff --quiet "$commit" -- "$testpath"
+            out="$PHP_DIFF/receipt/$arm"
+            mkdir "$out"
+            git rev-parse "$commit" > "$out/source"
+            src=bazel-testlogs/test/runtimes/qualify_php_diff
+            DIFF_ARM="$arm" "$PHP_DIFF/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g test \
+              --config=x86_64 -c opt --jobs=4 --lockfile_mode=off --remote_cache= --remote_executor= --bes_backend= \
+              --module_mirrors=https://bcr.cloudflaremirrors.com --spawn_strategy=linux-sandbox \
+              --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+              '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' \
+              --nocache_test_results --flaky_test_attempts=1 --strategy=TestRunner=local --test_timeout=500 \
+              --test_env=DIFF_ARM --test_output=errors --build_event_json_file="$PHP_DIFF/$arm.jsonl" \
+              //test/runtimes:qualify_php_diff || fail=1
+            if test -f "$PHP_DIFF/$arm.jsonl"; then
+              jq -c 'select(.testResult or .testSummary or .finished)' "$PHP_DIFF/$arm.jsonl" > "$out/bazel-events.jsonl"
+            fi
+            for f in test.log test.xml; do if test -f "$src/$f"; then cp "$src/$f" "$out/$f"; fi; done
+            if test -f "$src/test.outputs/outputs.zip"; then
+              unzip -o "$src/test.outputs/outputs.zip" -d "$out"
+            elif test -d "$src/test.outputs"; then
+              cp -a "$src/test.outputs/." "$out/"
+            fi
+            test -s "$out/result.json" || fail=1
+          done
+          exit "$fail"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: php-runtime-diff-comparison
+          path: ${{ runner.temp }}/php-diff/receipt
+          retention-days: 30
