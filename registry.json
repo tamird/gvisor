@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T17:23:01+00:00",
+    "updatedAt": "2026-11-11T17:44:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -74112,11 +74112,15 @@
       "inactive": true
     },
     {
-      "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
-      "title": "Expose the Buildifier executable for Bazel actions",
+      "head": "0d4bbc198943e150cd0f1c8f27140d498aba67f3",
+      "title": "Expose the toolchain executable to Starlark actions",
       "group": "bazel",
-      "summary": "The submitted target selected the host executable on Bazel 7 and 8 in cross-platform actions. The fork revision exposes the executable from the selected Buildifier toolchain. Both platform directions selected the requested executable on Bazel 7, 8 and 9. The interactive CLI keeps its existing behavior.",
+      "summary": "The public toolchain field gives Starlark actions the Buildifier executable for their execution platform. The revision preserves the interactive CLI and passed Mac-to-Linux and Linux-to-Mac selection on Bazel 7, 8 and 9.",
       "evidence": [
+        {
+          "label": "Published platform-selection reply",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4541271834"
+        },
         {
           "label": "Published single-commit change",
           "url": "https://github.com/keith/buildifier-prebuilt/pull/180"
@@ -74153,16 +74157,16 @@
       "ref": "native-buildifier-tool",
       "url": "https://github.com/keith/buildifier-prebuilt/pull/180",
       "status": "open",
-      "updatedAt": "2026-11-11T16:27:10+00:00",
+      "updatedAt": "2026-11-11T17:44:03+00:00",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
-        "observedAt": "2026-11-11T16:27:10+00:00",
-        "disposition": "The fork amendment is ready for review.",
-        "nextAction": "Review the amended toolchain field and proposed response on the original platform-selection thread.",
+        "owner": "Upstream maintainer",
+        "sourceHead": "0d4bbc198943e150cd0f1c8f27140d498aba67f3",
+        "observedAt": "2026-11-11T17:44:03+00:00",
+        "disposition": "The revised toolchain interface and response are published on #180.",
+        "nextAction": "Wait for the supplier maintainer to review the published amendment.",
         "evidence": [
-          "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4539738947",
-          "https://github.com/tamird/buildifier-prebuilt/commit/0d4bbc198",
+          "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4541271834",
+          "https://github.com/keith/buildifier-prebuilt/pull/180",
           "https://github.com/tamird/buildifier-prebuilt/actions/runs/43056723893/artifacts/13870534953"
         ]
       },
@@ -74175,18 +74179,24 @@
           "base": "def7480572c222555c6a037d680914c85ae3a99b"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
-        "head": "0d4bbc198943e150cd0f1c8f27140d498aba67f3",
-        "url": "https://github.com/tamird/buildifier-prebuilt/commit/0d4bbc198",
-        "requestedAt": "2026-11-11T16:27:10+00:00",
-        "title": "Expose the toolchain executable to Starlark actions",
-        "summary": "Publish the single-commit amendment to #180 and reply to the execution-platform review.",
-        "body": "The buildifier command starts a shell and changes to the workspace\ndirectory. A build action already has its input paths and needs the\nbinary for its execution platform. A Linux worker needs the Linux\nbinary even when Bazel runs on a Mac.\n\nExpose the selected file as tool on the Buildifier and Buildozer\ntoolchains so a rule can pass it to ctx.actions.run. Run Buildifier\ndirectly as a test in the bzlmod example.\n\nPrepared by Codex on behalf of @tamird.\n\ngit -C ~/code/buildifier-prebuilt range-diff 5357c442f^! 0d4bbc198^!",
-        "replyBody": "The action now takes the executable from its own Buildifier toolchain. I verified both Mac-to-Linux and Linux-to-Mac selection on Bazel 7, 8, and 9.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "baseHead": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
+          "head": "0d4bbc198943e150cd0f1c8f27140d498aba67f3",
+          "url": "https://github.com/tamird/buildifier-prebuilt/commit/0d4bbc198",
+          "requestedAt": "2026-11-11T16:27:10+00:00",
+          "title": "Expose the toolchain executable to Starlark actions",
+          "summary": "Publish the single-commit amendment to #180 and reply to the execution-platform review.",
+          "body": "The buildifier command starts a shell and changes to the workspace\ndirectory. A build action already has its input paths and needs the\nbinary for its execution platform. A Linux worker needs the Linux\nbinary even when Bazel runs on a Mac.\n\nExpose the selected file as tool on the Buildifier and Buildozer\ntoolchains so a rule can pass it to ctx.actions.run. Run Buildifier\ndirectly as a test in the bzlmod example.\n\nPrepared by Codex on behalf of @tamird.\n\ngit -C ~/code/buildifier-prebuilt range-diff 5357c442f^! 0d4bbc198^!",
+          "replyBody": "The action now takes the executable from its own Buildifier toolchain. I verified both Mac-to-Linux and Linux-to-Mac selection on Bazel 7, 8, and 9.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T17:44:03+00:00",
+          "postedURL": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4541271834",
+          "note": "Published the one-commit toolchain amendment and answered the platform-selection review."
+        }
+      ]
     },
     {
       "head": "99759b1ed1acb8dbcacfc46ed129d3ec5a14c4dd",
@@ -74434,6 +74444,34 @@
         {
           "label": "Original native and systrap syscall cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/43057467949/artifacts/13872635996"
+        }
+      ]
+    },
+    {
+      "id": "pr:17486",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17486,
+      "ref": "review/prewarmer-helper-capacity-timing",
+      "head": "997f8b37e43ec66fb94ae2d4394168d1685dac8c",
+      "title": "Time FD-table expansion inside the test helper",
+      "url": "https://github.com/google/gvisor/pull/17486",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-11T17:44:03+00:00",
+      "summary": "The test measures the three dup3 calls in the child after checking the inherited descriptor-table capacity. It compares direct and prewarmed medians when the direct child still needs to expand its table.",
+      "evidence": [
+        {
+          "label": "Published prewarmer test correction",
+          "url": "https://github.com/google/gvisor/pull/17486"
+        },
+        {
+          "label": "Failing cgroup v1 integration job",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1cad8-74b0-47f8-9ff0-c7aefef44dbb"
+        },
+        {
+          "label": "Passing retry on the same build",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1caf5-8673-4457-a85a-177663947130"
         }
       ]
     }
@@ -78447,6 +78485,74 @@
     }
   ],
   "investigations": [
+    {
+      "id": "investigation:go-runtime-testdir-selection",
+      "title": "Go 1.22 runtime batches can pass without running their selected on-disk tests",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "Go runtime suite investigation",
+      "updatedAt": "2026-11-11T17:44:03+00:00",
+      "summary": "The proctor passes shell apostrophes directly to Go’s test-name matcher. Go 1.22.11 registers 2,525 on-disk cases. The runtime suite separately excludes the distribution test that would run them all.",
+      "findings": [
+        {
+          "text": "The argv form introduced in b9b626d06 includes literal apostrophes. Grouping whole paths under one parenthesized alternation also prevents Go from matching nested subtest components independently.",
+          "evidence": [
+            {
+              "label": "Go proctor arguments on master",
+              "url": "https://github.com/google/gvisor/blob/2552c6787/test/runtimes/proctor/lib/go.go#L69-L105"
+            },
+            {
+              "label": "Go 1.22.11 slash and alternation matcher",
+              "url": "https://github.com/golang/go/blob/go1.22.11/src/testing/match.go#L168-L218"
+            },
+            {
+              "label": "Runtime migration that introduced the direct argument",
+              "url": "https://github.com/google/gvisor/commit/b9b626d06"
+            }
+          ]
+        },
+        {
+          "text": "The existing proctor file filters select the same 2,525 files as the pinned Go testdir registers, including nested typeparam/mdempsky cases. Some registered files explicitly skip or apply only to another architecture.",
+          "evidence": [
+            {
+              "label": "Go 1.22 disk-suite exclusion",
+              "url": "https://github.com/google/gvisor/blob/2552c6787/test/runtimes/exclude/go1.22.csv"
+            },
+            {
+              "label": "Go 1.22.11 registered test files",
+              "url": "https://github.com/golang/go/blob/go1.22.11/src/cmd/internal/testdir/testdir_test.go#L50-L96"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check that a deliberately failing selected file reaches the caller, that unselected siblings stay out, and that each of the 2,525 names has a recorded outcome across 51 systrap batches. Measure skips, failures and elapsed time before proposing the change.",
+      "evidence": [
+        {
+          "label": "Go proctor arguments on master",
+          "url": "https://github.com/google/gvisor/blob/2552c6787/test/runtimes/proctor/lib/go.go#L69-L105"
+        },
+        {
+          "label": "Go 1.22 disk-suite exclusion",
+          "url": "https://github.com/google/gvisor/blob/2552c6787/test/runtimes/exclude/go1.22.csv"
+        },
+        {
+          "label": "Go 1.22.11 slash and alternation matcher",
+          "url": "https://github.com/golang/go/blob/go1.22.11/src/testing/match.go#L168-L218"
+        },
+        {
+          "label": "Go 1.22.11 registered test files",
+          "url": "https://github.com/golang/go/blob/go1.22.11/src/cmd/internal/testdir/testdir_test.go#L50-L96"
+        },
+        {
+          "label": "Fork selection correction",
+          "url": "https://github.com/tamird/gvisor/commit/9f3e63e13"
+        },
+        {
+          "label": "Native Linux controls and complete systrap testdir run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43070682429"
+        }
+      ]
+    },
     {
       "id": "investigation:cubic-recovery",
       "title": "CUBIC recovery and congestion-control testing",
@@ -101860,7 +101966,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T17:16:13+00:00",
+      "updatedAt": "2026-11-11T17:44:03+00:00",
       "summary": "The FD-table speedup test timed startup and exit along with three dup3 calls. Timing those calls in the helper preserved the speedup signal under an unrelated post-syscall delay. All eight native FD-table comparisons ran on one AMD64 kernel.",
       "findings": [
         {
@@ -101919,10 +102025,23 @@
               "url": "https://github.com/tamird/gvisor/commit/997f8b37e"
             }
           ]
+        },
+        {
+          "text": "The qualified correction opened as #17486 at 997f8b37e. Master still uses the whole-process timing assertion.",
+          "evidence": [
+            {
+              "label": "Open single-commit change",
+              "url": "https://github.com/google/gvisor/pull/17486"
+            }
+          ]
         }
       ],
-      "nextStep": "Review the single-commit test adjustment that measures the three dup3 operations and checks the exec’d helper’s initial FD capacity.",
+      "nextStep": "Follow review and landing of #17486. Once it lands, check the measured FD-table expansion in subsequent CI failures.",
       "evidence": [
+        {
+          "label": "Published prewarmer test correction #17486",
+          "url": "https://github.com/google/gvisor/pull/17486"
+        },
         {
           "label": "Failing cgroup v1 integration job",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1cad8-74b0-47f8-9ff0-c7aefef44dbb"
@@ -101956,17 +102075,23 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43064713796/artifacts/13874883539"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "requestedAt": "2026-11-11T17:16:13+00:00",
-        "head": "997f8b37e43ec66fb94ae2d4394168d1685dac8c",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/997f8b37e",
-        "title": "Time FD-table expansion inside the test helper",
-        "body": "The prewarmer speedup test timed the whole child process. In one CI\nrun the prewarmed child took 139 ms and the standalone child 136 ms.\nThe same test passed on retry [1]. These times include startup and\nexit as well as the three dup3 calls that grow the FD table.\n\nHave the helper report its starting FDSize and the time spent in\ndup3. Skip comparisons where the standalone helper already has room\nfor FD 255. Check that the prewarmed helper starts with that room,\nsince equal-cost medians can otherwise let a no-op prewarmer pass.\nKeep the strict comparison of the 32 interleaved samples.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54410#01a1cad8-74b0-47f8-9ff0-c7aefef44dbb\n\nPrepared by Codex on behalf of @tamird.",
-        "summary": "Open this test-only change against gVisor?"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "requestedAt": "2026-11-11T17:16:13+00:00",
+          "head": "997f8b37e43ec66fb94ae2d4394168d1685dac8c",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/997f8b37e",
+          "title": "Time FD-table expansion inside the test helper",
+          "body": "The prewarmer speedup test timed the whole child process. In one CI\nrun the prewarmed child took 139 ms and the standalone child 136 ms.\nThe same test passed on retry [1]. These times include startup and\nexit as well as the three dup3 calls that grow the FD table.\n\nHave the helper report its starting FDSize and the time spent in\ndup3. Skip comparisons where the standalone helper already has room\nfor FD 255. Check that the prewarmed helper starts with that room,\nsince equal-cost medians can otherwise let a no-op prewarmer pass.\nKeep the strict comparison of the 32 interleaved samples.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54410#01a1cad8-74b0-47f8-9ff0-c7aefef44dbb\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Open this test-only change against gVisor?",
+          "outcome": "approved",
+          "at": "2026-11-11T17:44:03+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17486",
+          "note": "The approved test correction opened as #17486."
+        }
+      ]
     },
     {
       "id": "investigation:rules-shell-run-shell-release",
@@ -102289,5 +102414,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-11T17:23:01+00:00"
+  "updatedAt": "2026-11-11T17:44:03+00:00"
 }
