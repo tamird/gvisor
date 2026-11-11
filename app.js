@@ -1215,6 +1215,10 @@ function humanAction(node) {
   const action = node.humanAction;
   return action?.status === "pending" && action.kind === "submission" && action.head === node.head ? action : null;
 }
+function submissionLink(action, className) {
+  const title = new URL(action.url).pathname.includes("/compare/") ? "Open prefilled pull request" : "Open submission context";
+  return link(title + " ↗", action.url, className);
+}
 function contributorDecisionURL(node, reason) {
   const url = new URL(location.href);
   url.search = `?view=table&reason=${reason}`;
@@ -1774,7 +1778,7 @@ function drawTable(nodes) {
       }
     }
     const action = humanAction(node);
-    if (action) title.append(link("Open submission context ↗", action.url, "human-action-source"));
+    if (action) title.append(submissionLink(action, "human-action-source"));
     const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
     state.append(element("span", "base-status", status(node))); appendStates(state, node);
     for (const reason of entry.reasons) { const item = element("span", `attention-reason ${reason.owner}`, reason.title); item.title = `${ATTENTION_OWNERS[reason.owner]}. ${reason.detail}`; state.append(item); }
@@ -1851,7 +1855,7 @@ function appendHumanAction(parent, node) {
   const section = element("section", "detail-section human-action");
   section.append(element("h3", "", action.title), element("p", "", action.summary),
     element("p", "detail-meta", `Prepared commit ${action.head}`),
-    element("div", "decision-body", action.body), link("Open submission context ↗", action.url),
+    element("div", "decision-body", action.body), submissionLink(action),
     link("Read contribution policy ↗", action.policyURL));
   for (const item of node.evidence || []) {
     if (item.label && safeURL(item.url)) section.append(link(item.label + " ↗", item.url, "relation-source"));

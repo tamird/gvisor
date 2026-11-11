@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T18:54:47+00:00",
+    "updatedAt": "2026-11-11T19:07:18+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27629,26 +27629,27 @@
       "url": "https://github.com/google/benchmark/issues/1634",
       "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
       "status": "Human submission required",
-      "summary": "Benchmark v1.10.0 required a separate manual Bazel Central Registry submission. The local change would open a registry pull request from a release account for each stable version. It preserves the listed module maintainer and the current presubmit matrix. Native macOS ARM64 Bazel 8.5.1 built all three //:all targets in 25 actions. The workflow passed actionlint and its pinned publisher inputs and registry matrix were checked. Two real archive replays passed. The final 253-entry source archive embedded the exact commit ID and repeated byte for byte. All source and tests match the qualified tree 67f61169f.",
+      "summary": "Benchmark v1.10.0 required a separate manual Bazel Central Registry submission. The proposed workflow would open a registry pull request from a release account for each stable version. It preserves the listed module maintainer and the current presubmit matrix. Native macOS ARM64 Bazel 8.5.1 built all three //:all targets in 25 actions. The workflow passed actionlint and its pinned publisher inputs and registry matrix were checked. Two real archive replays passed. The final 253-entry source archive embedded the exact commit ID and repeated byte for byte. All source and tests match the qualified tree 67f61169f.",
       "humanAction": {
         "status": "pending",
         "kind": "submission",
         "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
         "title": "Review and personally submit the Benchmark release workflow",
-        "summary": "Review the local commit and proposed pull request below. Benchmark asks the human contributor to understand and produce the submission and disclose AI assistance.",
+        "summary": "The reviewed source is on your personal fork. Inspect the commit and use the prefilled form to personally submit the pull request. Benchmark asks the contributor to understand and produce the submission and disclose AI assistance.",
         "body": "Inspect the local commit and compare it with the earlier draft in ~/code/benchmark.\n\ngit -C ~/code/benchmark show e80986b50\ngit -C ~/code/benchmark range-diff 913b8dbc7^! e80986b50^!\n\nProposed pull request title\nOpen a BCR pull request for each stable release\n\nProposed pull request body\n\nBenchmark v1.10.0 needed a separate registry submission before Bazel users could select it [1]. This makes each stable GitHub release open that pull request. The source archive is attached to the draft once, so Bazel verifies the same bytes on retries. The existing module maintainer and registry build matrix carry forward.\n\n**Before merge**\n\n- [ ] Choose a release account and its fork of bazel-central-registry. Agree who will store and rotate its publishing token.\n- [ ] Confirm a listed module maintainer will review the account's non-draft entries. RE2 and J2CL use this split [2][3].\n\n**After merge**\n\n- [ ] Once, set the Actions variable `BCR_REGISTRY_FORK` and secret `BCR_PUBLISH_TOKEN`. The source repository grants the pinned workflow read access, as Brotli does [4].\n- [ ] For the first stable tag containing the new templates and each stable release after it, push the annotated tag at the version bump. Attach `benchmark-<version>.tar.gz` from that commit to the draft before publishing it. ArrayRecord likewise attaches the source before opening its registry PR [5].\n- [ ] Once BCR checks pass, have the listed maintainer review the entry. If the release job fails, fix the cause and choose **Re-run failed jobs** on its original run.\n\nOpenAI Codex researched the precedents and drafted the workflow, templates and release instructions.\n\n[1]: https://github.com/bazelbuild/bazel-central-registry/pull/11314\n[2]: https://github.com/bazelbuild/bazel-central-registry/pull/6424\n[3]: https://github.com/bazelbuild/bazel-central-registry/pull/11379\n[4]: https://github.com/google/brotli/blob/2654c9dd5/.github/workflows/publish_to_bcr.yaml\n[5]: https://github.com/google/array_record/blob/5873cf86d/.github/workflows/publish_release.yml",
-        "url": "https://github.com/google/benchmark/issues/1634",
+        "url": "https://github.com/google/benchmark/compare/main...tamird:review/benchmark-bcr-release-checklist?expand=1&title=Open+a+BCR+pull+request+for+each+stable+release&body=Benchmark+v1.10.0+needed+a+separate+registry+submission+before+Bazel+users+could+select+it+%5B1%5D.+This+makes+each+stable+GitHub+release+open+that+pull+request.+The+source+archive+is+attached+to+the+draft+once%2C+so+Bazel+verifies+the+same+bytes+on+retries.+The+existing+module+maintainer+and+registry+build+matrix+carry+forward.%0A%0A%2A%2ABefore+merge%2A%2A%0A%0A-+%5B+%5D+Choose+a+release+account+and+its+fork+of+bazel-central-registry.+Agree+who+will+store+and+rotate+its+publishing+token.%0A-+%5B+%5D+Confirm+a+listed+module+maintainer+will+review+the+account%27s+non-draft+entries.+RE2+and+J2CL+use+this+split+%5B2%5D%5B3%5D.%0A%0A%2A%2AAfter+merge%2A%2A%0A%0A-+%5B+%5D+Once%2C+set+the+Actions+variable+%60BCR_REGISTRY_FORK%60+and+secret+%60BCR_PUBLISH_TOKEN%60.+The+source+repository+grants+the+pinned+workflow+read+access%2C+as+Brotli+does+%5B4%5D.%0A-+%5B+%5D+For+the+first+stable+tag+containing+the+new+templates+and+each+stable+release+after+it%2C+push+the+annotated+tag+at+the+version+bump.+Attach+%60benchmark-%3Cversion%3E.tar.gz%60+from+that+commit+to+the+draft+before+publishing+it.+ArrayRecord+likewise+attaches+the+source+before+opening+its+registry+PR+%5B5%5D.%0A-+%5B+%5D+Once+BCR+checks+pass%2C+have+the+listed+maintainer+review+the+entry.+If+the+release+job+fails%2C+fix+the+cause+and+choose+%2A%2ARe-run+failed+jobs%2A%2A+on+its+original+run.%0A%0AOpenAI+Codex+researched+the+precedents+and+drafted+the+workflow%2C+templates+and+release+instructions.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F11314%0A%5B2%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F6424%0A%5B3%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F11379%0A%5B4%5D%3A+https%3A%2F%2Fgithub.com%2Fgoogle%2Fbrotli%2Fblob%2F2654c9dd5%2F.github%2Fworkflows%2Fpublish_to_bcr.yaml%0A%5B5%5D%3A+https%3A%2F%2Fgithub.com%2Fgoogle%2Farray_record%2Fblob%2F5873cf86d%2F.github%2Fworkflows%2Fpublish_release.yml",
         "policyURL": "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md"
       },
       "followup": {
         "owner": "tamird",
         "sourceHead": "e80986b5007460a9bf77c718d5e2daa247c4d841",
         "disposition": "Human submission required by the upstream contribution policy",
-        "nextAction": "Review the local commit and its release-manager checklist, then personally submit the contribution with AI disclosure if proceeding.",
+        "nextAction": "Review the source on your fork and the release-manager checklist, then personally submit the prefilled pull request with AI disclosure if proceeding.",
         "evidence": [
           "https://github.com/google/benchmark/issues/1634",
           "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md",
-          "https://app.buildbuddy.io/invocation/3fb83843-be08-482c-bd75-d6433d0611c6"
+          "https://app.buildbuddy.io/invocation/3fb83843-be08-482c-bd75-d6433d0611c6",
+          "https://github.com/tamird/benchmark/commit/e80986b50"
         ]
       },
       "evidence": [
@@ -27671,8 +27672,13 @@
         {
           "label": "ArrayRecord uploads the source archive before the registry PR",
           "url": "https://github.com/google/array_record/blob/5873cf86d/.github/workflows/publish_release.yml"
+        },
+        {
+          "label": "Reviewed commit on the personal fork",
+          "url": "https://github.com/tamird/benchmark/commit/e80986b50"
         }
-      ]
+      ],
+      "updatedAt": "2026-11-11T19:07:18+00:00"
     },
     {
       "id": "pr:16337",
@@ -38937,8 +38943,8 @@
       "url": "https://github.com/tamird/gvisor/commit/c5d0232e4",
       "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
       "group": "analysis",
-      "updatedAt": "2026-11-02T05:08:02+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-11T19:07:18+00:00",
+      "status": "Contributor approved; awaiting prerequisites",
       "summary": "Bazel 9.3.1 ran clang-format on all 485 tracked C and C++ files. On the same server, adding a malformed file produced its exact diagnostic, deleting the directory restored the 485-file inventory, and recreating it with a differently named malformed file produced the new diagnostic. The fix target formatted that file and the next check passed.",
       "evidence": [
         {
@@ -38984,14 +38990,29 @@
           "base": "045a3f7a506c109eab8beb396e5b3af37776a2df"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
-        "url": "https://github.com/tamird/gvisor/commit/c5d0232e4",
-        "requestedAt": "2026-11-02T05:08:02+00:00",
-        "title": "Open the declared clang-format change after #16663 lands",
-        "summary": "The formatter patch is unchanged on the Bazel 9.3.1 revision of #16663. The directory-watch fix is in that release. Both checking and applying clang-format run directly through Bazel."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
+          "url": "https://github.com/tamird/gvisor/commit/c5d0232e4",
+          "requestedAt": "2026-11-02T05:08:02+00:00",
+          "title": "Open the declared clang-format change after #16663 lands",
+          "summary": "The formatter patch is unchanged on the Bazel 9.3.1 revision of #16663. The directory-watch fix is in that release. Both checking and applying clang-format run directly through Bazel.",
+          "outcome": "approved",
+          "at": "2026-11-11T19:07:18+00:00",
+          "note": "Approved for publication after the shared source inventory in #16663 lands."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
+        "observedAt": "2026-11-11T19:07:18+00:00",
+        "disposition": "Approved for publication after the shared source inventory in #16663 lands.",
+        "nextAction": "Open this reviewed change after the shared source inventory in #16663 lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c5d0232e4",
+          "https://github.com/google/gvisor/pull/16663"
+        ]
       }
     },
     {
@@ -39034,8 +39055,8 @@
           "url": "https://app.buildbuddy.io/invocation/8c30dc22-4d7d-403e-b6f6-58fdd89c698c"
         }
       ],
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-11T02:45:00+00:00",
+      "status": "Contributor approved; awaiting prerequisites",
+      "updatedAt": "2026-11-11T19:07:18+00:00",
       "refinement": {
         "before": {
           "head": "c28bb7409901425e94c7fdf7a293c792c87a731c"
@@ -39044,15 +39065,30 @@
           "head": "d25ca53f67e4380d62aee94150abd4166ff69228"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "d25ca53f67e4380d62aee94150abd4166ff69228",
-        "url": "https://github.com/tamird/gvisor/commit/d25ca53f6",
-        "title": "Run the repository spelling check as a Bazel action",
-        "requestedAt": "2026-11-11T02:45:00+00:00",
-        "summary": "Open the revised codespell proposal after the shared Bazel lint rules land?",
-        "body": "Give codespell the repository’s C, C++, Go, Markdown and HTML files\nthrough the same source inventory as the other formatters. Run its\npinned wheel with the declared Python interpreter so the action can run\non a remote worker. A spelling error prints the path and suggestion and\nfails the build.\n\nReject configuration that enables in-place fixes. The lint target\nreads source files, including when Bazel runs the action locally."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d25ca53f67e4380d62aee94150abd4166ff69228",
+          "url": "https://github.com/tamird/gvisor/commit/d25ca53f6",
+          "title": "Run the repository spelling check as a Bazel action",
+          "requestedAt": "2026-11-11T02:45:00+00:00",
+          "summary": "Open the revised codespell proposal after the shared Bazel lint rules land?",
+          "body": "Give codespell the repository’s C, C++, Go, Markdown and HTML files\nthrough the same source inventory as the other formatters. Run its\npinned wheel with the declared Python interpreter so the action can run\non a remote worker. A spelling error prints the path and suggestion and\nfails the build.\n\nReject configuration that enables in-place fixes. The lint target\nreads source files, including when Bazel runs the action locally.",
+          "outcome": "approved",
+          "at": "2026-11-11T19:07:18+00:00",
+          "note": "Approved for publication after the declared clang-format change lands."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "d25ca53f67e4380d62aee94150abd4166ff69228",
+        "observedAt": "2026-11-11T19:07:18+00:00",
+        "disposition": "Approved for publication after the declared clang-format change lands.",
+        "nextAction": "Open this reviewed change after the declared clang-format change lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/d25ca53f6",
+          "https://github.com/tamird/gvisor/commit/c5d0232e4"
+        ]
       }
     },
     {
@@ -47942,8 +47978,8 @@
       "url": "https://github.com/tamird/gvisor/commit/49d0bc55a",
       "group": "analysis",
       "summary": "Gazelle runs as a declared Bazel build action so presubmit can execute it remotely and reuse an earlier result. The Actions step shows how to apply reported diffs with bazel run //:gazelle_fix, matching #17223.",
-      "updatedAt": "2026-11-08T22:38:00+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-11T19:07:18+00:00",
+      "status": "Contributor approved; awaiting prerequisites",
       "evidence": [
         {
           "label": "Earlier proposal to current revision (step name and commit message)",
@@ -47980,18 +48016,31 @@
           "head": "de64c6b62428b11ae47240b753998fc28f43069e",
           "outcome": "changes-requested",
           "at": "2026-11-02T16:20:02.085486+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "49d0bc55abb2e09059cb18d87eebf60f72caa12a",
+          "baseHead": "de64c6b62428b11ae47240b753998fc28f43069e",
+          "url": "https://github.com/tamird/gvisor/commit/49d0bc55a",
+          "title": "Let Bazel cache and remotely execute the Gazelle check",
+          "requestedAt": "2026-11-02T16:20:02.085486+00:00",
+          "summary": "Review the motivation for running Gazelle as a Bazel build action and the direct Bazel command for applying reported diffs.",
+          "body": "Presubmit checks whether the Go sources and their BUILD files agree.\nWith bazel run, Bazel builds the launcher, but the launcher scans the\ncheckout on the CI runner every time. A change outside the packages\nmanaged by Gazelle still pays for the scan, and a remote worker cannot\nrun it on the runner's behalf.\n\nRun Gazelle in diff mode as a build action. Its inputs include files\nmatched by go:embed and BUILD files containing inherited directives, so\na change to either invalidates the result. Share the package list, flags\nand repository map with the fixer so that bazel run //:gazelle_fix\napplies the reported diff.",
+          "outcome": "approved",
+          "at": "2026-11-11T19:07:18+00:00",
+          "note": "Approved for publication after the shared source inventory in #16663 lands."
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "49d0bc55abb2e09059cb18d87eebf60f72caa12a",
-        "baseHead": "de64c6b62428b11ae47240b753998fc28f43069e",
-        "url": "https://github.com/tamird/gvisor/commit/49d0bc55a",
-        "title": "Let Bazel cache and remotely execute the Gazelle check",
-        "requestedAt": "2026-11-02T16:20:02.085486+00:00",
-        "summary": "Review the motivation for running Gazelle as a Bazel build action and the direct Bazel command for applying reported diffs.",
-        "body": "Presubmit checks whether the Go sources and their BUILD files agree.\nWith bazel run, Bazel builds the launcher, but the launcher scans the\ncheckout on the CI runner every time. A change outside the packages\nmanaged by Gazelle still pays for the scan, and a remote worker cannot\nrun it on the runner's behalf.\n\nRun Gazelle in diff mode as a build action. Its inputs include files\nmatched by go:embed and BUILD files containing inherited directives, so\na change to either invalidates the result. Share the package list, flags\nand repository map with the fixer so that bazel run //:gazelle_fix\napplies the reported diff."
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "49d0bc55abb2e09059cb18d87eebf60f72caa12a",
+        "observedAt": "2026-11-11T19:07:18+00:00",
+        "disposition": "Approved for publication after the shared source inventory in #16663 lands.",
+        "nextAction": "Open this reviewed change after the shared source inventory in #16663 lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/49d0bc55a",
+          "https://github.com/google/gvisor/pull/16663"
+        ]
       }
     },
     {
@@ -102534,7 +102583,7 @@
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-11T18:47:20+00:00",
+      "updatedAt": "2026-11-11T19:07:18+00:00",
       "summary": "The master PGO pipeline reported 608 consecutive failures, from build #3174 through #3781. The previous build passed. Master still contains profiles through Go 1.27.1. The public statuses do not identify the failing benchmark or publication stage.",
       "findings": [
         {
@@ -102604,9 +102653,22 @@
               "url": "https://github.com/google/gvisor/blob/2552c6787/test/benchmarks/network/network.go#L59-L78"
             }
           ]
+        },
+        {
+          "text": "With benchmarks/util included, the stock Go 1.27.3 Make collector on 2552c6787 produced all six native AMD64 systrap profiles. Each compressed profile and package-hash sidecar was verified. In runc controls with util missing, stock started Hey for both owners; Nginx passed and Node received a connection refusal. The fork readiness correction stopped both before Hey and both passed once util was restored. Four event checks in the qualification expected an explicit :latest where Docker omitted the default tag.",
+          "evidence": [
+            {
+              "label": "Six stock profiles and the missing/readiness-image controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43078427299/artifacts/13884238177"
+            },
+            {
+              "label": "Readiness correction tested on the fork",
+              "url": "https://github.com/tamird/gvisor/commit/f574a3be1"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the Nginx path with its normal readiness image and a deliberately unavailable probe. Check that a readiness error stops the run before Hey. For the private master failures, obtain the first failing benchmark, merge or publication log.",
+      "nextStep": "Obtain the first failing benchmark, profile merge, or publication log from the private master pipeline. The stock Go 1.27.3 collector completed on the tested worker.",
       "evidence": [
         {
           "label": "Publisher correction, gVisor #17492",
