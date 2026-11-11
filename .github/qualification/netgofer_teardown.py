@@ -1,4 +1,4 @@
-"""Repeat the ordinary connection limit test and locate a natural teardown stall."""
+"""Compare the same connection-limit test on the existing queue-drain change."""
 
 import hashlib
 import json
@@ -18,11 +18,57 @@ TEST = "TestProxyLimitsConnections"
 WORK = Path(os.environ["RUNNER_TEMP"]) / "netgofer-teardown"
 OUT = WORK / "receipt"
 TEST_SOURCE = Path("runsc/gofer/net/netgofer_test.go")
+NETGOFER = Path("runsc/gofer/net/netgofer.go")
+ENDPOINT = Path("pkg/tcpip/link/fdbased/endpoint.go")
+DISPATCH = Path("pkg/tcpip/link/fdbased/packet_dispatchers.go")
+RAW = Path("pkg/rawfile/rawfile_unsafe.go")
+FIX = "fbad38ea661236e230a355fde5d0f87d9cac44bb"
 REPORT = {"source": SOURCE, "architecture": platform.machine(), "arms": {}, "verified": False}
 
 
 def save():
     (OUT / "result.json").write_text(json.dumps(REPORT, indent=2) + "\n")
+
+
+def replace(path, old, new):
+    text = path.read_text()
+    assert text.count(old) == 1, (path, old)
+    path.write_text(text.replace(old, new))
+
+
+def stock_observer():
+    replace(NETGOFER, "type Netgofer struct {", "type Netgofer struct {\n\tobserveReceive func(int, int)")
+    replace(NETGOFER, "PacketDispatchMode: fdbased.RecvMMsg,", "PacketDispatchMode: fdbased.RecvMMsg,\n\t\tObserveReceive: n.observeReceive,")
+    replace(ENDPOINT, "type Options struct {", "type Options struct {\n\tObserveReceive func(int, int)")
+    replace(DISPATCH, "type recvMMsgDispatcher struct {", 'type recvMMsgDispatcher struct {\n\tobserveReceive func(int, int) `state:"nosave"`')
+    replace(DISPATCH, "d := &recvMMsgDispatcher{", "d := &recvMMsgDispatcher{\n\t\tobserveReceive: opts.ObserveReceive,")
+    marker = "// Process each of received packets."
+    replace(DISPATCH, marker, """if d.observeReceive != nil {
+        bytes := 0
+        for _, msg := range d.msgHdrs[:nMsgs] {
+            bytes += int(msg.Len)
+        }
+        d.observeReceive(nMsgs, bytes)
+    }
+
+    """ + marker)
+    TEST_SOURCE.write_bytes((WORK / "diagnostic.go").read_bytes())
+
+
+def restore(*paths):
+    for path in paths:
+        path.write_bytes(subprocess.check_output(["git", "show", f"{SOURCE}:{path}"]))
+
+
+def install_receive_change():
+    # Only the receive path is under test in this in-process fixture. It has
+    # always run without installing the production process's seccomp filter.
+    changes = subprocess.check_output(["git", "diff", "--unified=1", FIX + "^", FIX, "--", RAW, ENDPOINT, DISPATCH])
+    subprocess.run(["git", "apply", "-C1"], input=changes, check=True)
+    option = "PacketDispatchMode: fdbased.RecvMMsg,"
+    replace(NETGOFER, option, option + "\n\t\tDetectSeqpacketEOF: true,")
+    REPORT["receiveChange"] = {"commit": FIX, "rawAndFDBasedDiffSHA256": hashlib.sha256(changes).hexdigest(),
+                               "files": [str(p) for p in [RAW, ENDPOINT, DISPATCH, NETGOFER]]}
 
 
 def run(name: str, count: int):
@@ -37,8 +83,6 @@ def run(name: str, count: int):
                "--test_timeout=420", "--test_output=errors", "--nobuild_event_json_file_path_conversion",
                "--test_arg=-test.v", f"--test_arg=-test.count={count}", "--test_arg=-test.failfast",
                "--test_arg=-test.run=^" + TEST + "$", "--build_event_json_file=" + str(bep)]
-    if name == "observer-control":
-        command.append("--test_env=NETGOFER_FRAME_CONTROL=1")
     for attempt in range(10):
         with console.open("w") as f:
             proc = subprocess.run([*command, *["--distdir=" + str(d) for d in sorted(previous.DIRS)], TARGET],
@@ -71,11 +115,13 @@ def run(name: str, count: int):
     assert any(c.get("name") == TEST and c.find("skipped") is None for c in cases), name
     # Keep the original per-case verdict and sanitized function/line evidence.
     # Transient public package-fetch output and raw runtime arguments stay on the runner.
-    frames = [l.strip() for l in log.splitlines() if "TEARDOWN_FRAME " in l or "TEARDOWN_STACK " in l]
+    frames = [l.strip() for l in log.splitlines() if any(x in l for x in ["TEARDOWN_FRAME ", "TEARDOWN_STACK ", "TEARDOWN_RECEIVES "])]
+    drained = re.findall(r"TEARDOWN_DRAIN\s+(-?\d+)", log)
     verdicts = re.findall(r"(?m)^\s*--- (PASS|FAIL|SKIP): " + TEST + r" \(([^)]+)\)", log)
     stalled = log.count("runProxyMode() did not exit after UDS peer closed")
     row = {"planned": count, "verdicts": verdicts, "teardownTimeouts": stalled, "strategy": info["strategy"],
            "bazelExit": proc.returncode, "bazelStatus": result["status"], "frames": frames,
+           "queueChecks": len(drained), "emptyQueueChecks": drained.count("0"),
            "originalLogSHA256": hashlib.sha256(outputs["test.log"]).hexdigest(),
            "started": next(e["started"]["uuid"] for e in events if "started" in e)}
     REPORT["arms"][name] = row
@@ -85,8 +131,11 @@ def run(name: str, count: int):
         assert failures == stalled and proc.returncode and result["status"] == "FAILED", row
     else:
         assert len(verdicts) == count and proc.returncode == 0 and result["status"] == "PASSED", row
-    if name == "observer-control" or (name == "ordinary-with-observer" and stalled):
+    if name == "stock-observed" and stalled:
         assert any("(*Netgofer).runProxyMode" in f and "netgofer.go:" in f for f in frames), row
+        assert any("TEARDOWN_RECEIVES " in f for f in frames), row
+    if name.startswith("queue-drain"):
+        assert not stalled, row
     print(name, len(verdicts), "executed,", stalled, "teardown timeouts", flush=True)
 
 
@@ -94,9 +143,15 @@ assert REPORT["architecture"] == "aarch64"
 previous.save = lambda: None
 assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == SOURCE
 save()
-run("unmodified", 24)
-TEST_SOURCE.write_bytes((WORK / "diagnostic.go").read_bytes())
-run("observer-control", 1)
-run("ordinary-with-observer", 64)
+stock_observer()
+run("stock-observed", 256)
+restore(NETGOFER, ENDPOINT, DISPATCH, TEST_SOURCE)
+install_receive_change()
+corrected = DISPATCH.read_bytes()
+marker = "d.queuedAtShutdown = n"
+replace(DISPATCH, marker, 'println("TEARDOWN_DRAIN", n)\n\t' + marker)
+run("queue-drain-observed", 128)
+DISPATCH.write_bytes(corrected)
+run("queue-drain-unobserved", 256)
 REPORT["verified"] = True
 save()

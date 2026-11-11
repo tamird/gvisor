@@ -27,6 +27,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -356,6 +357,16 @@ func startInProcessProxy(t *testing.T, n *Netgofer) *stack.Stack {
 	n.disableSeccomp = true
 	n.ready = make(chan struct{})
 
+	var withData, withoutData, lastMsgs atomic.Uint64
+	n.observeReceive = func(msgs, bytes int) {
+		lastMsgs.Store(uint64(msgs))
+		if bytes > 0 {
+			withData.Add(1)
+		} else {
+			withoutData.Add(1)
+		}
+	}
+
 	proxyExit := make(chan subcommands.ExitStatus, 1)
 	go func() {
 		proxyExit <- n.runProxyMode(&config.Config{RXChecksumOffload: true})
@@ -372,18 +383,18 @@ func startInProcessProxy(t *testing.T, n *Netgofer) *stack.Stack {
 	}
 
 	clientStack := newTestClientStackWithOptions(t, clientFD, n.allowLoopback)
-	if os.Getenv("NETGOFER_FRAME_CONTROL") == "1" {
-		logProxyWaitFrames(t)
-	}
 	t.Cleanup(func() {
 		clientStack.Destroy()
 		_ = unix.Close(clientFD)
+		dataAtClose, emptyAtClose := withData.Load(), withoutData.Load()
 		select {
 		case status := <-proxyExit:
 			if status != subcommands.ExitSuccess {
 				t.Errorf("runProxyMode() = %v, want %v", status, subcommands.ExitSuccess)
 			}
 		case <-time.After(5 * time.Second):
+			t.Logf("TEARDOWN_RECEIVES with_data_after_close=%d without_data_after_close=%d last_batch_records=%d",
+				withData.Load()-dataAtClose, withoutData.Load()-emptyAtClose, lastMsgs.Load())
 			logProxyWaitFrames(t)
 			t.Error("runProxyMode() did not exit after UDS peer closed")
 		}

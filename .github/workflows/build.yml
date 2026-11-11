@@ -1,11 +1,11 @@
-name: Locate the netgofer connection-limit teardown wait on native ARM64
+name: Check the netgofer receive path at shutdown on native ARM64
 on:
   push:
     branches: [qualification/netgofer-connection-limit-teardown]
 permissions: {}
 jobs:
   netgofer:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.before == '561d1c662f2083beed0038792b489557ec1267b6' && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 150
     steps:
@@ -21,9 +21,11 @@ jobs:
           prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
           assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
           inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          fixed=fbad38ea661236e230a355fde5d0f87d9cac44bb
           git init -q .
-          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prep" "$assets" "$inputs"
-          test "$(git rev-parse "$GITHUB_SHA^")" = "$source"
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prep" "$assets" "$inputs" "$fixed"
+          test "$(git rev-parse "$GITHUB_SHA^")" = 561d1c662f2083beed0038792b489557ec1267b6
+          test "$(git rev-parse "$GITHUB_SHA^^")" = "$source"
           git diff --exit-code "$source" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/netgofer_teardown.py' ':!runsc/gofer/net/netgofer_test.go'
           git show "$GITHUB_SHA:.github/qualification/netgofer_teardown.py" > "$w/check.py"
           git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
@@ -39,7 +41,7 @@ jobs:
           curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-arm64 -o bazel
           echo '10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366  bazel' | sha256sum -c -
           chmod +x bazel
-      - name: Run the unmodified test, verify the observer and repeat ordinary teardowns
+      - name: Compare ordinary proxy teardown with stock and corrected receive behavior
         run: |
           env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
             python3 -Bu "$RUNNER_TEMP/netgofer-teardown/check.py"
