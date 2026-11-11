@@ -411,21 +411,21 @@ func containerdConfig(runtimeOption string) string {
 		sandboxImage = `
   sandbox_image = "gvisor.dev/images/cri/pause:latest"`
 	}
-	return `
+	return fmt.Sprintf(`
 version=2
 disabled_plugins = ["io.containerd.internal.v1.restart"]
 [plugins."io.containerd.grpc.v1.cri"]
-  disable_tcp_service = true` + sandboxImage + `
+  disable_tcp_service = true%[1]s
 [plugins."io.containerd.runtime.v1.linux"]
   shim_debug = true
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
   runtime_type = "io.containerd.runc.v2"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.` + containerdRuntime + `]
-  runtime_type = "io.containerd.` + containerdRuntime + `.v1"
-  ` + runtimeOption + `
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.` + containerdRuntime + `.options]
-  TypeUrl = "io.containerd.` + containerdRuntime + `.v1.options"
-`
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.%[2]s]
+  runtime_type = "io.containerd.%[2]s.v1"
+  %[3]s
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.%[2]s.options]
+  TypeUrl = "io.containerd.%[2]s.v1.options"
+`, sandboxImage, containerdRuntime, runtimeOption)
 }
 
 // setup sets up before a test. Specifically it:

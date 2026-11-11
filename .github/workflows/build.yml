@@ -119,8 +119,9 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        candidate=8fda06b662ee93eddee27e0cba87ac767fdb4d16
+        candidate=fe5b152d94b4d58d499c0d5c05f04065da5265a1
         cp test/rbe/check_cri_archive.py "$RUNNER_TEMP/"
+        cp test/rbe/cri_pause_stage_test.go "$RUNNER_TEMP/"
         git fetch --no-tags --depth=1 origin "$candidate"
         git switch --detach "$candidate"
         bazelisk query 'somepath(//test/root:crictl_test, //test/root:sandbox_image_tar)'
@@ -128,6 +129,23 @@ jobs:
         bazelisk build //test/root:sandbox_image_tar
         python3 "$RUNNER_TEMP/check_cri_archive.py"
         cp -L bazel-bin/test/root/pause.tar "$RUNNER_TEMP/pause.tar"
+        cp "$RUNNER_TEMP/cri_pause_stage_test.go" test/root/
+        cat >>test/root/BUILD <<'STARLARK'
+
+        go_test(
+            name = "qualification_pause_stage_test",
+            srcs = ["cri_pause_stage_test.go"],
+            data = [":sandbox_image_tar"],
+            embed = [":root"],
+            pure = True,
+            deps = ["//pkg/test/testutil"],
+        )
+        STARLARK
+        git diff --exit-code -- test/root/containerd_harness.go test/root/crictl_test.go test/root/crictl_sandbox_test.go
+        bazelisk test --test_output=errors --nocache_test_results //test/root:qualification_pause_stage_test
+        cp bazel-testlogs/test/root/qualification_pause_stage_test/test.log "$RUNNER_TEMP/standalone-stage.log"
+        git restore -- test/root/BUILD
+        rm test/root/cri_pause_stage_test.go
         git switch --detach "$GITHUB_SHA"
         cp "$RUNNER_TEMP/pause.tar" test/root/pause.tar
 
@@ -192,4 +210,5 @@ jobs:
         path: |
           ${{ runner.temp }}/cri-startup-results.json
           ${{ runner.temp }}/pause-archives.json
+          ${{ runner.temp }}/standalone-stage.log
         if-no-files-found: error
