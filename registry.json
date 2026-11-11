@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T21:14:56+00:00",
+    "updatedAt": "2026-11-11T21:27:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7402,8 +7402,8 @@
       "group": "bazel",
       "status": "open",
       "head": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-      "updatedAt": "2026-11-11T20:55:59+00:00",
-      "summary": "The published single-commit rebase b3cf8596d is mergeable on 3238f32db. It preserves the existing tar.bzl entry and adds the complete with_cfg.bzl entry. The license verifier checked all 225 dependencies. The four actual Go and C++ TestRunner actions selected the expected AMD64 or ARM64 platform. The physical Linux run on the rebased source remains queued.",
+      "updatedAt": "2026-11-11T21:27:44+00:00",
+      "summary": "The published single-commit rebase b3cf8596d is mergeable on 3238f32db. It preserves the existing tar.bzl entry and adds the complete with_cfg.bzl entry. The license verifier checked all 225 dependencies. The four actual Go and C++ TestRunner actions selected the expected AMD64 or ARM64 platform. The physical Linux run on the rebased source remains queued. The native Linux AMD64 //:release build on b3cf8596d completed in 4,392 actions.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -7502,6 +7502,10 @@
         {
           "label": "Earlier native four-owner qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/42301517765"
+        },
+        {
+          "label": "Native Linux AMD64 release build on b3cf8596d",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43098772888"
         }
       ],
       "refinement": {
@@ -49618,8 +49622,8 @@
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T14:37:47+00:00",
-      "summary": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags.",
+      "updatedAt": "2026-11-11T21:31:39.172011+00:00",
+      "summary": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags. Export #17179 merged the earlier 4ba049ba5 at e18c358d6. The revised source a6e06bb65 now conflicts with master.",
       "evidence": [
         {
           "label": "Reply to Etienne after publishing the archive install",
@@ -49688,6 +49692,10 @@
         {
           "label": "One-line fix requested in the approving review",
           "url": "https://github.com/tamird/gvisor/commit/4ba049ba5"
+        },
+        {
+          "label": "The earlier source landed through #17179",
+          "url": "https://github.com/google/gvisor/commit/e18c358d6"
         }
       ],
       "settledReviews": [
@@ -49740,16 +49748,18 @@
       ],
       "number": 16843,
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Agent",
         "sourceHead": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
-        "observedAt": "2026-11-11T14:37:47+00:00",
-        "disposition": "The revised install steps are published and Etienne received the tested source and staged-archive results. Open export #17179 still uses the prior revision.",
-        "nextAction": "Await maintainer review and an updated import for a6e06bb65.",
+        "observedAt": "2026-11-11T21:31:39.172011+00:00",
+        "disposition": "The earlier installer source landed through #17179. The revised release-tarball source is conflicted.",
+        "nextAction": "Compare the merged installer with the tested release-tarball revision and identify the remaining edit on current master.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323",
           "https://github.com/tamird/gvisor/commit/a6e06bb65",
-          "https://github.com/google/gvisor/pull/17179"
-        ]
+          "https://github.com/google/gvisor/pull/17179",
+          "https://github.com/google/gvisor/commit/e18c358d6"
+        ],
+        "mergeable": "CONFLICTING"
       },
       "refinement": {
         "before": {
@@ -62071,13 +62081,13 @@
       "repo": "google/gvisor",
       "number": 17122,
       "ref": "proposal/vdso-declared-readelf",
-      "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+      "head": "b723711788b3cd7ff74a586541d27150d89ef4dd",
       "title": "Declare readelf for the vDSO layout test",
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T21:27:18.472Z",
-      "summary": "The published change declares LLVM readelf for the existing vDSO test. The Go experiment agreed on 20 fixtures per architecture and passed Debian’s unchanged clean recipe. Its Python entry point requires host Go and the Go source, and Debian’s existing incremental prerequisite misses Go-only edits.",
+      "updatedAt": "2026-11-11T21:27:44+00:00",
+      "summary": "The published rebase b72371178 declares LLVM readelf for the existing vDSO check. On native macOS ARM64 the checker accepted freshly built Linux AMD64 and ARM64 vDSOs and rejected a control with one byte in .data. The configured Linux AMD64 TestRunner resolves the declared Linux LLVM readelf. The separate Go replacement experiment remains optional.",
       "evidence": [
         {
           "label": "Unchanged downstream Make rule and Python entry point with host Go; source-only copy control",
@@ -62110,6 +62120,14 @@
         {
           "label": "Optional Go classifier with a downstream Python entry point",
           "url": "https://github.com/tamird/gvisor/commit/14f43c8fc"
+        },
+        {
+          "label": "Published vDSO checker rebase",
+          "url": "https://github.com/tamird/gvisor/commit/b72371178"
+        },
+        {
+          "label": "Comparison with the prior source",
+          "url": "https://github.com/tamird/gvisor/compare/466dbf7a9...b72371178"
         }
       ],
       "settledReviews": [
@@ -62127,15 +62145,25 @@
       ],
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
-        "observedAt": "2026-11-06T21:27:18.472Z",
-        "disposition": "Keep the published readelf fix. The Go replacement remains an optional experiment.",
-        "nextAction": "Follow upstream review on #17122.",
+        "sourceHead": "b723711788b3cd7ff74a586541d27150d89ef4dd",
+        "observedAt": "2026-11-11T21:27:44+00:00",
+        "disposition": "Context-only rebase published and verified mergeable",
+        "nextAction": "Follow the review and import of the declared LLVM readelf on #17122.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17122",
           "https://github.com/tamird/gvisor/commit/14f43c8fc",
           "https://github.com/tamird/gvisor/actions/runs/42295738426/artifacts/13541257890"
-        ]
+        ],
+        "mergeable": "MERGEABLE"
+      },
+      "refinement": {
+        "before": {
+          "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48"
+        },
+        "after": {
+          "head": "b723711788b3cd7ff74a586541d27150d89ef4dd",
+          "base": "3238f32db235efb5f8fe03d0490a07e2c53f1bf6"
+        }
       }
     },
     {
@@ -103164,7 +103192,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "updatedAt": "2026-11-11T21:31:39.172011+00:00",
       "summary": "On Buildkite #54502 for #17495, Node 22.2.0 reported read ECONNRESET in internet/test-tls-autoselectfamily-servername.js. The same-source retry passed.",
       "findings": [
         {
@@ -103187,9 +103215,31 @@
               "url": "https://github.com/nodejs/node/blob/v22.2.0/test/common/internet.js"
             }
           ]
+        },
+        {
+          "text": "With two loopback addresses, Node 19.6.0 sent the expected TLS server name on a direct connection but omitted it after the IPv6 refusal and IPv4 fallback. Node 22.2.0 sent the expected name on both paths and rejected the omitted-name control. The proposed test authenticated the fixture certificate and passed 12 of 12 native macOS ARM64 runs on Node 22.2.0. On Node 19.6.0’s release tree, supplying only the modern mock-DNS fixture, the proposed test itself failed because peer.servername was false instead of agent1. On the 22.2.0 release tree, the matching binary and test harness passed all 12 runs.",
+          "evidence": [
+            {
+              "label": "Node fallback regression",
+              "url": "https://github.com/nodejs/node/issues/46679"
+            },
+            {
+              "label": "Single Node test proposal",
+              "url": "https://github.com/tamird/node/commit/5bf936f9c"
+            }
+          ]
+        },
+        {
+          "text": "One uncached Bazel test exercised the pinned Node 22.2.0 image on native AMD64 Linux and on the November 9 gVisor systrap runtime with Docker networking disabled. On each runtime, both the direct IPv4 connection and the IPv6-to-IPv4 fallback authenticated the certificate and sent agent1 to the server. Both runtime controls exposed only loopback and returned ENETUNREACH for the external address.",
+          "evidence": [
+            {
+              "label": "Native Linux and gVisor systrap authenticated TLS results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43103711602/artifacts/13891943749"
+            }
+          ]
         }
       ],
-      "nextStep": "Identify which connection reset, its resolved address and address family, and whether it reached secureConnect.",
+      "nextStep": "Review the local TLS test and supply your personal DCO sign-off before submitting it to Node. A separate backport is needed for the version pinned by gVisor.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -103206,8 +103256,45 @@
         {
           "label": "Node 22.2.0 Internet test endpoints",
           "url": "https://github.com/nodejs/node/blob/v22.2.0/test/common/internet.js"
+        },
+        {
+          "label": "Review the single Node commit",
+          "url": "https://github.com/tamird/node/commit/5bf936f9c"
+        },
+        {
+          "label": "Open the prefilled Node pull request after personal sign-off",
+          "url": "https://github.com/nodejs/node/compare/main...tamird:node:proposal/tls-autoselectfamily-loopback?expand=1&title=test%3A+check+the+TLS+server+name+on+address-family+fallback+locally&body=The+TLS+address-selection+test+connects+to+nodejs.org+twice.+A+reset%0Acan+fail+the+test+before+the+handshake+completes%2C+and+the+addresses%0Areturned+by+DNS+determine+whether+the+client+ever+tries+a+second+one.%0A%0ARun+a+TLS+server+on+IPv4+loopback.+With+address-family+selection%0Aenabled%2C+return+IPv6+loopback+first+so+the+client+has+to+switch+TCP%0Ahandles.+Check+which+server+name+reaches+the+server+and+keep+certificate%0Averification+enabled+on+the+client.%0A%0ARefs%3A+https%3A%2F%2Fgithub.com%2Fnodejs%2Fnode%2Fissues%2F46679%0AAssisted-by%3A+Codex"
+        },
+        {
+          "label": "Original Node fallback regression",
+          "url": "https://github.com/nodejs/node/issues/46679"
+        },
+        {
+          "label": "Node contribution and personal sign-off policy",
+          "url": "https://github.com/nodejs/node/blob/main/CONTRIBUTING.md"
+        },
+        {
+          "label": "Native Linux and gVisor systrap loopback comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43103711602"
+        },
+        {
+          "label": "Native Linux and gVisor systrap authenticated TLS results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43103711602/artifacts/13891943749"
         }
-      ]
+      ],
+      "repo": "nodejs/node",
+      "head": "5bf936f9c9cfbf1c059847b3c681fb71dd15a250",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "5bf936f9c9cfbf1c059847b3c681fb71dd15a250",
+        "baseHead": "50ce73fe07b95b3e08160c7f2a592f87b62212cc",
+        "url": "https://github.com/tamird/node/commit/5bf936f9c",
+        "requestedAt": "2026-11-11T21:27:44+00:00",
+        "title": "test: check the TLS server name on address-family fallback locally",
+        "summary": "Review the single Node test commit, add your personal DCO sign-off and submit it through the prefilled form? Node 19.6.0 failed the historical server-name assertion. Node 22.2.0 passed on macOS, native Linux and gVisor systrap with a local TLS server. The cause of the external reset in Buildkite is still open.",
+        "body": "The TLS address-selection test connects to nodejs.org twice. A reset\ncan fail the test before the handshake completes, and the addresses\nreturned by DNS determine whether the client ever tries a second one.\n\nRun a TLS server on IPv4 loopback. With address-family selection\nenabled, return IPv6 loopback first so the client has to switch TCP\nhandles. Check which server name reaches the server and keep certificate\nverification enabled on the client.\n\nRefs: https://github.com/nodejs/node/issues/46679\nAssisted-by: Codex"
+      }
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
