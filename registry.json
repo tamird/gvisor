@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T21:27:44+00:00",
+    "updatedAt": "2026-11-11T21:53:08+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1925,24 +1925,25 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-11T20:53:13+00:00",
+      "updatedAt": "2026-11-11T21:53:08+00:00",
       "summary": "The published context-only rebase 65a54cd87 is mergeable. All 200 added and removed lines match the previous change after accounting for indentation, and the surrounding restore guard remains intact. All three Nogo targets passed using native macOS Bazel launchers, each checking Linux AMD64 and ARM64 findings. Fresh runtime and systrap restore results are pending.\n\nEarlier qualification:\n\nThe requested post-#16046 rebase is published at 048d2635a582 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-approved Unix-only change is delivered at a76235cf8 and PR #14338 is ready for maintainer review. Seven fresh unit, race and analyzer actions passed before delivery. The original b912f6375 source and nine residual TCP/UDP/fragmentation paths remain preserved; no contributor decision remains for this delivery. Current-head GitHub checks and review are tracked separately.\n\nEarlier observations:\n\nThe separate Unix-only proposal at a76235cf8 has passed its seven-action validation and independent reviews. The user has been asked to review that exact proposal and authorize replacing this broad draft. This live b912f6375 PR remains draft and unchanged; its proposed-update link carries the separate contributor decision.\n\nEarlier observations:\n\nA separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366–#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
       "followup": {
-        "disposition": "Context-only rebase published and verified mergeable",
+        "disposition": "Published rebase with native Linux qualification in progress",
         "owner": "Agent",
         "sourceHead": "65a54cd879a8ed66ac93d2ec15ab39bbf94e8d95",
         "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
-        "nextAction": "Check the outstanding native Linux transport and systrap restore results, then follow the corresponding import.",
+        "nextAction": "Read the native Linux transport and systrap restore evidence on 65a54cd87, then follow its import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14338",
           "https://github.com/google/gvisor/pull/14338#issuecomment-6080694275",
           "https://github.com/tamird/gvisor/commit/048d2635a582ab85720274b3cd8e515a781a3409",
           "https://github.com/tamird/gvisor/commit/65a54cd87",
-          "https://github.com/tamird/gvisor/actions/runs/43096485597"
+          "https://github.com/tamird/gvisor/actions/runs/43096485597",
+          "https://github.com/tamird/gvisor/actions/runs/43105440950"
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-11T20:53:13+00:00"
+        "observedAt": "2026-11-11T21:53:08+00:00"
       },
       "head": "65a54cd879a8ed66ac93d2ec15ab39bbf94e8d95",
       "evidence": [
@@ -1957,6 +1958,10 @@
         {
           "label": "Native Linux transport, systrap restore, and Nogo qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/43096485597"
+        },
+        {
+          "label": "Linux restore, transport and analyzer run after the first job failed to start",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43105440950"
         }
       ]
     },
@@ -7402,8 +7407,8 @@
       "group": "bazel",
       "status": "open",
       "head": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-      "updatedAt": "2026-11-11T21:27:44+00:00",
-      "summary": "The published single-commit rebase b3cf8596d is mergeable on 3238f32db. It preserves the existing tar.bzl entry and adds the complete with_cfg.bzl entry. The license verifier checked all 225 dependencies. The four actual Go and C++ TestRunner actions selected the expected AMD64 or ARM64 platform. The physical Linux run on the rebased source remains queued. The native Linux AMD64 //:release build on b3cf8596d completed in 4,392 actions.",
+      "updatedAt": "2026-11-11T21:53:08+00:00",
+      "summary": "The published single-commit rebase b3cf8596d is mergeable on 3238f32db. It preserves the existing tar.bzl entry and adds the complete with_cfg.bzl entry. The license verifier checked all 225 dependencies. The four actual Go and C++ TestRunner actions selected the expected AMD64 or ARM64 platform. The replacement physical Linux job is running on the rebased source. The native Linux AMD64 //:release build on b3cf8596d completed in 4,392 actions.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -7506,6 +7511,10 @@
         {
           "label": "Native Linux AMD64 release build on b3cf8596d",
           "url": "https://github.com/tamird/gvisor/actions/runs/43098772888"
+        },
+        {
+          "label": "Native Linux architecture tests on the rebased source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43104647743"
         }
       ],
       "refinement": {
@@ -7553,14 +7562,15 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "observedAt": "2026-11-11T20:55:59+00:00",
-        "disposition": "Context-only rebase published and verified mergeable",
-        "nextAction": "Read the fresh physical Linux test results when the Actions runner starts, then follow review and the import.",
+        "observedAt": "2026-11-11T21:53:08+00:00",
+        "disposition": "Published rebase with native Linux qualification in progress",
+        "nextAction": "Check the native Linux architecture tests on the rebased source, then follow review and import.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
           "https://github.com/tamird/gvisor/actions/runs/43095873400",
-          "https://github.com/tamird/gvisor/actions/runs/42301517765"
+          "https://github.com/tamird/gvisor/actions/runs/42301517765",
+          "https://github.com/tamird/gvisor/actions/runs/43104647743"
         ]
       }
     },
@@ -35544,7 +35554,7 @@
       "number": 16587,
       "group": "release",
       "ref": "review/debian-changelog-release-date",
-      "head": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
+      "head": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
       "title": "Date the Debian changelog from the release version",
       "url": "https://github.com/google/gvisor/pull/16587",
       "evidence": [
@@ -35591,11 +35601,15 @@
         {
           "label": "Build two packages in different time zones",
           "url": "https://app.buildbuddy.io/invocation/ac5fd1f2-80bf-4421-846e-05d5f7d4cfe7"
+        },
+        {
+          "label": "Published context-only rebase",
+          "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-06T11:28:05.597Z",
+      "updatedAt": "2026-11-11T21:53:08+00:00",
       "status": "open",
-      "summary": "The changelog used the worker’s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
+      "summary": "The published single commit 6cb9d5004 is mergeable. The rebase preserved all 78 changed lines. The Bazel changelog action emitted UTC midnight for a dated release and the Unix epoch for an untagged build under both UTC and Pacific/Honolulu.\n\nEarlier qualification on 8311c4cdb:\n\nThe changelog used the worker’s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
       "refinement": {
         "before": {
           "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
@@ -35606,17 +35620,19 @@
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow checks, maintainer review and import on #16587.",
+        "owner": "Agent",
+        "sourceHead": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
+        "observedAt": "2026-11-11T21:53:08+00:00",
+        "disposition": "Context-only rebase published",
+        "nextAction": "Follow the checks, maintainer review and import for the published revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
           "https://github.com/tamird/gvisor/commit/8311c4cdbffedf751449bfc1bb8560889dfda1fb",
-          "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
-        ]
+          "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
+          "https://github.com/tamird/gvisor/commit/6cb9d5004"
+        ],
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -49622,8 +49638,8 @@
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T21:31:39.172011+00:00",
-      "summary": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags. Export #17179 merged the earlier 4ba049ba5 at e18c358d6. The revised source a6e06bb65 now conflicts with master.",
+      "updatedAt": "2026-11-11T21:53:08+00:00",
+      "summary": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags. Export #17179 merged the earlier 4ba049ba5 at e18c358d6. The revised source a6e06bb65 now conflicts with master. The fork revision 5580eac32 preserves both approved installer hooks and is being tested against the release archive producer that landed through #17191.",
       "evidence": [
         {
           "label": "Reply to Etienne after publishing the archive install",
@@ -49650,7 +49666,7 @@
           "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6706880986"
         },
         {
-          "label": "Open export still on the previously approved source",
+          "label": "Merged export of the earlier installer",
           "url": "https://github.com/google/gvisor/pull/17179"
         },
         {
@@ -49696,6 +49712,14 @@
         {
           "label": "The earlier source landed through #17179",
           "url": "https://github.com/google/gvisor/commit/e18c358d6"
+        },
+        {
+          "label": "Rebased installer hooks",
+          "url": "https://github.com/tamird/gvisor/commit/5580eac32"
+        },
+        {
+          "label": "Native archive-install qualification with the landed release producer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43106141281"
         }
       ],
       "settledReviews": [
@@ -49750,14 +49774,16 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
-        "observedAt": "2026-11-11T21:31:39.172011+00:00",
-        "disposition": "The earlier installer source landed through #17179. The revised release-tarball source is conflicted.",
-        "nextAction": "Compare the merged installer with the tested release-tarball revision and identify the remaining edit on current master.",
+        "observedAt": "2026-11-11T21:53:08+00:00",
+        "disposition": "The two installer hooks have been rebased after #17179 landed. Qualification is running.",
+        "nextAction": "Read the native archive-install results on 5580eac32 before updating the source PR.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323",
           "https://github.com/tamird/gvisor/commit/a6e06bb65",
           "https://github.com/google/gvisor/pull/17179",
-          "https://github.com/google/gvisor/commit/e18c358d6"
+          "https://github.com/google/gvisor/commit/e18c358d6",
+          "https://github.com/tamird/gvisor/commit/5580eac32",
+          "https://github.com/tamird/gvisor/actions/runs/43106141281"
         ],
         "mergeable": "CONFLICTING"
       },
@@ -72668,10 +72694,10 @@
       "title": "Build the wrk2 benchmark image with Bazel",
       "url": "https://github.com/google/gvisor/pull/17376",
       "ref": "review/wrk2-upstream-build-file",
-      "head": "2ed4732163867b699554c75d7b49c1d8c08d2797",
+      "head": "fa3d2799126d2db7d489319ddaa6abd84adf19cf",
       "status": "open",
-      "updatedAt": "2026-11-10T17:00:32+00:00",
-      "summary": "Published at the reviewed 2ed473216 in #17376 after BCR merged #11683. The image builds wrk2 with LuaJIT 2.1.1794214635 and OpenSSL 4.0.3.bcr.1. Its upstream/BUILD cites the wrk2 Makefile. Native AMD64 and emulated ARM64 ran the packaged HTTP and HTTPS workloads.",
+      "updatedAt": "2026-11-11T21:53:08+00:00",
+      "summary": "The published single commit fa3d27991 is mergeable. The rebase preserved all 264 changed lines across 11 files and retained the existing tar.bzl license entry. Bazel analyzed both configured archives, the license verifier checked all 227 entries, and licensecheck_test passed.\n\nEarlier qualification on 2ed473216:\n\nPublished at the reviewed 2ed473216 in #17376 after BCR merged #11683. The image builds wrk2 with LuaJIT 2.1.1794214635 and OpenSSL 4.0.3.bcr.1. Its upstream/BUILD cites the wrk2 Makefile. Native AMD64 and emulated ARM64 ran the packaged HTTP and HTTPS workloads.",
       "evidence": [
         {
           "label": "Published LuaJIT release",
@@ -72696,8 +72722,23 @@
         {
           "label": "Single BCR prerequisite",
           "url": "https://github.com/tamird/bazel-central-registry/commit/a4f336eea"
+        },
+        {
+          "label": "Published context-only rebase",
+          "url": "https://github.com/tamird/gvisor/commit/fa3d27991"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "fa3d2799126d2db7d489319ddaa6abd84adf19cf",
+        "observedAt": "2026-11-11T21:53:08+00:00",
+        "disposition": "Context-only rebase published",
+        "nextAction": "Follow the checks, maintainer review and import for the published revision.",
+        "mergeable": "MERGEABLE",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fa3d27991"
+        ]
+      }
     },
     {
       "id": "pr:17377",
