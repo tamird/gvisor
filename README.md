@@ -1006,3 +1006,25 @@ polling lane.
 Routine validation on the existing RBE service has standing authorization.
 Dispatch the workload and track its source, invocation, and results under the
 agent’s follow-up. Contributor review covers the changes proposed for publication.
+
+### Retire local and fork automation branches
+
+Run `python3 -B branch_cleanup.py` in the local work-map checkout for a TSV of
+eligible refs. `--apply` refreshes the protections, saves the selected tips
+under the local `refs/branch-cleanup/archive`, and deletes the observed OIDs in
+batches. A changed tip fails its batch. Rerun the command after an interruption.
+The tool only pushes deletion refspecs to `tamird/gvisor`. Keep the archive
+local, including when backing up private work.
+
+The default retention is seven days. A disposable qualification needs a
+completed run on its exact branch and commit and a tip confined to validation
+files. The recent run search is bounded. An older validation branch can also
+be redundant when its exact fork copy is retained or its changes are already
+in a retained base. Checked-out heads, live PRs, running workflows, current
+work-map references, divergent copies and unrecognized topic branches remain
+in place.
+
+The command prints an archive commit. `git show <archive>:refs.tsv` lists
+`local` or `fork`, the original name and its full commit. Restore a local row
+with `git update-ref refs/heads/<name> <oid> 0000000000000000000000000000000000000000`.
+The archive also stores the original local reflogs in `reflogs.json`.
