@@ -12,7 +12,6 @@ go_binary(
     visibility = [
         "//visibility:public",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
         "//pkg/sentry/state/stateipc",
         "//pkg/unet",
