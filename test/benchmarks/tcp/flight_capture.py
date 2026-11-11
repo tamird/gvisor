@@ -1,9 +1,21 @@
 from collections import Counter
 import csv
 import gzip
+import re
 from pathlib import Path
 import shutil
 import subprocess
+
+
+def capture_stats(path):
+    text = path.read_text()
+    numbers = {}
+    for label in ("captured", "received by filter", "dropped by kernel"):
+        matches = re.findall(rf"^(\d+) packets? {label}$", text, re.MULTILINE)
+        if len(matches) != 1:
+            raise ValueError(f"{path.name} missing unique {label!r} count")
+        numbers[label] = int(matches[0])
+    return numbers
 
 
 def capture(d, public, name):
@@ -13,8 +25,8 @@ def capture(d, public, name):
     traces = {}
     for dev in ("client.1", "client2.1", "server.1"):
         path = d / f"{dev}.pcap"
-        capture = (d / f"{dev}-capture.txt").read_text()
-        assert "0 packets dropped by kernel" in capture, (dev, capture)
+        stats = capture_stats(d / f"{dev}-capture.txt")
+        assert stats["dropped by kernel"] == 0, (dev, stats)
         dest = public / f"{name}-{dev}-packets.tsv.gz"
         args = ["tshark", "-n", "-r", str(path), "-T", "fields"]
         for field in fields:

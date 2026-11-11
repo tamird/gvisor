@@ -683,6 +683,39 @@ record_probe_phase() {
   printf '%s\t%s\t%s\n' "\$1" "\$uptime" "\$(date +%s.%N)" \
     >> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
 }
+# Each clsact egress mirror sees the frame offered to netem. The peer's
+# ingress tap sees the frame only after netem dequeues and transmits it.
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  for dir in f r; do
+    ip link add "q\${dir}out" type veth peer name "q\${dir}in"
+    for d in "q\${dir}out" "q\${dir}in"; do
+      if [[ -e /proc/sys/net/ipv6/conf/\$d/disable_ipv6 ]]; then
+        echo 1 > /proc/sys/net/ipv6/conf/\$d/disable_ipv6
+      fi
+      ip link set dev "\$d" up
+      ethtool -K "\$d" gro off
+    done
+  done
+  for d in qfin wan.1 qrin wan.0; do
+    tcpdump -Z root -p -nn -U -Q in -B 8192 -s 160 -i "\$d" -w "\$TCP_BENCHMARK_OUTPUT_DIR/\$d.pcap" >/dev/null 2>"\$TCP_BENCHMARK_OUTPUT_DIR/\$d-capture.txt" &
+    capture_pids+=(\$!)
+  done
+  for d in qfin wan.1 qrin wan.0; do
+    for i in {1..100}; do
+      if grep -q 'listening on' "\$TCP_BENCHMARK_OUTPUT_DIR/\$d-capture.txt"; then break; fi
+      sleep 0.02
+    done
+    grep -q 'listening on' "\$TCP_BENCHMARK_OUTPUT_DIR/\$d-capture.txt"
+  done
+  for d in wan.0 wan.1; do
+    mirror=qfout
+    if [[ \$d == wan.1 ]]; then mirror=qrout; fi
+    tc qdisc add dev "\$d" clsact
+    tc filter add dev "\$d" egress protocol all matchall action mirred egress mirror dev "\$mirror"
+    tc -j -s qdisc show dev "\$d" root > "\$TCP_BENCHMARK_OUTPUT_DIR/\$d-qdisc-start.json"
+  done
+fi
+
 if ${latency_probe}; then
   # These are native addresses even when a proxy uses Netstack. This measures
   # the shared ICMP path, not Netstack TCP RTT or pure queue delay.
@@ -701,7 +734,7 @@ fi
 record_qdiscs() {
   for device in wan.0 wan.1; do
     printf '%s\n' "\$device"
-    tc -s -d qdisc show dev "\$device"
+    tc -s -d qdisc show dev "\$device" root
   done
 }
 
@@ -1019,6 +1052,12 @@ if ${latency_probe}; then
 fi
 if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
   record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-after.txt"
+  # The final echo reply may still be in netem when ping exits.
+  sleep 1
+  for d in wan.0 wan.1; do
+    tc -j -s qdisc show dev "\$d" root > "\$TCP_BENCHMARK_OUTPUT_DIR/\$d-qdisc-end.json"
+    tc -j -s filter show dev "\$d" egress > "\$TCP_BENCHMARK_OUTPUT_DIR/\$d-mirror.json"
+  done
 fi
 exit "\$result"
 

@@ -16,17 +16,19 @@ original=6489fd4c9dc4d093c3adcc7d4412867da2e89a62
 source=a89de7271af9ded5f5112651e0d504b58b08c116
 public="$RUNNER_TEMP/tcp-public"
 mkdir -p "$public"
-[[ "$(git rev-parse HEAD^^)" == "$base" ]]
+previous=bdb37e5c98364876b71c9664e86ab3501b6e6999
+[[ "$(git rev-parse HEAD^)" == "$previous" ]]
+[[ "$(git rev-parse "$previous^^")" == "$base" ]]
 git fetch --no-tags --depth=1 origin "$original"
 [[ "$(git diff --name-only "$base" "$source")" == "$(printf '%s\n' pkg/tcpip/transport/tcp/{rack,snd}.go)" ]]
-expected=(.github/workflows/build.yml pkg/tcpip/transport/tcp/{rack,snd}.go test/benchmarks/tcp/current-shared-{driver.sh,report.py})
+expected=(.github/workflows/build.yml pkg/tcpip/transport/tcp/{rack,snd}.go test/benchmarks/tcp/{current-shared-driver.sh,current-shared-report.py,flight_capture.py,tcp_benchmark.sh})
 [[ "$(git diff --name-only "$original" HEAD)" == "$(printf '%s\n' "${expected[@]}")" ]]
 git diff --no-ext-diff "$base" "$source" -- pkg/tcpip/transport/tcp > "$public/observer.patch"
 git diff --no-ext-diff "$original" HEAD -- .github/workflows test > "$public/collector.patch"
 git diff --raw --no-abbrev "$base" HEAD > "$public/all-changed-blobs.txt"
 printf '%s\n' "$base" "$original" "$source" "$GITHUB_SHA" > "$public/lineage.txt"
 
-[[ "$(git rev-parse HEAD^)" == "$source" ]]
+[[ "$(git rev-parse "$previous^")" == "$source" ]]
 git diff --exit-code "$source" -- pkg runsc tools .bazelrc MODULE.bazel
 printf '%s\n' "$source" "$GITHUB_SHA" > "$out/production.txt"
 sudo -n apt-get update -qq

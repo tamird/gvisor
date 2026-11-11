@@ -1,18 +1,18 @@
-name: Trace five sender loss decisions on a shared WAN
+name: Locate packet loss across the benchmark WAN queue
 on:
   push:
-    branches: [qualification/tcp-cubic-recovery-events]
+    branches: [qualification/tcp-wan-queue-captures]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cubic-recovery-events'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-wan-queue-captures'
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Build one proxy and run the fixed matched schedule
         run: bash test/benchmarks/tcp/current-shared-driver.sh
@@ -23,6 +23,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-cubic-recovery-events
+          name: tcp-wan-queue-captures
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error

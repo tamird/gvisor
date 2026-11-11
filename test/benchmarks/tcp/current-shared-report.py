@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from statistics import median
 import subprocess
-from flight_capture import capture
+from flight_capture import capture, capture_stats
 from datetime import datetime, timezone
 
 def read_json(p):
@@ -150,6 +150,53 @@ def trial(root, mode, case):
 CAUSES = ("tlp_confirmation", "rack_reorder_timer", "dupack_scoreboard", "rack_ack", "rto")
 
 
+QUEUE_TAPS = ("qfin", "wan.1", "qrin", "wan.0")
+ENDPOINT_TAPS = ("client.1", "client2.1", "server.1")
+# Export only headers of traffic generated inside the benchmark namespace.
+QUEUE_FIELDS = (
+    "frame.time_epoch", "frame.len", "eth.type", "eth.src", "eth.dst", "ip.src",
+    "ip.dst", "ip.id", "ip.proto", "ipv6.src", "ipv6.dst", "ipv6.nxt",
+    "tcp.srcport", "tcp.dstport", "tcp.seq_raw", "tcp.ack_raw", "tcp.len",
+    "tcp.flags", "tcp.window_size_value", "tcp.options.timestamp.tsval",
+    "tcp.options.timestamp.tsecr", "tcp.options.sack_le", "tcp.options.sack_re",
+    "icmp.type", "icmp.ident", "icmp.seq", "icmpv6.type", "arp.opcode",
+    "arp.src.proto_ipv4", "arp.dst.proto_ipv4",
+)
+
+
+def project_queue(raw, public):
+    counts = {}
+    names = [f"{tap}-capture.txt" for tap in (*ENDPOINT_TAPS, *QUEUE_TAPS)]
+    for dev in ("wan.0", "wan.1"):
+        names.extend(f"{dev}-{name}.json" for name in ("qdisc-start", "qdisc-end", "mirror"))
+    names.extend(("qdisc-before.txt", "qdisc-after.txt", "ping-preflight.txt", "ping-phases.tsv"))
+    for name in names:
+        if (source := raw / name).exists():
+            (public / name).write_bytes(source.read_bytes())
+    for tap in QUEUE_TAPS:
+        source = raw / f"{tap}.pcap"
+        if not source.exists():
+            continue
+        dest = public / f"{tap}-queue.tsv.gz"
+        cmd = ["tshark", "-n", "-r", str(source), "-T", "fields"]
+        for field in QUEUE_FIELDS:
+            cmd.extend(("-e", field))
+        with gzip.open(dest, "wt") as out, subprocess.Popen(cmd, text=True, stdout=subprocess.PIPE) as proc:
+            out.write("\t".join(QUEUE_FIELDS) + "\n")
+            rows = 0
+            for line in proc.stdout:
+                out.write(line)
+                rows += 1
+            if proc.wait():
+                raise ValueError(f"tshark failed on {tap}")
+        counts[tap] = rows
+    for tap in (*ENDPOINT_TAPS, *QUEUE_TAPS):
+        stats = capture_stats(public / f"{tap}-capture.txt")
+        assert stats["dropped by kernel"] == 0 and stats["captured"] > 0, (tap, stats)
+        if tap in counts:
+            assert stats["captured"] == counts[tap], (tap, stats, counts[tap])
+
+
 def project(folder, public):
     """Preserve unfiltered event records and essential setup even on a failed gate."""
     raw = folder / "results"
@@ -237,6 +284,7 @@ for arm,cc in expected:
     public.mkdir(exist_ok=True)
     try:
         events=project(folder, public)
+        project_queue(folder / "results", public)
         wire=capture(folder/"results",public,"measured-"+experiment)
         d=trial(root/arm,"measured",experiment)
         d["wire"]=wire
