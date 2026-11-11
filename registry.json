@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T16:27:43+00:00",
+    "updatedAt": "2026-11-11T16:52:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59935,13 +59935,13 @@
       "number": 17028,
       "repo": "google/gvisor",
       "ref": "upstream/dind-integration-20261105",
-      "head": "a772fedd6521ac693b8e25a41c01e00f2e023461",
-      "title": "Docker rejects both checkpoint subtest names",
+      "head": "4a7e1de519aed4a4a27f6430114e03754589ff37",
+      "title": "Checkpoint subtests now use Docker-compatible names",
       "url": "https://github.com/google/gvisor/pull/17028",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T13:13:00.663Z",
-      "summary": "Docker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.\n\nWith hyphenated names and the Docker/containerd test setup corrected, both modes started the inner Moby 29.8.1 daemon. Each daemon exited while creating its default bridge because /proc/sys/net/ipv4/conf/docker0/route_localnet was missing. This gVisor revision exposes route_localnet under all and default. Both tests stopped before checkpoint.",
+      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "summary": "The author addressed the container-name failure in 4a7e1de51 by using leave-running-%t before dockerutil.MakeContainer. The author’s reply leaves the full nested Docker checkpoint run pending.\n\nDocker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.\n\nWith hyphenated names and the Docker/containerd test setup corrected, both modes started the inner Moby 29.8.1 daemon. Each daemon exited while creating its default bridge because /proc/sys/net/ipv4/conf/docker0/route_localnet was missing. This gVisor revision exposes route_localnet under all and default. Both tests stopped before checkpoint.",
       "evidence": [
         {
           "label": "Both subtests failed at container creation",
@@ -59970,6 +59970,10 @@
         {
           "label": "Published inline review comment",
           "url": "https://github.com/google/gvisor/pull/17028#discussion_r4492765208"
+        },
+        {
+          "label": "Author’s revised implementation and test update",
+          "url": "https://github.com/google/gvisor/pull/17028#discussion_r4534767081"
         }
       ],
       "settledReviews": [
@@ -59987,14 +59991,24 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "a772fedd6521ac693b8e25a41c01e00f2e023461",
-        "observedAt": "2026-11-06T13:13:00.663Z",
-        "disposition": "Posted the approved inline review.",
-        "nextAction": "Follow the author’s response and any revision.",
+        "sourceHead": "4a7e1de519aed4a4a27f6430114e03754589ff37",
+        "observedAt": "2026-11-11T16:50:58+00:00",
+        "disposition": "The author corrected the two subtest names. Full checkpoint execution remains pending.",
+        "nextAction": "Record the full nested Docker checkpoint result when available.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17028#pullrequestreview-5800533338",
-          "https://github.com/google/gvisor/pull/17028#discussion_r4492765208"
+          "https://github.com/google/gvisor/pull/17028#discussion_r4492765208",
+          "https://github.com/google/gvisor/pull/17028#discussion_r4534767081"
         ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "4a7e1de519aed4a4a27f6430114e03754589ff37",
+        "url": "https://github.com/google/gvisor/pull/17028#discussion_r4534767081",
+        "title": "Ask which per-interface sysctl change belongs in the combined checkpoint test",
+        "summary": "The naming correction reached Moby’s bridge initialization in the earlier combined test. Ask the author about the missing per-interface route_localnet setting before rerunning the revised head.",
+        "body": "@hky1999, the new name fixes container creation. When I tested that rename with #16666, both modes reached Moby 29.8.1 and then stopped creating its default bridge: `open /proc/sys/net/ipv4/conf/docker0/route_localnet: no such file or directory`. The [daemon logs](https://github.com/tamird/gvisor/actions/runs/42204674294/job/127848215695) show this before either checkpoint. The current head still exposes that setting only under [all and default](https://github.com/google/gvisor/blob/4a7e1de51/pkg/sentry/fsimpl/proc/tasks_sys.go#L311-L317). Is there a per-interface sysctl change I should include when testing the combined series?\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -60003,13 +60017,13 @@
       "number": 17026,
       "repo": "google/gvisor",
       "ref": "upstream/dind-topology-20261105",
-      "head": "fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3",
-      "title": "Use the root network namespace when registering a child",
+      "head": "fdb50904483cd093a14c7d4ed3bbbf645222dab1",
+      "title": "Root registry preserves child network namespace ownership",
       "url": "https://github.com/google/gvisor/pull/17026",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T13:13:00.663Z",
-      "summary": "The existing netlink syscall test passed on Linux. On fdd009fd9 the guest entered the test and panicked on the second unshare. With the two production call sites corrected, GoogleTest recorded OK and the guest exited 0. The fork reporter subsequently marked the expected test-log output missing.",
+      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "summary": "The author addressed the nested-namespace review in fdb509044. Task.Clone and Task.Unshare now pass the root network namespace to the registry while retaining the child’s user namespace. New clone and unshare syscall tests cover both values of CLONE_NEWUSER. The author reports native, systrap, KVM and save results.\n\nThe existing netlink syscall test passed on Linux. On fdd009fd9 the guest entered the test and panicked on the second unshare. With the two production call sites corrected, GoogleTest recorded OK and the guest exited 0. The fork reporter subsequently marked the expected test-log output missing.",
       "evidence": [
         {
           "label": "Existing netlink syscall case on native Linux",
@@ -60026,6 +60040,10 @@
         {
           "label": "Published inline review comment",
           "url": "https://github.com/google/gvisor/pull/17026#discussion_r4492764964"
+        },
+        {
+          "label": "Author’s revised implementation and test update",
+          "url": "https://github.com/google/gvisor/pull/17026#discussion_r4534766408"
         }
       ],
       "settledReviews": [
@@ -60043,13 +60061,14 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3",
-        "observedAt": "2026-11-06T13:13:00.663Z",
-        "disposition": "Posted the approved inline review.",
-        "nextAction": "Follow the author’s response and any revision.",
+        "sourceHead": "fdb50904483cd093a14c7d4ed3bbbf645222dab1",
+        "observedAt": "2026-11-11T16:50:58+00:00",
+        "disposition": "The author revised both callers and added the requested syscall coverage.",
+        "nextAction": "Follow upstream integration or a new review request.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17026#pullrequestreview-5800533049",
-          "https://github.com/google/gvisor/pull/17026#discussion_r4492764964"
+          "https://github.com/google/gvisor/pull/17026#discussion_r4492764964",
+          "https://github.com/google/gvisor/pull/17026#discussion_r4534766408"
         ]
       }
     },
@@ -72144,8 +72163,8 @@
       "url": "https://github.com/google/gvisor/issues/16670",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T03:28:41+00:00",
-      "summary": "The guide marks receive accounting #16825 merged and keeps the ACK-admission work on #15325 open. The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option. The guide also links Andrea’s decision to close #16953 in favor of #17082. The restore and MTU sections mark #16711 and #16984 merged. They describe how saving advanced the live clock and how a veth MTU of 1,500 produced an MSS 14 bytes too small.",
+      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "summary": "The guide marks receive accounting #16825 merged and keeps the ACK-admission work on #15325 open. The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option. The guide also links Andrea’s decision to close #16953 in favor of #17082. The restore and MTU sections mark #16711 and #16984 merged. They describe how saving advanced the live clock and how a veth MTU of 1,500 produced an MSS 14 bytes too small. The guide records that #17082 incorporates the first-response ACK fix.",
       "evidence": [
         {
           "label": "Existing TCP review guide",
@@ -72174,6 +72193,10 @@
         {
           "label": "Andrea closed #16953 in favor of #17082",
           "url": "https://github.com/google/gvisor/pull/16953#issuecomment-6774757187"
+        },
+        {
+          "label": "First-response ACK change incorporated into #17082",
+          "url": "https://github.com/google/gvisor/pull/17082#discussion_r4534820835"
         }
       ],
       "settledReviews": [
@@ -99158,7 +99181,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:27:10+00:00",
+      "updatedAt": "2026-11-11T16:50:58+00:00",
       "summary": "Five builds failed OpenJDK’s Unref.java when the descriptor count changed by one. Each failed shard passed on the same source when rerun. gVisor’s published Java 21 exclusion in #17377 matches the exclusion in its pinned OpenJDK.",
       "findings": [
         {
@@ -99243,7 +99266,7 @@
           ]
         }
       ],
-      "nextStep": "Follow #17377 through upstream review and import. On the first Java shard containing the change, verify that only DatagramChannel/Unref is excluded.",
+      "nextStep": "Follow the approved #17377 through import. On the first Java shard containing the change, verify that only DatagramChannel/Unref is excluded.",
       "evidence": [
         {
           "label": "Published Java 21 exclusion at 6dd410ba8",
@@ -99260,6 +99283,10 @@
         {
           "label": "Linux admission and gVisor jtreg control run",
           "url": "https://github.com/tamird/gvisor/actions/runs/42849734838"
+        },
+        {
+          "label": "Approval on the submitted head",
+          "url": "https://github.com/google/gvisor/pull/17377#pullrequestreview-5850054830"
         }
       ]
     },
@@ -100131,8 +100158,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T17:59:30+00:00",
-      "summary": "Java 21 com/sun/jdi/ThreadMemoryLeakTest.java failed on two different PR heads. After the target printed goodbye at 25,000 iterations, the JDI Target VM Interface thread reported OutOfMemoryError and jtreg reached its 600-second timeout. Both retried shards passed.",
+      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "summary": "Three Java 21 CI jobs timed out in com/sun/jdi/ThreadMemoryLeakTest.java after the debugger's thread-event processing fell behind the target. The debugger reported a Java heap error in each job. All three same-head retries passed.",
       "findings": [
         {
           "text": "The test deliberately limits the debugger heap to 7 MB. Its source already includes the upstream increase from 6 MB.",
@@ -100168,6 +100195,40 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42867376567/artifacts/13788601685"
             }
           ]
+        },
+        {
+          "text": "On #17395, build 54333's target created 21,642 threads. The last start and death messages both reported thread 6,000 at about 105.806 s, 66 s after thread 5,000. The debugger's JDI Internal Event Handler ran out of heap in PacketStream.writeLong. The jtreg harness timed out at 600 s. The same-source retry passed.",
+          "evidence": [
+            {
+              "label": "54333 original jtreg log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54333/jobs/01a1c7d8-263f-4897-98c7-3fa318046015/artifacts/01a1c7f0-bbed-4a29-bbe1-0c3c9952ed51"
+            },
+            {
+              "label": "54333 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54333#01a1c7f2-18f8-481c-9f0f-1ca8bd97668d"
+            }
+          ]
+        },
+        {
+          "text": "The 24 shard boot commands across builds 54190, 54159 and 54333 each reported eight guest-visible CPUs, 33,651,961,856 bytes of memory and a 100 ms CPU period. None supplied a CPU quota argument. Build 54190 created 25,291 target threads and last logged event 4,000 at 28.30 s. Build 54159 created 25,440 and last logged event 6,000 at 103.398 s. The four-CPU replay had 15.61 GiB available. The field artifacts do not measure actual worker pressure.",
+          "evidence": [
+            {
+              "label": "54190 failed shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54190#01a1c616-5368-43e7-9e62-41071dbbfe5f"
+            },
+            {
+              "label": "54159 failed shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54159#01a1c397-3d60-42dc-bf31-0204787624f3"
+            },
+            {
+              "label": "54333 failed shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54333#01a1c7d8-263f-4897-98c7-3fa318046015"
+            },
+            {
+              "label": "Four-CPU loaded comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42867376567/artifacts/13788601685"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -100178,9 +100239,17 @@
         {
           "label": "Build 54159, head 9b4684f69",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54159#01a1c397-3d60-42dc-bf31-0204787624f3"
+        },
+        {
+          "label": "54333 original jtreg log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54333/jobs/01a1c7d8-263f-4897-98c7-3fa318046015/artifacts/01a1c7f0-bbed-4a29-bbe1-0c3c9952ed51"
+        },
+        {
+          "label": "54333 passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54333#01a1c7f2-18f8-481c-9f0f-1ca8bd97668d"
         }
       ],
-      "nextStep": "On the next original failure, capture the debugger’s event progress and the worker’s CPU and memory pressure. The isolated and eight-shard comparisons both passed."
+      "nextStep": "Compare target and debugger scheduling under the original eight-CPU, approximately 31 GiB shard configuration. At a failing milestone, collect the worker's actual CPU and memory pressure alongside JDI progress."
     },
     {
       "id": "investigation:ci-flake-netgofer-udp-idle",
@@ -101438,8 +101507,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:27:10+00:00",
-      "summary": "On the AMD64 Linux host, one packet-mode read differed from the expected packet in build #54409 on gVisor #17475. The failing shard ran again and passed on the same source.",
+      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "summary": "The stock packet-mode test expected a single TIOCPKT_DATA header for a translated line. Limiting its first native read to three bytes reproduced the same byte-comparison failure. The proposed one-byte case and the neighboring newline-translation case both passed on native Linux and systrap.",
       "findings": [
         {
           "text": "PtyTest.PacketModeWriteReplicaToMaster failed its full-buffer comparison at pty.cc:881. The adjacent job-control case passed. On retry, shard 1 ran and the other three shards supplied cached passes. The original log does not print the differing bytes.",
@@ -101453,9 +101522,22 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54409#01a1cabf-3cc6-4c40-954a-2f0a29023881"
             }
           ]
+        },
+        {
+          "text": "Unmodified stock passed once on native Linux. Capping only its first read returned 00 68 65 followed by 00 6c 6c 6f 0d, and the original comparison failed. The field log omitted the split. With one payload byte the revised case returned 00 78 on native and systrap. On each platform the neighboring ordinary-mode case received hello followed by CR/LF.",
+          "evidence": [
+            {
+              "label": "Original positive and split-read controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43057467949/artifacts/13872635996"
+            },
+            {
+              "label": "One-byte PTY test proposal",
+              "url": "https://github.com/tamird/gvisor/commit/8a64c10e3"
+            }
+          ]
         }
       ],
-      "nextStep": "Read the pending native and systrap comparison of the returned byte counts, packet prefixes and payloads.",
+      "nextStep": "Review the single PTY test change and its native and systrap controls.",
       "evidence": [
         {
           "label": "Original native PTY test.log",
@@ -101468,8 +101550,26 @@
         {
           "label": "Native, capped-read and systrap qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/43057467949"
+        },
+        {
+          "label": "Original positive and split-read controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43057467949/artifacts/13872635996"
+        },
+        {
+          "label": "One-byte PTY test proposal",
+          "url": "https://github.com/tamird/gvisor/commit/8a64c10e3"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/8a64c10e3",
+        "title": "Check the PTY packet header with one payload byte",
+        "body": "PacketModeWriteReplicaToMaster failed its byte comparison on native\nLinux [1]. In packet mode, each read of replica data has its own zero\nheader [2]. ReadFd can combine several reads, but the test expected a\nsingle header before the entire translated line.\n\nWrite one payload byte and check it together with TIOCPKT_DATA.\nWriteReplicaToMaster already checks newline translation.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54409#01a1caac-a912-4dfe-a720-1a77435ae5b2\n[2]: https://man7.org/linux/man-pages/man2/TIOCPKT.2const.html\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Open the single-commit PTY test correction on google/gvisor?"
+      }
     },
     {
       "id": "investigation:ci-flake-fastlane-token-time",
@@ -101685,7 +101785,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:27:43+00:00",
+      "updatedAt": "2026-11-11T16:52:05+00:00",
       "summary": "The FD-table speedup test timed startup and exit along with three dup3 calls. Timing those calls in the helper preserved the speedup signal under an unrelated post-syscall delay. All eight native FD-table comparisons ran on one AMD64 kernel.",
       "findings": [
         {
@@ -101718,9 +101818,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43056866344/artifacts/13873220439"
             }
           ]
+        },
+        {
+          "text": "Two uncached native AMD64 Bazel tests recorded 48 execs on Linux 7.0.0. From cold parents, the direct and pass-through helpers always started with 64 FD slots and grew to 256. The real prewarmer’s helpers started with 256. With a 512-slot parent that had closed its high FD before fork, the same distinction held. Keeping the high FD open through fork, even with close-on-exec, gave 512 slots in every helper. Reads of the helper's /proc/self/status were outside the timed dup3 loop.",
+          "evidence": [
+            {
+              "label": "48 original helper capacity and timing records",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43061410733/artifacts/13873703225"
+            },
+            {
+              "label": "Fork-only observation code",
+              "url": "https://github.com/tamird/gvisor/commit/66172dc09"
+            }
+          ]
         }
       ],
-      "nextStep": "Check FDSize in the exec’d helper before the timed dup3 loop, using cold, prewarmed, pass-through and already-expanded parent controls. Keep the strict timing comparison for the Linux performance assumption.",
+      "nextStep": "Use one direct and one prewarmed helper to check their starting FDSize before measuring speed. A direct helper already at 256 slots cannot exercise expansion. Retain the strict median comparison, then verify the pass-through launcher fails and unrelated post-syscall delay still passes.",
       "evidence": [
         {
           "label": "Failing cgroup v1 integration job",
@@ -101737,6 +101850,10 @@
         {
           "label": "Native Bazel comparison on one AMD64 worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/43056866344/artifacts/13873220439"
+        },
+        {
+          "label": "48 original helper capacity and timing records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43061410733/artifacts/13873703225"
         }
       ]
     },
