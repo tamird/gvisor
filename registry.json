@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T12:02:21+00:00",
+    "updatedAt": "2026-11-11T12:17:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -98611,8 +98611,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T21:46:42+00:00",
-      "summary": "A blocking receive on a connected UDP socket returned data where the test expected ECONNREFUSED. The same assertion failed on four builds.",
+      "updatedAt": "2026-11-11T12:17:56+00:00",
+      "summary": "A blocking receive on a connected UDP socket returned successfully where the packet test expected ECONNREFUSED. It recurred on #54388 while the upstream fix was still open.",
       "findings": [
         {
           "text": "The two failing logs point to the same receive assertion. On each retry, the UDP ICMP-error target was the only one of 82 tests to rerun and passed in 9.7 seconds. Its log does not report the individual passing subtest.",
@@ -98706,6 +98706,23 @@
             {
               "label": "Original Linux and gVisor results",
               "url": "https://app.buildbuddy.io/invocation/b9e8d9a7-157c-4875-a6e0-e8150c068c25"
+            }
+          ]
+        },
+        {
+          "text": "On Buildkite #54388 for gVisor #17433, TestICMPErrorDuringUDPRecv/Connected/PortUnreachable failed at line 316 when recv succeeded. The direct retry ran one of 82 packet targets and passed. The blocked-receive fix in #17312 was approved and had yet to merge.",
+          "evidence": [
+            {
+              "label": "#54388 failed UDP receive",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f51-4a9a-aff7-688ccd428307"
+            },
+            {
+              "label": "#54388 direct packet retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c989-9bc6-41e0-98d3-78a275d4eaaa"
+            },
+            {
+              "label": "gVisor #17312",
+              "url": "https://github.com/google/gvisor/pull/17312"
             }
           ]
         }
@@ -99975,7 +99992,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T12:02:09+00:00",
+      "updatedAt": "2026-11-11T12:17:56+00:00",
       "summary": "Two Node 22.2.0 debugger tests timed out in Buildkite build 54379. Both failing shards ran again and passed on the same source.",
       "findings": [
         {
@@ -100016,9 +100033,18 @@
               "url": "https://github.com/nodejs/node/commit/fbdca3a12"
             }
           ]
+        },
+        {
+          "text": "The isolated heap-profiler and debugger-list tests each passed four of four times on Node 22.2.0 and four of four on Node 26.12.0. The run alternated image order under the same native AMD64 systrap daemon. All 16 named TAP cases ran without a skip or timeout. This comparison did not reproduce the field failures on either release.",
+          "evidence": [
+            {
+              "label": "Original TAP results from both Node releases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43014104301/artifacts/13853099766"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the two named tests independently on Node 22.2.0 and the proposed 26.12.0 runtime with the existing timeout. Capture the last debugger prompt or process state if a case stalls.",
+      "nextStep": "Capture the last debugger prompt and child-process state during a failing full shard, along with its test ordering and concurrency.",
       "evidence": [
         {
           "label": "Paired Linux comparison of the two Node versions",
@@ -100039,6 +100065,174 @@
         {
           "label": "Node debugger process-cleanup change",
           "url": "https://github.com/nodejs/node/commit/d5958888c"
+        },
+        {
+          "label": "Original TAP results from both Node releases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43014104301/artifacts/13853099766"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-dind-bridge",
+      "title": "ARM64 nested Docker bridge tests time out",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T12:17:56+00:00",
+      "summary": "Seven of nine recent ARM64 Docker job failures with exit code 2 timed out in a nested bridge-network command. Two were building an image and five were running a privileged container. Both storage drivers were affected.",
+      "findings": [
+        {
+          "text": "The overlay build on #54388 spent 14m36s in docker_build_bridge_network before image_test reached its 900.1-second limit. On the same commit the retry ran image_test uncached and passed in 93.9 seconds. The VFS build on #54275 timed out in the same subtest.",
+          "evidence": [
+            {
+              "label": "#54388 ARM64 overlay build log",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f3b-4849-ab9f-bac64631a532"
+            },
+            {
+              "label": "#54388 same-head uncached retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c9b7-affb-4a41-9909-465e0adf985d"
+            },
+            {
+              "label": "#54275 VFS build timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54275#01a1c738-09f1-464f-9080-274b079b83d5"
+            }
+          ]
+        },
+        {
+          "text": "Five other jobs timed out in docker_run_bridge_network_privileged. VFS was in use on #54387, #54389 and #54253, and overlay on #54379 and #54251. Across the seven jobs the blocked subtest ran for 14m25s to 14m45s before the suite timed out.",
+          "evidence": [
+            {
+              "label": "#54387 VFS run on defff07cc",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54387#01a1c968-e07b-4201-b202-cad023d87017"
+            },
+            {
+              "label": "#54379 overlay run",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54379#01a1c8c8-63ca-4a11-8acd-a8029b7ffe79"
+            }
+          ]
+        },
+        {
+          "text": "The nested Dockerfile runs apk add git. The privileged container runs apk add curl. The matrix executes host networking first for each operation. Those calls returned before the bridge subtests stalled, but the failed jobs omit their individual verdicts. The stacks show the caller waiting for output. They do not identify image lookup, package retrieval or command execution as the stalled stage.",
+          "evidence": [
+            {
+              "label": "Docker host and bridge matrix on the affected revision",
+              "url": "https://github.com/google/gvisor/blob/3155b079644cd08ccfe900607bc8d3986b8ce148/test/image/image_test.go#L503-L554"
+            },
+            {
+              "label": "Nested Docker commands",
+              "url": "https://github.com/google/gvisor/blob/3155b079644cd08ccfe900607bc8d3986b8ce148/test/image/image_test.go#L677-L721"
+            }
+          ]
+        }
+      ],
+      "nextStep": "On the next occurrence with #17445, read the inner dockerd output captured at the command deadline and identify whether image lookup, package download or command execution stopped making progress.",
+      "evidence": [
+        {
+          "label": "#54388 ARM64 overlay build log",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f3b-4849-ab9f-bac64631a532"
+        },
+        {
+          "label": "gVisor #17445, preserving the exec deadline and output",
+          "url": "https://github.com/google/gvisor/pull/17445"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-containerd-runp",
+      "title": "containerd pod sandbox creation times out across CRI tests",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T12:17:56+00:00",
+      "summary": "Three AMD64 cgroup-v2 jobs on separate commits failed while crictl runp was creating a sandbox. All reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Each test target passed on its direct same-commit retry.",
+      "findings": [
+        {
+          "text": "On #54388 (gVisor #17433), TestMountOverSymlinks/enableGrouping failed at the start call before reading symlinks. On #54336 (gVisor #16637), TestCrictlPauseResume stopped during the same call. Both used containerd 2.1.7.",
+          "evidence": [
+            {
+              "label": "#54388 containerd 2.1.7 mount test",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f49-481d-b870-3ae933452936"
+            },
+            {
+              "label": "#54336 containerd 2.1.7 pause/resume test",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54336#01a1c7e3-1a81-47c6-92b9-2170c732b46e"
+            }
+          ]
+        },
+        {
+          "text": "On build #54291 (c2b7221bf), TestHomeDir/enableGrouping/sub-container failed during the same operation on containerd 2.2.3.",
+          "evidence": [
+            {
+              "label": "#54291 containerd 2.2.3 home-directory test",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54291#01a1c75e-27f0-47b6-be5e-bf5e40cf0050"
+            }
+          ]
+        },
+        {
+          "text": "All three retries executed their one CRI target and passed. The #54388 and #54336 retries also logged StopPodSandbox cleanup warnings in other tests. Those occurred during teardown and reported context deadline exceeded.",
+          "evidence": [
+            {
+              "label": "#54388 direct retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c98b-43aa-48ae-add1-319be466051f"
+            },
+            {
+              "label": "#54336 direct retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54336#01a1c7ef-0776-4b2c-a08f-3e100d291117"
+            },
+            {
+              "label": "#54291 direct retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54291#01a1c769-4cb2-4abc-b1bd-d46ae75d3851"
+            }
+          ]
+        },
+        {
+          "text": "The containerd 2.1.7 job used crictl v1.33.0 with an empty configuration. Its RunPodSandbox request has a four-second deadline, twice the client default. On #54388 the error appeared 4.194 seconds after the daemon launch message. That interval includes readiness and image import. The log omits the RPC start time. The client version and timeout on the 2.2.3 job are unverified.",
+          "evidence": [
+            {
+              "label": "#54388 timestamped job log",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f49-481d-b870-3ae933452936"
+            },
+            {
+              "label": "crictl v1.33.0 sandbox request",
+              "url": "https://github.com/kubernetes-sigs/cri-tools/blob/v1.33.0/cmd/crictl/sandbox.go#L67-L91"
+            },
+            {
+              "label": "CRI client v0.33 sandbox timeout",
+              "url": "https://github.com/kubernetes/cri-client/blob/v0.33.0-rc.0/pkg/remote_runtime.go#L192-L205"
+            }
+          ]
+        },
+        {
+          "text": "The fixture collects containerd stderr, then writes it under /tmp/shim-logs with the subtest name during cleanup. That directory is on the test container’s tmpfs and disappears when the container is removed. The failing #54388 job retained only the outer test.log.",
+          "evidence": [
+            {
+              "label": "Debug log destination",
+              "url": "https://github.com/google/gvisor/blob/3155b079644cd08ccfe900607bc8d3986b8ce148/test/root/crictl_test.go#L571-L576"
+            },
+            {
+              "label": "Container cleanup",
+              "url": "https://github.com/google/gvisor/blob/3155b079644cd08ccfe900607bc8d3986b8ce148/test/root/containerd_harness.go#L123-L138"
+            },
+            {
+              "label": "Only retained failure artifact",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54388/jobs/01a1c97c-2f49-481d-b870-3ae933452936/artifacts/01a1c98a-b166-45d2-b289-60f36a5b983a"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Print the existing per-subtest containerd debug log on failure before cleanup removes it. Use its timestamps to identify the sandbox startup step that consumed the four-second client budget on 2.1.7.",
+      "evidence": [
+        {
+          "label": "#54388 containerd 2.1.7 mount test",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f49-481d-b870-3ae933452936"
+        },
+        {
+          "label": "#54336 containerd 2.1.7 pause/resume test",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54336#01a1c7e3-1a81-47c6-92b9-2170c732b46e"
+        },
+        {
+          "label": "#54291 containerd 2.2.3 home-directory test",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54291#01a1c75e-27f0-47b6-be5e-bf5e40cf0050"
         }
       ]
     }
