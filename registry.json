@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T03:34:53+00:00",
+    "updatedAt": "2026-11-11T03:40:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49750,9 +49750,13 @@
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-11T01:30:36+00:00",
-      "summary": "Checklocks can verify the mutex at a semaphore lookup. On AMD64 and ARM64 it missed accesses through a saved or forwarded pointer after unlock, a wake using a different set’s mutex, and use after unlocking and relocking. A fork-only checker caught uses after unlock and storage into a global. It also rejected two legitimate operations: waking waiters in SetVal and walking the queue in countWaiters.",
+      "updatedAt": "2026-11-11T03:40:43+00:00",
+      "summary": "The checker on f56b1eaa4 followed the owning mutex through returned and forwarded semaphore element pointers. AMD64 and ARM64 Nogo each diagnosed 13 of 19 marked cases and accepted all four valid controls, including waking waiters while both sets were locked. SetVal and countWaiters passed. The wrong owner was rejected even with both locks held, as were a global store, an opaque callback and use after unlock. Two further cases passed after the original mutex was released and reacquired, once inside a helper and once explicitly. An uninterrupted lock lifetime remains unverified.",
       "evidence": [
+        {
+          "label": "Both architecture analyzers on f56b1eaa4, all 19 source-marked cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42880901658/artifacts/13795662188"
+        },
         {
           "label": "Uncached AMD64 and ARM64 checker results and missed accesses",
           "url": "https://github.com/tamird/gvisor/actions/runs/42664387976/artifacts/13696378343"
@@ -49840,10 +49844,11 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "observedAt": "2026-11-11T01:30:36+00:00",
-        "disposition": "The source prerequisite #16806 merged at dbcce4943. The semaphore proposal still needs a checker that can distinguish the correct owner from a different set’s lock without rejecting valid waiter operations.",
-        "nextAction": "Determine how checklocks can follow the owning mutex through derived pointers and account for whether a called method releases the mutex or retains the pointer.",
+        "observedAt": "2026-11-11T03:40:43+00:00",
+        "disposition": "The fork checker verifies the owner at use and accepts both legitimate waiter operations. It also accepts a saved reference after the original mutex was released and reacquired.",
+        "nextAction": "Determine which semaphore operations require uninterrupted ownership and how checklocks can distinguish that condition from ordinary reuse of a fixed slice element under its original mutex.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42880901658/artifacts/13795662188",
           "https://github.com/google/gvisor/pull/16806",
           "https://github.com/tamird/gvisor/actions/runs/42665113185/artifacts/13697018009",
           "https://github.com/tamird/gvisor/actions/runs/42664387976/artifacts/13696378343",
@@ -72998,9 +73003,17 @@
       "url": "https://github.com/google/gvisor/pull/17456",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-11T03:28:41+00:00",
-      "summary": "Merged architecture selection #16753 made the native runner sufficient for //:release. The approved workflow patch was applied to master with every added and removed line intact. The workflow keeps upstream's actions/upload-artifact 7.0.2. The earlier archive check verified nine executables, their paths, modes and bytes.",
+      "updatedAt": "2026-11-11T03:40:43+00:00",
+      "summary": "Merged architecture selection #16753 made the native runner sufficient for //:release. The approved workflow patch was applied to master with every added and removed line intact. The workflow keeps upstream's actions/upload-artifact 7.0.2. The earlier archive check verified nine executables, their paths, modes and bytes.\n\nThe standard GitHub workflow built //:release on c3aab1bce. The parent Make archive and the new Bazel archive each contain runsc, containerd-shim-runsc-v1 and seven files under gvisor-bin: checkpointgofer, gvisor-proc-umounter, gvisor-sentry-prewarmer, gvisor_sentry, runsc-fd-parking, runsc-metric-server and runsc-netgofer. All nine paths have mode 0555 and ELF machine X86-64 in both ZIPs. Each executable has no PT_INTERP or DT_NEEDED entry. The shim is byte-identical. The other eight differ. The three small C helpers have different .text and compiler comments identifying GCC 11.4.0 and 15.2.0 respectively. The Sentry also has different .text. For runsc, checkpointgofer, metric-server and netgofer the differing sections are .rodata and the GNU and Go build-ID notes.",
       "evidence": [
+        {
+          "label": "Bazel on the Actions host, nine AMD64 executables in the uploaded ZIP",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42952726390/artifacts/13826635771"
+        },
+        {
+          "label": "Make on the pre-change master, nine AMD64 executables in the uploaded ZIP",
+          "url": "https://github.com/google/gvisor/actions/runs/42950352192/artifacts/13824519485"
+        },
         {
           "label": "Published upstream PR #17456 at c3aab1bce",
           "url": "https://github.com/google/gvisor/pull/17456"
@@ -98091,7 +98104,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T02:58:05+00:00",
+      "updatedAt": "2026-11-11T03:40:43+00:00",
       "summary": "TestSystemdMultiUser timed out waiting for Bob’s user@1002.service on Buildkite. On a four-CPU AMD64 systrap worker, the same deadline also expired waiting for Alice’s user@1001.service.",
       "findings": [
         {
@@ -98140,10 +98153,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42946174439/artifacts/13824456202"
             }
           ]
+        },
+        {
+          "text": "On source 6782e66bb and the pinned systemd image, all 16 fresh isolated AMD64 systrap trials passed on the four-CPU host. Both managers reported active/running, active basic.target and both sockets in each trial. The 32 activation intervals were 481–529 ms. The sampler started after the readiness decision, and these runs recorded no timed-out manager.",
+          "evidence": [
+            {
+              "label": "Sixteen uncached isolated runs with both user managers sampled after the readiness check",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42950256234/artifacts/13826291267"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture the pending unit and process wait state inside whichever user manager remains unready. The isolated timeout selected Alice, while the original Buildkite failures selected Bob.",
+      "nextStep": "Capture the user-scoped pending unit, journal and process wait state of both managers when the original CI readiness check times out. The earlier isolated timeout affected Alice and the field failures affected Bob.",
       "evidence": [
+        {
+          "label": "Sixteen uncached isolated runs with both user managers sampled after the readiness check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42950256234/artifacts/13826291267"
+        },
         {
           "label": "Three isolated and three concurrent multi-user runs with manager samples and journals",
           "url": "https://github.com/tamird/gvisor/actions/runs/42946174439/artifacts/13824456202"
