@@ -25,12 +25,28 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"golang.org/x/sys/unix"
 )
 
+func reportFDSize(stage string) {
+	b, err := os.ReadFile("/proc/self/status")
+	if err != nil {
+		panic(err)
+	}
+	for _, line := range strings.Split(string(b), "\n") {
+		if strings.HasPrefix(line, "FDSize:") {
+			fmt.Fprintf(os.Stderr, "QA %s %s\n", stage, line)
+			return
+		}
+	}
+	panic("FDSize missing from /proc/self/status")
+}
+
 func main() {
+	reportFDSize("before")
 	start := time.Now()
 	for _, target := range []int{63, 127, 255} {
 		if err := unix.Dup3(0, target, unix.O_CLOEXEC); err != nil {
@@ -39,4 +55,5 @@ func main() {
 		}
 	}
 	fmt.Println(time.Since(start))
+	reportFDSize("after")
 }

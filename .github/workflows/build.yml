@@ -1,35 +1,111 @@
-name: CI
-
-"on":
+name: Measure FD table capacity in the execed prewarmer test helper
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/prewarmer-helper-fdsize]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  fdtable:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SOURCE: b8b0eff12d336444bccd0447e3ae8806683cbcf5
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify the source and prepare native Bazel
+        run: |
+          set -euo pipefail
+          task="$RUNNER_TEMP/prewarmer-fdsize"
+          mkdir -p "$task/receipt"
+          echo "TASK=$task" >> "$GITHUB_ENV"
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          git diff --quiet "$SOURCE" HEAD -- . ':!runsc/prewarmer/BUILD' ':!runsc/prewarmer/fdtable_expander.go' ':!runsc/prewarmer/fdsize_probe_test.go' ':!.github/workflows/build.yml'
+          git diff "$SOURCE" HEAD -- runsc/prewarmer > "$task/receipt/probe.diff"
+          test "$(uname -m)" = x86_64
+          uname -a | tee "$task/receipt/kernel"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$task/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $task/bazel" | sha256sum -c -
+          chmod 700 "$task/bazel"
+      - name: Compare direct exec and both prewarmers on cold and expanded parents
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          import shutil
+          import subprocess
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          from urllib.parse import unquote, urlparse
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+          task = Path(os.environ["TASK"])
+          receipt = task / "receipt"
+          source = Path("runsc/prewarmer/prewarmer.c")
+          original = source.read_text()
+          invocation = "  prewarm_fdtable();"
+          assert original.count(invocation) == 1
+          target = "//runsc/prewarmer:fdtable_capacity_probe_test"
+          inputs = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in (
+              source, Path("runsc/prewarmer/fdtable_expander.go"),
+              Path("runsc/prewarmer/fdsize_probe_test.go"), Path("runsc/prewarmer/BUILD"))}
+          result = {"product": os.environ["SOURCE"], "carrier": os.environ["GITHUB_SHA"], "inputs": inputs, "arms": {}}
+          pattern = re.compile(r"QA_CAPACITY parent=(\w+) initial=(\d+) parentSlots=(\d+) path=(\w+) before=(\d+) after=(\d+) dup3=(\S+)")
+          for arm in ("real", "passthrough"):
+              if arm == "passthrough":
+                  source.write_text(original.replace(invocation, "  if (0) prewarm_fdtable();"))
+              out = receipt / arm
+              out.mkdir()
+              proc = subprocess.run([str(task / "bazel"), "test", "--config=x86_64", "-c", "opt",
+                  "--jobs=4", "--lockfile_mode=off", "--remote_executor=", "--remote_cache=", "--bes_backend=",
+                  "--strategy=TestRunner=local", "--nocache_test_results", "--runs_per_test=1",
+                  "--flaky_test_attempts=1", "--test_sharding_strategy=disabled", "--test_output=errors", "--test_env=GO_TEST_WRAP_TESTV=1",
+                  "--test_arg=-test.v", "--build_event_json_file="+str(out / "events.json"), target])
+              events = [json.loads(line) for line in (out / "events.json").read_text().splitlines()]
+              tests = [e["testResult"] for e in events if "testResult" in e and e["id"]["testResult"]["label"] == target]
+              for t in tests:
+                  for item in t.get("testActionOutput", []):
+                      if item["name"] in ("test.log", "test.xml"):
+                          src = Path(unquote(urlparse(item["uri"]).path))
+                          if src.is_file():
+                              shutil.copyfile(src, out / item["name"])
+              result["arms"][arm] = {"bazel": proc.returncode, "actionResults": [
+                  {"status": t.get("status"), "cached": t.get("cachedLocally",False) or t.get("executionInfo",{}).get("cachedRemotely", False),
+                   "strategy":t.get("executionInfo",{}).get("strategy")} for t in tests]}
+              r = result["arms"][arm]
+              r["cases"] = [e.attrib for e in ET.parse(out / "test.xml").iter("testcase")] if (out / "test.xml").exists() else []
+              r["samples"] = [dict(zip(("parent","initial","parentSlots","path","before","after","dup3"),fields))
+                              for fields in pattern.findall((out/"test.log").read_text())] if (out/"test.log").exists() else []
+              (receipt / "result.json").write_text(json.dumps(result, indent=2))
+              print(arm, json.dumps(r), flush=True)
+          source.write_text(original)
+          for arm,r in result["arms"].items():
+              assert r["bazel"] == 0 and len(r["actionResults"]) == 1 and r["actionResults"][0]["status"] == "PASSED" and not r["actionResults"][0]["cached"], (arm,r)
+              assert len(r["samples"]) == 24 and any("TestFDSize" in e.get("name","") for e in r["cases"]), arm
+              for parent in ("cold","closed","held","inherited"):
+                  for path in ("direct","launcher"):
+                      samples = [s for s in r["samples"] if s["parent"] == parent and s["path"] == path]
+                      assert len(samples) == 3, (parent,path,samples)
+                      assert all(int(s["after"]) >= 256 and int(s["initial"]) < 256 for s in samples)
+                      if parent != "cold":
+                          assert all(int(s["parentSlots"]) >= 512 for s in samples)
+                      if parent == "cold":
+                          if arm == "real" and path == "launcher":
+                              assert all(int(s["before"]) >= 256 for s in samples)
+                          else:
+                              assert all(int(s["before"]) < 256 for s in samples)
+          print("Verified 48 before/after observations in actual exec'd helpers.")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: prewarmer-helper-fdsize
+          path: ${{ runner.temp }}/prewarmer-fdsize/receipt/
+          if-no-files-found: error
+          retention-days: 14

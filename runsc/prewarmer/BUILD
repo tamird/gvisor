@@ -76,3 +76,14 @@ go_test(
     ],
     deps = ["//pkg/test/testutil"],
 )
+
+go_test(
+    name = "fdtable_capacity_probe_test",
+    size = "small",
+    srcs = ["fdsize_probe_test.go"],
+    data = [
+        ":fdtable_expander",
+        ":prewarmer_binary",
+    ],
+    deps = ["//pkg/test/testutil"],
+)
