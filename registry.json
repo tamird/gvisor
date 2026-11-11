@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T14:52:21+00:00",
+    "updatedAt": "2026-11-11T15:31:31+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39,7 +39,8 @@
       "protocolbuffers/protobuf",
       "bazel-contrib/buildtools",
       "fmeum/with_cfg.bzl",
-      "bazelbuild/bazel-skylib"
+      "bazelbuild/bazel-skylib",
+      "keith/buildifier-prebuilt"
     ],
     "registryDate": "2026-11-01"
   },
@@ -71706,10 +71707,26 @@
       "title": "Honor module mirrors for the implicit Bazel Central Registry",
       "url": "https://github.com/bazelbuild/bazel/pull/32541",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-10T15:09:56+00:00",
-      "summary": "Tamir answered Fabian’s question on the original thread.\n\nFabian asked whether the mirror registry can omit the trailing slash. The rebuilt Bazel listed the mirror with the slashless flag for both implicit and explicit BCR selection. The generated lockfiles matched.\n\nBazel 9.3.2 rejects a mirror scoped to the default BCR unless the same registry is explicitly selected. The rebuilt Bazel accepted both forms and produced identical module URLs and fresh lockfiles. The offline regression and two existing mirror controls passed.",
+      "status": "closed",
+      "updatedAt": "2026-11-11T15:13:43+00:00",
+      "summary": "Bazel landed the implicit-registry mirror fix in 3a8a02bfd. Copybara closed #32541 with that commit. The approved Bazel 10.0 backport is open. The automatic Bazel 9.4 cherry-pick conflicted in BazelRepositoryModule.java.",
       "evidence": [
+        {
+          "label": "Upstream commit 3a8a02bfd",
+          "url": "https://github.com/bazelbuild/bazel/commit/3a8a02bfd"
+        },
+        {
+          "label": "Copybara closed the original PR with that commit",
+          "url": "https://github.com/bazelbuild/bazel/pull/32541#event-35706360058"
+        },
+        {
+          "label": "Approved Bazel 10.0 backport (#32574)",
+          "url": "https://github.com/bazelbuild/bazel/pull/32574"
+        },
+        {
+          "label": "Bazel 9.4 backport conflict (#32565)",
+          "url": "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148"
+        },
         {
           "label": "Published reply confirming the slashless mirror flag",
           "url": "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4526555413"
@@ -71771,16 +71788,16 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream delivery complete",
         "sourceHead": "a6d03b87ce5689d871074bce123ebbf25f305933",
-        "observedAt": "2026-11-10T15:09:56+00:00",
-        "disposition": "Fabian’s question is answered on the original inline thread.",
-        "nextAction": "Follow upstream review and release handling.",
+        "observedAt": "2026-11-11T15:13:43+00:00",
+        "disposition": "Copybara landed the fix in 3a8a02bfd.",
+        "nextAction": "Follow the Bazel 10.0 backport and the 9.4 backport investigation.",
         "evidence": [
-          "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4526555413",
-          "https://github.com/bazelbuild/bazel/pull/32541#discussion_r4524518452",
-          "https://github.com/tamird/bazel/blob/c46aeb195/.github/workflows/qualify-implicit-bcr.yml#L75-L84",
-          "https://github.com/tamird/bazel/actions/runs/42693608192/artifacts/13710049143"
+          "https://github.com/bazelbuild/bazel/commit/3a8a02bfd",
+          "https://github.com/bazelbuild/bazel/pull/32541#event-35706360058",
+          "https://github.com/bazelbuild/bazel/pull/32574",
+          "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148"
         ]
       }
     },
@@ -73399,9 +73416,13 @@
       "url": "https://github.com/google/gvisor/pull/17457",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "updatedAt": "2026-11-11T15:20:14+00:00",
       "summary": "The merged #16753 lets each native machine build the documented //debian:gvisor-release-tar-bz2 target with its own GNU tools. The published README is byte-identical to the approved guide. Native AMD64 and ARM64 qualification built and installed all nine executables and ran a systrap guest.",
       "evidence": [
+        {
+          "label": "Tamir’s response to Milan",
+          "url": "https://github.com/google/gvisor/pull/17457#issuecomment-6797781489"
+        },
         {
           "label": "Milan’s question about the native build",
           "url": "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654"
@@ -73439,32 +73460,26 @@
           "url": "https://github.com/tamird/gvisor/commit/a1b8ee4af"
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "0d46027e654ef56a1f9d2d739358a5200b2da9e5",
-        "url": "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654",
-        "title": "Reply to Milan about the native Bazel install",
-        "summary": "Post the native build and installation results in response to Milan’s question?",
-        "body": "Since #16753, an ARM64 host can build the release with its native GNU compiler. For someone installing from source who already has the build tools, the direct Bazel command builds just the archive they extract and doesn't require Docker. The documented target produced all nine executables and ran a systrap guest on [AMD64](https://github.com/tamird/gvisor/actions/runs/42175442583/artifacts/13482599775) and [ARM64](https://github.com/tamird/gvisor/actions/runs/42174590321/artifacts/13482448479). The Docker instructions still let the builder provide those tools.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-11T11:11:00+00:00"
-      },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "0d46027e654ef56a1f9d2d739358a5200b2da9e5",
-        "observedAt": "2026-11-11T11:11:00+00:00",
-        "disposition": "Milan asked why a native Bazel build is recommended for installation.",
-        "nextAction": "Review the reply about both tested native builds and the Docker workflow.",
+        "observedAt": "2026-11-11T15:20:14+00:00",
+        "disposition": "Tamir answered Milan’s native-build question on the original PR.",
+        "nextAction": "Await Milan’s response or further review.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17457#issuecomment-6797781489",
           "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654"
-        ],
-        "actionableComment": {
-          "kind": "review",
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "reply",
           "head": "0d46027e654ef56a1f9d2d739358a5200b2da9e5",
-          "url": "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654",
-          "commentId": "PRR_kwDOB9IlXs8AAAABXPYGXg"
+          "outcome": "superseded",
+          "at": "2026-11-11T15:20:14+00:00",
+          "url": "https://github.com/google/gvisor/pull/17457#pullrequestreview-5854594654"
         }
-      }
+      ]
     },
     {
       "id": "pr:17470",
@@ -73931,33 +73946,24 @@
       "title": "Expose the Buildifier executable for Bazel actions",
       "url": "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-11T14:52:21+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-11T15:20:14+00:00",
       "summary": "Expose the executable selected by the Buildifier toolchain separately from the interactive Bash wrapper. On native Darwin ARM64, the owner tests passed with an empty PATH and a relative input file. Substituting the wrapper produced an env: bash error. The matching Linux consumer implementation ran the gVisor formatting and check actions.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
-        "baseHead": "def7480572c222555c6a037d680914c85ae3a99b",
-        "url": "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f",
-        "title": "Expose the Buildifier executable for Bazel actions",
-        "body": "The public Buildifier target starts a shell to enter the directory\nwhere the user ran Bazel. A build action already runs in the directory\ncontaining its inputs, and its execution platform may have no shell.\nSelecting a download directly would duplicate the toolchain's platform\nselection in every caller.\n\nExpose the binary selected by the toolchain as //buildifier:native.\nExtend the existing working-directory test to run the executable with\nan empty PATH on a file found only in the action's directory.\n\nPrepared by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-11T14:52:21+00:00",
-        "summary": "Open this change against keith/buildifier-prebuilt main? It keeps the interactive wrapper and exposes the selected binary to build actions."
-      },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
-        "observedAt": "2026-11-11T14:52:21+00:00",
-        "disposition": "The standalone supplier change is tested. The gVisor-side patch header has been delivered separately.",
-        "nextAction": "Review the change for submission to keith/buildifier-prebuilt.",
+        "observedAt": "2026-11-11T15:20:14+00:00",
+        "disposition": "The supplier PR exposes the selected executable as //buildifier:native.",
+        "nextAction": "Await the supplier’s review.",
         "evidence": [
-          "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f",
-          "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962",
-          "https://github.com/keith/buildifier-prebuilt/pull/162"
+          "https://github.com/keith/buildifier-prebuilt/pull/180"
         ]
       },
       "evidence": [
+        {
+          "label": "Published supplier PR",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180"
+        },
         {
           "label": "Standalone supplier change and owner regression",
           "url": "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f"
@@ -73970,7 +73976,282 @@
           "label": "Supplier discussion of the interactive working directory",
           "url": "https://github.com/keith/buildifier-prebuilt/pull/162"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
+          "outcome": "approved",
+          "at": "2026-11-11T15:20:14+00:00"
+        }
+      ],
+      "inactive": true
+    },
+    {
+      "id": "branch:ephemeral-port-offset-wrap",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/ephemeral-port-offset-remainder",
+      "head": "1033f2ccec2f41b936b4b4ba565c801cbbedb6bd",
+      "title": "Visit every ephemeral port for any starting offset",
+      "url": "https://github.com/tamird/gvisor/commit/1033f2cce",
+      "group": "runtime",
+      "status": "Published",
+      "updatedAt": "2026-11-11T15:22:31+00:00",
+      "summary": "Starting at the largest uint32 offset, stock gVisor visited 16045 twice and skipped 16049. It could allocate only 49 of 50 available ports in the expanded test. All 42 ports package test records passed on the proposed change on native AMD64.",
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "1033f2ccec2f41b936b4b4ba565c801cbbedb6bd",
+        "observedAt": "2026-11-11T15:22:31+00:00",
+        "disposition": "The simplified allocator is live in #17480. Stock stopped after 49 ports. All 42 corrected package cases passed with zero skips.",
+        "nextAction": "Await review on #17480.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17480",
+          "https://github.com/tamird/gvisor/actions/runs/43046747374/artifacts/13866939565"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published correction",
+          "url": "https://github.com/google/gvisor/pull/17480"
+        },
+        {
+          "label": "Native AMD64 package results at 1033f2cce",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43046747374/artifacts/13866939565"
+        },
+        {
+          "label": "Approved revision simplifying the remainder",
+          "url": "https://github.com/tamird/gvisor/commit/1033f2cce"
+        },
+        {
+          "label": "Native package qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43046747374"
+        },
+        {
+          "label": "Standalone ephemeral-port allocator fix",
+          "url": "https://github.com/tamird/gvisor/commit/92fed73c3"
+        },
+        {
+          "label": "Native AMD64 · stock and corrected ports tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43045020915/artifacts/13866478514"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "92fed73c3f328b9a76ee6313a8c52cba008068a2",
+          "outcome": "approved",
+          "at": "2026-11-11T15:20:14+00:00"
+        }
+      ],
+      "inactive": true
+    },
+    {
+      "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
+      "title": "Expose the Buildifier executable for Bazel actions",
+      "group": "bazel",
+      "summary": "Expose the executable selected by the Buildifier toolchain separately from the interactive Bash wrapper. On native Darwin ARM64, the owner tests passed with an empty PATH and a relative input file. Substituting the wrapper produced an env: bash error. The matching Linux consumer implementation ran the gVisor formatting and check actions.",
+      "evidence": [
+        {
+          "label": "Published single-commit change",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180"
+        },
+        {
+          "label": "Standalone supplier change and owner regression",
+          "url": "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f"
+        },
+        {
+          "label": "Linux gVisor formatting and validation with the same implementation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962"
+        },
+        {
+          "label": "Supplier discussion of the interactive working directory",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/162"
+        }
+      ],
+      "id": "pr:keith/buildifier-prebuilt:180",
+      "type": "pr",
+      "repo": "keith/buildifier-prebuilt",
+      "number": 180,
+      "ref": "native-buildifier-tool",
+      "url": "https://github.com/keith/buildifier-prebuilt/pull/180",
+      "status": "open",
+      "updatedAt": "2026-11-11T15:20:14+00:00",
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
+        "observedAt": "2026-11-11T15:20:14+00:00",
+        "disposition": "The supplier PR exposes the selected executable as //buildifier:native.",
+        "nextAction": "Await the supplier’s review.",
+        "evidence": [
+          "https://github.com/keith/buildifier-prebuilt/pull/180"
+        ]
+      }
+    },
+    {
+      "head": "99759b1ed1acb8dbcacfc46ed129d3ec5a14c4dd",
+      "title": "Stabilize the Fastlane token check in the Ruby benchmark",
+      "group": "ci-flakes",
+      "summary": "Fastlane’s token spec could cross a second boundary between reading the clock twice. Backporting the upstream fix preserves the 3,613 benchmark examples. The first fixed release changes 90 entries in that selection.",
+      "evidence": [
+        {
+          "label": "Published gVisor fix",
+          "url": "https://github.com/google/gvisor/pull/17479"
+        },
+        {
+          "label": "Workload changes in Fastlane 2.220.0",
+          "url": "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981"
+        },
+        {
+          "label": "Fork proposal preserving the pinned benchmark",
+          "url": "https://github.com/tamird/gvisor/commit/99759b1ed"
+        },
+        {
+          "label": "Clock-boundary and benchmark controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43036941535/artifacts/13864612930"
+        },
+        {
+          "label": "Original RSpec failure and integer timestamps",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54407#01a1ca8b-ce6e-437b-9541-8876bbc417b6"
+        },
+        {
+          "label": "Pinned supplier example",
+          "url": "https://github.com/fastlane/fastlane/blob/2.207.0/spaceship/spec/connect_api/token_spec.rb#L210"
+        },
+        {
+          "label": "Supplier token timestamp change",
+          "url": "https://github.com/fastlane/fastlane/commit/2beac83f8"
+        }
+      ],
+      "id": "pr:17479",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17479,
+      "ref": "research/ruby-fastlane-token-clock",
+      "url": "https://github.com/google/gvisor/pull/17479",
+      "status": "open",
+      "updatedAt": "2026-11-11T15:20:14+00:00",
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "99759b1ed1acb8dbcacfc46ed129d3ec5a14c4dd",
+        "observedAt": "2026-11-11T15:20:14+00:00",
+        "disposition": "Opened the approved Fastlane backport and documented the proposed release’s different example set.",
+        "nextAction": "Await gVisor review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17479",
+          "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981"
+        ]
+      }
+    },
+    {
+      "head": "1033f2ccec2f41b936b4b4ba565c801cbbedb6bd",
+      "title": "Visit every ephemeral port for any starting offset",
+      "group": "runtime",
+      "summary": "Starting at the largest uint32 offset, stock gVisor visited 16045 twice and skipped 16049. It could allocate only 49 of 50 available ports in the expanded test. All 42 ports package test records passed on the proposed change on native AMD64.",
+      "ref": "proposal/ephemeral-port-offset-remainder",
+      "evidence": [
+        {
+          "label": "Published correction",
+          "url": "https://github.com/google/gvisor/pull/17480"
+        },
+        {
+          "label": "Native AMD64 package results at 1033f2cce",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43046747374/artifacts/13866939565"
+        },
+        {
+          "label": "Approved revision simplifying the remainder",
+          "url": "https://github.com/tamird/gvisor/commit/1033f2cce"
+        },
+        {
+          "label": "Native package qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43046747374"
+        },
+        {
+          "label": "Standalone ephemeral-port allocator fix",
+          "url": "https://github.com/tamird/gvisor/commit/92fed73c3"
+        },
+        {
+          "label": "Native AMD64 · stock and corrected ports tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43045020915/artifacts/13866478514"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "1033f2ccec2f41b936b4b4ba565c801cbbedb6bd",
+        "observedAt": "2026-11-11T15:22:31+00:00",
+        "disposition": "The simplified allocator is live in #17480. Stock stopped after 49 ports. All 42 corrected package cases passed with zero skips.",
+        "nextAction": "Await review on #17480.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17480",
+          "https://github.com/tamird/gvisor/actions/runs/43046747374/artifacts/13866939565"
+        ]
+      },
+      "id": "pr:17480",
+      "repo": "google/gvisor",
+      "number": 17480,
+      "type": "pr",
+      "status": "open",
+      "url": "https://github.com/google/gvisor/pull/17480",
+      "updatedAt": "2026-11-11T15:22:31+00:00"
+    },
+    {
+      "id": "pr:17481",
+      "repo": "google/gvisor",
+      "number": 17481,
+      "type": "pr",
+      "head": "cd3363d74d2c5c1d46baa8856459bb7cdcd71a25",
+      "title": "Link to the loopback ioctl PR without reviving it",
+      "group": "ci-flakes",
+      "summary": "A TODO linked #15559 as an issue, causing the nightly reviver to try reopening an open pull request and fail with HTTP 403. The correction links directly to the PR and preserves the scanner’s handling of real closed issues.",
+      "ref": "proposal/issue-reviver-loopback-reference",
+      "status": "open",
+      "url": "https://github.com/google/gvisor/pull/17481",
+      "updatedAt": "2026-11-11T15:24:12+00:00",
+      "evidence": [
+        {
+          "label": "Published gVisor correction",
+          "url": "https://github.com/google/gvisor/pull/17481"
+        },
+        {
+          "label": "Full-tree scans of the parent and the correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43047036820/artifacts/13867317414"
+        },
+        {
+          "label": "Candidate correction to the pull-request reference",
+          "url": "https://github.com/tamird/gvisor/commit/cd3363d74"
+        },
+        {
+          "label": "Offline dry run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43047036820"
+        },
+        {
+          "label": "Failed nightly · attempt to reopen #15559",
+          "url": "https://github.com/google/gvisor/actions/runs/42929421593/job/130224100501"
+        },
+        {
+          "label": "Previous successful nightly run",
+          "url": "https://github.com/google/gvisor/actions/runs/42726344253/job/129532827594"
+        },
+        {
+          "label": "TODO added by #17165",
+          "url": "https://github.com/google/gvisor/blob/a0e6be6fb/runsc/boot/loader.go#L2286"
+        },
+        {
+          "label": "#15559 · open pull request",
+          "url": "https://github.com/google/gvisor/pull/15559"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "cd3363d74d2c5c1d46baa8856459bb7cdcd71a25",
+        "observedAt": "2026-11-11T15:24:12+00:00",
+        "disposition": "The tested one-line correction is on the upstream PR.",
+        "nextAction": "Await gVisor review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17481",
+          "https://github.com/tamird/gvisor/actions/runs/43047036820/artifacts/13867317414"
+        ]
+      }
     }
   ],
   "edges": [
@@ -99388,7 +99669,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T22:49:57+00:00",
+      "updatedAt": "2026-11-11T15:09:02+00:00",
       "summary": "GitHub release downloads stopped independent gVisor jobs before their checks could run. The affected archives include Skylib, Protobuf and toml.bzl (HTTP 504), and rules_foreign_cc (HTTP 500).",
       "findings": [
         {
@@ -99485,9 +99766,43 @@
               "url": "https://github.com/google/gvisor/pull/17311"
             }
           ]
+        },
+        {
+          "text": "Go branch generation on #17432 stopped while fetching apple_support 2.8.0 (HTTP 502). On two independent Copybara exports, lint stopped fetching rules_python 2.4.5 and Go generation stopped fetching tar.bzl 0.10.4 (both HTTP 500). All three logs name GitHub release URLs.",
+          "evidence": [
+            {
+              "label": "#17432 · Go · apple_support 2.8.0",
+              "url": "https://github.com/google/gvisor/actions/runs/42927711896/job/130218337749"
+            },
+            {
+              "label": "#17396 · Copybara lint · rules_python 2.4.5",
+              "url": "https://github.com/google/gvisor/actions/runs/42909488258/job/130156062717"
+            },
+            {
+              "label": "#17413 · Copybara Go · tar.bzl 0.10.4",
+              "url": "https://github.com/google/gvisor/actions/runs/42899250957/job/130120498696"
+            }
+          ]
+        },
+        {
+          "text": "Bazel accepted the change that honors a module mirror for the implicit central registry. The 10.0 release backport is open and approved. The automatic 9.4 cherry-pick conflicted in BazelRepositoryModule.java.",
+          "evidence": [
+            {
+              "label": "Upstream commit 3a8a02bfd",
+              "url": "https://github.com/bazelbuild/bazel/commit/3a8a02bfd"
+            },
+            {
+              "label": "Approved Bazel 10.0 backport (#32574)",
+              "url": "https://github.com/bazelbuild/bazel/pull/32574"
+            },
+            {
+              "label": "Bazel 9.4 backport conflict (#32565)",
+              "url": "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the workspace mirror in #17311. Once it lands, inspect new Gazelle, Go generation, GPU driver, lint and packetdrill jobs for registry archive download failures.",
+      "nextStep": "Track the workspace mirror in gVisor #17311 and the approved Bazel 10.0 backport. Prepare and test a manual 9.4 backport for #32565.",
       "evidence": [
         {
           "label": "Independent Bazel fix for registry-scoped mirrors",
@@ -99528,6 +99843,30 @@
         {
           "label": "Mirror serving the verified archive",
           "url": "https://bcr.cloudflaremirrors.com/github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz"
+        },
+        {
+          "label": "#17432 · Go · apple_support 2.8.0",
+          "url": "https://github.com/google/gvisor/actions/runs/42927711896/job/130218337749"
+        },
+        {
+          "label": "#17396 · Copybara lint · rules_python 2.4.5",
+          "url": "https://github.com/google/gvisor/actions/runs/42909488258/job/130156062717"
+        },
+        {
+          "label": "#17413 · Copybara Go · tar.bzl 0.10.4",
+          "url": "https://github.com/google/gvisor/actions/runs/42899250957/job/130120498696"
+        },
+        {
+          "label": "Upstream commit 3a8a02bfd",
+          "url": "https://github.com/bazelbuild/bazel/commit/3a8a02bfd"
+        },
+        {
+          "label": "Approved Bazel 10.0 backport (#32574)",
+          "url": "https://github.com/bazelbuild/bazel/pull/32574"
+        },
+        {
+          "label": "Bazel 9.4 backport conflict (#32565)",
+          "url": "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148"
         }
       ]
     },
@@ -100979,10 +101318,10 @@
     {
       "id": "investigation:ci-flake-fastlane-token-time",
       "title": "Fastlane benchmark compares token time across a second boundary",
-      "status": "active",
+      "status": "concluded",
       "group": "ci-flakes",
-      "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T14:52:21+00:00",
+      "owner": "Upstream review",
+      "updatedAt": "2026-11-11T15:20:14+00:00",
       "summary": "The pinned Fastlane token example can compare two consecutive seconds. Upstream’s issued-at adjustment and updated assertion passed the boundary case while preserving the existing benchmark selection.",
       "findings": [
         {
@@ -101020,8 +101359,16 @@
           ]
         }
       ],
-      "nextStep": "Review the backport to the pinned Fastlane benchmark.",
+      "nextStep": "Follow #17479 for review of the two-hunk backport.",
       "evidence": [
+        {
+          "label": "Published gVisor fix",
+          "url": "https://github.com/google/gvisor/pull/17479"
+        },
+        {
+          "label": "Workload changes in Fastlane 2.220.0",
+          "url": "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981"
+        },
         {
           "label": "Fork proposal preserving the pinned benchmark",
           "url": "https://github.com/tamird/gvisor/commit/99759b1ed"
@@ -101042,18 +101389,174 @@
           "label": "Supplier token timestamp change",
           "url": "https://github.com/fastlane/fastlane/commit/2beac83f8"
         }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-docker-builder-apt-dns",
+      "title": "Ubuntu DNS failures while rebuilding the CI image",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T15:09:02+00:00",
+      "summary": "Lint and Go generation on #16663 both stopped before Bazel started. Docker could pull Ubuntu, but apt could not resolve the Ubuntu archive and security hosts.",
+      "findings": [
+        {
+          "text": "Both jobs missed default_x86_64:830786f662550d98 in the registry and ran the normal local rebuild. Its first apt install failed. The Lint job attempted the rebuild twice.",
+          "evidence": [
+            {
+              "label": "Lint · apt could not resolve archive.ubuntu.com",
+              "url": "https://github.com/google/gvisor/actions/runs/43041509351/job/130594223517"
+            },
+            {
+              "label": "Go · apt could not resolve archive.ubuntu.com",
+              "url": "https://github.com/google/gvisor/actions/runs/43041509343/job/130594222592"
+            }
+          ]
+        },
+        {
+          "text": "Both checks on the previous PR head missed the same image tag, downloaded the Ubuntu package indexes, rebuilt the image and passed.",
+          "evidence": [
+            {
+              "label": "Earlier Lint · same image rebuilt and passed",
+              "url": "https://github.com/google/gvisor/actions/runs/43014473074/job/130501981136"
+            },
+            {
+              "label": "Earlier Go · same image rebuilt and passed",
+              "url": "https://github.com/google/gvisor/actions/runs/43014472952/job/130501980324"
+            }
+          ]
+        }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "99759b1ed1acb8dbcacfc46ed129d3ec5a14c4dd",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/99759b1ed",
-        "title": "Stabilize the Fastlane token check in the Ruby benchmark",
-        "body": "The benchmark failed when the clock ticked between creating a Fastlane\ntoken and comparing its issued-at timestamp with the current second [1].\nThe token was valid. The test expected 1794400658 and read 1794400657.\n\nBackport Fastlane's issued-at adjustment and its accompanying\nassertion [2]. The first fixed release, 2.220.0, adds 78 examples and\nremoves 12 from the benchmark's selection. The backport preserves\nall 3,613 examples.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54407#01a1ca8b-ce6e-437b-9541-8876bbc417b6\n[2]: https://github.com/fastlane/fastlane/commit/2beac83f8\n\nPrepared by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-11T14:52:21+00:00",
-        "summary": "Open the two-hunk Fastlane backport that preserves the benchmark’s 3,613 examples?"
-      }
+      "nextStep": "Check the next runs of the two failed jobs for a successful apt update and completion of Lint and Go generation.",
+      "evidence": [
+        {
+          "label": "Lint · apt could not resolve archive.ubuntu.com",
+          "url": "https://github.com/google/gvisor/actions/runs/43041509351/job/130594223517"
+        },
+        {
+          "label": "Go · apt could not resolve archive.ubuntu.com",
+          "url": "https://github.com/google/gvisor/actions/runs/43041509343/job/130594222592"
+        },
+        {
+          "label": "Earlier Lint · same image rebuilt and passed",
+          "url": "https://github.com/google/gvisor/actions/runs/43014473074/job/130501981136"
+        },
+        {
+          "label": "Earlier Go · same image rebuilt and passed",
+          "url": "https://github.com/google/gvisor/actions/runs/43014472952/job/130501980324"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-nightly-issue-reviver-pr-reference",
+      "title": "Nightly issue reviver attempts to reopen an open pull request",
+      "status": "concluded",
+      "group": "ci-flakes",
+      "owner": "Upstream review",
+      "updatedAt": "2026-11-11T15:24:12+00:00",
+      "summary": "After #17165 added a TODO referring to #15559, the nightly issue reviver treated that open PR as an inactive issue. GitHub rejected its PATCH with HTTP 403.",
+      "findings": [
+        {
+          "text": "Both full source scans used the real Bazel launcher and an isolated issue service. With the correction the scanner stopped trying to reopen pull request #15559 and continued to select a genuine closed issue.",
+          "evidence": [
+            {
+              "label": "Both scanner outputs and issue-service readbacks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43047036820/artifacts/13867317414"
+            }
+          ]
+        },
+        {
+          "text": "The TODO in runsc/boot/loader.go uses gvisor.dev/issue/15559. The failing run processed 115 TODOs and reported one error. The previous run processed 114 with no errors. Both loaded 475 issues and skipped 163 TODOs.",
+          "evidence": [
+            {
+              "label": "Failed nightly · attempt to reopen #15559",
+              "url": "https://github.com/google/gvisor/actions/runs/42929421593/job/130224100501"
+            },
+            {
+              "label": "Previous successful nightly run",
+              "url": "https://github.com/google/gvisor/actions/runs/42726344253/job/129532827594"
+            },
+            {
+              "label": "TODO added by #17165",
+              "url": "https://github.com/google/gvisor/blob/a0e6be6fb/runsc/boot/loader.go#L2286"
+            },
+            {
+              "label": "#15559 · open pull request",
+              "url": "https://github.com/google/gvisor/pull/15559"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Follow #17481 for review of the corrected reference.",
+      "evidence": [
+        {
+          "label": "Published gVisor correction",
+          "url": "https://github.com/google/gvisor/pull/17481"
+        },
+        {
+          "label": "Full-tree scans of the parent and the correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43047036820/artifacts/13867317414"
+        },
+        {
+          "label": "Candidate correction to the pull-request reference",
+          "url": "https://github.com/tamird/gvisor/commit/cd3363d74"
+        },
+        {
+          "label": "Offline dry run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43047036820"
+        },
+        {
+          "label": "Failed nightly · attempt to reopen #15559",
+          "url": "https://github.com/google/gvisor/actions/runs/42929421593/job/130224100501"
+        },
+        {
+          "label": "Previous successful nightly run",
+          "url": "https://github.com/google/gvisor/actions/runs/42726344253/job/129532827594"
+        },
+        {
+          "label": "TODO added by #17165",
+          "url": "https://github.com/google/gvisor/blob/a0e6be6fb/runsc/boot/loader.go#L2286"
+        },
+        {
+          "label": "#15559 · open pull request",
+          "url": "https://github.com/google/gvisor/pull/15559"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-prewarmer-fd-expansion",
+      "title": "Prewarmed process launch measured slower than cold launch",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T15:20:14+00:00",
+      "summary": "TestPrewarmerSpeedsUpFDTableExpansion timed complete process launches and observed a slower median with prewarming on Buildkite. Retrying the same job passed.",
+      "findings": [
+        {
+          "text": "The failing cgroup v1 run measured 32 cold launches (median 136.272417 ms) followed by 32 prewarmed launches (median 139.286312 ms).",
+          "evidence": [
+            {
+              "label": "Failing cgroup v1 integration job",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1cad8-74b0-47f8-9ff0-c7aefef44dbb"
+            },
+            {
+              "label": "Passing retry on the same build",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1caf5-8673-4457-a85a-177663947130"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check whether the saved observations distinguish descriptor-table expansion time from other launch costs.",
+      "evidence": [
+        {
+          "label": "Failing cgroup v1 integration job",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1cad8-74b0-47f8-9ff0-c7aefef44dbb"
+        },
+        {
+          "label": "Passing retry on the same build",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1caf5-8673-4457-a85a-177663947130"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-11T01:47:46+00:00"
