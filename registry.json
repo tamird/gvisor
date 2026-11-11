@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T22:45:40+00:00",
+    "updatedAt": "2026-11-11T22:50:51+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7538,6 +7538,10 @@
         {
           "label": "ARM64 Go build reached the harness deadline without a TestResult",
           "url": "https://app.buildbuddy.io/invocation/5e3089fa-6572-430a-8319-6ec6025ec652"
+        },
+        {
+          "label": "All 10,933 Go tests passed on a native ARM64 executor on b3cf8596d",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43113944714/artifacts/13897134374"
         }
       ],
       "refinement": {
@@ -7585,9 +7589,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "observedAt": "2026-11-11T22:45:40+00:00",
-        "disposition": "Native C++ tests passed on both architectures. Only ARM64 Go has no result.",
-        "nextAction": "Recover the ARM64 Go test result. The harness stopped after 50 minutes without a Bazel TestResult. All 225 catalog entries passed, along with three uncached C++ cases per architecture and 10,933 native AMD64 Go test records.",
+        "observedAt": "2026-11-11T22:50:51+00:00",
+        "disposition": "Native AMD64 and ARM64 qualification passed on the published rebase.",
+        "nextAction": "Follow upstream review and import. All 10,933 ARM64 Go cases passed on a physical ARM64 executor with zero failures, errors or skips. The earlier run passed the AMD64 Go suite, the three C++ cases on both CPUs and all 225 catalog checks.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
@@ -7595,7 +7599,8 @@
           "https://github.com/tamird/gvisor/actions/runs/42301517765",
           "https://github.com/tamird/gvisor/actions/runs/43104647743",
           "https://github.com/tamird/gvisor/actions/runs/43104647743/artifacts/13896029325",
-          "https://app.buildbuddy.io/invocation/5e3089fa-6572-430a-8319-6ec6025ec652"
+          "https://app.buildbuddy.io/invocation/5e3089fa-6572-430a-8319-6ec6025ec652",
+          "https://github.com/tamird/gvisor/actions/runs/43113944714/artifacts/13897134374"
         ]
       }
     },
@@ -103446,7 +103451,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T22:24:09+00:00",
+      "updatedAt": "2026-11-11T22:50:51+00:00",
       "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
       "findings": [
         {
@@ -103457,9 +103462,22 @@
               "url": "https://github.com/NVIDIA/open-gpu-kernel-modules/releases/tag/580.196.07"
             }
           ]
+        },
+        {
+          "text": "The proposed registration adds the driver in one source file. The pinned AMD64 and ARM64 installer hashes matched NVIDIA’s published SHA256 values. The CPU-only qualification is running.",
+          "evidence": [
+            {
+              "label": "Fork registration for NVIDIA 580.196.07",
+              "url": "https://github.com/tamird/gvisor/commit/3dfdf32f7"
+            },
+            {
+              "label": "Native CPU-only driver qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43114713878"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the driver ABI and installer with the nearest gVisor-supported patch, and check whether an open PR already adds support.",
+      "nextStep": "Check the registration against the published driver ABI and the installed host driver requirements using the qualification results.",
       "evidence": [
         {
           "label": "Container-Optimized OS driver check, build #54517",
