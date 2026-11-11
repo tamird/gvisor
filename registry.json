@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T20:55:59+00:00",
+    "updatedAt": "2026-11-11T21:14:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2670,7 +2670,7 @@
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/google/gvisor/pull/16766",
       "status": "open",
-      "updatedAt": "2026-11-08T13:47:53+00:00",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
       "summary": "Published the approved amendment: successive Python releases replace older gVisor archives while preserving unrelated packages and files from a previous successful build. Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed. GitHub binds Carzh’s November 4 approval to the current one-commit submission. Its base and tree match the prior submission. Copybara opened #17222 for this exact revision.",
       "evidence": [
         {
@@ -2724,6 +2724,10 @@
         {
           "label": "Public Copybara export of f4b8a6bd2",
           "url": "https://github.com/google/gvisor/pull/17222"
+        },
+        {
+          "label": "November 11 import-status request to the approving maintainer for CL 1014036260",
+          "url": "https://github.com/google/gvisor/pull/16766#issuecomment-6807082318"
         }
       ],
       "refinement": {
@@ -2773,7 +2777,8 @@
           "https://github.com/google/gvisor/pull/16766",
           "https://github.com/tamird/gvisor/commit/04df6c244952232769db6b4123555354f9873e9b",
           "https://github.com/google/gvisor/pull/16766#discussion_r4470803575",
-          "https://github.com/google/gvisor/pull/17222"
+          "https://github.com/google/gvisor/pull/17222",
+          "https://github.com/google/gvisor/pull/16766#issuecomment-6807082318"
         ]
       },
       "reapproval": {
@@ -35762,7 +35767,7 @@
       "number": 16591,
       "group": "bazel",
       "ref": "review/hostlayout-generator-inputs",
-      "head": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd",
+      "head": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
       "title": "Generate Go host-layout tests from source files",
       "url": "https://github.com/google/gvisor/pull/16591",
       "evidence": [
@@ -35841,27 +35846,35 @@
         {
           "label": "Integration f1db0937c: matching generated host-layout tests on both architectures; 214 native AMD64 XML cases passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/42066060475/artifacts/13433228880"
+        },
+        {
+          "label": "Comparison with the approved host-layout source",
+          "url": "https://github.com/tamird/gvisor/compare/28a27e004...49fcf45ec"
+        },
+        {
+          "label": "Published host-layout generator rebase",
+          "url": "https://github.com/tamird/gvisor/commit/49fcf45ec"
         }
       ],
-      "updatedAt": "2026-11-05T17:23:39.125240Z",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
       "status": "open",
-      "summary": "Published the patch-preserving rebase 28a27e004b on 92d3cc68c. Contributor approval remains bound to 6264dbadc; the same four-file change and posted replies are preserved. The earlier 383-case qualification covers the public generator and modeled import prefix, not Google’s private integration. Copybara rewrites the Go provider load in tools/defs.bzl, and the internal template supplies the constructor that strips its repository prefix. Current-head CI is separate from those prior results.",
+      "summary": "The published rebase 49fcf45ec retains all 128 changed lines and the ready-to-pull label. Across nine packages, all 18 outputs configured for Linux AMD64 and ARM64 matched master byte for byte. All 386 generated tests ran on native macOS ARM64 with zero skips or failures. All nine GoHostLayout actions use the declared generator and Go sources. The private import remains a separate check.",
       "refinement": {
         "before": {
-          "head": "d678f172b527c75aac54b2d437566746e3a35696"
+          "head": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd"
         },
         "after": {
-          "head": "71a996f3993d949dae24cc82fa396eb571d26087",
-          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+          "head": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
+          "base": "3238f32db235efb5f8fe03d0490a07e2c53f1bf6"
         }
       },
       "followup": {
         "owner": "Agent",
-        "sourceHead": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd",
-        "providerHead": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd",
-        "observedAt": "2026-11-04T20:45:45.283369+00:00",
-        "disposition": "Patch-preserving rebase published",
-        "nextAction": "Follow current-head maintainer review and CI; retain prior approvals and source-bound results as history.",
+        "sourceHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
+        "providerHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
+        "observedAt": "2026-11-11T21:14:56+00:00",
+        "disposition": "Reviewed change rebased and verified mergeable",
+        "nextAction": "Follow the existing import and the checks on 49fcf45ec.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16591",
           "https://github.com/tamird/gvisor/commit/6264dbadc8d73f914c64acee7e8067018adbffd6",
@@ -35873,8 +35886,11 @@
           "https://github.com/tamird/gvisor/commit/876b93eba2466c097e383346041a3ad7c2c3a5ec",
           "https://github.com/google/gvisor/pull/16591#discussion_r4470795080",
           "https://github.com/google/gvisor/pull/16591#discussion_r4470795662",
-          "https://github.com/tamird/gvisor/commit/28a27e004b"
-        ]
+          "https://github.com/tamird/gvisor/commit/28a27e004b",
+          "https://github.com/tamird/gvisor/compare/28a27e004...49fcf45ec",
+          "https://github.com/tamird/gvisor/commit/49fcf45ec"
+        ],
+        "mergeable": "MERGEABLE"
       },
       "settledReviews": [
         {
@@ -35905,7 +35921,16 @@
           "at": "2026-11-04T11:27:39.033171+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16591#discussion_r4470795662"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "patch-preserving-rebase",
+        "method": "reviewed-source-diff",
+        "head": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
+        "approvedHead": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd",
+        "diffSha256": "b91234229d3bb2c00b296bac793d4f84f8ca0f698b2f588ff6574a7172f1a074",
+        "summary": "All 128 changed lines, affected file names and mode declarations match the source @parth-opensrc approved.",
+        "evidence": "https://github.com/tamird/gvisor/compare/28a27e004...49fcf45ec"
+      }
     },
     {
       "id": "pr:16592",
@@ -42401,12 +42426,12 @@
       "number": 16710,
       "group": "bazel",
       "ref": "review/stateify-output-path",
-      "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
+      "head": "c91c69121540117e88bc023ba5f58fec6766b8de",
       "title": "Generate checkpoint methods without a host shell",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "Published the patch-preserving rebase 66fbf023e8 on 92d3cc68c. Lucas’s November 3 approval remains on prior head 4bbf4d718; the rebased head has no ready-to-pull label. Current-head review and import checks remain separate. Stateify selects the imports used by its generated methods and formats the result with go/format, without goimports or a host shell. Earlier qualification matched all 485 official generated files, including the five seccomp-dependent outputs, and passed the sibling-file alias fixture.",
-      "updatedAt": "2026-11-06T23:10:47.246Z",
+      "summary": "The mergeable rebase c91c69121 preserves the complete change approved on 7ef8ae5df and produced byte-identical generated BPF output compared with master. All 16 focused native macOS ARM64 hook cases passed. The full native suite recorded 11,572 cases, with 85 skips and zero failures. The prior Copybara error has no public diagnostic.",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -42523,6 +42548,14 @@
         {
           "label": "After rebasing — Copybara migration error",
           "url": "https://api.github.com/repos/google/gvisor/commits/7ef8ae5df/status"
+        },
+        {
+          "label": "Comparison with the November 6 approved source",
+          "url": "https://github.com/tamird/gvisor/compare/7ef8ae5df...c91c69121"
+        },
+        {
+          "label": "Published stateify rebase",
+          "url": "https://github.com/tamird/gvisor/commit/c91c69121"
         }
       ],
       "settledReviews": [
@@ -42573,31 +42606,35 @@
       ],
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
-        "observedAt": "2026-11-06T23:10:47.246Z",
-        "disposition": "Asked Lucas for the first failing Copybara transform or file after the equivalent rebase failed again.",
-        "nextAction": "Inspect the first importer error when the reviewer shares it.",
+        "sourceHead": "c91c69121540117e88bc023ba5f58fec6766b8de",
+        "observedAt": "2026-11-11T21:14:56+00:00",
+        "disposition": "Patch-preserving rebase published",
+        "nextAction": "Follow the checks and import on the new source. Revisit the prior private Copybara error if the importer publishes a diagnostic.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df",
           "https://github.com/google/gvisor/pull/16710",
-          "https://github.com/google/gvisor/pull/16710#issuecomment-6698081583"
-        ]
+          "https://github.com/google/gvisor/pull/16710#issuecomment-6698081583",
+          "https://github.com/tamird/gvisor/compare/7ef8ae5df...c91c69121",
+          "https://github.com/tamird/gvisor/commit/c91c69121"
+        ],
+        "mergeable": "MERGEABLE"
       },
       "reapproval": {
         "kind": "patch-preserving-rebase",
         "method": "reviewed-source-diff",
-        "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
-        "approvedHead": "66fbf023e8a61b269c104bea321ffe75f49b8115",
-        "diffSha256": "790bdae8281f0cf92562937829d069a6849e7a62ba15d4b474bba4d8dd96113a",
-        "summary": "The ordered additions, deletions, paths, modes and binary edits match the approved patch. The adjacent C++ load changed on master. The merged generic receiver support remains present.",
-        "evidence": "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df"
+        "head": "c91c69121540117e88bc023ba5f58fec6766b8de",
+        "approvedHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
+        "diffSha256": "7a8992eccd7819a2639934ef4ccf7101b2895cbf47217bade94617f67202be37",
+        "summary": "The ordered additions, removals, affected files and modes match the previously approved source. The generated BPF output matches master.",
+        "evidence": "https://github.com/tamird/gvisor/compare/7ef8ae5df...c91c69121"
       },
       "refinement": {
         "before": {
-          "head": "66fbf023e8a61b269c104bea321ffe75f49b8115"
+          "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e"
         },
         "after": {
-          "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e"
+          "head": "c91c69121540117e88bc023ba5f58fec6766b8de",
+          "base": "3238f32db235efb5f8fe03d0490a07e2c53f1bf6"
         }
       }
     },
@@ -52307,10 +52344,14 @@
         {
           "label": "Preserved original incomplete result projection",
           "url": "https://github.com/tamird/gvisor/actions/runs/41894355458/artifacts/13355442664"
+        },
+        {
+          "label": "November 11 source review request for the shared-memory change",
+          "url": "https://github.com/google/gvisor/pull/16864#issuecomment-6807083169"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -57793,7 +57834,7 @@
       "url": "https://github.com/google/gvisor/pull/16999",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
       "summary": "Delivered as #16999 after #16403 landed through #16986. The approved 19b9ac70f patch is unchanged in ed556a288 on ebb46ee1d. When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
       "evidence": [
         {
@@ -57831,6 +57872,10 @@
         {
           "label": "Prerequisite exported and merged",
           "url": "https://github.com/google/gvisor/pull/16986"
+        },
+        {
+          "label": "November 11 source review request for the TCP receive change",
+          "url": "https://github.com/google/gvisor/pull/16999#issuecomment-6807084113"
         }
       ],
       "followup": {
@@ -57841,7 +57886,8 @@
         "nextAction": "Follow upstream review and CI on #16999; no contributor decision remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16999",
-          "https://github.com/google/gvisor/pull/16986"
+          "https://github.com/google/gvisor/pull/16986",
+          "https://github.com/google/gvisor/pull/16999#issuecomment-6807084113"
         ]
       },
       "number": 16999
@@ -99856,7 +99902,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
       "summary": "Five builds failed OpenJDK’s Unref.java when the descriptor count changed by one. Each failed shard passed on the same source when rerun. gVisor’s published Java 21 exclusion in #17377 matches the exclusion in its pinned OpenJDK.",
       "findings": [
         {
@@ -99939,6 +99985,19 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54404#01a1ca0e-44fd-42f4-a59d-864417623041"
             }
           ]
+        },
+        {
+          "text": "On overlay export #17495 (85b997498), Buildkite #54502 again reported actual=11, expected=10 in DatagramChannel/Unref.java. The other 21 cases passed in that invocation. The reviewed fix is open as #17377. The direct same-source retry exited 0 at 21:15:18 UTC.",
+          "evidence": [
+            {
+              "label": "#54502 original Java descriptor assertion",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54502/jobs/01a1cc5f-ce39-44de-b3a1-73524ad492d0/artifacts/01a1cc71-76d2-4a83-9ea7-bce551f0a442"
+            },
+            {
+              "label": "#54502 same-source Java retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc72-75c0-4909-9bdf-8985cb28aef0"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the approved #17377 through import. On the first Java shard containing the change, verify that only DatagramChannel/Unref is excluded.",
@@ -99962,6 +100021,14 @@
         {
           "label": "Approval on the submitted head",
           "url": "https://github.com/google/gvisor/pull/17377#pullrequestreview-5850054830"
+        },
+        {
+          "label": "#54502 original Java descriptor assertion",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54502/jobs/01a1cc5f-ce39-44de-b3a1-73524ad492d0/artifacts/01a1cc71-76d2-4a83-9ea7-bce551f0a442"
+        },
+        {
+          "label": "#54502 same-source Java retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc72-75c0-4909-9bdf-8985cb28aef0"
         }
       ]
     },
@@ -100313,7 +100380,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T12:17:56+00:00",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
       "summary": "A blocking receive on a connected UDP socket returned successfully where the packet test expected ECONNREFUSED. It recurred on #54388 while the upstream fix was still open.",
       "findings": [
         {
@@ -100427,6 +100494,19 @@
               "url": "https://github.com/google/gvisor/pull/17312"
             }
           ]
+        },
+        {
+          "text": "Buildkite #54502 on the unrelated overlay export #17495 (85b997498) reproduced TestICMPErrorDuringUDPRecv/Connected/PortUnreachable. At line 316, recv succeeded where the test expected ECONNREFUSED. The direct retry passed on the same source. The approved #17312 fix was still open.",
+          "evidence": [
+            {
+              "label": "#54502 original PacketImpact test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54502/jobs/01a1cc5f-ce31-4930-8e68-d78582853099/artifacts/01a1cc6c-48fb-436b-9c18-72755dcec1ca"
+            },
+            {
+              "label": "#54502 PacketImpact retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc6c-e19d-4ae2-8c2a-71351cf71bf9"
+            }
+          ]
         }
       ],
       "nextStep": "The blocked-receive fix and packet regression are in #17312. After it lands, check for further failures of the same UDP assertion in CI.",
@@ -100458,6 +100538,14 @@
         {
           "label": "Standalone parent with just the revised regression",
           "url": "https://app.buildbuddy.io/invocation/d3dcd323-a7c3-4795-a68a-c53147a7df21"
+        },
+        {
+          "label": "#54502 original PacketImpact test log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54502/jobs/01a1cc5f-ce31-4930-8e68-d78582853099/artifacts/01a1cc6c-48fb-436b-9c18-72755dcec1ca"
+        },
+        {
+          "label": "#54502 PacketImpact retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc6c-e19d-4ae2-8c2a-71351cf71bf9"
         }
       ]
     },
@@ -103067,6 +103155,57 @@
         {
           "label": "Existing Buildkite source syscall proposal containing the receive-path changes",
           "url": "https://tamird.github.io/gvisor/#branch%3Abuildkite-source-syscalls"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-node-tls-autoselectfamily",
+      "title": "Node’s Internet TLS connection test reports a connection reset",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "summary": "On Buildkite #54502 for #17495, Node 22.2.0 reported read ECONNRESET in internet/test-tls-autoselectfamily-servername.js. The same-source retry passed.",
+      "findings": [
+        {
+          "text": "The pinned test opens two TLS connections to the same host on port 443. One enables automatic address-family selection and the other disables it. The default hostname is nodejs.org and can be overridden by the test environment. The failure has yet to be attributed to either connection.",
+          "evidence": [
+            {
+              "label": "#54502 Node TLS failure",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54502/jobs/01a1cc5f-ce3c-43a5-8194-364b196ac600/artifacts/01a1cc6e-8330-48fa-ad39-ecf88e7268b6"
+            },
+            {
+              "label": "#54502 same-source Node retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc6f-be19-498c-af4b-667788967dac"
+            },
+            {
+              "label": "Node 22.2.0 TLS connection test",
+              "url": "https://github.com/nodejs/node/blob/v22.2.0/test/internet/test-tls-autoselectfamily-servername.js"
+            },
+            {
+              "label": "Node 22.2.0 Internet test endpoints",
+              "url": "https://github.com/nodejs/node/blob/v22.2.0/test/common/internet.js"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Identify which connection reset, its resolved address and address family, and whether it reached secureConnect.",
+      "evidence": [
+        {
+          "label": "#54502 Node TLS failure",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54502/jobs/01a1cc5f-ce3c-43a5-8194-364b196ac600/artifacts/01a1cc6e-8330-48fa-ad39-ecf88e7268b6"
+        },
+        {
+          "label": "#54502 same-source Node retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc6f-be19-498c-af4b-667788967dac"
+        },
+        {
+          "label": "Node 22.2.0 TLS connection test",
+          "url": "https://github.com/nodejs/node/blob/v22.2.0/test/internet/test-tls-autoselectfamily-servername.js"
+        },
+        {
+          "label": "Node 22.2.0 Internet test endpoints",
+          "url": "https://github.com/nodejs/node/blob/v22.2.0/test/common/internet.js"
         }
       ]
     }
