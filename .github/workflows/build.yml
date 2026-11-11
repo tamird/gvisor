@@ -1,35 +1,67 @@
-name: CI
-
-"on":
+name: Source-export release label and checkpoint compatibility
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/release-version-one-label]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compatibility:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-22.04
+    timeout-minutes: 85
+    env:
+      BASELINE: 0e702d775d4f14ade5136a00f3ba349dfc7ccbed
+      SOURCE: 8c826374e7d5c8cf51097092cd7afbdf2a4490cd
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Set up the same native compiler and Bazel as the successful export build
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse "$SOURCE^")" = "$BASELINE"
+          git diff --exit-code "$SOURCE" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/*'
+          dir="$RUNNER_TEMP/version-export"
+          mkdir -p "$dir" "$RUNNER_TEMP/label-proof"
+          git archive "$BASELINE" | tar -xf - -C "$dir"
+          curl --fail --silent --show-error --location --retry 3 --proto '=https' --proto-redir '=https' https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/version-bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/version-bazel" | sha256sum -c -
+          chmod 755 "$RUNNER_TEMP/version-bazel"
+          if ! dpkg-query -W -f '${Status}\n' crossbuild-essential-arm64 libnuma-dev | grep -cx 'install ok installed' | grep -qx 2; then
+            sudo -n apt-get -o Acquire::Retries=2 update -qq
+            sudo -n apt-get -o Acquire::Retries=2 install -y --no-install-recommends crossbuild-essential-arm64 libnuma-dev
+          fi
+      - name: Build and retain the original STABLE_VERSION producer
+        run: python3 -B .github/qualification/owner-pair-build.py old
+      - name: Replace the exported sources while keeping the Bazel cache
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/version-export"
+          git diff --diff-filter=D --name-only -z "$BASELINE" "$SOURCE" | while IFS= read -r -d '' name; do rm -- "$dir/$name"; done
+          git archive "$SOURCE" | tar -xf - -C "$dir"
+          test ! -e "$dir/.git"
+          test ! -e "$dir/tools/workspace_status.sh"
+      - name: Build the two named and one development installations and packages
+        run: |
+          set -eu
+          for variant in release different development; do python3 -B .github/qualification/owner-pair-build.py "$variant"; done
+      - name: Read the checkpoint headers and execute each admitted guest
+        run: |
+          sudo -n env -i HOME=/root PATH=/usr/sbin:/usr/bin:/sbin:/bin RUNNER_TEMP="$RUNNER_TEMP" SOURCE="$SOURCE" BASELINE="$BASELINE" /usr/bin/python3 -B .github/qualification/owner-pair-restore.py
+      - name: Verify the three reserved label spellings through the installed CLI
+        run: python3 -B .github/qualification/owner-pair-build.py placeholders
+      - name: Run the source and metadata assertions
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/version-export"
+          common=(--config=x86_64 --jobs=4 --remote_cache= --remote_executor= --test_output=errors --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v)
+          "$RUNNER_TEMP/version-bazel" --nohome_rc --nosystem_rc test "${common[@]}" //runsc:version_test
+          "$RUNNER_TEMP/version-bazel" --nohome_rc --nosystem_rc test "${common[@]}" --stamp --embed_label=release-20261111.0 //runsc:version_test
+          "$RUNNER_TEMP/version-bazel" --nohome_rc --nosystem_rc test "${common[@]}" --test_filter='TestCheckpointMetadata' //runsc/container:container_test
+          cp -L bazel-testlogs/runsc/container/container_test/test.log "$RUNNER_TEMP/label-proof/checkpoint-metadata.log"
+          grep -F -- '--- PASS: TestCheckpointMetadata' "$RUNNER_TEMP/label-proof/checkpoint-metadata.log"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: native-release-label-checkpoints
+          path: ${{ runner.temp }}/label-proof/
+          if-no-files-found: error
+          retention-days: 14
