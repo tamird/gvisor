@@ -219,6 +219,15 @@ class ReleaseObservationTest(unittest.TestCase):
 
 
 class RegisteredPRBatchTest(unittest.TestCase):
+    def test_request_budget_reserves_each_supplier_batch(self) -> None:
+        registry = {"meta": {"repo": "google/gvisor", "repositories": {"google/gvisor": "copybara"}},
+                    "nodes": [{"type": "pr", "repo": "google/gvisor", "number": 1}]}
+        for count, limit in ((0, 64), (8, 65), (9, 66), (32, 68), (34, 69)):
+            with self.subTest(count=count):
+                nodes = [{"type": "pr", "repo": "supplier/project", "number": n + 1} for n in range(count)]
+                self.assertEqual(updater.snapshot_request_limit({**registry, "nodes": registry["nodes"] + nodes + nodes}),
+                                 limit)
+
     def setUp(self) -> None:
         self.rows = {}
         self.nodes = []
@@ -756,7 +765,6 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(self.inventory_pages, 2)
         self.assertEqual(set(self.requested), {2, 3, 4, 5, 6, 101, 103, 105})
         self.assertEqual(len(self.requested), 8)
-        self.assertEqual(updater.REQUEST_LIMIT, 64)
         self.assertLess(updater.requests, 10)
         prs = {pr["number"]: pr for pr in current["prs"]}
         self.assertEqual(set(prs), {1, 2, 3, 4, 5, 6, *range(200, 300)})

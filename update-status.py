@@ -27,9 +27,27 @@ ROOT = Path(__file__).resolve().parent
 REGISTRY, REGISTRY_OID = load_registry(ROOT / "registry.json")
 REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
-REQUEST_LIMIT = 64
 PR_BATCH_SIZE = 8
 MERGEABILITY_BATCH_SIZE = 64
+
+
+def registered_repositories(registry: dict) -> set[str]:
+    discovery = set(registry["meta"].get("repositories", [registry["meta"]["repo"]]))
+    discovery.difference_update(registry["meta"].get("registeredOnlyRepositories", []))
+    return repository_policies(registry).keys() - discovery
+
+
+def registered_pr_identities(registry: dict, repositories: set[str]) -> list[tuple[str, int]]:
+    return sorted({(node["repo"], node["number"]) for node in registry["nodes"]
+                   if node["type"] == "pr" and node["repo"] in repositories})
+
+
+def snapshot_request_limit(registry: dict) -> int:
+    identities = registered_pr_identities(registry, registered_repositories(registry))
+    return 64 + len(range(0, len(identities), PR_BATCH_SIZE))
+
+
+REQUEST_LIMIT = snapshot_request_limit(REGISTRY)
 requests = 0
 query_cost = 0
 rate_remaining = None
@@ -646,8 +664,7 @@ def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO, *, team_
 
 def fetch_registered_prs(repositories: set[str]) -> dict[tuple[str, int], dict]:
     """Batch selected supplier PRs across repositories without broad discovery."""
-    identities = sorted({(node["repo"], node["number"]) for node in REGISTRY["nodes"]
-                         if node["type"] == "pr" and node["repo"] in repositories})
+    identities = registered_pr_identities(REGISTRY, repositories)
     result = {}
     for start in range(0, len(identities), PR_BATCH_SIZE):
         batch = {f"r{index}": identity for index, identity in
@@ -1259,13 +1276,12 @@ def main() -> None:
             previous = {}
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
     maintainers, active_reviewers, specialties = fetch_maintainers(include_specialties=True)
-    discovery_repositories = set(REGISTRY["meta"].get("repositories", [REPO])) - set(REGISTRY["meta"].get("registeredOnlyRepositories", []))
-    registered_repositories = policies.keys() - discovery_repositories
+    registered_only = registered_repositories(REGISTRY)
     registered = None
     for repo, policy in policies.items():
-        if repo in registered_repositories and registered is None:
-            registered = fetch_registered_prs(registered_repositories)
-        records, fresh, prior, inventory = collect_repository(repo, policy, previous, registered if repo in registered_repositories else None)
+        if repo in registered_only and registered is None:
+            registered = fetch_registered_prs(registered_only)
+        records, fresh, prior, inventory = collect_repository(repo, policy, previous, registered if repo in registered_only else None)
         if repo == "google/gvisor":
             records = [with_maintainer_reviewers(pr, maintainers) if pr["status"] == "open" else pr for pr in records]
             for pr in records:

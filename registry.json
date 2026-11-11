@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T15:31:31+00:00",
+    "updatedAt": "2026-11-11T16:01:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71708,8 +71708,8 @@
       "url": "https://github.com/bazelbuild/bazel/pull/32541",
       "group": "bazel",
       "status": "closed",
-      "updatedAt": "2026-11-11T15:13:43+00:00",
-      "summary": "Bazel landed the implicit-registry mirror fix in 3a8a02bfd. Copybara closed #32541 with that commit. The approved Bazel 10.0 backport is open. The automatic Bazel 9.4 cherry-pick conflicted in BazelRepositoryModule.java.",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "summary": "Bazel landed the implicit-registry mirror fix in 3a8a02bfd. Both release backports are open. The 9.4 change adapts the fix to that branch’s ImmutableSet.",
       "evidence": [
         {
           "label": "Upstream commit 3a8a02bfd",
@@ -71762,6 +71762,10 @@
         {
           "label": "Bazel patch acceptance and issue policy",
           "url": "https://bazel.build/contribute/patch-acceptance"
+        },
+        {
+          "label": "Published Bazel 9.4 backport",
+          "url": "https://github.com/bazelbuild/bazel/pull/32595"
         }
       ],
       "settledReviews": [
@@ -71792,12 +71796,13 @@
         "sourceHead": "a6d03b87ce5689d871074bce123ebbf25f305933",
         "observedAt": "2026-11-11T15:13:43+00:00",
         "disposition": "Copybara landed the fix in 3a8a02bfd.",
-        "nextAction": "Follow the Bazel 10.0 backport and the 9.4 backport investigation.",
+        "nextAction": "Follow the Bazel 10.0 and 9.4 backports through upstream review.",
         "evidence": [
           "https://github.com/bazelbuild/bazel/commit/3a8a02bfd",
           "https://github.com/bazelbuild/bazel/pull/32541#event-35706360058",
           "https://github.com/bazelbuild/bazel/pull/32574",
-          "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148"
+          "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148",
+          "https://github.com/bazelbuild/bazel/pull/32595"
         ]
       }
     },
@@ -74050,7 +74055,7 @@
       "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
       "title": "Expose the Buildifier executable for Bazel actions",
       "group": "bazel",
-      "summary": "Expose the executable selected by the Buildifier toolchain separately from the interactive Bash wrapper. On native Darwin ARM64, the owner tests passed with an empty PATH and a relative input file. Substituting the wrapper produced an env: bash error. The matching Linux consumer implementation ran the gVisor formatting and check actions.",
+      "summary": "With a macOS ARM64 host and a Linux x86-64 action, the submitted target selected the Darwin executable on Bazel 7.6.1 and 8.5.1. gVisor #16663’s pinned Bazel 9.3.1 selected Linux. A fork amendment exposes the selected executable through ToolchainInfo.",
       "evidence": [
         {
           "label": "Published single-commit change",
@@ -74067,6 +74072,18 @@
         {
           "label": "Supplier discussion of the interactive working directory",
           "url": "https://github.com/keith/buildifier-prebuilt/pull/162"
+        },
+        {
+          "label": "Reviewer’s execution-platform counterexample",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4539738947"
+        },
+        {
+          "label": "Fork toolchain-field amendment",
+          "url": "https://github.com/tamird/buildifier-prebuilt/commit/dada54c5b"
+        },
+        {
+          "label": "Hosted platform selection comparison",
+          "url": "https://github.com/tamird/buildifier-prebuilt/actions/runs/43053405661"
         }
       ],
       "id": "pr:keith/buildifier-prebuilt:180",
@@ -74076,15 +74093,17 @@
       "ref": "native-buildifier-tool",
       "url": "https://github.com/keith/buildifier-prebuilt/pull/180",
       "status": "open",
-      "updatedAt": "2026-11-11T15:20:14+00:00",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "buildifier_review",
         "sourceHead": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
-        "observedAt": "2026-11-11T15:20:14+00:00",
-        "disposition": "The supplier PR exposes the selected executable as //buildifier:native.",
-        "nextAction": "Await the supplier’s review.",
+        "observedAt": "2026-11-11T16:01:07+00:00",
+        "disposition": "The P2 review identifies an execution-platform mismatch in the submitted source.",
+        "nextAction": "Verify the supplier field and check whether gVisor can use a simpler source-based consumer before proposing an upstream amendment.",
         "evidence": [
-          "https://github.com/keith/buildifier-prebuilt/pull/180"
+          "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4539738947",
+          "https://github.com/tamird/buildifier-prebuilt/commit/dada54c5b",
+          "https://github.com/tamird/buildifier-prebuilt/actions/runs/43053405661"
         ]
       }
     },
@@ -74252,6 +74271,62 @@
           "https://github.com/tamird/gvisor/actions/runs/43047036820/artifacts/13867317414"
         ]
       }
+    },
+    {
+      "id": "pr:bazel-contrib/rules_shell:64",
+      "type": "pr",
+      "repo": "bazel-contrib/rules_shell",
+      "number": 64,
+      "ref": "fmeum/run_shell_subrule",
+      "head": "aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+      "title": "Implement run_shell in Starlark",
+      "url": "https://github.com/bazel-contrib/rules_shell/pull/64",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "summary": "Fabian Meumertzheim’s proposed file-backed shell toolchain can supply a declared executable and its runfiles to a remote action.",
+      "evidence": [
+        {
+          "label": "Proposed file-backed execution toolchain",
+          "url": "https://github.com/bazel-contrib/rules_shell/pull/64"
+        },
+        {
+          "label": "Maintainer discussion of a Starlark run_shell action",
+          "url": "https://github.com/bazel-contrib/rules_go/issues/4352#issuecomment-3361105198"
+        }
+      ]
+    },
+    {
+      "id": "pr:bazelbuild/bazel:32595",
+      "type": "pr",
+      "repo": "bazelbuild/bazel",
+      "number": 32595,
+      "ref": "proposal/default-bcr-mirror-bazel-9.4",
+      "head": "25edba3e1169be6ca3b4cfbcbd82e86c08c1e9ed",
+      "url": "https://github.com/bazelbuild/bazel/pull/32595",
+      "title": "[9.4.0] Honor module mirrors for the implicit Bazel Central Registry",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "summary": "The reviewed 9.4 backport adapts the default registry selection to the release branch’s ImmutableSet. On native ARM64 macOS, the release build accepted both nominal BCR spellings and placed the mirror first for rules_cc. The upstream Python regression passed.",
+      "evidence": [
+        {
+          "label": "Published release-9.4.0 backport",
+          "url": "https://github.com/bazelbuild/bazel/pull/32595"
+        },
+        {
+          "label": "Release request and automatic cherry-pick conflict",
+          "url": "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148"
+        },
+        {
+          "label": "Single-commit backport",
+          "url": "https://github.com/tamird/bazel/commit/25edba3e1"
+        },
+        {
+          "label": "Original contribution",
+          "url": "https://github.com/bazelbuild/bazel/pull/32541"
+        }
+      ]
     }
   ],
   "edges": [
@@ -78238,6 +78313,28 @@
         "https://github.com/google/gvisor/pull/17457",
         "https://github.com/tamird/gvisor/commit/d38b53857"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:bazel-contrib/rules_shell:64",
+      "to": "investigation:rules-shell-run-shell-release",
+      "reason": "The first consumable module must contain the API proposed in rules_shell #64.",
+      "evidence": [
+        "https://github.com/bazel-contrib/rules_shell/pull/64",
+        "https://github.com/bazel-contrib/rules_shell/releases"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "investigation:rules-shell-run-shell-release",
+      "to": "investigation:rules-go-sdk-bootstrap-shell",
+      "reason": "The rules_go supplier change needs a released file-backed execution toolchain. The gVisor experiment uses an unreleased commit.",
+      "evidence": [
+        "https://github.com/bazel-contrib/rules_shell/pull/64",
+        "https://github.com/bazel-contrib/rules_shell/releases",
+        "https://github.com/tamird/gvisor/commit/9e1db6e55",
+        "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
+      ]
     }
   ],
   "investigations": [
@@ -78246,7 +78343,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-11T13:35:55+00:00",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -80347,9 +80444,18 @@
               "url": "https://github.com/google/gvisor/pull/16624"
             }
           ]
+        },
+        {
+          "text": "In a new four-arm run, all 81 primary2 RACK-on timeouts had previous copies at sender and bottleneck ingress that were absent at egress and receiver. All 129 distinct previous copies were missing beyond the queue. The first send after each timeout reached all four taps. The 683 forward qdisc drops reconciled with 601 gVisor payloads, 78 Linux payloads, three echo requests and one Linux control ACK. The reverse queue dropped none. All seven capture taps in all four arms reported zero kernel drops. The same pattern occurred at 108/109 timeouts in the other RACK-on arm and 1/2 and 2/3 with RACK off. The earlier 110/111 observation had only endpoint captures.",
+          "evidence": [
+            {
+              "label": "Four-arm queue captures, timeout events and packet-drop reconciliation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare capture-drop counters, emulated-link drops and queue occupancy around the missing earlier transmissions to locate where they disappeared.",
+      "nextStep": "Compare competing traffic and queue occupancy at the missing sends to explain when repeated copies encounter the full forward queue. The four-arm capture establishes where those copies were lost.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -80818,6 +80924,10 @@
         {
           "label": "Eight-pair comparison with separate bottleneck and propagation queues",
           "url": "https://github.com/tamird/gvisor/actions/runs/42708554879"
+        },
+        {
+          "label": "Four-arm queue captures, timeout events and packet-drop reconciliation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
         }
       ],
       "comparisons": [
@@ -92117,7 +92227,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T20:24:14+00:00",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -95054,7 +95164,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the rules_shell #64 toolchain API through upstream release and reconcile the qualified integrations with their separately tracked product prerequisites.",
+      "nextStep": "Follow the rules_go SDK bootstrap supplier work through current-wrapper validation and a rules_shell release. Continue the separately tracked scratch-worker integrations.",
       "evidence": [
         {
           "label": "Both optimized release layouts from tool-free AMD64 workers",
@@ -95619,6 +95729,10 @@
         {
           "label": "Four original native Linux and Netstack TestResults, logs and packet captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42564062107/artifacts/13650647482"
+        },
+        {
+          "label": "Dedicated rules_go SDK bootstrap supplier work",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Arules-go-sdk-bootstrap-shell"
         }
       ],
       "group": "rbe"
@@ -101555,6 +101669,158 @@
         {
           "label": "Passing retry on the same build",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1caf5-8673-4457-a85a-177663947130"
+        }
+      ]
+    },
+    {
+      "id": "investigation:rules-shell-run-shell-release",
+      "title": "Release the rules_shell execution toolchain",
+      "status": "active",
+      "group": "bazel",
+      "owner": "rules_shell maintainers",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "summary": "The rules_go bootstrap needs a published rules_shell module that provides the file-backed shell toolchain proposed in #64. The native worker experiment pinned the PR’s source directly.",
+      "findings": [
+        {
+          "text": "The latest published release checked was v0.8.0. The toolchain proposal is open.",
+          "evidence": [
+            {
+              "label": "Proposed file-backed execution toolchain",
+              "url": "https://github.com/bazel-contrib/rules_shell/pull/64"
+            },
+            {
+              "label": "rules_shell v0.8.0",
+              "url": "https://github.com/bazel-contrib/rules_shell/releases/tag/v0.8.0"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Identify the first published rules_shell module that contains the execution-toolchain API once #64 lands.",
+      "evidence": [
+        {
+          "label": "Proposed file-backed execution toolchain",
+          "url": "https://github.com/bazel-contrib/rules_shell/pull/64"
+        },
+        {
+          "label": "Published rules_shell releases",
+          "url": "https://github.com/bazel-contrib/rules_shell/releases"
+        },
+        {
+          "label": "rules_go 0.65 integration with the execution-platform interpreter",
+          "url": "https://github.com/tamird/gvisor/commit/9e1db6e55"
+        }
+      ]
+    },
+    {
+      "id": "investigation:rules-go-sdk-bootstrap-shell",
+      "title": "Declare the shell for the rules_go SDK bootstrap",
+      "status": "active",
+      "group": "bazel",
+      "owner": "root",
+      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "summary": "On empty AMD64 and ARM64 Linux workers, rules_go 0.65 could not start its SDK builder wrapper. Supplying the interpreter as an execution-platform tool produced builder, pack and covdata on both workers. The supplier change depends on rules_shell #64 and a release containing its API.",
+      "findings": [
+        {
+          "text": "The original gVisor experiment in 55211b3e3 selected a declared shell. Its 0.65 integration in 9e1db6e55 retained the execution transition and passed the existing script and SDK inputs to that interpreter. Both native uncached actions succeeded with the same 5,947 SDK inputs, 31 rules_go inputs and wrapper bytes as their failing controls.",
+          "evidence": [
+            {
+              "label": "Original declared-shell experiment",
+              "url": "https://github.com/tamird/gvisor/commit/55211b3e3"
+            },
+            {
+              "label": "rules_go 0.65 integration with the execution-platform interpreter",
+              "url": "https://github.com/tamird/gvisor/commit/9e1db6e55"
+            },
+            {
+              "label": "Original SDK bootstrap action on both native tool-free workers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42368374290/artifacts/13573190060"
+            },
+            {
+              "label": "AMD64 and ARM64 bootstrap outputs with the declared interpreter",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
+            }
+          ]
+        },
+        {
+          "text": "The separate TMPDIR fallback in ea78f6fd9 is superseded. Supplying an empty, writable /tmp on the worker allowed Go’s original temporary-file handling to run in 5850173fc. No supplier PR is planned for the fallback.",
+          "evidence": [
+            {
+              "label": "Historical temporary-directory fallback",
+              "url": "https://github.com/tamird/gvisor/commit/ea78f6fd9"
+            },
+            {
+              "label": "Stock Go temporary files on a worker with writable /tmp",
+              "url": "https://github.com/tamird/gvisor/commit/5850173fc"
+            }
+          ]
+        },
+        {
+          "text": "rules_go asks contributors to discuss an idea first. Fabian already discussed a Starlark run_shell in #4352. The earlier #4465 selected the interpreter by path. Current binary_wrapper.sh also invokes readlink and dirname when resolving symlinked SDKs.",
+          "evidence": [
+            {
+              "label": "rules_go contribution process",
+              "url": "https://github.com/bazel-contrib/rules_go/blob/master/CONTRIBUTING.md#L24-L31"
+            },
+            {
+              "label": "Maintainer discussion of a Starlark run_shell action",
+              "url": "https://github.com/bazel-contrib/rules_go/issues/4352#issuecomment-3361105198"
+            },
+            {
+              "label": "Earlier shell-path implementation",
+              "url": "https://github.com/bazel-contrib/rules_go/pull/4465"
+            },
+            {
+              "label": "Current wrapper resolves symlinked SDKs using readlink and dirname",
+              "url": "https://github.com/bazel-contrib/rules_go/pull/4767"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Revalidate the current rules_go wrapper with a symlinked SDK on a tool-free worker. Use the existing design discussion for supplier feedback. Prepare the change against the released rules_shell API when available.",
+      "evidence": [
+        {
+          "label": "rules_go 0.65 integration with the execution-platform interpreter",
+          "url": "https://github.com/tamird/gvisor/commit/9e1db6e55"
+        },
+        {
+          "label": "Original SDK bootstrap action on both native tool-free workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42368374290/artifacts/13573190060"
+        },
+        {
+          "label": "AMD64 and ARM64 bootstrap outputs with the declared interpreter",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
+        },
+        {
+          "label": "Proposed file-backed execution toolchain",
+          "url": "https://github.com/bazel-contrib/rules_shell/pull/64"
+        },
+        {
+          "label": "Published rules_shell releases",
+          "url": "https://github.com/bazel-contrib/rules_shell/releases"
+        },
+        {
+          "label": "Maintainer discussion of a Starlark run_shell action",
+          "url": "https://github.com/bazel-contrib/rules_go/issues/4352#issuecomment-3361105198"
+        },
+        {
+          "label": "Earlier shell-path implementation",
+          "url": "https://github.com/bazel-contrib/rules_go/pull/4465"
+        },
+        {
+          "label": "rules_go contribution process",
+          "url": "https://github.com/bazel-contrib/rules_go/blob/master/CONTRIBUTING.md#L24-L31"
+        },
+        {
+          "label": "Current wrapper resolves symlinked SDKs using readlink and dirname",
+          "url": "https://github.com/bazel-contrib/rules_go/pull/4767"
+        },
+        {
+          "label": "Historical temporary-directory fallback",
+          "url": "https://github.com/tamird/gvisor/commit/ea78f6fd9"
+        },
+        {
+          "label": "Stock Go temporary files on a worker with writable /tmp",
+          "url": "https://github.com/tamird/gvisor/commit/5850173fc"
         }
       ]
     }
