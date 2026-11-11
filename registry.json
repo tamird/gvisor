@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T01:47:46+00:00",
+    "updatedAt": "2026-11-11T02:10:26+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -12802,25 +12802,38 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/nvproxy-offline-abi-single",
-      "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+      "head": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
       "title": "Compare NVIDIA driver ABIs using declared source archives",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/4b9a9bc5d",
+      "url": "https://github.com/tamird/gvisor/commit/2b34bb5a2",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-09T19:18:26+00:00",
-      "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. The final commit differs from that tested tree only in the README.",
+      "updatedAt": "2026-11-11T02:10:26+00:00",
+      "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. Without CA roots, all 34 online checksum cases failed TLS verification. On native AMD64 and ARM64 workers, all 34 passed with the declared roots. On each architecture, 25 public ABI comparisons passed and nine versions had no public source tag. The proposal's nvproxy and downloader directories match those runs byte for byte.",
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
-        "observedAt": "2026-11-09T19:18:26+00:00",
+        "sourceHead": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
+        "observedAt": "2026-11-11T02:10:26+00:00",
         "disposition": "Single-commit proposal prepared.",
-        "nextAction": "Review the full offline ABI change after #17112, #17114 and #17151. The same commit now moves the network-dependent installer checksum test to its own target.",
+        "nextAction": "Review the offline ABI comparison and the separate online installer checksum test after #17112, #17114 and #17151. The checksum test now brings its own CA bundle.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4b9a9bc5d",
-          "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+          "https://github.com/tamird/gvisor/commit/2b34bb5a2",
+          "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
+          "https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525"
         ]
       },
       "evidence": [
+        {
+          "label": "Revised proposal with the CA bundle for online checksum verification",
+          "url": "https://github.com/tamird/gvisor/commit/2b34bb5a2"
+        },
+        {
+          "label": "All 34 original certificate failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286"
+        },
+        {
+          "label": "Both architectures’ online checksums and offline ABI comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525"
+        },
         {
           "label": "Complete diff, including the checksum test split",
           "url": "https://github.com/tamird/gvisor/commit/4b9a9bc5d"
@@ -12872,11 +12885,11 @@
       ],
       "refinement": {
         "before": {
-          "head": "2627f0daa9a8127598d9405151660567a1f26c0c",
-          "base": "7c42f97e66d1b62df825d8e423071b1dd52443de"
+          "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+          "base": "4a735693062dedd81863e75f7a82efd8414dbe6f"
         },
         "after": {
-          "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+          "head": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
           "base": "4a735693062dedd81863e75f7a82efd8414dbe6f"
         }
       },
@@ -12894,13 +12907,13 @@
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+        "head": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
         "baseHead": "4a735693062dedd81863e75f7a82efd8414dbe6f",
-        "url": "https://github.com/tamird/gvisor/commit/4b9a9bc5d",
+        "url": "https://github.com/tamird/gvisor/commit/2b34bb5a2",
         "title": "Compare NVIDIA driver ABIs using declared source archives",
-        "body": "The NVIDIA ABI test clones a driver repository during each comparison.\nWithout Git or network access, the test fails before Clang can compare\nthe driver’s ioctl definitions with the corresponding nvproxy types.\n\nGive the ABI test and driver differ the same pinned header archives\nas Bazel runfiles. Record versions without a public source tag so\nthe test can distinguish them from missing build inputs. Developers\ncan also pin a candidate version for the differ before nvproxy adopts\nit. Keep these archives development dependencies of the gVisor module.\n\nChecking the installer checksums still requires network access. Move\nthat check into its own test. The existing parity suite runs both\ntests, while the ABI target can run offline on every supported version\nwith published headers.",
-        "requestedAt": "2026-11-09T19:18:26+00:00",
-        "summary": "Review the full offline ABI change after #17112, #17114 and #17151. The same commit now moves the network-dependent installer checksum test to its own target."
+        "body": "The NVIDIA ABI test clones a driver repository during each comparison. Without Git or network access, the test fails before Clang can compare the driver’s ioctl definitions with the corresponding nvproxy types.\n\nGive the ABI test and driver differ the same pinned header archives as Bazel runfiles. Record versions without a public source tag so the test can distinguish them from missing build inputs. Developers can also pin a candidate version for the differ before nvproxy adopts it. Keep these archives development dependencies of the gVisor module.\n\nThe existing parity suite runs the offline ABI comparison and a separate test that downloads the installers to check their hashes. Give the checksum test the pinned gRPC CA bundle so it can verify NVIDIA’s HTTPS certificate on workers without a system trust store.",
+        "requestedAt": "2026-11-11T02:10:26+00:00",
+        "summary": "Review the offline ABI comparison and the separate online installer checksum test after #17112, #17114 and #17151. The checksum test now brings its own CA bundle."
       }
     },
     {
@@ -58503,13 +58516,25 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "proposal/fd-stale-lock-preconditions",
-      "head": "1ee6b64aea00e1895fc67b71cc7a853a20319851",
+      "head": "68eb2f443ab14dae2cf23a04a3662fe3187e38be",
       "url": "https://github.com/google/gvisor/pull/17064",
       "title": "Remove stale file descriptor lock requirements",
       "status": "open",
-      "updatedAt": "2026-11-06T23:08:10.479Z",
-      "summary": "Remove the incorrect caller-lock comments on FDTable.GetFDs and VFSPipe.newFD. Published at the approved revision c74632e3c; four comment lines removed in two files.",
+      "updatedAt": "2026-11-11T02:10:26+00:00",
+      "summary": "Remove the stale caller-lock requirement on FDTable.GetFDs. The rebase preserves that file byte for byte. Master already removed the obsolete VFSPipe comment in d6786915f.",
       "evidence": [
+        {
+          "label": "Published rebase on current master",
+          "url": "https://github.com/tamird/gvisor/compare/1ee6b64ae...68eb2f443"
+        },
+        {
+          "label": "Earlier source approval on 1ee6b64ae",
+          "url": "https://github.com/google/gvisor/pull/17064#pullrequestreview-5806238222"
+        },
+        {
+          "label": "Copybara export of 1ee6b64ae",
+          "url": "https://github.com/google/gvisor/pull/17149"
+        },
         {
           "label": "Two-file change against the merged FDTable prerequisite",
           "url": "https://github.com/tamird/gvisor/compare/a4071cb4d...c74632e3c"
@@ -58539,33 +58564,24 @@
           "url": "https://github.com/google/gvisor/pull/17064"
         }
       ],
-      "reapproval": {
-        "kind": "patch-preserving-rebase",
-        "method": "reviewed-source-diff",
-        "head": "1ee6b64aea00e1895fc67b71cc7a853a20319851",
-        "approvedHead": "c74632e3cb3438ebf9322754e23c35bf56c9be58",
-        "diffSha256": "720fa75d60e0d6a4916cdc1ccdab14fd7e9d05434182ed98184205237a97e3f3",
-        "summary": "The ordered additions, deletions, paths, modes and binary edits match the approved patch. The rebase removes the same four stale comment lines.",
-        "evidence": "https://github.com/tamird/gvisor/compare/c74632e3c...1ee6b64ae"
-      },
       "refinement": {
         "before": {
-          "head": "c74632e3cb3438ebf9322754e23c35bf56c9be58"
+          "head": "1ee6b64aea00e1895fc67b71cc7a853a20319851"
         },
         "after": {
-          "head": "1ee6b64aea00e1895fc67b71cc7a853a20319851"
+          "head": "68eb2f443ab14dae2cf23a04a3662fe3187e38be"
         }
       },
       "followup": {
         "owner": "Agent",
-        "sourceHead": "1ee6b64aea00e1895fc67b71cc7a853a20319851",
-        "observedAt": "2026-11-06T23:08:10.479Z",
-        "disposition": "Copybara reports that the rebased change was imported into the internal review system.",
-        "nextAction": "Follow the resulting import through upstream integration.",
+        "sourceHead": "68eb2f443ab14dae2cf23a04a3662fe3187e38be",
+        "observedAt": "2026-11-11T02:10:26+00:00",
+        "disposition": "The updated source is mergeable. Ryan's approval and export #17149 identify the prior source 1ee6b64ae.",
+        "nextAction": "Follow review of 68eb2f443 and its Copybara export. The earlier export still conflicts.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/c74632e3c...1ee6b64ae",
-          "https://github.com/google/gvisor/pull/17064",
-          "https://api.github.com/repos/google/gvisor/commits/1ee6b64ae/status"
+          "https://github.com/tamird/gvisor/compare/1ee6b64ae...68eb2f443",
+          "https://github.com/google/gvisor/pull/17064#pullrequestreview-5806238222",
+          "https://github.com/google/gvisor/pull/17149"
         ]
       }
     },
@@ -99015,7 +99031,7 @@
       "title": "PHP’s 2.15 GB multipart upload fails across master and test builds",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T01:47:46+00:00",
+      "updatedAt": "2026-11-11T02:10:26+00:00",
       "summary": "PHP 8.5.11 reported sapi/cli/tests/upload_2G.phpt as failed in seven attempts across six commits. Two were gVisor master commits (d887f126f and 93713c50f). Four were Google test commits.",
       "findings": [
         {
@@ -99064,10 +99080,31 @@
               "url": "https://github.com/php/php-src/blob/php-8.5.11/run-tests.php#L2811-L2820"
             }
           ]
+        },
+        {
+          "text": "The isolated PHP 8.5.11 upload_2G.phpt completed on the first attempt with runc and gVisor. Both produced the expected output for the 2,150,000,000-byte upload. The original Buildkite failure still lacks the output difference needed to explain it.",
+          "evidence": [
+            {
+              "label": "Expected and actual output from both runtimes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42941830920/artifacts/13820553894"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the same PHP 8.5.11 case under Linux/runc and gVisor master 93713c50f with --show-diff enabled. Check free temporary space, free memory, and failed or short writes against any observed mismatch.",
+      "nextStep": "Check that 60ec8592c shows a failing PHPT's expected and actual output in the batch log. Use that output from the next field failure to identify its cause.",
       "evidence": [
+        {
+          "label": "Runtime upload comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42941830920/artifacts/13820553894"
+        },
+        {
+          "label": "Print a failing PHP test’s diff in its Bazel log",
+          "url": "https://github.com/tamird/gvisor/commit/60ec8592c"
+        },
+        {
+          "label": "Qualification of the PHP failure reporter",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42943209689"
+        },
         {
           "label": "Same-case Linux and gVisor comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42941221389"
