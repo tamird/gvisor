@@ -19,7 +19,7 @@ from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import load_registry, registry_is_published
-from reviewer_selection import needs_reviewer_paths, recent_reviewer_work, reviewer_governance
+from reviewer_selection import GENERIC_REVIEW, needs_reviewer_paths, recent_reviewer_work, reviewer_governance
 from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
@@ -262,6 +262,18 @@ def terminal_import_handoff(pr: dict, previous: dict, node: dict) -> dict | None
             "posting": "Agent inspection only."}
 
 
+def top_level_triage(item: dict, prior: dict, newly_observed: bool) -> bool:
+    """A new top-level message needs reading before anyone can assign a reply."""
+    if item["kind"] not in {"comment", "review"} or not (newly_observed or prior.get("needsTriage", prior.get("newOrChanged"))):
+        return False
+    body = item["body"].strip()
+    if GENERIC_REVIEW.fullmatch(body) or re.fullmatch(
+            r"\[🤖\] Invalidating approval due to rebase as a means to notify @[\w-]+ to re-review\. "
+            r"Current diff looks (?:identical to|different from) pre-rebase diff\.", body):
+        return False
+    return not re.fullmatch(r"\[🤖[^\]]*\] Review agent has no findings\.", body.partition("\n---\n")[0].strip())
+
+
 def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     """Put human feedback before routine checks, without treating replies as resolution."""
     nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]}
@@ -341,13 +353,25 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
             unedited = bool(item.get("createdAt") and item.get("updatedAt") == item["createdAt"])
             linked = followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
             claimed = bool(worker and (assigned and (observed or unedited) or observed and linked))
+            same_head = prior_record if prior_record and prior_record["head"] == pr["head"] else {}
+            # A cold inventory may contain years of comments. Queue newly seen or
+            # edited feedback, and carry forward the exact untriaged observation.
+            last_scan = previous.get("checkedAt")
+            fresh = changed and (key in prior or bool(last_scan and item.get("updatedAt")
+                    and datetime.fromisoformat(item["updatedAt"]) > datetime.fromisoformat(last_scan)))
+            inspect = (not awaiting_author and not claimed and top_level_triage(item, same_head, fresh)
+                       and not any(reply.get("kind") == "reply" and reply.get("url") == item["url"]
+                                   and reply.get("postedURL") and reply.get("at")
+                                   and datetime.fromisoformat(reply["at"]) >= datetime.fromisoformat(item["updatedAt"])
+                                   for reply in node.get("settledReviews", [])))
             claim = {}
             if awaiting_author:
                 claim = {"claimed": claimed, "overdue": bool(not claimed and prior_record
                          and prior_record["awaitingAuthor"] and prior_record.get("feedbackComplete")
                          and pr.get("feedback", {}).get("complete") and prior_record["head"] == pr["head"] and not changed)}
             records.append({"repo": key[0], "number": key[1], "head": pr["head"], "sourceNumber": source["number"],
-                            "owner": "Agent" if awaiting_author and not claimed else worker, **claim, "kind": item["kind"], "id": item["id"],
+                            "owner": "Agent" if inspect or awaiting_author and not claimed else worker, **claim, "kind": item["kind"], "id": item["id"],
+                            **({"needsTriage": inspect} if item["kind"] in {"comment", "review"} else {}),
                             **({"rebaseRequested": True} if is_rebase else {}),
                             "url": item["url"], "author": author["login"], "updatedAt": item.get("updatedAt"),
                             "newOrChanged": changed, "awaitingAuthor": awaiting_author, "assigned": assigned or awaiting_author,
@@ -356,6 +380,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         if not pr.get("feedback", {}).get("complete"):
             visible = {item["id"] for item in items}
             records.extend({**record, "head": pr["head"], "newOrChanged": False, "feedbackComplete": False,
+                            **({"needsTriage": False} if record.get("needsTriage") and record["head"] != pr["head"] else {}),
                             **({"owner": "Agent", "claimed": False, "overdue": False}
                                if record.get("awaitingAuthor") and record["head"] != pr["head"] else {})}
                            for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible)
@@ -1527,14 +1552,14 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     pending = []
     for row in snapshot.get("reviewerHandoff", []):
         source = by_number.get(row.get("sourceNumber", row["number"]))
-        if row["repo"] != REPO or not row["awaitingAuthor"] or not source:
+        if row["repo"] != REPO or not (row["awaitingAuthor"] or row.get("needsTriage")) or not source:
             continue
         # Ignore a stale assignment after either the source or the import closes.
         if not any(pr["number"] == row["number"] and pr["head"] == row["head"]
                    and pr.get("status") in {"open", "draft"} for pr in (source, *source.get("imports", []))):
             continue
         pending.append(row)
-    pending.sort(key=lambda row: (bool(row.get("claimed")), not row.get("overdue"),
+    pending.sort(key=lambda row: (bool(row.get("claimed")), not row["awaitingAuthor"], not row.get("overdue"),
                                   row.get("updatedAt") or "", row["url"]))
     unclaimed = [row for row in pending if not row.get("claimed")]
     cleanup = snapshot.get("branchCleanup")

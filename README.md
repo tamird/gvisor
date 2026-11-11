@@ -484,8 +484,13 @@ claiming the thread is resolved; a later reviewer reply raises it again.
 Edits to earlier human messages surface again even after an author reply.
 New top-level comments and review bodies remain in the same snapshot
 across refreshes until an exact feedback disposition or explicit assignment
-resolution records human triage. Dismissed reviews clear. This does not
-backfill every historical top-level message. An assigned `actionableComment`
+resolution records human triage. The supervisor queues a newly observed
+substantive message for agent inspection even when nobody has established
+that the author owes a reply. A later unrelated comment does not settle it.
+An owner can record its exact URL on the current head after reading the
+latest edit. An existing posted reply, routine re-review notices, and simple
+acknowledgements stay out of this queue. Dismissed reviews clear. This does
+not backfill every historical top-level message. An assigned `actionableComment`
 continues to use the existing explicit assignment mechanism.
 
 After each repository completes, the log also emits `reviewerHandoffProvisional`

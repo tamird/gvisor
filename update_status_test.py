@@ -970,7 +970,8 @@ class CollectorHistoryTest(unittest.TestCase):
         provisional, = [event for event in events if "reviewerHandoffProvisional" in event]
         record, = provisional["reviewerHandoffProvisional"]
         self.assertEqual((record["id"], record["head"], record["owner"], record["requiresLiveRecheck"]),
-                         (comment["id"], self.raw[3]["headRefOid"], "root", True))
+                         (comment["id"], self.raw[3]["headRefOid"], "Agent", True))
+        self.assertTrue(record["needsTriage"])
         self.assertTrue(next(call.kwargs["flush"] for call in output.call_args_list
                              if "reviewerHandoffProvisional" in call.args[0]))
         self.assertFalse(any("reviewerHandoff" in event for event in events))
@@ -1116,6 +1117,52 @@ class CollectorHistoryTest(unittest.TestCase):
             self.assertEqual(updater.worker_handoff(snap, incoming)["unclaimed"], 1)
             pr["authorLogin"] = "another-author"
             self.assertEqual(updater.worker_handoff(snap, incoming)["authorFeedback"], [])
+
+    def test_top_level_lint_report_reaches_the_worker_without_assigning_a_reply(self) -> None:
+        pr = retained(raw_pr(15106))
+        old = {"prs": [copy.deepcopy(pr)], "checkedAt": OLD}
+        message = {"id": "IC_kwDOB9IlXs8AAAABlZythA", "kind": "comment", "createdAt": LATER, "updatedAt": LATER,
+                   "body": "Genearlly approve, other than it is currently failing the linter and first pass CI.",
+                   "url": pr["url"] + "#issuecomment-6805040516",
+                   "author": {"login": "zkoopmans", "__typename": "User"}}
+        pr["feedback"]["items"] = [message]
+        node = {"id": "pr:15106", "repo": updater.REPO, "number": pr["number"],
+                "followup": {"owner": "Upstream review", "sourceHead": pr["head"], "observedAt": OLD}}
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
+            def advance(previous: dict) -> dict:
+                return {"prs": [copy.deepcopy(pr)], "reviewerHandoff": updater.reviewer_handoff([pr], previous)}
+
+            first = advance(old)
+            row = updater.worker_handoff(first, [])["nextWork"]
+            self.assertEqual((row["id"], row["owner"], row["needsTriage"], row["awaitingAuthor"]),
+                             (message["id"], "Agent", True, False))
+            del first["reviewerHandoff"][0]["needsTriage"]  # A published snapshot from before this change.
+            self.assertEqual(updater.worker_handoff(advance(first), [])["nextWork"]["id"], message["id"])
+            pr["feedback"]["items"].append({**message, "id": "unrelated", "body": "Other changes landed.",
+                                           "author": {"login": "tamird", "__typename": "User"}})
+            continued = advance(first)
+            self.assertEqual(updater.worker_handoff(continued, [])["nextWork"]["id"], message["id"])
+            node["followup"].update(observedAt=LATER, evidence=[message["url"]])
+            claimed = advance(continued)
+            self.assertIsNone(updater.worker_handoff(claimed, [])["nextWork"])
+            self.assertIsNone(updater.worker_handoff(advance(claimed), [])["nextWork"])
+            message["updatedAt"] = "2000-01-03T00:00:00+00:00"
+            self.assertEqual(updater.worker_handoff(advance(claimed), [])["nextWork"]["id"], message["id"])
+            node["settledReviews"] = [{"kind": "reply", "url": message["url"], "at": message["updatedAt"],
+                                       "postedURL": pr["url"] + "#issuecomment-2"}]
+            self.assertIsNone(updater.worker_handoff(advance(claimed), [])["nextWork"])
+            del node["settledReviews"]
+            edited = advance(claimed)
+            pr["head"] = "a" * 40
+            self.assertIsNone(updater.worker_handoff(advance(edited), [])["nextWork"])
+
+    def test_feedback_receipts_and_generic_approvals_remain_quiet(self) -> None:
+        for kind, body in [("comment", "[🤖] Invalidating approval due to rebase as a means to notify "
+                             "@carzh to re-review. Current diff looks different from pre-rebase diff."),
+                           ("review", "[🤖] Review agent has no findings.\n\n---\nAutomated review agent."),
+                           ("review", "LGTM!")]:
+            with self.subTest(body=body):
+                self.assertFalse(updater.top_level_triage({"kind": kind, "body": body}, {}, True))
 
     def test_reviewer_edit_releases_a_manually_claimed_comment(self) -> None:
         pr = retained(raw_pr(5))
