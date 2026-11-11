@@ -16,6 +16,7 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -115,6 +116,11 @@ func waitForUnitActive(ctx context.Context, t *testing.T, d *dockerutil.Containe
 		return nil
 	}
 	if err := pollWithTimeout(ctx, daemonPollTimeout, checkUnitActive); err != nil {
+		if unit == "user@1001.service" || unit == "user@1002.service" {
+			t.Logf("BOTH_TIMEOUT unit=%s", unit)
+			sampleSystemdUserManagers(ctx, t, d, "timeout")
+			sampleSystemdUserManagers(ctx, t, d, "after-timeout")
+		}
 		journal, _ := d.Exec(ctx, dockerutil.ExecOpts{User: "root"}, "journalctl", "-u", unit, "--no-pager")
 		t.Fatalf("%s did not become active: %v\njournal:\n%s", unit, err, journal)
 	}
@@ -863,6 +869,109 @@ func TestSystemdExecSandboxing(t *testing.T) {
 	}
 }
 
+func sampleSystemdUserManagers(ctx context.Context, t *testing.T, d *dockerutil.Container, phase string) {
+	t.Helper()
+	ended := make(chan struct{}, 2)
+	for _, uid := range []string{"1001", "1002"} {
+		go func() {
+			defer func() { ended <- struct{}{} }()
+			bounded, cancel := context.WithTimeout(ctx, 12*time.Second)
+			defer cancel()
+			begin := time.Now()
+			out, err := d.Exec(bounded, dockerutil.ExecOpts{User: "root"}, "sh", "-c", `uid=$1
+unit=user@$uid.service
+props=$(systemctl show "$unit" -p MainPID -p ControlPID -p ExecMainPID -p ExecMainCode -p ExecMainStatus -p Type -p NotifyAccess -p TasksCurrent -p InactiveExitTimestampMonotonic -p ActiveEnterTimestampMonotonic -p Job -p ActiveState -p SubState -p Result)
+printf '%s\n' "$props"
+main=$(printf '%s\n' "$props" | sed -n 's/^MainPID=//p')
+control=$(printf '%s\n' "$props" | sed -n 's/^ControlPID=//p')
+for s in /proc/[0-9]*/status; do
+    p=${s%/status}; pid=${p##*/}
+    row=$(awk -v uid="$uid" -v main="$main" -v control="$control" -v pid="$pid" '
+      /^Name:/{name=$2;gsub(/[^A-Za-z0-9_.:-]/,"-",name)}
+      /^Uid:/{u=$2} /^PPid:/{ppid=$2} /^State:/{st=$2} /^Threads:/{th=$2}
+      /^voluntary_ctxt_switches:/{v=$2} /^nonvoluntary_ctxt_switches:/{n=$2}
+      END{if (u==uid || pid==main || pid==control || (main!=0 && ppid==main)) printf "%s,%s,%s,%s,%s,%s,%s,%s",pid,ppid,u,name,st,th,v,n}' "$s" 2>/dev/null)
+    [ -n "$row" ] || continue
+    wait=$(cat "$p/wchan" 2>/dev/null)
+    syscall=$(awk 'NR==1 && ($1 ~ /^-?[0-9]+$/ || $1 == "running") {print $1}' "$p/syscall" 2>/dev/null)
+    printf 'Process=%s,%s,%s\n' "$row" "$wait" "$syscall"
+done
+systemctl list-jobs --no-legend --no-pager --plain | head -16 | awk 'NF >= 4 { print "SystemJob=" $1 "," $2 "," $3 "," $4 }'
+for pair in "ManagerSocket:/run/user/$uid/systemd/private" "BusSocket:/run/user/$uid/bus"; do
+    if [ -S "${pair#*:}" ]; then printf '%s=present\n' "${pair%%:*}"; else printf '%s=absent\n' "${pair%%:*}"; fi
+done
+for src in Unit User; do
+    if [ "$src" = Unit ]; then set -- -u "$unit"; else set -- "_UID=$uid"; fi
+    journal=$(journalctl -b --no-pager -q -n 24 -o json --output-fields=MESSAGE,MESSAGE_ID,PRIORITY,_COMM,_PID,_SYSTEMD_UNIT,_SYSTEMD_USER_UNIT,UNIT,USER_UNIT,ERRNO "$@" 2>/dev/null)
+    printf '%sJournalExit=%d\n' "$src" "$?"
+    if [ -n "$journal" ]; then printf '%s\n' "$journal" | sed "s/^/${src}Journal=/"; fi
+done
+userctl() { timeout 2s setpriv --reuid="$uid" --regid="$uid" --clear-groups env XDG_RUNTIME_DIR="/run/user/$uid" systemctl --user "$@"; }
+classify() {
+    case "$1" in
+      *"No such file"*) echo UserError=missing;; *"Connection refused"*) echo UserError=refused;;
+      *"No medium found"*) echo UserError=no-medium;; *"Permission denied"*) echo UserError=denied;;
+      *"connection timed out"*|*"Connection timed out"*) echo UserError=timed-out;; *) :;; esac
+}
+jobs=$(userctl list-jobs --no-pager --no-legend --plain 2>&1); status=$?
+printf 'UserJobsExit=%s\n' "$status"
+if [ "$status" = 0 ]; then printf '%s\n' "$jobs" | head -16 | awk 'NF>=4 {print "UserJob=" $1 "," $2 "," $3 "," $4}'; else classify "$jobs"; fi
+state=$(userctl show basic.target -p ActiveState --value --no-pager 2>&1); status=$?
+printf 'BasicExit=%s\n' "$status"
+if [ "$status" = 0 ]; then printf 'BasicState=%s\n' "$state"; else classify "$state"; fi
+exit 0
+`, "sh", uid)
+			t.Logf("BOTH_SAMPLE phase=%s uid=%s complete=%t elapsed_ms=%d", phase, uid, err == nil, time.Since(begin).Milliseconds())
+			for _, line := range strings.Split(out, "\n") {
+				key, value, found := strings.Cut(line, "=")
+				if !found {
+					continue
+				}
+				if key == "UnitJournal" || key == "UserJournal" {
+					var record map[string]any
+					if json.Unmarshal([]byte(value), &record) != nil {
+						continue
+					}
+					tag := func(k string) string {
+						v, _ := record[k].(string)
+						if len(v) > 140 {
+							return "-"
+						}
+						return strings.Map(func(r rune) rune {
+							switch {
+							case r >= 'A' && r <= 'Z', r >= 'a' && r <= 'z', r >= '0' && r <= '9', strings.ContainsRune("._@:-", r):
+								return r
+							default:
+								return '-'
+							}
+						}, v)
+					}
+					msg, _ := record["MESSAGE"].(string)
+					lower := strings.ToLower(msg)
+					event := "other"
+					for _, mark := range []string{"session opened", "session closed", "libbpf", "reached target", "startup finished", "queued start job", "failed", "timed out", "listening on", "starting ", "started ", "created slice", "socket", "notification", "generator", "finished ", "dependency", "ready"} {
+						if strings.Contains(lower, mark) {
+							event = strings.ReplaceAll(strings.TrimSpace(mark), " ", "-")
+							break
+						}
+					}
+					value = strings.Join([]string{tag("__MONOTONIC_TIMESTAMP"), tag("_PID"), tag("_COMM"), tag("PRIORITY"), tag("MESSAGE_ID"), tag("_SYSTEMD_UNIT"), tag("_SYSTEMD_USER_UNIT"), tag("UNIT"), tag("USER_UNIT"), tag("ERRNO"), event}, ",")
+				}
+				switch key {
+				case "MainPID", "ControlPID", "ActiveState", "SubState", "Result", "Type", "NotifyAccess", "ExecMainPID", "ExecMainCode", "ExecMainStatus", "Job", "InactiveExitTimestampMonotonic", "ActiveEnterTimestampMonotonic", "TasksCurrent", "Process", "ManagerSocket", "BusSocket", "UserJobsExit", "BasicExit", "BasicState", "UserJob", "SystemJob", "UnitJournal", "UserJournal", "UserError", "UnitJournalExit", "UserJournalExit":
+					if len(value) <= 420 && strings.IndexFunc(value, func(r rune) bool {
+						return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || strings.ContainsRune(".,:@_-", r))
+					}) < 0 {
+						t.Logf("BOTH_FIELD phase=%s uid=%s %s=%s", phase, uid, key, value)
+					}
+				}
+			}
+		}()
+	}
+	<-ended
+	<-ended
+}
+
 // userExec runs a command as the given user, as a transient unit in the
 // user's service manager (systemd-run --machine=<user>@.host --user).
 // Unlike `docker exec --user`, the user is resolved inside the sandbox.
@@ -913,6 +1022,7 @@ func TestSystemdMultiUser(t *testing.T) {
 	execOrFatal(ctx, t, d, "loginctl", "enable-linger", "alice", "bob")
 	waitForUnitActive(ctx, t, d, aliceUnit)
 	waitForUnitActive(ctx, t, d, bobUnit)
+	sampleSystemdUserManagers(ctx, t, d, "ready")
 	checkManagerRunning := func(ctx context.Context) error {
 		out, err := userExec(ctx, d, "alice", "systemctl", "--user", "is-system-running")
 		if err != nil || strings.TrimSpace(out) != "running" {

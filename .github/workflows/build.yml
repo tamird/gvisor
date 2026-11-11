@@ -1,35 +1,63 @@
-name: CI
-
-"on":
+name: Inspect both systemd user managers after the startup wait
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/systemd-manager-both-users]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  checkpoint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Verify sources and stage the original native guest harness
+        run: |
+          set -euo pipefail
+          trap 'echo "Source setup stopped at line $LINENO" >&2' ERR
+          test "$(uname -m)" = x86_64
+          source=6782e66bb04ba41de7da417da53406c2525ac9f1
+          original=300012edee02fd8b426a58333be88c72c1cd1547
+          donor=86293f7e139a0daf0914b0ad10e4819f440e6879
+          transport=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          bcr=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q
+          git -c gc.auto=0 fetch --quiet --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$original" "$donor" "$transport" "$bcr"
+          git switch -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$source"
+          printf '%s\n' .github/qualification/systemd_manager.py .github/workflows/build.yml test/e2e/systemd_test.go | diff - <(git diff --name-only HEAD^ HEAD)
+          test "$(cat .bazelversion)" = 9.3.1
+          d="$RUNNER_TEMP/cmd-guest-fixture"
+          mkdir -m 0700 "$d"
+          cp .github/qualification/systemd_manager.py "$d/"
+          git show "$original:.github/qualification/chained_wire.py" > "$d/chained_wire.py"
+          for spec in             "$donor:.github/qualification/checkpoint_compat.py 5d3bfb4c8a7f4df7f58360d8fe7628c6cba7491b checkpoint_compat.py"             "$donor:.github/qualification/cmd_guest.py 3b0872f5551a117b94f2a69de089e65fb8677fa5 cmd_guest.py"             "$transport:.github/qualification/recvbuf_deps.py 9a3f571087a1438113a3a067c300e26fcb0ca9e8 public_assets.py"             "$bcr:.github/qualification/tldk_public_inputs.py 1f3f7d4d75810ad60941772776e01f3b71b3b171 tldk_public_inputs.py"             "$bcr:.github/qualification/tldk_installed_inputs.json 6a2bd5d2ea15eb2adc2cab7695db1de719503d87 inputs.json"; do
+            read -r source blob target <<< "$spec"
+            test "$(git rev-parse "$source")" = "$blob"
+            git show "$source" > "$d/$target"
+          done
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null || ! dpkg -s libnuma-dev >/dev/null 2>&1; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=- -o Acquire::Retries=3)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends crossbuild-essential-arm64 libnuma-dev
+          fi
+          for url in https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64; do
+            if curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 --max-time 150 -H 'Accept: application/octet-stream' "$url" -o "$d/bazel.part" &&
+               echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel.part" | sha256sum -c -; then
+              mv "$d/bazel.part" "$d/bazel"
+              break
+            fi
+          done
+          chmod 700 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Observe both user managers after each original startup decision
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" python3 -IB "$RUNNER_TEMP/cmd-guest-fixture/systemd_manager.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: both-systemd-user-manager-states
+          path: ${{ runner.temp }}/cmd-guest-fixture/result.json
+          if-no-files-found: error
+          retention-days: 14
