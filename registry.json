@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T18:03:07+00:00",
+    "updatedAt": "2026-11-11T18:11:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46543,9 +46543,9 @@
       "title": "Build source exports without a Git version stamp",
       "url": "https://github.com/tamird/gvisor/commit/111c72d26",
       "group": "rbe",
-      "status": "Contributor review requested",
+      "status": "Agent work",
       "summary": "Two different development Sentries reported 0.0.0, so one accepted the other’s checkpoint. A source export now records the linked Sentry’s Go build ID unless the publisher supplies a release label. Old unnamed checkpoints contain only 0.0.0.\n\nThe version definitions also give the shipped netgofer the same label as runsc. Previously netgofer rejected its own named release on startup. On the current standalone change, both development and release builds produced all nine files on native AMD64 and executed a guest after restoring it. The Debian versions were 0~devel and 20261106.0. A separate native comparison verified netgofer enforcement on AMD64 and ARM64.",
-      "updatedAt": "2026-11-11T01:30:36+00:00",
+      "updatedAt": "2026-11-11T18:11:35+00:00",
       "evidence": [
         {
           "label": "Current standalone source, nine installed files per build, parser, Debian versions and both restored guests on native AMD64",
@@ -46641,9 +46641,9 @@
       "followup": {
         "owner": "Build and release",
         "sourceHead": "111c72d26660563b1cf23993293c4aa6fbdec851",
-        "observedAt": "2026-11-11T01:30:36+00:00",
-        "disposition": "Contributor review of the explicit release-label and linked-ID policy",
-        "nextAction": "Review the single source-export change for submission. Its prerequisite #16593 merged at 93713c50f.",
+        "observedAt": "2026-11-11T18:11:35+00:00",
+        "disposition": "The contributor requested a revision to the checkpoint version model in 111c72d26.",
+        "nextAction": "Revise how source builds identify checkpoints and qualify the result before presenting a new proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42360655295/artifacts/13569951004",
           "https://github.com/tamird/gvisor/actions/runs/42359633173/artifacts/13568979452",
@@ -46657,15 +46657,9 @@
           "https://github.com/tamird/gvisor/actions/runs/41180272657/artifacts/13037961695"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "111c72d26660563b1cf23993293c4aa6fbdec851",
-        "url": "https://github.com/tamird/gvisor/commit/111c72d26",
-        "title": "Build source exports without a Git version stamp",
-        "summary": "Review the source-export change for submission. #16593 has merged. This revision labels netgofer, which otherwise rejects its own packaged release.",
-        "baseHead": "1560a5df4920e054dfe7ae88655f835eab1b782c",
-        "body": "The default workspace status command runs Git even for a development\nbuild. Without a repository it reports 0.0.0, and presubmit jobs give\nunrelated commits the same tag. Neither string identifies the binary\nthat wrote a checkpoint.\n\nPass the release label from the publisher to Bazel with --embed_label.\nUse the same label for runsc, its Go sidecars and checkpoint restores.\nWithout a release label, record the linked sentry's Go build ID and\nreject restores from a different binary before loading the kernel.\nA custom STABLE_VERSION can still name the CLI and Debian package\nwithout asserting checkpoint compatibility.\n\nUnstamped builds report (devel) and produce Debian version 0~devel.\nThe release job passes the same version to both architecture builds."
+        "url": "https://github.com/tamird/gvisor/commit/111c72d26"
       }
     },
     {
