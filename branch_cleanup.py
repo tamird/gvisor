@@ -27,6 +27,7 @@ MERGED_SOURCE = "merged PR at exact upstream-reachable tip"
 COMPLETED_CI = "retired CI payload with a completed run at the exact tip"
 LOCAL_CI = "local copy of retiring completed CI branch"
 PUBLISHED_BRANCH = "reachable from a retained public branch"
+REDUNDANT_CI = "old CI tip reachable from a surviving fork branch"
 CI_IDLE = dt.timedelta(days=1)
 OID = re.compile(r"[0-9a-f]{40}")
 
@@ -332,10 +333,38 @@ class Candidate:
     reason: str
 
 
-def retained_public_history(fork: dict[str, str], protected: set[str], dropping: set[str]) -> set[str]:
+def retained_public_history(fork: dict[str, str], protected: set[str] | None, dropping: set[str]) -> set[str]:
     tips = {oid for name, oid in fork.items()
-            if name not in dropping and (name in protected or not name.startswith(MANAGED))}
+            if name not in dropping and (protected is None or name in protected or not name.startswith(MANAGED))}
     return set(git("rev-list", "--stdin", data=lines(available(tips))).decode().splitlines())
+
+
+def redundant_ci_refs(fork: dict[str, str], eligible: set[str], dropping: set[str]) -> set[str]:
+    """Retain one fork ref for each maximal CI tip without an outside witness."""
+    if not eligible:
+        return set()
+    by_tip = defaultdict(list)
+    for name in eligible:
+        by_tip[fork[name]].append(name)
+    outside = available({oid for name, oid in fork.items() if name not in eligible and name not in dropping})
+    # Subtract history already covered outside this pool. In the remaining
+    # graph, a tip appearing as a parent has a descendant in the same pool.
+    # Only tips with no descendant need their own surviving branch name.
+    roots = list(by_tip) + ["^" + oid for oid in outside]
+    seen, parents = set(), set()
+    for row in git("rev-list", "--parents", "--stdin", data=lines(roots)).decode().splitlines():
+        oid, *previous = row.split()
+        seen.add(oid)
+        parents.update(previous)
+    keep = {min(by_tip[oid]) for oid in by_tip.keys() & (seen - parents)}
+    return eligible - keep
+
+
+def require_public_descendants(items: list[Candidate], fork: dict[str, str], protected: set[str], dropping: set[str]) -> None:
+    for reason, names in ((PUBLISHED_BRANCH, protected), (REDUNDANT_CI, None)):
+        tips = {item.oid for item in items if item.reason == reason}
+        if tips and not tips <= retained_public_history(fork, names, dropping):
+            raise ValueError("a candidate lost its retained public descendant; rerun the plan")
 
 
 def unpublished_locals(items: list[Candidate], surviving: set[str]) -> set[str]:
@@ -467,9 +496,16 @@ def plan(retention: int, *, merged_only: bool = False) -> list[Candidate]:
             candidates.append(Candidate(scope, name, oid, COMPLETED_CI))
     dropping = {item.name for item in candidates if item.scope == "fork"}
     keep = evidence_keepers(fork, dropping, upstream, evidence)
-    if evidence_keepers(fork, dropping - keep, upstream, evidence):
-        raise ValueError("fork plan still contains the last published branch for source or cited commits")
+    # Names and active PR/worker tips have already been excluded. A citation
+    # by commit alone continues to work if a surviving ref contains its tip.
+    old_ci = [(scope, name, oid) for scope, name, oid in potential if not merged_only
+              and name.startswith(DISPOSABLE) and data[oid][0] <= cutoff.timestamp()]
+    extra = redundant_ci_refs(fork, {name for scope, name, _ in old_ci if scope == "fork"} - dropping, dropping - keep)
     candidates = [item for item in candidates if item.scope != "fork" or item.name not in keep]
+    candidates.extend(Candidate("fork", name, fork[name], REDUNDANT_CI) for name in extra)
+    dropping = dropping - keep | extra
+    if evidence_keepers(fork, dropping, upstream, evidence):
+        raise ValueError("fork plan still contains the last published branch for source or cited commits")
     # A completed CI run can retire a day-old local copy along with its fork
     # branch. A reset/amend may still leave unpublished work in its reflog.
     pairs = {i.name: i.oid for i in candidates if i.scope == "fork" and i.reason == COMPLETED_CI
@@ -483,10 +519,13 @@ def plan(retention: int, *, merged_only: bool = False) -> list[Candidate]:
     # A commit URL still resolves when its same-name fork branch survives.
     # Check reflogs too: a local rebase may have displaced unpublished work.
     mirrors = {name: oid for name, oid in mirrors.items() if name not in removing}
-    dropping -= keep
     surviving = {oid for name, oid in fork.items() if name not in dropping}
     for name in published_reflogs(mirrors, surviving):
         candidates.append(Candidate("local", name, mirrors[name], FORK_MIRROR))
+    local_candidates = {item.name for item in candidates if item.scope == "local"}
+    old_local = {name: oid for scope, name, oid in old_ci if scope == "local" and name not in local_candidates}
+    for name in published_reflogs(old_local, surviving):
+        candidates.append(Candidate("local", name, old_local[name], REDUNDANT_CI))
     unpublished = unpublished_locals(candidates, surviving | {upstream})
     return sorted(item for item in candidates if item.scope != "local" or item.name not in unpublished)
 
@@ -593,13 +632,11 @@ def apply(items: list[Candidate], retention: int) -> None:
         if (item.name in names or item.scope == "local" and item.name in recent or any(item.oid[:length] in tips for length in lengths)
                 or item.scope == "fork" and fork.get(item.name) != item.oid
                 or item.reason == MERGED_SOURCE and (item.name, item.oid) not in merged_prs
-                or item.reason not in {FORK_MIRROR, "reachable from a published base", MERGED_SOURCE}
+                or item.reason not in {FORK_MIRROR, "reachable from a published base", MERGED_SOURCE, REDUNDANT_CI}
                 and any(item.oid[:length] in evidence for length in evidence_lengths)):
             raise ValueError(f"{item.name} changed or became active; rerun the plan")
     dropping = {item.name for item in items if item.scope == "fork"}
-    ancestor_tips = {item.oid for item in items if item.reason == PUBLISHED_BRANCH}
-    if ancestor_tips and not ancestor_tips <= retained_public_history(fork, names, dropping):
-        raise ValueError("a candidate lost its retained public descendant; rerun the plan")
+    require_public_descendants(items, fork, names, dropping)
     if unpublished_locals(items, {oid for name, oid in fork.items() if name not in dropping} | {upstream}):
         raise ValueError("a branch has unpublished local history; rerun the plan")
     if evidence_keepers(fork, dropping, upstream, evidence):
@@ -620,16 +657,16 @@ def apply(items: list[Candidate], retention: int) -> None:
                     or published_reflogs(mirrors, set(fork.values())) != mirrors.keys()):
                 raise ValueError("a local mirror or its published history changed; rerun the plan")
         for batch in chunks([item for item in items if item.scope == scope], 80):
-            occupied, heads = checked_out()
-            if any(item.name in occupied or item.oid in heads for item in batch):
-                raise ValueError("a candidate was checked out during the cleanup; rerun the plan")
-            batch_tips = {item.oid for item in batch if item.reason == PUBLISHED_BRANCH}
-            if batch_tips or scope == "local":
+            if scope == "local" or any(i.reason in (PUBLISHED_BRANCH, REDUNDANT_CI) for i in batch):
                 fork = remote_refs("origin")
-                if batch_tips and not batch_tips <= retained_public_history(fork, names, dropping):
-                    raise ValueError("a candidate lost its retained public descendant; rerun the plan")
+                require_public_descendants(batch, fork, names, dropping)
                 if scope == "local" and unpublished_locals(batch, set(fork.values()) | {upstream}):
                     raise ValueError("a branch has unpublished local history; rerun the plan")
+            # An unchanged tip can acquire a PR or a workflow while earlier
+            # batches run. A Git push lease alone cannot observe that.
+            occupied, heads = live_protections() if scope == "fork" else checked_out()
+            if any(item.name in occupied or item.oid in heads for item in batch):
+                raise ValueError("a candidate became active during the cleanup; rerun the plan")
             if scope == "fork":
                 git("-c", "remote.origin.mirror=false", "push", "--atomic", "--no-follow-tags", "--recurse-submodules=no",
                     *(f"--force-with-lease={HEADS}{item.name}:{item.oid}" for item in batch), "origin",

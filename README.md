@@ -1051,6 +1051,11 @@ outside the managed prefixes, or a protected fork branch, contains its tip.
 The operator checks that ancestry again before deletion. A local branch
 can retire only if every commit in its reflog stays published.
 
+For week-old qualification and diagnostics branches, the witness can also
+be another CI branch. The operator keeps one name per tip that has no
+surviving descendant, then rechecks each deletion batch against the fork
+branches that will survive the entire plan.
+
 Other local mirrors can retire after seven days by default if the same branch
 and commit remain on the fork and its surviving branches cover the entire
 local reflog. Checked-out branches, open PRs, active workflows, work-map

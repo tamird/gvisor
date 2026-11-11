@@ -196,6 +196,78 @@ class BranchCleanupTest(unittest.TestCase):
                         cleanup.apply(fork_row, 7)
                     self.assertEqual(run("rev-parse", cleanup.HEADS + eligible).decode().strip(), tip)
 
+    def test_old_ci_tips_keep_a_public_witness_through_the_entire_batch(self):
+        with tempfile.TemporaryDirectory(prefix="gvisor-cleanup-fixture-") as tmp:
+            repo = Path(tmp) / "local.git"
+            subprocess.run(["git", "init", "--bare", "--quiet", str(repo)], check=True)
+            old = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=10)).isoformat()
+            with mock.patch.dict(os.environ, {"GIT_DIR": str(repo), "GIT_ALLOW_PROTOCOL": "file",
+                                              "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
+                                              "GIT_AUTHOR_DATE": old, "GIT_COMMITTER_DATE": old}):
+                run = cleanup.git
+                run("config", "user.name", "Fixture")
+                run("config", "user.email", "fixture@example.com")
+                run("config", "core.logAllRefUpdates", "true")
+                tree = run("mktree").decode().strip()
+
+                def commit(message, *parents):
+                    args = [arg for parent in parents for arg in ("-p", parent)]
+                    return run("commit-tree", tree, *args, "-m", message).decode().strip()
+
+                base = commit("master")
+                lower = commit("cited by its commit", base)
+                upper = commit("old CI leaf", commit("intermediate commit with no ref", lower))
+                separate = commit("independent old CI leaf", lower)
+                protected = commit("active under another name", base)
+                only = commit("must not use a retiring branch as a witness", base)
+                dropping = "qualification/retiring"
+                stable, alias = "diagnostics/first", "qualification/alias"
+                fork = {"master": base, "gh-pages": base, stable: upper, alias: upper,
+                        "qualification/cited": lower, "qualification/separate": separate,
+                        "qualification/busy-alias": protected, "qualification/busy": protected,
+                        "qualification/only": only, dropping: commit("retiring descendant", only),
+                        "qualification/linked-by-name": commit("named as a branch", base)}
+                fork["qualification/linked-alias"] = fork["qualification/linked-by-name"]
+                pool = {stable, alias, "qualification/cited", "qualification/separate"}
+                self.assertEqual(cleanup.redundant_ci_refs(fork, pool, set()), {alias, "qualification/cited"})
+                self.assertEqual(cleanup.redundant_ci_refs(fork, {"qualification/only"}, {dropping}), set())
+                local = "diagnostics/local-copy"
+                run("update-ref", cleanup.HEADS + local, lower)
+                private = commit("unpublished pre-amend tip", base)
+                amended = "diagnostics/local-amended"
+                run("update-ref", cleanup.HEADS + amended, private)
+                run("update-ref", cleanup.HEADS + amended, lower, private)
+
+                def tracker(_fork, _local, _upstream, names, evidence):
+                    names.add("qualification/linked-by-name")
+                    evidence.update({lower[:9], upper[:9], fork["qualification/linked-by-name"][:9]})
+                    return set()
+
+                with contextlib.ExitStack() as controls:
+                    for function, value in {"check_origin": None, "public_bases": base,
+                                            "api": ["master"], "completed_runs": set()}.items():
+                        controls.enter_context(mock.patch.object(cleanup, function, return_value=value))
+                    controls.enter_context(mock.patch.object(cleanup, "live_protections",
+                                                             side_effect=lambda: ({"qualification/busy"}, {protected})))
+                    controls.enter_context(mock.patch.object(cleanup, "tracker_protections", side_effect=tracker))
+                    observed = controls.enter_context(mock.patch.object(cleanup, "remote_refs", return_value=fork))
+                    rows = cleanup.plan(7)
+                    self.assertEqual({(r.scope, r.name) for r in rows if r.reason == cleanup.REDUNDANT_CI},
+                                     {("fork", alias), ("fork", "qualification/cited"),
+                                      ("fork", "qualification/only"), ("fork", "qualification/linked-alias"), ("local", local)})
+                    self.assertFalse(any(r.name in {amended, stable, "qualification/busy-alias",
+                                                    "qualification/linked-by-name", "qualification/separate"} for r in rows))
+                    # The archive is local. Moving the last public alias after
+                    # it is written must still abort before attempting a push.
+                    observed.side_effect = [fork, {**fork, stable: base}]
+                    with self.assertRaisesRegex(ValueError, "lost its retained public descendant"):
+                        cleanup.apply([r for r in rows if r.name == alias], 7)
+                    observed.side_effect = None
+                    active = [({"qualification/busy"}, {protected}), ({"new-run-alias"}, {upper})]
+                    with mock.patch.object(cleanup, "live_protections", side_effect=active):
+                        with self.assertRaisesRegex(ValueError, "became active during"):
+                            cleanup.apply([r for r in rows if r.name == alias], 7)
+
     def test_reflog_archive_and_compare_and_swap(self):
         # This fixture uses only two disposable bare repos, with transport
         # restricted to file. A changed remote tip exercises a real stale lease.
