@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T17:16:13+00:00",
+    "updatedAt": "2026-11-11T17:23:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -102210,7 +102210,7 @@
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-11T17:12:43+00:00",
+      "updatedAt": "2026-11-11T17:23:01+00:00",
       "summary": "The master PGO pipeline reported 608 consecutive failures, from build #3174 through #3781. The previous build passed. Master still contains profiles through Go 1.27.1. The public statuses do not identify the failing benchmark or publication stage.",
       "findings": [
         {
@@ -102277,9 +102277,17 @@
         {
           "label": "Earlier published Go 1.27.1 profiles, #15489",
           "url": "https://github.com/google/gvisor/pull/15489"
+        },
+        {
+          "label": "Stock benchmark replay on master",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43067257412"
         }
-      ]
+      ],
+      "defaultBranchCheck": {
+        "context": "buildkite/pgo-profiles",
+        "onSuccess": "Check whether the successful master build published new profile files for the expected Go version and platforms."
+      }
     }
   ],
-  "updatedAt": "2026-11-11T17:16:13+00:00"
+  "updatedAt": "2026-11-11T17:23:01+00:00"
 }
