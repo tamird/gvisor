@@ -1,7 +1,8 @@
 import unittest
 from datetime import datetime, timezone
 
-from reviewer_selection import get_reviewer_candidates, reviewer_governance, reviewer_history
+from reviewer_selection import (get_reviewer_candidates, needs_reviewer_paths, recent_reviewer_work,
+                                reviewer_governance, reviewer_history)
 
 
 class ReviewerSelectionTest(unittest.TestCase):
@@ -41,6 +42,42 @@ class ReviewerSelectionTest(unittest.TestCase):
     def test_assignment_alone_does_not_establish_expertise(self):
         self.pr["files"] = ["pkg/unrelated/BUILD"]
         self.assertEqual(self.picks(requested={"casey"}), [])
+
+    def test_only_unassigned_current_sources_trigger_path_history(self):
+        source = {**self.pr, "status": "open", "head": "current", "files": ["Makefile", "tools/bazel.mk"]}
+        row = {"status": "needs-reviewer", "head": "current"}
+        self.assertEqual(needs_reviewer_paths([source], {"2": row}), {"tools/bazel.mk"})
+        for change in ({"status": "merged"}, {"head": "old"}, {"repo": "other/project"}):
+            with self.subTest(change=change):
+                self.assertEqual(needs_reviewer_paths([{**source, **change}], {"2": row}), set())
+        self.assertEqual(needs_reviewer_paths([source], {"2": {**row, "status": "waiting"}}), set())
+
+    def test_authors_of_unassigned_file_include_copybara_commits(self):
+        path = "tools/bazel.mk"
+        oid = "a" * 40
+        url = f"https://github.com/google/gvisor/commit/{oid}"
+        def commit(login, sha, parents=1):
+            return {"oid": sha, "url": f"https://github.com/google/gvisor/commit/{sha}",
+                    "author": {"user": {"login": login}}, "parents": {"totalCount": parents}}
+
+        def graphql(query):
+            self.assertIn('history(first:20, path:"tools/bazel.mk")', query)
+            self.assertIn('defaultBranchRef', query)
+            commits = [commit("casey", "b" * 40, 2), commit("former", "c" * 40), commit("casey", oid),
+                       commit("casey", "d" * 40)]
+            return {"a0": {"nodes": []}, "r0": {"nodes": []},
+                    "repository": {"defaultBranchRef": {"target": {"p0": {"nodes": commits}}}}}
+
+        previous = {"checkedAt": self.now.isoformat(), "logins": ["casey"], "observations": [], "authored": []}
+        found = recent_reviewer_work(graphql, {"casey"}, previous, self.now, paths={path})
+        self.assertEqual(found["authored"], [{"login": "casey", "commit": oid, "url": url, "paths": [path]}])
+        self.assertIs(recent_reviewer_work(self.fail, {"casey"}, found, self.now, paths={path}), found)
+        self.pr["files"] = [path]
+        self.work["feedback"]["items"][-1].update(kind="review", path=None, body="", state="APPROVED")
+        self.assertEqual(self.picks(), [])
+        history = reviewer_history([self.work], "author", maintainers={"casey"}, authored=found["authored"])
+        candidate, = get_reviewer_candidates(self.pr, history, set(), set(), self.now)
+        self.assertEqual((candidate["login"], candidate["scope"], candidate["evidence"]), ("casey", path, url))
 
     def test_automated_review_on_human_account(self):
         self.work["feedback"]["items"][-1]["body"] = "[🤖🐸🤖] Review agent has no findings."

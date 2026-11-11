@@ -19,7 +19,7 @@ from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import load_registry, registry_is_published
-from reviewer_selection import recent_reviewer_work, reviewer_governance
+from reviewer_selection import needs_reviewer_paths, recent_reviewer_work, reviewer_governance
 from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
@@ -1293,7 +1293,8 @@ def main() -> None:
     activity = previous.get("reviewerActivity", {})
     if requests < REQUEST_LIMIT:
         try:
-            activity = recent_reviewer_work(graphql, active_reviewers, activity, datetime.now(timezone.utc))
+            paths = needs_reviewer_paths(prs, previous.get("reviewOutreach", {}))
+            activity = recent_reviewer_work(graphql, active_reviewers, activity, datetime.now(timezone.utc), paths=paths)
         except GitHubTransportError as error:
             activity = {**activity, "error": str(error)}
             print(json.dumps({"reviewerActivityDeferred": str(error)}), flush=True)
