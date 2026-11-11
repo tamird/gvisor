@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T13:19:32+00:00",
+    "updatedAt": "2026-11-11T13:35:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21496,15 +21496,15 @@
       "title": "Report per-interface multicast support",
       "url": "https://github.com/google/gvisor/pull/16059",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-09T18:07:34+00:00",
-      "summary": "The import exposes a separate IPv6 socket-option bug: Java reads the multicast hop limit on eth0 and receives ENOPROTOOPT. The tested socket-option fix makes this Java case pass. The interface-flag change itself remains approved.\n\nThe approved amendment is published at b584529cb. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific history:\n\nCurrent public #16059 remains at 857926029. The reviewed fork amendment at b584529cb is qualified and ready for contributor review. No upstream source update has been made.\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific record:\n\nThe October 25 source reconciliation is delivered at 857926029bac and the 12:53 provider snapshot reports it mergeable. Preserves the multicast capability behavior with the landed interface id and NIC Kind fields; the two overlapping sites retain both changes. No runtime replay or fresh exact-head approval is claimed.\n\nHistorical source-specific record:\n\nMulticast correction rebased, preserving landed TUN MTU bounds and both bounds and multicast during namespace moves. Exact head 36aadebb1e is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 71a5b3cbd3d2 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at ef937e84f8. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at ef937e84f875e956938dc7d04f9aabadd1314854 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe approved multicast proposal is delivered as PR #16059 at b06ac692f7. Authoritative readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from the source-bound qualification. Its current Gazelle log requests only removal of the unused production //pkg/zip dependency from tools/nogo/check/BUILD, already corrected by pending #16031.\n\nUser approved the exact proposal, and root delivered public PR16059 at b06ac692f7. Authoritative PR-number readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from source-bound qualification. No repeated question or merge is authorized.\n\nRoot requested contributor review once on October20 after independent qualification acceptance. Independent source review and owning unit/analyzer, ABI and focused Java validation passed at 00c8. The unchanged-production negative case reproduces the missing flag. Imported flags and Linux defaults are preserved; no writable-flag or checkpoint roundtrip claim. No public PR has been opened.",
+      "status": "merged",
+      "updatedAt": "2026-11-11T13:31:37+00:00",
+      "summary": "The interface flags landed through Copybara #17217 in 272ad5c72. The separate IPv6 multicast socket options are under review in #16875.\n\nThe approved amendment is published at b584529cb. The review threads are answered and resolved; no contributor decision remains. \n\nDelivered amendment:\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific history:\n\nCurrent public #16059 remains at 857926029. The reviewed fork amendment at b584529cb is qualified and ready for contributor review. No upstream source update has been made.\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific record:\n\nThe October 25 source reconciliation is delivered at 857926029bac and the 12:53 provider snapshot reports it mergeable. Preserves the multicast capability behavior with the landed interface id and NIC Kind fields; the two overlapping sites retain both changes. No runtime replay or fresh exact-head approval is claimed.\n\nHistorical source-specific record:\n\nMulticast correction rebased, preserving landed TUN MTU bounds and both bounds and multicast during namespace moves. Exact head 36aadebb1e is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 71a5b3cbd3d2 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at ef937e84f8. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at ef937e84f875e956938dc7d04f9aabadd1314854 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe approved multicast proposal is delivered as PR #16059 at b06ac692f7. Authoritative readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from the source-bound qualification. Its current Gazelle log requests only removal of the unused production //pkg/zip dependency from tools/nogo/check/BUILD, already corrected by pending #16031.\n\nUser approved the exact proposal, and root delivered public PR16059 at b06ac692f7. Authoritative PR-number readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from source-bound qualification. No repeated question or merge is authorized.\n\nRoot requested contributor review once on October20 after independent qualification acceptance. Independent source review and owning unit/analyzer, ABI and focused Java validation passed at 00c8. The unchanged-production negative case reproduces the missing flag. Imported flags and Linux defaults are preserved; no writable-flag or checkpoint roundtrip claim. No public PR has been opened.",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Completed",
         "sourceHead": "b584529cbf05e11ed7ba8f59b2706c554bf78250",
-        "observedAt": "2026-11-09T18:07:34+00:00",
-        "disposition": "The separate IPv6 multicast socket-option fix is open as #16875.",
-        "nextAction": "Follow #16875 through upstream review. After it lands, check the Java multicast test on the next import of #16059.",
+        "observedAt": "2026-11-11T13:31:37+00:00",
+        "disposition": "Merged with Copybara #17217 in 272ad5c72 on November 9.",
+        "nextAction": "Follow the separately tracked IPv6 multicast options in #16875.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16059",
           "https://github.com/google/gvisor/pull/16059#pullrequestreview-5658612539",
@@ -21512,7 +21512,9 @@
           "https://buildkite.com/gvisor/pipeline/builds/52852",
           "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f",
           "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149",
-          "https://github.com/google/gvisor/pull/16875"
+          "https://github.com/google/gvisor/pull/16875",
+          "https://github.com/google/gvisor/pull/17217",
+          "https://github.com/google/gvisor/commit/272ad5c72"
         ]
       },
       "evidence": [
@@ -66741,8 +66743,8 @@
       "title": "Re-enable three Java multicast tests",
       "url": "https://github.com/tamird/gvisor/commit/564f11ca4",
       "group": "tests",
-      "status": "Contributor approved; waiting for prerequisites",
-      "summary": "All five Java 21 cases failed on the interface-flags import. With the IPv6 multicast options applied, DatagramSocketMulticasting, AdaptorMulticasting and Loopback passed in both JVM modes. MulticastSendReceiveTests and Promiscuous still failed. The three exclusions can be removed once both parent changes reach master.",
+      "status": "Contributor approved; waiting for #16875",
+      "summary": "All five Java 21 cases failed on the interface-flags import. With the IPv6 multicast options applied, DatagramSocketMulticasting, AdaptorMulticasting and Loopback passed in both JVM modes. MulticastSendReceiveTests and Promiscuous still failed. The interface flags landed in 272ad5c72. The three exclusion removals still depend on #16875.",
       "evidence": [
         {
           "label": "All ten original jtreg result files on native AMD64",
@@ -66761,7 +66763,7 @@
           "url": "https://github.com/tamird/gvisor/commit/564f11ca4"
         }
       ],
-      "updatedAt": "2026-11-08T17:16:03+00:00",
+      "updatedAt": "2026-11-11T13:31:37+00:00",
       "refinement": {
         "before": {
           "head": "bbf2fa40eb7d8cce39cca5abefde7883c262c490"
@@ -66787,14 +66789,15 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "564f11ca4362b1d65da1198863839a5a368fbdfd",
-        "observedAt": "2026-11-08T17:16:03+00:00",
+        "observedAt": "2026-11-11T13:31:37+00:00",
         "disposition": "Tamir approved the three Java 21 exclusion removals at 564f11ca4.",
-        "nextAction": "Open the approved PR after the interface-flags change in #16059 (import #17217) and the IPv6 multicast options in #16875 land.",
+        "nextAction": "Open approved commit 564f11ca4 after the IPv6 multicast socket options in #16875 land.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16059",
           "https://github.com/google/gvisor/pull/17217",
           "https://github.com/google/gvisor/pull/16875",
-          "https://github.com/tamird/gvisor/actions/runs/42454656540/artifacts/13607680713"
+          "https://github.com/tamird/gvisor/actions/runs/42454656540/artifacts/13607680713",
+          "https://github.com/google/gvisor/commit/272ad5c72"
         ]
       }
     },
@@ -77342,8 +77345,11 @@
       "from": "pr:16059",
       "to": "branch:java21-multicast-exclusions",
       "type": "depends_on",
-      "reason": "Its Copybara import adds the three Java exclusions.",
-      "evidence": "https://github.com/google/gvisor/pull/17217/files"
+      "reason": "Copybara #17217 landed the interface flags and three original Java exclusions in 272ad5c72.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/17217/files",
+        "https://github.com/google/gvisor/commit/272ad5c72"
+      ]
     },
     {
       "from": "pr:16875",
@@ -77526,7 +77532,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-11T12:02:21+00:00",
+      "updatedAt": "2026-11-11T13:35:55+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -77535,6 +77541,28 @@
             {
               "label": "Eight alternating pairs with receiver, packet and queue records",
               "url": "https://github.com/tamird/gvisor/actions/runs/42708554879/artifacts/13716646876"
+            }
+          ]
+        },
+        {
+          "text": "Across four CUBIC handoffs, the sender retransmitted 504 payloads above the cumulative ACK that an earlier SACK had covered in full. In every case a retransmission timeout fell between the last covering SACK and the repeat. With RACK off and on, the respective counts were 172 and 213 in primary1, and 119 and zero in primary2. The run with the most timeouts (111) had zero such repeats. For the first repeat in each of the three affected runs, the receiver capture independently contained the covering SACK. Joining adjacent SACK ranges found no partly covered retransmissions. No repeated bytes overlapped SACK information received since the most recent timeout. Each of the 111 timeouts had a different oldest outstanding byte. At 110 of them, the receiver tap had emitted no cumulative ACK past that byte. The captures leave open whether a receiver discarded any data.",
+          "evidence": [
+            {
+              "label": "Four original CUBIC packet captures and recovery decisions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41396975788/artifacts/13120670595"
+            },
+            {
+              "label": "Sender resets its SACK scoreboard on retransmission timeout",
+              "url": "https://github.com/tamird/gvisor/blob/aa767e4c4/pkg/tcpip/transport/tcp/snd.go#L657-L671"
+            }
+          ]
+        },
+        {
+          "text": "In the run with 111 timeouts, the sender tap recorded two earlier transmissions covering the oldest unacknowledged byte in 65 cases and three in 45. None reached the far tap before the timeout in those 110 cases. The first copy to arrive matched the sequence range, length and TCP timestamp of a send 0.083–0.249 ms after the timeout. In the remaining case an advancing ACK passed the sender tap 60 µs before the timeout.",
+          "evidence": [
+            {
+              "label": "Original sender and far-side packet captures, sender decisions and queue counters",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41396975788/artifacts/13120670595"
             }
           ]
         },
@@ -79607,7 +79635,7 @@
           ]
         }
       ],
-      "nextStep": "Use the recovery-event trace to align the first repeated SACK-covered range with a sender timeout or scoreboard reset.",
+      "nextStep": "Compare capture-drop counters, emulated-link drops and queue occupancy around the missing earlier transmissions to locate where they disappeared.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
