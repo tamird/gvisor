@@ -64,8 +64,10 @@ function button(text, action, className) {
   node.addEventListener("click", action);
   return node;
 }
+const dateFormat = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 function date(value) {
-  return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  const when = new Date(value);
+  return Number.isNaN(when.getTime()) ? when.toString() : dateFormat.format(when);
 }
 function prRepo(pr, data = registry) { return pr.repo || data.meta.repo; }
 function prIdentity(pr, data = registry) {
@@ -1081,15 +1083,28 @@ function activeDependencyEdges() {
   const active = new Set(model.nodes.filter((node) => !historical(node) && !providerClosed(node)).map((node) => node.id));
   return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
 }
+// Reach depends on the snapshot's active blockers, even when a search shows
+// historical neighbors. Reuse it across the graph layout and table sorts.
+let reachIndex;
 function impact(id) {
-  const edges = activeDependencyEdges(), nodes = nodeMap(), seen = new Set([id]), queue = [id];
-  const direct = new Set(edges.filter((edge) => edge.from === id && nodes.get(edge.to)?.type === "pr").map((edge) => edge.to));
-  for (const current of queue) {
-    for (const edge of edges) if (edge.from === current && !seen.has(edge.to)) { seen.add(edge.to); queue.push(edge.to); }
+  if (reachIndex?.model !== model) {
+    const dependents = new Map();
+    for (const edge of activeDependencyEdges()) {
+      if (!dependents.has(edge.from)) dependents.set(edge.from, new Set());
+      dependents.get(edge.from).add(edge.to);
+    }
+    reachIndex = { model, dependents, nodes: nodeMap(), results: new Map() };
   }
-  seen.delete(id);
-  return { direct: direct.size, prs: [...seen].filter((other) => nodes.get(other)?.type === "pr").length,
-    branches: [...seen].filter((other) => nodes.get(other)?.type === "branch").length };
+  const { dependents, nodes, results } = reachIndex;
+  if (!results.has(id)) {
+    const direct = dependents.get(id) || [], seen = new Set([id]);
+    for (const current of seen) for (const other of dependents.get(current) || []) seen.add(other);
+    seen.delete(id);
+    const reached = [...seen].map(other => nodes.get(other)?.type);
+    results.set(id, { direct: [...direct].filter(other => nodes.get(other)?.type === "pr").length,
+      prs: reached.filter(type => type === "pr").length, branches: reached.filter(type => type === "branch").length });
+  }
+  return results.get(id);
 }
 function displayDependencyEdges() {
   const selectedHistory = [selected, focus].some(id => { const node = nodeMap().get(id); return node && historical(node); });
@@ -1560,10 +1575,10 @@ function drawInvestigations() {
 }
 function graphNodes() {
   const selectedNode = nodeMap().get(selected), historySelection = !$("show-resolved").checked && selectedNode && historical(selectedNode) ? selected : null;
-  const target = focus || historySelection, chains = components(), filtering = filtered();
+  const target = focus || historySelection, filtering = filtered();
   if (!filtering && !target) return tableNodes();
   const ids = new Set((filtering ? tableNodes() : model.nodes.filter((node) => node.id === target)).map((node) => node.id));
-  for (const chain of chains) if ([...chain.ids].some((id) => ids.has(id))) for (const id of chain.ids) ids.add(id);
+  for (const chain of components()) if ([...chain.ids].some((id) => ids.has(id))) for (const id of chain.ids) ids.add(id);
   return model.nodes.filter((node) => ids.has(node.id));
 }
 function applyCamera() { $("graph-content").setAttribute("transform", `translate(${camera.x},${camera.y}) scale(${camera.scale})`); saveView(); }
@@ -2013,14 +2028,34 @@ function focusWork(id) {
 function drawChainSelector() {
   const select = $("chain-filter"); select.replaceChildren();
   const all = element("option", "", "All work"); all.value = ""; select.append(all);
-  for (const chain of components()) { const option = element("option", "", `${chain.title} (${chain.ids.size})`); option.value = chain.id; select.append(option); }
-  const chain = components().find((chain) => chain.ids.has(focus));
+  const chains = components();
+  for (const chain of chains) { const option = element("option", "", `${chain.title} (${chain.ids.size})`); option.value = chain.id; select.append(option); }
+  const chain = chains.find((chain) => chain.ids.has(focus));
   const isolated = !chain && nodeMap().get(focus);
   if (isolated) { const option = element("option", "", `${label(isolated)} · ${isolated.title}`); option.value = isolated.id; select.append(option); }
   select.value = chain?.id || isolated?.id || "";
   select.disabled = Boolean(filtered());
 }
+let searchFrame = null;
+function searchInput() {
+  invalidateHandoffCopy();
+  if (view === "investigations" || selected?.startsWith("attention-")) selected = null;
+  syncViewURL(searchEditing ? "replace" : "push");
+  searchEditing = true;
+  // Paint the input first. Multiple keystrokes before the redraw share the
+  // latest query; any immediate navigation or filter change renders it itself.
+  if (searchFrame === null) searchFrame = requestAnimationFrame(() => {
+    searchFrame = requestAnimationFrame(() => {
+      searchFrame = null;
+      render(view !== "investigations");
+    });
+  });
+}
 function render(reposition = false, navigation = "replace") {
+  if (searchFrame !== null) {
+    cancelAnimationFrame(searchFrame);
+    searchFrame = null;
+  }
   invalidateHandoffCopy();
   const dag = view === "dag", investigations = view === "investigations";
   $("dag-pane").hidden = !dag; $("table-pane").hidden = view !== "table"; $("investigations-pane").hidden = !investigations;
@@ -2036,7 +2071,8 @@ function render(reposition = false, navigation = "replace") {
   const scope = investigations ? "Research records" : queue ? ATTENTION_OWNERS[queue] : reasonFilters.size ? "Matching any selected attention reason" : dag && filtered() ? "Matches with dependency context" : "Active work";
   $("filter-note").textContent = `${scope} · ${historyNote}`;
   $("empty").hidden = nodes.length !== 0; $("empty-title").textContent = investigations ? "No matching investigations" : "No matching work";
-  drawDetails(); drawStateFilters();
+  drawDetails();
+  if (!investigations) drawStateFilters();
   if (dag) { drawGraph(nodes); drawChainSelector(); } else if (view === "table") drawTable(nodes);
   $("inventory").textContent = `${model.nodes.filter(node => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items · ${investigationMap().size} investigations`;
   if (reposition && dag) resetCamera();
@@ -2759,9 +2795,9 @@ function initialize() {
   const countsNote = element("span", "notice", "Queue counts incomplete until a matching GitHub snapshot is available.");
   countsNote.id = "queue-counts-note"; countsNote.setAttribute("role", "status");
   $("state-filters").append(countsNote);
-  $("search").addEventListener("input", () => { if (selected?.startsWith("attention-")) selected = null; render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
+  $("search").addEventListener("input", searchInput);
   $("search").addEventListener("blur", () => { searchEditing = false; });
-  $("investigation-search").addEventListener("input", () => { selected = null; render(false, searchEditing ? "replace" : "push"); searchEditing = true; });
+  $("investigation-search").addEventListener("input", searchInput);
   $("investigation-search").addEventListener("blur", () => { searchEditing = false; });
   $("investigation-filter").addEventListener("change", () => { if ($("investigation-filter").value === "concluded") $("show-resolved").checked = true; selected = null; render(false, "push"); });
   $("group-filter").addEventListener("change", () => { if (selected?.startsWith("attention-")) selected = null; render(true, "push"); });

@@ -2819,6 +2819,46 @@ function historyView(nodes, investigations = []) {
   return { context, controls };
 }
 
+test('typing renders the latest query after the input paints, with one history entry per edit', () => {
+  const { context, controls } = historyView([]);
+  context.document.getElementById('search');
+  const frames = [], navigations = [], redraws = [];
+  context.requestAnimationFrame = callback => frames.push(callback);
+  context.syncViewURL = mode => navigations.push(mode);
+  context.render = reposition => redraws.push([controls.get('search').value, reposition]);
+  vm.runInContext("selected = 'pr:42'", context);
+  function input(text) {
+    controls.get('search').value = text;
+    vm.runInContext('searchInput()', context);
+  }
+  input('g');
+  input('go');
+  assert.equal(frames.length, 1);
+  assert.equal(vm.runInContext('handoffCopyVersion', context), 2);
+  frames.shift()();
+  input('go 1');
+  assert.deepEqual(redraws, []);
+  frames.shift()();
+  assert.deepEqual(redraws, [['go 1', true]]);
+  assert.equal(vm.runInContext('selected', context), 'pr:42');
+  assert.deepEqual(navigations, ['push', 'replace', 'replace']);
+  vm.runInContext("selected = 'attention-agent'; searchEditing = false", context);
+  input('');
+  assert.equal(vm.runInContext('selected', context), null);
+  assert.equal(navigations.at(-1), 'push');
+});
+
+test('downstream reach counts unique active PRs and is rebuilt for a replacement snapshot', () => {
+  const nodes = [1, 2, 3, 4].map(number => ({ id: 'pr:' + number, number, type: 'pr', status: 'open' }));
+  const { context } = historyView(nodes);
+  context.edges = [[1, 2], [1, 3], [2, 4], [3, 4]].map(([a, b]) => ({ from: 'pr:' + a, to: 'pr:' + b, type: 'depends_on' }));
+  vm.runInContext('model = {...model, edges}', context);
+  const reach = () => JSON.parse(vm.runInContext("JSON.stringify(impact('pr:1'))", context));
+  assert.deepEqual(reach(), { direct: 2, prs: 3, branches: 0 });
+  vm.runInContext("model = {...model, nodes: model.nodes.map(node => node.number === 2 ? {...node, status: 'merged'} : node)}", context);
+  assert.deepEqual(reach(), { direct: 1, prs: 2, branches: 0 });
+});
+
 test('graph selection outlines only direct prerequisites and dependents without changing arrows', () => {
   const nodes = ['a', 'b', 'c', 'd', 'e'].map(id => ({ id, type: 'branch', title: id, status: 'Agent work', url: 'https://example.test/' + id }));
   const { context, controls } = historyView(nodes);
