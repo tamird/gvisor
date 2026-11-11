@@ -25,15 +25,18 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
 
 func main() {
+	start := time.Now()
 	for _, target := range []int{63, 127, 255} {
 		if err := unix.Dup3(0, target, unix.O_CLOEXEC); err != nil {
 			fmt.Fprintf(os.Stderr, "fdtable_expander: dup3(0, %d) failed: %v\n", target, err)
 			os.Exit(1)
 		}
 	}
+	fmt.Println(time.Since(start))
 }

@@ -53,16 +53,19 @@ func highestOpenFD(t *testing.T) int {
 	return highest
 }
 
-// timedRun runs cmd and returns its wall time.
-func timedRun(t *testing.T, cmd *exec.Cmd) time.Duration {
+// expansionTime returns the time fdtable_expander spent in its dup3 loop.
+func expansionTime(t *testing.T, cmd *exec.Cmd) time.Duration {
 	t.Helper()
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	start := time.Now()
-	if err := cmd.Run(); err != nil {
+	out, err := cmd.Output()
+	if err != nil {
 		t.Fatalf("%v failed: %v", cmd.Args, err)
 	}
-	return time.Since(start)
+	d, err := time.ParseDuration(string(bytes.TrimSpace(out)))
+	if err != nil {
+		t.Fatalf("%v reported invalid expansion time %q: %v", cmd.Args, out, err)
+	}
+	return d
 }
 
 func p50(durations []time.Duration) time.Duration {
@@ -106,17 +109,15 @@ func TestPrewarmerSpeedsUpFDTableExpansion(t *testing.T) {
 		return cmd
 	}
 
-	// One untimed run with both binaries involved just to warm the page cache:
-	timedRun(t, prewarmedCommand())
+	// Warm the page cache for both binaries before collecting samples.
+	expansionTime(t, prewarmedCommand())
 
 	const runs = 32 // Number of runs to do.
 
 	var alone, prewarmed []time.Duration
-	for i := 0; i < runs; i++ {
-		alone = append(alone, timedRun(t, exec.Command(expander)))
-	}
-	for i := 0; i < runs; i++ {
-		prewarmed = append(prewarmed, timedRun(t, prewarmedCommand()))
+	for range runs {
+		alone = append(alone, expansionTime(t, exec.Command(expander)))
+		prewarmed = append(prewarmed, expansionTime(t, prewarmedCommand()))
 	}
 
 	p50Alone, p50Prewarmed := p50(alone), p50(prewarmed)
