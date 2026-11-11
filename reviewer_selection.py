@@ -63,8 +63,8 @@ def _login(actor: dict | None) -> str:
 @dataclass
 class Experience:
     last_review: datetime | None = None
-    # (path, PR number) -> URL of the review or authored change.
-    sources: dict[tuple[str, int], str] = field(default_factory=dict)
+    # (path, PR number or commit hash) -> URL of the review or authored change.
+    sources: dict[tuple[str, int | str], str] = field(default_factory=dict)
     outstanding: int = 0
     asks: Counter[str] = field(default_factory=Counter)
     answers: Counter[str] = field(default_factory=Counter)
@@ -78,16 +78,39 @@ class History:
     importers: dict[str, str] = field(default_factory=dict)
 
 
-def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime | str) -> dict:
-    """Sample reviews of other gVisor authors once per day, using one API request."""
+def needs_reviewer_paths(prs: list[dict], outreach: dict) -> set[str]:
+    paths = set()
+    for pr in prs:
+        row = outreach.get(str(pr["number"]), {})
+        if (pr.get("repo") == REPO and pr.get("status") == "open" and row.get("status") == "needs-reviewer"
+                and row.get("head") == pr.get("head")):
+            paths.update(_candidate_paths(pr))
+    return paths
+
+
+def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime | str, *, paths=()) -> dict:
+    """Sample recent reviewers and commits to otherwise unassigned paths in one API request."""
     now = _time(now)
     logins = sorted(active_logins)
     checked = previous.get("checkedAt")
-    if checked and "authored" in previous and _time(checked).date() == now.date() and previous.get("logins") == logins:
+    current = (checked and "authored" in previous and _time(checked).date() == now.date()
+               and previous.get("logins") == logins)
+    checked_paths = {path: at for path, at in previous.get("checkedPaths", {}).items()
+                     if now - _time(at) <= ACTIVE_WINDOW}
+    # Keep the optional file histories within one small GraphQL query. Rotate
+    # through uncovered paths before refreshing any previously sampled path.
+    due_paths = sorted((p for p in paths if p not in checked_paths or _time(checked_paths[p]).date() < now.date()),
+                       key=lambda p: (checked_paths.get(p, ""), p))[:12]
+    if current and not due_paths:
         return previous
+    # Combining all roster searches with a commit-history walk can time out
+    # at GitHub. Refresh the daily sample first and reuse it for file lookups.
+    if not current:
+        due_paths = []
+    sample_logins = [] if current else logins
     cutoff = now - ACTIVE_WINDOW
     searches = []
-    for i, login in enumerate(logins):
+    for i, login in enumerate(sample_logins):
         query = f"repo:{REPO} is:pr reviewed-by:{login} updated:>={cutoff.date()} sort:updated-desc"
         searches.append(f'r{i}:search(type:ISSUE, first:6, query:{json.dumps(query)}) '
                         '{nodes{... on PullRequest {number url author{login} files(first:30){nodes{path}} '
@@ -96,11 +119,29 @@ def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime |
         by_author = f"repo:{REPO} is:pr author:{login} is:merged sort:updated-desc"
         searches.append(f'a{i}:search(type:ISSUE, first:4, query:{json.dumps(by_author)}) '
                         '{nodes{... on PullRequest {number url files(first:40){nodes{path}}}}}')
-    observations = []
-    authored = []
+    if due_paths:
+        fields = [f'p{i}:history(first:20, path:{json.dumps(path)}) '
+                  '{nodes{oid url author{user{login}} parents(first:1){totalCount}}}'
+                  for i, path in enumerate(due_paths)]
+        searches.append('repository(owner:"google",name:"gvisor"){defaultBranchRef{target{... on Commit{'
+                        + " ".join(fields) + '}}}}')
+    observations = previous.get("observations", []) if current else []
+    authored = [item for item in previous.get("authored", []) if
+                (current and not item.get("commit")) or
+                (item.get("commit") and item["paths"][0] in checked_paths and item["paths"][0] not in due_paths)]
     if searches:
         data = graphql("query {" + " ".join(searches) + "}")
-        for i, login in enumerate(logins):
+        for i, path in enumerate(due_paths):
+            # Copybara opens the PR, but Git records the person who wrote the
+            # change. Merge commits do not establish authorship of a file.
+            seen = set()
+            for commit in data["repository"]["defaultBranchRef"]["target"][f"p{i}"]["nodes"]:
+                login = _login((commit.get("author") or {}).get("user"))
+                if login in active_logins and login not in seen and commit["parents"]["totalCount"] == 1:
+                    authored.append({"login": login, "commit": commit["oid"], "url": commit["url"], "paths": [path]})
+                    seen.add(login)
+            checked_paths[path] = now.isoformat()
+        for i, login in enumerate(sample_logins):
             for pr in data[f"a{i}"]["nodes"]:
                 authored.append({"login": login, "number": pr["number"], "url": pr["url"],
                                  "paths": [f["path"] for f in pr["files"]["nodes"]]})
@@ -119,7 +160,8 @@ def recent_reviewer_work(graphql, active_logins, previous: dict, now: datetime |
                             paths[comment["path"]] = comment["url"]
                     observations.append({"login": login, "number": pr["number"], "at": at,
                                          "url": review["url"], "paths": paths})
-    return {"checkedAt": now.isoformat(), "logins": logins, "observations": observations, "authored": authored}
+    return {"checkedAt": checked if current else now.isoformat(), "logins": logins,
+            "observations": observations, "authored": authored, "checkedPaths": checked_paths}
 
 
 def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | None = None,
@@ -196,8 +238,10 @@ def reviewer_history(prs: list[dict], owner: str, *, maintainers: set[str] | Non
                 person.sources[path, observed["number"]] = url
     for contribution in authored:
         if contribution["login"] in people:
+            source = contribution.get("commit") or contribution["number"]
+            url = f"https://github.com/{REPO}/commit/{source[:9]}" if isinstance(source, str) else contribution["url"]
             for path in contribution["paths"]:
-                people[contribution["login"]].sources[path, contribution["number"]] = contribution["url"]
+                people[contribution["login"]].sources[path, source] = url
     return History(people, specialties or {}, owner, importers)
 
 
@@ -205,23 +249,28 @@ def _home(path: str) -> str:
     return path.rpartition("/")[0]
 
 
-def _expertise(pr: dict, login: str, person: Experience, specialties: dict) -> tuple[int, int, str, str, str]:
+def _candidate_paths(pr: dict) -> set[str]:
     paths = set(pr.get("files", []))
     # Root module and checksum edits accompany otherwise unrelated changes.
     paths = {p for p in paths if "/" in p} or paths
     implementation = {p for p in paths if not p.startswith(("test/", "g3doc/"))
                       and not p.endswith(("_test.go", ".md", "/BUILD", "/BUILD.bazel"))}
-    paths = implementation or paths
+    return implementation or paths
+
+
+def _expertise(pr: dict, login: str, person: Experience, specialties: dict) -> tuple[int, int, str, str, str]:
+    paths = _candidate_paths(pr)
     dirs = {_home(p) for p in paths if "/" in _home(p)}
     best = (0, 0, "", "", "")
-    for (path, number), url in person.sources.items():
-        if number == pr["number"] and path in paths:
+    for (path, source), url in person.sources.items():
+        if source == pr["number"] and path in paths:
             return (5, 0, url, "You reviewed this part of the PR earlier.", path)
+        reference = f"#{source}" if isinstance(source, int) else f"commit {source[:9]}"
         if path in paths:
-            best = max(best, (4, 0, url, f"You worked on this file in #{number}.", path))
-        elif _home(path) in dirs:
+            best = max(best, (4, 0, url, f"You worked on this file in {reference}.", path))
+        elif isinstance(source, int) and _home(path) in dirs:
             directory = _home(path) + "/"
-            best = max(best, (3, 0, url, f"You worked in this directory in #{number}.", directory))
+            best = max(best, (3, 0, url, f"You worked in this directory in {reference}.", directory))
     for prefix, owners in specialties.items():
         if login not in owners:
             continue
