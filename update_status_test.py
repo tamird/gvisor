@@ -117,6 +117,35 @@ class TerminalImportHandoffTest(unittest.TestCase):
         item["matchesSourceHead"] = False
         return retained(raw_pr(number, "CLOSED", head=int(final, 16)), [item])
 
+    def test_older_export_merges_while_source_is_still_open(self) -> None:
+        source = self.source(16843, "a6e06bb65252c49143cae551eb556a6ff33ab73a", 17179,
+                             "4ba049ba5c249f885a0a249c921b60931897ea5d")
+        source.update(status="open", closedAt=None, headIntroducedAt=LATER)
+        export, = source["imports"]
+        # The old collector had already observed both heads and the merge.
+        row = updater.terminal_import_handoff(source, source, {})
+        self.assertEqual(row["imports"][0]["number"], 17179)
+        self.assertIn("a6e06bb65", row["nextAction"])
+        source["terminalImportHandoff"] = row
+        self.assertEqual(updater.worker_handoff({"prs": [source]}, [])["nextWork"], row)
+        followup = {"owner": "Agent", "sourceHead": source["head"], "observedAt": OLD,
+                    "nextAction": "Qualify the missing archive install.", "evidence": [export["url"]]}
+        self.assertEqual(updater.terminal_import_handoff(source, source, {"followup": followup}), row)
+        followup["observedAt"] = LATER
+        self.assertIsNone(updater.terminal_import_handoff(source, source, {"followup": followup}))
+
+        for state in ("open", "draft", "merged", "closed"):
+            replacement = {**export, "number": 2, "sourceHead": source["head"], "status": state}
+            current = {**source, "status": "draft", "imports": [export, replacement]}
+            expected = row if state == "closed" else None
+            self.assertEqual(updater.terminal_import_handoff(current, source, {}), expected, state)
+            self.assertEqual(updater.worker_handoff({"prs": [current]}, [])["nextWork"], expected, state)
+        self.assertIsNone(updater.terminal_import_handoff({**source, "imports": [{**export, "status": "closed"}]}, source, {}))
+        moved = {**source, "branchHead": "1" * 40, "revisionChanged": True}
+        self.assertIsNone(updater.terminal_import_handoff(moved, source, {}))
+        # Reusing the branch after closing the PR cannot change its recorded final head.
+        self.assertEqual(updater.terminal_import_handoff({**moved, "status": "closed"}, source, {}), row)
+
     def test_review_then_track_the_omitted_inotify_deletion(self) -> None:
         pr = self.source(16812, "637158efcbee8244f5df020b57bb0296c0c15fe6", 16882,
                          "b79fa85f739884e7544fb47a248640073f22d8c2")

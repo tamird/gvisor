@@ -220,8 +220,10 @@ def changed_references(current: dict, previous: dict) -> list[dict]:
 
 
 def older_merged_imports(pr: dict) -> list[dict]:
-    """Return verified footer observations for a closed source with no current delivery."""
-    if pr.get("status") != "closed" or not pr.get("importsComplete"):
+    """Find merged exports when the current source has no active or merged export."""
+    if pr.get("status") not in {"open", "draft", "closed"} or not pr.get("importsComplete"):
+        return []
+    if pr["status"] != "closed" and (pr.get("revisionChanged") or pr.get("branchHead") not in {None, pr.get("head")}):
         return []
     imports = pr.get("imports", [])
     if any(item["sourceHead"] == pr["head"] and item["status"] != "closed" for item in imports):
@@ -239,11 +241,15 @@ def terminal_import_handoff(pr: dict, previous: dict, node: dict) -> dict | None
     if pr.get("authorLogin", pr.get("headOwner") if node.get("url") == canonical else None) != OWNER:
         return None
     imports = older_merged_imports(pr)
-    if not imports or (not previous.get("terminalImportHandoff") and previous.get("head") == pr["head"]
-                       and older_merged_imports(previous) == imports):
+    # Active sources can still ship a correction, including one missed by an
+    # older collector. Only grandfather unchanged, previously closed sources.
+    closed = pr.get("status") == "closed"
+    if not imports or (closed and previous.get("status") == "closed" and not previous.get("terminalImportHandoff")
+                       and previous.get("head") == pr["head"] and older_merged_imports(previous) == imports):
         return None
+    delivered_or_pending = {"merged"} if closed else {"merged", "open", "draft"}
     if (verified_landing(pr, node.get("landedPatch"))
-            or any(item["status"] == "merged" for item in import_lineage(pr, node.get("approvedPatch")))):
+            or any(item["status"] in delivered_or_pending for item in import_lineage(pr, node.get("approvedPatch")))):
         return None
     followup = node.get("followup", {})
     if (followup.get("sourceHead") == pr["head"] and followup.get("owner") and followup.get("nextAction")
@@ -251,14 +257,16 @@ def terminal_import_handoff(pr: dict, previous: dict, node: dict) -> dict | None
             and all(item["url"] in followup.get("evidence", []) for item in imports)):
         try:
             reviewed = datetime.fromisoformat(at.replace("Z", "+00:00"))
+            source_at = pr.get("closedAt") if closed else pr.get("headIntroducedAt") or pr.get("headCommittedAt")
             if all(stamp and reviewed >= datetime.fromisoformat(stamp.replace("Z", "+00:00"))
-                   for stamp in [pr.get("closedAt"), *(item["mergedAt"] for item in imports)]):
+                   for stamp in [source_at, *(item["mergedAt"] for item in imports)]):
                 return None
         except (TypeError, ValueError):
             pass  # An undated disposition cannot acknowledge this observation.
+    exports = ", ".join(f"#{item['number']}" for item in imports)
     return {"repo": REPO, "number": pr["number"], "url": canonical, "sourceHead": pr["head"],
             "imports": imports, "action": "inspect-terminal-import",
-            "nextAction": "Compare the final source with the merged export and check existing follow-up. Different SHAs do not establish missing changes.",
+            "nextAction": f"Compare source {pr['head'][:9]} with the changes merged in {exports} and record any remaining work.",
             "posting": "Agent inspection only."}
 
 
@@ -1566,6 +1574,9 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     unclaimed = [row for row in pending if not row.get("claimed")]
     cleanup = snapshot.get("branchCleanup")
     next_work = unclaimed[0] if unclaimed else next(iter(incoming), None)
+    if next_work is None:
+        next_work = next((row for pr in by_number.values() if (row := pr.get("terminalImportHandoff"))
+                          and row["sourceHead"] == pr["head"] and row["imports"] == older_merged_imports(pr)), None)
     if next_work is None and cleanup and cleanup["due"]:
         next_work = cleanup
     return {"nextWork": next_work, "authorFeedback": pending, "unclaimed": len(unclaimed),

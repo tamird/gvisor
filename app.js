@@ -159,7 +159,7 @@ function approvedPatch(node) {
 }
 function landedPatch(node) {
   const pr = node?.github, proof = node?.landedPatch;
-  return pr?.status === "open" && !pr.revisionChanged && proof?.head === pr.head
+  return ["open", "draft"].includes(pr?.status) && !pr.revisionChanged && proof?.head === pr.head
     && (!pr.branchHead || pr.branchHead === pr.head) && proof.method === "merge-tree-identical"
     && [proof.head, proof.upstreamHead, proof.upstreamTree, proof.replayedTree].every(value => /^[a-f0-9]{40}$/.test(value))
     && proof.upstreamTree === proof.replayedTree && /(?:Z|[+-]\d{2}:\d{2})$/.test(proof.verifiedAt) && Number.isFinite(Date.parse(proof.verifiedAt))
@@ -268,6 +268,7 @@ const ATTENTION_REASONS = [
   { id: "agent-review-outreach", owner: "agent", title: "Find or contact a reviewer" },
   { id: "agent-requested-review", owner: "agent", title: "Incoming PR review requests" },
   { id: "agent-feedback-sweep", owner: "agent", title: "Audit earlier work against contributor guidance" },
+  { id: "agent-import-comparison", owner: "agent", title: "Compare source with merged export" },
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
   { id: "agent-import-conflict", owner: "agent", title: "Investigate Copybara export conflict" },
   { id: "author-ci-remedy", owner: "agent", title: "Merged CI fix needs action" },
@@ -643,6 +644,15 @@ function attentionReasons(node, owner) {
       && typeof node.followup.nextAction === "string" && node.followup.nextAction.trim())
     add("agent-branch-work", `${node.followup.owner}: ${node.followup.nextAction}`);
   const pr = node.github;
+  const inspection = pr?.terminalImportHandoff;
+  if (node.type === "pr" && pr?.headOwner === owner && ["open", "draft"].includes(pr.status)
+      && inspection?.action === "inspect-terminal-import" && inspection.sourceHead === pr.head
+      && inspection.repo === "google/gvisor" && inspection.number === pr.number && inspection.url === pr.url
+      && !pr.revisionChanged && (!pr.branchHead || pr.branchHead === pr.head) && pr.importsComplete
+      && !landedPatch(node) && !importLineage(node).some(item => item.status !== "closed")
+      && inspection.imports?.length && inspection.imports.every(merged => pr.imports.some(item => item.status === "merged"
+        && item.number === merged.number && item.head === merged.head && item.sourceHead === merged.sourceHead)))
+    add("agent-import-comparison", inspection.nextAction);
   if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return reasons;
   if (pr.branchHead && pr.branchHead !== pr.head) {
     add("agent-refresh", `The snapshot observed source branch ${pr.branchHead.slice(0, 9)}, but GitHub's PR reports ${pr.head.slice(0, 9)}. Displayed reviews, checks and mergeability cover the older PR head; the branch's current mergeability is unknown.`);

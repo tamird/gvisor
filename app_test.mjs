@@ -2463,6 +2463,40 @@ test('agreed release wait leaves the maintainer queue; new feedback and upstream
   assert.deepEqual(idsFor(node), ['author-feedback']);
 });
 
+test('an older merged export is agent work while the source still needs comparison', () => {
+  const node = attentionNode(16843), pr = node.github, exp = attentionImport(node);
+  Object.assign(exp, { number: 17179, sourceHead: 'b'.repeat(40), matchesSourceHead: false, status: 'merged' });
+  pr.imports = [exp];
+  pr.terminalImportHandoff = { repo: 'google/gvisor', number: pr.number, url: pr.url, action: 'inspect-terminal-import', sourceHead: pr.head,
+    imports: [{ number: exp.number, head: exp.head, sourceHead: exp.sourceHead }], nextAction: 'Compare source with #17179.' };
+  const reason = () => reasonsFor(node).find(row => row.id === 'agent-import-comparison');
+  for (const state of ['open', 'draft']) {
+    pr.status = state;
+    assert.equal(reason().owner, 'agent');
+    assert.match(reason().detail, /#17179/);
+  }
+  const replacement = { ...attentionImport(node, 17180), status: 'open' };
+  pr.imports.push(replacement);
+  assert.equal(reason(), undefined);
+  replacement.sourceHead = 'd'.repeat(40);
+  replacement.matchesSourceHead = false;
+  assert.equal(reason().owner, 'agent');
+  node.repo = 'google/gvisor';
+  pr.reviewRequests = [];
+  node.approvedPatch = { head: pr.head, approvedHead: replacement.sourceHead, reviewId: 'review', reviewer: 'reviewer',
+    submittedAt: pr.approvedAt, verifiedAt: pr.approvedAt, method: 'stable-patch-id',
+    oldPatchId: 'e'.repeat(40), newPatchId: 'e'.repeat(40) };
+  assert.equal(reason(), undefined);
+  replacement.status = 'closed';
+  assert.equal(reason().owner, 'agent');
+  node.landedPatch = { head: pr.head, upstreamHead: replacement.sourceHead, upstreamTree: exp.head, replayedTree: exp.head,
+    verifiedAt: pr.approvedAt, method: 'merge-tree-identical', evidence: [pr.url] };
+  assert.equal(reason(), undefined);
+  delete node.landedPatch;
+  pr.head = 'c'.repeat(40);
+  assert.equal(reason(), undefined);
+});
+
 test('a closed export of a verified unchanged patch calls for re-import, not review', () => {
   const node = attentionNode(), pr = node.github;
   node.repo = pr.repo = 'google/gvisor';
