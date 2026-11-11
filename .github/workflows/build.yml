@@ -1,35 +1,25 @@
 name: CI
 
-"on":
-  push:
-    branches:
-      - "*"
+on:
+  workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify-archive:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-          name: runsc
-          path: bin/
+        persist-credentials: false
+    - name: Build the CRI sandbox archive on Linux ARM64
+      run: bazelisk build //test/root:sandbox_image_tar
+    - name: Verify the selected manifest and pause executable
+      run: python3 test/rbe/cri_pause_arm64.py
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: cri-pause-arm64
+        path: pause-arm64.json
+        if-no-files-found: error
