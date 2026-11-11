@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T18:16:23+00:00",
+    "updatedAt": "2026-11-11T18:20:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46538,17 +46538,25 @@
       "id": "branch:staged-release-tag",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/source-export-checkpoint-version",
-      "head": "111c72d26660563b1cf23993293c4aa6fbdec851",
+      "ref": "research/release-version-single-label",
+      "head": "8c826374e7d5c8cf51097092cd7afbdf2a4490cd",
       "title": "Build source exports without a Git version stamp",
-      "url": "https://github.com/tamird/gvisor/commit/111c72d26",
+      "url": "https://github.com/tamird/gvisor/commit/8c826374e",
       "group": "rbe",
       "status": "Agent work",
-      "summary": "Two different development Sentries reported 0.0.0, so one accepted the other’s checkpoint. A source export now records the linked Sentry’s Go build ID unless the publisher supplies a release label. Old unnamed checkpoints contain only 0.0.0.\n\nThe version definitions also give the shipped netgofer the same label as runsc. Previously netgofer rejected its own named release on startup. On the current standalone change, both development and release builds produced all nine files on native AMD64 and executed a guest after restoring it. The Debian versions were 0~devel and 20261106.0. A separate native comparison verified netgofer enforcement on AMD64 and ARM64.",
-      "updatedAt": "2026-11-11T18:11:35+00:00",
+      "summary": "The release publisher passes one version to Bazel with --stamp --embed_label for runsc, its sidecars, packages and checkpoint compatibility. An unnamed build reports (devel) and saves the linked Sentry build ID in its checkpoint. Builders that set STABLE_VERSION must pass that value through --embed_label.",
+      "updatedAt": "2026-11-11T18:20:21+00:00",
       "evidence": [
         {
-          "label": "Current standalone source, nine installed files per build, parser, Debian versions and both restored guests on native AMD64",
+          "label": "Revised single-label proposal",
+          "url": "https://github.com/tamird/gvisor/commit/8c826374e"
+        },
+        {
+          "label": "Native release and checkpoint qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43076551298"
+        },
+        {
+          "label": "Earlier standalone proposal: nine installed files per build, parser, Debian versions and both restored guests on native AMD64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42360655295/artifacts/13569951004"
         },
         {
@@ -46630,21 +46638,23 @@
       ],
       "refinement": {
         "before": {
-          "base": "5de94c6a122c68dd02a20543a6413c5e37b1a65a",
-          "head": "a303ec9336e4844e589cd35c891301856369038a"
-        },
-        "after": {
           "base": "1560a5df4920e054dfe7ae88655f835eab1b782c",
           "head": "111c72d26660563b1cf23993293c4aa6fbdec851"
+        },
+        "after": {
+          "base": "0e702d775d4f14ade5136a00f3ba349dfc7ccbed",
+          "head": "8c826374e7d5c8cf51097092cd7afbdf2a4490cd"
         }
       },
       "followup": {
         "owner": "Build and release",
-        "sourceHead": "111c72d26660563b1cf23993293c4aa6fbdec851",
-        "observedAt": "2026-11-11T18:11:35+00:00",
-        "disposition": "The contributor requested a revision to the checkpoint version model in 111c72d26.",
-        "nextAction": "Revise how source builds identify checkpoints and qualify the result before presenting a new proposal.",
+        "sourceHead": "8c826374e7d5c8cf51097092cd7afbdf2a4490cd",
+        "observedAt": "2026-11-11T18:20:21+00:00",
+        "disposition": "8c826374e implements the requested revision. Its regression test covers both old placeholder strings, 0.0.0 and (devel).",
+        "nextAction": "Inspect the native release and checkpoint qualification for this exact revision before requesting contributor review.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/8c826374e",
+          "https://github.com/tamird/gvisor/actions/runs/43076551298",
           "https://github.com/tamird/gvisor/actions/runs/42360655295/artifacts/13569951004",
           "https://github.com/tamird/gvisor/actions/runs/42359633173/artifacts/13568979452",
           "https://github.com/tamird/gvisor/commit/111c72d26",
