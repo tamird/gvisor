@@ -186,6 +186,25 @@ def available(oids: set[str]) -> set[str]:
                                             data=lines(sorted(oids))).decode().splitlines() if line.endswith(" commit")}
 
 
+def fetch_missing(repo: str, oids: set[str]) -> None:
+    missing = oids - available(oids)
+    if missing:
+        # Publish-time comparisons need the objects but must not change
+        # FETCH_HEAD, remote-tracking refs, tags, or the operator's checkout.
+        git("fetch", "--no-write-fetch-head", "--refmap=", "--no-tags", "--no-prune",
+            "--no-recurse-submodules", "--no-auto-maintenance", repo, *sorted(missing))
+        if missing != available(missing):
+            raise ValueError(f"the observed base commits are still missing after fetching {repo}")
+
+
+def public_bases(fork: dict[str, str]) -> str:
+    upstream_repo = f"https://github.com/{UPSTREAM}.git"
+    upstream = remote_refs(upstream_repo, HEADS + "master")["master"]
+    fetch_missing(f"https://github.com/{FORK}.git", {fork["master"], fork["gh-pages"]})
+    fetch_missing(upstream_repo, {upstream})
+    return upstream
+
+
 def metadata(oids: set[str]) -> dict[str, tuple[int, str, int]]:
     if not oids:
         return {}
@@ -244,7 +263,7 @@ def evidence_keepers(fork: dict[str, str], dropping: set[str], upstream: str, ev
 def plan(retention: int) -> list[Candidate]:
     check_origin()
     fork = remote_refs("origin")
-    upstream = remote_refs(f"https://github.com/{UPSTREAM}.git", HEADS + "master")["master"]
+    upstream = public_bases(fork)
     local = dict(row.split("\t") for row in git("for-each-ref", "--format=%(refname:lstrip=2)%09%(objectname)",
                                                  HEADS).decode().splitlines())
     names, tips = live_protections()
@@ -273,8 +292,6 @@ def plan(retention: int) -> list[Candidate]:
             if stamp <= cutoff.timestamp() and author == owner:
                 potential.append((scope, name, oid))
     main_tips = {fork["master"], fork["gh-pages"], upstream}
-    if available(main_tips) != main_tips:
-        raise ValueError("fetch origin and upstream master before inspecting merged branches")
     ancestors = set(git("rev-list", "--stdin", data=lines(main_tips)).decode().splitlines())
     retained = {scope: {oid for name, oid in refs.items() if not name.startswith(MANAGED) or name in names}
                 for scope, refs in branches.items()}
@@ -352,7 +369,9 @@ def apply(items: list[Candidate], retention: int) -> None:
     if git("rev-parse", "--show-ref-format").strip() != b"files":
         raise ValueError("local reflog preservation requires Git's files ref backend")
     # The proof search can take minutes. Re-read live exclusions after it.
+    check_origin()
     fork = remote_refs("origin")
+    upstream = public_bases(fork)
     names, tips = live_protections()
     evidence = set()
     tracker_protections(fork["gh-pages"], names, evidence)
@@ -367,7 +386,6 @@ def apply(items: list[Candidate], retention: int) -> None:
                 and any(item.oid[:length] in evidence for length in evidence_lengths)):
             raise ValueError(f"{item.name} changed or became active; rerun the plan")
     dropping = {item.name for item in items if item.scope == "fork"}
-    upstream = remote_refs(f"https://github.com/{UPSTREAM}.git", HEADS + "master")["master"]
     if evidence_keepers(fork, dropping, upstream, evidence):
         raise ValueError("a candidate now contains the only published copy of cited work; rerun the plan")
     ref = archive(items)

@@ -43,6 +43,17 @@ class BranchCleanupTest(unittest.TestCase):
                     self.assertEqual(len(witness), 1)
                     self.assertEqual(cleanup.evidence_keepers(fork, dropping - witness, two, {one[:9]}), set())
                     self.assertEqual(cleanup.evidence_keepers(fork, dropping, descendant, {one[:9]}), set())
+                    run("update-ref", "refs/heads/master", descendant)
+                    with mock.patch.dict(os.environ, {"GIT_DIR": str(dst)}):
+                        (dst / "FETCH_HEAD").write_text("previous operation\n")
+                        self.assertEqual(cleanup.available({descendant}), set())
+                        cleanup.fetch_missing(str(src), {descendant})
+                        self.assertEqual(cleanup.available({descendant}), {descendant})
+                        self.assertEqual((dst / "FETCH_HEAD").read_text(), "previous operation\n")
+                        self.assertEqual(run("for-each-ref", "--format=%(refname)"), b"")
+                        with mock.patch.object(cleanup, "git", wraps=run) as observed:
+                            cleanup.fetch_missing(str(src), {descendant})
+                            self.assertFalse(any(call.args[0] == "fetch" for call in observed.call_args_list))
                     name = "qualification/fixture"
                     full = cleanup.HEADS + name
                     run("update-ref", full, one)
