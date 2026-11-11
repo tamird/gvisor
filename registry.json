@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T19:24:40+00:00",
+    "updatedAt": "2026-11-11T19:57:39+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -832,22 +832,27 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-10T16:10:44+00:00",
+      "updatedAt": "2026-11-11T19:57:39+00:00",
       "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
       "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "45137f922cf026cfa764ca3177d624d1b49b5581",
-        "observedAt": "2026-11-10T16:10:44+00:00",
-        "disposition": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
-        "nextAction": "Follow checks and maintainer review on the published head.",
+        "owner": "Maintainer",
+        "sourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
+        "observedAt": "2026-11-11T19:57:39+00:00",
+        "disposition": "Published c83396e33 on #15106 and answered Zachary’s lint report. Buildifier passed all 627 tracked inputs and the assembler test passed. The Linux AMD64 GoExport action key and arguments matched before and after reordering go.mod on the same base.",
+        "nextAction": "Await review of c83396e33.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
           "https://github.com/tamird/gvisor/actions/runs/42807933933/artifacts/13761961713",
-          "https://github.com/google/gvisor/pull/15106"
+          "https://github.com/google/gvisor/pull/15106",
+          "https://github.com/google/gvisor/pull/15106#issuecomment-6805040516",
+          "https://github.com/google/gvisor/actions/runs/42848612826/job/129942779320",
+          "https://github.com/tamird/gvisor/commit/c83396e33",
+          "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255",
+          "https://github.com/google/gvisor/pull/15106#issuecomment-6805836974"
         ]
       },
-      "head": "45137f922cf026cfa764ca3177d624d1b49b5581",
+      "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
       "evidence": [
         {
           "label": "Direct archive action on 45137f922 and byte-for-byte comparison",
@@ -908,6 +913,26 @@
         {
           "label": "Original projected archive failure, direct/repair ZIP equality and sidecar command tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/42505014580/artifacts/13627089013"
+        },
+        {
+          "label": "Zachary’s report of the failing lint check",
+          "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6805040516"
+        },
+        {
+          "label": "Original failing Buildifier check",
+          "url": "https://github.com/google/gvisor/actions/runs/42848612826/job/129942779320"
+        },
+        {
+          "label": "Single-commit Go export amendment",
+          "url": "https://github.com/tamird/gvisor/commit/c83396e33"
+        },
+        {
+          "label": "Maintainer guidance on First Pass",
+          "url": "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255"
+        },
+        {
+          "label": "Published amendment and reply to Zachary",
+          "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6805836974"
         }
       ],
       "ciRecovery": {
@@ -941,11 +966,10 @@
       },
       "refinement": {
         "before": {
-          "head": "b61651f9371f514411dbb4fc2bd367f860204546"
+          "head": "45137f922cf026cfa764ca3177d624d1b49b5581"
         },
         "after": {
-          "head": "4ecb0b121b95836dac48eb7f6c8b6948591004a1",
-          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+          "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e"
         }
       },
       "settledReviews": [
@@ -962,6 +986,33 @@
           "at": "2026-11-10T15:51:32+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/15106",
           "note": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The 2,566-entry ZIP and the Go-only consumer were verified on 4ecb0b121."
+        },
+        {
+          "kind": "amendment",
+          "status": "pending",
+          "baseHead": "45137f922cf026cfa764ca3177d624d1b49b5581",
+          "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
+          "url": "https://github.com/tamird/gvisor/commit/c83396e33",
+          "requestedAt": "2026-11-11T19:43:51+00:00",
+          "title": "Build the Go branch source archive with Bazel",
+          "summary": "Publish the Buildifier ordering fix on #15106 and reply to Zachary?",
+          "body": "Zachary reported a failing lint check on the published head. The amendment rebases onto f2504851d and moves go.mod into Buildifier’s expected order in go_export.srcs. Buildifier 8.5.1 reproduced the failure on 45137f922 and passed all 627 tracked inputs on c83396e33. The assembler test passed on native macOS ARM64. On the same fresh base, Linux AMD64 Bazel aquery produced identical GoExport action keys and command arguments before and after the reorder.\n\ngit -C ~/code/gvisor range-diff 45137f922^! c83396e33^!",
+          "replyBody": "I moved `go.mod` into the order Buildifier expects in `go_export.srcs`. The lint check now passes on all 627 tracked inputs, and `//tools/go_export:assemble_test` passed. The maintainers have [marked First Pass advisory](https://github.com/google/gvisor/issues/16791#issuecomment-6585124255) while it is being set up.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T19:55:25Z",
+          "postedURL": "https://github.com/google/gvisor/pull/15106",
+          "note": "Approved amendment published as the sole commit c83396e33. The author replied to Zachary on the original discussion."
+        },
+        {
+          "kind": "reply",
+          "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
+          "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6805040516",
+          "title": "Reply to Zachary on the lint fix",
+          "summary": "The author reported the checked revision.",
+          "body": "@zkoopmans, fixed the Buildifier failure in c83396e33. The repository-wide Buildifier check and the archive assembler test pass. Ryan confirmed that first-pass can be ignored while the pipeline is being set up: https://github.com/google/gvisor/issues/16791#issuecomment-6585124255.",
+          "outcome": "posted",
+          "at": "2026-11-11T19:55:25Z",
+          "postedURL": "https://github.com/google/gvisor/pull/15106#issuecomment-6805836974"
         }
       ]
     },
@@ -5536,7 +5587,7 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
-      "updatedAt": "2026-11-11T03:12:16+00:00",
+      "updatedAt": "2026-11-11T19:43:51+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6270,6 +6321,10 @@
         {
           "label": "Native ARM64 worker ran all three cases from the same executable",
           "url": "https://app.buildbuddy.io/invocation/676eb0f4-85d3-4806-b106-a2d33f2b9c86"
+        },
+        {
+          "label": "Native vDSO prerequisite merged through #16983",
+          "url": "https://github.com/google/gvisor/commit/f855fc7c1"
         }
       ],
       "refinement": {
@@ -6304,7 +6359,7 @@
         "sourceHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
         "disposition": "The installed systrap plugin and runc exchanged TCP and UDP. The original workflow failed on an obsolete GCC query label and a query that looked for auto on a pure=True runsc target. The actual release target kept its ordinary mode, and all three corrected GCC queries passed.",
         "observedAt": "2026-11-11T00:47:02+00:00",
-        "nextAction": "Review the revision for publication after #16522, #16586, #16516, #17067, #17114 and the TLDK port in #17444 land. To compare with the earlier approved source, run git -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 8178e3fe5^!.",
+        "nextAction": "Review the revision for publication after #16522, #16516, #17067, #17114 and the TLDK port in #17444 land. To compare with the earlier approved source, run git -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 8178e3fe5^!.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17444",
           "https://github.com/tamird/gvisor/commit/8178e3fe5",
@@ -6322,7 +6377,7 @@
         "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
         "title": "Build C and C++ with the declared LLVM toolchains",
         "requestedAt": "2026-11-10T21:39:45+00:00",
-        "summary": "Open this single compiler PR after #16522, #16586, #16516, #17067, #17114 and the TLDK port in #17444 land?",
+        "summary": "Open this single compiler PR after #16522, #16516, #17067, #17114 and the TLDK port in #17444 land?",
         "body": "The Coral toolchain looks for GCC and target headers under /usr. An\nAMD64 worker therefore needs an installed cross-compiler to build the\nvDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the LLVM 0.8.24 module already in\nMODULE.bazel. Bazel selects the compiler for the execution platform and\nthe sysroot for the target. Keep GNU17 and C++17 and remove the Coral\nrepositories, toolchain definitions and patches.\n\nThe three runsc sidecars provide their own entry points and use Linux\nUAPI headers. Only the signal stub needs target libc headers for its\nsignal and ucontext types.\n\nThe GNU sysroot has no static libc. The race runtime and the optional\nnetwork stack both link C into the Go executable. Use the LLVM musl\nsysroot for their static links on the default Linux target. Keep an\nexplicitly selected C toolchain or custom platform on its own libc."
       }
     },
@@ -35062,8 +35117,8 @@
       "title": "Build the vDSO with the C++ toolchain",
       "url": "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
       "group": "bazel",
-      "status": "Published as #16586",
-      "updatedAt": "2026-10-28T13:38:53.803726+00:00",
+      "status": "Merged through #16586",
+      "updatedAt": "2026-11-11T19:43:51+00:00",
       "summary": "Published at immutable 1d73cd4965 as #16586 after contributor approval. Use the C++ toolchain for the Sentry vDSO. Both target ELFs kept their public symbols, versions and offsets, and both were embedded in the matching Go archive. Native AMD64 passed the layout and two Systrap clock tests; a separate QEMU user-mode probe exercised the ARM64 entry point. The outer verifier failed on a wrapper-argv assumption; the original test logs verify the actual runner and sandbox arguments.",
       "evidence": [
         {
@@ -35089,21 +35144,27 @@
         {
           "label": "Original aggregate: verification predicate failed, native stages passed",
           "url": "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+        },
+        {
+          "label": "Merged vDSO change from #16983",
+          "url": "https://github.com/google/gvisor/commit/f855fc7c1"
         }
       ],
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
-        "observedAt": "2026-10-28T13:38:53.803726+00:00",
-        "disposition": "Approved native vDSO change published as #16586",
-        "nextAction": "Follow checks, maintainer review and import on #16586. No contributor decision remains.",
+        "observedAt": "2026-11-11T19:43:51+00:00",
+        "disposition": "The source and its Copybara import merged as f855fc7c1.",
+        "nextAction": "Complete. The native vDSO compiler prerequisite landed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16586",
           "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
           "https://app.buildbuddy.io/invocation/f3ce256d-20de-4ff3-bbce-65ec04180ea1",
           "https://app.buildbuddy.io/invocation/59864f06-e0f1-4216-ab2a-fd50aea5bacc",
           "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae",
-          "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+          "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a",
+          "https://github.com/google/gvisor/pull/16983",
+          "https://github.com/google/gvisor/commit/f855fc7c1"
         ]
       },
       "inactive": true
@@ -35118,9 +35179,9 @@
       "title": "Build the vDSO with the C++ toolchain",
       "url": "https://github.com/google/gvisor/pull/16586",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-07T02:36:21+00:00",
-      "summary": "The native vDSO change is approved at 1d73cd496 and has an open Copybara import, #16983.",
+      "status": "merged",
+      "updatedAt": "2026-11-11T19:43:51+00:00",
+      "summary": "The native vDSO change from 1d73cd496 landed through #16983 in f855fc7c1.",
       "evidence": [
         {
           "label": "Published upstream PR #16586",
@@ -35145,21 +35206,27 @@
         {
           "label": "Original aggregate: verification predicate failed, native stages passed",
           "url": "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+        },
+        {
+          "label": "Merged vDSO change from #16983",
+          "url": "https://github.com/google/gvisor/commit/f855fc7c1"
         }
       ],
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
-        "observedAt": "2026-11-07T02:36:21+00:00",
-        "disposition": "Approved native vDSO change published as #16586",
-        "nextAction": "Follow the open Copybara import #16983.",
+        "observedAt": "2026-11-11T19:43:51+00:00",
+        "disposition": "The source and its Copybara import merged as f855fc7c1.",
+        "nextAction": "Complete. The native vDSO compiler prerequisite landed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16586",
           "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
           "https://app.buildbuddy.io/invocation/f3ce256d-20de-4ff3-bbce-65ec04180ea1",
           "https://app.buildbuddy.io/invocation/59864f06-e0f1-4216-ab2a-fd50aea5bacc",
           "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae",
-          "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+          "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a",
+          "https://github.com/google/gvisor/pull/16983",
+          "https://github.com/google/gvisor/commit/f855fc7c1"
         ]
       }
     },
@@ -47121,19 +47188,19 @@
       "type": "pr",
       "repo": "hermeticbuild/hermetic-llvm",
       "ref": "review/linux-unwind-link-libraries",
-      "head": "3db00c1cf3d2b880429f5571311006e123d3e7d6",
+      "head": "89c57ee6988962eca89daeb32e07813981729fe2",
       "title": "Link pthread and dl only with the Linux C++ runtimes",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909",
       "group": "bazel",
       "status": "open",
-      "summary": "Send the LLVM change upstream. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries.",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "summary": "The supplier PR is open. All 46 checks passed on 89c57ee69. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries.",
+      "updatedAt": "2026-11-11T19:43:51+00:00",
       "refinement": {
         "before": {
-          "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9"
+          "head": "3db00c1cf3d2b880429f5571311006e123d3e7d6"
         },
         "after": {
-          "head": "3db00c1cf3d2b880429f5571311006e123d3e7d6"
+          "head": "89c57ee6988962eca89daeb32e07813981729fe2"
         }
       },
       "evidence": [
@@ -47156,6 +47223,10 @@
         {
           "label": "All six gVisor sidecars linked on empty AMD64 and ARM64 workers with the same rule",
           "url": "https://github.com/tamird/gvisor/actions/runs/41181782834/artifacts/13035731072"
+        },
+        {
+          "label": "Supplier checks on the current change",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909/checks"
         }
       ],
       "settledReviews": [
@@ -74294,7 +74365,7 @@
       "inactive": true
     },
     {
-      "head": "0d4bbc198943e150cd0f1c8f27140d498aba67f3",
+      "head": "d4dbaed9e9758004ee19e96d42dbc9eea7bbf3ba",
       "title": "Expose the toolchain executable to Starlark actions",
       "group": "bazel",
       "summary": "The public toolchain field gives Starlark actions the Buildifier executable for their execution platform. The revision preserves the interactive CLI and passed Mac-to-Linux and Linux-to-Mac selection on Bazel 7, 8 and 9.",
@@ -74330,6 +74401,34 @@
         {
           "label": "Bazel 7, 8 and 9 selection controls and native Linux execution",
           "url": "https://github.com/tamird/buildifier-prebuilt/actions/runs/43056723893/artifacts/13870534953"
+        },
+        {
+          "label": "Keith’s request to remove the example",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180#pullrequestreview-5864421023"
+        },
+        {
+          "label": "Private field replacement requested by Keith",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542446564"
+        },
+        {
+          "label": "Fork revision for both maintainer requests",
+          "url": "https://github.com/tamird/buildifier-prebuilt/commit/b2af4549b"
+        },
+        {
+          "label": "Native and split-platform checks",
+          "url": "https://github.com/tamird/buildifier-prebuilt/actions/runs/43089719265"
+        },
+        {
+          "label": "Bazel 7, 8 and 9 native and cross-platform controls",
+          "url": "https://github.com/tamird/buildifier-prebuilt/actions/runs/43089719265/artifacts/13889090029"
+        },
+        {
+          "label": "Keith’s README-only change on the published revision",
+          "url": "https://github.com/keith/buildifier-prebuilt/commit/d4dbaed9e"
+        },
+        {
+          "label": "Reply to Keith on the latest inline request",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542584665"
         }
       ],
       "id": "pr:keith/buildifier-prebuilt:180",
@@ -74339,26 +74438,32 @@
       "ref": "native-buildifier-tool",
       "url": "https://github.com/keith/buildifier-prebuilt/pull/180",
       "status": "open",
-      "updatedAt": "2026-11-11T17:44:03+00:00",
+      "updatedAt": "2026-11-11T19:52:30+00:00",
       "followup": {
-        "owner": "Upstream maintainer",
-        "sourceHead": "0d4bbc198943e150cd0f1c8f27140d498aba67f3",
-        "observedAt": "2026-11-11T17:44:03+00:00",
-        "disposition": "The revised toolchain interface and response are published on #180.",
-        "nextAction": "Wait for the supplier maintainer to review the published amendment.",
+        "owner": "Maintainer",
+        "sourceHead": "d4dbaed9e9758004ee19e96d42dbc9eea7bbf3ba",
+        "observedAt": "2026-11-11T19:52:30+00:00",
+        "disposition": "Published b2af4549b on the existing supplier PR. It replaces the private field and removes the example Keith identified. Native and cross-platform tests passed on Bazel 7, 8 and 9. Keith then removed the README edit in d4dbaed9e. The tested implementation is unchanged. Tamir acknowledged the change on Keith’s original inline thread.",
+        "nextAction": "Await the supplier maintainer’s review of d4dbaed9e.",
         "evidence": [
           "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4541271834",
           "https://github.com/keith/buildifier-prebuilt/pull/180",
-          "https://github.com/tamird/buildifier-prebuilt/actions/runs/43056723893/artifacts/13870534953"
+          "https://github.com/tamird/buildifier-prebuilt/actions/runs/43056723893/artifacts/13870534953",
+          "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542446564",
+          "https://github.com/keith/buildifier-prebuilt/pull/180#pullrequestreview-5864421023",
+          "https://github.com/tamird/buildifier-prebuilt/commit/b2af4549b",
+          "https://github.com/tamird/buildifier-prebuilt/actions/runs/43089719265",
+          "https://github.com/tamird/buildifier-prebuilt/actions/runs/43089719265/artifacts/13889090029",
+          "https://github.com/keith/buildifier-prebuilt/commit/d4dbaed9e",
+          "https://github.com/keith/buildifier-prebuilt/pull/180#discussion_r4542584665"
         ]
       },
       "refinement": {
         "before": {
-          "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce"
+          "head": "0d4bbc198943e150cd0f1c8f27140d498aba67f3"
         },
         "after": {
-          "head": "0d4bbc198943e150cd0f1c8f27140d498aba67f3",
-          "base": "def7480572c222555c6a037d680914c85ae3a99b"
+          "head": "b2af4549b322845abb376b8186de340f0073bff5"
         }
       },
       "settledReviews": [
@@ -78333,9 +78438,12 @@
     {
       "from": "pr:16586",
       "to": "branch:hermetic-compiler-review",
-      "type": "depends_on",
-      "reason": "Build the vDSO with the target C++ toolchain so its embedded ELF matches the Sentry architecture.",
-      "evidence": "https://github.com/google/gvisor/pull/16586"
+      "type": "includes",
+      "reason": "Merged through #16983. The compiler uses the same vdso/BUILD blob as the landed target toolchain change.",
+      "evidence": [
+        "https://github.com/google/gvisor/commit/f855fc7c1",
+        "https://github.com/google/gvisor/pull/16983"
+      ]
     },
     {
       "from": "pr:16522",
@@ -102812,6 +102920,41 @@
           "at": "2026-11-11T18:47:20+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17492",
           "note": "The tested publisher change opened as one commit in #17492."
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-netgofer-proxy-shutdown",
+      "title": "Netgofer connection-limit test times out waiting for proxy shutdown",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T19:57:39+00:00",
+      "summary": "The ARM64 TestProxyLimitsConnections on #17384 reached teardown, closed the Unix-domain socket peer, and waited five seconds for runProxyMode to return. The retry on the same commit passed.",
+      "findings": [
+        {
+          "text": "The original failure at runsc/gofer/net/netgofer_test.go:353 records the shutdown timeout. It does not identify the operation keeping the proxy alive. The earlier UDP idle-slot investigation failed a different assertion.",
+          "evidence": [
+            {
+              "label": "Original ARM64 test.log from #17384, build 54448",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54448/jobs/01a1cbe4-c7f2-4d90-bab1-5b28a49f1d69/artifacts/01a1cbfd-d194-4be8-931b-4785de6283c1"
+            },
+            {
+              "label": "Passing same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54448#01a1cbfe-def7-41eb-8738-aeed795aab8d"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Identify which proxy operation still owns a connection after the Unix-domain peer closes, using goroutine or connection state from a failed teardown.",
+      "evidence": [
+        {
+          "label": "Original ARM64 test.log from #17384, build 54448",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54448/jobs/01a1cbe4-c7f2-4d90-bab1-5b28a49f1d69/artifacts/01a1cbfd-d194-4be8-931b-4785de6283c1"
+        },
+        {
+          "label": "Passing same-head retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54448#01a1cbfe-def7-41eb-8738-aeed795aab8d"
         }
       ]
     }
