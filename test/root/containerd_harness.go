@@ -263,7 +263,7 @@ func stageRuntime(dir, self string) error {
 		return fmt.Errorf("release tree %q is empty", root)
 	}
 
-	archive, err := testutil.FindFile(filepath.Join("test/root/pause", *containerdVersion+".tar"))
+	archive, err := testutil.FindFile("test/root/pause.tar")
 	if err != nil {
 		return fmt.Errorf("locating sandbox image for containerd %s: %w", *containerdVersion, err)
 	}

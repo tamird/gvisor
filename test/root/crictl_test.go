@@ -399,25 +399,34 @@ const containerdRuntime = "runsc"
 
 var extraEnv []string
 
-// containerdConfig is the containerd (1.5+) configuration file that
+// containerdConfig returns the containerd (1.5+) configuration file that
 // configures the gVisor shim.
 //
 // Note that the v2 shim binary name must be containerd-shim-<runtime>-v1.
-const containerdConfig = `
+func containerdConfig(runtimeOption string) string {
+	sandboxImage := ""
+	if inHarness() {
+		// containerd 1.x reads sandbox_image here. When 2.x loads a v2
+		// config it migrates the value to the image plugin's pinned_images.
+		sandboxImage = `
+  sandbox_image = "gvisor.dev/images/cri/pause:latest"`
+	}
+	return `
 version=2
 disabled_plugins = ["io.containerd.internal.v1.restart"]
 [plugins."io.containerd.grpc.v1.cri"]
-  disable_tcp_service = true
+  disable_tcp_service = true` + sandboxImage + `
 [plugins."io.containerd.runtime.v1.linux"]
   shim_debug = true
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
   runtime_type = "io.containerd.runc.v2"
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.` + containerdRuntime + `]
   runtime_type = "io.containerd.` + containerdRuntime + `.v1"
-  pod_annotations = ["dev.gvisor.*"]
+  ` + runtimeOption + `
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.` + containerdRuntime + `.options]
   TypeUrl = "io.containerd.` + containerdRuntime + `.v1.options"
 `
+}
 
 // setup sets up before a test. Specifically it:
 //   - Creates the /etc/containerd/runsc/config.toml file.
@@ -597,7 +606,7 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 		})
 	}
 	cu.Add(cc.CleanUp)
-	if inHarness() && os.Getenv("CRI_PAUSE_TRIAL") == "declared-denied" {
+	if inHarness() {
 		if err := cc.ImportArchive(path.Join(runtimeDir, "pause.tar")); err != nil {
 			return nil, nil, err
 		}
@@ -1130,7 +1139,7 @@ func getContainerd() string {
 // The config could change based on the containerd features enabled
 // e.g. enable sandbox API in containerd or not.
 var getContainerdConfig = func(major, minor uint64) string {
-	return containerdConfig
+	return containerdConfig(`pod_annotations = ["dev.gvisor.*"]`)
 }
 
 // TestCrictlSandboxPosture checks the security posture of a containerd sandbox.

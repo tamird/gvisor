@@ -79,16 +79,13 @@ def containerd_test(name, **kwargs):
                 "//test/docker:images_" + image.replace("/", "_").replace("-", "_") + "_" + arch + "_tar": image
                 for image in CONTAINERD_IMAGES
             }
-            images[":" + name + "_pause_" + pause.replace(".", "_") + "_" + arch + "_tar"] = "registry.k8s.io/pause:" + pause
-            if version == "2.2.3" and arch == "amd64":
-                images.pop(":" + name + "_pause_" + pause.replace(".", "_") + "_" + arch + "_tar")
-                images["//test/root:pause/2.2.3.tar"] = "registry.k8s.io/pause:" + pause
+            images["//test/root:pause.tar"] = "gvisor.dev/images/cri/pause:latest"
             image_inputs[arch] = images
         _image_config(
             name = config,
             testonly = True,
             containerd_version = version,
-            sandbox_image = "registry.k8s.io/pause:" + pause,
+            sandbox_image = "gvisor.dev/images/cri/pause:latest",
             images = select_arch(**image_inputs),
             tags = ["manual"],
         )
@@ -98,7 +95,7 @@ def containerd_test(name, **kwargs):
             test_args = [
                 "--containerd_version=" + version,
                 "--harness_image_config=$(rootpath :" + config + ")",
-                "-test.run=^TestPauseImageSource$$",
+                "-test.run=^TestPauseImageConfig$$",
                 "-test.v",
             ],
             data = [":" + config],
