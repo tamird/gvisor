@@ -9,6 +9,7 @@ go_test(
     name = "image_test",
     size = "large",
     srcs = [
+        "deadline_qualification_test.go",
         "image_test.go",
     ],
     data = [
