@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-10T23:26:20+00:00",
+    "updatedAt": "2026-11-11T00:17:51+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2666,32 +2666,36 @@
       "id": "branch:bazel-clang-tidy-llvm",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/clang-tidy-compile-actions",
+      "ref": "research/clang-tidy-c-family",
       "title": "Run clang-tidy through Bazel compile actions",
-      "url": "https://github.com/tamird/gvisor/commit/49c4a3a92",
+      "url": "https://github.com/tamird/gvisor/commit/89a85fa8f",
       "group": "release",
-      "status": "Agent work",
-      "summary": "Bazel runs clang-tidy for each configured C++ compilation. The revised action calls clang-tidy directly and declares its frontend diagnostics file. On an AMD64 image containing only /hello, two clean actions produced identical files. An invalid include printed its source line and check name in the Bazel log and failed the build. The previous revision covered 371 AMD64 and 370 ARM64 actions.",
-      "updatedAt": "2026-11-10T23:00:22+00:00",
+      "status": "Contributor review requested",
+      "summary": "Run clang-tidy directly on configured C/C++ compile actions. The revised rule excludes the four assembly inputs and preserves the configured sources, owners and flags for the remaining actions.",
+      "updatedAt": "2026-11-11T00:17:51+00:00",
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
-        "observedAt": "2026-11-10T23:00:22+00:00",
-        "disposition": "On compiler integration 64a78c455, 376 of 384 AMD64 and 375 of 383 ARM64 ClangTidy actions passed. All 767 ran uncached on remote workers. Eight systrap/sysmsg inputs failed on each architecture, including assembly files.",
-        "nextAction": "Diagnose the systrap inputs and rerun the affected actions before requesting review of the clang-tidy change. The compiler remains its prerequisite.",
+        "owner": "Contributor",
+        "sourceHead": "89a85fa8f0b193be67ada38a3d755a080b09dbbc",
+        "observedAt": "2026-11-11T00:17:51+00:00",
+        "disposition": "Both complete selections passed, covering 380 configured C/C++ units on AMD64 and 379 on ARM64. In each selection two focused actions already had outputs. The full invocations supplied the other 378 and 377. The reporter incorrectly required the focused actions to execute again.",
+        "nextAction": "Review the clang-tidy proposal for submission after both the LLVM compiler migration and the independent systrap C fix land.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/89a85fa8f",
+          "https://github.com/tamird/gvisor/actions/runs/42920937695/artifacts/13812971162",
+          "https://github.com/tamird/gvisor/actions/runs/42923279810/artifacts/13812582816",
           "https://github.com/tamird/gvisor/actions/runs/42915366560/artifacts/13810936299",
           "https://github.com/tamird/gvisor/actions/runs/41593214329/artifacts/13211346681",
           "https://app.buildbuddy.io/invocation/65a0825c-34d6-4e58-8bd8-a3eaee9d289e"
         ]
       },
-      "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
+      "head": "89a85fa8f0b193be67ada38a3d755a080b09dbbc",
       "refinement": {
         "before": {
-          "head": "e312033b85f31626dacbece4fb65db81adaca947"
+          "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb"
         },
         "after": {
-          "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb"
+          "head": "89a85fa8f0b193be67ada38a3d755a080b09dbbc",
+          "base": "8178e3fe5fa3684427a9c78a66c0a268668de86c"
         }
       },
       "evidence": [
@@ -2710,6 +2714,14 @@
         {
           "label": "Full AMD64 and ARM64 selections on the integrated compiler",
           "url": "https://github.com/tamird/gvisor/actions/runs/42915366560/artifacts/13810936299"
+        },
+        {
+          "label": "Complete configured clang-tidy selections and verified diagnostics",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42920937695/artifacts/13812971162"
+        },
+        {
+          "label": "Exact focused checks on the independent systrap C correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42923279810/artifacts/13812582816"
         }
       ],
       "settledReviews": [
@@ -2726,7 +2738,18 @@
           "at": "2026-11-10T23:00:22+00:00",
           "note": "Withdrawn after the full integrated selection failed on eight systrap inputs per architecture."
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "89a85fa8f0b193be67ada38a3d755a080b09dbbc",
+        "baseHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
+        "url": "https://github.com/tamird/gvisor/commit/89a85fa8f",
+        "requestedAt": "2026-11-11T00:17:51+00:00",
+        "title": "Run clang-tidy through Bazel compile actions",
+        "body": "A source file can compile with different flags and headers in different\ntargets. Running clang-tidy once per source in a local execution root\nmisses those differences and keeps Bazel from scheduling lint remotely.\n\nRun the LLVM toolchain's clang-tidy for each configured compilation of\nrepository sources. Pass the compile action's arguments, declared\ninputs and clang-tidy's matching builtin headers. Share header\ndiscovery with the editor's compilation database and include transitive\ngenerated sources in that database. Keep generated and third-party\nsources outside the lint selection.\n\nDeclare a serialized Clang frontend diagnostics file for each action.\nClang writes it even on a clean run, so Bazel can invoke clang-tidy\ndirectly without a shell. Read clang-tidy findings in the Bazel action\nlog. With warnings treated as errors, clang-tidy's exit status replaces\nthe Python diagnostic parser and thread pool.",
+        "summary": "Open this clang-tidy change after the compiler migration and the standalone C correction land? Both architecture selections passed. Across each full and focused invocation, the verified diagnostics cover all 380 AMD64 and 379 ARM64 C/C++ units. The aggregate reporter expected four cached stub actions to repeat.\n\ngit -C ~/code/gvisor range-diff 49c4a3a92^! 89a85fa8f^!"
+      }
     },
     {
       "id": "pr:15307",
@@ -66424,7 +66447,7 @@
       "url": "https://github.com/google/gvisor/pull/17221",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T12:56:37+00:00",
+      "updatedAt": "2026-11-11T00:17:51+00:00",
       "summary": "Supplying -checkpoint-dir currently makes the reader query Docker before it opens the saved files. The fork checks Docker only for live capture. The existing round-trip test and EncodeStatefile ran on the same saved kernel without a Docker client or daemon.",
       "evidence": [
         {
@@ -66434,6 +66457,10 @@
         {
           "label": "Published single-commit PR #17221",
           "url": "https://github.com/google/gvisor/pull/17221"
+        },
+        {
+          "label": "Copybara #17435 imports the published checkpoint benchmark fix",
+          "url": "https://github.com/google/gvisor/pull/17435"
         }
       ],
       "settledReviews": [
@@ -66454,12 +66481,13 @@
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
-        "observedAt": "2026-11-08T12:55:09Z",
-        "disposition": "Published the approved change as #17221.",
-        "nextAction": "Follow #17221 for maintainer review and import.",
+        "observedAt": "2026-11-11T00:17:51+00:00",
+        "disposition": "Open Copybara #17435 identifies the approved source cba5d1b3f in its integration footer.",
+        "nextAction": "Follow checks and landing of #17435.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17221",
-          "https://github.com/tamird/gvisor/commit/cba5d1b3f"
+          "https://github.com/tamird/gvisor/commit/cba5d1b3f",
+          "https://github.com/google/gvisor/pull/17435"
         ]
       }
     },
@@ -72164,6 +72192,52 @@
         ]
       },
       "number": 17416
+    },
+    {
+      "id": "branch:sysmsg-memcpy-contract",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/sysmsg-memcpy-contract",
+      "head": "4e82d96053956477eed5782e780581d68e5ff6fc",
+      "title": "Use the C memcpy prototype in the freestanding signal stub",
+      "url": "https://github.com/tamird/gvisor/commit/4e82d9605",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-11T00:17:51+00:00",
+      "summary": "The systrap signal stub defines its own memcpy. Its old declaration returned void while the C interface returns the destination pointer. The revision uses the standard prototype, returns the destination, and makes the memory-order wrappers explicit.",
+      "evidence": [
+        {
+          "label": "Exact C checks, GCC and LLVM binaries, embedded inputs and formatting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42923279810/artifacts/13812582816"
+        },
+        {
+          "label": "Full remote clang-tidy integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42920937695/artifacts/13812971162"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
+        "observedAt": "2026-11-11T00:17:51+00:00",
+        "disposition": "Exact formatted C sources passed all four focused checks. GCC and LLVM linked the AMD64 and ARM64 stubs with their own memcpy and no undefined symbols. The embedded Go inputs matched the linked sections at 5,312 and 4,864 bytes. A separate Go library build stopped in standard-library analysis.",
+        "nextAction": "Review the standalone signal-stub correction for submission.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/4e82d9605",
+          "https://github.com/tamird/gvisor/actions/runs/42923279810/artifacts/13812582816",
+          "https://github.com/tamird/gvisor/actions/runs/42920937695/artifacts/13812971162"
+        ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "head": "4e82d96053956477eed5782e780581d68e5ff6fc",
+        "baseHead": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f",
+        "status": "pending",
+        "requestedAt": "2026-11-11T00:17:51+00:00",
+        "url": "https://github.com/tamird/gvisor/commit/4e82d9605",
+        "title": "Use the C memcpy prototype in the freestanding signal stub",
+        "body": "The stub supplies its own memcpy for generated and explicit calls. Its\nprivate declaration returns void, although the C interface returns the\ndestination pointer. Use the declaration from string.h and return the\ndestination after copying.\n\nName the local load and store wrappers for the acquire and release\norders they provide. Their old names also identify C11 operations with\ndifferent defaults. Include the headers that define the signal frame\nregisters and offsets where the stub uses them.",
+        "summary": "Open the standalone C fix? The four GCC and LLVM stubs resolved their own memcpy; all four focused checks passed. The exact embedded stub bytes matched on both architectures."
+      }
     }
   ],
   "edges": [
@@ -76118,6 +76192,13 @@
         "https://github.com/tamird/gvisor/commit/244ef8019",
         "https://github.com/tamird/gvisor/actions/runs/42898754604/artifacts/13805865588"
       ]
+    },
+    {
+      "from": "branch:sysmsg-memcpy-contract",
+      "to": "branch:bazel-clang-tidy-llvm",
+      "type": "depends_on",
+      "reason": "The full clang-tidy selection checks the freestanding C sources. Their independent prototype and header correction passed on both toolchains and architectures.",
+      "evidence": "https://github.com/tamird/gvisor/actions/runs/42923279810/artifacts/13812582816"
     }
   ],
   "investigations": [
@@ -97721,7 +97802,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T23:22:43+00:00",
+      "updatedAt": "2026-11-11T00:17:51+00:00",
       "summary": "TestSudo timed out three times each on #17391 and #17393 while the test waited for the traced sudo command. Rollback #17412 removed the regression from master. Botir’s draft reland #17432 includes the checked PTRACE_SEIZE fix and syscall regression.",
       "findings": [
         {
@@ -97875,9 +97956,22 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54309#01a1c793-0100-41ed-bfc6-41fe68c43eaa"
             }
           ]
+        },
+        {
+          "text": "Copybara #17436 (8c559633f) carries the executable PTRACE_SEIZE fix. In ptrace.go only the adjacent comment differs from #17432. The import still tests only PTRACE_ATTACH in AttachingConvertsGroupStopToPtraceStop. Botir’s source also exercises PTRACE_SEIZE and checks the reported stop. The relevant source and test are unchanged between 642302dfe and fb1d78aea.",
+          "evidence": [
+            {
+              "label": "New Copybara reland #17436",
+              "url": "https://github.com/google/gvisor/pull/17436"
+            },
+            {
+              "label": "Botir’s source reland #17432",
+              "url": "https://github.com/google/gvisor/pull/17432"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the reland in #17432 and check its own integration results. Once the reland merges, verify the traced sudo case on the merged revision.",
+      "nextStep": "Follow both #17432 and Copybara #17436. If the import lands without the PTRACE_SEIZE variant, reconcile that regression test as a separate follow-up and verify the traced sudo case on master.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -97958,6 +98052,10 @@
         {
           "label": "Botir’s reland #17432 on the new master",
           "url": "https://github.com/google/gvisor/pull/17432"
+        },
+        {
+          "label": "New Copybara reland #17436",
+          "url": "https://github.com/google/gvisor/pull/17436"
         }
       ],
       "settledReviews": [
@@ -98224,5 +98322,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-10T23:26:20+00:00"
+  "updatedAt": "2026-11-11T00:17:51+00:00"
 }
