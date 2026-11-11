@@ -701,24 +701,47 @@ def import_source(candidate: dict, source_url: str, head_owner: str | None, head
     return next(iter(heads), None)
 
 
-def open_inventory(repo: str = REPO) -> dict[int, str | None]:
+def open_inventory(repo: str = REPO) -> tuple[dict[int, str | None], dict]:
     """Discover new author PRs and reopened tracked sources/imports together."""
     owner, name = repo.split("/")
     cursor = None
     numbers = {}
     total = None
+    checks = {}
+    watches = [(item["id"], item["defaultBranchCheck"]["context"])
+               for item in REGISTRY.get("investigations", [])
+               if repo == REPO and item.get("defaultBranchCheck") and item.get("status") == "active"]
+    fields = " ".join(f"c{i}:context(name:{json.dumps(context)}) {{ context state targetUrl description }}"
+                      for i, (_, context) in enumerate(watches))
     while True:
         print(json.dumps({"openInventoryPage": {"repo": repo, "offset": len(numbers),
                                                 "nextRequest": requests + 1}}), flush=True)
         query = """query($owner:String!,$name:String!,$after:String) {
           repository(owner:$owner,name:$name) {
+            DEFAULT_BRANCH_CHECKS
             pullRequests(states:OPEN,first:100,after:$after) {
               totalCount pageInfo { hasNextPage endCursor }
               nodes { number author { login } }
             }
           }
         }"""
-        found = graphql(query, {"owner": owner, "name": name, "after": cursor})["repository"]["pullRequests"]
+        # Read the branch name, commit and exact watched contexts together on
+        # the first inventory page. Later pages may observe a different tip.
+        branch_field = ("defaultBranchRef { name target { ... on Commit { oid status { "
+                        + fields + " } } } }" if fields and cursor is None else "")
+        repository = graphql(query.replace("DEFAULT_BRANCH_CHECKS", branch_field),
+                             {"owner": owner, "name": name, "after": cursor})["repository"]
+        if branch_field and (branch := repository.get("defaultBranchRef")):
+            tip = branch["target"]
+            for index, (identity, context) in enumerate(watches):
+                status = (tip.get("status") or {}).get(f"c{index}")
+                if status and status["context"] != context:
+                    raise RuntimeError("Default-branch status context did not match the investigation")
+                checks[identity] = {"branch": branch["name"], "head": tip["oid"], "context": context,
+                                    "state": status["state"] if status else "MISSING",
+                                    "url": public_url(status.get("targetUrl")) if status else None,
+                                    "description": status.get("description") if status else None}
+        found = repository["pullRequests"]
         if total is not None and total != found["totalCount"]:
             raise RuntimeError("Open PR inventory changed during retrieval")
         total = found["totalCount"]
@@ -734,7 +757,7 @@ def open_inventory(repo: str = REPO) -> dict[int, str | None]:
         cursor = next_cursor
     if len(numbers) != total:
         raise RuntimeError("Open PR inventory is incomplete")
-    return numbers
+    return numbers, checks
 
 
 def needs_refresh(number: int, previous: dict[int, dict], open_numbers: dict[int, str | None]) -> bool:
@@ -802,12 +825,13 @@ def recheck_snapshot_mergeability(raw_prs: list[dict], rows: list[dict], repo: s
 
 
 def collect_repository(repo: str, policy: str, previous: dict,
-                       registered: dict[tuple[str, int], dict] | None = None) -> tuple[list[dict], dict, dict, dict]:
+                       registered: dict[tuple[str, int], dict] | None = None) -> tuple[list[dict], dict, dict, dict, dict]:
     numbers = {node["number"] for node in REGISTRY["nodes"]
                if node["type"] == "pr" and node["repo"] == repo}
     prior_sources = {pr["number"]: pr for pr in previous.get("prs", []) if pr.get("repo", REPO) == repo}
     prior_imports = {pr["number"]: pr for source in prior_sources.values() for pr in source.get("imports", [])}
     registered_only = registered is not None
+    branch_checks = {}
     if registered_only:
         # Refresh even terminal registered PRs: without discovery this is also
         # how a reopening becomes visible. Never fetch unrelated repository PRs.
@@ -815,7 +839,7 @@ def collect_repository(repo: str, policy: str, previous: dict,
         refresh_numbers = numbers
     else:
         numbers.update(prior_sources)
-        open_numbers = open_inventory(repo)
+        open_numbers, branch_checks = open_inventory(repo)
         numbers.update(number for number, author in open_numbers.items() if author == OWNER)
         refresh_numbers = {number for number in numbers if needs_refresh(number, prior_sources, open_numbers)}
     originals = ({number: registered[repo, number] for number in refresh_numbers}
@@ -883,7 +907,7 @@ def collect_repository(repo: str, policy: str, previous: dict,
         "registeredCount": len(refresh_numbers) if registered_only else None,
         "openInventoryTotal": None if registered_only else len(open_numbers), "retainedSources": len(numbers) - len(originals),
         "retainedImports": len(import_numbers) - len(imported),
-    }
+    }, branch_checks
 
 
 def failed_checks(pr: dict) -> list[dict]:
@@ -1275,13 +1299,15 @@ def main() -> None:
         if not (previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER):
             previous = {}
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
+    default_branch_checks = {}
     maintainers, active_reviewers, specialties = fetch_maintainers(include_specialties=True)
     registered_only = registered_repositories(REGISTRY)
     registered = None
     for repo, policy in policies.items():
         if repo in registered_only and registered is None:
             registered = fetch_registered_prs(registered_only)
-        records, fresh, prior, inventory = collect_repository(repo, policy, previous, registered if repo in registered_only else None)
+        records, fresh, prior, inventory, checks = collect_repository(repo, policy, previous, registered if repo in registered_only else None)
+        default_branch_checks.update(checks)
         if repo == "google/gvisor":
             records = [with_maintainer_reviewers(pr, maintainers) if pr["status"] == "open" else pr for pr in records]
             for pr in records:
@@ -1365,6 +1391,16 @@ def main() -> None:
                            **{key: sum(item[key] for item in inventories.values() if item[key] is not None)
                               for key in ("openInventoryTotal", "retainedSources", "retainedImports")}}}
     snapshot["reviewerSpecialties"] = {path: sorted(logins) for path, logins in specialties.items()}
+    if default_branch_checks:
+        snapshot["defaultBranchChecks"] = default_branch_checks
+        for item in REGISTRY.get("investigations", []):
+            identity = item["id"]
+            row = default_branch_checks.get(identity)
+            if row and row != previous.get("defaultBranchChecks", {}).get(identity):
+                event = {"investigation": identity, **row}
+                if row["state"] == "SUCCESS":
+                    event["nextAction"] = item["defaultBranchCheck"]["onSuccess"]
+                print(json.dumps({"defaultBranchCheck": event}), flush=True)
     snapshot["reviewerActivity"] = activity
     history = reviewer_history(prs, OWNER, maintainers=active_reviewers, specialties=specialties,
                                observations=activity.get("observations", []), authored=activity.get("authored", []))

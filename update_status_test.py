@@ -521,8 +521,33 @@ class CollectorHistoryTest(unittest.TestCase):
         expected[202] = "other"
         self.open_rows = [{"number": number, "author": {"login": author}} for number, author in expected.items()]
         with mock.patch.object(updater, "requests", 0), mock.patch.object(updater, "graphql", side_effect=self.graphql):
-            self.assertEqual(updater.open_inventory(), expected)
+            self.assertEqual(updater.open_inventory(), (expected, {}))
         self.assertEqual(self.inventory_pages, 3)
+
+    def test_default_branch_status_is_read_with_only_the_first_inventory_page(self) -> None:
+        identity = "investigation:master-pgo"
+        context = "buildkite/pgo-profiles"
+        self.registry["investigations"] = [{"id": identity, "status": "active", "defaultBranchCheck": {"context": context}}]
+        url = "https://buildkite.com/gvisor/pgo-profiles/builds/37"
+        for index, state in enumerate(("FAILURE", "ERROR", "PENDING", "EXPECTED", "SUCCESS", None), start=1):
+            with self.subTest(state=state):
+                head = str(index) * 40
+                value = {"context": context, "state": state, "targetUrl": url, "description": "Build #37"} if state else None
+                def query(text, variables):
+                    result = self.graphql(text, variables)
+                    if variables["after"] is None:
+                        self.assertIn('context(name:"buildkite/pgo-profiles")', text)
+                        result["repository"]["defaultBranchRef"] = {"name": "master", "target": {"oid": head, "status": {"c0": value}}}
+                    else:
+                        self.assertNotIn("defaultBranchRef", text)
+                    return result
+                with mock.patch.object(updater, "REGISTRY", self.registry), mock.patch.object(updater, "graphql", side_effect=query) as requests:
+                    numbers, observed = updater.open_inventory()
+                self.assertEqual(len(numbers), len(self.open_rows))
+                self.assertEqual(requests.call_count, 2)
+                self.assertEqual(observed, {identity: {"head": head, "branch": "master", "context": context,
+                                                       "state": state or "MISSING", "url": url if state else None,
+                                                       "description": "Build #37" if state else None}})
 
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()

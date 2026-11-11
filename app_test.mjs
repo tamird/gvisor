@@ -30,6 +30,44 @@ test('a requested rebase belongs to its author and source head', () => {
   assert.equal(request(), null);
 });
 
+test('a default-branch result directs the investigation owner using the observed commit', () => {
+  const c = client(), id = 'investigation:pgo';
+  const item = { id, title: 'PGO refresh', owner: 'agent', status: 'active', group: 'tests', updatedAt: c.registryInput.meta.updatedAt,
+    summary: 'Refresh profiles', findings: [], evidence: [], nextStep: 'Inspect the failing stage.',
+    defaultBranchCheck: { context: 'buildkite/pgo-profiles', onSuccess: 'Verify the published profile.' } };
+  Object.assign(c.registryInput, { groups: [{ id: 'tests', label: 'Tests' }], nodes: [], edges: [], investigations: [item] });
+  const check = { head: 'a'.repeat(40), branch: 'master', context: item.defaultBranchCheck.context };
+  c.snapshotInput.defaultBranchChecks = { [id]: check };
+  const create = () => ({ children: [], dataset: {}, value: '', append(...items) { this.children.push(...items); },
+    replaceChildren() { this.children = []; }, setAttribute() {}, addEventListener() {} });
+  const list = create();
+  c.document = { createElement: create, getElementById: key => key === 'investigation-list' ? list : create() };
+  c.location = new URL('https://tamird.github.io/gvisor/?view=investigations');
+  const text = e => typeof e === 'string' ? e : [e.textContent || '', e.href || '', ...(e.children || []).map(text)].join(' ');
+  function draw() {
+    vm.runInContext("validateRegistry(registry); validateSnapshot(snapshotInput); liveSnapshot=snapshotInput; view='investigations'; model={...registry,nodes:registryNodes(registry)};drawInvestigations()", c);
+    return text(list);
+  }
+  for (const state of ['FAILURE', 'ERROR', 'SUCCESS', 'PENDING', 'EXPECTED', 'MISSING']) {
+    Object.assign(check, { state, url: state === 'MISSING' ? null : 'https://buildkite.com/gvisor/pgo-profiles/builds/37' });
+    const rendered = draw();
+    const alerts = vm.runInContext("attentionReasons(registryNodes(registry)[0]).map(row => [row.id, row.detail])", c);
+    assert.deepEqual(JSON.parse(JSON.stringify(alerts)), ['FAILURE', 'ERROR', 'SUCCESS'].includes(state)
+      ? [['agent-default-branch-check', state === 'SUCCESS' ? item.defaultBranchCheck.onSuccess : item.nextStep]] : []);
+    assert.match(rendered, /master aaaaaaaaa/);
+    assert.match(rendered, /https:\/\/github\.com\/google\/gvisor\/commit\/aaaaaaaaa(?:\s|$)/);
+    assert.ok(rendered.includes(state === 'SUCCESS' ? item.defaultBranchCheck.onSuccess : ['FAILURE', 'ERROR'].includes(state) ? item.nextStep : 'Wait for a completed status on this commit.'));
+    assert.equal(rendered.includes(item.defaultBranchCheck.onSuccess), state === 'SUCCESS');
+    if (state !== 'MISSING') assert.ok(rendered.includes(check.url));
+  }
+  check.url = 'https://buildkite.com/gvisor/pgo-profiles/builds/37';
+  assert.throws(draw, /Invalid default-branch check/);
+  Object.assign(check, { state: 'SUCCESS', context: 'some other check' });
+  assert.throws(draw, /Invalid default-branch check/);
+  delete c.snapshotInput.defaultBranchChecks[id];
+  assert.match(draw(), /Wait for a status observation on the current default branch/);
+});
+
 test('an investigation issue has one filing decision and keeps its receipt after filing', () => {
   const c = client();
   const url = 'https://github.com/google/gvisor/issues/new';

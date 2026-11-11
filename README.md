@@ -138,8 +138,12 @@ check next. Link subsequent occurrences, the upstream issue and the fix on
 the same card. Conclude it when the repair has been exercised.
 
 Each scheduled work-map refresh scans the public Buildkite build listings
-and follows job retry IDs. It also samples gVisor PR validation workflows
-on GitHub Actions and searches gVisor issue and PR titles for flake reports
+and follows job retry IDs. Investigations can also watch a named status on
+gVisor's current default-branch commit. The first PR inventory page reads
+the branch, commit and status together. A successful PGO run prompts the
+investigation owner to check the published profile. Pending or missing
+statuses remain unsettled. The refresh also samples gVisor PR validation
+workflows on GitHub Actions and searches gVisor issue and PR titles for flake reports
 within the remaining GitHub request budget. Closed reports are available
 through Show history. The CI flake
 triage owner checks new observations, unrecovered failures and public flake

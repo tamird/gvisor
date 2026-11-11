@@ -269,6 +269,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
+  { id: "agent-default-branch-check", owner: "agent", title: "Default-branch CI investigations" },
   { id: "agent-ci-flake", owner: "agent", title: "CI flake investigations" },
   { id: "agent-release-check", owner: "agent", title: "Check an upstream release" },
   { id: "agent-release-opportunity", owner: "agent", title: "Inspect a newer BCR release", secondary: true },
@@ -615,8 +616,12 @@ function attentionReasons(node, owner) {
     }
   }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
-  if (node.type === "investigation" && node.group === "ci-flakes" && node.status === "active" && !contributorDecision(node) && !humanAction(node))
-    add("agent-ci-flake", node.nextStep);
+  if (node.type === "investigation" && node.status === "active" && !contributorDecision(node) && !humanAction(node)) {
+    if (node.defaultBranchCheck) {
+      if (["FAILURE", "ERROR", "SUCCESS"].includes(liveSnapshot?.defaultBranchChecks?.[node.id]?.state))
+        add("agent-default-branch-check", investigationNextStep(node));
+    } else if (node.group === "ci-flakes") add("agent-ci-flake", node.nextStep);
+  }
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const outreach = currentOutreach(node);
   if (outreach?.status === "due") add("agent-review-outreach", `${outreach.kind === "import-status" ? "Import status" : "Review"} request due for @${outreach.reviewer}.`);
@@ -1365,10 +1370,18 @@ function navigateFromURL() {
     document.getElementById(selected)?.focus({ preventScroll: true });
 }
 function tableNodes() { return model.nodes.filter((node) => matches(node) && visibleHistory(node)); }
+function investigationNextStep(item) {
+  if (!item.defaultBranchCheck || item.status !== "active") return item.nextStep;
+  const check = liveSnapshot?.defaultBranchChecks?.[item.id];
+  if (!check) return "Wait for a status observation on the current default branch.";
+  if (check.state === "SUCCESS") return item.defaultBranchCheck.onSuccess;
+  if (["PENDING", "EXPECTED", "MISSING"].includes(check.state)) return "Wait for a completed status on this commit.";
+  return item.nextStep;
+}
 function investigationMatches(item) {
   const query = $("investigation-search").value.trim().toLowerCase(), state = $("investigation-filter").value;
   const group = registry.groups?.find(entry => entry.id === item.group);
-  const text = [item.title, group?.label || "", item.owner, item.summary, item.nextStep || "", ...item.findings.map(finding => finding.text),
+  const text = [item.title, group?.label || "", item.owner, item.summary, investigationNextStep(item) || "", ...item.findings.map(finding => finding.text),
     ...(item.comparisons || []).flatMap(comparison => [comparison.title, comparison.description, comparison.note, ...comparison.columns, ...comparison.rows.flat()])].join(" ").toLowerCase();
   return visibleHistory(item) && (!state || item.status === state) && (!query || text.includes(query));
 }
@@ -1516,7 +1529,17 @@ function drawInvestigations() {
       const section = element("section", "investigation-finding"); section.append(element("p", "", finding.text));
       section.append(investigationEvidence(finding.evidence)); card.append(section);
     }
-    if (item.nextStep) card.append(element("h3", "", item.status === "active" ? "Next step" : "Recommendation"), element("p", "", item.nextStep));
+    const check = liveSnapshot?.defaultBranchChecks?.[item.id];
+    if (check) {
+      const line = element("p", "comparison-note");
+      line.append(link(check.branch + " " + check.head.slice(0, 9), "https://github.com/" + registry.meta.repo + "/commit/" + check.head), " · ");
+      const result = check.context + " · " + (check.state === "MISSING" ? "no status reported" : check.state.toLowerCase());
+      line.append(check.url ? link(result, check.url) : result);
+      if (check.description) line.append(" · " + check.description);
+      card.append(line);
+    }
+    const nextStep = investigationNextStep(item);
+    if (nextStep) card.append(element("h3", "", item.status === "active" ? "Next step" : "Recommendation"), element("p", "", nextStep));
     if (item.evidence.length) {
       card.append(investigationEvidence(item.evidence));
     }
@@ -2369,6 +2392,9 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
           review.kind === "proposal" && review.outcome === "approved" && review.head === item.head
           && commitLinkMatches(`${candidate.meta.owner}/${repo.split("/")[1]}`, review.head, review.url))))
         throw new Error("Invalid investigation submission");
+      if (item.defaultBranchCheck !== undefined && (repo !== candidate.meta.repo
+          || !nonemptyText(item.defaultBranchCheck?.context) || !nonemptyText(item.defaultBranchCheck?.onSuccess)))
+        throw new Error("Invalid default-branch investigation check");
       const draft = item.contributorReview;
       if (draft !== undefined) {
         const issue = repo === candidate.meta.repo && validIssueDraft(draft) && draft.head === undefined
@@ -2408,6 +2434,19 @@ function validateSnapshotSource(snapshot, nextRegistry) {
 function validateSnapshot(snapshot, nextRegistry = registry) {
   validateSnapshotSource(snapshot, nextRegistry);
   if (snapshot.mergedOnly || snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
+  if (snapshot.defaultBranchChecks !== undefined) {
+    const rows = snapshot.defaultBranchChecks;
+    if (!rows || typeof rows !== "object" || Array.isArray(rows)) throw new Error("Invalid default-branch checks");
+    for (const [id, row] of Object.entries(rows)) {
+      const item = (nextRegistry.investigations || []).find(record => record.id === id);
+      if (!item?.defaultBranchCheck || item.status !== "active" || !row || row.context !== item.defaultBranchCheck.context
+          || typeof row.branch !== "string" || !row.branch.trim() || !/^[a-f0-9]{40}$/.test(row.head)
+          || !["EXPECTED", "PENDING", "ERROR", "FAILURE", "SUCCESS", "MISSING"].includes(row.state)
+          || row.url != null && !safeURL(row.url) || row.description != null && typeof row.description !== "string"
+          || row.state === "MISSING" && (row.url != null || row.description != null))
+        throw new Error("Invalid default-branch check observation");
+    }
+  }
   if (snapshot.ciFlakes !== undefined) {
     const scan = snapshot.ciFlakes, slug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
     const uuid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
