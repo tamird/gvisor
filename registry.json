@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T03:12:16+00:00",
+    "updatedAt": "2026-11-11T03:28:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38135,10 +38135,22 @@
       "title": "Build the GitHub release without the Docker builder",
       "url": "https://github.com/tamird/gvisor/commit/a5afdee61",
       "group": "release",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-09T03:28:20+00:00",
-      "summary": "On hosted AMD64 with Docker stopped, the approved GitHub workflow ran bazel build //:release and uploaded all nine default outputs, including runsc-netgofer. The raw ZIP matched the current upstream Make archive in member paths and Unix modes (0555). The standard Actions download extracted all nine as 0644. Each member matched the direct build byte-for-byte in both downloads. This run used master 975fb1722 with the approved workflow and #16753. The earlier eight-file ZIP round trip covered AMD64 and ARM64 with explicit top-level output downloads. A separate native build verified the nine-file layout and Make installation on both architectures. Without #16753, each architecture requested the other compiler. The approval to open a5afdee61 after #16753 remains in force.",
+      "status": "Published",
+      "updatedAt": "2026-11-11T03:28:41+00:00",
+      "summary": "Merged architecture selection #16753 made the native runner sufficient for //:release. The approved workflow patch was applied to master with every added and removed line intact. The workflow keeps upstream's actions/upload-artifact 7.0.2. The earlier archive check verified nine executables, their paths, modes and bytes.",
       "evidence": [
+        {
+          "label": "Published upstream PR #17456 at c3aab1bce",
+          "url": "https://github.com/google/gvisor/pull/17456"
+        },
+        {
+          "label": "Hosted release workflow on c3aab1bce",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42952726390"
+        },
+        {
+          "label": "Merged architecture-selection prerequisite",
+          "url": "https://github.com/google/gvisor/commit/a299ae372"
+        },
         {
           "label": "Nine default outputs, per-file hashes and ordinary download modes on hosted AMD64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42555203237/artifacts/13647083530"
@@ -38203,7 +38215,19 @@
           "outcome": "approved",
           "at": "2026-10-29T18:56:07.113045+00:00"
         }
-      ]
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "a5afdee618840c9211d989c775afda8280be484b",
+        "observedAt": "2026-11-11T03:28:41+00:00",
+        "disposition": "Approval delivered in #17456 on c3aab1bce after #16753 merged.",
+        "nextAction": "Follow checks and maintainer review on #17456.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17456",
+          "https://github.com/google/gvisor/commit/a299ae372"
+        ]
+      }
     },
     {
       "id": "branch:fsconfigfd-checkpoint",
@@ -44685,9 +44709,9 @@
       "title": "Select generated Go sources for the requested architecture",
       "url": "https://github.com/google/gvisor/pull/16753",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "summary": "Release builds configure only the requested architecture’s generated sources. The Go archive still exports both architectures, so a downstream consumer can select either when it builds.",
-      "updatedAt": "2026-10-30T18:24:04.695422+00:00",
+      "updatedAt": "2026-11-11T03:28:41+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -44705,6 +44729,10 @@
         }
       },
       "evidence": [
+        {
+          "label": "Merged on master at a299ae372",
+          "url": "https://github.com/google/gvisor/commit/a299ae372"
+        },
         {
           "label": "Current AMD64, ARM64 and Go archive configuration outputs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41106038963/artifacts/13000263977"
@@ -59281,10 +59309,18 @@
       "title": "Lead the Linux installation guide with the Bazel archive",
       "url": "https://github.com/tamird/gvisor/commit/75fdf2ab9",
       "group": "bazel",
-      "status": "Approved; waiting for #16753",
-      "updatedAt": "2026-11-09T23:53:15+00:00",
-      "summary": "Build and install the Linux runtime from the Bazel archive. The revised introduction explains that running containers with runsc requires Linux 5.6 or later. All seven command blocks match the ones tested on native AMD64 and ARM64.",
+      "status": "Published",
+      "updatedAt": "2026-11-11T03:28:41+00:00",
+      "summary": "The merged #16753 lets each native machine build the documented //debian:gvisor-release-tar-bz2 target with its own GNU tools. The published README is byte-identical to the approved guide. Native AMD64 and ARM64 qualification built and installed all nine executables and ran a systrap guest.",
       "evidence": [
+        {
+          "label": "Published upstream PR #17457 at 0d46027e6",
+          "url": "https://github.com/google/gvisor/pull/17457"
+        },
+        {
+          "label": "Merged architecture-selection prerequisite",
+          "url": "https://github.com/google/gvisor/commit/a299ae372"
+        },
         {
           "label": "Two-line clarification of the kernel requirement",
           "url": "https://github.com/tamird/gvisor/compare/e77cb0cd6...75fdf2ab9"
@@ -59332,15 +59368,17 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream review",
         "sourceHead": "75fdf2ab90f427c78af3c71cdc0ee2250ce5a5d1",
-        "observedAt": "2026-11-09T23:53:15+00:00",
-        "disposition": "Approved; waiting for #16753",
-        "nextAction": "Open the approved installation guide change after #16753 lands.",
+        "observedAt": "2026-11-11T03:28:41+00:00",
+        "disposition": "Approval delivered in #17457 on 0d46027e6 after #16753 merged.",
+        "nextAction": "Follow checks and maintainer review on #17457.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16753"
+          "https://github.com/google/gvisor/pull/17457",
+          "https://github.com/google/gvisor/commit/a299ae372"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:tcp-listener-handshake-locks",
@@ -71760,12 +71798,20 @@
       "url": "https://github.com/google/gvisor/issues/16670",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T01:42:49+00:00",
-      "summary": "The guide marks receive accounting #16825 merged and keeps the ACK-admission work on #15325 open. The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option. The guide also links Andrea’s decision to close #16953 in favor of #17082.",
+      "updatedAt": "2026-11-11T03:28:41+00:00",
+      "summary": "The guide marks receive accounting #16825 merged and keeps the ACK-admission work on #15325 open. The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option. The guide also links Andrea’s decision to close #16953 in favor of #17082. The restore and MTU sections mark #16711 and #16984 merged. They describe how saving advanced the live clock and how a veth MTU of 1,500 produced an MSS 14 bytes too small.",
       "evidence": [
         {
           "label": "Existing TCP review guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Merged live-clock correction",
+          "url": "https://github.com/google/gvisor/commit/9deeb41cc"
+        },
+        {
+          "label": "Merged veth MTU and TCP MSS correction",
+          "url": "https://github.com/google/gvisor/commit/cf0007816"
         },
         {
           "label": "Merged receive accounting #16825",
@@ -72919,6 +72965,138 @@
           "at": "2026-11-11T00:51:01+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17446",
           "note": "Published upstream as one commit on the exact approved head."
+        }
+      ]
+    },
+    {
+      "id": "pr:17456",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17456,
+      "ref": "ci-bazel-release",
+      "head": "c3aab1bce0567576e7d6c307a9d909b6ece96690",
+      "title": "Build the GitHub Actions release directly with Bazel",
+      "url": "https://github.com/google/gvisor/pull/17456",
+      "group": "release",
+      "status": "open",
+      "updatedAt": "2026-11-11T03:28:41+00:00",
+      "summary": "Merged architecture selection #16753 made the native runner sufficient for //:release. The approved workflow patch was applied to master with every added and removed line intact. The workflow keeps upstream's actions/upload-artifact 7.0.2. The earlier archive check verified nine executables, their paths, modes and bytes.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #17456 at c3aab1bce",
+          "url": "https://github.com/google/gvisor/pull/17456"
+        },
+        {
+          "label": "Hosted release workflow on c3aab1bce",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42952726390"
+        },
+        {
+          "label": "Merged architecture-selection prerequisite",
+          "url": "https://github.com/google/gvisor/commit/a299ae372"
+        },
+        {
+          "label": "Nine default outputs, per-file hashes and ordinary download modes on hosted AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42555203237/artifacts/13647083530"
+        },
+        {
+          "label": "Raw nine-file ZIP uploaded by the approved workflow",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42555203237/artifacts/13646998765"
+        },
+        {
+          "label": "Upstream nine-file ZIP produced by Make on master 975fb1722",
+          "url": "https://github.com/google/gvisor/actions/runs/42483821961/artifacts/13618518716"
+        },
+        {
+          "label": "Exact workflow and architecture-selection patches on master",
+          "url": "https://github.com/tamird/gvisor/commit/55604a485"
+        },
+        {
+          "label": "Direct Ubuntu build and release artifact",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40817414442"
+        },
+        {
+          "label": "Published upstream layout",
+          "url": "https://github.com/google/gvisor/actions/runs/40803813239"
+        },
+        {
+          "label": "Original master artifact with all eight release paths",
+          "url": "https://github.com/google/gvisor/actions/runs/41194870621/artifacts/13040222266"
+        },
+        {
+          "label": "Native AMD64 receipt with Docker stopped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41198457424/artifacts/13040854873"
+        },
+        {
+          "label": "Native ARM64 receipt with Docker stopped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41198457424/artifacts/13041577662"
+        },
+        {
+          "label": "Without #16753 each architecture requested the opposite compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41198176938"
+        },
+        {
+          "label": "Only workflow wording and explicit download mode differed in this proof",
+          "url": "https://github.com/tamird/gvisor/compare/a5afdee61..c7a99450c"
+        },
+        {
+          "label": "Upstream addition of runsc-netgofer to the release",
+          "url": "https://github.com/google/gvisor/commit/693353612"
+        },
+        {
+          "label": "Nine-file declared-toolchain integration source",
+          "url": "https://github.com/tamird/gvisor/commit/96057fa92"
+        },
+        {
+          "label": "Native AMD64 and ARM64 links, nine declared copies each and both Make installs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41765228449/artifacts/13292873920"
+        }
+      ]
+    },
+    {
+      "id": "pr:17457",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17457,
+      "ref": "proposal/docs-native-linux-install",
+      "head": "0d46027e654ef56a1f9d2d739358a5200b2da9e5",
+      "title": "Lead the Linux installation guide with the Bazel archive",
+      "url": "https://github.com/google/gvisor/pull/17457",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-11T03:28:41+00:00",
+      "summary": "The merged #16753 lets each native machine build the documented //debian:gvisor-release-tar-bz2 target with its own GNU tools. The published README is byte-identical to the approved guide. Native AMD64 and ARM64 qualification built and installed all nine executables and ran a systrap guest.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #17457 at 0d46027e6",
+          "url": "https://github.com/google/gvisor/pull/17457"
+        },
+        {
+          "label": "Merged architecture-selection prerequisite",
+          "url": "https://github.com/google/gvisor/commit/a299ae372"
+        },
+        {
+          "label": "Two-line clarification of the kernel requirement",
+          "url": "https://github.com/tamird/gvisor/compare/e77cb0cd6...75fdf2ab9"
+        },
+        {
+          "label": "runsc began requiring openat2 for secure path resolution",
+          "url": "https://github.com/google/gvisor/commit/a7402ea5d"
+        },
+        {
+          "label": "Native AMD64 build, nine executables and systrap guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42175442583/artifacts/13482599775"
+        },
+        {
+          "label": "Native ARM64 build, nine executables and systrap guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42174590321/artifacts/13482448479"
+        },
+        {
+          "label": "Stock ARM64 build requested x86_64-linux-gnu-gcc",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42173048776/artifacts/13481609279"
+        },
+        {
+          "label": "README used for the native command and guest checks",
+          "url": "https://github.com/tamird/gvisor/commit/a1b8ee4af"
         }
       ]
     }
@@ -75729,7 +75907,7 @@
     {
       "type": "depends_on",
       "from": "pr:16753",
-      "to": "branch:ci-bazel-release",
+      "to": "pr:17456",
       "reason": "The native AMD64 runner lacks the ARM64 cross-compiler pulled in by the unfiltered build.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/a5afdee618840c9211d989c775afda8280be484b"
@@ -76547,7 +76725,7 @@
     {
       "type": "depends_on",
       "from": "pr:16753",
-      "to": "branch:native-install-archive",
+      "to": "pr:17457",
       "reason": "Stock ARM64 tries to invoke an x86 GNU compiler. Selecting only target-architecture generators makes the documented build work with just native GNU tools.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16753",
