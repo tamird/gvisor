@@ -53,6 +53,19 @@ func waitOnMount(s *fuse.Server) {
 
 func main() {
 	flag.Parse()
+	for _, path := range []string{*dir, "/fuse", "/dev/fuse"} {
+		info, err := os.Stat(path)
+		if err != nil {
+			log.Warningf("FUSE_PATH path=%s error=%v", path, err)
+			continue
+		}
+		var fs unix.Statfs_t
+		if err := unix.Statfs(path, &fs); err != nil {
+			log.Warningf("FUSE_PATH path=%s mode=%s statfs=%v", path, info.Mode(), err)
+			continue
+		}
+		log.Warningf("FUSE_PATH path=%s mode=%s filesystem_magic=%#x", path, info.Mode(), fs.Type)
+	}
 	loopbackRoot, err := fs.NewLoopbackRoot("/fuse")
 	if err != nil {
 		log.Warningf("could not create loopback root: %v", err)

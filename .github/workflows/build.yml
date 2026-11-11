@@ -1,35 +1,69 @@
-name: CI
-
-"on":
+name: Check the native runc FUSE benchmark setup
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/runc-fuse-stock-paths-20261111]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  ruby:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Load the stock Ruby benchmark image
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/fuse-stock-receipts"
+          mkdir -p "$out"
+          test "$(git rev-parse HEAD^)" = 3238f32db235efb5f8fe03d0490a07e2c53f1bf6
+          git diff --exit-code HEAD^ HEAD -- . ':(exclude).github/workflows/build.yml' ':(exclude)test/runner/fuse/fuse.go'
+          {
+            uname -smr
+            docker version --format 'Docker server {{.Server.Version}}'
+            runc --version
+            stat -c 'FUSE_HOST %n %F major:minor=%t:%T' /dev/fuse || true
+          } | tee "$out/host.log"
+          image=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/rubydev_x86_64
+          tag=$(cd images && find benchmarks/rubydev -type f | sort -f -d | xargs -n 1 sha256sum | sha256sum | cut -c1-16)
+          test "$tag" = 755dcb89419fd14b
+          digest=sha256:908f36fb814f54d2a710d10f7f1c80eb8642b1f64468b8291223951c0cc15909
+          docker pull --quiet "$image@$digest"
+          docker tag "$image@$digest" gvisor.dev/images/benchmarks/rubydev:latest
+          docker image inspect --format 'image={{.Id}} repo_digests={{json .RepoDigests}}' "$image@$digest" | tee "$out/image.log"
+      - name: Exercise the normal runc Ruby benchmark on FUSE
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/fuse-stock-receipts"
+          # Match the RubyNoOpTest dirty-cache failure, avoiding the host-global cache drop.
+          target=//test/benchmarks/fs:rubydev_test
+          status=0
+          bazel test --config=x86_64 --extra_toolchains=@llvm//toolchain:all \
+            --copt=-Wno-unknown-warning-option --jobs=4 --strategy=TestRunner=local \
+            --nocache_test_results --flaky_test_attempts=1 --test_output=all \
+            --test_arg=-runtime=runc --test_arg=-test.v --test_arg=-test.benchtime=1ns \
+            '--test_arg=-test.bench=^BenchmarkRubyNoOpTest$/^page_cache[.]dirty$/^filesystem[.]fusefs$' \
+            "$target" >"$out/bazel.log" 2>&1 || status=$?
+          echo "$status" >"$out/bazel.exit"
+          tail -n 70 "$out/bazel.log"
+          cp bazel-testlogs/test/benchmarks/fs/rubydev_test/test.{log,xml} "$out/"
+          grep -F 'BenchmarkRubyNoOpTest/page_cache.dirty/filesystem.fusefs' "$out/test.log"
+          for path in /data /fuse; do
+            grep -F "FUSE_PATH path=$path mode=d" "$out/test.log" | grep -F 'filesystem_magic=0x1021994'
+          done
+          grep -F 'FUSE_PATH path=/dev/fuse' "$out/test.log"
+          if [ "$status" -ne 0 ]; then
+            test "$status" -eq 3
+            grep -F 'FUSE_PATH path=/dev/fuse error=stat /dev/fuse: no such file or directory' "$out/test.log"
+            grep -F 'could not create fuse server: no such file or directory' "$out/test.log"
+          fi
+      - name: Retain native benchmark output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: runc-fuse-stock-paths
+          path: ${{ runner.temp }}/fuse-stock-receipts
+          if-no-files-found: error
