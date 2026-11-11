@@ -58,6 +58,9 @@ class BranchCleanupTest(unittest.TestCase):
                     full = cleanup.HEADS + name
                     run("update-ref", full, one)
                     run("update-ref", full, two, one)
+                    self.assertEqual(cleanup.published_reflogs({name: two}, {two}), set())
+                    self.assertEqual(cleanup.published_reflogs({name: two}, {two, descendant}), {name})
+                    self.assertEqual(cleanup.published_reflogs({name: one}, {two, descendant}), set())
                     run("push", "origin", full)
                     # The old local branch must survive any stale expected-OID update.
                     row = cleanup.Candidate("local", name, two, "retired")

@@ -22,6 +22,7 @@ MANAGED = DISPOSABLE + ("proposal/", "research/", "review/", "integration/",
                         "rebase/", "tracker/", "workmap/", "delivery/")
 PAYLOAD = (".github/workflows/", ".github/qualification/", "test/rbe/")
 ACTIVE = ("queued", "in_progress", "waiting", "requested", "pending")
+FORK_MIRROR = "identical fork branch retained"
 OID = re.compile(r"[0-9a-f]{40}")
 
 
@@ -260,6 +261,25 @@ def evidence_keepers(fork: dict[str, str], dropping: set[str], upstream: str, ev
     return keep
 
 
+def published_reflogs(mirrors: dict[str, str], surviving: set[str]) -> set[str]:
+    """Keep a local branch if a reset or amend left unpublished history in its log."""
+    if not mirrors:
+        return set()
+    common = Path(os.fsdecode(git("rev-parse", "--path-format=absolute", "--git-common-dir").strip()))
+    reachable = set(git("rev-list", "--stdin", data=lines(available(surviving))).decode().splitlines())
+    published = set()
+    for name, head in mirrors.items():
+        path = common / "logs" / "refs" / "heads" / name
+        if not path.is_file():
+            continue
+        history = [row.split(b" ", 2)[:2] for row in path.read_bytes().splitlines()]
+        if (history and history[-1][-1] == head.encode() and
+                all(len(pair) == 2 and all(oid == b"0" * 40 or oid.decode() in reachable for oid in pair)
+                    for pair in history)):
+            published.add(name)
+    return published
+
+
 def plan(retention: int) -> list[Candidate]:
     check_origin()
     fork = remote_refs("origin")
@@ -282,15 +302,18 @@ def plan(retention: int) -> list[Candidate]:
     owner = git("config", "--get", "user.email").decode().strip()
     prefix_lengths = {len(oid) for oid in tips if oid}
     potential = []
+    mirrors = {}
     for scope, refs in branches.items():
         for name, oid in refs.items():
             if (name in names or scope == "local" and name in local_recent or oid not in data
-                    or not (name.startswith(MANAGED) or (name, oid) in merged_prs)
                     or any(oid[:length] in tips for length in prefix_lengths)):
                 continue
             stamp, author, _ = data[oid]
             if stamp <= cutoff.timestamp() and author == owner:
-                potential.append((scope, name, oid))
+                if scope == "local" and fork.get(name) == oid:
+                    mirrors[name] = oid
+                if name.startswith(MANAGED) or (name, oid) in merged_prs:
+                    potential.append((scope, name, oid))
     main_tips = {fork["master"], fork["gh-pages"], upstream}
     ancestors = set(git("rev-list", "--stdin", data=lines(main_tips)).decode().splitlines())
     retained = {scope: {oid for name, oid in refs.items() if not name.startswith(MANAGED) or name in names}
@@ -315,16 +338,20 @@ def plan(retention: int) -> list[Candidate]:
     for scope, name, oid in pending:
         if (name, oid) in completed:
             candidates.append(Candidate(scope, name, oid, "retired CI payload with a completed run at the exact tip"))
-    removing = {(item.scope, item.name) for item in candidates}
-    for scope, name, oid in pending:
-        if (scope == "local" and fork.get(name) == oid and (scope, name) not in removing
-                and ("fork", name) not in removing):
-            candidates.append(Candidate(scope, name, oid, "identical fork branch retained"))
     dropping = {item.name for item in candidates if item.scope == "fork"}
     keep = evidence_keepers(fork, dropping, upstream, evidence)
     if evidence_keepers(fork, dropping - keep, upstream, evidence):
         raise ValueError("fork plan still contains the last published branch for cited commits")
-    return sorted(item for item in candidates if item.scope != "fork" or item.name not in keep)
+    candidates = [item for item in candidates if item.scope != "fork" or item.name not in keep]
+    removing = {item.name for item in candidates}
+    # A commit URL still resolves when its same-name fork branch survives.
+    # Check reflogs too: a local rebase may have displaced unpublished work.
+    mirrors = {name: oid for name, oid in mirrors.items() if name not in removing}
+    dropping -= keep
+    surviving = {oid for name, oid in fork.items() if name not in dropping}
+    for name in published_reflogs(mirrors, surviving):
+        candidates.append(Candidate("local", name, mirrors[name], FORK_MIRROR))
+    return sorted(candidates)
 
 
 def archive(items: list[Candidate]) -> str:
@@ -382,7 +409,7 @@ def apply(items: list[Candidate], retention: int) -> None:
     for item in items:
         if (item.name in names or item.scope == "local" and item.name in recent or any(item.oid[:length] in tips for length in lengths)
                 or item.scope == "fork" and fork.get(item.name) != item.oid
-                or item.reason not in {"reachable from a published base", "merged PR at exact upstream-reachable tip"}
+                or item.reason not in {FORK_MIRROR, "reachable from a published base", "merged PR at exact upstream-reachable tip"}
                 and any(item.oid[:length] in evidence for length in evidence_lengths)):
             raise ValueError(f"{item.name} changed or became active; rerun the plan")
     dropping = {item.name for item in items if item.scope == "fork"}
@@ -395,9 +422,10 @@ def apply(items: list[Candidate], retention: int) -> None:
     for scope in ("fork", "local"):
         if scope == "local":
             fork = remote_refs("origin")
-            for item in items:
-                if item.reason == "identical fork branch retained" and fork.get(item.name) != item.oid:
-                    raise ValueError(f"the fork copy of {item.name} changed; rerun the plan")
+            mirrors = {item.name: item.oid for item in items if item.reason == FORK_MIRROR}
+            if (any(fork.get(name) != oid for name, oid in mirrors.items())
+                    or published_reflogs(mirrors, set(fork.values())) != mirrors.keys()):
+                raise ValueError("a local mirror or its published history changed; rerun the plan")
         for batch in chunks([item for item in items if item.scope == scope], 80):
             names, tips = checked_out()
             if any(item.name in names or item.oid in tips for item in batch):
