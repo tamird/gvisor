@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T11:32:25+00:00",
+    "updatedAt": "2026-11-11T11:49:23+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -143,13 +143,16 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-11T11:32:25+00:00",
-      "summary": "Tamir reports that the maintainer hold concerns adding google/licensecheck. The existing checker already verifies the compiler migration with the current catalog and policy. The hold remains on this classifier PR. Its fork revision now includes the go-digest catalog entry and policy exception.\n\nThe fork rebase repairs three stale GPL constants introduced by 61088c907 and makes the mock HTTP notice state an actual GPL-v2-only grant. All 41 owning tests pass on 0ea1ef528. Fresh catalog verification still reports 20 QEMU mismatches, one LTP mismatch and one go-digest mismatch. In particular, QEMU’s license appendix contains an example grant. The project’s LICENSE identifies the terms for the emulator. The upstream October hold remains.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne’s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.\n\nThe current head conflicts with 2552c6787 in governance/licensing.yaml. The existing maintainer hold remains in force.",
+      "updatedAt": "2026-11-11T11:49:23+00:00",
+      "summary": "Tamir reports that the maintainer hold concerns adding google/licensecheck. The existing checker already verifies the compiler migration with the current catalog and policy. The hold remains on this classifier PR. Its fork revision now includes the go-digest catalog entry and policy exception.\n\nThe fork rebase repairs three stale GPL constants introduced by 61088c907 and makes the mock HTTP notice state an actual GPL-v2-only grant. All 41 owning tests pass on 0ea1ef528. Fresh catalog verification still reports 20 QEMU mismatches, one LTP mismatch and one go-digest mismatch. In particular, QEMU’s license appendix contains an example grant. The project’s LICENSE identifies the terms for the emulator. The upstream October hold remains.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne’s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.\n\nThe current head conflicts with 2552c6787 in governance/licensing.yaml. The existing maintainer hold remains in force.\n\nThe plain rebase 5c080a5cf failed to compile three gpl2 references. The fork revision 23b8ddf0a restores the earlier GPL fixture changes. The package test target passed and the verifier checked all 224 entries in the existing catalog. Earlier source-notice discovery differences remain open.",
       "followup": {
-        "disposition": "Current master conflicts in governance/licensing.yaml. The documented maintainer hold remains in force.",
+        "disposition": "The published head still conflicts. The fork repair 23b8ddf0a passed the package target and verified the existing 224-entry catalog. No individual testcase records were emitted.",
         "owner": "root",
-        "nextAction": "Prepare the catalog-only conflict repair for the adjacent Kythe and libpluginstack entries. Preserve the maintainer hold on submitting the classifier until the internal exception is confirmed.",
+        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/23b8ddf0a",
+          "https://github.com/tamird/gvisor/actions/runs/43014384411",
+          "https://github.com/tamird/gvisor/actions/runs/43013588542",
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
           "https://github.com/tamird/gvisor/commit/44d3ce3bc",
           "https://github.com/tamird/gvisor/commit/b4e336c68c3672fa7e25b29f86f321da09774fde",
@@ -167,11 +170,23 @@
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-11T11:32:25+00:00",
+        "observedAt": "2026-11-11T11:49:23+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc"
       },
       "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
       "evidence": [
+        {
+          "label": "Tested fork repair on current master",
+          "url": "https://github.com/tamird/gvisor/commit/23b8ddf0a"
+        },
+        {
+          "label": "Package target and 224-entry existing catalog verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43014384411"
+        },
+        {
+          "label": "Plain rebase failed compiling three GPL references",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43013588542"
+        },
         {
           "label": "Current conflicting master",
           "url": "https://github.com/google/gvisor/commit/2552c6787"
@@ -31251,30 +31266,35 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-mysql-upstream",
-      "head": "28035bfa21166cd1fccca0e107aaf56009d707e3",
+      "head": "25b9e2c269c513045f9c0f9232ae5b9846d2facb",
       "title": "Pin the basic MySQL image",
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T11:32:25+00:00",
-      "summary": "Rebased the MySQL image in 28035bfa2. Ryan approved 1785bfc26, the source that export #17300 still names.\n\nBefore this rebase, the AMD64 check built all five image contexts and exercised their Make content tags. ARM64 checks covered target configuration and image inventories.\n\nOn master 2552c6787 this source conflicts in tools/images.mk.",
+      "updatedAt": "2026-11-11T11:48:58+00:00",
+      "summary": "The rebased MySQL source 25b9e2c26 is open as one mergeable commit. Konstantin approved the previous revision, 28035bfa2. Open export #17300 still names that revision and conflicts with master.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.",
       "followup": {
-        "owner": "buildifier_review",
-        "sourceHead": "28035bfa21166cd1fccca0e107aaf56009d707e3",
-        "observedAt": "2026-11-11T11:32:25+00:00",
-        "disposition": "The source conflicts with current master in tools/images.mk.",
-        "nextAction": "Prioritize the MySQL source rebase and verify the status of its open, conflicting export #17300.",
+        "owner": "Maintainer",
+        "sourceHead": "25b9e2c269c513045f9c0f9232ae5b9846d2facb",
+        "observedAt": "2026-11-11T11:48:58+00:00",
+        "disposition": "The published MySQL source is mergeable. Konstantin approved the previous revision, 28035bfa2. Open export #17300 still names that revision and conflicts with master.",
+        "nextAction": "Monitor review of the current source and the status of the earlier export #17300.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/28035bfa2",
           "https://github.com/google/gvisor/pull/16458",
-          "https://github.com/tamird/gvisor/commit/1785bfc26",
-          "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974",
-          "https://github.com/google/gvisor/commit/2552c6787",
+          "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612",
           "https://github.com/google/gvisor/pull/17300"
         ],
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       },
       "evidence": [
+        {
+          "label": "Published MySQL rebase 25b9e2c26",
+          "url": "https://github.com/tamird/gvisor/commit/25b9e2c26"
+        },
+        {
+          "label": "Eight image contexts, seven Make operations and archive comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612"
+        },
         {
           "label": "Current master with the adjacent image entries",
           "url": "https://github.com/google/gvisor/commit/2552c6787"
@@ -31323,11 +31343,11 @@
       "number": 16458,
       "refinement": {
         "before": {
-          "head": "1785bfc2680236e91724c0c826379a8c4cf74141",
-          "base": "3847ed738e1a59892b936aebb1b9164c4f31ee95"
+          "head": "28035bfa21166cd1fccca0e107aaf56009d707e3"
         },
         "after": {
-          "head": "28035bfa21166cd1fccca0e107aaf56009d707e3"
+          "head": "25b9e2c269c513045f9c0f9232ae5b9846d2facb",
+          "base": "2552c678794e048487e1d18e9c81729b67fc119a"
         }
       }
     },
@@ -31394,29 +31414,34 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-tomcat-upstream-current",
-      "head": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd",
+      "head": "71dff5de7d5ed7441915d2425b7ba64c19de1c13",
       "title": "Pin the existing Tomcat fixture images",
       "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T11:32:25+00:00",
-      "summary": "Rebased in 2eb25a5f1 onto deb6b3ea1.\n\nThe rebased Tomcat fixture retains the two architecture-specific base images and master’s PostgreSQL context.\n\nOn master 2552c6787 this source conflicts in MODULE.bazel.",
+      "updatedAt": "2026-11-11T11:48:58+00:00",
+      "summary": "The rebased Tomcat source 71dff5de7 is open as one mergeable commit. GitHub lists @relkochta and @zkoopmans as requested reviewers.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.",
       "followup": {
-        "owner": "buildifier_review",
-        "sourceHead": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd",
-        "observedAt": "2026-11-11T11:32:25+00:00",
-        "disposition": "The source conflicts with current master in MODULE.bazel.",
-        "nextAction": "Rebase the Tomcat manifest beside the landed image entries and check the existing contexts.",
+        "owner": "Maintainer",
+        "sourceHead": "71dff5de7d5ed7441915d2425b7ba64c19de1c13",
+        "observedAt": "2026-11-11T11:48:58+00:00",
+        "disposition": "The published Tomcat source is mergeable. GitHub lists @relkochta and @zkoopmans as requested reviewers.",
+        "nextAction": "Await review of the mergeable Tomcat source.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2eb25a5f1",
           "https://github.com/google/gvisor/pull/16462",
-          "https://github.com/google/gvisor/pull/16462",
-          "https://github.com/tamird/gvisor/compare/d754a40f1...5186abc50",
-          "https://github.com/google/gvisor/commit/2552c6787"
+          "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612"
         ],
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       },
       "evidence": [
+        {
+          "label": "Published Tomcat rebase 71dff5de7",
+          "url": "https://github.com/tamird/gvisor/commit/71dff5de7"
+        },
+        {
+          "label": "Eight image contexts, seven Make operations and archive comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612"
+        },
         {
           "label": "Current master with the adjacent image entries",
           "url": "https://github.com/google/gvisor/commit/2552c6787"
@@ -31457,10 +31482,11 @@
       "number": 16462,
       "refinement": {
         "before": {
-          "head": "5186abc509b59e4c5a997757db4d87e1e82f49d3"
+          "head": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd"
         },
         "after": {
-          "head": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd"
+          "head": "71dff5de7d5ed7441915d2425b7ba64c19de1c13",
+          "base": "2552c678794e048487e1d18e9c81729b67fc119a"
         }
       }
     },
@@ -31524,31 +31550,34 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-httpd-upstream-current",
-      "head": "f53888791f36f5ecf1996c08a840b706262b49e3",
+      "head": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
       "title": "Pin upstream Apache test images",
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T11:32:25+00:00",
-      "summary": "Rebased the Apache image in f53888791. Carzh approved c1511cf4b. The export for 2595b7928, #16879, closed without merging.\n\nThe Apache fixtures retain their image pins, configuration and Make names.\n\nOn master 2552c6787 this source conflicts in MODULE.bazel and tools/images.mk.",
+      "updatedAt": "2026-11-11T11:48:58+00:00",
+      "summary": "The rebased Apache source 31a34e576 is open as one mergeable commit. GitHub lists @zkoopmans and @carzh as requested reviewers. The previous export #16879 closed.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.",
       "followup": {
-        "owner": "buildifier_review",
-        "sourceHead": "f53888791f36f5ecf1996c08a840b706262b49e3",
-        "observedAt": "2026-11-11T11:32:25+00:00",
-        "disposition": "The source conflicts with current master in MODULE.bazel and tools/images.mk.",
-        "nextAction": "Rebase the Apache manifest and Make entries, preserving the other benchmark images.",
+        "owner": "Maintainer",
+        "sourceHead": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
+        "observedAt": "2026-11-11T11:48:58+00:00",
+        "disposition": "The published Apache source is mergeable. GitHub lists @zkoopmans and @carzh as requested reviewers. The previous export #16879 closed.",
+        "nextAction": "Await review of the mergeable Apache source.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/f53888791",
           "https://github.com/google/gvisor/pull/16466",
-          "https://github.com/google/gvisor/pull/16466#issuecomment-6706215297",
-          "https://github.com/google/gvisor/pull/16466",
-          "https://github.com/tamird/gvisor/compare/c1511cf4b...f7b488717",
-          "https://github.com/google/gvisor/pull/16879",
-          "https://github.com/google/gvisor/commit/2552c6787"
+          "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612"
         ],
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       },
       "evidence": [
+        {
+          "label": "Published Apache rebase 31a34e576",
+          "url": "https://github.com/tamird/gvisor/commit/31a34e576"
+        },
+        {
+          "label": "Eight image contexts, seven Make operations and archive comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612"
+        },
         {
           "label": "Current master with the adjacent image entries",
           "url": "https://github.com/google/gvisor/commit/2552c6787"
@@ -31613,10 +31642,11 @@
       },
       "refinement": {
         "before": {
-          "head": "f7b488717a001b18d48197e4cbcb0c35bd427e94"
+          "head": "f53888791f36f5ecf1996c08a840b706262b49e3"
         },
         "after": {
-          "head": "f53888791f36f5ecf1996c08a840b706262b49e3"
+          "head": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
+          "base": "2552c678794e048487e1d18e9c81729b67fc119a"
         }
       }
     },
@@ -39295,12 +39325,16 @@
       "repo": "google/gvisor",
       "number": 16663,
       "ref": "review/buildifier-native-diff",
-      "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-      "title": "Use the registered Buildifier binary for source lint",
+      "head": "045005811630722969d77c706fb368b469201863",
+      "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "The published PR registers the Buildifier binary. The amendment runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.",
+      "summary": "Published 045005811 and answered Milan on the original thread. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.",
       "evidence": [
+        {
+          "label": "Reply on Milan’s original formatting-hint thread",
+          "url": "https://github.com/google/gvisor/pull/16663#discussion_r4537464299"
+        },
         {
           "label": "629 Starlark and 486 C/C++ files, both repair commands, separate module-docstring control",
           "url": "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962"
@@ -39459,18 +39493,20 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-11T11:29:35+00:00",
+      "updatedAt": "2026-11-11T11:48:58+00:00",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-11-11T11:29:35+00:00",
-        "disposition": "The exact Linux check on 045005811 passed with the full manifest. The formatter repaired the seeded file and the next check passed. A missing module docstring still produced its own warning.",
-        "nextAction": "Review the full amendment and the reply to Milan.",
+        "owner": "Maintainer",
+        "sourceHead": "045005811630722969d77c706fb368b469201863",
+        "observedAt": "2026-11-11T11:48:58+00:00",
+        "disposition": "The published revision is mergeable. Milan’s CHANGES_REQUESTED review names 1dac5af96, and the reply on his thread points to the revision.",
+        "nextAction": "Await maintainer review of 045005811.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16663#discussion_r4537464299",
           "https://github.com/google/gvisor/pull/16663#discussion_r4534723342",
           "https://github.com/tamird/gvisor/commit/045005811",
           "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962"
-        ]
+        ],
+        "mergeable": "MERGEABLE"
       },
       "refinement": {
         "before": {
@@ -39480,18 +39516,24 @@
           "head": "045005811630722969d77c706fb368b469201863"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "head": "045005811630722969d77c706fb368b469201863",
-        "url": "https://github.com/tamird/gvisor/commit/045005811",
-        "requestedAt": "2026-11-11T11:29:35+00:00",
-        "title": "Run Buildifier and cpplint as Bazel actions",
-        "summary": "Publish 045005811 on #16663 and reply to Milan? The public PR and previous fork proposal are compared below.",
-        "body": "The published PR registers the Buildifier binary. The amendment runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nOn Linux, the clean actions matched all 629 Starlark and 486 C/C++ inputs. The formatter fixed a misformatted file and a new check passed. A separate missing module docstring still failed lint.\n\nFrom the published PR:\ngit -C ~/code/gvisor range-diff --creation-factor=999 1dac5af96^! 045005811^!\n\nFrom the previous author proposal:\ngit -C ~/code/gvisor range-diff --creation-factor=999 7a38c0e2c^! 045005811^!",
-        "replyBody": "A formatting failure now prints `bazel run //tools/lint:format` and `make lint-fix`. I checked that the Bazel command fixed a misformatted file and that the next check passed.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+          "head": "045005811630722969d77c706fb368b469201863",
+          "url": "https://github.com/tamird/gvisor/commit/045005811",
+          "requestedAt": "2026-11-11T11:29:35+00:00",
+          "title": "Run Buildifier and cpplint as Bazel actions",
+          "summary": "Publish 045005811 on #16663 and reply to Milan? The public PR and previous fork proposal are compared below.",
+          "body": "The published PR registers the Buildifier binary. The amendment runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nOn Linux, the clean actions matched all 629 Starlark and 486 C/C++ inputs. The formatter fixed a misformatted file and a new check passed. A separate missing module docstring still failed lint.\n\nFrom the published PR:\ngit -C ~/code/gvisor range-diff --creation-factor=999 1dac5af96^! 045005811^!\n\nFrom the previous author proposal:\ngit -C ~/code/gvisor range-diff --creation-factor=999 7a38c0e2c^! 045005811^!",
+          "replyBody": "A formatting failure now prints `bazel run //tools/lint:format` and `make lint-fix`. I checked that the Bazel command fixed a misformatted file and that the next check passed.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T11:48:58+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16663#discussion_r4537464299",
+          "note": "The single commit is published. Milan received the approved response on the original inline thread."
+        }
+      ]
     },
     {
       "id": "pr:16664",
@@ -99616,7 +99658,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "Contributor",
-      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "updatedAt": "2026-11-11T11:48:58+00:00",
       "summary": "The Node 22.2.0 test tick-processor/test-tick-processor-preprocess-flag timed out on #17425 (040ae629f) and #17428 (aa0152a6a). The Node target passed on each same-head retry.",
       "findings": [
         {
@@ -99765,8 +99807,8 @@
         "head": "3fef4a81d86844a359984c1b070b3a680665b7eb",
         "title": "Submit the signed-off Node pull request",
         "summary": "Tamir signed off the approved change. Open the pull request from the prepared branch.",
-        "body": "Commit 3fef4a81d carries Tamir’s DCO sign-off and the approved helper change on current Node main. Use the comparison to create the pull request on nodejs/node.",
-        "url": "https://github.com/nodejs/node/compare/main...tamird:node:test-tick-processor-retry-flags?expand=1",
+        "body": "The prepared pull request includes the reviewed title, the Linux retry comparison and the AI attribution. Commit 3fef4a81d carries Tamir’s DCO sign-off.",
+        "url": "https://github.com/nodejs/node/compare/main...tamird:node:test-tick-processor-retry-flags?expand=1&title=test%3A+preserve+tick+processor+flags+on+retry&body=The+%60test-tick-processor-preprocess-flag%60+test+expects+JSON+from+%60--prof-process+--preprocess%60.+When+the+first+profile+fails+to+match%2C+the+retry+drops+%60--preprocess%60+and+produces+a+text+report+that+cannot+match+the+opening+brace.+Pass+the+original+flags+on+each+attempt.%0A%0AOn+Linux+with+Node+v22.2.0%2C+forcing+the+first+match+to+fail+produced+a+text+report+on+retry.+With+the+flags+preserved%2C+the+second+profile+was+JSON+and+the+test+passed.+Two+gVisor+CI+runs+timed+out+in+this+test.+Neither+recorded+the+first+profile.%0A%0AAssisted-by%3A+Codex",
         "policyURL": "https://github.com/nodejs/node/blob/2336a1f00/doc/contributing/ai-guidelines.md#L13-L38"
       }
     },
