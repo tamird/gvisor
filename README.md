@@ -1048,6 +1048,12 @@ and commit remain on the fork and its surviving branches cover the entire
 local reflog. Checked-out branches, open PRs, active workflows, work-map
 branch links and divergent copies stay in place.
 
+Use `--merged-only` to check merged source branches without collecting old CI
+runs. A merged source branch can retire after seven days if its exact fork
+tip is on gVisor master. The operator verifies the original upstream PR and
+checks for open PRs using the same fork branch. Historical cards keep their
+commit links. A command or published link that needs the branch keeps it.
+
 The command prints an archive commit. `git show <archive>:refs.tsv` lists
 `local` or `fork`, the original name and its full commit. Restore a local row
 with `git update-ref refs/heads/<name> <oid> 0000000000000000000000000000000000000000`.

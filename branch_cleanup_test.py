@@ -1,5 +1,6 @@
 import datetime as dt
 import contextlib
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -11,6 +12,82 @@ import branch_cleanup as cleanup
 
 
 class BranchCleanupTest(unittest.TestCase):
+    def test_native_merged_source_requires_exact_reachable_and_idle_fork_ref(self):
+        name, tip, moved = "topic", "a" * 40, "b" * 40
+        row = {"ref": name, "head": tip, "number": 82, "status": "merged", "headRepo": cleanup.FORK}
+        pr = {"number": 82, "state": "MERGED", "headRefName": name, "headRefOid": tip,
+              "baseRepository": {"nameWithOwner": cleanup.UPSTREAM}, "headRepository": {"nameWithOwner": cleanup.FORK}}
+        connection = {"pageInfo": {"hasNextPage": False}, "nodes": [pr]}
+        ref = {"target": {"oid": tip}, "associatedPullRequests": connection}
+
+        def native(*args):
+            self.assertIn("refs/heads/topic", args[-1])
+            return json.dumps({"data": {"repository": {"b0": ref}}}).encode()
+
+        with mock.patch.object(cleanup, "git", return_value=tip.encode()), mock.patch.object(cleanup, "command", side_effect=native) as api:
+            self.assertEqual(cleanup.live_merged_sources([row], {name: tip}, {}, tip), {name: 82})
+            for fork, local in [({name: moved}, {}), ({name: tip}, {name: moved}), ({}, {})]:
+                api.reset_mock()
+                self.assertFalse(cleanup.live_merged_sources([row], fork, local, tip))
+                api.assert_not_called()
+            ref["target"]["oid"] = moved
+            self.assertFalse(cleanup.live_merged_sources([row], {name: tip}, {}, tip))
+            ref["target"]["oid"] = tip
+            pr["headRefOid"] = moved
+            self.assertFalse(cleanup.live_merged_sources([row], {name: tip}, {}, tip))
+            pr["headRefOid"] = tip
+            connection["nodes"].append({**pr, "state": "OPEN", "baseRepository": {"nameWithOwner": "other/gvisor"}})
+            self.assertFalse(cleanup.live_merged_sources([row], {name: tip}, {}, tip))
+            connection["nodes"].pop()
+            connection["pageInfo"]["hasNextPage"] = True
+            self.assertFalse(cleanup.live_merged_sources([row], {name: tip}, {}, tip))
+        with mock.patch.object(cleanup, "git", return_value=moved.encode()), mock.patch.object(cleanup, "command") as api:
+            self.assertFalse(cleanup.live_merged_sources([row], {name: tip}, {}, moved))
+            api.assert_not_called()
+
+    def test_merged_card_identity_survives_retiring_its_ref(self):
+        name, previous = "review/archive", "a" * 40
+        merged = {name: 82, "left": 83, "right": 84}
+        branch = {"id": "branch:" + name, "type": "branch", "repo": cleanup.FORK, "ref": name,
+                  "inactive": True, "head": previous, "url": f"https://github.com/{cleanup.FORK}/commit/{previous}"}
+        source = {"id": "pr:82", "type": "pr", "ref": name, "number": 82}
+        registry = {"nodes": [branch, source], "edges": [{"from": source["id"], "to": branch["id"]}]}
+        snapshot = {"prs": [], "oldReview": "https://github.com/google/gvisor/compare/tamird:left...tamird:right"}
+        names, tips = set(), set()
+        cleanup.tracker_metadata(registry, snapshot, merged, names, tips)
+        self.assertEqual(names, {"left", "right"})
+        self.assertIn(previous, tips)
+        unconfirmed = {"status": "merged", "headRepo": cleanup.FORK, "ref": "moved"}
+        cleanup.tracker_metadata(registry, {"prs": [unconfirmed]}, merged, names, set())
+        self.assertIn("moved", names)
+        for command in [f"git log main...{name}", f'git -C "repo" diff {name}..main']:
+            names.clear()
+            cleanup.tracker_metadata(registry, {**snapshot, "archivedSummary": "Run `" + command + "`."}, merged, names, set())
+            self.assertIn(name, names)
+        for action in [{"branch": name}, {"command": "git cherry-pick origin/" + name}]:
+            with self.subTest(action=action):
+                names.clear()
+                cleanup.tracker_metadata({**registry, "investigations": [action]}, snapshot, merged, names, set())
+                self.assertIn(name, names)
+        discussion = {"status": "open", "feedback": {"items": [{"body": "git switch " + name}]}}
+        for key in ["prs", "reviewPRs"]:
+            names.clear()
+            cleanup.tracker_metadata(registry, {**snapshot, key: [discussion]}, merged, names, set())
+            self.assertIn(name, names)
+        names.clear()
+        issue = {"githubState": "open", "comments": [{"body": "git switch " + name}]}
+        cleanup.tracker_metadata(registry, {**snapshot, "issues": {"issue:1": issue}}, merged, names, set())
+        self.assertIn(name, names)
+        branch["additionalReviews"] = [{"status": "pending"}]
+        names.clear()
+        cleanup.tracker_metadata(registry, snapshot, merged, names, set())
+        self.assertIn(name, names)
+        del branch["additionalReviews"]
+        branch["followup"] = {"nextAction": "Run git log origin/" + name}
+        names.clear()
+        cleanup.tracker_metadata(registry, snapshot, merged, names, set())
+        self.assertIn(name, names)
+
     def test_completed_run_waits_after_latest_attempt_on_branch(self):
         now = dt.datetime.fromisoformat("2026-11-11T12:00:00+00:00")
         runs = [
@@ -30,8 +107,11 @@ class BranchCleanupTest(unittest.TestCase):
         self.assertEqual(cleanup.linked_branches(
             "https://github.com/tamird/gvisor/blob/qualification/a/file.go "
             "https://github.com/tamird/gvisor/compare/base-name...tip/with-slash "
-            "https://github.com/google/gvisor/compare/master...tamird:gvisor:other/tip"
-        ), {"qualification", "qualification/a", "qualification/a/file.go", "base-name", "tip/with-slash", "other/tip"})
+            "https://github.com/google/gvisor/compare/master...tamird:gvisor:other/tip "
+            "https://raw.githubusercontent.com/tamird/gvisor/refs/heads/raw-name/BUILD "
+            "https://github.com/tamird/gvisor/archive/refs/heads/archived/name.tar.gz"
+        ), {"qualification", "qualification/a", "qualification/a/file.go", "base-name", "tip/with-slash", "other/tip",
+            "raw-name", "raw-name/BUILD", "archived/name"})
 
     def test_payload_rejects_mixed_product_and_validation_changes(self):
         with mock.patch.object(cleanup, "git", return_value=(
@@ -57,6 +137,9 @@ class BranchCleanupTest(unittest.TestCase):
                     run("config", "user.name", "Fixture")
                     run("config", "user.email", "fixture@example.com")
                     run("config", "core.logAllRefUpdates", "true")
+                    run("config", "branch.personal.remote", "private")
+                    self.assertEqual(cleanup.local_activity({}, dt.datetime.now(dt.timezone.utc)), set())
+                    self.assertEqual(cleanup.local_activity({"personal": "absent"}, dt.datetime.now(dt.timezone.utc)), {"personal"})
                     run("remote", "add", "origin", str(dst))
                     tree = run("mktree").decode().strip()
                     two = run("commit-tree", tree, "-m", "upstream").decode().strip()
@@ -69,6 +152,12 @@ class BranchCleanupTest(unittest.TestCase):
                     ci_tree = run("mktree", data=cleanup.lines([source_line, f"040000 tree {tests}\ttest"])).decode().strip()
                     descendant = run("commit-tree", ci_tree, "-p", one, "-m", "first run").decode().strip()
                     cousin = run("commit-tree", ci_tree, "-p", one, "-m", "second run").decode().strip()
+                    run("update-ref", "refs/heads/merged", one)
+                    run("update-ref", "refs/heads/merged", two, one)
+                    merged = [cleanup.Candidate("local", "merged", two, cleanup.MERGED_SOURCE)]
+                    self.assertEqual(cleanup.unpublished_merged_locals(merged, {two}), {"merged"})
+                    self.assertEqual(cleanup.unpublished_merged_locals(merged, {descendant}), set())
+                    run("update-ref", "-d", "refs/heads/merged", two)
                     fork = {"qualification/first": descendant, "qualification/second": cousin, "master": two}
                     dropping = {"qualification/first", "qualification/second"}
                     witness = cleanup.evidence_keepers(fork, dropping, two, {one[:9]})
@@ -93,6 +182,8 @@ class BranchCleanupTest(unittest.TestCase):
                         self.assertEqual({(c.scope, c.name, c.reason) for c in cleanup.plan(7)},
                                          {(scope, n, reason) for n in dropping - witness for scope, reason in (
                                              ("fork", cleanup.COMPLETED_CI), ("local", cleanup.LOCAL_CI))})
+                        with mock.patch.object(cleanup, "completed_runs", side_effect=AssertionError):
+                            self.assertEqual(cleanup.plan(7, merged_only=True), [])
                     for branch in dropping:
                         run("update-ref", "-d", cleanup.HEADS + branch, fork[branch])
                     run("update-ref", "refs/heads/master", descendant)

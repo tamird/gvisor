@@ -23,6 +23,7 @@ MANAGED = DISPOSABLE + ("proposal/", "research/", "review/", "integration/",
 PAYLOAD = (".github/workflows/", ".github/qualification/", "test/rbe/")
 ACTIVE = ("queued", "in_progress", "waiting", "requested", "pending")
 FORK_MIRROR = "identical fork branch retained"
+MERGED_SOURCE = "merged PR at exact upstream-reachable tip"
 COMPLETED_CI = "retired CI payload with a completed run at the exact tip"
 LOCAL_CI = "local copy of retiring completed CI branch"
 CI_IDLE = dt.timedelta(days=1)
@@ -96,7 +97,97 @@ def live_protections() -> tuple[set[str], set[str]]:
     return names, tips
 
 
-def tracker_protections(pages: str, names: set[str], tips: set[str]) -> set[tuple[str, str]]:
+def live_merged_sources(rows: list[dict], fork: dict[str, str], local: dict[str, str], upstream: str) -> dict[str, int]:
+    # A Copybara import may have landed an earlier revision. Confirm the
+    # actual source PR and fork ref before consuming its historical metadata.
+    ancestors = set(git("rev-list", upstream).decode().splitlines())
+    candidates = {row["ref"]: row for row in rows if row.get("repo", UPSTREAM) == UPSTREAM
+                  and row.get("headRepo") == FORK and row["status"] == "merged"
+                  and fork.get(row["ref"]) == row["head"] and row["head"] in ancestors
+                  and local.get(row["ref"], row["head"]) == row["head"]}
+    confirmed = {}
+    for batch in chunks(sorted(candidates), 40):
+        fields = []
+        for i, name in enumerate(batch):
+            ref = json.dumps(HEADS + name)
+            fields.append(f"b{i}:ref(qualifiedName:{ref})" + """{target{oid}
+                associatedPullRequests(first:10,states:[OPEN,MERGED]){pageInfo{hasNextPage}
+                    nodes{number state headRefName headRefOid headRepository{nameWithOwner} baseRepository{nameWithOwner}}}}""")
+        query = 'query{repository(owner:"tamird",name:"gvisor"){' + " ".join(fields) + "}}"
+        result = json.loads(command("gh", "api", "--hostname", "github.com", "graphql", "-f", "query=" + query))
+        for i, name in enumerate(batch):
+            row, ref = candidates[name], result["data"]["repository"][f"b{i}"]
+            if not ref or ref["target"]["oid"] != row["head"]:
+                continue
+            prs = ref["associatedPullRequests"]
+            if prs["pageInfo"]["hasNextPage"] or any(pr["state"] == "OPEN" for pr in prs["nodes"]):
+                continue
+            if any(pr["number"] == row["number"] and pr["state"] == "MERGED" and pr["headRefName"] == name
+                   and pr["headRefOid"] == row["head"] and (pr["headRepository"] or {}).get("nameWithOwner") == FORK
+                   and (pr["baseRepository"] or {}).get("nameWithOwner") == UPSTREAM for pr in prs["nodes"]):
+                confirmed[name] = row["number"]
+    return confirmed
+
+
+def tracker_metadata(registry: dict, snapshot: dict, merged: dict[str, int], names: set[str], tips: set[str]) -> None:
+    handoffs = {key: value for key, value in snapshot.items() if key.endswith("Handoff")
+                or key in {"incomingReviewRequests", "ciFlakes", "reviewOutreach"}}
+    # Branch ids in edges link to tracker cards. They do not open a Git ref.
+    active = [{k: v for k, v in registry.items() if k not in {"nodes", "edges"}}, handoffs,
+              [{k: v for k, v in edge.items() if k not in {"from", "to"}} for edge in registry.get("edges", [])]]
+    for node in registry["nodes"]:
+        name = node.get("ref", "")
+        number = merged.get(name)
+        pr_url = f"https://github.com/{UPSTREAM}/pull/{number}"
+        links = [link.get("url") if isinstance(link, dict) else link for link in node.get("evidence", [])]
+        linked = pr_url == node.get("url") or pr_url in links
+        source = node["type"] == "pr" and node.get("repo", UPSTREAM) == UPSTREAM and node.get("number") == number
+        published = node["type"] == "branch" and node.get("repo") == FORK and (
+            node.get("inactive") or linked and node.get("status") in {"Published", "Delivered"})
+        pending = any(d and d.get("status") == "pending"
+                      for d in [node.get("contributorReview"), *node.get("additionalReviews", [])])
+        terminal = number and (source or published) and not pending
+        if terminal:
+            active.extend([(node.get("followup") or {}).get("nextAction"), node.get("refinement")])
+        else:
+            active.append(node)
+            if name:
+                names.add(name)
+        if node["id"].startswith("branch:"):
+            branch_id = node["id"].removeprefix("branch:")
+            if not terminal or branch_id != name:
+                names.add(branch_id)
+    for row in snapshot["prs"]:
+        if row["status"] in {"open", "draft"} and row.get("headRepo") == FORK:
+            names.add(row["ref"])
+            tips.add(row["head"])
+        if row["status"] == "merged" and row.get("headRepo") == FORK and row["ref"] not in merged:
+            names.add(row["ref"])
+    active.extend(row.get("feedback") for row in [*snapshot["prs"], *snapshot.get("reviewPRs", [])]
+                  if row["status"] in {"open", "draft"})
+    active.extend(row for row in snapshot.get("issues", {}).values() if row.get("githubState") == "open")
+
+    blob = unquote(json.dumps([registry, handoffs]))
+    managed_refs = re.findall(r"\b((?:qualification|diagnostics|research|review|proposal|integration|tracker|workmap|rebase|delivery)/[\w./-]+)", blob)
+    names.update(set(managed_refs) - merged.keys())
+    # An active command such as `git switch a-merged-branch` still needs
+    # the name even when the commit itself is safely on upstream master.
+    all_text = unquote(json.dumps([registry, snapshot]))
+    commands = re.findall(r'\bgit[ \t]+[^"\n`]*', all_text.replace(r'\"', "'").replace(r"\n", "\n"))
+    active_text = unquote(json.dumps(active)) + "\n" + "\n".join(commands)
+    for name in merged:
+        if re.search(r"(?:^|[^\w.-]|\.\.)" + re.escape(name) + r"(?=$|[^\w./-]|\.\.)", active_text):
+            names.add(name)
+    # All links and previous commit citations survive, including those on
+    # delivered cards and in older GitHub conversations.
+    names.update(linked_branches(all_text))
+    tips.update(re.findall(r"(?<![A-Za-z0-9])[a-f0-9]{7,40}(?![A-Za-z0-9])", all_text))
+
+
+def tracker_protections(fork: dict[str, str], local: dict[str, str], upstream: str,
+                        names: set[str], tips: set[str]) -> set[tuple[str, str]]:
+    pages = fork["gh-pages"]
+
     def document(filename: str) -> dict:
         # Prefer the immutable local objects; gh-pages may advance between
         # fetches. Both fallback reads use the same observed fork commit.
@@ -109,38 +200,15 @@ def tracker_protections(pages: str, names: set[str], tips: set[str]) -> set[tupl
     if (not registry["nodes"] or registry["meta"]["repo"] != UPSTREAM
             or registry["meta"]["updatedAt"] != snapshot["registryDate"]):
         raise ValueError("unexpected or unpaired work map registry and snapshot")
-    prs = {(row.get("repo", UPSTREAM), row["number"]): row for row in snapshot["prs"]}
-    merged = {(row["ref"], row["head"]) for row in prs.values()
-              if row.get("headRepo") == FORK and row["status"] == "merged"}
-    for node in registry["nodes"]:
-        source = prs.get((node.get("repo", UPSTREAM), node.get("number")))
-        if node.get("ref") and not (source and (node["ref"], source["head"]) in merged):
-            names.add(node["ref"])
-        if node["id"].startswith("branch:"):
-            names.add(node["id"].removeprefix("branch:"))
-    for row in prs.values():
-        if row["status"] == "open" and row.get("headRepo") == FORK:
-            names.add(row["ref"])
-            tips.add(row["head"])
-    # A tree URL needs its branch name to survive. Kept commit/compare links
-    # must remain reachable on the fork, including historical review evidence.
-    handoffs = {key: value for key, value in snapshot.items()
-                if key.endswith("Handoff") or key in {"incomingReviewRequests", "ciFlakes", "reviewOutreach"}}
-    blob = unquote(json.dumps([registry, handoffs]))
-    names.update(re.findall(r"(?:github\.com/tamird/gvisor/tree/|\b)((?:qualification|diagnostics|research|review|proposal|integration|tracker|workmap|rebase|delivery)/[\w./-]+)", blob))
-    for match in re.finditer(r"github\.com/(?:tamird|google)/gvisor/(?:commit|compare|blob)/([a-f0-9]{7,40})(?:\.{2,3}([a-f0-9]{7,40}))?", blob):
-        tips.update(part for part in match.groups() if part)
-    # Prior review heads, inline replies and qualification receipts may live
-    # only in the GitHub snapshot. Their commits must stay reachable even
-    # when the last published tip is several commits ahead of the citation.
-    all_text = unquote(json.dumps([registry, snapshot]))
-    names.update(linked_branches(all_text))
-    tips.update(re.findall(r"(?<![A-Za-z0-9])[a-f0-9]{7,40}(?![A-Za-z0-9])", all_text))
-    return merged
+    merged = live_merged_sources(snapshot["prs"], fork, local, upstream)
+    tracker_metadata(registry, snapshot, merged, names, tips)
+    return {(name, fork[name]) for name in merged}
 
 
 def linked_branches(text: str) -> set[str]:
-    names = set()
+    names = set(re.findall(r'github\.com/tamird/gvisor/archive/refs/heads/([^\s"\\<>?#)]+?)\.(?:tar\.gz|zip)(?=[\s"\\<>?#)]|$)', text))
+    text = re.sub(r"(?:raw\.githubusercontent\.com/tamird/gvisor/|github\.com/tamird/gvisor/raw/)(?:refs/heads/)?",
+                  "github.com/tamird/gvisor/blob/", text)
     for owner, route, target in re.findall(
             r"github\.com/(tamird|google)/gvisor/(tree|blob|commits|compare)/([^\s\"\\<>?#)]+)", text):
         if route == "compare":
@@ -166,7 +234,7 @@ def local_activity(refs: dict[str, str], cutoff: dt.datetime) -> set[str]:
     for line in configs.stdout.decode().splitlines():
         key, _, value = line.partition(" ")
         name, _, kind = key.removeprefix("branch.").rpartition(".")
-        if (kind, value) not in {("remote", "origin"), ("merge", HEADS + name)}:
+        if name in refs and (kind, value) not in {("remote", "origin"), ("merge", HEADS + name)}:
             protected.add(name)
     for name in refs.keys() - protected:
         log = common / "logs" / "refs" / "heads" / name
@@ -263,6 +331,11 @@ class Candidate:
     reason: str
 
 
+def unpublished_merged_locals(items: list[Candidate], surviving: set[str]) -> set[str]:
+    local = {item.name: item.oid for item in items if item.scope == "local" and item.reason == MERGED_SOURCE}
+    return local.keys() - published_reflogs(local, surviving)
+
+
 def evidence_keepers(fork: dict[str, str], dropping: set[str], upstream: str, evidence: set[str]) -> set[str]:
     """Retain a public branch for each citation and each non-CI source commit."""
     if not dropping:
@@ -310,7 +383,7 @@ def published_reflogs(mirrors: dict[str, str], surviving: set[str]) -> set[str]:
     return published
 
 
-def plan(retention: int) -> list[Candidate]:
+def plan(retention: int, *, merged_only: bool = False) -> list[Candidate]:
     check_origin()
     fork = remote_refs("origin")
     upstream = public_bases(fork)
@@ -318,7 +391,7 @@ def plan(retention: int) -> list[Candidate]:
                                                  HEADS).decode().splitlines())
     names, tips = live_protections()
     evidence = set()
-    merged_prs = tracker_protections(fork["gh-pages"], names, evidence)
+    merged_prs = tracker_protections(fork, local, upstream, names, evidence)
     names.update({"master", "main", "gh-pages", "go"})
     for repo in (FORK, UPSTREAM):
         names.update(api(f"repos/{repo}", "[.default_branch]"))
@@ -341,6 +414,8 @@ def plan(retention: int) -> list[Candidate]:
             stamp, author, _ = data[oid]
             if author != owner:
                 continue
+            if merged_only and ((name, oid) not in merged_prs or stamp > cutoff.timestamp()):
+                continue
             if stamp <= cutoff.timestamp():
                 if scope == "local" and fork.get(name) == oid:
                     mirrors[name] = oid
@@ -362,9 +437,10 @@ def plan(retention: int) -> list[Candidate]:
         if early:
             pending.append((scope, name, oid))
             continue
+        if (name, oid) in merged_prs:
+            candidates.append(Candidate(scope, name, oid, MERGED_SOURCE))
+            continue
         if not name.startswith(MANAGED):
-            if oid in ancestors and (name, oid) in merged_prs:
-                candidates.append(Candidate(scope, name, oid, "merged PR at exact upstream-reachable tip"))
             continue
         if oid in ancestors or oid in retained[scope]:
             candidates.append(Candidate(scope, name, oid, "reachable from a published base" if oid in ancestors else "retained branch has identical tip"))
@@ -398,7 +474,8 @@ def plan(retention: int) -> list[Candidate]:
     surviving = {oid for name, oid in fork.items() if name not in dropping}
     for name in published_reflogs(mirrors, surviving):
         candidates.append(Candidate("local", name, mirrors[name], FORK_MIRROR))
-    return sorted(candidates)
+    unpublished = unpublished_merged_locals(candidates, surviving | {upstream})
+    return sorted(item for item in candidates if item.scope != "local" or item.name not in unpublished)
 
 
 def archive(items: list[Candidate]) -> str:
@@ -481,12 +558,12 @@ def apply(items: list[Candidate], retention: int) -> None:
     upstream = public_bases(fork)
     names, tips = live_protections()
     evidence = set()
-    tracker_protections(fork["gh-pages"], names, evidence)
     # A checkout may have retained a different version of a planned fork
     # branch since the plan was constructed.
     local = dict(row.split("\t") for row in git("for-each-ref", "--format=%(refname:lstrip=2)%09%(objectname)",
                                                  HEADS).decode().splitlines())
     names.update(name for name in local.keys() & fork.keys() if local[name] != fork[name])
+    merged_prs = tracker_protections(fork, local, upstream, names, evidence)
     evidence_lengths = {len(oid) for oid in evidence}
     lengths = {len(oid) for oid in tips if oid}
     now = dt.datetime.now(dt.timezone.utc)
@@ -502,10 +579,13 @@ def apply(items: list[Candidate], retention: int) -> None:
     for item in items:
         if (item.name in names or item.scope == "local" and item.name in recent or any(item.oid[:length] in tips for length in lengths)
                 or item.scope == "fork" and fork.get(item.name) != item.oid
-                or item.reason not in {FORK_MIRROR, "reachable from a published base", "merged PR at exact upstream-reachable tip"}
+                or item.reason == MERGED_SOURCE and (item.name, item.oid) not in merged_prs
+                or item.reason not in {FORK_MIRROR, "reachable from a published base", MERGED_SOURCE}
                 and any(item.oid[:length] in evidence for length in evidence_lengths)):
             raise ValueError(f"{item.name} changed or became active; rerun the plan")
     dropping = {item.name for item in items if item.scope == "fork"}
+    if unpublished_merged_locals(items, {oid for name, oid in fork.items() if name not in dropping} | {upstream}):
+        raise ValueError("a merged branch has unpublished local history; rerun the plan")
     if evidence_keepers(fork, dropping, upstream, evidence):
         raise ValueError("a candidate now contains the only published copy of source or cited work; rerun the plan")
     ref = archive(items)
@@ -516,6 +596,8 @@ def apply(items: list[Candidate], retention: int) -> None:
     for scope in ("fork", "local"):
         if scope == "local":
             fork = remote_refs("origin")
+            if unpublished_merged_locals(items, set(fork.values()) | {upstream}):
+                raise ValueError("a merged branch has unpublished local history; rerun the plan")
             if (local_ci.keys() & fork.keys()
                     or published_reflogs(local_ci, set(fork.values()) | {ref, upstream}) != local_ci.keys()):
                 raise ValueError("a paired CI branch or its archived history changed; rerun the plan")
@@ -538,12 +620,13 @@ def apply(items: list[Candidate], retention: int) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", help="archive and delete the freshly planned branches")
+    parser.add_argument("--merged-only", action="store_true", help="check only merged source branches already on upstream master")
     parser.add_argument("--retention-days", type=int, default=7,
                         help="minimum age in days, except completed disposable CI (default 7)")
     args = parser.parse_args()
     if args.retention_days < 7:
         parser.error("keep at least seven days of recent branches")
-    items = plan(args.retention_days)
+    items = plan(args.retention_days, merged_only=args.merged_only)
     for item in items:
         print(f"{item.scope}\t{item.name}\t{item.oid}\t{item.reason}")
     print(f"{len(items)} eligible refs", file=sys.stderr)
