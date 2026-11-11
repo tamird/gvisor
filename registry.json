@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T17:48:55+00:00",
+    "updatedAt": "2026-11-11T18:03:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5218,29 +5218,65 @@
       "group": "bazel",
       "status": "open",
       "summary": "The requested post-#16046 rebase is published at 886a52af8c85 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nOpened ready for review as PR #15368 after explicit user approval, at fd0194dbcd3b64e2cc5ffb31c32c24698ca54390. The code tree equals approved source 9699d635f; only the description of pre-change behavior was reworded. Root verified the exact body, master base and MERGEABLE state. Existing source-specific validation is reused; no new runtime is claimed.\n\nEarlier source and validation evidence:\n\nStanding disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nCurrent public, clean and tracked head d257959b1a9257f1caed5a8a0c3d6a8c956abdf8 is one commit on upstream d3d566ad19. Independent review verifies the complete patch, all three file blobs and message are byte-identical to prior a04bf42405f376e922f9956b1e3d48b653565b33, retained by the local recovery ref errno-safe-delete-noexcept-before-refresh. The correction includes noexcept delete operators and throwing-new/new_handler behavior with owning tests. Earlier before/after validation failed before and passed all three cases after, with actual remote actions reviewed; the mechanical refresh did not rerun runtime. Contributor review has been requested before any upstream PR. The compiler successor currently contains only the older noexcept prerequisite as 71fb69959 (original 1f92a05f9), not the full allocation-behavior change.",
-      "head": "886a52af8c85864aa628d04550ce5508dd91e8bc",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "head": "403195966ebb7900501ebb8ef40fa859c12fe71c",
+      "updatedAt": "2026-11-11T18:03:07+00:00",
       "number": 15368,
       "followup": {
-        "disposition": "awaiting upstream review or import",
-        "owner": "external_sweeps",
-        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
+        "owner": "Contributor",
+        "sourceHead": "403195966ebb7900501ebb8ef40fa859c12fe71c",
+        "observedAt": "2026-11-11T18:03:07+00:00",
+        "disposition": "The contributor source passed formatting. Copybara export #17430 rewrote the allocator test and its public lint failed.",
+        "nextAction": "Review f44a549ae. If #17430 lands first, check the landed files before preparing a follow-up.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15368",
-          "https://github.com/tamird/gvisor/commit/886a52af8c85864aa628d04550ce5508dd91e8bc"
-        ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
-        "sourceHead": "886a52af8c85864aa628d04550ce5508dd91e8bc",
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00"
+          "https://github.com/google/gvisor/pull/17430",
+          "https://github.com/google/gvisor/actions/runs/42918605079/job/130187378168",
+          "https://github.com/tamird/gvisor/commit/f44a549ae",
+          "https://github.com/tamird/gvisor/actions/runs/43073329270/job/130706670410",
+          "https://github.com/tamird/gvisor/actions/runs/43073329270/artifacts/13878673690"
+        ]
       },
       "evidence": [
+        {
+          "label": "Matching export #17430",
+          "url": "https://github.com/google/gvisor/pull/17430"
+        },
+        {
+          "label": "Original import lint failure",
+          "url": "https://github.com/google/gvisor/actions/runs/42918605079/job/130187378168"
+        },
+        {
+          "label": "Clang-format 20 and 23 byte comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43073329270/job/130706670410"
+        },
+        {
+          "label": "Three native allocator tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43073329270/artifacts/13878673690"
+        },
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/886a52af8c85864aa628d04550ce5508dd91e8bc"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "403195966ebb7900501ebb8ef40fa859c12fe71c"
+        },
+        "after": {
+          "head": "f44a549ae6a4832e3766d41ab3e92687967ba8a8",
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "requestedAt": "2026-11-11T18:03:07+00:00",
+        "head": "f44a549ae6a4832e3766d41ab3e92687967ba8a8",
+        "baseHead": "403195966ebb7900501ebb8ef40fa859c12fe71c",
+        "url": "https://github.com/tamird/gvisor/commit/f44a549ae",
+        "title": "Preserve C++ allocation failure semantics",
+        "body": "The replacements introduced in edbc2af9f preserved errno after\nsuccessful allocation, but returned malloc's null result on failure.\nThrowing allocation functions must instead return storage or throw\nstd::bad_alloc [1]; callers can otherwise dereference null while\nexpecting allocation failure to throw.\n\nRestore the default allocation behavior: retry after a returning new\nhandler, throw when no handler is installed, and return storage for a\nsuccessful zero-size request. Preserve errno on success and mark the\ndelete replacements noexcept to match their standard exception\nspecification. The regression tests exercise scalar and array allocation\nthrough the replacement entry points, including bounded\nallocation-failure cases.\n\n[1]: https://eel.is/c++draft/new.delete.single",
+        "summary": "Publish f44a549ae on #15368 with the existing PR description? It moves the diagnostic name after the paired function pointers in the test table. Clang-format 20.1.8 and 23.1.1 produced identical bytes, and the three native allocator tests passed. If the existing export lands first, check what it delivered before opening a follow-up."
+      }
     },
     {
       "id": "pr:15435",
@@ -64454,9 +64490,33 @@
       "url": "https://github.com/google/gvisor/pull/17194",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T17:21:53+00:00",
+      "updatedAt": "2026-11-11T18:03:07+00:00",
       "summary": "A Sentry that applies capabilities without an exec can retain the proc umounter’s pidfd after the helper exits. The original hosted ARM64 test observed it on the fourth default Sentry repeat. Holding the helper’s Go process object reachable reproduced the extra pidfd on stock. The default Gofer passed. With cmd.Wait, both retained-object cases passed and the same child’s WithHandle returned os.ErrProcessDone after the wait. Without instrumentation, all ten Sentry and Gofer comparisons across five modes passed uncached on native ARM64 Linux 6.8.0-1070-azure with the private namespaces and seven runtime sidecars verified. The qualification put the runtime files from 5ca9588a6 on fixture e34a3859c. The proposal adds three ownership-comment lines to that tested source.",
       "evidence": [
+        {
+          "label": "Current export and its public checks",
+          "url": "https://github.com/google/gvisor/pull/17413"
+        },
+        {
+          "label": "Generated-Go job and status publication",
+          "url": "https://github.com/google/gvisor/actions/runs/42899250957/job/130120498696"
+        },
+        {
+          "label": "Workflow sets the go tests status",
+          "url": "https://github.com/google/gvisor/blob/6e196a28d/.github/workflows/go.yml#L68-L73"
+        },
+        {
+          "label": "Source archive mirror",
+          "url": "https://github.com/google/gvisor/pull/17311"
+        },
+        {
+          "label": "Cgroup-v1 integration timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54276#01a1c784-2099-41e7-8e92-2372a9bd8047"
+        },
+        {
+          "label": "Subsequent ptrace rollback",
+          "url": "https://github.com/google/gvisor/pull/17412"
+        },
         {
           "label": "Native ARM64 6.8.0-1070-azure, retained helper on both arms and all ten original posture cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/42378662487/artifacts/13577260754"
@@ -64494,14 +64554,18 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent",
         "sourceHead": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
-        "observedAt": "2026-11-07T17:21:53+00:00",
-        "disposition": "The approved change is on #17194 at c218182e1.",
-        "nextAction": "Follow #17194 for maintainer review and import.",
+        "observedAt": "2026-11-11T18:03:07+00:00",
+        "disposition": "Copybara export #17413 at 6e196a28d stopped while downloading tar.bzl 0.10.4 with HTTP 500. The same workflow then posted the failing go tests status without starting the Go build. #17311’s mirror served all 78,725 bytes with the registry checksum. In Buildkite #54276, eight integration targets hit 900 seconds. The cgroup-v1 job identified a leftover TestSudo container. This export predates the #17412 rollback. The other seven timeout locations and the private Buildkite failure are unconfirmed.",
+        "nextAction": "Follow the source and any updated export. Compare its Go fetch and integration jobs with this evidence. Preserve the existing source approval.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17194",
-          "https://github.com/tamird/gvisor/commit/c218182e1"
+          "https://github.com/google/gvisor/pull/17413",
+          "https://github.com/google/gvisor/actions/runs/42899250957/job/130120498696",
+          "https://github.com/google/gvisor/blob/6e196a28d/.github/workflows/go.yml#L68-L73",
+          "https://github.com/google/gvisor/pull/17311",
+          "https://buildkite.com/gvisor/pipeline/builds/54276#01a1c784-2099-41e7-8e92-2372a9bd8047",
+          "https://github.com/google/gvisor/pull/17412"
         ]
       },
       "number": 17194
@@ -78491,7 +78555,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "Go runtime suite investigation",
-      "updatedAt": "2026-11-11T17:44:03+00:00",
+      "updatedAt": "2026-11-11T18:03:07+00:00",
       "summary": "The proctor passes shell apostrophes directly to Go’s test-name matcher. Go 1.22.11 registers 2,525 on-disk cases. The runtime suite separately excludes the distribution test that would run them all.",
       "findings": [
         {
@@ -78523,10 +78587,23 @@
               "url": "https://github.com/golang/go/blob/go1.22.11/src/cmd/internal/testdir/testdir_test.go#L50-L96"
             }
           ]
+        },
+        {
+          "text": "On native Linux and stock gVisor systrap, the stock proctor returned success with zero subtests despite a deliberate error in a selected nested file. Dropping the quotes alone ran only the flat case. The corrected proctor ran exactly three cases, propagated the nested failure, then passed all three after that error was removed. Explicitly selecting the three malformed siblings failed all three.",
+          "evidence": [
+            {
+              "label": "Ten original native and systrap control logs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13880355745"
+            }
+          ]
         }
       ],
-      "nextStep": "Check that a deliberately failing selected file reaches the caller, that unselected siblings stay out, and that each of the 2,525 names has a recorded outcome across 51 systrap batches. Measure skips, failures and elapsed time before proposing the change.",
+      "nextStep": "Read the named outcomes, skips, failures and elapsed time across all 51 systrap batches before proposing the 2,525-file workload.",
       "evidence": [
+        {
+          "label": "Native and systrap positive and negative controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13880355745"
+        },
         {
           "label": "Go proctor arguments on master",
           "url": "https://github.com/google/gvisor/blob/2552c6787/test/runtimes/proctor/lib/go.go#L69-L105"
@@ -102450,5 +102527,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-11T17:48:55+00:00"
+  "updatedAt": "2026-11-11T18:03:07+00:00"
 }
