@@ -353,13 +353,12 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
             unedited = bool(item.get("createdAt") and item.get("updatedAt") == item["createdAt"])
             linked = followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
             claimed = bool(worker and (assigned and (observed or unedited) or observed and linked))
-            same_head = prior_record if prior_record and prior_record["head"] == pr["head"] else {}
             # A cold inventory may contain years of comments. Queue newly seen or
             # edited feedback, and carry forward the exact untriaged observation.
             last_scan = previous.get("checkedAt")
             fresh = changed and (key in prior or bool(last_scan and item.get("updatedAt")
                     and datetime.fromisoformat(item["updatedAt"]) > datetime.fromisoformat(last_scan)))
-            inspect = (not awaiting_author and not claimed and top_level_triage(item, same_head, fresh)
+            inspect = (not awaiting_author and not claimed and top_level_triage(item, prior_record or {}, fresh)
                        and not any(reply.get("kind") == "reply" and reply.get("url") == item["url"]
                                    and reply.get("postedURL") and reply.get("at")
                                    and datetime.fromisoformat(reply["at"]) >= datetime.fromisoformat(item["updatedAt"])
@@ -380,7 +379,6 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         if not pr.get("feedback", {}).get("complete"):
             visible = {item["id"] for item in items}
             records.extend({**record, "head": pr["head"], "newOrChanged": False, "feedbackComplete": False,
-                            **({"needsTriage": False} if record.get("needsTriage") and record["head"] != pr["head"] else {}),
                             **({"owner": "Agent", "claimed": False, "overdue": False}
                                if record.get("awaitingAuthor") and record["head"] != pr["head"] else {})}
                            for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible)

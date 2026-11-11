@@ -1154,7 +1154,11 @@ class CollectorHistoryTest(unittest.TestCase):
             del node["settledReviews"]
             edited = advance(claimed)
             pr["head"] = "a" * 40
-            self.assertIsNone(updater.worker_handoff(advance(edited), [])["nextWork"])
+            moved = advance(edited)
+            row = updater.worker_handoff(moved, [])["nextWork"]
+            self.assertEqual((row["head"], row["id"], row["awaitingAuthor"]), (pr["head"], message["id"], False))
+            pr["status"] = "merged"
+            self.assertIsNone(updater.worker_handoff(advance(moved), [])["nextWork"])
 
     def test_feedback_receipts_and_generic_approvals_remain_quiet(self) -> None:
         for kind, body in [("comment", "[🤖] Invalidating approval due to rebase as a means to notify "
