@@ -17,7 +17,8 @@ source=a89de7271af9ded5f5112651e0d504b58b08c116
 public="$RUNNER_TEMP/tcp-public"
 mkdir -p "$public"
 previous=bdb37e5c98364876b71c9664e86ab3501b6e6999
-[[ "$(git rev-parse HEAD^)" == "$previous" ]]
+[[ "$(git rev-parse HEAD^)" == 341cdb1de4f26f96c845ab37f023944e11740072 ]]
+[[ "$(git rev-parse HEAD^^)" == "$previous" ]]
 [[ "$(git rev-parse "$previous^^")" == "$base" ]]
 git fetch --no-tags --depth=1 origin "$original"
 [[ "$(git diff --name-only "$base" "$source")" == "$(printf '%s\n' pkg/tcpip/transport/tcp/{rack,snd}.go)" ]]
@@ -31,8 +32,23 @@ printf '%s\n' "$base" "$original" "$source" "$GITHUB_SHA" > "$public/lineage.txt
 [[ "$(git rev-parse "$previous^")" == "$source" ]]
 git diff --exit-code "$source" -- pkg runsc tools .bazelrc MODULE.bazel
 printf '%s\n' "$source" "$GITHUB_SHA" > "$out/production.txt"
-sudo -n apt-get update -qq
-sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod jq iputils-ping
+sources="$out/ubuntu.list"
+apt_options=(-o "Dir::Etc::sourcelist=$sources" -o Dir::Etc::sourceparts=- -o Acquire::Retries=1 -o Acquire::https::Timeout=12 -o APT::Update::Error-Mode=any)
+packages=(tshark tcpdump iproute2 iperf3 ethtool bc kmod jq iputils-ping)
+. /etc/os-release
+[[ "$VERSION_CODENAME" == noble ]]
+for mirror in archive.ubuntu.com security.ubuntu.com; do
+  for suite in noble noble-updates noble-security; do
+    echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://$mirror/ubuntu $suite main universe"
+  done > "$sources"
+  if sudo -n timeout 100 apt-get "${apt_options[@]}" -qq update &&
+      sudo -n env DEBIAN_FRONTEND=noninteractive timeout 120 apt-get "${apt_options[@]}" -y --no-install-recommends install "${packages[@]}"; then
+    break
+  fi
+done
+for package in "${packages[@]}"; do
+  [[ "$(dpkg-query -W -f='${db:Status-Status}' "$package")" == installed ]]
+done
 sudo -n modprobe sch_netem
 uname -a > "$out/worker.txt"
 phase=build

@@ -1,18 +1,18 @@
 name: Locate packet loss across the benchmark WAN queue
 on:
   push:
-    branches: [qualification/tcp-wan-queue-captures]
+    branches: [qualification/tcp-wan-queue-captures-v2]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-wan-queue-captures'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-wan-queue-captures-v2'
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 4
+          fetch-depth: 5
           persist-credentials: false
       - name: Build one proxy and run the fixed matched schedule
         run: bash test/benchmarks/tcp/current-shared-driver.sh
