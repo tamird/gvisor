@@ -34,15 +34,12 @@ go_library(
 go_binary(
     name = "parser",
     testonly = 1,
-    srcs = [
-        "parser_main.go",
-        "version.go",
-    ],
+    srcs = ["parser_main.go"],
     nogo = False,
-    x_defs = {"main.version": "{STABLE_VERSION}"},
     deps = [
         ":parsers",
         "//runsc/flag",
+        "//runsc/version",
         "//tools/bigquery",
     ],
 )

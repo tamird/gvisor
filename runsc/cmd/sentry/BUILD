@@ -12,7 +12,6 @@ go_binary(
     noasan = True,
     pure = True,
     visibility = ["//visibility:public"],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
@@ -30,7 +29,6 @@ go_binary(
         "//:__pkg__",
         "//debian:__pkg__",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
@@ -82,7 +80,6 @@ go_binary(
     static = True,
     tags = ["network_plugins"],
     visibility = ["//visibility:public"],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
         "//pkg/sentry/socket/plugin/stack",
         "//runsc/cli",
