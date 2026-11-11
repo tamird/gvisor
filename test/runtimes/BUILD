@@ -1,5 +1,7 @@
+load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archive")
 load("//test/runtimes:defs.bzl", "runtime_tests")
 load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -69,4 +71,35 @@ bzl_library(
         "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
     ],
+)
+
+docker_image_archive(
+    name = "debugger_node22",
+    architecture = "amd64",
+    image = "runtimes/nodejs22.2.0",
+)
+
+docker_daemon_config(
+    name = "debugger_docker_config",
+    testonly = True,
+    images = [
+        ":debugger_node22_tar",
+        ":nodejs26.12.0_image_amd64_tar",
+    ],
+    runtime_args = ["--platform=systrap", "--directfs=true"],
+)
+
+docker_command_test(
+    name = "node_debugger_pairs",
+    size = "enormous",
+    command = "node_debugger_pairs.py",
+    command_args = ["$(rootpath //test/runtimes/proctor:proctor_bin)"],
+    data = ["//test/runtimes/proctor:proctor_bin"],
+    docker_config = ":debugger_docker_config",
+    exec_properties = docker_test_exec_properties(
+        free_disk = "80GB",
+        memory = "8GB",
+    ),
+    tags = ["manual", "no-local"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
 )

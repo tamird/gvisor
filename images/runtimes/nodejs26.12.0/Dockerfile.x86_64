@@ -44,12 +44,6 @@ RUN cd tools/eslint \
 # Use node --check on the files we patched
 RUN out/Release/node --check test/common/index.js
 
-# Select the certificate for www.nodejs.org in the CA interaction test.
-COPY tls-servername.patch /tmp/tls-servername.patch
-RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/tls-servername.patch \
-  && out/Release/node --check test/internet/test-tls-add-ca-cert.js \
-  && rm -f /tmp/tls-servername.patch
-
 COPY test-selection.patch /tmp/test-selection.patch
 RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/test-selection.patch \
   && rm -f /tmp/test-selection.patch

@@ -48,6 +48,8 @@ func TestRunnerForRuntime(runtime string) (TestRunner, error) {
 		return javaRunner{}, nil
 	case "nodejs":
 		return nodejsRunner{}, nil
+	case "nodejs22":
+		return nodejsRunner{legacy: true}, nil
 	case "php":
 		return phpRunner{}, nil
 	case "python":
