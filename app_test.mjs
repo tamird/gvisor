@@ -112,6 +112,19 @@ test('an investigation can review its exact fork fix after an issue was approved
   assert.deepEqual(reasons(), []);
   fix.url = 'https://github.com/other/node/commit/aaaaaaaaa';
   assert.throws(reasons, /Invalid contributor decision/);
+  delete row.contributorReview;
+  row.status = 'active';
+  row.head = head;
+  row.humanAction = { kind: 'submission', status: 'pending', head, title: 'Sign off and submit',
+    summary: 'The contributor signs the commit.', body: 'Submit the signed source to Node.',
+    url: 'https://github.com/nodejs/node/compare/main...tamird:node:branch',
+    policyURL: 'https://github.com/nodejs/node/blob/main/CONTRIBUTING.md' };
+  assert.throws(reasons, /Invalid investigation submission/);
+  row.settledReviews[1].outcome = 'approved';
+  assert.deepEqual(reasons(), ['human-submission']);
+  row.humanAction.head = baseHead;
+  assert.throws(reasons, /Invalid human-only action/);
+
 });
 
 test('tracker maintenance never requests a contributor decision on a cached registry', () => {

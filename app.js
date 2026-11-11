@@ -614,7 +614,7 @@ function attentionReasons(node, owner) {
     }
   }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
-  if (node.type === "investigation" && node.group === "ci-flakes" && node.status === "active" && !contributorDecision(node))
+  if (node.type === "investigation" && node.group === "ci-flakes" && node.status === "active" && !contributorDecision(node) && !humanAction(node))
     add("agent-ci-flake", node.nextStep);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const outreach = currentOutreach(node);
@@ -1164,6 +1164,15 @@ function contributorDecisionHeadChanged(node, decision = contributorDecision(nod
 function contributorDecisionNeedsRefresh(node, decision = contributorDecision(node)) {
   return ["amendment", "review"].includes(decision?.kind) && contributorDecisionHeadChanged(node, decision);
 }
+function validateHumanAction(node, retiredExecution = false) {
+  const action = node.humanAction;
+  if (action !== undefined && (!action || action.status !== "pending"
+      || !/^[a-f0-9]{40}$/.test(action.head) || action.head !== node.head
+      || ![action.title, action.summary, action.body].every(value => typeof value === "string" && value.trim())
+      || !safeURL(action.url) || !(retiredExecution || action.kind === "submission" && safeURL(action.policyURL))
+      || node.contributorReview !== undefined))
+    throw new Error("Invalid human-only action");
+}
 function humanAction(node) {
   const action = node.humanAction;
   return action?.status === "pending" && action.kind === "submission" && action.head === node.head ? action : null;
@@ -1492,6 +1501,7 @@ function drawInvestigations() {
     if (node) {
       appendContributorDecisions(card, node, pendingDecisions(node));
       appendSettledPublications(card, node);
+      appendHumanAction(card, node);
     }
     if (item.findings.length) card.append(element("h3", "", "Findings"));
     for (const finding of item.findings) {
@@ -1779,6 +1789,16 @@ function appendRangeDiff(parent, edge, nodes) {
     description: `Published ${oldHead.slice(0, 9)} → proposed ${newHead.slice(0, 9)} · snapshot ${date(pr.checkedAt)}`,
   });
 }
+function appendHumanAction(parent, node) {
+  const action = humanAction(node);
+  if (!action) return;
+  const section = element("section", "detail-section human-action");
+  section.append(element("h3", "", action.title), element("p", "", action.summary),
+    element("p", "detail-meta", `Prepared commit ${action.head}`),
+    element("div", "decision-body", action.body), link("Open submission context ↗", action.url),
+    link("Read contribution policy ↗", action.policyURL));
+  parent.append(section);
+}
 function appendSettledPublications(parent, node) {
   const labels = { issue: "Issue filed", reply: "Reply posted", review: "Review posted" };
   for (const decision of node.settledReviews || []) {
@@ -1871,15 +1891,7 @@ function drawDetails() {
   }
   const showedComparison = appendContributorDecisions(details, node, visibleDecisions(node));
   appendSettledPublications(details, node);
-  const action = humanAction(node);
-  if (action) {
-    const section = element("section", "detail-section human-action");
-    section.append(element("h3", "", action.title), element("p", "", action.summary),
-      element("p", "detail-meta", `Prepared local commit ${action.head}; not published upstream`),
-      element("div", "decision-body", action.body), link("Open submission context ↗", action.url),
-      link("Read contribution policy ↗", action.policyURL));
-    details.append(section);
-  }
+  appendHumanAction(details, node);
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
@@ -2240,12 +2252,7 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
     // humanAction() ignores its execution records. New metadata cannot publish one.
     const retiredExecution = allowRetiredExecution && action?.kind === "execution" && proposalRepo
       && /^[a-f0-9]{40}$/.test(action.sourceHead) && commitLinkMatches(proposalRepo, action.sourceHead, action.url);
-    if (action !== undefined && (!action || action.status !== "pending"
-        || !/^[a-f0-9]{40}$/.test(action.head) || action.head !== node.head
-        || ![action.title, action.summary, action.body].every(value => typeof value === "string" && value.trim())
-        || !safeURL(action.url) || !(retiredExecution || action.kind === "submission" && safeURL(action.policyURL))
-        || node.contributorReview !== undefined))
-      throw new Error("Invalid human-only action");
+    validateHumanAction(node, retiredExecution);
     if (node.additionalReviews !== undefined && (!Array.isArray(node.additionalReviews) || node.type !== "pr" || action ||
         node.additionalReviews.some(review => review?.kind !== "review"))) throw new Error("Invalid additional review");
     const decisions = node.contributorReview === undefined ? [] : [node.contributorReview];
@@ -2349,6 +2356,11 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
       if (item.additionalReviews !== undefined) throw new Error(`Invalid additional review for ${item.id}`);
       const repo = item.repo === undefined ? candidate.meta.repo : item.repo;
       if (typeof repo !== "string" || !Object.hasOwn(policies, repo)) throw new Error(`Invalid investigation repository for ${item.id}`);
+      validateHumanAction(item);
+      if (item.humanAction && (!item.group || item.status !== "active" || !item.settledReviews?.some(review =>
+          review.kind === "proposal" && review.outcome === "approved" && review.head === item.head
+          && commitLinkMatches(`${candidate.meta.owner}/${repo.split("/")[1]}`, review.head, review.url))))
+        throw new Error("Invalid investigation submission");
       const draft = item.contributorReview;
       if (draft !== undefined) {
         const issue = repo === candidate.meta.repo && validIssueDraft(draft) && draft.head === undefined
