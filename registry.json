@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T18:20:21+00:00",
+    "updatedAt": "2026-11-11T18:28:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5217,16 +5217,16 @@
       "url": "https://github.com/google/gvisor/pull/15368",
       "group": "bazel",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at 886a52af8c85 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nOpened ready for review as PR #15368 after explicit user approval, at fd0194dbcd3b64e2cc5ffb31c32c24698ca54390. The code tree equals approved source 9699d635f; only the description of pre-change behavior was reworded. Root verified the exact body, master base and MERGEABLE state. Existing source-specific validation is reused; no new runtime is claimed.\n\nEarlier source and validation evidence:\n\nStanding disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nCurrent public, clean and tracked head d257959b1a9257f1caed5a8a0c3d6a8c956abdf8 is one commit on upstream d3d566ad19. Independent review verifies the complete patch, all three file blobs and message are byte-identical to prior a04bf42405f376e922f9956b1e3d48b653565b33, retained by the local recovery ref errno-safe-delete-noexcept-before-refresh. The correction includes noexcept delete operators and throwing-new/new_handler behavior with owning tests. Earlier before/after validation failed before and passed all three cases after, with actual remote actions reviewed; the mechanical refresh did not rerun runtime. Contributor review has been requested before any upstream PR. The compiler successor currently contains only the older noexcept prerequisite as 71fb69959 (original 1f92a05f9), not the full allocation-behavior change.",
-      "head": "403195966ebb7900501ebb8ef40fa859c12fe71c",
-      "updatedAt": "2026-11-11T18:03:07+00:00",
+      "summary": "Published f44a549ae on #15368. Both clang-format 20.1.8 and 23.1.1 preserve its test table byte for byte. Open Copybara export #17430 still identifies the previous source, 403195966.\n\nEarlier revisions:\n\nThe requested post-#16046 rebase is published at 886a52af8c85 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nOpened ready for review as PR #15368 after explicit user approval, at fd0194dbcd3b64e2cc5ffb31c32c24698ca54390. The code tree equals approved source 9699d635f; only the description of pre-change behavior was reworded. Root verified the exact body, master base and MERGEABLE state. Existing source-specific validation is reused; no new runtime is claimed.\n\nEarlier source and validation evidence:\n\nStanding disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nCurrent public, clean and tracked head d257959b1a9257f1caed5a8a0c3d6a8c956abdf8 is one commit on upstream d3d566ad19. Independent review verifies the complete patch, all three file blobs and message are byte-identical to prior a04bf42405f376e922f9956b1e3d48b653565b33, retained by the local recovery ref errno-safe-delete-noexcept-before-refresh. The correction includes noexcept delete operators and throwing-new/new_handler behavior with owning tests. Earlier before/after validation failed before and passed all three cases after, with actual remote actions reviewed; the mechanical refresh did not rerun runtime. Contributor review has been requested before any upstream PR. The compiler successor currently contains only the older noexcept prerequisite as 71fb69959 (original 1f92a05f9), not the full allocation-behavior change.",
+      "head": "f44a549ae6a4832e3766d41ab3e92687967ba8a8",
+      "updatedAt": "2026-11-11T18:28:00+00:00",
       "number": 15368,
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "403195966ebb7900501ebb8ef40fa859c12fe71c",
-        "observedAt": "2026-11-11T18:03:07+00:00",
-        "disposition": "The contributor source passed formatting. Copybara export #17430 rewrote the allocator test and its public lint failed.",
-        "nextAction": "Review f44a549ae. If #17430 lands first, check the landed files before preparing a follow-up.",
+        "owner": "Agent",
+        "sourceHead": "f44a549ae6a4832e3766d41ab3e92687967ba8a8",
+        "observedAt": "2026-11-11T18:28:00+00:00",
+        "disposition": "Published f44a549ae on #15368. Both clang-format 20.1.8 and 23.1.1 preserve its test table byte for byte. Open Copybara export #17430 still identifies the previous source, 403195966.",
+        "nextAction": "Watch for a Copybara export of f44a549ae and check its formatter result. If the old export lands first, compare the landed table with the approved source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17430",
           "https://github.com/google/gvisor/actions/runs/42918605079/job/130187378168",
@@ -5266,17 +5266,23 @@
           "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "requestedAt": "2026-11-11T18:03:07+00:00",
-        "head": "f44a549ae6a4832e3766d41ab3e92687967ba8a8",
-        "baseHead": "403195966ebb7900501ebb8ef40fa859c12fe71c",
-        "url": "https://github.com/tamird/gvisor/commit/f44a549ae",
-        "title": "Preserve C++ allocation failure semantics",
-        "body": "The replacements introduced in edbc2af9f preserved errno after\nsuccessful allocation, but returned malloc's null result on failure.\nThrowing allocation functions must instead return storage or throw\nstd::bad_alloc [1]; callers can otherwise dereference null while\nexpecting allocation failure to throw.\n\nRestore the default allocation behavior: retry after a returning new\nhandler, throw when no handler is installed, and return storage for a\nsuccessful zero-size request. Preserve errno on success and mark the\ndelete replacements noexcept to match their standard exception\nspecification. The regression tests exercise scalar and array allocation\nthrough the replacement entry points, including bounded\nallocation-failure cases.\n\n[1]: https://eel.is/c++draft/new.delete.single",
-        "summary": "Publish f44a549ae on #15368 with the existing PR description? It moves the diagnostic name after the paired function pointers in the test table. Clang-format 20.1.8 and 23.1.1 produced identical bytes, and the three native allocator tests passed. If the existing export lands first, check what it delivered before opening a follow-up."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "pending",
+          "requestedAt": "2026-11-11T18:03:07+00:00",
+          "head": "f44a549ae6a4832e3766d41ab3e92687967ba8a8",
+          "baseHead": "403195966ebb7900501ebb8ef40fa859c12fe71c",
+          "url": "https://github.com/tamird/gvisor/commit/f44a549ae",
+          "title": "Preserve C++ allocation failure semantics",
+          "body": "The replacements introduced in edbc2af9f preserved errno after\nsuccessful allocation, but returned malloc's null result on failure.\nThrowing allocation functions must instead return storage or throw\nstd::bad_alloc [1]; callers can otherwise dereference null while\nexpecting allocation failure to throw.\n\nRestore the default allocation behavior: retry after a returning new\nhandler, throw when no handler is installed, and return storage for a\nsuccessful zero-size request. Preserve errno on success and mark the\ndelete replacements noexcept to match their standard exception\nspecification. The regression tests exercise scalar and array allocation\nthrough the replacement entry points, including bounded\nallocation-failure cases.\n\n[1]: https://eel.is/c++draft/new.delete.single",
+          "summary": "Publish f44a549ae on #15368 with the existing PR description? It moves the diagnostic name after the paired function pointers in the test table. Clang-format 20.1.8 and 23.1.1 produced identical bytes, and the three native allocator tests passed. If the existing export lands first, check what it delivered before opening a follow-up.",
+          "outcome": "approved",
+          "at": "2026-11-11T18:28:00+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/15368",
+          "note": "The approved formatter-compatible amendment was published as the single commit on #15368."
+        }
+      ]
     },
     {
       "id": "pr:15435",
@@ -46539,21 +46545,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/release-version-single-label",
-      "head": "8c826374e7d5c8cf51097092cd7afbdf2a4490cd",
+      "head": "b6c1c66c618663b608e44bb5e1e55ddaf907b14f",
       "title": "Build source exports without a Git version stamp",
-      "url": "https://github.com/tamird/gvisor/commit/8c826374e",
+      "url": "https://github.com/tamird/gvisor/commit/b6c1c66c6",
       "group": "rbe",
       "status": "Agent work",
-      "summary": "The release publisher passes one version to Bazel with --stamp --embed_label for runsc, its sidecars, packages and checkpoint compatibility. An unnamed build reports (devel) and saves the linked Sentry build ID in its checkpoint. Builders that set STABLE_VERSION must pass that value through --embed_label.",
-      "updatedAt": "2026-11-11T18:20:21+00:00",
+      "summary": "The release publisher sets one Bazel --embed_label for the standard runsc installation, its checkpoints and its Debian package. The revised change declares the version once in the Go library and removes ten executable-level stamp declarations. Unnamed builds report (devel) and store the linked Sentry build ID in checkpoints. Builders that supplied STABLE_VERSION can pass the same value with --stamp --embed_label.",
+      "updatedAt": "2026-11-11T18:28:00+00:00",
       "evidence": [
         {
-          "label": "Revised single-label proposal",
-          "url": "https://github.com/tamird/gvisor/commit/8c826374e"
+          "label": "Revised source with a single library version declaration",
+          "url": "https://github.com/tamird/gvisor/commit/b6c1c66c6"
         },
         {
-          "label": "Native release and checkpoint qualification",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43076551298"
+          "label": "Native qualification of the library version declaration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43077713792"
         },
         {
           "label": "Earlier standalone proposal: nine installed files per build, parser, Debian versions and both restored guests on native AMD64",
@@ -46643,16 +46649,18 @@
         },
         "after": {
           "base": "0e702d775d4f14ade5136a00f3ba349dfc7ccbed",
-          "head": "8c826374e7d5c8cf51097092cd7afbdf2a4490cd"
+          "head": "b6c1c66c618663b608e44bb5e1e55ddaf907b14f"
         }
       },
       "followup": {
         "owner": "Build and release",
-        "sourceHead": "8c826374e7d5c8cf51097092cd7afbdf2a4490cd",
-        "observedAt": "2026-11-11T18:20:21+00:00",
-        "disposition": "8c826374e implements the requested revision. Its regression test covers both old placeholder strings, 0.0.0 and (devel).",
-        "nextAction": "Inspect the native release and checkpoint qualification for this exact revision before requesting contributor review.",
+        "sourceHead": "b6c1c66c618663b608e44bb5e1e55ddaf907b14f",
+        "observedAt": "2026-11-11T18:28:00+00:00",
+        "disposition": "The single-library revision b6c1c66c6 is under native qualification.",
+        "nextAction": "Inspect the native release and checkpoint results for b6c1c66c6 before asking for contributor review.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/b6c1c66c6",
+          "https://github.com/tamird/gvisor/actions/runs/43077713792",
           "https://github.com/tamird/gvisor/commit/8c826374e",
           "https://github.com/tamird/gvisor/actions/runs/43076551298",
           "https://github.com/tamird/gvisor/actions/runs/42360655295/artifacts/13569951004",
@@ -74542,6 +74550,30 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/54410#01a1caf5-8673-4457-a85a-177663947130"
         }
       ]
+    },
+    {
+      "id": "pr:17490",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17490,
+      "ref": "review/go-select-disk-test-subtests",
+      "head": "9f3e63e134254bd8cd2a2e0ad49790d6dfe784ce",
+      "title": "Run the selected Go testdir subtests",
+      "url": "https://github.com/google/gvisor/pull/17490",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-11T18:28:00+00:00",
+      "summary": "Pass each on-disk test path to go test as an independently anchored alternative. In 51 systrap batches the corrected proctor accounted for all 2,525 selected files, with 2,502 passes and 23 Go skips.",
+      "evidence": [
+        {
+          "label": "All 51 original systrap batch logs and complete case inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13882920474"
+        },
+        {
+          "label": "Native and systrap positive and negative controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13880355745"
+        }
+      ]
     }
   ],
   "edges": [
@@ -78559,7 +78591,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "Go runtime suite investigation",
-      "updatedAt": "2026-11-11T18:16:23+00:00",
+      "updatedAt": "2026-11-11T18:28:00+00:00",
       "summary": "The proctor passes shell apostrophes directly to Go’s test-name matcher. Go 1.22.11 registers 2,525 on-disk cases. The runtime suite separately excludes the distribution test that would run them all.",
       "findings": [
         {
@@ -78611,8 +78643,12 @@
           ]
         }
       ],
-      "nextStep": "Review the single Go proctor change for upstream submission. It restores selection of the on-disk tests in each existing batch.",
+      "nextStep": "Follow #17490 through review and landing. Once it lands, check the actual selected case counts in the Go runtime shards.",
       "evidence": [
+        {
+          "label": "Published fix for Go testdir selection, #17490",
+          "url": "https://github.com/google/gvisor/pull/17490"
+        },
         {
           "label": "All 51 original systrap batch logs and complete case inventory",
           "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13882920474"
@@ -78646,17 +78682,23 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43070682429"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "requestedAt": "2026-11-11T18:16:23+00:00",
-        "head": "9f3e63e134254bd8cd2a2e0ad49790d6dfe784ce",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/9f3e63e13",
-        "title": "Run the selected Go testdir subtests",
-        "summary": "Open this change to run the selected Go 1.22 on-disk tests in their existing batches? The full systrap run accounted for all 2,525 files.",
-        "body": "The Go runtime suite passed literal shell quotes in the -run argument\nto go test. No top-level test matched, so a batch of on-disk tests\ncould report success without running any of them. The suite already\nexcludes the separate go tool dist entry that runs the entire testdir.\n\nPass each selected file as a top-level alternative. Match each\nslash-separated part of its name literally so a nested test runs\nwithout also selecting similarly named files.\n\nFixes: b9b626d06 (\"Bump golang runtime tests to Go 1.22.\")\n\nPrepared by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "requestedAt": "2026-11-11T18:16:23+00:00",
+          "head": "9f3e63e134254bd8cd2a2e0ad49790d6dfe784ce",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/9f3e63e13",
+          "title": "Run the selected Go testdir subtests",
+          "summary": "Open this change to run the selected Go 1.22 on-disk tests in their existing batches? The full systrap run accounted for all 2,525 files.",
+          "body": "The Go runtime suite passed literal shell quotes in the -run argument\nto go test. No top-level test matched, so a batch of on-disk tests\ncould report success without running any of them. The suite already\nexcludes the separate go tool dist entry that runs the entire testdir.\n\nPass each selected file as a top-level alternative. Match each\nslash-separated part of its name literally so a nested test runs\nwithout also selecting similarly named files.\n\nFixes: b9b626d06 (\"Bump golang runtime tests to Go 1.22.\")\n\nPrepared by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T18:28:00+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17490",
+          "note": "The qualified correction opened as a single commit in #17490."
+        }
+      ]
     },
     {
       "id": "investigation:cubic-recovery",
@@ -102440,7 +102482,7 @@
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-11T17:48:55+00:00",
+      "updatedAt": "2026-11-11T18:28:00+00:00",
       "summary": "The master PGO pipeline reported 608 consecutive failures, from build #3174 through #3781. The previous build passed. Master still contains profiles through Go 1.27.1. The public statuses do not identify the failing benchmark or publication stage.",
       "findings": [
         {
@@ -102497,10 +102539,31 @@
               "url": "https://github.com/google/gvisor/pull/15489"
             }
           ]
+        },
+        {
+          "text": "On 2552c6787 with Go 1.27.3, the native AMD64 systrap collector merged profiles and wrote package hashes for FFmpeg, iperf, Redis, Ruby and sysbench. Four of eight Nginx cases reached Hey and their first GET was refused. The pilot preloaded seven images and omitted benchmarks/util, which upstream normally supplies to the readiness probe. The benchmark ignored the probe error and started timing. The original private Buildkite failure stage remains unknown.",
+          "evidence": [
+            {
+              "label": "Native AMD64 stock Make collector and five merged profiles",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43067257412/artifacts/13881972415"
+            },
+            {
+              "label": "Shared static-server benchmark ignores the readiness result",
+              "url": "https://github.com/google/gvisor/blob/2552c6787/test/benchmarks/network/network.go#L59-L78"
+            }
+          ]
         }
       ],
-      "nextStep": "Identify the first failing benchmark, merge or publication step in the Go 1.27.2 refresh. The public Buildkite status exposes the final outcome and duration only.",
+      "nextStep": "Compare the Nginx path with its normal readiness image and a deliberately unavailable probe. Check that a readiness error stops the run before Hey. For the private master failures, obtain the first failing benchmark, merge or publication log.",
       "evidence": [
+        {
+          "label": "Native AMD64 stock Make collector and five merged profiles",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43067257412/artifacts/13881972415"
+        },
+        {
+          "label": "Shared static-server benchmark ignores the readiness result",
+          "url": "https://github.com/google/gvisor/blob/2552c6787/test/benchmarks/network/network.go#L59-L78"
+        },
         {
           "label": "Single-commit publisher correction",
           "url": "https://github.com/tamird/gvisor/commit/2ca38c700"
