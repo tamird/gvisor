@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T13:35:55+00:00",
+    "updatedAt": "2026-11-11T14:01:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26488,39 +26488,32 @@
       "inactive": true
     },
     {
-      "id": "branch:rules-img-redis-benchmark-upstream",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:17477",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/redis-benchmark-shared-manifest",
       "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
       "title": "Reuse the pinned Redis image for benchmarks",
-      "url": "https://github.com/tamird/gvisor/commit/ff8702412",
+      "url": "https://github.com/google/gvisor/pull/17477",
       "group": "bazel",
-      "status": "Contributor review",
-      "updatedAt": "2026-11-11T11:15:13+00:00",
-      "summary": "The old placement created a Bazel package boundary that removed other test sources. Revision ff8702412 reuses the existing :redis target and preserves all 36 other benchmark sources and their modes. Six config and layer digest comparisons matched the basic Redis image on each architecture. The AMD64 image completed SET and GET.",
+      "status": "open",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "summary": "The old placement created a Bazel package boundary that removed other test sources. Revision ff8702412 reuses the existing :redis target and preserves all 36 other benchmark sources and their modes. Six config and layer digest comparisons matched the basic Redis image on each architecture. The AMD64 image completed SET and GET. The approved change is open upstream as #17477.",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
-        "observedAt": "2026-11-11T11:15:13+00:00",
-        "disposition": "The tested target placement preserves the other benchmarks on current master. #16551 has merged.",
-        "nextAction": "Review the revised placement before opening the Redis benchmark PR.",
+        "observedAt": "2026-11-11T14:01:21+00:00",
+        "disposition": "The approved change is open upstream as #17477.",
+        "nextAction": "Follow the upstream review and checks.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2b507a7ba",
-          "https://github.com/tamird/gvisor/commit/ff8702412",
-          "https://github.com/google/gvisor/pull/16551",
-          "https://github.com/tamird/gvisor/actions/runs/43009562796/artifacts/13850860018"
+          "https://github.com/google/gvisor/pull/17477"
         ]
       },
-      "refinement": {
-        "before": {
-          "head": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
-        },
-        "after": {
-          "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57"
-        }
-      },
       "evidence": [
+        {
+          "label": "Published single-commit PR",
+          "url": "https://github.com/google/gvisor/pull/17477"
+        },
         {
           "label": "36 unchanged benchmark sources, matching Redis digests and AMD64 SET/GET",
           "url": "https://github.com/tamird/gvisor/actions/runs/43009562796/artifacts/13850860018"
@@ -26534,17 +26527,7 @@
           "url": "https://github.com/tamird/gvisor/commit/2b507a7ba"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/ff8702412",
-        "requestedAt": "2026-11-11T11:15:13+00:00",
-        "title": "Reuse the pinned Redis image for benchmarks",
-        "summary": "Open the revised Redis benchmark change? It reuses the existing manifest on current master without changing the other benchmark inputs.",
-        "body": "The benchmarks/redis Dockerfile consists of FROM redis:7.0.12. The\nbasic Redis image already pins that release for AMD64 and ARM64.\nProduce the benchmark archive and Make context from the same manifest\nso building the benchmark no longer resolves the tag in Docker."
-      }
+      "number": 17477
     },
     {
       "id": "branch:rules-img-nginx-benchmark-upstream",
@@ -36433,9 +36416,17 @@
       "url": "https://github.com/google/gvisor/pull/16597",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-09T08:30:37+00:00",
-      "summary": "The published RSEQ helper disables implicit C++ runtime linkage. GNU linked the static helpers for AMD64 and ARM64, and the amended source passed all 14 AMD64 native cases. The earlier LLVM build linked both helpers with the hermetic-llvm #909 backport. With unmodified BCR LLVM 0.8.24, both fresh links failed to find dl and pthread before either syscall test started.\n\nApplying only the #909 backport to that release, with the published gVisor BUILD file unchanged, produced both static helpers on AMD64 LLVM workers. The ARM64 helper was cross-linked. Each linked ELF matched the digest of the helper used by its native syscall test. All 14 AMD64 and 13 ARM64 RSEQ cases passed with zero skips. Bazel exited zero. The reporting step missed the compact TestRunner rows, so this run did not verify the per-test worker image.",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "summary": "The published RSEQ helper disables implicit C++ runtime linkage. GNU linked the static helpers for AMD64 and ARM64, and the amended source passed all 14 AMD64 native cases. The earlier LLVM build linked both helpers with the hermetic-llvm #909 backport. With unmodified BCR LLVM 0.8.24, both fresh links failed to find dl and pthread before either syscall test started.\n\nApplying only the #909 backport to that release, with the published gVisor BUILD file unchanged, produced both static helpers on AMD64 LLVM workers. The ARM64 helper was cross-linked. Each linked ELF matched the digest of the helper used by its native syscall test. All 14 AMD64 and 13 ARM64 RSEQ cases passed with zero skips. Bazel exited zero. The reporting step missed the compact TestRunner rows, so this run did not verify the per-test worker image. On export #17474 C++ lint attempts to parse both AMD64 assembly sources. Skipping them exposes separate include-cleaner findings for rseq.cc. The unchanged fixture built as a static binary.",
       "evidence": [
+        {
+          "label": "C++ lint on the current Copybara export",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54408#01a1ca8e-9e75-4211-ac58-ecf64c284f7b"
+        },
+        {
+          "label": "Fork analyzer and direct C++ findings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43033869007/artifacts/13862237033"
+        },
         {
           "label": "Published upstream PR #16597",
           "url": "https://github.com/google/gvisor/pull/16597"
@@ -36498,24 +36489,13 @@
         }
       ],
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Agent qualification",
         "sourceHead": "9751bfaf98742849046e9b4e9178f3db32f846b2",
-        "observedAt": "2026-11-05T16:41:13.307421Z",
-        "disposition": "Published on #16597",
-        "nextAction": "Await upstream review and checks.",
+        "observedAt": "2026-11-11T14:01:21+00:00",
+        "disposition": "Export #17474 failed C++ lint on three attempts.",
+        "nextAction": "Check the direct-header findings and the analyzer change on this export before requesting a review.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16597",
-          "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
-          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
-          "https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66",
-          "https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769",
-          "https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510",
-          "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0",
-          "https://github.com/tamird/gvisor/commit/9751bfaf9",
-          "https://github.com/tamird/gvisor/compare/a0e3cf835..9751bfaf9",
-          "https://github.com/tamird/gvisor/actions/runs/42020685444/artifacts/13410893893",
-          "https://github.com/tamird/gvisor/actions/runs/42017764904/artifacts/13409484718",
-          "https://github.com/tamird/gvisor/actions/runs/42022304102/artifacts/13413675212"
+          "https://buildkite.com/gvisor/pipeline/builds/54408#01a1ca8e-9e75-4211-ac58-ecf64c284f7b"
         ]
       },
       "settledReviews": [
@@ -73498,17 +73478,21 @@
       ]
     },
     {
-      "id": "branch:gazelle-cgroups-go-metrics",
-      "type": "branch",
-      "repo": "tamird/bazel-gazelle",
+      "id": "pr:bazel-contrib/bazel-gazelle:2513",
+      "type": "pr",
+      "repo": "bazel-contrib/bazel-gazelle",
       "ref": "fix/containerd-cgroups-generated-metrics",
-      "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
-      "title": "Build the shipped Go metrics for cgroups v3",
-      "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
+      "head": "bda5855871e245cb79e946ce035105c6869a67bf",
+      "title": "Build the shipped Go metrics for containerd/cgroups/v3",
+      "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513",
       "group": "bazel",
-      "status": "Ready for contributor review",
-      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The proposed upstream revision and the earlier preview have identical trees.",
+      "status": "open",
+      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The proposed upstream revision and the earlier preview have identical trees. The approved directive is open upstream as #2513 with the corrected title and commit description.",
       "evidence": [
+        {
+          "label": "Published single-commit PR",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+        },
         {
           "label": "Exact one-commit fork proposal",
           "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804faacf022c6c593703d2da28e4e4c495"
@@ -73526,18 +73510,230 @@
           "url": "https://github.com/tamird/bazel-gazelle/actions/runs/43023215493/job/130531311355"
         }
       ],
-      "updatedAt": "2026-11-11T12:57:27+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
-        "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
-        "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
-        "title": "Build the shipped Go metrics for cgroups v3",
-        "body": "Building github.com/containerd/cgroups/v3 with go_deps fails with\n\"undefined: v1.Metrics\". Both metrics schemas specify Go import paths\nwithout the /v3 suffix [1][2]. Gazelle generates the protobuf bindings\nat those paths, leaving only doc.go in the two /v3 stats packages that\ncgroups imports.\n\nCompile the metrics.pb.go files that cgroups ships. They preserve field\nnames such as Metrics.CPU because cgroups runs go-fix-acronym after\nprotoc [3]. Disable only Go proto generation so other languages can\nstill import both schemas through their stats_proto targets.\n\n[1]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup1/stats/metrics.proto#L5\n[2]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup2/stats/metrics.proto#L5\n[3]: https://github.com/containerd/cgroups/blob/076b5e0e6/Makefile#L29",
-        "requestedAt": "2026-11-11T12:39:44+00:00",
-        "summary": "Open this single-commit PR in bazel-contrib/bazel-gazelle? The original gVisor qualification exercised the directive on Gazelle 0.51.3."
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "number": 2513,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "bda5855871e245cb79e946ce035105c6869a67bf",
+        "observedAt": "2026-11-11T14:01:21+00:00",
+        "disposition": "The approved directive is open upstream as #2513 with the corrected title and commit description.",
+        "nextAction": "Follow the upstream review and checks.",
+        "evidence": [
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+        ]
       }
+    },
+    {
+      "id": "pr:nodejs/node:67411",
+      "type": "pr",
+      "repo": "nodejs/node",
+      "number": 67411,
+      "ref": "test-tick-processor-retry-flags",
+      "head": "a9d228c85448735f5b3ee91b3c1eda4b75ebb8e0",
+      "title": "test: preserve tick processor flags on retry",
+      "url": "https://github.com/nodejs/node/pull/67411",
+      "group": "ci-flakes",
+      "status": "open",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "summary": "Node’s tick-processor retry now forwards --preprocess after a first miss. Tamir signed and submitted the tested one-line fix. The original CI logs did not record why the first match failed.",
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "a9d228c85448735f5b3ee91b3c1eda4b75ebb8e0",
+        "observedAt": "2026-11-11T14:01:21+00:00",
+        "disposition": "The author submitted the signed fix.",
+        "nextAction": "Follow the Node review and checks.",
+        "evidence": [
+          "https://github.com/nodejs/node/pull/67411"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Submitted Node change",
+          "url": "https://github.com/nodejs/node/pull/67411"
+        }
+      ]
+    },
+    {
+      "id": "branch:protobuf-37x-upb-direct",
+      "type": "branch",
+      "repo": "tamird/protobuf",
+      "ref": "research/37x-upb-direct",
+      "head": "3bad9c725b55a39cd6964518c97e959c1924830e",
+      "title": "[37.x] Run the stage-1 upb generators without Bash",
+      "url": "https://github.com/tamird/protobuf/commit/3bad9c725",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "summary": "On 37.x all four generator actions failed when Bazel could not execute /bin/bash. The backport ran all four and generated the same six C sources and headers byte for byte. PacketImpact uses these actions on workers without a shell. The core compiler switch can land independently.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "3bad9c725b55a39cd6964518c97e959c1924830e",
+        "baseHead": "0cf7641d26918523b3c26ae8f9b197cbbda05baf",
+        "url": "https://github.com/tamird/protobuf/commit/3bad9c725",
+        "title": "[37.x] Run the stage-1 upb generators without Bash",
+        "summary": "Open this cherry-pick against Protobuf’s 37.x release branch?",
+        "body": "Backport b1f8a6e38 (#31234) to 37.x. The stage-1 upb generators for descriptor.proto and plugin.proto invoke Bash to launch protoc. This prevented gVisor’s PacketImpact tests from building on workers that have protoc and its plugins but no shell [1].\n\nRun protoc directly with the stage-0 plugins.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13648067269\n\nPrepared by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-11T14:01:21+00:00"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "3bad9c725b55a39cd6964518c97e959c1924830e",
+        "observedAt": "2026-11-11T14:01:21+00:00",
+        "disposition": "The backport is qualified against Protobuf 37.x.",
+        "nextAction": "Open this cherry-pick against Protobuf’s 37.x release branch?",
+        "evidence": [
+          "https://github.com/tamird/protobuf/commit/3bad9c725"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Four corrected release actions and six byte-identical generated files",
+          "url": "https://github.com/tamird/protobuf/actions/runs/43031950508/artifacts/13861831162"
+        },
+        {
+          "label": "Original PacketImpact scratch build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13648067269"
+        },
+        {
+          "label": "Delivered fix on main",
+          "url": "https://github.com/protocolbuffers/protobuf/commit/b1f8a6e38"
+        },
+        {
+          "label": "Release cherry-pick policy",
+          "url": "https://github.com/protocolbuffers/protobuf/blob/0cf7641d2/CONTRIBUTING.md#L56-L60"
+        }
+      ]
+    },
+    {
+      "id": "branch:gazelle-cgroups-go-metrics",
+      "type": "branch",
+      "repo": "tamird/bazel-gazelle",
+      "ref": "fix/containerd-cgroups-generated-metrics",
+      "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
+      "title": "Build the shipped Go metrics for cgroups v3",
+      "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
+      "group": "bazel",
+      "status": "Published",
+      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The proposed upstream revision and the earlier preview have identical trees.",
+      "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+        },
+        {
+          "label": "Exact one-commit fork proposal",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804faacf022c6c593703d2da28e4e4c495"
+        },
+        {
+          "label": "Original Gazelle 0.51.3 metrics, descriptors and shim qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41404466409/artifacts/13121904786"
+        },
+        {
+          "label": "containerd/cgroups field-name postprocessing",
+          "url": "https://github.com/containerd/cgroups/commit/f0f76178d"
+        },
+        {
+          "label": "Gazelle 761d7b804: 196 of 196 Linux tests passed in 2,650 Bazel actions",
+          "url": "https://github.com/tamird/bazel-gazelle/actions/runs/43023215493/job/130531311355"
+        }
+      ],
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "settledReviews": [
+        {
+          "status": "settled",
+          "kind": "proposal",
+          "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
+          "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
+          "title": "Build the shipped Go metrics for cgroups v3",
+          "body": "Building github.com/containerd/cgroups/v3 with go_deps fails with\n\"undefined: v1.Metrics\". Both metrics schemas specify Go import paths\nwithout the /v3 suffix [1][2]. Gazelle generates the protobuf bindings\nat those paths, leaving only doc.go in the two /v3 stats packages that\ncgroups imports.\n\nCompile the metrics.pb.go files that cgroups ships. They preserve field\nnames such as Metrics.CPU because cgroups runs go-fix-acronym after\nprotoc [3]. Disable only Go proto generation so other languages can\nstill import both schemas through their stats_proto targets.\n\n[1]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup1/stats/metrics.proto#L5\n[2]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup2/stats/metrics.proto#L5\n[3]: https://github.com/containerd/cgroups/blob/076b5e0e6/Makefile#L29",
+          "requestedAt": "2026-11-11T12:39:44+00:00",
+          "summary": "Open this single-commit PR in bazel-contrib/bazel-gazelle? The original gVisor qualification exercised the directive on Gazelle 0.51.3.",
+          "outcome": "approved",
+          "at": "2026-11-11T14:01:21+00:00",
+          "note": "The approved directive is open upstream as #2513 with the corrected title and commit description.",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "761d7b804faacf022c6c593703d2da28e4e4c495",
+        "observedAt": "2026-11-11T14:01:21+00:00",
+        "disposition": "The approved directive is open upstream as #2513 with the corrected title and commit description.",
+        "nextAction": "Follow the upstream review and checks.",
+        "evidence": [
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+        ]
+      },
+      "inactive": true
+    },
+    {
+      "id": "branch:rules-img-redis-benchmark-upstream",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/redis-benchmark-shared-manifest",
+      "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
+      "title": "Reuse the pinned Redis image for benchmarks",
+      "url": "https://github.com/tamird/gvisor/commit/ff8702412",
+      "group": "bazel",
+      "status": "Published",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "summary": "The old placement created a Bazel package boundary that removed other test sources. Revision ff8702412 reuses the existing :redis target and preserves all 36 other benchmark sources and their modes. Six config and layer digest comparisons matched the basic Redis image on each architecture. The AMD64 image completed SET and GET.",
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
+        "observedAt": "2026-11-11T14:01:21+00:00",
+        "disposition": "The approved change is open upstream as #17477.",
+        "nextAction": "Follow the upstream review and checks.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17477"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
+        },
+        "after": {
+          "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/17477"
+        },
+        {
+          "label": "36 unchanged benchmark sources, matching Redis digests and AMD64 SET/GET",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43009562796/artifacts/13850860018"
+        },
+        {
+          "label": "Revised source using the existing Redis target",
+          "url": "https://github.com/tamird/gvisor/commit/ff8702412"
+        },
+        {
+          "label": "Originally approved source",
+          "url": "https://github.com/tamird/gvisor/commit/2b507a7ba"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/ff8702412",
+          "requestedAt": "2026-11-11T11:15:13+00:00",
+          "title": "Reuse the pinned Redis image for benchmarks",
+          "summary": "Open the revised Redis benchmark change? It reuses the existing manifest on current master without changing the other benchmark inputs.",
+          "body": "The benchmarks/redis Dockerfile consists of FROM redis:7.0.12. The\nbasic Redis image already pins that release for AMD64 and ARM64.\nProduce the benchmark archive and Make context from the same manifest\nso building the benchmark no longer resolves the tag in Docker.",
+          "outcome": "approved",
+          "at": "2026-11-11T14:01:21+00:00",
+          "note": "The approved change is open upstream as #17477.",
+          "postedURL": "https://github.com/google/gvisor/pull/17477"
+        }
+      ],
+      "inactive": true
     }
   ],
   "edges": [
@@ -75728,7 +75924,7 @@
     },
     {
       "from": "pr:16551",
-      "to": "branch:rules-img-redis-benchmark-upstream",
+      "to": "pr:17477",
       "type": "depends_on",
       "reason": "The benchmark reuses the Redis image declared by #16551. Submit the approved benchmark image after that PR merges.",
       "evidence": [
@@ -98442,7 +98638,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T11:14:40+00:00",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
       "summary": "Three Buildkite runs stopped at the first wire dump with “error printing state: unreachable”. A native AMD64 workload reproduced the error on two of eight valid guest checkpoints. Stock mistook saved page data for a stream header. #17208 dumped all eight and the guests restored.",
       "findings": [
         {
@@ -98534,10 +98730,27 @@
               "url": "https://github.com/google/gvisor/blob/87713ade1/pkg/state/wire/wire.go#L133-L150"
             }
           ]
+        },
+        {
+          "text": "Build #54409 on #17475 repeated the systrap wire-to-graph-to-wire hop-0 statefile dump error. The same container shard passed on retry.",
+          "evidence": [
+            {
+              "label": "Repeated systrap hop-0 failure on #17475",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54409/jobs/01a1caac-a910-476d-84be-2e1629be50b7/artifacts/01a1cab8-4337-4714-9bd2-447fb414caf1"
+            },
+            {
+              "label": "Same-head container-test retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54409#01a1cab9-2ccb-4b53-a667-c12f6a562451"
+            }
+          ]
         }
       ],
       "nextStep": "Check the original chained restore test on the first upstream run that includes #17208. If the error recurs, retain the failing header offset and the type of checkpoint region it falls in.",
       "evidence": [
+        {
+          "label": "Repeated systrap hop-0 failure on #17475",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54409/jobs/01a1caac-a910-476d-84be-2e1629be50b7/artifacts/01a1cab8-4337-4714-9bd2-447fb414caf1"
+        },
         {
           "label": "Master failure on KVM and systrap",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9d2-71d7-424c-ba58-681b6a5d12fa"
@@ -99773,8 +99986,8 @@
       "title": "Node tick-processor test times out while checking --preprocess",
       "status": "active",
       "group": "ci-flakes",
-      "owner": "Contributor",
-      "updatedAt": "2026-11-11T11:48:58+00:00",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
       "summary": "The Node 22.2.0 test tick-processor/test-tick-processor-preprocess-flag timed out on #17425 (040ae629f) and #17428 (aa0152a6a). The Node target passed on each same-head retry.",
       "findings": [
         {
@@ -99830,8 +100043,12 @@
           ]
         }
       ],
-      "nextStep": "Tamir can open the pull request from the signed-off test-tick-processor-retry-flags branch.",
+      "nextStep": "Follow Node #67411. If a full shard times out again, capture the first profile output to determine why its initial match failed.",
       "evidence": [
+        {
+          "label": "Tamir’s Node PR for retry flags",
+          "url": "https://github.com/nodejs/node/pull/67411"
+        },
         {
           "label": "Signed-off source on Node main",
           "url": "https://github.com/tamird/node/commit/3fef4a81d"
@@ -99913,20 +100130,11 @@
           "body": "test-tick-processor-preprocess-flag expects JSON from --prof-process\n--preprocess. If its first profile does not match, the retry drops\n--preprocess and gets a text report. No later report can match the\nopening brace, so the test keeps retrying.\n\nPass the original flags on each attempt. On Linux with Node v22.2.0,\nforcing one first match to fail produced a text report on the next\nattempt. With the flags preserved, the second profile was JSON and the\ntest exited successfully. Two gVisor CI runs timed out in this test;\nneither recorded the output of the first attempt.\n\nAssisted-by: Codex\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
           "outcome": "approved",
           "at": "2026-11-11T11:11:00+00:00",
-          "note": "Tamir personally signed off the approved one-line patch after rebasing it onto Node main. The resulting helper blob is identical."
+          "note": "Tamir personally signed and submitted Node #67411. Its single commit has the same full tree as the previously signed proposal.",
+          "postedURL": "https://github.com/nodejs/node/pull/67411"
         }
       ],
-      "head": "3fef4a81d86844a359984c1b070b3a680665b7eb",
-      "humanAction": {
-        "kind": "submission",
-        "status": "pending",
-        "head": "3fef4a81d86844a359984c1b070b3a680665b7eb",
-        "title": "Submit the signed-off Node pull request",
-        "summary": "Tamir signed off the approved change. Open the pull request from the prepared branch.",
-        "body": "The prepared pull request includes the reviewed title, the Linux retry comparison and the AI attribution. Commit 3fef4a81d carries Tamir’s DCO sign-off.",
-        "url": "https://github.com/nodejs/node/compare/main...tamird:node:test-tick-processor-retry-flags?expand=1&title=test%3A+preserve+tick+processor+flags+on+retry&body=The+%60test-tick-processor-preprocess-flag%60+test+expects+JSON+from+%60--prof-process+--preprocess%60.+When+the+first+profile+fails+to+match%2C+the+retry+drops+%60--preprocess%60+and+produces+a+text+report+that+cannot+match+the+opening+brace.+Pass+the+original+flags+on+each+attempt.%0A%0AOn+Linux+with+Node+v22.2.0%2C+forcing+the+first+match+to+fail+produced+a+text+report+on+retry.+With+the+flags+preserved%2C+the+second+profile+was+JSON+and+the+test+passed.+Two+gVisor+CI+runs+timed+out+in+this+test.+Neither+recorded+the+first+profile.%0A%0AAssisted-by%3A+Codex",
-        "policyURL": "https://github.com/nodejs/node/blob/2336a1f00/doc/contributing/ai-guidelines.md#L13-L38"
-      }
+      "head": "a9d228c85448735f5b3ee91b3c1eda4b75ebb8e0"
     },
     {
       "id": "investigation:ci-flake-php-upload-2g",
@@ -100221,7 +100429,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T13:19:32+00:00",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
       "summary": "Five AMD64 job failures on four commits stopped during crictl runp. Four reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Containerd 2.0.8 reported context deadline exceeded. All five targets passed on their direct same-commit retries.",
       "findings": [
         {
@@ -100352,10 +100560,23 @@
               "url": "https://tamird.github.io/gvisor/#branch%3Arbe-source-image-archives"
             }
           ]
+        },
+        {
+          "text": "With upstream setup and registry access, the 2.2.3 resource-update case passed. Its first RunPodSandbox failed when the proxy rejected its sole registry.k8s.io:443 connection; the first declared-image control stopped before the RPC. The original #54401 log does not identify a registry failure.",
+          "evidence": [
+            {
+              "label": "2.2.3 registry-dependency comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43031605760/artifacts/13861301835"
+            }
+          ]
         }
       ],
       "nextStep": "Use the tested failure reporter to retain the existing daemon timestamps when a natural RunPodSandbox timeout recurs. Identify which startup phase consumed the client deadline.",
       "evidence": [
+        {
+          "label": "2.2.3 registry-dependency comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43031605760/artifacts/13861301835"
+        },
         {
           "label": "#54388 containerd 2.1.7 mount test",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f49-481d-b870-3ae933452936"
@@ -100367,6 +100588,84 @@
         {
           "label": "#54291 containerd 2.2.3 home-directory test",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54291#01a1c75e-27f0-47b6-be5e-bf5e40cf0050"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-native-pty-packet",
+      "title": "Native PTY packet-mode read mismatch",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "summary": "On the AMD64 Linux host, one packet-mode read differed from the expected packet in build #54409 on gVisor #17475. The failing shard ran again and passed on the same source.",
+      "findings": [
+        {
+          "text": "PtyTest.PacketModeWriteReplicaToMaster failed its full-buffer comparison at pty.cc:881. The adjacent job-control case passed. On retry, shard 1 ran and the other three shards supplied cached passes. The original log does not print the differing bytes.",
+          "evidence": [
+            {
+              "label": "Original native PTY test.log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54409/jobs/01a1caac-a912-4dfe-a720-1a77435ae5b2/artifacts/01a1cabe-8966-4473-92bb-0351d98b5c5f"
+            },
+            {
+              "label": "Same-head uncached retry of shard 1",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54409#01a1cabf-3cc6-4c40-954a-2f0a29023881"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare returned byte counts, packet prefixes and payloads against the existing PTY read assertions on native Linux.",
+      "evidence": [
+        {
+          "label": "Original native PTY test.log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54409/jobs/01a1caac-a912-4dfe-a720-1a77435ae5b2/artifacts/01a1cabe-8966-4473-92bb-0351d98b5c5f"
+        },
+        {
+          "label": "Same-head uncached retry of shard 1",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54409#01a1cabf-3cc6-4c40-954a-2f0a29023881"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-fastlane-token-time",
+      "title": "Fastlane benchmark compares token time across a second boundary",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "summary": "On master 2552c6787, the Ruby CI benchmark failed the fastlane 2.207.0 Spaceship token example. It expected 1794400658 and read 1794400657.",
+      "findings": [
+        {
+          "text": "The pinned supplier spec compares the token timestamp to a later Time.now.to_i read. The Ruby 3.0 image runs a fixed list of 100 benchmark specs. Fastlane 2.220.0 still contains all 100 and includes the supplier’s changed token timestamp behavior.",
+          "evidence": [
+            {
+              "label": "Original RSpec failure and integer timestamps",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54407#01a1ca8b-ce6e-437b-9541-8876bbc417b6"
+            },
+            {
+              "label": "Pinned supplier example",
+              "url": "https://github.com/fastlane/fastlane/blob/2.207.0/spaceship/spec/connect_api/token_spec.rb#L210"
+            },
+            {
+              "label": "Supplier token timestamp change",
+              "url": "https://github.com/fastlane/fastlane/commit/2beac83f8"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Replay the pinned benchmark specs on 2.220.0, checking both the intended token behavior and the workload coverage.",
+      "evidence": [
+        {
+          "label": "Original RSpec failure and integer timestamps",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54407#01a1ca8b-ce6e-437b-9541-8876bbc417b6"
+        },
+        {
+          "label": "Pinned supplier example",
+          "url": "https://github.com/fastlane/fastlane/blob/2.207.0/spaceship/spec/connect_api/token_spec.rb#L210"
+        },
+        {
+          "label": "Supplier token timestamp change",
+          "url": "https://github.com/fastlane/fastlane/commit/2beac83f8"
         }
       ]
     }
