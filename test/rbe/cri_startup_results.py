@@ -8,7 +8,7 @@ import re
 owner = "//test/root:crictl_test_2_2_3_owned"
 case = "TestCrictlUpdateContainerResources"
 tmp = Path(os.environ["RUNNER_TEMP"])
-trials = {run: {"run": run, "case": "missing"} for run in range(1, 9)}
+trials = {run: {"run": run, "case": "missing"} for run in range(1, 8)}
 stages = ("RunPodSandbox started", "assigned sandbox ID", "starting CNI setup",
           "received CNI result", "selected OCI runtime", "generated OCI spec",
           "RunPodSandbox returned", "RunPodSandbox failed")

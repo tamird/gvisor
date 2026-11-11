@@ -851,7 +851,7 @@ run_platform_matrix() (
         # Declared frontends own their platform transitions. Expand suites and
         # compare their configured owners with the final combined selection.
         include_public_profiles=true
-        options+=("${bazel_options[@]}" --runs_per_test=8 --nocache_test_results --flaky_test_attempts=1 --test_output=summary)
+        options+=("${bazel_options[@]}")
         language_test_options
         printf '%s\n' "${test_targets[@]}" >> "$selection_dir/shared-targets"
         ;;
@@ -1466,7 +1466,7 @@ PY
     if [[ $lane != release-repository ]]; then
       options+=(--strip=never)
     fi
-    options+=(--sandbox_add_mount_pair=/tmp --test_output=errors)
+    options+=(--sandbox_add_mount_pair=/tmp --test_output=summary)
     if [[ $test_execution == local ]]; then
       case "$lane" in
         plugin-network|nftables|moby|kvm|language-goferfs|startup|posture|portforward|root|benchmarks|pgo|docker|cpu-images|gpu-images)

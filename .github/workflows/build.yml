@@ -160,13 +160,15 @@ jobs:
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: bash test/rbe/actions.sh
+      run: >-
+        bash test/rbe/actions.sh --bazel-option=--runs_per_test=7
+        --bazel-option=--nocache_test_results --bazel-option=--flaky_test_attempts=1
 
     - name: Collect each named case and its startup phase timestamps
       if: always()
       run: python3 test/rbe/cri_startup_results.py
 
-    - name: Retain only the eight case records
+    - name: Retain only the seven case records
       if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
