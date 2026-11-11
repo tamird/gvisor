@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T01:21:31+00:00",
+    "updatedAt": "2026-11-11T01:35:28+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46202,7 +46202,7 @@
       "group": "rbe",
       "status": "Contributor review requested",
       "summary": "Two different development Sentries reported 0.0.0, so one accepted the other’s checkpoint. A source export now records the linked Sentry’s Go build ID unless the publisher supplies a release label. Old unnamed checkpoints contain only 0.0.0.\n\nThe version definitions also give the shipped netgofer the same label as runsc. Previously netgofer rejected its own named release on startup. On the current standalone change, both development and release builds produced all nine files on native AMD64 and executed a guest after restoring it. The Debian versions were 0~devel and 20261106.0. A separate native comparison verified netgofer enforcement on AMD64 and ARM64.",
-      "updatedAt": "2026-11-07T09:50:14+00:00",
+      "updatedAt": "2026-11-11T01:30:36+00:00",
       "evidence": [
         {
           "label": "Current standalone source, nine installed files per build, parser, Debian versions and both restored guests on native AMD64",
@@ -46298,9 +46298,9 @@
       "followup": {
         "owner": "Build and release",
         "sourceHead": "111c72d26660563b1cf23993293c4aa6fbdec851",
-        "observedAt": "2026-11-07T09:50:14+00:00",
+        "observedAt": "2026-11-11T01:30:36+00:00",
         "disposition": "Contributor review of the explicit release-label and linked-ID policy",
-        "nextAction": "Open the single source-export change after contributor review and #16593. The corrected standalone check passed for both named and development builds.",
+        "nextAction": "Review the single source-export change for submission. Its prerequisite #16593 merged at 93713c50f.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42360655295/artifacts/13569951004",
           "https://github.com/tamird/gvisor/actions/runs/42359633173/artifacts/13568979452",
@@ -46320,7 +46320,7 @@
         "head": "111c72d26660563b1cf23993293c4aa6fbdec851",
         "url": "https://github.com/tamird/gvisor/commit/111c72d26",
         "title": "Build source exports without a Git version stamp",
-        "summary": "Review the source-export change for submission after #16593. The current revision also labels netgofer, which otherwise rejects its own packaged release.",
+        "summary": "Review the source-export change for submission. #16593 has merged. This revision labels netgofer, which otherwise rejects its own packaged release.",
         "baseHead": "1560a5df4920e054dfe7ae88655f835eab1b782c",
         "body": "The default workspace status command runs Git even for a development\nbuild. Without a repository it reports 0.0.0, and presubmit jobs give\nunrelated commits the same tag. Neither string identifies the binary\nthat wrote a checkpoint.\n\nPass the release label from the publisher to Bazel with --embed_label.\nUse the same label for runsc, its Go sidecars and checkpoint restores.\nWithout a release label, record the linked sentry's Go build ID and\nreject restores from a different binary before loading the kernel.\nA custom STABLE_VERSION can still name the CLI and Debian package\nwithout asserting checkpoint compatibility.\n\nUnstamped builds report (devel) and produce Debian version 0~devel.\nThe release job passes the same version to both architecture builds."
       }
@@ -49675,7 +49675,7 @@
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-09T17:50:06+00:00",
+      "updatedAt": "2026-11-11T01:30:36+00:00",
       "summary": "Checklocks can verify the mutex at a semaphore lookup. On AMD64 and ARM64 it missed accesses through a saved or forwarded pointer after unlock, a wake using a different set’s mutex, and use after unlocking and relocking. A fork-only checker caught uses after unlock and storage into a global. It also rejected two legitimate operations: waking waiters in SetVal and walking the queue in countWaiters.",
       "evidence": [
         {
@@ -49765,10 +49765,11 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "observedAt": "2026-11-09T17:50:06+00:00",
-        "disposition": "The semaphore proposal remains on hold. The experimental checker flags both a correctly owned wake and a wake using the wrong set.",
+        "observedAt": "2026-11-11T01:30:36+00:00",
+        "disposition": "The source prerequisite #16806 merged at dbcce4943. The semaphore proposal still needs a checker that can distinguish the correct owner from a different set’s lock without rejecting valid waiter operations.",
         "nextAction": "Determine how checklocks can follow the owning mutex through derived pointers and account for whether a called method releases the mutex or retains the pointer.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16806",
           "https://github.com/tamird/gvisor/actions/runs/42665113185/artifacts/13697018009",
           "https://github.com/tamird/gvisor/actions/runs/42664387976/artifacts/13696378343",
           "https://github.com/tamird/gvisor/commit/e22d237b3",
@@ -54818,7 +54819,7 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-10T20:57:16+00:00",
+      "updatedAt": "2026-11-11T01:30:36+00:00",
       "summary": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
       "evidence": [
         {
@@ -54900,6 +54901,10 @@
         {
           "label": "Reply on duplicate callback diagnostics",
           "url": "https://github.com/google/gvisor/pull/16868#discussion_r4529053276"
+        },
+        {
+          "label": "Open report about a locationless range-over-func lock diagnostic",
+          "url": "https://github.com/google/gvisor/pull/16868#discussion_r4531734437"
         }
       ],
       "refinement": {
@@ -54964,12 +54969,13 @@
       ],
       "number": 16868,
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent",
         "sourceHead": "b968f4defe4632c2f168af37003ca59216fd4027",
-        "observedAt": "2026-11-10T20:57:16+00:00",
-        "disposition": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
-        "nextAction": "Follow maintainer review of the published amendment and the import.",
+        "observedAt": "2026-11-11T01:30:36+00:00",
+        "disposition": "The previous +checklocksignore correction is published. A new report on the same head shows that a synthesized range-over-func call can produce a lock-change diagnostic at token.NoPos. The configured Nogo filter discards diagnostics printed at that location.",
+        "nextAction": "Qualify the reported range-over-func case on the published head and verify a correction that reports the guard change at the source location.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16868#discussion_r4531734437",
           "https://github.com/google/gvisor/pull/16868#discussion_r4530412516",
           "https://github.com/tamird/gvisor/actions/runs/42897002914/artifacts/13802036928",
           "https://github.com/tamird/gvisor/commit/06dd5df8a",
@@ -98967,7 +98973,63 @@
         "url": "https://github.com/nodejs/node/compare/main...tamird:node:test-tick-processor-retry-flags?expand=1",
         "policyURL": "https://github.com/nodejs/node/blob/ab11f834f/doc/contributing/pull-requests.md#L211-L220"
       }
+    },
+    {
+      "id": "investigation:ci-flake-php-upload-2g",
+      "group": "ci-flakes",
+      "title": "PHP’s 2.15 GB multipart upload fails across master and test builds",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T01:35:28+00:00",
+      "summary": "PHP 8.5.11 reported sapi/cli/tests/upload_2G.phpt as failed in seven attempts across six commits. Two were gVisor master commits (d887f126f and 93713c50f). Four were Google test commits.",
+      "findings": [
+        {
+          "text": "The master goferfs jobs failed in builds #54352 and #54360. The #54360 retry used a cached result. A fresh passing execution of this individual case has yet to be verified.",
+          "evidence": [
+            {
+              "label": "Master build #54360",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54360#01a1c821-c73e-4698-8da5-e5e84fa86587"
+            },
+            {
+              "label": "Cached retry on the same master commit",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54360#01a1c82c-8e82-4c99-ab89-fd3c5f33003b"
+            }
+          ]
+        },
+        {
+          "text": "Four other affected builds (#54340, #54341, #54342 and #54347) ran different test commits. The failing job logs name the test. The PHPT checks for more than 3 GiB of free memory and 2.3 GB of free space in /tmp before sending 2,150,000,000 bytes.",
+          "evidence": [
+            {
+              "label": "First failure in build #54340",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54340#01a1c7e8-9007-406b-b565-61701e284168"
+            },
+            {
+              "label": "Final job in build #54340",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54340#01a1c801-256c-44ad-b0fa-292429bb02b5"
+            },
+            {
+              "label": "PHP 8.5.11 test",
+              "url": "https://github.com/php/php-src/blob/php-8.5.11/sapi/cli/tests/upload_2G.phpt"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Recover the PHPT’s expected and actual output before container cleanup. Compare the test’s free-space and memory readings and check for failed or short writes.",
+      "evidence": [
+        {
+          "label": "Master build #54360",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54360#01a1c821-c73e-4698-8da5-e5e84fa86587"
+        },
+        {
+          "label": "First failure in build #54340",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54340#01a1c7e8-9007-406b-b565-61701e284168"
+        },
+        {
+          "label": "PHP 8.5.11 test",
+          "url": "https://github.com/php/php-src/blob/php-8.5.11/sapi/cli/tests/upload_2G.phpt"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-11T01:21:31+00:00"
+  "updatedAt": "2026-11-11T01:35:28+00:00"
 }
