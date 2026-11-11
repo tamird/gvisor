@@ -1,0 +1,20 @@
+name: Check image rebases
+on:
+  push:
+    branches: ["qualification/image-rebase-2552c6787"]
+permissions:
+  contents: read
+jobs:
+  images:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Build image contexts and compare source archives
+        run: |
+          set -euo pipefail
+          bazel --version
+          python3 .github/workflows/image-rebase-check.py
