@@ -102,11 +102,10 @@ else
     # Note that a given commit can match any number of tags. We have to iterate
     # through all possible tags and produce associated artifacts.
     for tag in ${tags}; do
-      # LINT.IfChange
+      # A CI cache tag is not a release.
       if [[ "$tag" == "buildkite-test-branch" ]]; then
         continue
       fi
-      # LINT.ThenChange(../.buildkite/hooks/pre-command)
       # A staging tag names a release that is still being built.
       if [[ "$tag" == release-*-staging ]]; then
         continue
