@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T02:10:26+00:00",
+    "updatedAt": "2026-11-11T02:24:40+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3701,37 +3701,33 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "Master can call the reader without backing an advised one-page allocation. Successful zeroing of a recycled disk page can also skip the reservation requested by tmpfs. The rebased fix preserves master’s handling of unwritable zero pages, reserves the disk range, and passed 83 pgalloc, 356 safecopy and two tmpfs cases. On one pinned AMD core, 4 KiB recycled allocations took 3.86% longer hot and 3.23% longer cold. Fresh advised and shmem allocations are also covered by #15181.\n\nAyush closed #17204 without merging it. On copy-on-write filesystems such as Btrfs, a write to a mapped page can still fault after fallocate succeeds. The plain clear in #17204 and fork integration 5b93713ad would reintroduce the SIGBUS addressed by #17086. The integration is unsuitable. The published #15181 head 61470ea41 keeps fault-protected clearing and separately reserves storage for strict disk-backed allocations.\n\nThe native AMD64 comparison exercised reservation errors and syscall count. With a read-only descriptor and a writable mapping, #17204 returned all 12,288 bytes with no error. The fork integration returned an empty range and EBADF. With a writable descriptor, the integration reserved the same range once and returned all 12,288 bytes. The 84 pgalloc, 356 safecopy and two selected tmpfs cases passed. These tests did not exercise a copy-on-write fault after a successful reservation.\n\nAyush closed #17209 in favor of #17214 and asked for #15181 to be submitted after #17214 lands. The fork integration a8dd95cf9 puts the three unchanged allocator files from public #15181 (61470ea41) on current #17214 (58f1ae5ef) and inherits its entire safecopy package. On native AMD64 Linux with 4 KiB pages, both uncached test owners passed: 13 pgalloc records and 183 safecopy records, including 180 fault cases.\n\nThe earlier integration 71ad75002 on 4f94a055b passed 83 allocator and 609 safecopy records per architecture on native AMD64 and ARM64. Only safecopy_test.go changed in the two affected packages between those integrations. The separate 64 KiB ARM64 guest ran the upstream safecopy tests on 58f1ae5ef alone. There is no ARM64 result or timing measurement for a8dd95cf9.",
+      "summary": "Strict disk-backed allocations must reserve space even when zeroing a recycled page succeeds. With #17214 landed, the rebased PR keeps its protected clear and preserves the three approved allocator files byte for byte. All 84 pgalloc and 609 safecopy cases passed without skips on each of native AMD64 and ARM64, including the short-read and restore tests. The pinned-CPU results in the PR description were measured on its earlier revision.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "owner": "Agent after #17214 lands",
-        "sourceHead": "61470ea4162137e6871edd94e369f1c03592c163",
-        "observedAt": "2026-11-08T18:25:51+00:00",
-        "disposition": "Waiting for #17214 to land. The exact fork integration passed its native AMD64 allocator and protected-clear checks.",
-        "nextAction": "After #17214 lands, compare the landed code with 58f1ae5ef and carry forward the three allocator files from a8dd95cf9. Use the current AMD64 results and requalify any changes from the tested composition before submitting #15181.",
+        "owner": "Maintainer",
+        "sourceHead": "5ee96374bca7b621b033444e65f8433ae1329474",
+        "observedAt": "2026-11-11T02:17:46+00:00",
+        "disposition": "The approved amendment is published as one mergeable commit following #17214.",
+        "nextAction": "Review the published allocator change at 5ee96374b.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15181#issuecomment-6725025012",
-          "https://github.com/google/gvisor/pull/17209#issuecomment-6723886420",
-          "https://github.com/google/gvisor/pull/17214",
-          "https://github.com/tamird/gvisor/commit/71ad75002",
-          "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610727093",
-          "https://github.com/tamird/gvisor/actions/runs/42463714782/artifacts/13610579330",
-          "https://github.com/google/gvisor/pull/17086",
           "https://github.com/google/gvisor/pull/15181",
-          "https://github.com/google/gvisor/pull/17204",
-          "https://github.com/tamird/gvisor/commit/61470ea41",
-          "https://github.com/tamird/gvisor/commit/5b93713ad",
-          "https://github.com/tamird/gvisor/actions/runs/42414525094/artifacts/13590248941",
-          "https://github.com/google/gvisor/pull/17204#issuecomment-6713531237",
-          "https://github.com/tamird/gvisor/commit/a8dd95cf9",
-          "https://github.com/tamird/gvisor/actions/runs/42509390460/artifacts/13628248410",
-          "https://github.com/tamird/gvisor/actions/runs/42498576587/artifacts/13624374886"
+          "https://github.com/google/gvisor/pull/17214",
+          "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13822575150",
+          "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13821608693"
         ]
       },
-      "updatedAt": "2026-11-08T18:25:51+00:00",
-      "head": "61470ea4162137e6871edd94e369f1c03592c163",
+      "updatedAt": "2026-11-11T02:17:46+00:00",
+      "head": "5ee96374bca7b621b033444e65f8433ae1329474",
       "evidence": [
+        {
+          "label": "Uncached AMD64 allocator and safecopy results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13822575150"
+        },
+        {
+          "label": "Uncached ARM64 allocator and safecopy results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13821608693"
+        },
         {
           "label": "Allocator conflict repair",
           "url": "https://github.com/tamird/gvisor/commit/61470ea41"
@@ -3807,12 +3803,12 @@
       ],
       "refinement": {
         "before": {
-          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-          "head": "36900f03504f22a8a89271d95f9beaa172f9d233"
-        },
-        "after": {
           "base": "70008149cff7b8d3b858877ae9c359b9046d19c5",
           "head": "61470ea4162137e6871edd94e369f1c03592c163"
+        },
+        "after": {
+          "head": "5ee96374bca7b621b033444e65f8433ae1329474",
+          "base": "46e8f70ffcccbed7159248e4e29d03f16fa58263"
         }
       },
       "settledReviews": [
@@ -12801,30 +12797,30 @@
       "id": "branch:nvproxy-declared-sources",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/nvproxy-offline-abi-single",
-      "head": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
+      "ref": "review/nvproxy-upstream-build",
+      "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
       "title": "Compare NVIDIA driver ABIs using declared source archives",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/2b34bb5a2",
+      "url": "https://github.com/tamird/gvisor/commit/73a5b30ce",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-11T02:10:26+00:00",
-      "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. Without CA roots, all 34 online checksum cases failed TLS verification. On native AMD64 and ARM64 workers, all 34 passed with the declared roots. On each architecture, 25 public ABI comparisons passed and nine versions had no public source tag. The proposal's nvproxy and downloader directories match those runs byte for byte.",
+      "updatedAt": "2026-11-11T02:24:40+00:00",
+      "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. Without CA roots, all 34 online checksum cases failed TLS verification. On native AMD64 and ARM64 workers, all 34 passed with the declared roots. On each architecture, 25 public ABI comparisons passed and nine versions had no public source tag. The proposal's nvproxy and downloader directories match those runs byte for byte. Renaming the archive overlay to upstream/BUILD preserved all 17,893 file labels in the 25 driver archives and all 14 targets under //tools/nvidia_driver_differ/... in Bazel 9.3.1.",
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
-        "observedAt": "2026-11-11T02:10:26+00:00",
+        "sourceHead": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
+        "observedAt": "2026-11-11T02:24:40+00:00",
         "disposition": "Single-commit proposal prepared.",
-        "nextAction": "Review the offline ABI comparison and the separate online installer checksum test after #17112, #17114 and #17151. The checksum test now brings its own CA bundle.",
+        "nextAction": "Review the offline ABI comparison, the CA bundle for online checksum verification, and the driver header BUILD file. Publication follows #17112, #17114 and #17151.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2b34bb5a2",
+          "https://github.com/tamird/gvisor/commit/73a5b30ce",
           "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
           "https://github.com/tamird/gvisor/actions/runs/42365714739/artifacts/13572296525"
         ]
       },
       "evidence": [
         {
-          "label": "Revised proposal with the CA bundle for online checksum verification",
-          "url": "https://github.com/tamird/gvisor/commit/2b34bb5a2"
+          "label": "Revised single commit with the CA bundle and upstream/BUILD overlay",
+          "url": "https://github.com/tamird/gvisor/commit/73a5b30ce"
         },
         {
           "label": "All 34 original certificate failures",
@@ -12889,7 +12885,7 @@
           "base": "4a735693062dedd81863e75f7a82efd8414dbe6f"
         },
         "after": {
-          "head": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
+          "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
           "base": "4a735693062dedd81863e75f7a82efd8414dbe6f"
         }
       },
@@ -12907,13 +12903,13 @@
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "2b34bb5a27e623e38f6fcb0b755da14fd9f1193d",
+        "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
         "baseHead": "4a735693062dedd81863e75f7a82efd8414dbe6f",
-        "url": "https://github.com/tamird/gvisor/commit/2b34bb5a2",
+        "url": "https://github.com/tamird/gvisor/commit/73a5b30ce",
         "title": "Compare NVIDIA driver ABIs using declared source archives",
         "body": "The NVIDIA ABI test clones a driver repository during each comparison. Without Git or network access, the test fails before Clang can compare the driver’s ioctl definitions with the corresponding nvproxy types.\n\nGive the ABI test and driver differ the same pinned header archives as Bazel runfiles. Record versions without a public source tag so the test can distinguish them from missing build inputs. Developers can also pin a candidate version for the differ before nvproxy adopts it. Keep these archives development dependencies of the gVisor module.\n\nThe existing parity suite runs the offline ABI comparison and a separate test that downloads the installers to check their hashes. Give the checksum test the pinned gRPC CA bundle so it can verify NVIDIA’s HTTPS certificate on workers without a system trust store.",
-        "requestedAt": "2026-11-11T02:10:26+00:00",
-        "summary": "Review the offline ABI comparison and the separate online installer checksum test after #17112, #17114 and #17151. The checksum test now brings its own CA bundle."
+        "requestedAt": "2026-11-11T02:24:40+00:00",
+        "summary": "Review the offline ABI comparison, the CA bundle for online checksum verification, and the driver header BUILD file. Publication follows #17112, #17114 and #17151."
       }
     },
     {
@@ -97827,7 +97823,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T18:35:40+00:00",
+      "updatedAt": "2026-11-11T02:19:56+00:00",
       "summary": "TestSystemdMultiUser timed out waiting for Bob’s user@1002.service before it could exercise cross-user isolation.",
       "findings": [
         {
@@ -97848,6 +97844,23 @@
             {
               "label": "#53945 passing retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/53945#01a1c024-f4e9-4fa8-b1c6-844e1fa8f8fd"
+            }
+          ]
+        },
+        {
+          "text": "Build #54182 on 16b82498a also timed out waiting for Bob's user manager. Its log shows the PAM session opened and the same optional-library warning before the test failed at 68.88 seconds. The same shard passed on retry. Six uncached native AMD64/systrap runs on 6782e66bb with the pinned systemd image all passed. Bob's recorded activation took 344–365 ms, so those controls did not capture a stalled manager.",
+          "evidence": [
+            {
+              "label": "Build #54182 original systemd test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54182/jobs/01a1c4bf-c677-4ac4-85e8-1618f865bf83/artifacts/01a1c4ca-3263-4eae-8623-13b77775a970"
+            },
+            {
+              "label": "Passing retry of the same shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54182#01a1c4ca-e7c2-489d-a511-e799811e3bb6"
+            },
+            {
+              "label": "Six native AMD64 manager activations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42709502602/artifacts/13715004946"
             }
           ]
         }
