@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T18:11:35+00:00",
+    "updatedAt": "2026-11-11T18:16:23+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -78549,7 +78549,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "Go runtime suite investigation",
-      "updatedAt": "2026-11-11T18:03:07+00:00",
+      "updatedAt": "2026-11-11T18:16:23+00:00",
       "summary": "The proctor passes shell apostrophes directly to Go’s test-name matcher. Go 1.22.11 registers 2,525 on-disk cases. The runtime suite separately excludes the distribution test that would run them all.",
       "findings": [
         {
@@ -78590,10 +78590,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13880355745"
             }
           ]
+        },
+        {
+          "text": "The stock systrap runtime and corrected proctor ran all 51 batches in 493.69 seconds on native AMD64. The inventory accounted for every one of the 2,525 selected files exactly once. Go reported 2,502 passes and 23 skips. No case failed.",
+          "evidence": [
+            {
+              "label": "All 51 original systrap batch logs and complete case inventory",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13882920474"
+            }
+          ]
         }
       ],
-      "nextStep": "Read the named outcomes, skips, failures and elapsed time across all 51 systrap batches before proposing the 2,525-file workload.",
+      "nextStep": "Review the single Go proctor change for upstream submission. It restores selection of the on-disk tests in each existing batch.",
       "evidence": [
+        {
+          "label": "All 51 original systrap batch logs and complete case inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13882920474"
+        },
         {
           "label": "Native and systrap positive and negative controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13880355745"
@@ -78622,7 +78635,18 @@
           "label": "Native Linux controls and complete systrap testdir run",
           "url": "https://github.com/tamird/gvisor/actions/runs/43070682429"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "requestedAt": "2026-11-11T18:16:23+00:00",
+        "head": "9f3e63e134254bd8cd2a2e0ad49790d6dfe784ce",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/9f3e63e13",
+        "title": "Run the selected Go testdir subtests",
+        "summary": "Open this change to run the selected Go 1.22 on-disk tests in their existing batches? The full systrap run accounted for all 2,525 files.",
+        "body": "The Go runtime suite passed literal shell quotes in the -run argument\nto go test. No top-level test matched, so a batch of on-disk tests\ncould report success without running any of them. The suite already\nexcludes the separate go tool dist entry that runs the entire testdir.\n\nPass each selected file as a top-level alternative. Match each\nslash-separated part of its name literally so a nested test runs\nwithout also selecting similarly named files.\n\nFixes: b9b626d06 (\"Bump golang runtime tests to Go 1.22.\")\n\nPrepared by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "investigation:cubic-recovery",
