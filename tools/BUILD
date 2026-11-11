@@ -85,3 +85,19 @@ py_test(
         "//:.clang-format",
     ],
 )
+
+ALLOCATOR_FORMAT_INPUTS = [
+    "@qualification_format_20//file",
+    "@qualification_format_23//file",
+    "//:.clang-format",
+    "@qualification_allocator_source//file",
+    "@qualification_allocator_export//file",
+    "//test/util:errno_safe_allocator_test.cc",
+]
+
+py_test(
+    name = "allocator_format_test",
+    srcs = ["allocator_format_test.py"],
+    args = ["$(rootpath %s)" % f for f in ALLOCATOR_FORMAT_INPUTS],
+    data = ALLOCATOR_FORMAT_INPUTS,
+)

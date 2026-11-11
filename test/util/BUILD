@@ -478,3 +478,5 @@ cc_test(
         ":test_main",
     ],
 )
+
+exports_files(["errno_safe_allocator_test.cc"], visibility = ["//tools:__pkg__"])

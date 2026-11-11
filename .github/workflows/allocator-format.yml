@@ -1,0 +1,26 @@
+name: Verify the allocator test against both formatter versions
+on:
+  push:
+    branches: [qualification/errno-allocator-export-format]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Run the paired formatters and the allocator tests
+        run: bazel test --config=x86_64 --nocache_test_results --test_output=all //tools:allocator_format_test //test/util:errno_safe_allocator_test
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: allocator-export-format
+          path: |
+            bazel-testlogs/tools/allocator_format_test/test.log
+            bazel-testlogs/tools/allocator_format_test/test.xml
+            bazel-testlogs/test/util/errno_safe_allocator_test/test.log
+            bazel-testlogs/test/util/errno_safe_allocator_test/test.xml
+          if-no-files-found: warn

@@ -885,3 +885,24 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+http_file(
+    name = "qualification_format_20",
+    sha256 = "7c6bcb7e01ba4f05a4c980fda147b330f7e4833c2aea8c92a0c2df9573ae7afe",
+    urls = ["https://files.pythonhosted.org/packages/a6/77/786aa0fc8a75d8ce94966bb33e44c63fec1964cbf343ee862ed6a5be38c1/clang_format-20.1.8-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"],
+)
+http_file(
+    name = "qualification_format_23",
+    sha256 = "64900462c1203cee2fec364536c2dda708baf0619e15b52ceda926648cc82f56",
+    urls = ["https://files.pythonhosted.org/packages/42/ef/3f8e215916e79ecd435b5bc20810443f80fce3fb8bbfe6d2783ceb775c1b/clang_format-23.1.1-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"],
+)
+http_file(
+    name = "qualification_allocator_source",
+    sha256 = "170eeb9d0f5c864e76327bc4781818a457a946b4684dfebb6da1f3e901d14936",
+    urls = ["https://raw.githubusercontent.com/google/gvisor/403195966ebb7900501ebb8ef40fa859c12fe71c/test/util/errno_safe_allocator_test.cc"],
+)
+http_file(
+    name = "qualification_allocator_export",
+    sha256 = "de7fe53e36fa695e0b621ba38f5d86ae6b3a6b634da4515ec0e6459309322b66",
+    urls = ["https://raw.githubusercontent.com/google/gvisor/649ad252f2c93094fad7ff627e962ca487ee70db/test/util/errno_safe_allocator_test.cc"],
+)
