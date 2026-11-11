@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T11:20:49+00:00",
+    "updatedAt": "2026-11-11T11:32:25+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -143,12 +143,12 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-06T16:30:19.068Z",
-      "summary": "Tamir reports that the maintainer hold concerns adding google/licensecheck. The existing checker already verifies the compiler migration with the current catalog and policy. The hold remains on this classifier PR. Its fork revision now includes the go-digest catalog entry and policy exception.\n\nThe fork rebase repairs three stale GPL constants introduced by 61088c907 and makes the mock HTTP notice state an actual GPL-v2-only grant. All 41 owning tests pass on 0ea1ef528. Fresh catalog verification still reports 20 QEMU mismatches, one LTP mismatch and one go-digest mismatch. In particular, QEMU’s license appendix contains an example grant. The project’s LICENSE identifies the terms for the emulator. The upstream October hold remains.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne’s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
+      "updatedAt": "2026-11-11T11:32:25+00:00",
+      "summary": "Tamir reports that the maintainer hold concerns adding google/licensecheck. The existing checker already verifies the compiler migration with the current catalog and policy. The hold remains on this classifier PR. Its fork revision now includes the go-digest catalog entry and policy exception.\n\nThe fork rebase repairs three stale GPL constants introduced by 61088c907 and makes the mock HTTP notice state an actual GPL-v2-only grant. All 41 owning tests pass on 0ea1ef528. Fresh catalog verification still reports 20 QEMU mismatches, one LTP mismatch and one go-digest mismatch. In particular, QEMU’s license appendix contains an example grant. The project’s LICENSE identifies the terms for the emulator. The upstream October hold remains.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne’s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.\n\nThe current head conflicts with 2552c6787 in governance/licensing.yaml. The existing maintainer hold remains in force.",
       "followup": {
-        "disposition": "Equivalent conflict repair published; existing review requirements retained",
+        "disposition": "Current master conflicts in governance/licensing.yaml. The documented maintainer hold remains in force.",
         "owner": "root",
-        "nextAction": "Follow current-head public checks and substantive maintainer review through the existing intake; no repeat rebase or reapproval request for this equivalent change.",
+        "nextAction": "Prepare the catalog-only conflict repair for the adjacent Kythe and libpluginstack entries. Preserve the maintainer hold on submitting the classifier until the internal exception is confirmed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
           "https://github.com/tamird/gvisor/commit/44d3ce3bc",
@@ -160,17 +160,22 @@
           "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021",
           "https://github.com/google/gvisor/pull/16048",
           "https://github.com/tamird/gvisor/commit/04108da6a3cfe97d3990c7e36c1204ca9ca598f5",
-          "https://github.com/tamird/gvisor/commit/afd34241a1b7e38e196e5d173632f658b7e5defc"
+          "https://github.com/tamird/gvisor/commit/afd34241a1b7e38e196e5d173632f658b7e5defc",
+          "https://github.com/google/gvisor/commit/2552c6787"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-27T18:54:54+00:00",
+        "mergeable": "CONFLICTING",
+        "observedAt": "2026-11-11T11:32:25+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc"
       },
       "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
       "evidence": [
+        {
+          "label": "Current conflicting master",
+          "url": "https://github.com/google/gvisor/commit/2552c6787"
+        },
         {
           "label": "Classifier fork revision with go-digest’s module-specific catalog and policy exception",
           "url": "https://github.com/tamird/gvisor/compare/afd34241a...63811d8fe"
@@ -628,25 +633,30 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
-      "summary": "The requested post-#16046 rebase is published at 636cec92b308 on master 077ee528716d, which contains 82aa7f55a. The rebase incorporates the existing pkg/zip proxy into the wheel audit and removes the duplicate standard-library import. Remote checker and analyzer validation passed: 37 positive cases, no failures or skips, both analyzer architectures and formatting. The existing maintainer exception hold remains.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 7856cf4d0b68 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe requested follow-up on the October 3 internal exception hold is posted and verified. The maintainer’s response is pending.\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:24:40 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
+      "updatedAt": "2026-11-11T11:32:25+00:00",
+      "summary": "The requested post-#16046 rebase is published at 636cec92b308 on master 077ee528716d, which contains 82aa7f55a. The rebase incorporates the existing pkg/zip proxy into the wheel audit and removes the duplicate standard-library import. Remote checker and analyzer validation passed: 37 positive cases, no failures or skips, both analyzer architectures and formatting. The existing maintainer exception hold remains.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 7856cf4d0b68 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe requested follow-up on the October 3 internal exception hold is posted and verified. The maintainer’s response is pending.\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:24:40 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.\n\nThe current head conflicts with 2552c6787 in tools/licensecheck/licensecheck.go. The existing maintainer hold remains in force.",
       "followup": {
         "owner": "root",
-        "disposition": "Wheel audit rebased over QEMU repository discovery; the existing maintainer hold remains.",
+        "disposition": "Current master conflicts in tools/licensecheck/licensecheck.go. The documented maintainer hold remains in force.",
         "sourceHead": "e9289d0a24c17e33d9dccf880ddef2f7e7bf886c",
-        "observedAt": "2026-10-29T01:35:12.698800+00:00",
-        "nextAction": "Await maintainer confirmation that the existing internal license-exception hold is cleared. The mechanical rebase does not clear that hold.",
+        "observedAt": "2026-11-11T11:32:25+00:00",
+        "nextAction": "Await confirmation of the existing maintainer hold before revising the conflicting checker implementation.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15114#issuecomment-6269971682",
           "https://github.com/tamird/gvisor/commit/7856cf4d0b68716fb257595d34c90c7d5b21e1ba",
           "https://github.com/tamird/gvisor/commit/636cec92b308662bb2da1b2c325f999c82e9e65a",
-          "https://app.buildbuddy.io/invocation/a424675f-7ff1-49a0-8e2e-e90b22101343"
+          "https://app.buildbuddy.io/invocation/a424675f-7ff1-49a0-8e2e-e90b22101343",
+          "https://github.com/google/gvisor/commit/2552c6787"
         ],
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       },
       "head": "e9289d0a24c17e33d9dccf880ddef2f7e7bf886c",
       "evidence": [
+        {
+          "label": "Current conflicting master",
+          "url": "https://github.com/google/gvisor/commit/2552c6787"
+        },
         {
           "label": "58 passing named test records; none skipped or missing",
           "url": "https://app.buildbuddy.io/invocation/9fd7d22f-a6a8-4b8a-a613-fe40bea1df5e"
@@ -31246,22 +31256,33 @@
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-10T11:40:34+00:00",
-      "summary": "Rebased the MySQL image in 28035bfa2. Ryan approved 1785bfc26, the source that export #17300 still names.\n\nBefore this rebase, the AMD64 check built all five image contexts and exercised their Make content tags. ARM64 checks covered target configuration and image inventories.",
+      "updatedAt": "2026-11-11T11:32:25+00:00",
+      "summary": "Rebased the MySQL image in 28035bfa2. Ryan approved 1785bfc26, the source that export #17300 still names.\n\nBefore this rebase, the AMD64 check built all five image contexts and exercised their Make content tags. ARM64 checks covered target configuration and image inventories.\n\nOn master 2552c6787 this source conflicts in tools/images.mk.",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "buildifier_review",
         "sourceHead": "28035bfa21166cd1fccca0e107aaf56009d707e3",
-        "observedAt": "2026-11-10T11:40:34+00:00",
-        "disposition": "The published single-commit rebase 28035bfa2 applies to deb6b3ea1 and GitHub reports it is mergeable.",
-        "nextAction": "Review the rebased MySQL image. Ryan approved the preceding head. Export #17300 still names 1785bfc26.",
+        "observedAt": "2026-11-11T11:32:25+00:00",
+        "disposition": "The source conflicts with current master in tools/images.mk.",
+        "nextAction": "Prioritize the MySQL source rebase and verify the status of its open, conflicting export #17300.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/28035bfa2",
           "https://github.com/google/gvisor/pull/16458",
           "https://github.com/tamird/gvisor/commit/1785bfc26",
-          "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974"
-        ]
+          "https://github.com/tamird/gvisor/actions/runs/42348319373/artifacts/13564985974",
+          "https://github.com/google/gvisor/commit/2552c6787",
+          "https://github.com/google/gvisor/pull/17300"
+        ],
+        "mergeable": "CONFLICTING"
       },
       "evidence": [
+        {
+          "label": "Current master with the adjacent image entries",
+          "url": "https://github.com/google/gvisor/commit/2552c6787"
+        },
+        {
+          "label": "Open, conflicting MySQL export",
+          "url": "https://github.com/google/gvisor/pull/17300"
+        },
         {
           "label": "Published rebase 28035bfa2",
           "url": "https://github.com/tamird/gvisor/commit/28035bfa2"
@@ -31378,22 +31399,28 @@
       "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-10T11:40:34+00:00",
-      "summary": "Rebased in 2eb25a5f1 onto deb6b3ea1.\n\nThe rebased Tomcat fixture retains the two architecture-specific base images and master’s PostgreSQL context. The source is mergeable.",
+      "updatedAt": "2026-11-11T11:32:25+00:00",
+      "summary": "Rebased in 2eb25a5f1 onto deb6b3ea1.\n\nThe rebased Tomcat fixture retains the two architecture-specific base images and master’s PostgreSQL context.\n\nOn master 2552c6787 this source conflicts in MODULE.bazel.",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "buildifier_review",
         "sourceHead": "2eb25a5f13f556a221a9efd4bddddd44bf8f40dd",
-        "observedAt": "2026-11-10T11:40:34+00:00",
-        "disposition": "The published single-commit rebase 2eb25a5f1 applies to deb6b3ea1 and GitHub reports it is mergeable.",
-        "nextAction": "Review the rebased Tomcat image.",
+        "observedAt": "2026-11-11T11:32:25+00:00",
+        "disposition": "The source conflicts with current master in MODULE.bazel.",
+        "nextAction": "Rebase the Tomcat manifest beside the landed image entries and check the existing contexts.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2eb25a5f1",
           "https://github.com/google/gvisor/pull/16462",
           "https://github.com/google/gvisor/pull/16462",
-          "https://github.com/tamird/gvisor/compare/d754a40f1...5186abc50"
-        ]
+          "https://github.com/tamird/gvisor/compare/d754a40f1...5186abc50",
+          "https://github.com/google/gvisor/commit/2552c6787"
+        ],
+        "mergeable": "CONFLICTING"
       },
       "evidence": [
+        {
+          "label": "Current master with the adjacent image entries",
+          "url": "https://github.com/google/gvisor/commit/2552c6787"
+        },
         {
           "label": "Published rebase 2eb25a5f1",
           "url": "https://github.com/tamird/gvisor/commit/2eb25a5f1"
@@ -31502,24 +31529,30 @@
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-10T11:40:34+00:00",
-      "summary": "Rebased the Apache image in f53888791. Carzh approved c1511cf4b. The export for 2595b7928, #16879, closed without merging.\n\nThe Apache fixtures retain their image pins, configuration and Make names.",
+      "updatedAt": "2026-11-11T11:32:25+00:00",
+      "summary": "Rebased the Apache image in f53888791. Carzh approved c1511cf4b. The export for 2595b7928, #16879, closed without merging.\n\nThe Apache fixtures retain their image pins, configuration and Make names.\n\nOn master 2552c6787 this source conflicts in MODULE.bazel and tools/images.mk.",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "buildifier_review",
         "sourceHead": "f53888791f36f5ecf1996c08a840b706262b49e3",
-        "observedAt": "2026-11-10T11:40:34+00:00",
-        "disposition": "The published single-commit rebase f53888791 applies to deb6b3ea1 and GitHub reports it is mergeable.",
-        "nextAction": "Review the rebased Apache image. Export #16879 closed without merging.",
+        "observedAt": "2026-11-11T11:32:25+00:00",
+        "disposition": "The source conflicts with current master in MODULE.bazel and tools/images.mk.",
+        "nextAction": "Rebase the Apache manifest and Make entries, preserving the other benchmark images.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f53888791",
           "https://github.com/google/gvisor/pull/16466",
           "https://github.com/google/gvisor/pull/16466#issuecomment-6706215297",
           "https://github.com/google/gvisor/pull/16466",
           "https://github.com/tamird/gvisor/compare/c1511cf4b...f7b488717",
-          "https://github.com/google/gvisor/pull/16879"
-        ]
+          "https://github.com/google/gvisor/pull/16879",
+          "https://github.com/google/gvisor/commit/2552c6787"
+        ],
+        "mergeable": "CONFLICTING"
       },
       "evidence": [
+        {
+          "label": "Current master with the adjacent image entries",
+          "url": "https://github.com/google/gvisor/commit/2552c6787"
+        },
         {
           "label": "Published rebase f53888791",
           "url": "https://github.com/tamird/gvisor/commit/f53888791"
@@ -39266,8 +39299,20 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Milan asked for the repair command when Buildifier reports a formatting difference. Fork revision 9ebf90e97 restores the hint and rebases the existing change. Fork revision 9ebf90e97 exited cleanly in both lint actions, but Buildifier’s declared inventory matched only 627 of 629 tracked sources. Two files under external/ were missing. The comparison did not qualify the amendment.",
+      "summary": "The published PR registers the Buildifier binary. The amendment runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.",
       "evidence": [
+        {
+          "label": "629 Starlark and 486 C/C++ files, both repair commands, separate module-docstring control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962"
+        },
+        {
+          "label": "Tested one-commit amendment",
+          "url": "https://github.com/tamird/gvisor/commit/045005811"
+        },
+        {
+          "label": "Previous author proposal",
+          "url": "https://github.com/tamird/gvisor/commit/7a38c0e2c"
+        },
         {
           "label": "Uncached Linux actions and 627-of-629 Buildifier inventory check",
           "url": "https://github.com/tamird/gvisor/actions/runs/43009445356/artifacts/13850355782"
@@ -39414,17 +39459,17 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-11T11:14:40+00:00",
+      "updatedAt": "2026-11-11T11:29:35+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "Contributor",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-11-11T11:11:00+00:00",
-        "disposition": "Fork revision 9ebf90e97 exited cleanly in both lint actions, but Buildifier’s declared inventory matched only 627 of 629 tracked sources. Two files under external/ were missing. The comparison did not qualify the amendment.",
-        "nextAction": "Correct the two missing Starlark source inputs, then verify the failure hint and complete manifest on Linux.",
+        "observedAt": "2026-11-11T11:29:35+00:00",
+        "disposition": "The exact Linux check on 045005811 passed with the full manifest. The formatter repaired the seeded file and the next check passed. A missing module docstring still produced its own warning.",
+        "nextAction": "Review the full amendment and the reply to Milan.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663#discussion_r4534723342",
-          "https://github.com/tamird/gvisor/commit/9ebf90e97",
-          "https://github.com/tamird/gvisor/actions/runs/43009445356"
+          "https://github.com/tamird/gvisor/commit/045005811",
+          "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962"
         ]
       },
       "refinement": {
@@ -39432,8 +39477,20 @@
           "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
         },
         "after": {
-          "head": "9ebf90e97c3a79b3cdd17e89783094aae394b868"
+          "head": "045005811630722969d77c706fb368b469201863"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+        "head": "045005811630722969d77c706fb368b469201863",
+        "url": "https://github.com/tamird/gvisor/commit/045005811",
+        "requestedAt": "2026-11-11T11:29:35+00:00",
+        "title": "Run Buildifier and cpplint as Bazel actions",
+        "summary": "Publish 045005811 on #16663 and reply to Milan? The public PR and previous fork proposal are compared below.",
+        "body": "The published PR registers the Buildifier binary. The amendment runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nOn Linux, the clean actions matched all 629 Starlark and 486 C/C++ inputs. The formatter fixed a misformatted file and a new check passed. A separate missing module docstring still failed lint.\n\nFrom the published PR:\ngit -C ~/code/gvisor range-diff --creation-factor=999 1dac5af96^! 045005811^!\n\nFrom the previous author proposal:\ngit -C ~/code/gvisor range-diff --creation-factor=999 7a38c0e2c^! 045005811^!",
+        "replyBody": "A formatting failure now prints `bazel run //tools/lint:format` and `make lint-fix`. I checked that the Bazel command fixed a misformatted file and that the next check passed.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -59304,16 +59361,40 @@
       "number": 17082,
       "repo": "google/gvisor",
       "ref": "netstack-delayed-ack",
-      "head": "b5062f2222f563af2f39c4cc2e57cd1194634146",
+      "head": "c6dd14a6d36f9a940f9ff46c7f1a80a8e837165e",
       "title": "Review delayed ACKs after gap recovery and rejected replies",
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T16:31:03+00:00",
-      "summary": "At b5062f222, draining the receive queue after a full-size 1,460-byte PSH segment triggered the delayed ACK. On four fresh connections, the ACK followed the start of the draining read by 0.99–3.45 ms on Netstack and 0.45–1.23 ms on native Linux 6.8. Leaving one byte queued or omitting PSH kept the ACK at 40.5–41.9 ms from packet arrival on both stacks. All eight uncached tests passed on AMD64, four with native Linux and four with Netstack.\n\nEarlier measurements at 981034f8b:\n\nThe delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nAfter 24 individually acknowledged segments, Linux ACKed a pushed 1,460-byte segment within 0.33–0.75 ms of starting the read that drained the socket. The PR waited 29.84–30.85 ms. Leaving one byte queued or omitting PSH kept both stacks near 40 ms from packet arrival. Each case ran on four fresh connections per stack. All four Linux test runs and all four netstack runs passed on AMD64. The workflow reported failure because its capture reader required all 1,514 Ethernet bytes. The capture retained 1,500 bytes, including every TCP header. The corrected reader verified the original packet lengths, sequence numbers and timestamps.",
+      "updatedAt": "2026-11-11T11:32:25+00:00",
+      "summary": "Ayush updated the PR from b5062f222 to 18d419650 at 06:47 UTC on November 11, then to c6dd14a6d at 07:13 UTC. The current one-commit PR is based on 1f49f256e. All four existing review threads are resolved. The current request for review is addressed to @nybidari. Andrea closed #16953 in favor of #17082 after measuring Redis SET at 66.6k requests/s on #17082 and 66.8k on #16953. The measurements below apply to the named earlier revisions.\n\nAt b5062f222, draining the receive queue after a full-size 1,460-byte PSH segment triggered the delayed ACK. On four fresh connections, the ACK followed the start of the draining read by 0.99–3.45 ms on Netstack and 0.45–1.23 ms on native Linux 6.8. Leaving one byte queued or omitting PSH kept the ACK at 40.5–41.9 ms from packet arrival on both stacks. All eight uncached tests passed on AMD64, four with native Linux and four with Netstack.\n\nEarlier measurements at 981034f8b:\n\nThe delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nAfter 24 individually acknowledged segments, Linux ACKed a pushed 1,460-byte segment within 0.33–0.75 ms of starting the read that drained the socket. The PR waited 29.84–30.85 ms. Leaving one byte queued or omitting PSH kept both stacks near 40 ms from packet arrival. Each case ran on four fresh connections per stack. All four Linux test runs and all four netstack runs passed on AMD64. The workflow reported failure because its capture reader required all 1,514 Ethernet bytes. The capture retained 1,500 bytes, including every TCP header. The corrected reader verified the original packet lengths, sequence numbers and timestamps.",
       "evidence": [
         {
-          "label": "Both smaller-segment cases failed previously; all 11 passed on the current revision",
+          "label": "Ayush requests review from @nybidari",
+          "url": "https://github.com/google/gvisor/pull/17082#issuecomment-6789643545"
+        },
+        {
+          "label": "Andrea closes the alternative proposal in favor of #17082",
+          "url": "https://github.com/google/gvisor/pull/16953#issuecomment-6774757187"
+        },
+        {
+          "label": "TamaGo Redis comparison",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4523498211"
+        },
+        {
+          "label": "Current November 11 revision, 07:13 UTC",
+          "url": "https://github.com/google/gvisor/commit/c6dd14a6d"
+        },
+        {
+          "label": "Earlier November 11 revision, 06:47 UTC",
+          "url": "https://github.com/google/gvisor/commit/18d419650"
+        },
+        {
+          "label": "November 9 revision used for the drain checks",
+          "url": "https://github.com/google/gvisor/commit/b5062f222"
+        },
+        {
+          "label": "The smaller-segment cases failed on 10555b8fe and all 11 passed on 981034f8b",
           "url": "https://github.com/tamird/gvisor/actions/runs/42288031163/artifacts/13538692103"
         },
         {
@@ -59321,7 +59402,7 @@
           "url": "https://github.com/google/gvisor/pull/17082#issuecomment-6694613110"
         },
         {
-          "label": "Both original packet controls on the author’s new head, nine cases and zero skips",
+          "label": "Earlier nine-case packet check, zero skips",
           "url": "https://github.com/tamird/gvisor/actions/runs/42245055323/artifacts/13518805282"
         },
         {
@@ -59415,13 +59496,17 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "b5062f2222f563af2f39c4cc2e57cd1194634146",
-        "observedAt": "2026-11-09T16:31:03+00:00",
-        "disposition": "Posted the first-response packet comparison and tested correction on Botir’s original thread.",
-        "nextAction": "Follow the authors’ response and any changes to the first-ACK deadline.",
+        "owner": "Agent",
+        "sourceHead": "c6dd14a6d36f9a940f9ff46c7f1a80a8e837165e",
+        "observedAt": "2026-11-11T11:32:25+00:00",
+        "disposition": "Ayush addressed the prior threads and requested review from @nybidari on the new revision.",
+        "nextAction": "Monitor the maintainer review on c6dd14a6d. Tamir has no outstanding review request.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17082#discussion_r4515162604"
+          "https://github.com/google/gvisor/pull/17082",
+          "https://github.com/google/gvisor/commit/c6dd14a6d",
+          "https://github.com/google/gvisor/commit/18d419650",
+          "https://github.com/google/gvisor/pull/17082#discussion_r4515162604",
+          "https://github.com/google/gvisor/pull/17082#issuecomment-6789643545"
         ]
       }
     },
@@ -99818,6 +99903,62 @@
           "at": "2026-11-11T11:11:00+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17470",
           "note": "Opened the approved diagnostic change in #17470. The intermittent upload failure remains under investigation."
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-node-debugger",
+      "title": "Node debugger timeouts in the runtime suite",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T11:29:35+00:00",
+      "summary": "Two Node 22.2.0 debugger tests timed out in Buildkite build 54379. Both failing shards ran again and passed on the same source.",
+      "findings": [
+        {
+          "text": "In parallel/test-debugger-heap-profiler.js, Node rejected a second snapshot while the first was running, wrote 3,785,613 bytes, then timed out waiting ten seconds for the debugger prompt. The other shard reported the outer timeout for parallel/test-debugger-list.js without an inner assertion. The retry completed in 142.9 seconds with six of eight shard results cached.",
+          "evidence": [
+            {
+              "label": "Heap-profiler timeout and snapshot output",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54379/jobs/01a1c8cd-2f1b-4788-8ca6-ae0656202cb9/artifacts/01a1c8d3-a6d1-45fe-b4a5-1e5f717ac80c"
+            },
+            {
+              "label": "Debugger-list outer timeout",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54379/jobs/01a1c8cd-2f1b-4788-8ca6-ae0656202cb9/artifacts/01a1c8d3-aa03-49bb-aa6a-5a0bfea88345"
+            },
+            {
+              "label": "Passing retry of the two uncached shards",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54379#01a1c8d4-6573-4d3e-b9f6-2d79645e8512"
+            }
+          ]
+        },
+        {
+          "text": "The proposed Node 26.12.0 upgrade includes a change to debugger subprocess cleanup. Whether that change affects the debugger-list timeout is unknown. The original logs do not establish a common cause.",
+          "evidence": [
+            {
+              "label": "Node debugger process-cleanup change",
+              "url": "https://github.com/nodejs/node/commit/d5958888c"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare the two named tests independently on Node 22.2.0 and the proposed 26.12.0 runtime with the existing timeout. Capture the last debugger prompt or process state if a case stalls.",
+      "evidence": [
+        {
+          "label": "Heap-profiler timeout and snapshot output",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54379/jobs/01a1c8cd-2f1b-4788-8ca6-ae0656202cb9/artifacts/01a1c8d3-a6d1-45fe-b4a5-1e5f717ac80c"
+        },
+        {
+          "label": "Debugger-list outer timeout",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54379/jobs/01a1c8cd-2f1b-4788-8ca6-ae0656202cb9/artifacts/01a1c8d3-aa03-49bb-aa6a-5a0bfea88345"
+        },
+        {
+          "label": "Passing retry of the two uncached shards",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54379#01a1c8d4-6573-4d3e-b9f6-2d79645e8512"
+        },
+        {
+          "label": "Node debugger process-cleanup change",
+          "url": "https://github.com/nodejs/node/commit/d5958888c"
         }
       ]
     }
