@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T14:10:12+00:00",
+    "updatedAt": "2026-11-11T14:52:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23,7 +23,8 @@
       "protocolbuffers/protobuf": "none",
       "bazel-contrib/buildtools": "none",
       "fmeum/with_cfg.bzl": "none",
-      "bazelbuild/bazel-skylib": "none"
+      "bazelbuild/bazel-skylib": "none",
+      "keith/buildifier-prebuilt": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -3762,21 +3763,23 @@
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Maintainer",
         "sourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
-        "observedAt": "2026-11-11T11:20:49+00:00",
-        "disposition": "The requested rebase was published as one mergeable commit. The pgalloc, safecopy and safemem package trees match the tested revision.",
-        "nextAction": "Review the short reply to Ayush. The requested rebase is already published.",
+        "observedAt": "2026-11-11T14:38:33+00:00",
+        "disposition": "Ayush received the rebase chronology, the refreshed single-commit source and both architecture results.",
+        "nextAction": "Await maintainer review of f05d6b909.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15181",
-          "https://github.com/google/gvisor/pull/17214",
-          "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13822575150",
-          "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13821608693"
+          "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
+          "https://github.com/tamird/gvisor/actions/runs/43007012855"
         ]
       },
-      "updatedAt": "2026-11-11T11:20:49+00:00",
+      "updatedAt": "2026-11-11T14:38:33+00:00",
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "evidence": [
+        {
+          "label": "Reply to Ayush with rebase chronology and results",
+          "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709"
+        },
         {
           "label": "Published-source test run on both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/43007012855"
@@ -3901,18 +3904,22 @@
           "outcome": "approved",
           "at": "2026-11-07T03:08:22+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/15181"
+        },
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
+          "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6788449945",
+          "requestedAt": "2026-11-11T11:20:49+00:00",
+          "title": "Confirm the rebase and both architecture checks",
+          "summary": "Post the test result in response to Ayush’s rebase request? The branch is already updated.",
+          "body": "@ayushr2, this was already rebased onto master with #17214 at 02:14 UTC, before your request. I refreshed it again at f05d6b909. All 84 pgalloc and 609 safecopy cases passed on both AMD64 and ARM64. [Linux test results](https://github.com/tamird/gvisor/actions/runs/43007012855)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T14:37:51Z",
+          "postedURL": "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
+          "note": "The posted reply gives Ayush both rebase dates and the completed AMD64 and ARM64 results."
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
-        "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6788449945",
-        "requestedAt": "2026-11-11T11:20:49+00:00",
-        "title": "Confirm the rebase and both architecture checks",
-        "summary": "Post the test result in response to Ayush’s rebase request? The branch is already updated.",
-        "body": "Rebased onto master after #17214 in f05d6b909. All 84 pgalloc and 609 safecopy cases passed on both AMD64 and ARM64. [Linux test results](https://github.com/tamird/gvisor/actions/runs/43007012855)\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "pr:15183",
@@ -36424,14 +36431,18 @@
       "repo": "google/gvisor",
       "number": 16597,
       "ref": "review/rseq-native-cc",
-      "head": "9751bfaf98742849046e9b4e9178f3db32f846b2",
+      "head": "e46a1e757f8a1fe00e04d8c854139fbc7e189ebf",
       "title": "Build the RSEQ fixture with the C++ toolchain",
       "url": "https://github.com/google/gvisor/pull/16597",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T14:27:56+00:00",
+      "updatedAt": "2026-11-11T14:43:26+00:00",
       "summary": "The published RSEQ helper disables implicit C++ runtime linkage. GNU linked the static helpers for AMD64 and ARM64, and the amended source passed all 14 AMD64 native cases. The earlier LLVM build linked both helpers with the hermetic-llvm #909 backport. With unmodified BCR LLVM 0.8.24, both fresh links failed to find dl and pthread before either syscall test started.\n\nApplying only the #909 backport to that release, with the published gVisor BUILD file unchanged, produced both static helpers on AMD64 LLVM workers. The ARM64 helper was cross-linked. Each linked ELF matched the digest of the helper used by its native syscall test. All 14 AMD64 and 13 ARM64 RSEQ cases passed with zero skips. Bazel exited zero. The reporting step missed the compact TestRunner rows, so this run did not verify the per-test worker image.\n\nOn export #17474, clang-tidy parsed both AMD64 assembly files as C. Skipping assembly exposed nine missing-header diagnostics in rseq.cc. With the lint filter, a direct integer header and Linux UAPI error constants, clang-tidy passed the C++ source. Removing the integer header brought back four diagnostics. The stock and revised static AMD64 binaries had byte-identical .text and .rodata sections and each passed registration, duplicate registration and unregistration.",
       "evidence": [
+        {
+          "label": "Published amendment with the qualified lint and headers",
+          "url": "https://github.com/tamird/gvisor/commit/e46a1e757"
+        },
         {
           "label": "Tested lint and freestanding header changes",
           "url": "https://github.com/tamird/gvisor/commit/0bb367479"
@@ -36510,15 +36521,16 @@
         }
       ],
       "followup": {
-        "owner": "Agent qualification",
-        "sourceHead": "9751bfaf98742849046e9b4e9178f3db32f846b2",
-        "observedAt": "2026-11-11T14:27:56+00:00",
-        "disposition": "The export’s lint failure is reproduced and the correction passed on the exact exported sources.",
-        "nextAction": "Publish the folded amendment on the fork so the contributor can review the exact commit.",
+        "owner": "Upstream review",
+        "sourceHead": "e46a1e757f8a1fe00e04d8c854139fbc7e189ebf",
+        "observedAt": "2026-11-11T14:43:26+00:00",
+        "disposition": "The folded correction is published. The previous approval and export #17474 refer to the earlier revision.",
+        "nextAction": "Follow the checks and maintainer review of e46a1e757 and an updated import.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16597",
+          "https://github.com/tamird/gvisor/commit/e46a1e757",
           "https://github.com/tamird/gvisor/actions/runs/43037553668/artifacts/13864580728",
-          "https://github.com/tamird/gvisor/commit/0bb367479",
-          "https://buildkite.com/gvisor/pipeline/builds/54408#01a1ca8e-9e75-4211-ac58-ecf64c284f7b"
+          "https://github.com/google/gvisor/pull/17474"
         ]
       },
       "settledReviews": [
@@ -36530,6 +36542,18 @@
           "outcome": "approved",
           "at": "2026-11-05T16:41:13.307421Z",
           "note": "Tamir approved this change. Published on #16597.",
+          "postedURL": "https://github.com/google/gvisor/pull/16597"
+        },
+        {
+          "kind": "amendment",
+          "head": "e46a1e757f8a1fe00e04d8c854139fbc7e189ebf",
+          "baseHead": "9751bfaf98742849046e9b4e9178f3db32f846b2",
+          "url": "https://github.com/tamird/gvisor/commit/e46a1e757",
+          "title": "Build the RSEQ fixture with the C++ toolchain",
+          "outcome": "approved",
+          "at": "2026-11-11T14:43:26+00:00",
+          "note": "Published the approved lint and header corrections in one commit with the existing BUILD change. The complete delta from the current export is byte-identical to the qualified fix.",
+          "body": "git -C ~/code/gvisor range-diff 9751bfaf9^! e46a1e757^!",
           "postedURL": "https://github.com/google/gvisor/pull/16597"
         }
       ]
@@ -39330,12 +39354,16 @@
       "repo": "google/gvisor",
       "number": 16663,
       "ref": "review/buildifier-native-diff",
-      "head": "045005811630722969d77c706fb368b469201863",
+      "head": "4cd0185fe40766a4875459239c214253612a1962",
       "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Published 045005811 and answered Milan on the original thread. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.",
+      "summary": "The formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.",
       "evidence": [
+        {
+          "label": "Six-line explanation in the Buildifier patch",
+          "url": "https://github.com/tamird/gvisor/blob/4cd0185fe/tools/lint/buildifier_native.patch"
+        },
         {
           "label": "Reply on Milan’s original formatting-hint thread",
           "url": "https://github.com/google/gvisor/pull/16663#discussion_r4537464299"
@@ -39498,27 +39526,24 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-11T11:48:58+00:00",
+      "updatedAt": "2026-11-11T14:48:06+00:00",
       "followup": {
-        "owner": "Maintainer",
-        "sourceHead": "045005811630722969d77c706fb368b469201863",
-        "observedAt": "2026-11-11T11:48:58+00:00",
-        "disposition": "The published revision is mergeable. Milan’s CHANGES_REQUESTED review names 1dac5af96, and the reply on his thread points to the revision.",
-        "nextAction": "Await maintainer review of 045005811.",
+        "owner": "Upstream review",
+        "sourceHead": "4cd0185fe40766a4875459239c214253612a1962",
+        "observedAt": "2026-11-11T14:48:06+00:00",
+        "disposition": "The explanatory Buildifier patch header is published. The PR is open and mergeable.",
+        "nextAction": "Follow maintainer review and CI on the published revision.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16663#discussion_r4537464299",
-          "https://github.com/google/gvisor/pull/16663#discussion_r4534723342",
-          "https://github.com/tamird/gvisor/commit/045005811",
-          "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962"
-        ],
-        "mergeable": "MERGEABLE"
+          "https://github.com/tamird/gvisor/commit/4cd0185fe",
+          "https://github.com/google/gvisor/pull/16663"
+        ]
       },
       "refinement": {
         "before": {
-          "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+          "head": "045005811630722969d77c706fb368b469201863"
         },
         "after": {
-          "head": "045005811630722969d77c706fb368b469201863"
+          "head": "4cd0185fe40766a4875459239c214253612a1962"
         }
       },
       "settledReviews": [
@@ -39537,6 +39562,21 @@
           "at": "2026-11-11T11:48:58+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16663#discussion_r4537464299",
           "note": "The single commit is published. Milan received the approved response on the original inline thread."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "baseHead": "045005811630722969d77c706fb368b469201863",
+          "head": "4cd0185fe40766a4875459239c214253612a1962",
+          "url": "https://github.com/tamird/gvisor/commit/4cd0185fe",
+          "requestedAt": "2026-11-11T14:43:55+00:00",
+          "title": "Run Buildifier and cpplint as Bazel actions",
+          "summary": "Publish the explanatory header in the Buildifier patch on #16663?",
+          "body": "The six-line header explains why the Linux Buildifier wrapper needs Bash and why gVisor’s lint action invokes the selected executable directly. The patch hunks are unchanged. On Darwin ARM64, Bazel 9.3.1 applied the patch to buildifier_prebuilt 8.5.1.4, built //buildifier:native and selected the native executable in cquery.\n\ngit -C ~/code/gvisor range-diff 045005811^! 4cd0185fe^!",
+          "outcome": "approved",
+          "at": "2026-11-11T14:48:06+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16663",
+          "note": "The checked patch header is published in the single commit on the existing PR."
         }
       ]
     },
@@ -46381,8 +46421,12 @@
       "group": "rbe",
       "status": "closed",
       "summary": "Delivered upstream in b1f8a6e38. Copybara closed #31234 on November 5 with that commit, which identifies the exact reviewed source a4504c546. The stage-0 plugins take their inputs as protoc arguments. Six calls that used to require Bash ran remotely with just the declared compiler and plugin. All nine C sources and headers were identical to the originals.",
-      "updatedAt": "2026-11-07T21:17:40+00:00",
+      "updatedAt": "2026-11-11T14:37:47+00:00",
       "evidence": [
+        {
+          "label": "Release-branch backport announced",
+          "url": "https://github.com/protocolbuffers/protobuf/pull/31234#issuecomment-6798664679"
+        },
         {
           "label": "Action logs and output hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/41161985190/artifacts/13027657016"
@@ -49220,14 +49264,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/buildkite-source-release-staging",
-      "head": "4ba049ba5c249f885a0a249c921b60931897ea5d",
+      "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
       "title": "Install runsc with its Sentry in Buildkite source jobs",
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T11:20:49+00:00",
+      "updatedAt": "2026-11-11T14:37:47+00:00",
       "summary": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags.",
       "evidence": [
+        {
+          "label": "Reply to Etienne after publishing the archive install",
+          "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323"
+        },
         {
           "label": "Both Docker installations, nine files apiece and two successful guest exits",
           "url": "https://github.com/tamird/gvisor/actions/runs/43008909643/artifacts/13850441351"
@@ -49323,27 +49371,36 @@
           "at": "2026-11-07T12:23:40+00:00",
           "url": "https://github.com/tamird/gvisor/commit/4ba049ba5",
           "body": "Published on the original PR. Ryan was asked to reapprove the one-line change."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "baseHead": "4ba049ba5c249f885a0a249c921b60931897ea5d",
+          "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
+          "url": "https://github.com/tamird/gvisor/commit/a6e06bb65",
+          "requestedAt": "2026-11-11T11:20:49+00:00",
+          "title": "Install the documented release archive in source CI jobs",
+          "summary": "Publish a6e06bb65 on #16843 and answer Etienne? If #17179 lands first, carry the remaining change as a follow-up.",
+          "body": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags.\n\ngit -C ~/code/gvisor range-diff 4ba049ba5^! a6e06bb65^!",
+          "replyBody": "The source branch now runs `make release-tarball DESTINATION=bin/` and extracts `bin/gvisor.tar.bz2` into `/usr/local/bin`, as the README describes. I checked that Docker started a container using that installation and using the existing staged archive.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T14:37:47+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323",
+          "note": "Published the approved single commit and replied to Etienne’s original question."
         }
       ],
       "number": 16843,
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "4ba049ba5c249f885a0a249c921b60931897ea5d",
-        "observedAt": "2026-11-11T11:20:49+00:00",
-        "disposition": "Etienne’s requested README installation passed on the exact fork revision. Export #17179 remains open.",
-        "nextAction": "Review a6e06bb65 and the reply to Etienne. If the old export lands first, prepare the remaining change against the landed source.",
+        "owner": "Maintainer",
+        "sourceHead": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
+        "observedAt": "2026-11-11T14:37:47+00:00",
+        "disposition": "The revised install steps are published and Etienne received the tested source and staged-archive results. Open export #17179 still uses the prior revision.",
+        "nextAction": "Await maintainer review and an updated import for a6e06bb65.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16843#issuecomment-6788222821",
+          "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323",
           "https://github.com/tamird/gvisor/commit/a6e06bb65",
-          "https://github.com/tamird/gvisor/actions/runs/43008909643/artifacts/13850441351",
           "https://github.com/google/gvisor/pull/17179"
-        ],
-        "actionableComment": {
-          "kind": "comment",
-          "head": "4ba049ba5c249f885a0a249c921b60931897ea5d",
-          "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6788222821",
-          "commentId": "IC_kwDOB9IlXs8AAAABlJwPZQ"
-        }
+        ]
       },
       "refinement": {
         "before": {
@@ -49352,18 +49409,6 @@
         "after": {
           "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a"
         }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "4ba049ba5c249f885a0a249c921b60931897ea5d",
-        "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
-        "url": "https://github.com/tamird/gvisor/commit/a6e06bb65",
-        "requestedAt": "2026-11-11T11:20:49+00:00",
-        "title": "Install the documented release archive in source CI jobs",
-        "summary": "Publish a6e06bb65 on #16843 and answer Etienne? If #17179 lands first, carry the remaining change as a follow-up.",
-        "body": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags.\n\ngit -C ~/code/gvisor range-diff 4ba049ba5^! a6e06bb65^!",
-        "replyBody": "The source branch now runs `make release-tarball DESTINATION=bin/` and extracts `bin/gvisor.tar.bz2` into `/usr/local/bin`, as the README describes. I checked that Docker started a container using that installation and using the existing staged archive.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -55113,9 +55158,13 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "updatedAt": "2026-11-11T14:38:33+00:00",
       "summary": "The published analyzer now reports a range callback that changes the caller’s lock state at the range keyword. The owning Nogo test passed on AMD64 and ARM64.",
       "evidence": [
+        {
+          "label": "Baseline and PR suppression comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43040187707"
+        },
         {
           "label": "Published amendment and reply",
           "url": "https://github.com/google/gvisor/pull/16868#discussion_r4536990180"
@@ -55295,12 +55344,13 @@
       ],
       "number": 16868,
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent qualification",
         "sourceHead": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
-        "observedAt": "2026-11-11T11:11:00+00:00",
-        "disposition": "Published d5cd4802b and answered the review.",
-        "nextAction": "Follow upstream checks and review.",
+        "observedAt": "2026-11-11T14:38:33+00:00",
+        "disposition": "The published callback analysis is under review for existing checklocks suppressions.",
+        "nextAction": "Compare diagnostics on the baseline and the PR before deciding which suppressions can be removed.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43040187707",
           "https://github.com/google/gvisor/pull/16868#discussion_r4536990180",
           "https://github.com/google/gvisor/pull/16868"
         ]
@@ -73593,31 +73643,29 @@
       "title": "[37.x] Run the stage-1 upb generators without Bash",
       "url": "https://github.com/tamird/protobuf/commit/3bad9c725",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "status": "Published upstream",
+      "updatedAt": "2026-11-11T14:37:47+00:00",
       "summary": "On 37.x all four generator actions failed when Bazel could not execute /bin/bash. The backport ran all four and generated the same six C sources and headers byte for byte. PacketImpact uses these actions on workers without a shell. The core compiler switch can land independently.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "3bad9c725b55a39cd6964518c97e959c1924830e",
-        "baseHead": "0cf7641d26918523b3c26ae8f9b197cbbda05baf",
-        "url": "https://github.com/tamird/protobuf/commit/3bad9c725",
-        "title": "[37.x] Run the stage-1 upb generators without Bash",
-        "summary": "Open this cherry-pick against Protobuf’s 37.x release branch?",
-        "body": "Backport b1f8a6e38 (#31234) to 37.x. The stage-1 upb generators for descriptor.proto and plugin.proto invoke Bash to launch protoc. This prevented gVisor’s PacketImpact tests from building on workers that have protoc and its plugins but no shell [1].\n\nRun protoc directly with the stage-0 plugins.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13648067269\n\nPrepared by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-11T14:01:21+00:00"
-      },
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "3bad9c725b55a39cd6964518c97e959c1924830e",
-        "observedAt": "2026-11-11T14:01:21+00:00",
-        "disposition": "The backport is qualified against Protobuf 37.x.",
-        "nextAction": "Open this cherry-pick against Protobuf’s 37.x release branch?",
+        "observedAt": "2026-11-11T14:37:47+00:00",
+        "disposition": "The backport is open against 37.x. Protobuf’s fork CI asks a team member to apply the safe for tests label before running code checks.",
+        "nextAction": "Await upstream maintainer review and test authorization.",
         "evidence": [
-          "https://github.com/tamird/protobuf/commit/3bad9c725"
+          "https://github.com/protocolbuffers/protobuf/pull/31530",
+          "https://github.com/protocolbuffers/protobuf/actions/runs/43039912432/job/130588617472"
         ]
       },
       "evidence": [
+        {
+          "label": "Linked from the original main-branch change",
+          "url": "https://github.com/protocolbuffers/protobuf/pull/31234#issuecomment-6798664679"
+        },
+        {
+          "label": "Published release backport",
+          "url": "https://github.com/protocolbuffers/protobuf/pull/31530"
+        },
         {
           "label": "Four corrected release actions and six byte-identical generated files",
           "url": "https://github.com/tamird/protobuf/actions/runs/43031950508/artifacts/13861831162"
@@ -73634,7 +73682,25 @@
           "label": "Release cherry-pick policy",
           "url": "https://github.com/protocolbuffers/protobuf/blob/0cf7641d2/CONTRIBUTING.md#L56-L60"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "3bad9c725b55a39cd6964518c97e959c1924830e",
+          "baseHead": "0cf7641d26918523b3c26ae8f9b197cbbda05baf",
+          "url": "https://github.com/tamird/protobuf/commit/3bad9c725",
+          "title": "[37.x] Run the stage-1 upb generators without Bash",
+          "summary": "Open this cherry-pick against Protobuf’s 37.x release branch?",
+          "body": "Backport b1f8a6e38 (#31234) to 37.x. The stage-1 upb generators for descriptor.proto and plugin.proto invoke Bash to launch protoc. This prevented gVisor’s PacketImpact tests from building on workers that have protoc and its plugins but no shell [1].\n\nRun protoc directly with the stage-0 plugins.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13648067269\n\nPrepared by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-11T14:01:21+00:00",
+          "outcome": "approved",
+          "at": "2026-11-11T14:37:47+00:00",
+          "postedURL": "https://github.com/protocolbuffers/protobuf/pull/31530",
+          "note": "Opened against Protobuf 37.x as one commit and linked from the original proposal."
+        }
+      ],
+      "inactive": true
     },
     {
       "id": "branch:gazelle-cgroups-go-metrics",
@@ -73769,6 +73835,142 @@
         }
       ],
       "inactive": true
+    },
+    {
+      "id": "pr:protocolbuffers/protobuf:31530",
+      "type": "pr",
+      "repo": "protocolbuffers/protobuf",
+      "ref": "research/37x-upb-direct",
+      "head": "3bad9c725b55a39cd6964518c97e959c1924830e",
+      "title": "[37.x] Run the stage-1 upb generators without Bash",
+      "url": "https://github.com/protocolbuffers/protobuf/pull/31530",
+      "group": "bazel",
+      "status": "open",
+      "summary": "On 37.x all four generator actions failed when Bazel could not execute /bin/bash. The backport ran all four and generated the same six C sources and headers byte for byte. PacketImpact uses these actions on workers without a shell. The core compiler switch can land independently.",
+      "evidence": [
+        {
+          "label": "Supplier CI requires team authorization",
+          "url": "https://github.com/protocolbuffers/protobuf/actions/runs/43039912432/job/130588617472"
+        },
+        {
+          "label": "Linked from the original main-branch change",
+          "url": "https://github.com/protocolbuffers/protobuf/pull/31234#issuecomment-6798664679"
+        },
+        {
+          "label": "Published release backport",
+          "url": "https://github.com/protocolbuffers/protobuf/pull/31530"
+        },
+        {
+          "label": "Four corrected release actions and six byte-identical generated files",
+          "url": "https://github.com/tamird/protobuf/actions/runs/43031950508/artifacts/13861831162"
+        },
+        {
+          "label": "Original PacketImpact scratch build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42556818756/artifacts/13648067269"
+        },
+        {
+          "label": "Delivered fix on main",
+          "url": "https://github.com/protocolbuffers/protobuf/commit/b1f8a6e38"
+        },
+        {
+          "label": "Release cherry-pick policy",
+          "url": "https://github.com/protocolbuffers/protobuf/blob/0cf7641d2/CONTRIBUTING.md#L56-L60"
+        }
+      ],
+      "updatedAt": "2026-11-11T14:37:47+00:00",
+      "number": 31530,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "3bad9c725b55a39cd6964518c97e959c1924830e",
+        "observedAt": "2026-11-11T14:37:47+00:00",
+        "disposition": "The backport is open against 37.x. Protobuf’s fork CI asks a team member to apply the safe for tests label before running code checks.",
+        "nextAction": "Await upstream maintainer review and test authorization.",
+        "evidence": [
+          "https://github.com/protocolbuffers/protobuf/pull/31530",
+          "https://github.com/protocolbuffers/protobuf/actions/runs/43039912432/job/130588617472"
+        ]
+      }
+    },
+    {
+      "id": "pr:17478",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17478,
+      "ref": "proposal/containerd-harness-pause",
+      "head": "fe5b152d94b4d58d499c0d5c05f04065da5265a1",
+      "title": "Stage the pause image before starting CRI test pods",
+      "url": "https://github.com/google/gvisor/pull/17478",
+      "group": "ci-flakes",
+      "status": "open",
+      "updatedAt": "2026-11-11T14:48:06+00:00",
+      "summary": "Stage the pinned pause image before the first CRI test pod and clean up partial staging on failure. Two containerd releases completed the resource update without registry access.",
+      "evidence": [
+        {
+          "label": "Published native staging and runtime results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43039277941/artifacts/13864783186"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "fe5b152d94b4d58d499c0d5c05f04065da5265a1",
+        "observedAt": "2026-11-11T14:48:06+00:00",
+        "disposition": "The reviewed fixture change is open on the original head.",
+        "nextAction": "Follow upstream review and checks.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17478",
+          "https://github.com/tamird/gvisor/actions/runs/43039277941/artifacts/13864783186"
+        ]
+      }
+    },
+    {
+      "id": "branch:buildifier-prebuilt-native",
+      "type": "branch",
+      "repo": "tamird/buildifier-prebuilt",
+      "ref": "native-buildifier-tool",
+      "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
+      "title": "Expose the Buildifier executable for Bazel actions",
+      "url": "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-11T14:52:21+00:00",
+      "summary": "Expose the executable selected by the Buildifier toolchain separately from the interactive Bash wrapper. On native Darwin ARM64, the owner tests passed with an empty PATH and a relative input file. Substituting the wrapper produced an env: bash error. The matching Linux consumer implementation ran the gVisor formatting and check actions.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
+        "baseHead": "def7480572c222555c6a037d680914c85ae3a99b",
+        "url": "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f",
+        "title": "Expose the Buildifier executable for Bazel actions",
+        "body": "The public Buildifier target starts a shell to enter the directory\nwhere the user ran Bazel. A build action already runs in the directory\ncontaining its inputs, and its execution platform may have no shell.\nSelecting a download directly would duplicate the toolchain's platform\nselection in every caller.\n\nExpose the binary selected by the toolchain as //buildifier:native.\nExtend the existing working-directory test to run the executable with\nan empty PATH on a file found only in the action's directory.\n\nPrepared by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-11T14:52:21+00:00",
+        "summary": "Open this change against keith/buildifier-prebuilt main? It keeps the interactive wrapper and exposes the selected binary to build actions."
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "5357c442f1646fbcab29f3b63525fb280f4fc2ce",
+        "observedAt": "2026-11-11T14:52:21+00:00",
+        "disposition": "The standalone supplier change is tested. The gVisor-side patch header has been delivered separately.",
+        "nextAction": "Review the change for submission to keith/buildifier-prebuilt.",
+        "evidence": [
+          "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f",
+          "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962",
+          "https://github.com/keith/buildifier-prebuilt/pull/162"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Standalone supplier change and owner regression",
+          "url": "https://github.com/tamird/buildifier-prebuilt/commit/5357c442f"
+        },
+        {
+          "label": "Linux gVisor formatting and validation with the same implementation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962"
+        },
+        {
+          "label": "Supplier discussion of the interactive working directory",
+          "url": "https://github.com/keith/buildifier-prebuilt/pull/162"
+        }
+      ]
     }
   ],
   "edges": [
@@ -95146,9 +95348,18 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T22:10:43+00:00",
+      "updatedAt": "2026-11-11T14:38:33+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "The #16868 owner is checking which existing callback suppressions can be removed. The comparison job ended with a failure status; its baseline and PR diagnostic records still need inspection.",
+          "evidence": [
+            {
+              "label": "Compare existing suppressions on baseline and PR",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43040187707"
+            }
+          ]
+        },
         {
           "text": "The POSIX timer proposal guards both the table of timers and the next timer ID. Its checkpoint control identified the unguarded pause read on AMD64 and ARM64.",
           "evidence": [
@@ -97422,10 +97633,23 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-11T14:29:43+00:00",
-      "lastReviewedAt": "2026-11-11T14:29:43+00:00",
+      "updatedAt": "2026-11-11T14:52:21+00:00",
+      "lastReviewedAt": "2026-11-11T14:52:21+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
+        {
+          "text": "Across the same 187-head sample, 14 added patch files represented four distinct paths. The wrk2, TLDK and DPDK patches already explained their changes. The Buildifier patch needed a header, now published on #16663. The Fastlane backport arrived after this sample and received a header before contributor review.",
+          "evidence": [
+            {
+              "label": "Buildifier patch header on the published revision",
+              "url": "https://github.com/tamird/gvisor/blob/4cd0185fe/tools/lint/buildifier_native.patch"
+            },
+            {
+              "label": "Fastlane backport with its upstream reference",
+              "url": "https://github.com/tamird/gvisor/commit/99759b1ed"
+            }
+          ]
+        },
         {
           "text": "On November 11, a targeted check of recent review guidance covered 220 tracked URLs representing 187 distinct commit heads. Local Git supplied 180 diffs and GitHub supplied the remaining seven. The six shell matches specified executables in OCI command arrays. The three adjacent checklocks or prose matches belonged to the external delayed-ACK proposals #16953 and #17082. When revising our ACK-accounting and nvproxy prerequisite changes, use t.Context() where the argument type allows and clean up the flagged formatting. Other review guidance remains outside this check.",
           "evidence": [
@@ -100485,9 +100709,22 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "Contributor",
-      "updatedAt": "2026-11-11T14:10:12+00:00",
+      "updatedAt": "2026-11-11T14:48:06+00:00",
       "summary": "Five AMD64 job failures on four commits stopped during crictl runp. Four reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Containerd 2.0.8 reported context deadline exceeded. All five targets passed on their direct same-commit retries.",
       "findings": [
+        {
+          "text": "The pause-image input and failure cleanup are published in #17478. With a missing pause archive, staging returned the error and removed partially copied files. Successful staging preserved the real archive and files byte for byte. Native AMD64 containerd 1.7.31 and 2.2.3 each completed the resource update without a registry connection. The cause of the original CI sandbox deadline remains open.",
+          "evidence": [
+            {
+              "label": "Published CRI fixture change",
+              "url": "https://github.com/google/gvisor/pull/17478"
+            },
+            {
+              "label": "Staging failure and native containerd results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43039277941/artifacts/13864783186"
+            }
+          ]
+        },
         {
           "text": "On #54388 (gVisor #17433), TestMountOverSymlinks/enableGrouping failed at the start call before reading symlinks. On #54336 (gVisor #16637), TestCrictlPauseResume stopped during the same call. Both used containerd 2.1.7.",
           "evidence": [
@@ -100644,7 +100881,7 @@
           ]
         }
       ],
-      "nextStep": "Review the change to stage the pause image. Capture the daemon phase at the next original CI startup timeout to identify where its deadline expires.",
+      "nextStep": "At a natural full-shard timeout, capture the daemon log to identify which stage consumed the startup budget.",
       "evidence": [
         {
           "label": "Network-denied control on the installed 2.2.3 daemon",
@@ -100671,17 +100908,38 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/54291#01a1c75e-27f0-47b6-be5e-bf5e40cf0050"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "8fda06b662ee93eddee27e0cba87ac767fdb4d16",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/8fda06b66",
-        "title": "Stage the pause image before starting CRI test pods",
-        "body": "The CRI tests stage their workload images, but each fresh containerd still pulls the sandbox image from registry.k8s.io when creating its first pod. If the registry is unavailable, the test fails before starting the workload.\n\nAdd a pinned pause archive to //test/root:crictl_test. Import it into each fresh daemon and configure the harness to use it.\n\nPrepared by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-11T14:10:12+00:00",
-        "summary": "Open this change to stage the pinned pause image in the CRI harness?"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "8fda06b662ee93eddee27e0cba87ac767fdb4d16",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/8fda06b66",
+          "title": "Stage the pause image before starting CRI test pods",
+          "body": "The CRI tests stage their workload images, but each fresh containerd still pulls the sandbox image from registry.k8s.io when creating its first pod. If the registry is unavailable, the test fails before starting the workload.\n\nAdd a pinned pause archive to //test/root:crictl_test. Import it into each fresh daemon and configure the harness to use it.\n\nPrepared by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-11T14:10:12+00:00",
+          "summary": "Open this change to stage the pinned pause image in the CRI harness?",
+          "outcome": "approved",
+          "at": "2026-11-11T14:48:06+00:00",
+          "note": "Approved with the staging-error cleanup carried into the published revision.",
+          "postedURL": "https://github.com/google/gvisor/pull/17478"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "fe5b152d94b4d58d499c0d5c05f04065da5265a1",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/fe5b152d9",
+          "title": "Stage the pause image before starting CRI test pods",
+          "body": "The CRI harness stages its application images, but every subtest starts\na fresh containerd. Its first pod still needs a sandbox image and pulls\nit from registry.k8s.io during the test.\n\nStage one pinned pause image alongside the harness runtime. Configure\nthe test daemon to use that image and import it into the CRI store\nbefore creating a pod. The ordinary and sandbox-controller tests\nshare the setting across containerd versions.",
+          "requestedAt": "2026-11-11T14:10:12+00:00",
+          "summary": "Open this change to stage the pinned pause image in the CRI harness?",
+          "outcome": "approved",
+          "at": "2026-11-11T14:48:06+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17478",
+          "note": "The reviewed change, including cleanup on partial staging, is open as #17478."
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-native-pty-packet",
@@ -100724,9 +100982,26 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
-      "summary": "On master 2552c6787, the Ruby CI benchmark failed the fastlane 2.207.0 Spaceship token example. It expected 1794400658 and read 1794400657.",
+      "updatedAt": "2026-11-11T14:52:21+00:00",
+      "summary": "The pinned Fastlane token example can compare two consecutive seconds. Upstream’s issued-at adjustment and updated assertion passed the boundary case while preserving the existing benchmark selection.",
       "findings": [
+        {
+          "text": "The native AMD64 control reproduced the one-second mismatch. The two-hunk backport passed that check and the full systrap benchmark, preserving all 3,613 example names and paths, including repetitions. Fastlane 2.220.0 selected 3,679 examples: 78 additions and 12 removals. Its RSpec run had zero failures, but the benchmark rejected the changed count. The stock image used Ruby 3.0.6 and both rebuilt images used 3.0.7. The job’s report missed an optional debug line redirected by Fastlane. The patch header on the proposed revision explains the clock race and links its upstream fix. Applying it with zero fuzz to pinned Fastlane 3344301a0 produced the same two patched files byte for byte.",
+          "evidence": [
+            {
+              "label": "Original native clock, example lists and systrap benchmark results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43036941535/artifacts/13864612930"
+            },
+            {
+              "label": "Fastlane issued-at adjustment and test update",
+              "url": "https://github.com/fastlane/fastlane/commit/2beac83f8"
+            },
+            {
+              "label": "Proposed patch header and upstream hunks",
+              "url": "https://github.com/tamird/gvisor/commit/99759b1ed"
+            }
+          ]
+        },
         {
           "text": "The pinned supplier spec compares the token timestamp to a later Time.now.to_i read. The Ruby 3.0 image runs a fixed list of 100 benchmark specs. Fastlane 2.220.0 still contains all 100 and includes the supplier’s changed token timestamp behavior.",
           "evidence": [
@@ -100745,8 +101020,16 @@
           ]
         }
       ],
-      "nextStep": "Replay the pinned benchmark specs on 2.220.0, checking both the intended token behavior and the workload coverage.",
+      "nextStep": "Review the backport to the pinned Fastlane benchmark.",
       "evidence": [
+        {
+          "label": "Fork proposal preserving the pinned benchmark",
+          "url": "https://github.com/tamird/gvisor/commit/99759b1ed"
+        },
+        {
+          "label": "Clock-boundary and benchmark controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43036941535/artifacts/13864612930"
+        },
         {
           "label": "Original RSpec failure and integer timestamps",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54407#01a1ca8b-ce6e-437b-9541-8876bbc417b6"
@@ -100759,7 +101042,18 @@
           "label": "Supplier token timestamp change",
           "url": "https://github.com/fastlane/fastlane/commit/2beac83f8"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "99759b1ed1acb8dbcacfc46ed129d3ec5a14c4dd",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/99759b1ed",
+        "title": "Stabilize the Fastlane token check in the Ruby benchmark",
+        "body": "The benchmark failed when the clock ticked between creating a Fastlane\ntoken and comparing its issued-at timestamp with the current second [1].\nThe token was valid. The test expected 1794400658 and read 1794400657.\n\nBackport Fastlane's issued-at adjustment and its accompanying\nassertion [2]. The first fixed release, 2.220.0, adds 78 examples and\nremoves 12 from the benchmark's selection. The backport preserves\nall 3,613 examples.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54407#01a1ca8b-ce6e-437b-9541-8876bbc417b6\n[2]: https://github.com/fastlane/fastlane/commit/2beac83f8\n\nPrepared by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-11T14:52:21+00:00",
+        "summary": "Open the two-hunk Fastlane backport that preserves the benchmark’s 3,613 examples?"
+      }
     }
   ],
   "updatedAt": "2026-11-11T01:47:46+00:00"
