@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T18:28:00+00:00",
+    "updatedAt": "2026-11-11T18:47:20+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46545,14 +46545,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/release-version-single-label",
-      "head": "b6c1c66c618663b608e44bb5e1e55ddaf907b14f",
+      "head": "8b4856bbd7f5e8daf209246b2fe211a4df36327f",
       "title": "Build source exports without a Git version stamp",
-      "url": "https://github.com/tamird/gvisor/commit/b6c1c66c6",
+      "url": "https://github.com/tamird/gvisor/commit/8b4856bbd",
       "group": "rbe",
       "status": "Agent work",
       "summary": "The release publisher sets one Bazel --embed_label for the standard runsc installation, its checkpoints and its Debian package. The revised change declares the version once in the Go library and removes ten executable-level stamp declarations. Unnamed builds report (devel) and store the linked Sentry build ID in checkpoints. Builders that supplied STABLE_VERSION can pass the same value with --stamp --embed_label.",
-      "updatedAt": "2026-11-11T18:28:00+00:00",
+      "updatedAt": "2026-11-11T18:47:20+00:00",
       "evidence": [
+        {
+          "label": "Signed source with distinct version imports",
+          "url": "https://github.com/tamird/gvisor/commit/8b4856bbd"
+        },
+        {
+          "label": "Native release metadata and eight installed checkpoint restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43078670798/artifacts/13883378238"
+        },
         {
           "label": "Revised source with a single library version declaration",
           "url": "https://github.com/tamird/gvisor/commit/b6c1c66c6"
@@ -46649,16 +46657,18 @@
         },
         "after": {
           "base": "0e702d775d4f14ade5136a00f3ba349dfc7ccbed",
-          "head": "b6c1c66c618663b608e44bb5e1e55ddaf907b14f"
+          "head": "8b4856bbd7f5e8daf209246b2fe211a4df36327f"
         }
       },
       "followup": {
         "owner": "Build and release",
-        "sourceHead": "b6c1c66c618663b608e44bb5e1e55ddaf907b14f",
-        "observedAt": "2026-11-11T18:28:00+00:00",
-        "disposition": "The single-library revision b6c1c66c6 is under native qualification.",
-        "nextAction": "Inspect the native release and checkpoint results for b6c1c66c6 before asking for contributor review.",
+        "sourceHead": "8b4856bbd7f5e8daf209246b2fe211a4df36327f",
+        "observedAt": "2026-11-11T18:47:20+00:00",
+        "disposition": "The native build passed after the kernel version import was aliased. All eight guest restore comparisons passed, as did the Debian, CLI and netgofer version checks.",
+        "nextAction": "Verify the owning wire-codec test and separately built coverage launcher, then assess the release and restore evidence.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/8b4856bbd",
+          "https://github.com/tamird/gvisor/actions/runs/43078670798/artifacts/13883378238",
           "https://github.com/tamird/gvisor/commit/b6c1c66c6",
           "https://github.com/tamird/gvisor/actions/runs/43077713792",
           "https://github.com/tamird/gvisor/commit/8c826374e",
@@ -74574,6 +74584,26 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43070682429/artifacts/13880355745"
         }
       ]
+    },
+    {
+      "id": "pr:17492",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17492,
+      "ref": "research/pgo-commit-before-rebase",
+      "head": "2ca38c700a1f17a2520e456022b2840285296185",
+      "title": "pgo: commit newly generated profiles before rebasing",
+      "url": "https://github.com/google/gvisor/pull/17492",
+      "group": "release",
+      "status": "open",
+      "updatedAt": "2026-11-11T18:47:20+00:00",
+      "summary": "Commit generated PGO profiles before rebasing, so an empty stash cannot stop publication of a fresh profile directory. The ten native Git cases include an advanced master and conflicting files.",
+      "evidence": [
+        {
+          "label": "Ten native publisher cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43071328237/artifacts/13878581857"
+        }
+      ]
     }
   ],
   "edges": [
@@ -102482,7 +102512,7 @@
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-11T18:28:00+00:00",
+      "updatedAt": "2026-11-11T18:47:20+00:00",
       "summary": "The master PGO pipeline reported 608 consecutive failures, from build #3174 through #3781. The previous build passed. Master still contains profiles through Go 1.27.1. The public statuses do not identify the failing benchmark or publication stage.",
       "findings": [
         {
@@ -102557,6 +102587,10 @@
       "nextStep": "Compare the Nginx path with its normal readiness image and a deliberately unavailable probe. Check that a readiness error stops the run before Hey. For the private master failures, obtain the first failing benchmark, merge or publication log.",
       "evidence": [
         {
+          "label": "Publisher correction, gVisor #17492",
+          "url": "https://github.com/google/gvisor/pull/17492"
+        },
+        {
           "label": "Native AMD64 stock Make collector and five merged profiles",
           "url": "https://github.com/tamird/gvisor/actions/runs/43067257412/artifacts/13881972415"
         },
@@ -102605,17 +102639,23 @@
         "context": "buildkite/pgo-profiles",
         "onSuccess": "Check whether the successful master build published new profile files for the expected Go version and platforms."
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "requestedAt": "2026-11-11T17:48:55+00:00",
-        "head": "2ca38c700a1f17a2520e456022b2840285296185",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/2ca38c700",
-        "title": "pgo: commit newly generated profiles before rebasing",
-        "summary": "Open the publisher correction against google/gvisor? The separate investigation of the private PGO build remains active.",
-        "body": "After a Go upgrade, the profile refresh can produce only new files.\nThe publisher stashes tracked changes before pulling master. On a clean\ncheckout that stash is empty, and the following git stash pop exits\nbefore the profiles are staged.\n\nCommit the profile directory on the daily branch before pulling. This\nlets Git rebase new and modified profiles together if master advances\nwhile the benchmarks run. Skip the PR when master already contains the\ngenerated profiles.\n\nPrepared by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "requestedAt": "2026-11-11T17:48:55+00:00",
+          "head": "2ca38c700a1f17a2520e456022b2840285296185",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/2ca38c700",
+          "title": "pgo: commit newly generated profiles before rebasing",
+          "summary": "Open the publisher correction against google/gvisor? The separate investigation of the private PGO build remains active.",
+          "body": "After a Go upgrade, the profile refresh can produce only new files.\nThe publisher stashes tracked changes before pulling master. On a clean\ncheckout that stash is empty, and the following git stash pop exits\nbefore the profiles are staged.\n\nCommit the profile directory on the daily branch before pulling. This\nlets Git rebase new and modified profiles together if master advances\nwhile the benchmarks run. Skip the PR when master already contains the\ngenerated profiles.\n\nPrepared by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-11T18:47:20+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17492",
+          "note": "The tested publisher change opened as one commit in #17492."
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
