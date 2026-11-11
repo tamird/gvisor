@@ -24,6 +24,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -311,6 +312,36 @@ func newTestClientStackWithOptions(t *testing.T, clientFD int, allowExternalLoop
 	return st
 }
 
+// logProxyWaitFrames records only function names and source locations. Frame
+// arguments, goroutine identifiers and data from sockets are unnecessary.
+func logProxyWaitFrames(t *testing.T) {
+	t.Helper()
+	buf := make([]byte, 4<<20)
+	n := runtime.Stack(buf, true)
+	t.Logf("TEARDOWN_STACK truncated=%v", n == len(buf))
+	for group, record := range strings.Split(string(buf[:n]), "\n\n") {
+		if !strings.Contains(record, "(*Netgofer).runProxyMode") &&
+			!strings.Contains(record, "(*Netgofer).proxyOutboundRequest") &&
+			!strings.Contains(record, "(*endpoint).dispatchLoop") {
+			continue
+		}
+		lines := strings.Split(record, "\n")
+		for i := 1; i+1 < len(lines); i += 2 {
+			line := lines[i]
+			arg := strings.LastIndexByte(line, '(')
+			if arg < 0 || strings.HasPrefix(line, "created by ") {
+				continue
+			}
+			site := strings.Fields(lines[i+1])
+			if len(site) == 0 {
+				continue
+			}
+			file := site[0][strings.LastIndexByte(site[0], '/')+1:]
+			t.Logf("TEARDOWN_FRAME %d %s %s", group, line[:arg], file)
+		}
+	}
+}
+
 func startInProcessProxy(t *testing.T, n *Netgofer) *stack.Stack {
 	t.Helper()
 	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
@@ -341,6 +372,9 @@ func startInProcessProxy(t *testing.T, n *Netgofer) *stack.Stack {
 	}
 
 	clientStack := newTestClientStackWithOptions(t, clientFD, n.allowLoopback)
+	if os.Getenv("NETGOFER_FRAME_CONTROL") == "1" {
+		logProxyWaitFrames(t)
+	}
 	t.Cleanup(func() {
 		clientStack.Destroy()
 		_ = unix.Close(clientFD)
@@ -350,6 +384,7 @@ func startInProcessProxy(t *testing.T, n *Netgofer) *stack.Stack {
 				t.Errorf("runProxyMode() = %v, want %v", status, subcommands.ExitSuccess)
 			}
 		case <-time.After(5 * time.Second):
+			logProxyWaitFrames(t)
 			t.Error("runProxyMode() did not exit after UDS peer closed")
 		}
 	})

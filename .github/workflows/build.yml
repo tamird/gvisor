@@ -1,35 +1,52 @@
-name: CI
-
-"on":
+name: Locate the netgofer connection-limit teardown wait on native ARM64
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/netgofer-connection-limit-teardown]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  netgofer:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 150
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the Linux ARM64 sources, Bazel and established dependency helpers
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          w="$RUNNER_TEMP/netgofer-teardown"
+          mkdir -m 700 "$w" "$w/receipt"
+          mkdir -p "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"verified":false,"stage":"setup"}' > "$w/receipt/result.json"
+          source=d5f35d45b22ccea5f6309726c48c9e6bdb2c45a2
+          prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q .
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prep" "$assets" "$inputs"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$source"
+          git diff --exit-code "$source" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/netgofer_teardown.py' ':!runsc/gofer/net/netgofer_test.go'
+          git show "$GITHUB_SHA:.github/qualification/netgofer_teardown.py" > "$w/check.py"
+          git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$inputs:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          git show "$GITHUB_SHA:runsc/gofer/net/netgofer_test.go" > "$w/diagnostic.go"
+          git checkout -q --detach "$source"
+          test "$(cat .bazelversion)" = 9.3.1
+          cd "$w"
+          test "$(git hash-object --no-filters previous.py)" = 0c1db7071558c5f9c8de45b60ba625183bd8a400
+          test "$(git hash-object --no-filters public_assets.py)" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          test "$(git hash-object --no-filters tldk_public_inputs.py)" = 1f3f7d4d75810ad60941772776e01f3b71b3b171
+          curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-arm64 -o bazel
+          echo '10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366  bazel' | sha256sum -c -
+          chmod +x bazel
+      - name: Run the unmodified test, verify the observer and repeat ordinary teardowns
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            python3 -Bu "$RUNNER_TEMP/netgofer-teardown/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: netgofer-connection-limit-teardown
+          path: ${{ runner.temp }}/netgofer-teardown/receipt
+          retention-days: 14
+          if-no-files-found: error
