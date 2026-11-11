@@ -1,35 +1,176 @@
-name: CI
-
-"on":
+name: Qualify timing and capacity in the prewarmer owner test
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/prewarmer-capacity-owner-controls]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    env:
+      BASE: 2552c678794e048487e1d18e9c81729b67fc119a
+      SOURCE: 38fb3809be96ae335303ed42d3c0ae1dae4d3e49
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify source and prepare native Linux Bazel
+        run: |
+          set -euo pipefail
+          task="$RUNNER_TEMP/prewarmer-capacity-owner"
+          mkdir -p "$task/receipt"
+          echo "TASK=$task" >> "$GITHUB_ENV"
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          test "$(git rev-parse "$SOURCE^")" = "$BASE"
+          git diff --quiet "$SOURCE" HEAD -- . ':!.github/workflows/build.yml'
+          git diff --quiet "$BASE" "$SOURCE" -- . ':!runsc/prewarmer/fdtable_expander.go' ':!runsc/prewarmer/prewarmer_speedup_test.go'
+          test "$(uname -m)" = x86_64
+          uname -a | tee "$task/receipt/kernel"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$task/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $task/bazel" | sha256sum -c -
+          chmod 700 "$task/bazel"
+          cc --version | head -1
+      - name: Run stock, revised and measurement controls on one kernel
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          import subprocess
+          import urllib.parse
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          task = Path(os.environ["TASK"])
+          receipt = task / "receipt"
+          target = "//runsc/prewarmer:prewarmer_speedup_test"
+          case_name = "TestPrewarmerSpeedsUpFDTableExpansion"
+          root = Path("runsc/prewarmer")
+          helper = root / "fdtable_expander.go"
+          owner = root / "prewarmer_speedup_test.go"
+          launcher = root / "prewarmer.c"
+          report = {}
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+          def git(*args):
+              return subprocess.check_output(["git", *map(str, args)], text=True).strip()
 
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+          def replace(path, old, new):
+              contents = path.read_text()
+              assert contents.count(old) == 1, (path, old)
+              path.write_text(contents.replace(old, new))
+
+          def delay_after_measurement():
+              if '"time"' not in helper.read_text():
+                  replace(helper, '"os"', '"os"\n\t"time"')
+              replace(helper, 'func main() {', '''func main() {
+              if os.Args[0] == "fdtable_expander" {
+                  defer func() {
+                      fmt.Fprintln(os.Stderr, "QA post-syscall delay")
+                      time.Sleep(250 * time.Millisecond)
+                  }()
+              }''')
+
+          def scalar(value):
+              return value is not None and value.get("status") not in ("notrun", "skipped")
+
+          def run(name, expected=None, message=None, full=False):
+              events_path = task / (name + ".bep")
+              console = receipt / (name + ".console")
+              args = [str(task / "bazel"), "--nosystem_rc", "--nohome_rc", "test", "--config=x86_64",
+                      "-c", "opt", "--jobs=4", "--lockfile_mode=off", "--remote_executor=", "--remote_cache=",
+                      "--bes_backend=", "--strategy=TestRunner=local", "--nocache_test_results",
+                      "--flaky_test_attempts=1", "--runs_per_test=1", "--test_sharding_strategy=disabled",
+                      "--test_timeout=360", "--test_env=GO_TEST_WRAP_TESTV=1", "--test_arg=-test.v",
+                      "--build_event_json_file=" + str(events_path)]
+              if not full:
+                  args += ["--test_arg=-test.run=^" + case_name + "$"]
+              with console.open("w") as output:
+                  rc = subprocess.run([*args, target], stdout=output, stderr=subprocess.STDOUT).returncode
+              print(name, rc, "\n".join(console.read_text().splitlines()[-12:]), flush=True)
+              (receipt / (name + ".diff")).write_text(git("diff", "--", helper, owner, launcher) + "\n")
+              events = [json.loads(line) for line in events_path.read_text().splitlines()]
+              result, = [e["testResult"] for e in events if e["id"].get("testResult", {}).get("label") == target and "testResult" in e]
+              info = result["executionInfo"]
+              assert info["strategy"] == "local" and not info.get("cachedRemotely") and not result.get("cachedLocally"), result
+              for item in result["testActionOutput"]:
+                  if item["name"] in ("test.xml", "test.log"):
+                      uri = urllib.parse.urlparse(item["uri"])
+                      assert uri.scheme == "file", uri
+                      data = Path(urllib.parse.unquote(uri.path)).read_bytes()
+                      assert not item.get("digest") or hashlib.sha256(data).hexdigest() == item["digest"], item
+                      (receipt / (name + "." + item["name"])).write_bytes(data)
+              cases = {}
+              for case in ET.parse(receipt / (name + ".test.xml")).iter("testcase"):
+                  status = "passed"
+                  if case.find("skipped") is not None or not scalar(case):
+                      status = "skipped"
+                  elif case.find("failure") is not None or case.find("error") is not None:
+                      status = "failed"
+                  cases[case.attrib["name"]] = {"status": status, "time": case.attrib.get("time")}
+              log = (receipt / (name + ".test.log")).read_text()
+              medians = dict(re.findall(r"fdtable_expander (alone|with prewarmer): p50 = (\S+) over 32 runs", log))
+              status = cases[case_name]["status"]
+              if expected is not None:
+                  assert status == expected, (name, cases, log[-2500:])
+              assert (rc == 0) == (status in ("skipped", "passed")), (name, rc, cases)
+              if message:
+                  assert message in log, (name, message, log[-2500:])
+              expect_samples = status == "passed" or name in ("stock", "stock-delay", "reversed")
+              assert bool(medians) == expect_samples, (name, cases, log[-2500:])
+              if expect_samples:
+                  assert set(medians) == {"alone", "with prewarmer"}, (name, medians)
+              count = log.count("QA post-syscall delay")
+              assert count == (33 if name.endswith("-delay") else 0), (name, count)
+              report[name] = dict(head=git("rev-parse", "HEAD"), exit=rc, cases=cases, p50=medians, delays=count)
+              (receipt / "results.json").write_text(json.dumps(report, indent=2) + "\n")
+              print(json.dumps(report[name]), flush=True)
+
+          git("checkout", "-q", "--detach", os.environ["BASE"])
+          run("stock")
+          delay_after_measurement()
+          run("stock-delay", "failed", "prewarming did not speed up FD table expansion")
+          git("restore", "--worktree", "--", helper)
+          git("checkout", "-q", "--detach", os.environ["SOURCE"])
+          run("revised", "passed", full=True)
+          delay_after_measurement()
+          run("revised-delay", "passed")
+          git("restore", "--worktree", "--", helper)
+
+          replace(launcher, "  prewarm_fdtable();", "  if (0) prewarm_fdtable();")
+          for turn in range(1, 4):
+              run(f"passthrough-{turn}", "failed", "prewarmed helper started with 64 FD slots, want at least 256")
+          git("restore", "--worktree", "--", launcher)
+
+          for keep in (False, True):
+              replace(owner, '"testing"', '"testing"\n\t"syscall"')
+              declaration = f'func {case_name}(t *testing.T) {{'
+              injection = '''if err := syscall.Dup3(0, 511, syscall.O_CLOEXEC); err != nil { t.Fatal(err) }'''
+              if keep:
+                  injection += "\n\tdefer syscall.Close(511)"
+              else:
+                  injection += "\n\tif err := syscall.Close(511); err != nil { t.Fatal(err) }"
+              replace(owner, declaration, declaration + "\n\t" + injection)
+              if keep:
+                  run("retained-high-fd", "skipped", "standalone helper already has 512 FD slots")
+              else:
+                  run("closed-high-fd", "passed")
+              git("restore", "--worktree", "--", owner)
+
+          # Keep the two genuine capacity checks separate from this timing control.
+          replace(owner, "append(alone, coldTime)", "append(alone, warmTime)")
+          replace(owner, "append(prewarmed, warmTime)", "append(prewarmed, coldTime)")
+          run("reversed", "failed", "prewarming did not speed up FD table expansion")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: prewarmer-capacity-and-timing
+          path: ${{ runner.temp }}/prewarmer-capacity-owner/receipt/
+          if-no-files-found: error
+          retention-days: 14
