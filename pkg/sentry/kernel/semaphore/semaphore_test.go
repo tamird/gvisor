@@ -179,3 +179,62 @@ func TestUnregister(t *testing.T) {
 		}
 	}
 }
+
+// The callback deliberately violates countWaiters' contract. Both production
+// predicates in its original callers only inspect w.value.
+func TestWaiterCursorAcrossUnlock(t *testing.T) {
+	ctx := contexttest.Context(t)
+	creds := auth.CredentialsFromContext(ctx)
+	r := NewRegistry(auth.NewRootUserNamespace())
+	s, err := r.FindOrCreate(ctx, 123, 1, linux.FileMode(0o600), true, true, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		executeOps(ctx, t, s, []linux.Sembuf{{SemOp: -1}}, true)
+	}
+	checkCounts := func(wantZero, wantNegative uint16) {
+		t.Helper()
+		zero, err := s.CountZeroWaiters(0, creds)
+		if err != nil || zero != wantZero {
+			t.Fatalf("CountZeroWaiters = %d, %v; want %d, nil", zero, err, wantZero)
+		}
+		negative, err := s.CountNegativeWaiters(0, creds)
+		if err != nil || negative != wantNegative {
+			t.Fatalf("CountNegativeWaiters = %d, %v; want %d, nil", negative, err, wantNegative)
+		}
+	}
+	checkCounts(0, 3)
+	count, err := s.countWaiters(0, creds, func(w *waiter) bool {
+		s.mu.Unlock()
+		s.AbortWait(0, w.ch)
+		s.mu.Lock()
+		return true
+	})
+	if count != 1 || err != nil {
+		t.Fatalf("count through stale cursor = %d, %v; want 1, nil", count, err)
+	}
+	checkCounts(0, 2)
+	t.Log("queued before=3, visited=1, queued after=2")
+
+	s.mu.Lock()
+	before := s.findSem(0)
+	s.mu.Unlock()
+	if err := s.SetVal(ctx, 0, 3, creds, 17); err != nil {
+		t.Fatal(err)
+	}
+	s.mu.Lock()
+	same := s.findSem(0) == before
+	val, pid := before.value, before.pid
+	s.mu.Unlock()
+	if !same || val != 3 || pid != 17 {
+		t.Fatalf("same member=%t, value=%d, pid=%d; want true, 3, 17", same, val, pid)
+	}
+	checkCounts(0, 0)
+	executeOps(ctx, t, s, []linux.Sembuf{{SemOp: 0}}, true)
+	checkCounts(1, 0)
+	if _, err := s.CountZeroWaiters(1, creds); err != linuxerr.ERANGE {
+		t.Errorf("CountZeroWaiters for invalid slot = %v, want ERANGE", err)
+	}
+	t.Log("member stayed at the same address; after reacquiring the mutex it contained the updated value and PID")
+}

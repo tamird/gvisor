@@ -582,22 +582,45 @@ func (s *Set) countWaiters(num int32, creds *auth.Credentials, pred func(w *wait
 	return cnt, nil
 }
 
-// CountZeroWaiters returns number of waiters waiting for the sem's value to increase.
+// waiterCounts counts both classes while the queue is locked.
+//
+// +checklocksexclude:s.mu
+func (s *Set) waiterCounts(num int32, creds *auth.Credentials) (uint16, uint16, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.obj.CheckPermissions(creds, vfs.MayRead) {
+		return 0, 0, linuxerr.EACCES
+	}
+	member := s.findSem(num)
+	if member == nil {
+		return 0, 0, linuxerr.ERANGE
+	}
+	var zero, negative uint16
+	for w := member.waiters.Front(); w != nil; w = w.Next() {
+		switch {
+		case w.value == 0:
+			zero++
+		case w.value < 0:
+			negative++
+		}
+	}
+	return zero, negative, nil
+}
+
+// CountZeroWaiters returns the number of callers waiting for a zero value.
 //
 // +checklocksexclude:s.mu
 func (s *Set) CountZeroWaiters(num int32, creds *auth.Credentials) (uint16, error) {
-	return s.countWaiters(num, creds, func(w *waiter) bool {
-		return w.value == 0
-	})
+	zero, _, err := s.waiterCounts(num, creds)
+	return zero, err
 }
 
-// CountNegativeWaiters returns number of waiters waiting for the sem to go to zero.
+// CountNegativeWaiters returns the number of callers waiting for an increase.
 //
 // +checklocksexclude:s.mu
 func (s *Set) CountNegativeWaiters(num int32, creds *auth.Credentials) (uint16, error) {
-	return s.countWaiters(num, creds, func(w *waiter) bool {
-		return w.value < 0
-	})
+	_, negative, err := s.waiterCounts(num, creds)
+	return negative, err
 }
 
 // ExecuteOps attempts to execute a list of operations to the set. It only
@@ -848,4 +871,22 @@ func (s *Set) calleeEscapeForTest(num int32, opaque func(*sem)) {
 	member := s.findSem(num)
 	storeGuardedElementForTest(member, s) // escape: static callee stores the member
 	opaque(member)                        // unproven: callback may retain the member
+}
+
+var savedWaiterForProbe *waiter
+
+func saveWaiterForProbe(w *waiter) {
+	savedWaiterForProbe = w
+}
+
+func (s *Set) queueCursorForProbe(num int32, opaque func(*waiter)) {
+	s.mu.Lock()
+	cursor := s.findSem(num).waiters.Front()
+	savedWaiterForProbe = cursor // cursor: store returned list node directly
+	saveWaiterForProbe(cursor)   // cursor: helper stores returned list node
+	opaque(cursor)               // cursor: callback may retain the list node
+	s.mu.Unlock()
+	s.mu.Lock()
+	_ = cursor.Next() // cursor: next link can be cleared during prior unlock
+	s.mu.Unlock()
 }

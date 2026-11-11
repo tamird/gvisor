@@ -1,35 +1,77 @@
-name: CI
-
-"on":
+name: Check semaphore member and queue cursor lifetimes
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/semaphore-cursor-lifetime]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 125
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Prepare the original Linux Go and Nogo owners
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/semaphore-slice-guard"
+          mkdir -p "$d"
+          test "$(git rev-parse HEAD^)" = f56b1eaa4e1651606a5941a5e7f61b9d0e95c345
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/sem_element_results.py' ':!pkg/sentry/kernel/semaphore/semaphore.go' ':!pkg/sentry/kernel/semaphore/semaphore_test.go'
+          test "$(cat .bazelversion)" = 8.8.1
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=-)
+            sudo apt-get "${opts[@]}" update -qq
+            sudo apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+      - name: Check marked member and cursor references on both architectures
+        timeout-minutes: 112
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/semaphore-slice-guard"
+          cp .github/qualification/sem_element_results.py "$d/"
+          mkdir -p "$d/receipt"
+          python3 -B "$d/sem_element_results.py"
+      - name: Exercise the semaphore and compare traversal outcomes
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/semaphore-slice-guard"
+          "$d/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx2600m test --config=x86_64 \
+            --jobs=2 --spawn_strategy=processwrapper-sandbox --strategy=TestRunner=local \
+            --remote_executor= --remote_cache= --bes_backend= --nocache_test_results \
+            --test_arg=-test.v --test_timeout=240 --test_output=errors --build_event_json_file="$d/native.bep" \
+            //pkg/sentry/kernel/semaphore:semaphore_test
+          python3 - "$d" <<'PY'
+          import json
+          from pathlib import Path
+          import shutil
+          import sys
+          from urllib.parse import unquote, urlsplit
+          root = Path(sys.argv[1])
+          target = "//pkg/sentry/kernel/semaphore:semaphore_test"
+          events = map(json.loads, (root / "native.bep").read_text().splitlines())
+          result, = (e["testResult"] for e in events if e["id"].get("testResult", {}).get("label") == target and "testResult" in e)
+          assert result["status"] == "PASSED" and not result.get("cachedLocally"), result["status"]
+          for item in result["testActionOutput"]:
+              if item["name"] in ("test.log", "test.xml"):
+                  uri = urlsplit(item["uri"])
+                  assert uri.scheme == "file" and not uri.netloc
+                  shutil.copyfile(unquote(uri.path), root / "receipt" / ("native" + Path(item["name"]).suffix))
+          PY
+          grep -F -- '--- PASS: TestWaiterCursorAcrossUnlock' "$d/receipt/native.log"
+          grep -F 'queued before=3, visited=1, queued after=2' "$d/receipt/native.log"
+          grep -F 'member stayed at the same address' "$d/receipt/native.log"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: semaphore-cursor-lifetime
+          path: ${{ runner.temp }}/semaphore-slice-guard/receipt
+          if-no-files-found: error
+          retention-days: 14
