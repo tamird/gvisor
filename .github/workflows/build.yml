@@ -1,35 +1,31 @@
-name: CI
-
-"on":
+name: Build the downstream gVisor BPF object
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/downstream-bpf-object]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  downstream:
+    if: github.repository == 'tamird/gvisor' && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Build from the published source
+        run: |
+          set -euo pipefail
+          area="$RUNNER_TEMP/downstream-bpf"
+          mkdir -p "$area/receipts"
+          cp test/rbe/downstream_bpf.py "$area/"
+          git checkout --detach b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98
+          curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$area/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $area/bazelisk" | sha256sum -c -
+          chmod +x "$area/bazelisk"
+          python3 -B "$area/downstream_bpf.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: downstream-bpf-object
+          path: ${{ runner.temp }}/downstream-bpf/receipts
+          if-no-files-found: error
