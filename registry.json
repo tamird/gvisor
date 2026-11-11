@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T17:44:03+00:00",
+    "updatedAt": "2026-11-11T17:48:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -102335,7 +102335,7 @@
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-11T17:23:01+00:00",
+      "updatedAt": "2026-11-11T17:48:55+00:00",
       "summary": "The master PGO pipeline reported 608 consecutive failures, from build #3174 through #3781. The previous build passed. Master still contains profiles through Go 1.27.1. The public statuses do not identify the failing benchmark or publication stage.",
       "findings": [
         {
@@ -102375,10 +102375,35 @@
               "url": "https://github.com/google/gvisor/pull/15489"
             }
           ]
+        },
+        {
+          "text": "On a clean checkout, the stock publication script exited 128 before staging 24 new profiles. The revised publisher pushed all 24. When master advanced, it retained 25 new and modified profiles and the intervening upstream work. An identical upstream result produced no PR, and both conflict cases stopped before pushing. All ten native Git cases passed. Earlier #15489 added 24 profiles with the old script. The stage failing in the private pipeline remains unknown.",
+          "evidence": [
+            {
+              "label": "Single-commit publisher correction",
+              "url": "https://github.com/tamird/gvisor/commit/2ca38c700"
+            },
+            {
+              "label": "Ten native Linux Git publication cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43071328237/artifacts/13878581857"
+            },
+            {
+              "label": "Earlier successful publication of new profiles",
+              "url": "https://github.com/google/gvisor/pull/15489"
+            }
+          ]
         }
       ],
       "nextStep": "Identify the first failing benchmark, merge or publication step in the Go 1.27.2 refresh. The public Buildkite status exposes the final outcome and duration only.",
       "evidence": [
+        {
+          "label": "Single-commit publisher correction",
+          "url": "https://github.com/tamird/gvisor/commit/2ca38c700"
+        },
+        {
+          "label": "Ten native Linux Git publication cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43071328237/artifacts/13878581857"
+        },
         {
           "label": "Last successful master PGO build, #3173",
           "url": "https://api.github.com/repos/google/gvisor/commits/689b011dd/status"
@@ -102411,8 +102436,19 @@
       "defaultBranchCheck": {
         "context": "buildkite/pgo-profiles",
         "onSuccess": "Check whether the successful master build published new profile files for the expected Go version and platforms."
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "requestedAt": "2026-11-11T17:48:55+00:00",
+        "head": "2ca38c700a1f17a2520e456022b2840285296185",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/2ca38c700",
+        "title": "pgo: commit newly generated profiles before rebasing",
+        "summary": "Open the publisher correction against google/gvisor? The separate investigation of the private PGO build remains active.",
+        "body": "After a Go upgrade, the profile refresh can produce only new files.\nThe publisher stashes tracked changes before pulling master. On a clean\ncheckout that stash is empty, and the following git stash pop exits\nbefore the profiles are staged.\n\nCommit the profile directory on the daily branch before pulling. This\nlets Git rebase new and modified profiles together if master advances\nwhile the benchmarks run. Skip the PR when master already contains the\ngenerated profiles.\n\nPrepared by Codex on behalf of @tamird."
       }
     }
   ],
-  "updatedAt": "2026-11-11T17:44:03+00:00"
+  "updatedAt": "2026-11-11T17:48:55+00:00"
 }
