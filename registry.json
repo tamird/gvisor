@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T14:01:21+00:00",
+    "updatedAt": "2026-11-11T14:10:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73487,8 +73487,12 @@
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513",
       "group": "bazel",
       "status": "open",
-      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The proposed upstream revision and the earlier preview have identical trees. The approved directive is open upstream as #2513 with the corrected title and commit description.",
+      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups/v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The published revision has the same tree as the approved fork commit. The approved directive is open upstream as #2513 with the corrected title and commit description.",
       "evidence": [
+        {
+          "label": "Approval on published revision bda585587",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513#pullrequestreview-5859938900"
+        },
         {
           "label": "Published single-commit PR",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
@@ -73510,7 +73514,7 @@
           "url": "https://github.com/tamird/bazel-gazelle/actions/runs/43023215493/job/130531311355"
         }
       ],
-      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "updatedAt": "2026-11-11T14:10:12+00:00",
       "number": 2513,
       "followup": {
         "owner": "Upstream review",
@@ -73534,8 +73538,8 @@
       "url": "https://github.com/nodejs/node/pull/67411",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
-      "summary": "Node’s tick-processor retry now forwards --preprocess after a first miss. Tamir signed and submitted the tested one-line fix. The original CI logs did not record why the first match failed.",
+      "updatedAt": "2026-11-11T14:10:12+00:00",
+      "summary": "Node’s tick-processor retry now forwards --preprocess after a first miss. Tamir signed and submitted the tested one-line fix. The original CI logs did not record why the first match failed. One Linux check failed to resolve the Ubuntu APT mirror while installing clang. Its test step was skipped.",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "a9d228c85448735f5b3ee91b3c1eda4b75ebb8e0",
@@ -73547,6 +73551,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Linux setup failed to resolve the Ubuntu mirror; test step skipped",
+          "url": "https://github.com/nodejs/node/actions/runs/43033382074/job/130565850906"
+        },
         {
           "label": "Submitted Node change",
           "url": "https://github.com/nodejs/node/pull/67411"
@@ -73611,12 +73619,16 @@
       "repo": "tamird/bazel-gazelle",
       "ref": "fix/containerd-cgroups-generated-metrics",
       "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
-      "title": "Build the shipped Go metrics for cgroups v3",
+      "title": "Build the shipped Go metrics for containerd/cgroups/v3",
       "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
       "group": "bazel",
       "status": "Published",
-      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The proposed upstream revision and the earlier preview have identical trees.",
+      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups/v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The published revision has the same tree as the approved fork commit.",
       "evidence": [
+        {
+          "label": "Approval on published revision bda585587",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513#pullrequestreview-5859938900"
+        },
         {
           "label": "Published upstream PR",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
@@ -73638,7 +73650,7 @@
           "url": "https://github.com/tamird/bazel-gazelle/actions/runs/43023215493/job/130531311355"
         }
       ],
-      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "updatedAt": "2026-11-11T14:10:12+00:00",
       "settledReviews": [
         {
           "status": "settled",
@@ -73646,13 +73658,13 @@
           "head": "761d7b804faacf022c6c593703d2da28e4e4c495",
           "baseHead": "8b89ee9f6d3c920911bf6ff73fabd4e86b4b9c3e",
           "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804",
-          "title": "Build the shipped Go metrics for cgroups v3",
+          "title": "Build the shipped Go metrics for containerd/cgroups/v3",
           "body": "Building github.com/containerd/cgroups/v3 with go_deps fails with\n\"undefined: v1.Metrics\". Both metrics schemas specify Go import paths\nwithout the /v3 suffix [1][2]. Gazelle generates the protobuf bindings\nat those paths, leaving only doc.go in the two /v3 stats packages that\ncgroups imports.\n\nCompile the metrics.pb.go files that cgroups ships. They preserve field\nnames such as Metrics.CPU because cgroups runs go-fix-acronym after\nprotoc [3]. Disable only Go proto generation so other languages can\nstill import both schemas through their stats_proto targets.\n\n[1]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup1/stats/metrics.proto#L5\n[2]: https://github.com/containerd/cgroups/blob/076b5e0e6/cgroup2/stats/metrics.proto#L5\n[3]: https://github.com/containerd/cgroups/blob/076b5e0e6/Makefile#L29",
           "requestedAt": "2026-11-11T12:39:44+00:00",
           "summary": "Open this single-commit PR in bazel-contrib/bazel-gazelle? The original gVisor qualification exercised the directive on Gazelle 0.51.3.",
           "outcome": "approved",
           "at": "2026-11-11T14:01:21+00:00",
-          "note": "The approved directive is open upstream as #2513 with the corrected title and commit description.",
+          "note": "Approved at 761d7b804 and published at bda585587 with the corrected containerd/cgroups/v3 name.",
           "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
         }
       ],
@@ -100428,8 +100440,8 @@
       "title": "containerd pod sandbox creation times out across CRI tests",
       "status": "active",
       "group": "ci-flakes",
-      "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "owner": "Contributor",
+      "updatedAt": "2026-11-11T14:10:12+00:00",
       "summary": "Five AMD64 job failures on four commits stopped during crictl runp. Four reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Containerd 2.0.8 reported context deadline exceeded. All five targets passed on their direct same-commit retries.",
       "findings": [
         {
@@ -100569,13 +100581,38 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43031605760/artifacts/13861301835"
             }
           ]
+        },
+        {
+          "text": "The ordinary CRI target at 8fda06b66 built the declared pause archive. On native AMD64, the existing integration ran the resource-update case against fresh containerd 1.7.31 and 2.2.3 daemons with registries denied. Both passed with zero registry CONNECTs. The ordinary and sandbox-controller configuration checks resolved the staged image; direct mode preserved default configuration. On native ARM64 all three OCI blob hashes and sizes matched, and the archive contained a 64-bit AArch64 /pause executable. The ARM64 check built the image only. The historical sandbox timeout remains unexplained.",
+          "evidence": [
+            {
+              "label": "Network-denied control on the installed 2.2.3 daemon",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43031605760/artifacts/13861301835"
+            },
+            {
+              "label": "Both installed daemons passed with zero registry connections",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43033887427/artifacts/13863390443"
+            },
+            {
+              "label": "Native ARM64 OCI archive and executable verification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43035569499/artifacts/13863147216"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the tested failure reporter to retain the existing daemon timestamps when a natural RunPodSandbox timeout recurs. Identify which startup phase consumed the client deadline.",
+      "nextStep": "Review the change to stage the pause image. Capture the daemon phase at the next original CI startup timeout to identify where its deadline expires.",
       "evidence": [
         {
-          "label": "2.2.3 registry-dependency comparison",
+          "label": "Network-denied control on the installed 2.2.3 daemon",
           "url": "https://github.com/tamird/gvisor/actions/runs/43031605760/artifacts/13861301835"
+        },
+        {
+          "label": "Both installed daemons passed with zero registry connections",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43033887427/artifacts/13863390443"
+        },
+        {
+          "label": "Native ARM64 OCI archive and executable verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43035569499/artifacts/13863147216"
         },
         {
           "label": "#54388 containerd 2.1.7 mount test",
@@ -100589,7 +100626,18 @@
           "label": "#54291 containerd 2.2.3 home-directory test",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54291#01a1c75e-27f0-47b6-be5e-bf5e40cf0050"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "8fda06b662ee93eddee27e0cba87ac767fdb4d16",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/8fda06b66",
+        "title": "Stage the pause image before starting CRI test pods",
+        "body": "The CRI tests stage their workload images, but each fresh containerd still pulls the sandbox image from registry.k8s.io when creating its first pod. If the registry is unavailable, the test fails before starting the workload.\n\nAdd a pinned pause archive to //test/root:crictl_test. Import it into each fresh daemon and configure the harness to use it.\n\nPrepared by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-11T14:10:12+00:00",
+        "summary": "Open this change to stage the pinned pause image in the CRI harness?"
+      }
     },
     {
       "id": "investigation:ci-flake-native-pty-packet",
