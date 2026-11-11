@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T13:06:06+00:00",
+    "updatedAt": "2026-11-11T13:19:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -100193,7 +100193,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T13:06:06+00:00",
+      "updatedAt": "2026-11-11T13:19:32+00:00",
       "summary": "Five AMD64 job failures on four commits stopped during crictl runp. Four reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Containerd 2.0.8 reported context deadline exceeded. All five targets passed on their direct same-commit retries.",
       "findings": [
         {
@@ -100296,6 +100296,19 @@
             {
               "label": "Native AMD64 diagnostic controls and field-safe output",
               "url": "https://github.com/tamird/gvisor/actions/runs/43022886472/artifacts/13856466121"
+            }
+          ]
+        },
+        {
+          "text": "TestCrictlUpdateContainerResources passed all eight uncached trials on containerd 2.2.3, in 1.72–2.87 s. None reached the RunPodSandbox deadline. The first job recorded one pass and reported its seven missing trials. The follow-up recorded seven separate passes.",
+          "evidence": [
+            {
+              "label": "First uncached trial and missing-trial check",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43025448021/artifacts/13856513764"
+            },
+            {
+              "label": "Seven further uncached containerd 2.2.3 trials",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43026601843/artifacts/13857373616"
             }
           ]
         },
