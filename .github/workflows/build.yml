@@ -1,35 +1,56 @@
-name: CI
-
-"on":
+name: Check the Node TLS regression on Linux and systrap
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/node-tls-loopback]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Fetch the fork test, pinned Node image and released gVisor
+        shell: bash
+        run: |
+          set -eu -o pipefail
+          w="$RUNNER_TEMP/node-tls"
+          mkdir -p "$w/receipt"
+          git init -q .
+          git fetch -q --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = aa0152a6a2735aad86244a594c62c344b280c3e7
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/node_tls'
+          echo '2e05bada553040d251addaf86a9b6aa0d2dd5637ea5251dd778465eba41cd593  test/rbe/node_tls/reviewed.js' | sha256sum --check
+          curl -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum --check
+          chmod +x "$w/bazel"
+          img=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/nodejs22.2.0_x86_64@sha256:68af6d298e743e15b8e8b518393d4dd023dcb8209d718bd9d0fcae66a088006e
+          docker pull --platform=linux/amd64 "$img"
+          docker image inspect "$img" --format '{{json .RepoDigests}} {{.Architecture}}' > "$w/receipt/image.txt"
+          curl -fsSL --retry 2 https://github.com/google/gvisor/releases/download/release-20261109.0/gvisor-x86_64.tar.zstd -o "$w/runtime.tar.zstd"
+          echo "84c29e8f92ba306b1a8c8cb1793fc32fe7388ca894da0427a22f3d8f6448af12  $w/runtime.tar.zstd" | sha256sum --check
+          sudo mkdir -p /opt/gvisor-node-tls
+          sudo tar --zstd -xf "$w/runtime.tar.zstd" -C /opt/gvisor-node-tls
+          sudo /opt/gvisor-node-tls/runsc install --runtime=runsc-systrap -- --platform=systrap
+          sudo systemctl restart docker
+          /opt/gvisor-node-tls/runsc --version > "$w/receipt/runsc.txt"
+          sudo jq '.runtimes["runsc-systrap"]' /etc/docker/daemon.json >> "$w/receipt/runsc.txt"
+      - name: Run the same reviewed JavaScript under runc and systrap
+        shell: bash
+        run: |
+          set -eu -o pipefail
+          w="$RUNNER_TEMP/node-tls"
+          status=0
+          "$w/bazel" --batch test --module_mirrors=https://bcr.cloudflaremirrors.com --jobs=4 --nocache_test_results --flaky_test_attempts=1 --test_strategy=standalone --test_output=errors --test_timeout=300 //test/rbe/node_tls:loopback_test || status=$?
+          dir=bazel-testlogs/test/rbe/node_tls/loopback_test
+          if test -f "$dir/test.log"; then cp "$dir/test.log" "$w/receipt/"; fi
+          if test -f "$dir/test.xml"; then cp "$dir/test.xml" "$w/receipt/"; fi
+          if test -d "$dir/test.outputs"; then cp -rL "$dir/test.outputs" "$w/receipt/"; fi
+          exit "$status"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled()
+        with:
+          name: node-tls-loopback
+          path: ${{ runner.temp }}/node-tls/receipt/
+          if-no-files-found: error
+          retention-days: 14
