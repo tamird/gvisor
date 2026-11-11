@@ -61,8 +61,9 @@ containers with `runsc` requires Linux 5.6 or later.
 
 ### Building on Linux
 
-Install [Bazelisk][bazelisk], the native GNU C and C++ compilers, and binutils.
+Install [Bazelisk][bazelisk] and make sure `tar` can extract bzip2 archives.
 Bazelisk runs the [Bazel][bazel] version pinned in [.bazelversion](.bazelversion).
+Bazel downloads LLVM and the sysroot for the target architecture.
 The [build image Dockerfile](images/default/Dockerfile) lists the packages used
 in CI.
 
