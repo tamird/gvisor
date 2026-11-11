@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T12:17:56+00:00",
+    "updatedAt": "2026-11-11T12:32:04+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -86579,7 +86579,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-10T17:41:21+00:00",
+      "updatedAt": "2026-11-11T12:32:04+00:00",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -87304,7 +87304,7 @@
           ]
         }
       ],
-      "nextStep": "The single-waiter change is ready for contributor review. Its upstream prerequisite is #16860.",
+      "nextStep": "Open the approved single-waiter change (be0aab89c) after gVisor #16860 merges.",
       "evidence": [
         {
           "label": "Eight paired Nginx restores and linked decoder disassembly",
@@ -97465,7 +97465,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-09T22:10:43+00:00",
+      "updatedAt": "2026-11-11T12:32:04+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -97634,7 +97634,7 @@
           ]
         },
         {
-          "text": "containerd/cgroups rewrites generated Go field names in all ten published v3 releases. A three-line Gazelle default selects the shipped Go sources and keeps both protobuf descriptor targets. The shim linked, started, and read its executable eight times. The stock gVisor build applies a protobuf patch and makes zero such reads. In that run, building protoc in the external consumer failed on C++ header paths.",
+          "text": "containerd/cgroups rewrites generated Go field names in all ten published v3 releases. Gazelle 0.51.3 with the registry directive selected both checked-in metrics.pb.go inputs and kept both language-neutral protobuf descriptor targets. The tested directive matches the proposal in 9e4aff6b5 apart from a comment. The shim linked, started, and read its executable eight times. The stock gVisor build applies a protobuf patch and makes zero such reads. In that run, building protoc in the external consumer failed on C++ header paths.",
           "evidence": [
             {
               "label": "Both descriptor actions and the real shim startup",
@@ -97730,7 +97730,7 @@
           ]
         }
       ],
-      "nextStep": "Use the first x/tools release that includes the merged goimports diff change to check the full lint build on an empty worker. Separately, test whether Gazelle selects containerd/cgroups’ published Go metrics types and retains both protobuf schemas.",
+      "nextStep": "Wait for the first golang.org/x/tools tag that contains CL 858482, then verify the full lint build on an empty worker. The v0.52.0 tag predates the merged goimports change.",
       "evidence": [
         {
           "label": "Gazelle: qualified proposal",
