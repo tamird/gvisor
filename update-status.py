@@ -10,7 +10,7 @@ import subprocess
 import sys
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ci_actions import collect as collect_ci_actions
@@ -1428,6 +1428,9 @@ def main() -> None:
         snapshot["reviewOutreach"][str(number)] = action
         if action["status"] in {"due", "verify-mergeability"}:
             planned[action["reviewer"].lower()] += 1
+    if cleanup := branch_cleanup_handoff(REGISTRY, checked_at):
+        snapshot["branchCleanup"] = cleanup
+
     if sweep := feedback_sweep(REGISTRY, [*prs, *review_prs], previous, checked_at):
         snapshot["projectFeedbackReview"] = sweep
         print(json.dumps({"projectFeedbackReview": sweep}))
@@ -1500,6 +1503,22 @@ def incoming_review_intake(previous: dict, rows: list[dict], now: str) -> tuple[
     return incoming_reviews(previous, rows, OWNER, graphql, now, min(6, REQUEST_LIMIT - requests))
 
 
+def branch_cleanup_handoff(registry: dict, checked_at: str) -> dict | None:
+    """Schedule local branch maintenance from its last completed audit."""
+    task = registry.get("meta", {}).get("branchCleanup")
+    if task is None:
+        return None
+    completed = task.get("lastCompletedAt")
+    result = task.get("lastResult")
+    if bool(completed) != bool(result):
+        raise ValueError("Branch cleanup requires both a completed audit time and its result.")
+    due = datetime.fromisoformat(completed) + timedelta(days=1) if completed else None
+    return {"id": "local-fork-branch-cleanup", "owner": "Agent", "command": "python3 -B branch_cleanup.py",
+            "lastCompletedAt": completed, "lastResult": result,
+            "nextDueAt": due.isoformat() if due else None,
+            "due": due is None or datetime.fromisoformat(checked_at) >= due}
+
+
 def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     """Select an unclaimed author-side obligation before other work."""
     by_number = {pr["number"]: pr for pr in snapshot.get("prs", [])
@@ -1518,9 +1537,13 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     pending.sort(key=lambda row: (bool(row.get("claimed")), not row.get("overdue"),
                                   row.get("updatedAt") or "", row["url"]))
     unclaimed = [row for row in pending if not row.get("claimed")]
-    return {"nextWork": unclaimed[0] if unclaimed else next(iter(incoming), None),
-            "authorFeedback": pending, "unclaimed": len(unclaimed),
-            "overdue": sum(bool(row.get("overdue")) for row in unclaimed)}
+    cleanup = snapshot.get("branchCleanup")
+    next_work = unclaimed[0] if unclaimed else next(iter(incoming), None)
+    if next_work is None and cleanup and cleanup["due"]:
+        next_work = cleanup
+    return {"nextWork": next_work, "authorFeedback": pending, "unclaimed": len(unclaimed),
+            "overdue": sum(bool(row.get("overdue")) for row in unclaimed),
+            "branchCleanup": cleanup}
 
 
 def incoming_review_handoff() -> None:
@@ -1533,6 +1556,7 @@ def incoming_review_handoff() -> None:
     except RuntimeError:
         rows = previous.get("incomingReviewRequests", [])
         status = "using last published incoming requests"
+    previous["branchCleanup"] = branch_cleanup_handoff(REGISTRY, checked)
     print(json.dumps({"checkedAt": checked, "repo": REPO, **worker_handoff(previous, rows),
                       "authorFeedbackCheckedAt": previous.get("checkedAt"),
                       "incomingReviewStatus": status, "incomingReviewRequests": rows}))

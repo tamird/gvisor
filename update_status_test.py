@@ -20,6 +20,33 @@ OLD = "2000-01-01T00:00:00+00:00"
 LATER = "2000-01-02T00:00:00+00:00"
 
 
+class BranchCleanupTest(unittest.TestCase):
+    def test_rolls_forward_only_after_local_cleanup(self) -> None:
+        task = {}
+        registry = {"meta": {"branchCleanup": task}}
+
+        def work(at: str, incoming: list[dict] | None = None) -> dict:
+            cleanup = updater.branch_cleanup_handoff(registry, at)
+            return updater.worker_handoff({"branchCleanup": cleanup}, incoming or [])
+
+        self.assertIsNone(work(OLD)["nextWork"]["lastCompletedAt"])
+        with self.assertRaisesRegex(ValueError, "audit time and its result"):
+            updater.branch_cleanup_handoff({"meta": {"branchCleanup": {"lastCompletedAt": OLD}}}, LATER)
+        task.update(lastCompletedAt="2000-01-01T18:00:00+00:00", lastResult="Removed two verified branches.")
+        self.assertIsNone(work("2000-01-02T17:59:59+00:00")["nextWork"])
+        for now in ["2000-01-02T18:00:00+00:00", "2000-01-03T18:00:00+00:00"]:
+            due = work(now)["nextWork"]
+            self.assertEqual((due["owner"], due["nextDueAt"], due["lastResult"]),
+                             ("Agent", "2000-01-02T18:00:00+00:00", "Removed two verified branches."))
+        request = {"id": "review"}
+        self.assertEqual(work("2000-01-03T18:00:00+00:00", [request])["nextWork"], request)
+        task.update(lastCompletedAt="2000-01-03T19:00:00+00:00", lastResult="No removable branches.")
+        result = work("2000-01-03T19:05:00+00:00")
+        self.assertIsNone(result["nextWork"])
+        self.assertEqual(result["branchCleanup"]["nextDueAt"], "2000-01-04T19:00:00+00:00")
+        self.assertEqual(work("2000-01-04T19:00:00+00:00")["nextWork"]["lastResult"], "No removable branches.")
+
+
 class FeedbackSweepTest(unittest.TestCase):
     def test_old_commit_force_push_and_merge_stay_queued_until_reviewed(self) -> None:
         review = {"id": "investigation:project-feedback", "status": "active", "lastReviewedAt": OLD}

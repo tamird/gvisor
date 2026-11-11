@@ -450,6 +450,21 @@ checks GitHub directly, so a new request can be handled before the next
 scheduled publication. For each request, read the linked conversation and
 the current PR head, then conduct the requested review.
 
+The same snapshot and supervisor handoff include `branchCleanup`. After
+author obligations and incoming review requests, `nextWork` selects the
+local/fork branch audit when 24 hours have elapsed since the last completed
+local cleanup. An audit with no eligible branches also counts. The operator
+runs `python3 -B branch_cleanup.py` from a local checkout of this Pages
+branch, checks the plan, and applies eligible removals with `--apply`.
+Record the verified completion timestamp and actual result together in
+`registry.meta.branchCleanup.lastCompletedAt` and `lastResult`, and publish
+the paired snapshot. An empty initial record makes the first audit due.
+Scheduled refreshes and read-only handoff checks report the deadline and last
+result. They never advance it or remove branches on the agent's machine.
+Retire a finished qualification's local and fork branches promptly once its
+submitted source, evidence, and active work are preserved. The daily operator
+also finds older disposable branches under its seven-day retention rule.
+
 The collector checks open PRs from other authors in `google/gvisor`,
 including PRs absent from the registry. It looks for formal reviewer
 assignments and explicit requests addressed to the contributor in PR
