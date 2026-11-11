@@ -26,12 +26,15 @@ import (
 var nodejsTestRegEx = regexp.MustCompile(`^test-[^-].+\.js$`)
 
 // nodejsRunner implements TestRunner for NodeJS.
-type nodejsRunner struct{}
+type nodejsRunner struct{ legacy bool }
 
 var _ TestRunner = nodejsRunner{}
 
 // ListTests implements TestRunner.ListTests.
-func (nodejsRunner) ListTests() ([]string, error) {
+func (r nodejsRunner) ListTests() ([]string, error) {
+	if r.legacy {
+		return Search("test", nodejsTestRegEx)
+	}
 	cmd := nodejsCommand("--list-tests")
 	cmd.Stderr = os.Stderr
 	output, err := cmd.Output()
@@ -57,7 +60,13 @@ func (nodejsRunner) ListTests() ([]string, error) {
 }
 
 // TestCmds implements TestRunner.TestCmds.
-func (nodejsRunner) TestCmds(tests []string) []*exec.Cmd {
+func (r nodejsRunner) TestCmds(tests []string) []*exec.Cmd {
+	if r.legacy {
+		// The 22.2.0 public image uses its original Python and test selector.
+		// TAP ensures a skipped or missing case cannot count as a pass.
+		args := append([]string{"tools/test.py", "--timeout=180", "--progress=tap"}, tests...)
+		return []*exec.Cmd{exec.Command("/usr/bin/python3.10", args...)}
+	}
 	return []*exec.Cmd{nodejsCommand(tests...)}
 }
 
