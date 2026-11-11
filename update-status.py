@@ -930,7 +930,20 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 failures.append(failure)
             unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"} or observation["sourceBranchMismatch"]
             if active and unresolved:
-                mergeability.append({**observation, "followup": assignment})
+                issue = {**observation, "followup": assignment}
+                if (repo == REPO and is_source and source["status"] == "open" and not delivered
+                        and source.get("authorLogin") == OWNER and source.get("headOwner") == OWNER
+                        and pr["mergeable"] == "CONFLICTING" and not observation["sourceBranchMismatch"]):
+                    # A review assignment on this same head can predate a change to master.
+                    # Retain a named handler only when the recorded task covers the conflict.
+                    assigned = (followup.get("sourceHead") == source["head"]
+                                and followup.get("mergeable") == "CONFLICTING" and followup.get("owner")
+                                and followup.get("nextAction"))
+                    issue["owner"] = followup["owner"] if assigned else "Agent"
+                    issue["action"] = (followup["nextAction"] if assigned else
+                                       "Check the source conflict against current master and prepare the rebase. "
+                                       "Preserve any recorded maintainer hold before publication.")
+                mergeability.append(issue)
             if (unresolved or old.get("mergeable") in {"CONFLICTING", "UNKNOWN"}
                     or old.get("branchHead") and old["branchHead"] != old.get("head")) and (source_status_changed or any(
                 pr.get(key) != old.get(key) for key in ("head", "branchHead", "base", "status", "mergeable", "mergeState")
@@ -1013,6 +1026,8 @@ def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
             action = ("Reconcile the PR and fork branch heads, and independently check both against the current base. "
                       "Route a verified source conflict or provider synchronization obstacle to the owner; "
                       "a published branch or waiting disposition does not resolve this mismatch.")
+        elif "action" in observation:
+            action = observation["action"]
         elif observation["mergeable"] == "CONFLICTING":
             action = ("Verify the current head/base conflict and route the repair to its owner. "
                       "Keep the blocker active until the exact source or import is confirmed mergeable or closed.")
@@ -1025,7 +1040,7 @@ def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
         records.append({key: observation[key] for key in (
             "repo", "source", "sourceHead", "number", "url", "scope", "head", "branchHead", "base", "mergeable",
             "checkedAt", "mergeabilityCheckedAt", "sourceBranchMismatch"
-        )} | {"owner": followup.get("owner"), "action": action, "recordedFollowup": followup,
+        )} | {"owner": observation.get("owner", followup.get("owner")), "action": action, "recordedFollowup": followup,
               "conflictObservedSince": conflict.get("since") if conflict.get("scope") == observation["head"] else None})
     return records
 

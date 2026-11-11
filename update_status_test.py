@@ -1351,6 +1351,27 @@ class CheckReportTest(unittest.TestCase):
             current.update(mergeable="CONFLICTING", status="closed")
             self.assertEqual(updater.mergeability_handoff(updater.check_report([current], previous), previous), [])
 
+    def test_owned_source_conflict_precedes_a_recorded_review_wait(self) -> None:
+        source = retained(raw_pr(16458), [linked(imported(17300, 16458), 16458)])
+        source["mergeable"] = source["imports"][0]["mergeable"] = "CONFLICTING"
+        followup = {"owner": "Maintainer", "sourceHead": source["head"], "nextAction": "Review the MySQL image."}
+        node = {"type": "pr", "repo": "google/gvisor", "number": 16458, "followup": followup}
+        def rows():
+            return updater.mergeability_handoff(updater.check_report([source], {}), {})
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
+            ours, export = rows()
+            self.assertEqual((ours["owner"], export["owner"]), ("Agent", "Maintainer"))
+            self.assertIn("prepare the rebase", ours["action"])
+            self.assertEqual(ours["recordedFollowup"], followup)
+            followup.update(owner="image-owner", mergeable="CONFLICTING", nextAction="Repair the MySQL image.")
+            self.assertEqual((rows()[0]["owner"], rows()[0]["action"]), ("image-owner", followup["nextAction"]))
+            followup["sourceHead"] = "b" * 40
+            self.assertEqual(rows()[0]["owner"], "Agent")
+            source.update(authorLogin="upstream", headOwner="upstream")
+            self.assertNotIn("prepare the rebase", rows()[0]["action"])
+            source["mergeable"] = "MERGEABLE"
+            self.assertEqual([row["number"] for row in rows()], [17300])
+
     def test_import_handoff_requires_current_source_identity(self) -> None:
         current = retained(raw_pr(7), [linked(imported(107, 7), 7)])
         current["imports"][0]["mergeable"] = "CONFLICTING"

@@ -147,6 +147,11 @@ test('review outreach follows only the observed open gVisor source', () => {
   const read = () => vm.runInContext('currentOutreach(pr)', c);
   vm.runInContext('validateSnapshot(snapshotInput, registryInput); liveSnapshot = snapshotInput;', c);
   assert.equal(read().reviewer, 'reviewer');
+  // A newer base can conflict without changing the head used by the cached request.
+  c.pr.github.mergeable = 'CONFLICTING';
+  assert.equal(read(), null);
+  c.pr.github.mergeable = 'MERGEABLE';
+  assert.equal(read().reviewer, 'reviewer');
   c.pr.github.head = 'b'.repeat(40);
   assert.equal(read(), null);
   c.pr.github.head = row.head;

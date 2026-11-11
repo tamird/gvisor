@@ -1812,7 +1812,7 @@ function appendSettledPublications(parent, node) {
 }
 function currentOutreach(node) {
   const pr = node.github;
-  if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open") return null;
+  if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open" || pr.mergeable === "CONFLICTING") return null;
   const row = liveSnapshot?.reviewOutreach?.[pr.number];
   if (row?.head !== pr.head || row?.kind === "import-status" && !currentHeadApproval(pr) && !reviewedExport(node)) return null;
   return row;
