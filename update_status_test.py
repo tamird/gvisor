@@ -21,6 +21,18 @@ LATER = "2000-01-02T00:00:00+00:00"
 
 
 class BranchCleanupTest(unittest.TestCase):
+    def test_run_published_operator_from_a_different_checkout(self) -> None:
+        command = updater.branch_cleanup_handoff({"meta": {"branchCleanup": {}}}, OLD)["command"]
+        with tempfile.TemporaryDirectory() as checkout:
+            subprocess.run(["git", "init", "--quiet", checkout], check=True)
+            for args in ["", " --apply"]:
+                result = subprocess.run(["bash", "-c", command + args], cwd=checkout, capture_output=True)
+                self.assertNotEqual(result.returncode, 0)
+            subprocess.run(["git", "hash-object", "-w", updater.ROOT / "branch_cleanup.py"], cwd=checkout,
+                           check=True, capture_output=True)
+            help_text = subprocess.check_output(["bash", "-c", command + " --help"], cwd=checkout, text=True)
+            self.assertIn("archive and delete the freshly planned branches", help_text)
+
     def test_rolls_forward_only_after_local_cleanup(self) -> None:
         task = {}
         registry = {"meta": {"branchCleanup": task}}

@@ -120,6 +120,82 @@ class BranchCleanupTest(unittest.TestCase):
             self.assertEqual(cleanup.payload_paths({"aaa", "bbb"}), {
                 "aaa": [".github/workflows/build.yml", "test/rbe/report.py"]})
 
+    def test_published_descendant_must_survive_planning_and_deletion(self):
+        with tempfile.TemporaryDirectory(prefix="gvisor-cleanup-fixture-") as tmp:
+            repo = Path(tmp) / "local.git"
+            subprocess.run(["git", "init", "--bare", "--quiet", str(repo)], check=True)
+            old = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=10)).isoformat()
+            with mock.patch.dict(os.environ, {"GIT_DIR": str(repo), "GIT_ALLOW_PROTOCOL": "file",
+                                              "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
+                                              "GIT_AUTHOR_DATE": old, "GIT_COMMITTER_DATE": old}):
+                run = cleanup.git
+                run("config", "user.name", "Fixture")
+                run("config", "user.email", "fixture@example.com")
+                run("config", "core.logAllRefUpdates", "true")
+                tree = run("mktree").decode().strip()
+
+                def commit(message, *parents, contents=tree):
+                    args = [arg for parent in parents for arg in ("-p", parent)]
+                    return run("commit-tree", contents, *args, "-m", message).decode().strip()
+
+                base = commit("master")
+                tip = commit("qualified source", base)
+                named_tip = commit("still named in the tracker", base)
+                retained = commit("retained proposal", tip, named_tip)
+                blob = run("hash-object", "-w", "--stdin", data=b"change").decode().strip()
+                src = run("mktree", data=cleanup.lines([f"100644 blob {blob}\tproduct.go"])).decode().strip()
+                private = commit("unpublished previous revision", base, contents=src)
+                wf = run("mktree", data=cleanup.lines([f"100644 blob {blob}\tjob.yml"])).decode().strip()
+                github = run("mktree", data=cleanup.lines([f"040000 tree {wf}\tworkflows"])).decode().strip()
+                ci = run("mktree", data=cleanup.lines([f"040000 tree {github}\t.github"])).decode().strip()
+                private_ci = commit("completed qualification on a since-deleted fork ref", base, contents=ci)
+                local_ci, rewound = "qualification/old-ci", "review/reset-to-master"
+                run("update-ref", cleanup.HEADS + local_ci, private_ci)
+                run("update-ref", cleanup.HEADS + rewound, private)
+                run("update-ref", cleanup.HEADS + rewound, base, private)
+                eligible, reset = "qualification/published", "qualification/amended"
+                named, witness = "diagnostics/named-in-card", "proposal/active"
+                fork = {"master": base, "gh-pages": base, witness: retained, eligible: tip, reset: tip, named: named_tip}
+                run("update-ref", cleanup.HEADS + eligible, tip)
+                run("update-ref", cleanup.HEADS + "research/local-only", tip)
+                run("update-ref", cleanup.HEADS + reset, private)
+                run("update-ref", cleanup.HEADS + reset, tip, private)
+                run("update-ref", cleanup.HEADS + "local-only-descendant", retained)
+
+                def protected(*_):
+                    return {named, witness}, set()
+
+                with contextlib.ExitStack() as controls:
+                    for function, value in {"check_origin": None, "public_bases": base,
+                                            "tracker_protections": set(), "api": ["master"],
+                                            "completed_runs": {(local_ci, private_ci)}}.items():
+                        controls.enter_context(mock.patch.object(cleanup, function, return_value=value))
+                    controls.enter_context(mock.patch.object(cleanup, "live_protections", side_effect=protected))
+                    observed = controls.enter_context(mock.patch.object(cleanup, "remote_refs", return_value=fork))
+                    rows = cleanup.plan(7)
+                    self.assertEqual({(r.scope, r.name, r.reason) for r in rows},
+                                     {(scope, name, cleanup.PUBLISHED_BRANCH)
+                                      for scope, name in [("fork", eligible), ("local", eligible), ("fork", reset), ("local", "research/local-only")]})
+                    for name, oid, reason in [(local_ci, private_ci, cleanup.COMPLETED_CI),
+                                              (rewound, base, "reachable from a published base")]:
+                        with self.subTest(name=name), mock.patch.object(cleanup, "archive", side_effect=AssertionError):
+                            with self.assertRaisesRegex(ValueError, "unpublished local history"):
+                                cleanup.apply([cleanup.Candidate("local", name, oid, reason)], 7)
+                    removed = {k: v for k, v in fork.items() if k != witness}
+                    self.assertNotIn(tip, cleanup.retained_public_history(fork, {witness}, {witness}))
+                    self.assertIn(tip, cleanup.retained_public_history({**removed, "stable": retained}, set(), set()))
+                    observed.return_value = removed
+                    self.assertFalse(any(r.reason == cleanup.PUBLISHED_BRANCH for r in cleanup.plan(7)))
+                    fork_row = [r for r in rows if r.scope == "fork" and r.name == eligible]
+                    with mock.patch.object(cleanup, "archive", side_effect=AssertionError):
+                        with self.assertRaisesRegex(ValueError, "lost its retained public descendant"):
+                            cleanup.apply(fork_row, 7)
+                    # The witness still existed at archival, then moved before the batch.
+                    observed.side_effect = [fork, {**fork, witness: base}]
+                    with self.assertRaisesRegex(ValueError, "lost its retained public descendant"):
+                        cleanup.apply(fork_row, 7)
+                    self.assertEqual(run("rev-parse", cleanup.HEADS + eligible).decode().strip(), tip)
+
     def test_reflog_archive_and_compare_and_swap(self):
         # This fixture uses only two disposable bare repos, with transport
         # restricted to file. A changed remote tip exercises a real stale lease.
@@ -155,8 +231,8 @@ class BranchCleanupTest(unittest.TestCase):
                     run("update-ref", "refs/heads/merged", one)
                     run("update-ref", "refs/heads/merged", two, one)
                     merged = [cleanup.Candidate("local", "merged", two, cleanup.MERGED_SOURCE)]
-                    self.assertEqual(cleanup.unpublished_merged_locals(merged, {two}), {"merged"})
-                    self.assertEqual(cleanup.unpublished_merged_locals(merged, {descendant}), set())
+                    self.assertEqual(cleanup.unpublished_locals(merged, {two}), {"merged"})
+                    self.assertEqual(cleanup.unpublished_locals(merged, {descendant}), set())
                     run("update-ref", "-d", "refs/heads/merged", two)
                     fork = {"qualification/first": descendant, "qualification/second": cousin, "master": two}
                     dropping = {"qualification/first", "qualification/second"}

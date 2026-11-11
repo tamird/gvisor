@@ -453,9 +453,11 @@ the current PR head, then conduct the requested review.
 The same snapshot and supervisor handoff include `branchCleanup`. After
 author obligations and incoming review requests, `nextWork` selects the
 local/fork branch audit when 24 hours have elapsed since the last completed
-local cleanup. An audit with no eligible branches also counts. The operator
-runs `python3 -B branch_cleanup.py` from a local checkout of this Pages
-branch, checks the plan, and applies eligible removals with `--apply`.
+local cleanup. An audit with no eligible branches also counts. On each
+foreground sweep compare the current UTC time with `branchCleanup.nextDueAt`
+even if the last scheduled snapshot still says `due: false`. When due, run
+`branchCleanup.command` in the full gVisor clone, inspect the plan, and
+append `--apply` to the same command for eligible removals.
 Record the verified completion timestamp and actual result together in
 `registry.meta.branchCleanup.lastCompletedAt` and `lastResult`, and publish
 the paired snapshot. An empty initial record makes the first audit due.
@@ -1027,9 +1029,12 @@ agent’s follow-up. Contributor review covers the changes proposed for publicat
 
 ### Retire local and fork automation branches
 
-Run `python3 -B branch_cleanup.py` in the local work-map checkout for a TSV of
-eligible refs. `--apply` refreshes the protections, saves the selected tips
-under the local `refs/branch-cleanup/archive`, and deletes the observed OIDs in
+Run the command from the published `branchCleanup` record in the local
+gVisor clone for a TSV of eligible refs. It reads the exact operator blob
+from Git, so any checked-out branch works. If the blob is missing, run
+`git fetch origin gh-pages` and rerun the command. `--apply` refreshes the
+protections, saves the selected tips under the local
+`refs/branch-cleanup/archive`, and deletes the observed OIDs in
 batches. A changed tip fails its batch. Rerun the command after an interruption.
 The tool only pushes deletion refspecs to `tamird/gvisor`. Keep the archive
 local, including when backing up private work.
@@ -1040,6 +1045,11 @@ a push or dispatch must have finished on that commit. Deletion must leave
 every source change and cited commit reachable on the fork or upstream.
 Its identical local branch can retire with it if its reflog has also been
 idle for a day and every entry is published.
+
+A week-old managed branch can also retire if a surviving public branch
+outside the managed prefixes, or a protected fork branch, contains its tip.
+The operator checks that ancestry again before deletion. A local branch
+can retire only if every commit in its reflog stays published.
 
 Other local mirrors can retire after seven days by default if the same branch
 and commit remain on the fork and its surviving branches cover the entire

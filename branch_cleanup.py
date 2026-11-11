@@ -26,6 +26,7 @@ FORK_MIRROR = "identical fork branch retained"
 MERGED_SOURCE = "merged PR at exact upstream-reachable tip"
 COMPLETED_CI = "retired CI payload with a completed run at the exact tip"
 LOCAL_CI = "local copy of retiring completed CI branch"
+PUBLISHED_BRANCH = "reachable from a retained public branch"
 CI_IDLE = dt.timedelta(days=1)
 OID = re.compile(r"[0-9a-f]{40}")
 
@@ -331,8 +332,16 @@ class Candidate:
     reason: str
 
 
-def unpublished_merged_locals(items: list[Candidate], surviving: set[str]) -> set[str]:
-    local = {item.name: item.oid for item in items if item.scope == "local" and item.reason == MERGED_SOURCE}
+def retained_public_history(fork: dict[str, str], protected: set[str], dropping: set[str]) -> set[str]:
+    tips = {oid for name, oid in fork.items()
+            if name not in dropping and (name in protected or not name.startswith(MANAGED))}
+    return set(git("rev-list", "--stdin", data=lines(available(tips))).decode().splitlines())
+
+
+def unpublished_locals(items: list[Candidate], surviving: set[str]) -> set[str]:
+    # Paired CI refs have their own pre-deletion publication proof. Their
+    # archived CI tip can intentionally lose its last public branch.
+    local = {item.name: item.oid for item in items if item.scope == "local" and item.reason != LOCAL_CI}
     return local.keys() - published_reflogs(local, surviving)
 
 
@@ -425,8 +434,10 @@ def plan(retention: int, *, merged_only: bool = False) -> list[Candidate]:
                 potential.append((scope, name, oid))
     main_tips = {fork["master"], fork["gh-pages"], upstream}
     ancestors = set(git("rev-list", "--stdin", data=lines(main_tips)).decode().splitlines())
-    retained = {scope: {oid for name, oid in refs.items() if not name.startswith(MANAGED) or name in names}
-                for scope, refs in branches.items()}
+    # A fork branch that could itself be retired cannot establish publication
+    # for another branch. Local-only branches cannot establish it either.
+    public_history = set() if merged_only else retained_public_history(
+        fork, names, {name for scope, name, _ in potential if scope == "fork"})
     pending = []
     candidates = []
     evidence_lengths = {len(oid) for oid in evidence}
@@ -442,8 +453,10 @@ def plan(retention: int, *, merged_only: bool = False) -> list[Candidate]:
             continue
         if not name.startswith(MANAGED):
             continue
-        if oid in ancestors or oid in retained[scope]:
-            candidates.append(Candidate(scope, name, oid, "reachable from a published base" if oid in ancestors else "retained branch has identical tip"))
+        if oid in ancestors:
+            candidates.append(Candidate(scope, name, oid, "reachable from a published base"))
+        elif oid in public_history:
+            candidates.append(Candidate(scope, name, oid, PUBLISHED_BRANCH))
         elif name.startswith(DISPOSABLE):
             pending.append((scope, name, oid))
     paths = payload_paths({oid for _, _, oid in pending if data[oid][2] == 1})
@@ -474,7 +487,7 @@ def plan(retention: int, *, merged_only: bool = False) -> list[Candidate]:
     surviving = {oid for name, oid in fork.items() if name not in dropping}
     for name in published_reflogs(mirrors, surviving):
         candidates.append(Candidate("local", name, mirrors[name], FORK_MIRROR))
-    unpublished = unpublished_merged_locals(candidates, surviving | {upstream})
+    unpublished = unpublished_locals(candidates, surviving | {upstream})
     return sorted(item for item in candidates if item.scope != "local" or item.name not in unpublished)
 
 
@@ -584,8 +597,11 @@ def apply(items: list[Candidate], retention: int) -> None:
                 and any(item.oid[:length] in evidence for length in evidence_lengths)):
             raise ValueError(f"{item.name} changed or became active; rerun the plan")
     dropping = {item.name for item in items if item.scope == "fork"}
-    if unpublished_merged_locals(items, {oid for name, oid in fork.items() if name not in dropping} | {upstream}):
-        raise ValueError("a merged branch has unpublished local history; rerun the plan")
+    ancestor_tips = {item.oid for item in items if item.reason == PUBLISHED_BRANCH}
+    if ancestor_tips and not ancestor_tips <= retained_public_history(fork, names, dropping):
+        raise ValueError("a candidate lost its retained public descendant; rerun the plan")
+    if unpublished_locals(items, {oid for name, oid in fork.items() if name not in dropping} | {upstream}):
+        raise ValueError("a branch has unpublished local history; rerun the plan")
     if evidence_keepers(fork, dropping, upstream, evidence):
         raise ValueError("a candidate now contains the only published copy of source or cited work; rerun the plan")
     ref = archive(items)
@@ -596,8 +612,6 @@ def apply(items: list[Candidate], retention: int) -> None:
     for scope in ("fork", "local"):
         if scope == "local":
             fork = remote_refs("origin")
-            if unpublished_merged_locals(items, set(fork.values()) | {upstream}):
-                raise ValueError("a merged branch has unpublished local history; rerun the plan")
             if (local_ci.keys() & fork.keys()
                     or published_reflogs(local_ci, set(fork.values()) | {ref, upstream}) != local_ci.keys()):
                 raise ValueError("a paired CI branch or its archived history changed; rerun the plan")
@@ -606,9 +620,16 @@ def apply(items: list[Candidate], retention: int) -> None:
                     or published_reflogs(mirrors, set(fork.values())) != mirrors.keys()):
                 raise ValueError("a local mirror or its published history changed; rerun the plan")
         for batch in chunks([item for item in items if item.scope == scope], 80):
-            names, tips = checked_out()
-            if any(item.name in names or item.oid in tips for item in batch):
+            occupied, heads = checked_out()
+            if any(item.name in occupied or item.oid in heads for item in batch):
                 raise ValueError("a candidate was checked out during the cleanup; rerun the plan")
+            batch_tips = {item.oid for item in batch if item.reason == PUBLISHED_BRANCH}
+            if batch_tips or scope == "local":
+                fork = remote_refs("origin")
+                if batch_tips and not batch_tips <= retained_public_history(fork, names, dropping):
+                    raise ValueError("a candidate lost its retained public descendant; rerun the plan")
+                if scope == "local" and unpublished_locals(batch, set(fork.values()) | {upstream}):
+                    raise ValueError("a branch has unpublished local history; rerun the plan")
             if scope == "fork":
                 git("-c", "remote.origin.mirror=false", "push", "--atomic", "--no-follow-tags", "--recurse-submodules=no",
                     *(f"--force-with-lease={HEADS}{item.name}:{item.oid}" for item in batch), "origin",

@@ -1547,7 +1547,10 @@ def branch_cleanup_handoff(registry: dict, checked_at: str) -> dict | None:
     if bool(completed) != bool(result):
         raise ValueError("Branch cleanup requires both a completed audit time and its result.")
     due = datetime.fromisoformat(completed) + timedelta(days=1) if completed else None
-    return {"id": "local-fork-branch-cleanup", "owner": "Agent", "command": "python3 -B branch_cleanup.py",
+    operator = subprocess.check_output(["git", "hash-object", Path(__file__).with_name("branch_cleanup.py")],
+                                       text=True).strip()
+    return {"id": "local-fork-branch-cleanup", "owner": "Agent",
+            "command": f"set -o pipefail && git cat-file blob {operator} | python3 -B -",
             "lastCompletedAt": completed, "lastResult": result,
             "nextDueAt": due.isoformat() if due else None,
             "due": due is None or datetime.fromisoformat(checked_at) >= due}
