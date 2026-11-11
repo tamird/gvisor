@@ -118,7 +118,13 @@ func TestCrictlSanity(t *testing.T) {
 				t.Fatalf("failed to setup crictl: %v", err)
 			}
 			defer cleanup()
-			podID, contID, err := crictl.StartPodAndContainer(containerdRuntime, "basic/httpd", Sandbox("default"), Httpd)
+			rt := containerdRuntime
+			sandbox := Sandbox("default")
+			if os.Getenv("GVISOR_CRI_TIMELINE_CONTROL") == "missing-handler" {
+				rt = "missing-timeline-runtime"
+				sandbox = strings.Replace(sandbox, "{", `{"annotations":{"test.gvisor.dev/timeline":"payload-only-canary"},`, 1)
+			}
+			podID, contID, err := crictl.StartPodAndContainer(rt, "basic/httpd", sandbox, Httpd)
 			if err != nil {
 				t.Fatalf("start failed: %v", err)
 			}
@@ -132,6 +138,46 @@ func TestCrictlSanity(t *testing.T) {
 			if err := crictl.StopPodAndContainers(podID, []string{contID}); err != nil {
 				t.Fatalf("stop failed: %v", err)
 			}
+		})
+	}
+}
+
+func TestPodStartupTimelineControls(t *testing.T) {
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, control := range []string{"missing-handler", "configured-handler"} {
+		t.Run(control, func(t *testing.T) {
+			cmd := exec.CommandContext(t.Context(), self, "-test.run=^TestCrictlSanity$/^enableGrouping$", "-test.v", "--runtime="+os.Getenv("RUNTIME"), "--config_path=/etc/docker/daemon.json")
+			cmd.Env = append(os.Environ(), "GVISOR_CRI_TIMELINE_CONTROL="+control)
+			out, err := cmd.CombinedOutput()
+			log := string(out)
+			if strings.Contains(log, "payload-only-canary") || strings.Contains(log, "containerd stderr:") {
+				t.Fatal("child published the sandbox payload or the unfiltered daemon log")
+			}
+			if control == "configured-handler" {
+				if err != nil || !strings.Contains(log, "--- PASS: TestCrictlSanity/enableGrouping") || strings.Contains(log, "crictl runp ran from") {
+					t.Fatalf("normal runtime: status %v, child pass %t, failure timeline %t", err, strings.Contains(log, "--- PASS: TestCrictlSanity/enableGrouping"), strings.Contains(log, "crictl runp ran from"))
+				}
+				t.Log("TestCrictlSanity/enableGrouping passed without a failure timeline")
+				return
+			}
+			if err == nil || !strings.Contains(log, "--- FAIL: TestCrictlSanity/enableGrouping") || !strings.Contains(log, "start failed:") || !strings.Contains(log, "missing-timeline-runtime") {
+				t.Fatalf("unknown runtime: status %v, child failure %t, startup error %t, requested handler %t", err, strings.Contains(log, "--- FAIL: TestCrictlSanity/enableGrouping"), strings.Contains(log, "start failed:"), strings.Contains(log, "missing-timeline-runtime"))
+			}
+			phase := regexp.MustCompile(`containerd ([0-9T:.+Z-]+): (RunPodSandbox started|assigned sandbox ID|RunPodSandbox failed)$`)
+			var seen []string
+			for line := range strings.SplitSeq(log, "\n") {
+				if m := phase.FindStringSubmatch(line); m != nil {
+					t.Log(m[0])
+					seen = append(seen, m[2])
+				}
+			}
+			if got := strings.Join(seen, ", "); got != "RunPodSandbox started, assigned sandbox ID, RunPodSandbox failed" {
+				t.Errorf("unknown runtime: unexpected stages %q", got)
+			}
+			t.Log("TestCrictlSanity/enableGrouping rejected the missing handler without publishing the sandbox annotation")
 		})
 	}
 }
@@ -556,9 +602,6 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 			<-drainDone
 		}
 		startupR.Close()
-		if t.Failed() {
-			t.Logf("containerd stderr:\n%s", stderr.Bytes())
-		}
 		_ = os.MkdirAll("/tmp/shim-logs", 0755)
 		logFile := fmt.Sprintf("/tmp/shim-logs/containerd-%s.log", strings.ReplaceAll(t.Name(), "/", "_"))
 		_ = os.WriteFile(logFile, stderr.Bytes(), 0644)
@@ -590,6 +633,15 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 
 	// Create the crictl interface.
 	cc := criutil.NewCrictl(t, sockAddr)
+	cc.OnRunPodError = func(start, end time.Time) {
+		// The caller's deferred cleanup stops containerd and drains stderr
+		// before testing runs this callback.
+		t.Cleanup(func() {
+			if t.Failed() {
+				logPodStartup(t, stderr.String(), start, end)
+			}
+		})
+	}
 	cu.Add(cc.CleanUp)
 	// Each fresh containerd needs its version's sandbox image before CRI can
 	// create pods. Declared harness inputs supply it through the ordinary import.
@@ -600,6 +652,52 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 	}
 
 	return cc, cu.Release(), nil
+}
+
+// Containerd's debug messages include the pod configuration, OCI spec and CNI
+// result. Report when it reached each stage without copying those payloads.
+func logPodStartup(t *testing.T, stderr string, start, end time.Time) {
+	t.Helper()
+	t.Logf("crictl runp ran from %s to %s", start.Format(time.RFC3339Nano), end.Format(time.RFC3339Nano))
+	for line := range strings.SplitSeq(stderr, "\n") {
+		stamp, fields, ok := strings.Cut(line, " ")
+		if !ok {
+			continue
+		}
+		at, err := time.Parse(time.RFC3339Nano, strings.Trim(strings.TrimPrefix(stamp, "time="), `"`))
+		if err != nil || at.Before(start) || at.After(end) {
+			continue
+		}
+		_, msg, ok := strings.Cut(fields, ` msg="`)
+		if !ok {
+			continue
+		}
+		var stage string
+		switch {
+		case strings.HasPrefix(msg, "RunPodSandbox for "):
+			switch {
+			case strings.Contains(msg, " returns sandbox id "):
+				stage = "RunPodSandbox returned"
+			case strings.HasPrefix(fields, "level=error "):
+				stage = "RunPodSandbox failed"
+			default:
+				stage = "RunPodSandbox started"
+			}
+		case strings.HasPrefix(msg, "generated id for sandbox name "):
+			stage = "assigned sandbox ID"
+		case strings.HasPrefix(msg, "begin cni setup"):
+			stage = "starting CNI setup"
+		case strings.HasPrefix(msg, "cni result:"):
+			stage = "received CNI result"
+		case strings.HasPrefix(msg, "use OCI runtime "):
+			stage = "selected OCI runtime"
+		case strings.HasPrefix(msg, "sandbox container spec:"):
+			stage = "generated OCI spec"
+		default:
+			continue
+		}
+		t.Logf("containerd %s: %s", at.Format(time.RFC3339Nano), stage)
+	}
 }
 
 // getShimPIDs finds running containerd-shim-runsc-v1 processes whose

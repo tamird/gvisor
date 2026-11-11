@@ -95,6 +95,8 @@ def containerd_test(name, **kwargs):
             test_args = [
                 "--containerd_version=" + version,
                 "--harness_image_config=$(rootpath :" + config + ")",
+                "-test.run=^TestPodStartupTimelineControls$",
+                "-test.v",
             ],
             data = [":" + config],
         ))
