@@ -1853,6 +1853,9 @@ function appendHumanAction(parent, node) {
     element("p", "detail-meta", `Prepared commit ${action.head}`),
     element("div", "decision-body", action.body), link("Open submission context ↗", action.url),
     link("Read contribution policy ↗", action.policyURL));
+  for (const item of node.evidence || []) {
+    if (item.label && safeURL(item.url)) section.append(link(item.label + " ↗", item.url, "relation-source"));
+  }
   parent.append(section);
 }
 function appendSettledPublications(parent, node) {

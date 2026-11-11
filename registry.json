@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T18:47:20+00:00",
+    "updatedAt": "2026-11-11T18:54:47+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27627,30 +27627,52 @@
       "group": "release",
       "title": "Submit Benchmark automatic BCR release publishing",
       "url": "https://github.com/google/benchmark/issues/1634",
-      "head": "913b8dbc73f654d07426dbce7826c27548e592de",
+      "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
       "status": "Human submission required",
-      "summary": "The prepared local Benchmark commit opens a Bazel Central Registry pull request for each stable release. Upstream requires a human to understand and produce the contribution, with AI assistance disclosed. This is an existing manual submission action, not a PR approval request or an automated publication grant. No automation PR has been published.",
+      "summary": "Benchmark v1.10.0 required a separate manual Bazel Central Registry submission. The local change would open a registry pull request from a release account for each stable version. It preserves the listed module maintainer and the current presubmit matrix. Native macOS ARM64 Bazel 8.5.1 built all three //:all targets in 25 actions. The workflow passed actionlint and its pinned publisher inputs and registry matrix were checked. Two real archive replays passed. The final 253-entry source archive embedded the exact commit ID and repeated byte for byte. All source and tests match the qualified tree 67f61169f.",
       "humanAction": {
         "status": "pending",
         "kind": "submission",
-        "head": "913b8dbc73f654d07426dbce7826c27548e592de",
-        "title": "Review and submit the prepared Benchmark contribution yourself",
-        "summary": "Tamir must review the local commit and personally produce the upstream contribution under Benchmark’s policy. No automated fork, pull request or comment.",
-        "body": "Prepared local commit: 913b8dbc73f654d07426dbce7826c27548e592de in ~/code/benchmark.\n\nReview the four-file change and its explanation, then personally submit the contribution if you choose to proceed. The change attaches a stable source archive to each release and uses Publish to BCR to open the registry pull request, preserving the existing module maintainer and presubmit matrix. Disclose the AI assistance in the contribution as upstream requires.\n\nAll four source files match the validated consumer. The upstream automation issue remains open; this entry does not claim an existing PR or authorize agent publication.",
+        "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
+        "title": "Review and personally submit the Benchmark release workflow",
+        "summary": "Review the local commit and proposed pull request below. Benchmark asks the human contributor to understand and produce the submission and disclose AI assistance.",
+        "body": "Inspect the local commit and compare it with the earlier draft in ~/code/benchmark.\n\ngit -C ~/code/benchmark show e80986b50\ngit -C ~/code/benchmark range-diff 913b8dbc7^! e80986b50^!\n\nProposed pull request title\nOpen a BCR pull request for each stable release\n\nProposed pull request body\n\nBenchmark v1.10.0 needed a separate registry submission before Bazel users could select it [1]. This makes each stable GitHub release open that pull request. The source archive is attached to the draft once, so Bazel verifies the same bytes on retries. The existing module maintainer and registry build matrix carry forward.\n\n**Before merge**\n\n- [ ] Choose a release account and its fork of bazel-central-registry. Agree who will store and rotate its publishing token.\n- [ ] Confirm a listed module maintainer will review the account's non-draft entries. RE2 and J2CL use this split [2][3].\n\n**After merge**\n\n- [ ] Once, set the Actions variable `BCR_REGISTRY_FORK` and secret `BCR_PUBLISH_TOKEN`. The source repository grants the pinned workflow read access, as Brotli does [4].\n- [ ] For the first stable tag containing the new templates and each stable release after it, push the annotated tag at the version bump. Attach `benchmark-<version>.tar.gz` from that commit to the draft before publishing it. ArrayRecord likewise attaches the source before opening its registry PR [5].\n- [ ] Once BCR checks pass, have the listed maintainer review the entry. If the release job fails, fix the cause and choose **Re-run failed jobs** on its original run.\n\nOpenAI Codex researched the precedents and drafted the workflow, templates and release instructions.\n\n[1]: https://github.com/bazelbuild/bazel-central-registry/pull/11314\n[2]: https://github.com/bazelbuild/bazel-central-registry/pull/6424\n[3]: https://github.com/bazelbuild/bazel-central-registry/pull/11379\n[4]: https://github.com/google/brotli/blob/2654c9dd5/.github/workflows/publish_to_bcr.yaml\n[5]: https://github.com/google/array_record/blob/5873cf86d/.github/workflows/publish_release.yml",
         "url": "https://github.com/google/benchmark/issues/1634",
         "policyURL": "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md"
       },
       "followup": {
         "owner": "tamird",
-        "sourceHead": "913b8dbc73f654d07426dbce7826c27548e592de",
-        "disposition": "Human-only submission; separate from contributor reviews",
-        "nextAction": "Review the prepared local commit, understand the change, and personally produce the upstream submission with AI disclosure if proceeding. Agents must not create its fork, PR or comment.",
+        "sourceHead": "e80986b5007460a9bf77c718d5e2daa247c4d841",
+        "disposition": "Human submission required by the upstream contribution policy",
+        "nextAction": "Review the local commit and its release-manager checklist, then personally submit the contribution with AI disclosure if proceeding.",
         "evidence": [
           "https://github.com/google/benchmark/issues/1634",
           "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md",
           "https://app.buildbuddy.io/invocation/3fb83843-be08-482c-bd75-d6433d0611c6"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Manual registry submission for Benchmark v1.10.0",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11314"
+        },
+        {
+          "label": "RE2 release account and independent module review",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/6424"
+        },
+        {
+          "label": "J2CL release account and independent module review",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11379"
+        },
+        {
+          "label": "Brotli pinned publisher and repository access",
+          "url": "https://github.com/google/brotli/blob/2654c9dd5/.github/workflows/publish_to_bcr.yaml"
+        },
+        {
+          "label": "ArrayRecord uploads the source archive before the registry PR",
+          "url": "https://github.com/google/array_record/blob/5873cf86d/.github/workflows/publish_release.yml"
+        }
+      ]
     },
     {
       "id": "pr:16337",
