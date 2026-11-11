@@ -596,9 +596,64 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 
 	// Create the crictl interface.
 	cc := criutil.NewCrictl(t, sockAddr)
+	cc.OnRunPodError = func(start, end time.Time) {
+		// The caller's deferred cleanup stops containerd and drains stderr
+		// before testing runs this callback.
+		t.Cleanup(func() {
+			if t.Failed() {
+				logPodStartup(t, stderr.String(), start, end)
+			}
+		})
+	}
 	cu.Add(cc.CleanUp)
 
 	return cc, cu.Release(), nil
+}
+
+// Containerd's debug messages include the pod configuration, OCI spec and CNI
+// result. Report when it reached each stage without copying those payloads.
+func logPodStartup(t *testing.T, stderr string, start, end time.Time) {
+	t.Helper()
+	t.Logf("crictl runp ran from %s to %s", start.Format(time.RFC3339Nano), end.Format(time.RFC3339Nano))
+	for line := range strings.SplitSeq(stderr, "\n") {
+		stamp, fields, ok := strings.Cut(line, " ")
+		if !ok {
+			continue
+		}
+		at, err := time.Parse(time.RFC3339Nano, strings.Trim(strings.TrimPrefix(stamp, "time="), `"`))
+		if err != nil || at.Before(start) || at.After(end) {
+			continue
+		}
+		_, msg, ok := strings.Cut(fields, ` msg="`)
+		if !ok {
+			continue
+		}
+		var stage string
+		switch {
+		case strings.HasPrefix(msg, "RunPodSandbox for "):
+			switch {
+			case strings.Contains(msg, " returns sandbox id "):
+				stage = "RunPodSandbox returned"
+			case strings.HasPrefix(fields, "level=error "):
+				stage = "RunPodSandbox failed"
+			default:
+				stage = "RunPodSandbox started"
+			}
+		case strings.HasPrefix(msg, "generated id for sandbox name "):
+			stage = "assigned sandbox ID"
+		case strings.HasPrefix(msg, "begin cni setup"):
+			stage = "starting CNI setup"
+		case strings.HasPrefix(msg, "cni result:"):
+			stage = "received CNI result"
+		case strings.HasPrefix(msg, "use OCI runtime "):
+			stage = "selected OCI runtime"
+		case strings.HasPrefix(msg, "sandbox container spec:"):
+			stage = "generated OCI spec"
+		default:
+			continue
+		}
+		t.Logf("containerd %s: %s", at.Format(time.RFC3339Nano), stage)
+	}
 }
 
 // getShimPIDs finds running containerd-shim-runsc-v1 processes whose

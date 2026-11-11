@@ -38,6 +38,9 @@ type Crictl struct {
 	logger   testutil.Logger
 	endpoint string
 	cleanup  []func()
+
+	// OnRunPodError receives the interval in which the failed runp command ran.
+	OnRunPodError func(start, end time.Time)
 }
 
 // ResolvePath attempts to find binary paths. It may set the path to invalid,
@@ -92,8 +95,12 @@ func (cc *Crictl) CleanUp() {
 
 // RunPod creates a sandbox. It corresponds to `crictl runp`.
 func (cc *Crictl) RunPod(runtime, sbSpecFile string) (string, error) {
+	start := time.Now()
 	podID, err := cc.run("runp", "--runtime", runtime, sbSpecFile)
 	if err != nil {
+		if cc.OnRunPodError != nil {
+			cc.OnRunPodError(start, time.Now())
+		}
 		return "", fmt.Errorf("runp failed: %v", err)
 	}
 	lines := strings.Split(strings.TrimSpace(podID), "\n")
