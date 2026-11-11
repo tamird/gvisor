@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T11:15:13+00:00",
+    "updatedAt": "2026-11-11T11:20:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3724,11 +3724,11 @@
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor",
         "sourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
-        "observedAt": "2026-11-11T10:50:43+00:00",
+        "observedAt": "2026-11-11T11:20:49+00:00",
         "disposition": "The requested rebase was published as one mergeable commit. The pgalloc, safecopy and safemem package trees match the tested revision.",
-        "nextAction": "Follow upstream review on the rebased source.",
+        "nextAction": "Review the short reply to Ayush. The requested rebase is already published.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/google/gvisor/pull/17214",
@@ -3736,9 +3736,13 @@
           "https://github.com/tamird/gvisor/actions/runs/42943753761/artifacts/13821608693"
         ]
       },
-      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "updatedAt": "2026-11-11T11:20:49+00:00",
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "evidence": [
+        {
+          "label": "Published-source test run on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43007012855"
+        },
         {
           "label": "84 pgalloc and 609 safecopy cases on AMD64",
           "url": "https://github.com/tamird/gvisor/actions/runs/43007012855/artifacts/13849326901"
@@ -3860,7 +3864,17 @@
           "at": "2026-11-07T03:08:22+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/15181"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
+        "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6788449945",
+        "requestedAt": "2026-11-11T11:20:49+00:00",
+        "title": "Confirm the rebase and both architecture checks",
+        "summary": "Post the test result in response to Ayush’s rebase request? The branch is already updated.",
+        "body": "Rebased onto master after #17214 in f05d6b909. All 84 pgalloc and 609 safecopy cases passed on both AMD64 and ARM64. [Linux test results](https://github.com/tamird/gvisor/actions/runs/43007012855)\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:15183",
@@ -24817,21 +24831,18 @@
       "title": "Check for zero values while encoding legacy checkpoints",
       "url": "https://github.com/tamird/gvisor/commit/dffb3d3c3",
       "group": "runtime",
-      "status": "Contributor approved; ready to publish",
-      "updatedAt": "2026-11-11T10:50:43+00:00",
-      "summary": "The signed-zero prerequisite landed in #16718. The approved legacy encoder change can now be delivered.\n\nThe legacy checkpoint encoder now checks the value it has already read to decide whether to omit a field. Unlike the previously approved 15f2d7624, this revision preserves the sign of floating-point zero and of each complex component. It applies directly to #16718.\n\nOn Linux/amd64, saving a 32-packet UDP receive queue took 632.1 µs before and 607.0 µs after (−3.98%, p=0.000, 16 matched pairs). Both arms used the legacy encoder and produced the same 12,690 checkpoint bytes. This measures legacy Save; graph is the default encoder.\n\nReplacing the sign-aware checks with arithmetic comparisons lost negative zero in four wire cases; all six graph cases passed. The first run also exposed two missing test imports. With those imports fixed, ordinary and race builds each ran both test targets on the proposed tree: all 15 signed-zero records and 16 wire-representation and struct-hook records passed, with no skips. The review commit has the same tree as the tested 139053514; its message links the measured legacy benchmark.",
+      "status": "Published",
+      "updatedAt": "2026-11-11T11:20:49+00:00",
+      "summary": "The approved legacy checkpoint encoder change is published as #17472 after #16718 merged. The range-diff from dffb3d3c3 is empty. Native AMD64 reported 11,574 ordinary passes and 85 existing skips, and 31 focused cases passed under the race detector.",
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream review",
         "sourceHead": "dffb3d3c3f7850994b8059fad487b379d1943862",
-        "observedAt": "2026-11-11T10:50:43+00:00",
-        "disposition": "The signed-zero prerequisite landed in #16718. The approved legacy encoder change can now be delivered.",
-        "nextAction": "Apply the approved single commit to current master, verify any changed integration, and open its upstream pull request.",
+        "observedAt": "2026-11-11T11:20:49+00:00",
+        "disposition": "Approved change published under #17472 at 6827c2cfb.",
+        "nextAction": "Follow upstream checks and review on #17472.",
         "evidence": [
-          "https://github.com/google/gvisor/commit/2552c678794e048487e1d18e9c81729b67fc119a",
-          "https://github.com/tamird/gvisor/commit/dffb3d3c3",
-          "https://github.com/google/gvisor/pull/16718",
-          "https://github.com/tamird/gvisor/actions/runs/42047834918/artifacts/13426625360",
-          "https://github.com/tamird/gvisor/actions/runs/42042839654/artifacts/13423159446"
+          "https://github.com/google/gvisor/pull/17472",
+          "https://github.com/tamird/gvisor/actions/runs/43009693434/artifacts/13850012545"
         ]
       },
       "links": [
@@ -24888,6 +24899,17 @@
           "body": "The wire encoder inspects the type of each field to decide whether to\nomit it, then dispatches on its kind again to write it. Use the value\nalready read by each encoder case to decide whether the field can be\nomitted. Whole arrays still need to account for struct save hooks and\nthe sign bit of floating-point elements.\n\nTyped zeros in interfaces and other full-value contexts preserve their\nwire types. An ordinary field containing negative zero keeps its sign,\nincluding either component of a complex number.\n\nThe graph encoder is the default. The 32-packet UDP receive queue\nbenchmark [1] selects the legacy encoder on both sides. Sixteen\nalternating pairs on Linux/amd64 gave the following Save times.\n\nUDPReceiveQueueSave/32    632.1µ ± 1%   607.0µ ± 0%  -3.98% (p=0.000 n=16)\n\n[1]: https://github.com/tamird/gvisor/blob/d8fe8e3ef/pkg/tcpip/transport/udp/codec_queue_benchmark_test.go#L41-L47",
           "at": "2026-11-09T16:23:10+00:00",
           "outcome": "approved"
+        }
+      ],
+      "inactive": true,
+      "evidence": [
+        {
+          "label": "Published single-commit PR #17472",
+          "url": "https://github.com/google/gvisor/pull/17472"
+        },
+        {
+          "label": "Native AMD64 ordinary and race tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43009693434/artifacts/13850012545"
         }
       ]
     },
@@ -49099,9 +49121,13 @@
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T11:11:00+00:00",
-      "summary": "Etienne asked to use the README archive installation while export #17179 remains open. Fork revision a6e06bb65 installs the archive in source jobs.",
+      "updatedAt": "2026-11-11T11:20:49+00:00",
+      "summary": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags.",
       "evidence": [
+        {
+          "label": "Both Docker installations, nine files apiece and two successful guest exits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43008909643/artifacts/13850441351"
+        },
         {
           "label": "Maintainer request",
           "url": "https://github.com/google/gvisor/pull/16843#issuecomment-6788222821"
@@ -49197,15 +49223,16 @@
       ],
       "number": 16843,
       "followup": {
-        "owner": "root",
+        "owner": "Contributor",
         "sourceHead": "4ba049ba5c249f885a0a249c921b60931897ea5d",
-        "observedAt": "2026-11-11T11:11:00+00:00",
-        "disposition": "Etienne asked to use the README archive installation while export #17179 remains open. Fork revision a6e06bb65 installs the archive in source jobs.",
-        "nextAction": "Verify the archive installation on a6e06bb65 and prepare the response on the original thread.",
+        "observedAt": "2026-11-11T11:20:49+00:00",
+        "disposition": "Etienne’s requested README installation passed on the exact fork revision. Export #17179 remains open.",
+        "nextAction": "Review a6e06bb65 and the reply to Etienne. If the old export lands first, prepare the remaining change against the landed source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16843#issuecomment-6788222821",
           "https://github.com/tamird/gvisor/commit/a6e06bb65",
-          "https://github.com/tamird/gvisor/actions/runs/43008909643"
+          "https://github.com/tamird/gvisor/actions/runs/43008909643/artifacts/13850441351",
+          "https://github.com/google/gvisor/pull/17179"
         ],
         "actionableComment": {
           "kind": "comment",
@@ -49221,6 +49248,18 @@
         "after": {
           "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "4ba049ba5c249f885a0a249c921b60931897ea5d",
+        "head": "a6e06bb65252c49143cae551eb556a6ff33ab73a",
+        "url": "https://github.com/tamird/gvisor/commit/a6e06bb65",
+        "requestedAt": "2026-11-11T11:20:49+00:00",
+        "title": "Install the documented release archive in source CI jobs",
+        "summary": "Publish a6e06bb65 on #16843 and answer Etienne? If #17179 lands first, carry the remaining change as a follow-up.",
+        "body": "On a6e06bb65, the source branch builds the documented tarball and installs all nine release files into /usr/local/bin. The staged archive installs the same nine files. Docker started a guest that exited 0 with each installation, including the staged archive’s separate systrap and debug flags.\n\ngit -C ~/code/gvisor range-diff 4ba049ba5^! a6e06bb65^!",
+        "replyBody": "The source branch now runs `make release-tarball DESTINATION=bin/` and extracts `bin/gvisor.tar.bz2` into `/usr/local/bin`, as the README describes. I checked that Docker started a container using that installation and using the existing staged archive.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -73287,6 +73326,30 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43008528640/artifacts/13850005693"
         }
       ]
+    },
+    {
+      "id": "pr:17472",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17472,
+      "ref": "proposal/legacy-state-zero-dispatch",
+      "head": "6827c2cfbc7102549d4ea74eb602516db2635a16",
+      "title": "Check for zeros during legacy checkpoint encoding",
+      "url": "https://github.com/google/gvisor/pull/17472",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-11T11:20:49+00:00",
+      "summary": "The approved legacy checkpoint encoder change is published as #17472 after #16718 merged. The range-diff from dffb3d3c3 is empty. Native AMD64 reported 11,574 ordinary passes and 85 existing skips, and 31 focused cases passed under the race detector.",
+      "evidence": [
+        {
+          "label": "Published single-commit PR #17472",
+          "url": "https://github.com/google/gvisor/pull/17472"
+        },
+        {
+          "label": "Native AMD64 ordinary and race tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43009693434/artifacts/13850012545"
+        }
+      ]
     }
   ],
   "edges": [
@@ -75267,9 +75330,9 @@
     },
     {
       "from": "pr:16718",
-      "to": "branch:state-encoder-zero-dispatch",
+      "to": "pr:17472",
       "type": "depends_on",
-      "reason": "The candidate applies directly to #16718 and preserves its signed-zero behavior. Submit after that PR lands.",
+      "reason": "The legacy zero check preserves the signed-zero behavior that landed in #16718.",
       "evidence": "https://github.com/google/gvisor/pull/16718"
     },
     {
@@ -99291,9 +99354,38 @@
       "title": "Docker-in-Docker commands outlive their exec deadline",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T00:51:01+00:00",
+      "updatedAt": "2026-11-11T11:20:49+00:00",
       "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected.",
       "findings": [
+        {
+          "text": "Three more bridge-network jobs reached the 15-minute test timeout while execProc.Logs waited for the nested command, apk add curl && apk info -d curl. This recurred in ARM64 VFS, ARM64 overlay and AMD64 cgroup-v1 VFS. Each direct retry passed. #17445 makes the exec reader honor the existing deadline. The original logs do not establish why the nested command stalled.",
+          "evidence": [
+            {
+              "label": "ARM64 VFS initial timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9e5-7547-45e1-b708-16fda9c33485"
+            },
+            {
+              "label": "ARM64 VFS passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9f8-1669-47a2-92b4-3296b9c9b876"
+            },
+            {
+              "label": "ARM64 overlay initial timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54379#01a1c8c8-63ca-4a11-8acd-a8029b7ffe79"
+            },
+            {
+              "label": "ARM64 overlay passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54379#01a1c8de-a6b2-434b-9d67-641bdc26a027"
+            },
+            {
+              "label": "AMD64 cgroup-v1 VFS initial timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9e4-8a49-469f-87da-395049e145c5"
+            },
+            {
+              "label": "AMD64 cgroup-v1 VFS passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9fa-76e4-497a-a69c-06bba036a7da"
+            }
+          ]
+        },
         {
           "text": "The matrix specifies a ten-minute command timeout. Reading directly from the Docker process kept the test from returning on time to gather daemon logs and remove the container. The original delay inside the nested command remains unexplained.",
           "evidence": [
@@ -99357,6 +99449,30 @@
         }
       ],
       "evidence": [
+        {
+          "label": "ARM64 VFS initial timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9e5-7547-45e1-b708-16fda9c33485"
+        },
+        {
+          "label": "ARM64 VFS passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9f8-1669-47a2-92b4-3296b9c9b876"
+        },
+        {
+          "label": "ARM64 overlay initial timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54379#01a1c8c8-63ca-4a11-8acd-a8029b7ffe79"
+        },
+        {
+          "label": "ARM64 overlay passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54379#01a1c8de-a6b2-434b-9d67-641bdc26a027"
+        },
+        {
+          "label": "AMD64 cgroup-v1 VFS initial timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9e4-8a49-469f-87da-395049e145c5"
+        },
+        {
+          "label": "AMD64 cgroup-v1 VFS passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54403#01a1c9fa-76e4-497a-a69c-06bba036a7da"
+        },
         {
           "label": "Published upstream PR #17445",
           "url": "https://github.com/google/gvisor/pull/17445"
