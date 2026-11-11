@@ -233,6 +233,18 @@ func stageRuntime(self string) (string, error) {
 		return "", fmt.Errorf("release tree %q is empty", root)
 	}
 
+	// Each subtest starts a fresh containerd. Stage its sandbox image with
+	// the runtime so the subtest can import it before creating a pod.
+	archive, err := testutil.FindFile("test/root/pause.tar")
+	if err != nil {
+		os.RemoveAll(dir)
+		return "", fmt.Errorf("locating sandbox image: %w", err)
+	}
+	if err := copyFile(archive, filepath.Join(dir, "pause.tar"), 0644); err != nil {
+		os.RemoveAll(dir)
+		return "", fmt.Errorf("staging sandbox image: %w", err)
+	}
+
 	// Copy the test binary into the temporary directory.
 	selfReal, err := filepath.EvalSymlinks(self)
 	if err != nil {
