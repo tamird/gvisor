@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T01:35:28+00:00",
+    "updatedAt": "2026-11-11T01:47:46+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54487,10 +54487,14 @@
       "title": "Keep large TCP receive charges representable",
       "url": "https://github.com/google/gvisor/pull/16825",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-11T01:42:49+00:00",
       "summary": "When a one-byte payload fits in the last byte of a receive buffer, its headers and bookkeeping can take the charge above MaxInt32. The old signed counter wrapped, reported 4,294,966,720 bytes free and accepted another payload. The correction reported zero, refused that payload, and recovered exactly one byte after release.",
       "evidence": [
+        {
+          "label": "Merged as ff6c9147b",
+          "url": "https://github.com/google/gvisor/commit/ff6c9147b"
+        },
         {
           "label": "Original and fixed queue boundary; AMD64 TCP unit tests and both owning analyzers, 45/45 records",
           "url": "https://github.com/tamird/gvisor/actions/runs/41254453359/artifacts/13061998440"
@@ -54819,9 +54823,21 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-11T01:30:36+00:00",
+      "updatedAt": "2026-11-11T01:47:46+00:00",
       "summary": "Published b968f4def and answered the review. The analyzer honors +checklocksignore in the enclosing function and still diagnoses the same unresolved guard in an ordinary caller. Both architecture suites passed.",
       "evidence": [
+        {
+          "label": "Original and revised range-callback diagnostics on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42940229449/artifacts/13820782149"
+        },
+        {
+          "label": "Single fork amendment d5cd4802b",
+          "url": "https://github.com/tamird/gvisor/commit/d5cd4802b"
+        },
+        {
+          "label": "Linux checklocks qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42940229449"
+        },
         {
           "label": "Reply on the ignored callback guard",
           "url": "https://github.com/google/gvisor/pull/16868#discussion_r4530412516"
@@ -54909,10 +54925,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "06dd5df8ae456915c1b659cc1607d15ffc696d3e"
+          "head": "b968f4defe4632c2f168af37003ca59216fd4027"
         },
         "after": {
-          "head": "b968f4defe4632c2f168af37003ca59216fd4027",
+          "head": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
         }
       },
@@ -54969,13 +54985,16 @@
       ],
       "number": 16868,
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "b968f4defe4632c2f168af37003ca59216fd4027",
-        "observedAt": "2026-11-11T01:30:36+00:00",
+        "observedAt": "2026-11-11T01:47:46+00:00",
         "disposition": "The previous +checklocksignore correction is published. A new report on the same head shows that a synthesized range-over-func call can produce a lock-change diagnostic at token.NoPos. The configured Nogo filter discards diagnostics printed at that location.",
-        "nextAction": "Qualify the reported range-over-func case on the published head and verify a correction that reports the guard change at the source location.",
+        "nextAction": "Review the single amendment and the reply to Alexander. Both architecture checks passed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16868#discussion_r4531734437",
+          "https://github.com/tamird/gvisor/actions/runs/42940229449/artifacts/13820782149",
+          "https://github.com/tamird/gvisor/commit/d5cd4802b",
+          "https://github.com/tamird/gvisor/actions/runs/42940229449",
           "https://github.com/google/gvisor/pull/16868#discussion_r4530412516",
           "https://github.com/tamird/gvisor/actions/runs/42897002914/artifacts/13802036928",
           "https://github.com/tamird/gvisor/commit/06dd5df8a",
@@ -54984,6 +55003,18 @@
           "https://github.com/tamird/gvisor/actions/runs/42897002914",
           "https://github.com/tamird/gvisor/actions/runs/42894329342/artifacts/13800951044"
         ]
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
+        "baseHead": "b968f4defe4632c2f168af37003ca59216fd4027",
+        "url": "https://github.com/tamird/gvisor/commit/d5cd4802b",
+        "requestedAt": "2026-11-11T01:47:46+00:00",
+        "title": "Report a range callback’s lock change at its range keyword",
+        "summary": "Publish d5cd4802b on #16868 and reply to Alexander on the original thread.",
+        "body": "The published analyzer accepted a range-over-func loop that released the caller’s lock. On AMD64 and ARM64, the revision reports the lock change at the range keyword (callbacks.go:62:6). The owning test_nogo target passed on both architectures.\n\ngit -C ~/code/gvisor range-diff b968f4def^! d5cd4802b^!",
+        "replyBody": "Thanks, confirmed on both architectures. The published analyzer accepted the loop. I used the yield function’s source position so the diagnostic now points at the `range` keyword, and added that loop to the existing callback tests.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -71698,12 +71729,16 @@
       "url": "https://github.com/google/gvisor/issues/16670",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T18:08:31+00:00",
-      "summary": "The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option. The guide also links Andrea’s decision to close #16953 in favor of #17082.",
+      "updatedAt": "2026-11-11T01:42:49+00:00",
+      "summary": "The guide marks receive accounting #16825 merged and keeps the ACK-admission work on #15325 open. The interactive TCP row now records the author’s measured TamaGo Redis comparison. It starts review with #17082, which needs no new public TCP option. The guide also links Andrea’s decision to close #16953 in favor of #17082.",
       "evidence": [
         {
           "label": "Existing TCP review guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Merged receive accounting #16825",
+          "url": "https://github.com/google/gvisor/pull/16825"
         },
         {
           "label": "Author’s measurements on both implementations",
@@ -98980,7 +99015,7 @@
       "title": "PHP’s 2.15 GB multipart upload fails across master and test builds",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T01:35:28+00:00",
+      "updatedAt": "2026-11-11T01:47:46+00:00",
       "summary": "PHP 8.5.11 reported sapi/cli/tests/upload_2G.phpt as failed in seven attempts across six commits. Two were gVisor master commits (d887f126f and 93713c50f). Four were Google test commits.",
       "findings": [
         {
@@ -99012,10 +99047,31 @@
               "url": "https://github.com/php/php-src/blob/php-8.5.11/sapi/cli/tests/upload_2G.phpt"
             }
           ]
+        },
+        {
+          "text": "In #54340 the test was the only failure among 50 PHPTs on shard 1 (15 passed, 34 skipped). Its log names the case twice, then records FAIL. The 489-entry runtime archive contains no PHPT .out, .exp or .diff. The final job passed the target with one uncached shard. It did not publish whether this test passed or skipped.",
+          "evidence": [
+            {
+              "label": "Original PHP shard test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54340/jobs/01a1c7e8-9007-406b-b565-61701e284168/artifacts/01a1c7f6-a2f2-4c9b-b468-57460c3f6f4b"
+            },
+            {
+              "label": "Original runtime archive",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54340/jobs/01a1c7e8-9007-406b-b565-61701e284168/artifacts/01a1c7f6-d16f-4d9e-a9b5-6b2260110e56"
+            },
+            {
+              "label": "How the pinned PHP runner prints a failing diff",
+              "url": "https://github.com/php/php-src/blob/php-8.5.11/run-tests.php#L2811-L2820"
+            }
+          ]
         }
       ],
-      "nextStep": "Recover the PHPT’s expected and actual output before container cleanup. Compare the test’s free-space and memory readings and check for failed or short writes.",
+      "nextStep": "Compare the same PHP 8.5.11 case under Linux/runc and gVisor master 93713c50f with --show-diff enabled. Check free temporary space, free memory, and failed or short writes against any observed mismatch.",
       "evidence": [
+        {
+          "label": "Same-case Linux and gVisor comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42941221389"
+        },
         {
           "label": "Master build #54360",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54360#01a1c821-c73e-4698-8da5-e5e84fa86587"
@@ -99031,5 +99087,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-11T01:35:28+00:00"
+  "updatedAt": "2026-11-11T01:47:46+00:00"
 }
