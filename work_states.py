@@ -594,11 +594,11 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
         action = None
     result = {"binding": binding, "scope": scope, "state": state, "action": action,
               "trigger": trigger, "description": description}
-    # A reassociated review is not a fresh approval. Once Copybara has opened
-    # an export of this exact source, an older export is no reason to rebase.
+    # A conflict with master does not change which source Copybara exported.
+    open_export = next((item for item in active if item["status"] == "open"), None)
     if (pr.get("status") == "open" and pr.get("importPolicy", "copybara") == "copybara"
             and pr.get("githubReviewDecision") == "APPROVED"
-            and scope == "exact" and state == "open" and trigger["state"] == "present"
+            and scope == "exact" and open_export and trigger["state"] == "present"
             and binding["complete"] and binding["labelsComplete"] and not approval and not effective_approval(pr)
             and pr.get("repo", "google/gvisor") == "google/gvisor"
             and not pr.get("revisionChanged") and pr.get("branchHead", pr["head"]) == pr["head"]
@@ -610,9 +610,9 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
                     and not (comparison.get("comparison", {}).get("normalized_delta_identical") is True
                              and comparison.get("comparison", {}).get("modes_identical") is True))
         if review and review.get("id") and review["id"] not in dismissed and not mismatch:
-            item = next(item for item in active if item["status"] == "open")
-            result["reviewedExport"] = {"number": item["number"], "head": item["head"], "reviewId": review["id"]}
-            result["description"] = "GitHub reports approval and Copybara has opened an export of this source. The review predates this source revision."
+            result["reviewedExport"] = {"number": open_export["number"], "head": open_export["head"], "reviewId": review["id"]}
+            if state != "conflicting":
+                result["description"] = "GitHub reports approval and Copybara has opened an export of this source. The review predates this source revision."
     return result
 
 

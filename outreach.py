@@ -233,7 +233,7 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     if approval:
         return import_status_plan(pr, node, disposition, approval, now, owner, history, planned or {}, preferred)
     if (not needs_replacement and states.keys() & {"importing", "awaiting-import", "waiting-merge"}
-            or disposition.get("reviewedExport")):
+            or disposition.get("state") == "open" and disposition.get("reviewedExport")):
         return None
     if not (pr.get("headHistoryComplete") and pr.get("reviewsComplete") and pr.get("reviewRequestsComplete")
             and pr.get("feedback", {}).get("complete") and pr.get("importsComplete")

@@ -74,6 +74,14 @@ class WorkStatesTest(unittest.TestCase):
         pr["publicImportDisposition"] = proof
         self.assertIn("importing", pr_states(pr))
         self.assertNotIn("maintainer-review", pr_states(pr))
+        pr["mergeable"] = current["mergeable"] = "CONFLICTING"
+        conflict = public_import_disposition(pr)
+        self.assertEqual(conflict["reviewedExport"], proof["reviewedExport"])
+        self.assertEqual(conflict["description"], "Resolve the matching export's conflict.")
+        self.assertFalse(conflict["binding"]["eligible"])
+        pr["publicImportDisposition"] = conflict
+        self.assertIn("conflicts", pr_states(pr))
+        self.assertNotIn("maintainer-review", pr_states(pr))
         for label, changes in {
             "only older export": {"imports": [older]},
             "amended source": {"head": "e" * 40},

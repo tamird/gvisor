@@ -398,6 +398,12 @@ test('an open current-source export does not request a rebase of an older export
   assert.equal(run('reviewInfo(nodeInput.github, nodeInput).text'), 'GitHub approved · current source exported');
   assert.equal(run('rebaseNeedsComparison(nodeInput)'), false);
   assert.equal(run('stateRecords({ workStates: {} }, nodeInput)["maintainer-review"]'), undefined);
+  pr.mergeable = pr.imports[1].mergeable = 'CONFLICTING';
+  pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', source],
+    { cwd: new URL('.', import.meta.url), encoding: 'utf8', input: JSON.stringify(pr) }));
+  assert.equal(run('reviewInfo(nodeInput.github, nodeInput).text'), 'GitHub approved · current source exported');
+  assert.equal(run('publicImportDisposition(nodeInput).description'), "Resolve the matching export's conflict.");
+  assert.equal(run('stateRecords({ workStates: {} }, nodeInput)["maintainer-review"]'), undefined);
   node.importPatchComparison = { source: {head}, export: {head: exported}, comparison: {normalized_delta_identical: false, modes_identical: true} };
   assert.equal(run('reviewedExport(nodeInput)'), false);
   delete node.importPatchComparison;

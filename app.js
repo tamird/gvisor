@@ -566,7 +566,7 @@ function reviewedExport(node) {
       || !pr.reviewsComplete || !pr.reviewRequestsComplete || !pr.headHistoryComplete
       || pr.branchHead && pr.branchHead !== pr.head) return false;
   const record = publicImportDisposition(node);
-  if (!record || record.scope !== "exact" || record.state !== "open" || record.trigger.state !== "present"
+  if (!record || record.scope !== "exact" || !["open", "conflicting"].includes(record.state) || record.trigger.state !== "present"
       || !record.binding.complete || !record.binding.labelsComplete || !pr.feedback?.complete || !pr.reviewDismissals?.complete) return false;
   const review = pr.feedback.items.find(item => item.id === receipt.reviewId);
   const comparison = node.importPatchComparison;
