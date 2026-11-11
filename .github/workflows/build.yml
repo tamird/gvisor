@@ -1,0 +1,60 @@
+name: Check gVisor reviewer file history
+on:
+  push:
+    branches: [qualification/work-map-path-authors-20261111]
+permissions:
+  contents: read
+jobs:
+  replay:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Run the production tracker tests
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 74a0bb331ee43ab66183d20790197de53e43a963
+          git diff --quiet HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git checkout --detach HEAD^
+          mkdir -p "$RUNNER_TEMP/results"
+          /usr/bin/python3 -B -m unittest discover -p '*_test.py' 2>&1 | tee "$RUNNER_TEMP/results/python.txt"
+          node --test app_test.mjs | tee "$RUNNER_TEMP/results/node.txt"
+          node metadata-preflight.mjs .
+      - name: Collect real GitHub file authors and dry-run the normal sender
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          results="$RUNNER_TEMP/results"
+          /usr/bin/python3 -Bu update-status.py | tee "$results/collection.txt"
+          /usr/bin/python3 -Bu update-status.py --review-outreach plan | tee "$results/plans.jsonl"
+          node metadata-preflight.mjs . | tee "$results/preflight.json"
+          /usr/bin/python3 -B - "$results" <<'PY'
+          import json, sys
+          from pathlib import Path
+          results = Path(sys.argv[1])
+          snapshot = json.loads(Path("github-status.json").read_bytes())
+          row = snapshot["reviewOutreach"]["16951"]
+          print(row)
+          assert row["head"] == "b79cad51119968aff3e0027237e3d646d00b6a4c" and row["status"] in {"due", "verify-mergeability"}
+          sources = [p for p in snapshot["prs"] if p.get("repo") == "google/gvisor" and p["number"] == 16951]
+          source, = sources
+          assigned = {p["login"].lower() for p in source["reviewRequests"]}
+          assert {"konstantin-s-bogom", "riverafernando"} <= assigned
+          author = next(a for a in snapshot["reviewerActivity"]["authored"] if a["login"] == row["reviewer"] and a.get("commit") and a["paths"] == ["tools/bazel.mk"] and a["url"] == row["evidence"])
+          plan, = [p for line in (results / "plans.jsonl").read_text().splitlines() if (p := json.loads(line)).get("reviewOutreach") == 16951]
+          assert plan["status"] == "would-send" and plan["reviewer"] == row["reviewer"]
+          report = {"source": row, "contribution": author, "assignments": sorted(assigned), "dryRun": plan}
+          (results / "16951.json").write_text(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: reviewer-file-history
+          path: ${{ runner.temp }}/results
