@@ -2,7 +2,7 @@
 """Publish public GitHub metadata using the existing authenticated gh session."""
 
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 import http.client
 import json
 import re
@@ -20,7 +20,7 @@ from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import load_registry, registry_is_published
 from reviewer_selection import GENERIC_REVIEW, needs_reviewer_paths, recent_reviewer_work, reviewer_governance
-from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
+from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, pr_identity, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -1556,6 +1556,46 @@ def branch_cleanup_handoff(registry: dict, checked_at: str) -> dict | None:
             "due": due is None or datetime.fromisoformat(checked_at) >= due}
 
 
+def approved_branches_after_merge(registry: dict, prs: list[dict]) -> list[dict]:
+    """Surface the recorded agent follow-up when its last prerequisite PR lands."""
+    merged = {pr_identity(pr, REPO) for pr in prs if pr.get("status") == "merged"}
+    published = {(pr["headRepo"], pr["ref"]) for pr in prs if pr.get("headRepo") and pr.get("ref")
+                 and pr.get("status") in {"open", "draft", "merged"}}
+    parents = defaultdict(set)
+    for edge in registry.get("edges", []):
+        if edge["type"] in {"depends_on", "blocked_by"}:
+            parents[edge["to"]].add(edge["from"])
+
+    ready = []
+    for node in registry["nodes"]:
+        status = node.get("status", "").lower().removeprefix("contributor ")
+        if (node.get("type") != "branch" or node.get("inactive")
+                or node.get("contributorChangesRequested", {}).get("head") == node.get("head")
+                or not status.startswith(("approved; waiting for ", "approved; awaiting "))
+                or (node.get("repo"), node.get("ref")) in published):
+            continue
+        required = parents.get(node["id"])
+        followup = node.get("followup", {})
+        if (not required or not required <= merged or not followup.get("owner")
+                or not followup.get("nextAction") or followup.get("sourceHead") != node.get("head")):
+            continue
+        reviews = [node.get("contributorReview", {}), *node.get("additionalReviews", [])]
+        if any(review.get("status") == "pending" for review in reviews):
+            continue
+        decision = next((review for review in reversed(node.get("settledReviews", []))
+                         if review["kind"] == "proposal"), {})
+        if decision.get("outcome") == "approved" and decision.get("head") == node["head"]:
+            # A rebase can be published under a new ref and commit. A matching
+            # title is a reason to compare the PR before acting on the old plan.
+            matches = [pr["url"] for pr in prs if pr.get("headRepo") == node.get("repo") and pr.get("url")
+                       and (pr.get("ref") == node.get("ref") or pr.get("title") == node["title"])]
+            ready.append({"id": node["id"], "url": node["url"], "head": node["head"], "owner": "Agent",
+                          "prerequisites": sorted(required), "relatedPRs": matches, "followup": followup["nextAction"],
+                          "nextAction": "Compare the existing PR with the approved change." if matches
+                          else "Check the approved change against current master and its recorded publication conditions."})
+    return ready
+
+
 def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     """Select an unclaimed author-side obligation before other work."""
     by_number = {pr["number"]: pr for pr in snapshot.get("prs", [])
@@ -1582,9 +1622,12 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
                           and row["sourceHead"] == pr["head"] and row["imports"] == older_merged_imports(pr)), None)
     if next_work is None and cleanup and cleanup["due"]:
         next_work = cleanup
+    ready = approved_branches_after_merge(REGISTRY, snapshot.get("prs", []))
+    if next_work is None and ready:
+        next_work = ready[0]
     return {"nextWork": next_work, "authorFeedback": pending, "unclaimed": len(unclaimed),
             "overdue": sum(bool(row.get("overdue")) for row in unclaimed),
-            "branchCleanup": cleanup}
+            "branchCleanup": cleanup, "approvedBranchesAfterMerge": ready}
 
 
 def incoming_review_handoff() -> None:

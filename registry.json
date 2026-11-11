@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T22:50:51+00:00",
+    "updatedAt": "2026-11-11T23:26:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32709,8 +32709,8 @@
       "title": "Declare vDSO disassembly tools",
       "url": "https://github.com/google/gvisor/pull/16491",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "status": "closed",
+      "updatedAt": "2026-11-11T23:26:49+00:00",
       "summary": "Published the patch-preserving rebase 212b0add21 on 92d3cc68c. Konstantin’s October 29 approval remains on prior head 77b422e41. That old head was imported successfully, then reported an internal-check failure; neither status is a result for the rebased head. Earlier Bazel runs passed 23 AMD64 and 20 ARM64 vDSO cases with PATH=/nonexistent using the declared LLVM tools, without /dev/kvm.",
       "evidence": [
         {
@@ -32740,17 +32740,28 @@
       ],
       "number": 16491,
       "followup": {
-        "owner": "root",
+        "owner": "Complete",
         "sourceHead": "212b0add216acfcad2c20b2aaee101d8461d085f",
-        "observedAt": "2026-11-04T20:45:45.283369+00:00",
-        "disposition": "Patch-preserving rebase published",
-        "nextAction": "Follow current-head maintainer review and CI; retain prior approvals and source-bound results as history.",
+        "observedAt": "2026-11-11T23:26:49+00:00",
+        "disposition": "Replaying the final source change on the parent of #17054 produced the identical Git tree. That commit is on master.",
+        "nextAction": "None.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16491",
-          "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
-          "https://app.buildbuddy.io/invocation/1ed0c7c1-eae5-4cc0-8c89-dff268322054",
-          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03",
-          "https://github.com/tamird/gvisor/commit/212b0add21"
+          "https://github.com/google/gvisor/pull/17054",
+          "https://github.com/google/gvisor/commit/8f985c75c",
+          "https://github.com/google/gvisor/pull/16491#issuecomment-6668347828"
+        ]
+      },
+      "landedPatch": {
+        "head": "212b0add216acfcad2c20b2aaee101d8461d085f",
+        "method": "merge-tree-identical",
+        "upstreamHead": "8f985c75cafbcd13fa426ef5b6eba5f158c36b05",
+        "upstreamTree": "55ae9a5a0970e08c5878955144b2bed1f8b109e9",
+        "replayedTree": "55ae9a5a0970e08c5878955144b2bed1f8b109e9",
+        "verifiedAt": "2026-11-11T23:26:49+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17054",
+          "https://github.com/google/gvisor/commit/8f985c75c",
+          "https://github.com/google/gvisor/pull/16491#issuecomment-6668347828"
         ]
       }
     },
@@ -70051,16 +70062,16 @@
       "inactive": true
     },
     {
-      "id": "branch:state-single-plain-waiter",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:17502",
+      "type": "pr",
+      "repo": "google/gvisor",
       "group": "runtime",
-      "ref": "research/state-single-plain-waiter",
-      "head": "be0aab89c556c459e8e110c517ea7e1011d24ce4",
-      "url": "https://github.com/tamird/gvisor/commit/be0aab89c",
+      "ref": "delivery/state-single-plain-waiter",
+      "head": "4570ff5c1f9cad2c2ac4b0142ceb94d6fb88c2b9",
+      "url": "https://github.com/google/gvisor/pull/17502",
       "title": "Store a single graph waiter without a callback record",
-      "status": "Contributor approved; awaiting prerequisite",
-      "updatedAt": "2026-11-09T17:16:09+00:00",
+      "status": "open",
+      "updatedAt": "2026-11-11T23:26:49+00:00",
       "summary": "On a 50,000-file checkpoint, the first guest command took 200.2 ms versus 243.2 ms on #16860. Decoding allocated 99.27 MiB versus 121.84 MiB per checkpoint. Both comparisons have 16 pairs. Separate cold and pooled callback, pointer-chain, and map benchmarks detected no timing change. Package and race checks passed.",
       "evidence": [
         {
@@ -70074,6 +70085,10 @@
         {
           "label": "Race and package checks and a uniform-queue comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42540723329/artifacts/13642840434"
+        },
+        {
+          "label": "Native state, wire and integration XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43118808013/artifacts/13899642773"
         }
       ],
       "settledReviews": [
@@ -70092,16 +70107,17 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "be0aab89c556c459e8e110c517ea7e1011d24ce4",
-        "observedAt": "2026-11-09T17:16:09+00:00",
-        "disposition": "Approved for publication after #16860 lands.",
-        "nextAction": "Open the reviewed PR after #16860 lands.",
+        "owner": "Upstream review",
+        "sourceHead": "4570ff5c1f9cad2c2ac4b0142ceb94d6fb88c2b9",
+        "observedAt": "2026-11-11T23:26:49+00:00",
+        "disposition": "Opened #17502 after #16860 merged. Both decoder files match the reviewed revision.",
+        "nextAction": "Follow the upstream review of #17502.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/be0aab89c",
-          "https://github.com/google/gvisor/pull/16860"
+          "https://github.com/google/gvisor/pull/17502",
+          "https://github.com/tamird/gvisor/actions/runs/43118808013/artifacts/13899642773"
         ]
-      }
+      },
+      "number": 17502
     },
     {
       "id": "branch:tcp-segment-experiment-ipv6",
@@ -78999,7 +79015,7 @@
     {
       "type": "depends_on",
       "from": "pr:16860",
-      "to": "branch:state-single-plain-waiter",
+      "to": "pr:17502",
       "reason": "This change uses the waiting-object queue introduced in #16860.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16860",
@@ -82490,7 +82506,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-08T22:38:49+00:00",
+      "updatedAt": "2026-11-11T23:26:49+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -85768,7 +85784,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the completion-queue and callback/waiter changes in #16867 and #16860. The standalone generated reservation API remains on hold.",
+      "nextStep": "Follow #16867 and #17502 through review. #16860 landed. The standalone generated reservation API remains on hold.",
       "evidence": [
         {
           "label": "Standalone and combined graph decoder changes on native systrap",
@@ -100031,7 +100047,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "updatedAt": "2026-11-11T23:26:49+00:00",
       "summary": "Five builds failed OpenJDK’s Unref.java when the descriptor count changed by one. Each failed shard passed on the same source when rerun. gVisor’s published Java 21 exclusion in #17377 matches the exclusion in its pinned OpenJDK.",
       "findings": [
         {
@@ -100127,9 +100143,22 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc72-75c0-4909-9bdf-8985cb28aef0"
             }
           ]
+        },
+        {
+          "text": "The matching Copybara export added only Unref.java to the exclusion list. Applied to the 22 names in the failing batch, that leaves all 21 peers selected. Buildkite ran the same directfs shard (33 of 40) with the change and it passed in 405.8 seconds. The passing job published a shard result without individual case logs.",
+          "evidence": [
+            {
+              "label": "Export under test",
+              "url": "https://github.com/google/gvisor/pull/17427"
+            },
+            {
+              "label": "Directfs shard 33 · executed and passed",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54531#01a1cccc-0eda-46b9-a440-3c35b110302d"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the approved #17377 through import. On the first Java shard containing the change, verify that only DatagramChannel/Unref is excluded.",
+      "nextStep": "Follow #17377 and its tested export #17427 through landing, then check the first directfs Java shard 33 on master.",
       "evidence": [
         {
           "label": "Published Java 21 exclusion at 6dd410ba8",
@@ -100158,6 +100187,14 @@
         {
           "label": "#54502 same-source Java retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc72-75c0-4909-9bdf-8985cb28aef0"
+        },
+        {
+          "label": "Export under test",
+          "url": "https://github.com/google/gvisor/pull/17427"
+        },
+        {
+          "label": "Directfs shard 33 · executed and passed",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54531#01a1cccc-0eda-46b9-a440-3c35b110302d"
         }
       ]
     },
@@ -102555,7 +102592,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T15:09:02+00:00",
+      "updatedAt": "2026-11-11T23:26:49+00:00",
       "summary": "Lint and Go generation on #16663 both stopped before Bazel started. Docker could pull Ubuntu, but apt could not resolve the Ubuntu archive and security hosts.",
       "findings": [
         {
@@ -102583,9 +102620,26 @@
               "url": "https://github.com/google/gvisor/actions/runs/43014472952/job/130501980324"
             }
           ]
+        },
+        {
+          "text": "On the next #16663 revision, both jobs again missed builder tag 830786f662550d98. Docker pulled Ubuntu, then apt failed to resolve archive.ubuntu.com and security.ubuntu.com. A passing master lint job pulled a different prebuilt tag, 5d12c16f9c4ad806.",
+          "evidence": [
+            {
+              "label": "Go generation · second DNS failure",
+              "url": "https://github.com/google/gvisor/actions/runs/43065941169/job/130680774057"
+            },
+            {
+              "label": "Lint · second DNS failure",
+              "url": "https://github.com/google/gvisor/actions/runs/43065941479/job/130680775762"
+            },
+            {
+              "label": "Master lint · existing builder pulled",
+              "url": "https://github.com/google/gvisor/actions/runs/43111993441/job/130830152557"
+            }
+          ]
         }
       ],
-      "nextStep": "Check the next runs of the two failed jobs for a successful apt update and completion of Lint and Go generation.",
+      "nextStep": "On the next run rebuilding 830786f662550d98, check whether apt can fetch the package indexes and whether lint or Go generation completes.",
       "evidence": [
         {
           "label": "Lint · apt could not resolve archive.ubuntu.com",
@@ -102602,6 +102656,18 @@
         {
           "label": "Earlier Go · same image rebuilt and passed",
           "url": "https://github.com/google/gvisor/actions/runs/43014472952/job/130501980324"
+        },
+        {
+          "label": "Go generation · second DNS failure",
+          "url": "https://github.com/google/gvisor/actions/runs/43065941169/job/130680774057"
+        },
+        {
+          "label": "Lint · second DNS failure",
+          "url": "https://github.com/google/gvisor/actions/runs/43065941479/job/130680775762"
+        },
+        {
+          "label": "Master lint · existing builder pulled",
+          "url": "https://github.com/google/gvisor/actions/runs/43111993441/job/130830152557"
         }
       ]
     },

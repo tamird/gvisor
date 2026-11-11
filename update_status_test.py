@@ -20,6 +20,53 @@ OLD = "2000-01-01T00:00:00+00:00"
 LATER = "2000-01-02T00:00:00+00:00"
 
 
+class ApprovedBranchTest(unittest.TestCase):
+    def test_last_prerequisite_lands(self) -> None:
+        proposal = {"id": "branch:waiter", "type": "branch", "repo": "tamird/gvisor", "ref": "research/waiter",
+                    "title": "Store a single graph waiter",
+                    "head": "abc", "url": "https://github.com/tamird/gvisor/commit/abc",
+                    "status": "Contributor approved; awaiting prerequisites",
+                    "settledReviews": [{"kind": "proposal", "head": "abc", "outcome": "approved"}],
+                    "followup": {"owner": "Agent", "sourceHead": "abc", "nextAction": "Run the state tests."}}
+        registry = {"nodes": [proposal], "edges": [
+            {"from": "pr:16860", "to": proposal["id"], "type": "depends_on"},
+            {"from": "pr:other/tool:16860", "to": proposal["id"], "type": "blocked_by"},
+            {"from": "branch:integration", "to": proposal["id"], "type": "includes"},
+        ]}
+        parent = {"repo": "google/gvisor", "number": 16860, "status": "merged"}
+        other = {**parent, "repo": "other/tool"}
+        with mock.patch.object(updater, "REGISTRY", registry):
+            def work(*prs, incoming=()):
+                return updater.worker_handoff({"prs": prs}, list(incoming))
+
+            for blockers in ([], [{**other, "status": "closed"}], [{**other, "status": "open"}]):
+                self.assertIsNone(work(parent, *blockers)["nextWork"])
+            row, = work(parent, other)["approvedBranchesAfterMerge"]
+            self.assertEqual(row["prerequisites"], ["pr:16860", "pr:other/tool:16860"])
+            self.assertEqual(row["followup"], "Run the state tests.")
+            self.assertEqual(work(parent, other)["nextWork"], row)
+            request = {"id": "incoming-review"}
+            self.assertEqual(work(parent, other, incoming=[request])["nextWork"], request)
+            published = {**parent, "number": 17502, "status": "open", "title": proposal["title"],
+                         "url": "https://github.com/google/gvisor/pull/17502",
+                         "headRepo": proposal["repo"], "ref": proposal["ref"]}
+            self.assertIsNone(work(parent, other, published)["nextWork"])
+            for earlier in ({**published, "ref": "delivery/waiter"}, {**published, "status": "closed"}):
+                handoff = work(parent, other, earlier)["nextWork"]
+                self.assertEqual(handoff["relatedPRs"], [published["url"]])
+                self.assertIn("Compare", handoff["nextAction"])
+            with mock.patch.dict(proposal, status="Approved; waiting for #16860"), mock.patch.dict(
+                    proposal["followup"], owner="State workstream"):
+                self.assertEqual(work(parent, other)["nextWork"], row)
+            for changes in ({"head": "def"}, {"status": "Retired; prerequisite obsolete"}, {"inactive": True},
+                            {"contributorChangesRequested": {"head": "abc"}},
+                            {"contributorReview": {"status": "pending"}},
+                            {"settledReviews": [*proposal["settledReviews"],
+                                                {"kind": "proposal", "head": "abc", "outcome": "revise"}]}):
+                with mock.patch.dict(proposal, changes):
+                    self.assertIsNone(work(parent, other)["nextWork"])
+
+
 class BranchCleanupTest(unittest.TestCase):
     def test_run_published_operator_from_a_different_checkout(self) -> None:
         command = updater.branch_cleanup_handoff({"meta": {"branchCleanup": {}}}, OLD)["command"]
