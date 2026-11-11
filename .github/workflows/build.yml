@@ -1,35 +1,56 @@
-name: CI
-
-"on":
+name: Verify the native LLVM Go branch export
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/go-export-llvm-tree]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  export:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/go-export-llvm-tree' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    env:
+      PRODUCT: 6a237fe9fc528fcc90980b6689fc1344c291f1b5
+      LAST_GO: b7b250848e2ebdd8bbc176ca875e212fae57ce7a
+      DOCKER_HOST: unix:///no-gvisor-builder.sock
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the published exporter, compiler, real local Go ref and pinned Linux tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/go-export-llvm"
+          mkdir -p "$work/bin" "$work/evidence" "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"stage":"setup","verified":false}' > "$work/evidence/result.json"
+          git init -q
+          git -c credential.helper= fetch -q --no-tags --no-auto-maintenance --depth=5 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse "$PRODUCT^{tree}")" = ad1599727626c92195986daf38456c0e3f307727
+          test "$(git show -s --format=%P "$PRODUCT")" = "8178e3fe5fa3684427a9c78a66c0a268668de86c 45137f922cf026cfa764ca3177d624d1b49b5581"
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/llvm_go_tree.py'
+          cp .github/qualification/llvm_go_tree.py "$work/"
+          provider=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          git -c credential.helper= fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git "$provider"
+          git show "$provider:.github/qualification/recvbuf_deps.py" > "$work/public_assets.py"
+          test "$(git hash-object "$work/public_assets.py")" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          git -c credential.helper= fetch -q --depth=1 --no-tags https://github.com/google/gvisor.git "$LAST_GO:refs/heads/go"
+          git checkout -q --detach "$PRODUCT"
+          test -z "$(git remote)"
+          test "$(git rev-parse go)" = "$LAST_GO"
+          test "$(cat .bazelversion)" = 9.3.1
+          test ! -e /no-gvisor-builder.sock
+          curl -qfsSL --retry 2 --max-time 150 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$work/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $work/bazel" | sha256sum -c -
+          chmod +x "$work/bazel"
+          printf '#!/bin/bash\nexec "$RUNNER_TEMP/go-export-llvm/bazel" --nosystem_rc --nohome_rc --bazelrc="$RUNNER_TEMP/go-export-llvm/options.rc" "$@"\n' > "$work/bin/bazel"
+          chmod +x "$work/bin/bazel"
+          echo "$work/bin" >> "$GITHUB_PATH"
+      - name: Run tools/go_branch.sh and compare the complete ZIP with its local Git tree
+        timeout-minutes: 85
+        run: python3 -B "$RUNNER_TEMP/go-export-llvm/llvm_go_tree.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: llvm-go-export-tree
+          path: ${{ runner.temp }}/go-export-llvm/evidence/result.json
+          if-no-files-found: error
+          retention-days: 14
