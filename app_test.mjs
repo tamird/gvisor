@@ -152,6 +152,10 @@ test('review outreach follows only the observed open gVisor source', () => {
   assert.equal(read(), null);
   c.pr.github.mergeable = 'MERGEABLE';
   assert.equal(read().reviewer, 'reviewer');
+  c.pr.reviewOutreachHold = { reason: 'Await the licensing exception' };
+  assert.equal(read(), null);
+  delete c.pr.reviewOutreachHold;
+  assert.equal(read().reviewer, 'reviewer');
   c.pr.github.head = 'b'.repeat(40);
   assert.equal(read(), null);
   c.pr.github.head = row.head;
@@ -2666,7 +2670,10 @@ test('imported-unmerged does not assert readiness and administrative failures ar
   imported.mergeable = 'MERGEABLE'; imported.checks.complete = true;
   assert.deepEqual(idsFor(node), ['maintainer-merge']);
   imported.mergeable = 'CONFLICTING';
-  assert.deepEqual(idsFor(node), ['author-conflicts']);
+  assert.deepEqual(idsFor(node), ['agent-import-conflict']);
+  node.github.mergeable = 'CONFLICTING';
+  assert.deepEqual(idsFor(node), ['author-conflicts', 'agent-import-conflict']);
+  node.github.mergeable = 'MERGEABLE';
   imported.status = 'closed'; assert.ok(!idsFor(node).includes('maintainer-import-failed'));
   assert.ok(idsFor(node).includes('maintainer-reimport'));
   node.github.imports = []; node.github.checks.contexts.push({ name: 'assign', state: 'FAILURE', purpose: 'reviewer-assignment' }); node.github.checks.total = 2; node.github.checks.state = 'FAILURE';

@@ -263,6 +263,7 @@ const ATTENTION_REASONS = [
   { id: "agent-requested-review", owner: "agent", title: "Incoming PR review requests" },
   { id: "agent-feedback-sweep", owner: "agent", title: "Audit earlier work against contributor guidance" },
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
+  { id: "agent-import-conflict", owner: "agent", title: "Investigate Copybara export conflict" },
   { id: "author-ci-remedy", owner: "agent", title: "Merged CI fix needs action" },
   { id: "author-public-checks", owner: "agent", title: "Public source checks failing" },
   { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
@@ -589,7 +590,7 @@ function unresolvedImportChecks(imports) {
 }
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
-    const disposition = attentionDisposition(node, id);
+    const disposition = attentionDisposition(node, id === "agent-import-conflict" ? "author-conflicts" : id);
     if (disposition) {
       // The separate cleanup record owns this suggestion. Other reasons,
       // including the import's normal merge state, still belong to this PR.
@@ -654,8 +655,9 @@ function attentionReasons(node, owner) {
   const publicFailures = failedValidationChecks(pr);
   const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id));
   if (!landed && authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
+  const reviewHold = node.reviewOutreachHold;
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
-  if (!landed && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
+  if (!landed && !reviewHold && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
   const exported = reviewedExport(node);
@@ -698,8 +700,13 @@ function attentionReasons(node, owner) {
     && importDisposition.binding.currentApproval && (active.length || importDisposition.scope === "amended" && lineage.length);
   if (awaitingReapprovedExport)
     add("maintainer-unknown", `Current source ${pr.head.slice(0, 9)} has a fresh approval. Copybara still shows the earlier export ${lineage.map(item => "#" + item.number).join(", ")}; wait for its replacement. The earlier export is not a request for manual conflict repair.`, "Reapproved; waiting for Copybara");
-  for (const item of active) if (conflictRecord(item) && (current.length || importAction === "maintainer-import-refresh"))
-    add(current.length ? "author-conflicts" : "maintainer-import-refresh", `Import #${item.number}: ${mergeDescription(item)}${current.length ? "" : " This export predates the equivalent source rebase. Refresh the export; its conflict does not establish a conflict on the current source."}`);
+  for (const item of active) {
+    if (!conflictRecord(item)) continue;
+    if (current.includes(item))
+      add("agent-import-conflict", `Check Copybara export #${item.number} against its base. ${mergeDescription(item)}`);
+    else if (importAction === "maintainer-import-refresh")
+      add("maintainer-import-refresh", `Refresh the earlier export #${item.number}. ${mergeDescription(item)}`);
+  }
   // After reapproval, a failed check on the previous export stays in that
   // export's details. Source checks and checks on a replacement still apply.
   const checkImports = awaitingReapprovedExport && importDisposition.binding.complete && importDisposition.trigger?.state === "present"
@@ -760,11 +767,12 @@ function attentionReasons(node, owner) {
   if (importAction === "maintainer-import-landed")
     add("maintainer-import-landed", `Import ${lineage.filter(item => item.status === "merged").map(item => "#" + item.number).join(", ")} merged${acceptedPatch && !current.length ? " with the verified equivalent pre-rebase patch" : ""}; the source PR remains open. Verify the landed change and reconcile the source PR; another import or fresh approval is not indicated.`);
   const followupBlocked = reasons.some(item => item.owner === "agent" || ["maintainer-triaged", "maintainer-ci-infrastructure", "maintainer-import-refresh", "maintainer-reapproval"].includes(item.id));
-  if (review.unknown && !review.incomplete && !followupBlocked)
+  if (reviewHold) add("maintainer-unknown", reviewHold.reason, "Maintainer requested a hold");
+  if (!reviewHold && review.unknown && !review.incomplete && !followupBlocked)
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
-  if (review.response && !newWaitComment && attentionDisposition(node, "author-feedback")?.action !== "batch-cleanup")
+  if (!reviewHold && review.response && !newWaitComment && attentionDisposition(node, "author-feedback")?.action !== "batch-cleanup")
     add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
-  if (!approved && !exported && !restoreLabel && !followupBlocked && !review.response && !review.unknown)
+  if (!reviewHold && !approved && !exported && !restoreLabel && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
   if ((approved || exported) && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport && !restoreLabel) {
     const open = active.filter(item => item.status === "open");
@@ -1812,7 +1820,7 @@ function appendSettledPublications(parent, node) {
 }
 function currentOutreach(node) {
   const pr = node.github;
-  if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open" || pr.mergeable === "CONFLICTING") return null;
+  if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open" || pr.mergeable === "CONFLICTING" || node.reviewOutreachHold) return null;
   const row = liveSnapshot?.reviewOutreach?.[pr.number];
   if (row?.head !== pr.head || row?.kind === "import-status" && !currentHeadApproval(pr) && !reviewedExport(node)) return null;
   return row;
