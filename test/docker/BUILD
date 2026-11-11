@@ -275,3 +275,28 @@ source_image_archive(
     image = "runtimes/php8.5.11",
     tags = ["manual"],
 )
+
+docker_daemon_config(
+    name = "ruby_clock_config",
+    testonly = True,
+    images = [":images_benchmarks_rubydev_amd64_tar"],
+)
+
+docker_command_test(
+    name = "ruby_clock_test",
+    size = "large",
+    command = ":ruby_clock_boundary.sh",
+    docker_config = ":ruby_clock_config",
+    exec_properties = docker_test_exec_properties(free_disk = "40GB", memory = "8GB"),
+    tags = ["manual"],
+)
+
+source_image_archive(
+    name = "ruby_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+    exec_properties = docker_test_exec_properties(exec_group = "", free_disk = "40GB", memory = "8GB"),
+    image = "benchmarks/rubydev",
+    tags = ["manual"],
+)
