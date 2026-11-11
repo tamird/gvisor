@@ -45,16 +45,9 @@ single_version_override(
 
 archive_override(
     module_name = "rules_go",
-    integrity = "sha256-0/gWsj+zrbIEuGGqBCaJjv8qFQrGgcFgvtOqGxSA/Rs=",
-    strip_prefix = "rules_go-68804a20e8d6059d38953d9c9558d4352652aa9c",
-    urls = ["https://github.com/bazel-contrib/rules_go/archive/68804a20e8d6059d38953d9c9558d4352652aa9c.tar.gz"],
-    patch_strip = 1,
-    patches = [
-        "//tools:rules_cgo.patch",
-        "//tools:rules_go_export.patch",
-        "//tools:rules_go_bootstrap_shell.patch",
-        "//test/rbe/sdk_links:diagnostic-path.patch",
-    ],
+    integrity = "sha256-Rc+bIA3M+oqYZh3ssA3wtlmVi6TLbNSckDYo2vKFgBQ=",
+    strip_prefix = "rules_go-2b0358c4e1ba19da33d8703a732a42cfe84ed79c",
+    urls = ["https://github.com/tamird/rules_go/archive/2b0358c4e1ba19da33d8703a732a42cfe84ed79c.tar.gz"],
 )
 
 single_version_override(

@@ -1,7 +1,7 @@
-name: Check the real Go SDK builder with a relative executable
+name: Check the supplier Go SDK bootstrap shell
 on:
   push:
-    branches: [qualification/rules-go-linked-sdk-scratch]
+    branches: [qualification/rules-go-supplier-bootstrap-shell]
 permissions: {}
 jobs:
   bootstrap:
@@ -17,7 +17,7 @@ jobs:
           mkdir -p "$work/results"
           public=https://github.com/tamird/gvisor.git
           git init -q .
-          GIT_TERMINAL_PROMPT=0 git fetch -q --depth=3 "$public" "$GITHUB_SHA"
+          GIT_TERMINAL_PROMPT=0 git fetch -q --depth=4 "$public" "$GITHUB_SHA"
           git checkout -q --detach "$GITHUB_SHA"
           test "$(cat .bazelversion)" = 9.3.1
           git diff --exit-code f86924e215f07e2ef382865df136b750671da0c6 HEAD -- . ':!MODULE.bazel' ':!.github/workflows/build.yml' ':!.github/qualification/sdk_links.py' ':!test/rbe/sdk_links'
@@ -59,7 +59,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && !cancelled()
         with:
-          name: current-go-sdk-relative-link
+          name: supplier-go-sdk-shell
           path: ${{ runner.temp }}/sdk-native/results/*.json
           if-no-files-found: error
           retention-days: 14

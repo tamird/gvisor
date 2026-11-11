@@ -21,8 +21,6 @@ CASES = (
     ("stock-shebang", SDK, False, None),
     ("declared-shell", SDK, True, None),
     ("relative", FIXTURE, True, None),
-    ("relative-readlink", FIXTURE, True, "readlink"),
-    ("relative-both", FIXTURE, True, "both"),
 )
 
 
@@ -116,17 +114,13 @@ def main():
         if name.startswith("relative"):
             witness = row.get("witness", [])
             assert witness and witness[0].startswith("relative-target=../") and witness[0].endswith("/bin/go"), (name, witness)
-        if not row["bazelExit"]:
-            for product in PRODUCTS:
-                entry = row["files"][product]
-                assert entry["elf64le"] and entry["machine"] == 62 and entry["bytes"] > 1024, name
-                assert entry["sha256"] == builder["outputs"][product], (name, product)
-        else:
-            want = {"relative": "readlink", "relative-readlink": "dirname"}.get(name)
-            assert want and any(want + ":" in msg for msg in row["diagnostics"]), name
-    assert not rows["declared-shell"]["bazelExit"] and not rows["relative-both"]["bazelExit"]
+        assert not row["bazelExit"], (name, row["diagnostics"])
+        for product in PRODUCTS:
+            entry = row["files"][product]
+            assert entry["elf64le"] and entry["machine"] == 62 and entry["bytes"] > 1024, name
+            assert entry["sha256"] == builder["outputs"][product], (name, product)
     for product in PRODUCTS:
-        assert rows["declared-shell"]["files"][product]["sha256"] == rows["relative-both"]["files"][product]["sha256"], product
+        assert rows["declared-shell"]["files"][product]["sha256"] == rows["relative"]["files"][product]["sha256"], product
 
 
 if __name__ == "__main__":
