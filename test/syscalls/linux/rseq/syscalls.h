@@ -45,14 +45,6 @@ namespace testing {
 // Maximum Linux error number.
 constexpr int kMaxErrno = 4095;
 
-// Errno values.
-#define EPERM 1
-#define EINTR 4
-#define EAGAIN 11
-#define EFAULT 14
-#define EBUSY 16
-#define EINVAL 22
-
 // Get the error number from a raw system call return value.
 // Returns a positive error number or 0 if there was no error.
 static inline int sys_errno(uintptr_t rval) {

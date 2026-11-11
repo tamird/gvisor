@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <errno.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // asm/signal.h needs size_t from stddef.h.
 #include <asm/signal.h>
@@ -22,7 +24,6 @@
 #include "test/syscalls/linux/rseq/critical.h"
 #include "test/syscalls/linux/rseq/syscalls.h"
 #include "test/syscalls/linux/rseq/test.h"
-#include "test/syscalls/linux/rseq/types.h"
 #include "test/syscalls/linux/rseq/uapi.h"
 
 namespace gvisor {
