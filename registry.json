@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T22:07:50+00:00",
+    "updatedAt": "2026-11-11T22:24:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -103427,6 +103427,37 @@
         {
           "label": "Native Ruby test log, XML, host device and container path checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/43105062304/artifacts/13893973900"
+        }
+      ]
+    },
+    {
+      "id": "investigation:cos-driver-580-196-07",
+      "title": "COS driver check rejects NVIDIA 580.196.07",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-11T22:24:09+00:00",
+      "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
+      "findings": [
+        {
+          "text": "NVIDIA published the kernel module source for this patch. The source tag permits an ABI comparison with the nearest supported driver. Compatibility and installation remain unverified.",
+          "evidence": [
+            {
+              "label": "NVIDIA 580.196.07 source release",
+              "url": "https://github.com/NVIDIA/open-gpu-kernel-modules/releases/tag/580.196.07"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare the driver ABI and installer with the nearest gVisor-supported patch, and check whether an open PR already adds support.",
+      "evidence": [
+        {
+          "label": "Container-Optimized OS driver check, build #54517",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54517#01a1cca5-1418-49e2-8d35-b49f0a21b458"
+        },
+        {
+          "label": "NVIDIA 580.196.07 source release",
+          "url": "https://github.com/NVIDIA/open-gpu-kernel-modules/releases/tag/580.196.07"
         }
       ]
     }

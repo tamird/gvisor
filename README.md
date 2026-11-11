@@ -634,17 +634,15 @@ keeps its existing author/agent priority. No service status establishes merge
 readiness or a test count. Titles, labels and comments never invent
 an import relationship or graph edge.
 
-If an authored source closes with a known merged export of an older revision,
-or a previously linked older export merges after closure, the refresh emits an
-agent inspection in `publicImportHandoff`. The collector follows known links
-without re-fetching every closed source. The handoff repeats until an exact or
-verified equivalent delivery is found, a tree replay proves the final change
-already landed, a current export is in progress, or the source owner records
-what happened. Use the existing `followup` on the final source head:
-cite the merged import, record the observation after closure and merge, and
-link any separate delivery or pending work. Different SHAs are not proof of a
-lost fix. This comparison does not send a reminder or create a contributor
-decision. Previously observed closures are not announced again on rollout.
+When an export of an older revision merges, the tracker queues an agent
+inspection in `publicImportHandoff`. Open and draft sources appear under
+Agent work. The collector follows known exports after a source closes
+without re-fetching every closed PR. A matching
+delivery, a verified tree replay on master, or a current replacement export
+on an open source clears the task. To record the comparison, bind the
+source's `followup` to its current head, cite the merged export, and name
+what still needs to land. Date that observation after both the export merge
+and the source update (or closure).
 
 Every refreshed tracked PR also inspects the latest 100 cross-reference events
 and retains public PR sources with their author, body, URL, head and event time.
