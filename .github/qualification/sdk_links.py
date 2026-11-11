@@ -46,7 +46,7 @@ def measure(case, prefix, declared, helpers):
     inv = str(uuid.uuid4())
     args = [
         *native.BAZEL, "--bazelrc=" + str(WORK / "remote.bazelrc"), "build",
-        *native.flags("amd64", declared), "--spawn_strategy=remote", "--remote_download_outputs=toplevel",
+        *native.flags("amd64", declared), "--distdir=" + str(WORK / "distdir"), "--spawn_strategy=remote", "--remote_download_outputs=toplevel",
         "--remote_timeout=300", "--action_env=SDK_LINK_CASE=" + case, "--invocation_id=" + inv,
         "--execution_log_json_file=" + str(spawnfile),
     ]
@@ -74,11 +74,13 @@ def measure(case, prefix, declared, helpers):
         outputs = {Path(f["path"]).name: f.get("digest", {}).get("hash") for f in spawn.get("actualOutputs", [])}
         wrappers = [f.get("digest", {}).get("hash") for f in spawn.get("inputs", [])
                     if f["path"].endswith("/go/private/rules/binary_wrapper.sh")]
+        interpreter = next((f.get("digest", {}).get("hash") for f in spawn.get("inputs", [])
+                            if command and f["path"] == command[0]), None)
         row["spawns"].append({"mnemonic": spawn["mnemonic"], "owner": spawn.get("targetLabel"),
                               "runner": spawn.get("runner"), "cache": bool(spawn.get("cacheHit")),
                               "exit": int(spawn.get("exitCode", 0)), "status": native.signals(spawn.get("status", "")),
                               "diagnostics": safe_diagnostics(spawn.get("status", "")),
-                              "argv0": command[0] if command else None, "wrapper": wrappers,
+                              "argv0": command[0] if command else None, "wrapper": wrappers, "interpreterSha256": interpreter,
                               "GO_BINARY": env.get("GO_BINARY"), "PATH": env.get("PATH"),
                               "worker": {k: props.get(k) for k in native.expected("amd64")}, "outputs": outputs})
     root = ROOT / ("external/" + prefix.lstrip("@").split("//")[0] if prefix == SDK else "test/rbe/sdk_links")
@@ -110,6 +112,7 @@ def main():
             assert any("no such file" in msg.lower() for msg in row["diagnostics"] + builder["diagnostics"]), name
             continue
         assert builder["argv0"].endswith("/test/rbe/go_bootstrap/ash"), name
+        assert builder["interpreterSha256"] == "dbac288c29ba568459550a2da9e7ae0ded6b1fc728ee9fad3044c44e62d6ac14", name
         if name.startswith("relative"):
             witness = row.get("witness", [])
             assert witness and witness[0].startswith("relative-target=../") and witness[0].endswith("/bin/go"), (name, witness)
