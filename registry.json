@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T19:14:34+00:00",
+    "updatedAt": "2026-11-11T19:24:40+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44,8 +44,8 @@
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
-      "lastCompletedAt": null,
-      "lastResult": null
+      "lastCompletedAt": "2026-11-11T19:24:19+00:00",
+      "lastResult": "Removed 2,274 local branches and 1,314 fork branches. After cleanup, 4,210 local and 5,139 fork branches remained; two new local branches appeared during the inventory. Verified all 3,588 removed names were absent and all 3,588 tips recoverable from the local archive. All 235 inventoried open upstream PR heads remained and every inventoried tracker citation retained a publicly reachable commit."
     }
   },
   "groups": [
@@ -46611,9 +46611,9 @@
       "title": "Build source exports without a Git version stamp",
       "url": "https://github.com/tamird/gvisor/commit/8b4856bbd",
       "group": "rbe",
-      "status": "Agent work",
+      "status": "Contributor review requested",
       "summary": "The release publisher sets one Bazel --embed_label for the standard runsc installation, its checkpoints and its Debian package. The revised change declares the version once in the Go library and removes ten executable-level stamp declarations. Unnamed builds report (devel) and store the linked Sentry build ID in checkpoints. Builders that supplied STABLE_VERSION can pass the same value with --stamp --embed_label.",
-      "updatedAt": "2026-11-11T18:47:20+00:00",
+      "updatedAt": "2026-11-11T19:23:26+00:00",
       "evidence": [
         {
           "label": "Signed source with distinct version imports",
@@ -46622,6 +46622,18 @@
         {
           "label": "Native release metadata and eight installed checkpoint restores",
           "url": "https://github.com/tamird/gvisor/actions/runs/43078670798/artifacts/13883378238"
+        },
+        {
+          "label": "Both coverage launchers ignored the release label and the unnamed version changed from VERSION_MISSING to (devel)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43080716720/artifacts/13886060203"
+        },
+        {
+          "label": "TestCheckpointMetadata/systrap passed in direct and Bazel test logs; the standalone wrapper expected an XML file",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43085323699/artifacts/13887500268"
+        },
+        {
+          "label": "Previous proposal returned for a revised checkpoint version model",
+          "url": "https://github.com/tamird/gvisor/commit/111c72d26"
         },
         {
           "label": "Revised source with a single library version declaration",
@@ -46723,14 +46735,16 @@
         }
       },
       "followup": {
-        "owner": "Build and release",
+        "owner": "Contributor",
         "sourceHead": "8b4856bbd7f5e8daf209246b2fe211a4df36327f",
-        "observedAt": "2026-11-11T18:47:20+00:00",
-        "disposition": "The native build passed after the kernel version import was aliased. All eight guest restore comparisons passed, as did the Debian, CLI and netgofer version checks.",
-        "nextAction": "Verify the owning wire-codec test and separately built coverage launcher, then assess the release and restore evidence.",
+        "observedAt": "2026-11-11T19:23:26+00:00",
+        "disposition": "All eight installed guest restore comparisons and Debian, CLI and netgofer version checks passed. Both coverage launchers ignored the release label. Direct and Bazel logs record TestCheckpointMetadata/systrap passing in 0.12 seconds. The standalone wrapper exited 1 when it could not find its expected XML file.",
+        "nextAction": "Review the revised single-commit release and checkpoint version change for submission after its recorded prerequisites.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8b4856bbd",
           "https://github.com/tamird/gvisor/actions/runs/43078670798/artifacts/13883378238",
+          "https://github.com/tamird/gvisor/actions/runs/43080716720/artifacts/13886060203",
+          "https://github.com/tamird/gvisor/actions/runs/43085323699/artifacts/13887500268",
           "https://github.com/tamird/gvisor/commit/b6c1c66c6",
           "https://github.com/tamird/gvisor/actions/runs/43077713792",
           "https://github.com/tamird/gvisor/commit/8c826374e",
@@ -46747,9 +46761,16 @@
           "https://github.com/tamird/gvisor/actions/runs/41180272657/artifacts/13037961695"
         ]
       },
-      "contributorChangesRequested": {
-        "head": "111c72d26660563b1cf23993293c4aa6fbdec851",
-        "url": "https://github.com/tamird/gvisor/commit/111c72d26"
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "8b4856bbd7f5e8daf209246b2fe211a4df36327f",
+        "baseHead": "0e702d775d4f14ade5136a00f3ba349dfc7ccbed",
+        "url": "https://github.com/tamird/gvisor/commit/8b4856bbd",
+        "title": "Build source exports without a Git version stamp",
+        "body": "Every development build runs git describe. In a source export it yields\n0.0.0, so two different Sentries can appear to be the same version\nwhen one tries to restore a checkpoint written by the other.\n\nHave the release publisher pass its tag to Bazel with --embed_label.\nUse that label for the standard runsc installation, its checkpoints\nand its Debian package. Builders that supplied their own STABLE_VERSION\ncan pass the same label with --stamp --embed_label.\n\nAn unnamed build reports (devel). Save its linked Sentry build ID in\nthe checkpoint so that the same executable can restore it and a\ndifferent one is rejected before loading the kernel.\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Review the revised single-commit release and checkpoint version change for submission after its recorded prerequisites.",
+        "requestedAt": "2026-11-11T19:23:26+00:00"
       }
     },
     {
@@ -74679,6 +74700,55 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43071328237/artifacts/13878581857"
         }
       ]
+    },
+    {
+      "id": "branch:gazelle-public-go-repository-config",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/bazel-gazelle",
+      "ref": "proposal/public-go-repository-config",
+      "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+      "title": "Expose the Go repository map to Bazel actions",
+      "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-11T19:23:26+00:00",
+      "summary": "Ordinary Gazelle and a sandboxed BUILD-file check can pass the same public input to -repo_config. On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
+      "evidence": [
+        {
+          "label": "Single supplier commit for a public repository-map input",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766"
+        },
+        {
+          "label": "Upstream repository-map format discussion",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/2413"
+        },
+        {
+          "label": "Separate change to defer loading the Go environment",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+        "observedAt": "2026-11-11T19:23:26+00:00",
+        "disposition": "On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
+        "nextAction": "Submit this single commit to bazel-contrib/bazel-gazelle?",
+        "evidence": [
+          "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
+          "https://github.com/bazel-contrib/bazel-gazelle/issues/2413"
+        ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+        "baseHead": "cdbba80c45c02a79c6581e61bc6590c90daccfd0",
+        "title": "Expose the Go repository map to Bazel actions",
+        "body": "gVisor checks BUILD files by running Gazelle in a sandboxed Bazel action. The gazelle rule passes the binary a table of Go imports and their Bazel repositories. A separate action needs the same input. Importing the generated repository directly works until bazel mod tidy removes it.\n\nExpose the input as @gazelle//:go_repository_config and use that label in the gazelle rule. Callers pass the file to -repo_config. The label can still point to a different file if Gazelle adopts the format proposed in [1].\n\nWith Bazel 9.3.1, a test action that imported github.com/bazel-contrib/bazel-gazelle/v2/config kept the dependency @gazelle//v2/config. Renaming the module to my_gazelle produced @my_gazelle//v2/config. Omitting the input dropped the dependency and failed the BUILD file check in both cases.\n\n[1]: https://github.com/bazel-contrib/bazel-gazelle/issues/2413\n\nPrepared by Codex on behalf of @tamird.",
+        "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
+        "summary": "Submit this single commit to bazel-contrib/bazel-gazelle?",
+        "requestedAt": "2026-11-11T19:23:26+00:00"
+      }
     }
   ],
   "edges": [
