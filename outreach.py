@@ -282,7 +282,8 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         if (event.get("actor") or {}).get("__typename") == "Bot" or opening_codeowner:
             automatic.add(reviewer)
         else:
-            contacts[reviewer] = max(contacts.get(reviewer, instant(event["at"])), instant(event["at"]))
+            contact = (asked, "")
+            contacts[reviewer] = max(contacts.get(reviewer, contact), contact)
     for item in pr["feedback"]["items"]:
         who = item.get("author") or {}
         if who.get("__typename") != "User" or who.get("login", "").lower() in {"copybara-service","googlebot"}:
@@ -296,8 +297,9 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         asks = requested_in_comment(item, number) if login == owner.lower() and item["kind"] in {"comment","inline"} else set()
         if asks:
             asked = instant(item.get("createdAt")) or at
+            contact = (asked, item.get("url") or "")
             for name in asks:
-                contacts[name] = max(contacts.get(name, asked), asked)
+                contacts[name] = max(contacts.get(name, contact), contact)
             continue
         if item.get("state") == "DISMISSED" or (login != owner.lower() and item.get("body", "").lstrip().startswith("[🤖")):
             continue
@@ -306,17 +308,20 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
             owner_activity = max(owner_activity, at)
         else:
             responses[login] = max(responses.get(login, at), at)
-    prior = {name for name, at in contacts.items() if not (
+    prior = {name for name, (at, _) in contacts.items() if not (
         name in responses and at < responses[name] < owner_activity)}
-    last_contact = max((contacts[name] for name in prior if contacts[name] >= started), default=None)
-    if last_contact is not None and last_contact > activity:
-        due = business_deadline(last_contact, 2)
+    last_contact = max((contacts[name] for name in prior if contacts[name][0] >= started), default=None)
+    if last_contact is not None and last_contact[0] > activity:
+        due = business_deadline(last_contact[0], 2)
     else:
         due = business_deadline(activity, 5)
     info = {"number": number, "head": head, "lastActivity": activity.isoformat(), "dueAt": due.isoformat()}
     if last_contact is not None:
-        info["lastContactAt"] = last_contact.isoformat()
-        info["lastReviewers"] = sorted(name for name in prior if contacts[name] == last_contact)
+        at, url = last_contact
+        info["lastContactAt"] = at.isoformat()
+        info["lastReviewers"] = sorted(name for name in prior if contacts[name][0] == at)
+        if url:
+            info["lastContactURL"] = url
     if current - contacts.keys() - automatic:
         return {**info, "status": "incomplete"}
     if now < due or now.astimezone(PACIFIC).weekday() >= 5:

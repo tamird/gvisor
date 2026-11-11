@@ -163,18 +163,23 @@ class OutreachTest(unittest.TestCase):
         self.assertEqual(action(p, node={"outreachReviewClock": proof})["status"], "waiting")
 
     def test_recent_personal_contact_and_rotation(self):
+        url = "https://github.com/google/gvisor/pull/1#issuecomment-123"
         for channel in ("request", "comment"):
             with self.subTest(channel=channel):
-                p=pr()
-                at="2026-11-06T18:00:00Z"
-                if channel=="request":
-                    p["reviewTimeline"]["items"]=[ask("alice",at)]
-                    p["reviewRequests"]=[{"login":"alice"}]
+                p = pr()
+                at = "2026-11-06T18:00:00Z"
+                if channel == "request":
+                    p["reviewTimeline"]["items"] = [ask("alice", at)]
+                    p["reviewRequests"] = [{"login": "alice"}]
+                    p["feedback"]["items"] = [comment("tamird", "@alice, could you take a look?", START, url=url)]
                 else:
-                    p["feedback"]["items"]=[comment("tamird","@alice, could you take a look?",at)]
-                self.assertEqual(action(p)["dueAt"],"2026-11-10T10:00:00-08:00")
-                self.assertEqual(action(p)["lastReviewers"],["alice"])
-                self.assertEqual(action(p,"2026-11-10T18:00:00Z")["reviewer"],"bob")
+                    p["feedback"]["items"] = [comment("tamird", "@alice, could you take a look?", at, url=url)]
+                row = action(p)
+                self.assertEqual(row["status"], "waiting")
+                self.assertEqual(row.get("lastContactURL"), url if channel == "comment" else None)
+                self.assertEqual(row["dueAt"], "2026-11-10T10:00:00-08:00")
+                self.assertEqual(row["lastReviewers"], ["alice"])
+                self.assertEqual(action(p, "2026-11-10T18:00:00Z")["reviewer"], "bob")
 
     def test_unchanged_bot_assignment_allows_one_effective_mention(self):
         p=pr()
