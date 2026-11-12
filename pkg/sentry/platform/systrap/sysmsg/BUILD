@@ -73,10 +73,6 @@ freestanding_cc_binary(
         "-Wl,-z,noexecstack",
         "-Wl,-T,$(location pie.lds.S)",
     ],
-    local_defines = select({
-        "//tools/bazeldefs:pagesize_64k": ["PAGE_SIZE=65536"],
-        "//conditions:default": ["PAGE_SIZE=4096"],
-    }),
 )
 
 genrule(
@@ -122,10 +118,10 @@ go_library(
     name = "sysmsg",
     srcs = [
         "sysmsg.go",
-        "sysmsg_4k.go",
-        "sysmsg_64k.go",
         "sysmsg_amd64.go",
         "sysmsg_arm64.go",
+        "sysmsg_layout_amd64.go",
+        "sysmsg_layout_arm64.go",
         "sysmsg_unsafe.go",
         ":sighandler_go_arch",
     ],
