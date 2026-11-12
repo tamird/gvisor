@@ -1,35 +1,47 @@
-name: CI
-
-"on":
+name: Verify the trace test sink retries
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/trace-test-sink-retries-evidence]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native-arm64:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Set up the established native ARM64 Bazel test runner
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test "$(uname -m)" = aarch64
+          test "$(getconf PAGESIZE)" = 4096
+          dir="$RUNNER_TEMP/trace-retries"
+          mkdir -p "$dir/results"
+          test -n "$BUILDBUDDY_API_KEY"
+          printf 'build --remote_cache=grpcs://remote.buildbuddy.io\nbuild --remote_header=x-buildbuddy-api-key=%s\nbuild --remote_upload_local_results=false\n' "$BUILDBUDDY_API_KEY" > "$dir/cache.bazelrc"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$dir/bazelisk"
+          echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $dir/bazelisk" | sha256sum -c
+          chmod 755 "$dir/bazelisk"
+          test "$("$dir/bazelisk" --version)" = 'bazel 9.3.1'
+          # Use the hosted job's existing namespace fixture for rootless TestAll.
+          if [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
+            sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Run the complete normal workload and the isolated socket control
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/trace-retries"
+          cp .github/qualification/{trace_sink_check.py,trace_sink_fixture.go} "$dir"
+          python3 -B "$dir/trace_sink_check.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: trace-sink-arm64-results
+          path: ${{ runner.temp }}/trace-retries/results/
+          if-no-files-found: error
+          retention-days: 14
