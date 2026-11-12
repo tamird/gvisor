@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T10:03:08+00:00",
+    "updatedAt": "2026-11-12T10:27:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5708,8 +5708,8 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. An external Bazel module that explicitly adopted gVisor’s dependency overrides also cross-built the full nine-file ARM64 release. Both the unmodified master and the compiler integration reject the default downstream module at Gazelle evaluation.",
-      "updatedAt": "2026-11-12T09:42:01+00:00",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation.",
+      "updatedAt": "2026-11-12T10:13:48+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -59823,8 +59823,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T09:54:04+00:00",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.",
+      "updatedAt": "2026-11-12T10:22:34+00:00",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. Neither guest produced a test result in this run.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -59913,6 +59913,10 @@
         {
           "label": "One ARM64 Sentry boots 4 KiB and 64 KiB guests under QEMU TCG",
           "url": "https://github.com/tamird/gvisor/actions/runs/42417769342/artifacts/13592453813"
+        },
+        {
+          "label": "Latest LLVM ARM64 release, stub arguments, GNU probe and guest result inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43197555515/artifacts/13934866163"
         }
       ],
       "settledReviews": [
@@ -75910,7 +75914,7 @@
       "title": "Confine the sandbox to a device cgroup",
       "url": "https://github.com/google/gvisor/pull/16485",
       "status": "open",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "updatedAt": "2026-11-12T10:22:34+00:00",
       "summary": "The #17291 export failed to create all 797 TestLLM readiness clients on an Ubuntu GPU worker. Its runtime device-selection changes match the current source. The client asks for an image and a server link. Only the Ollama server explicitly requests a GPU.",
       "evidence": [
         {
@@ -75934,15 +75938,21 @@
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Agpu-ollama-readiness"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "bab22586d8048207c4838be25f38ed41bcd98410",
-        "url": "https://github.com/google/gvisor/pull/16485/files#diff-1dc829f21764f85b856a4bf53ab11bf0f37472af77cb5e8384df3c24bb03b216R89",
-        "title": "Report the TestLLM client-create failures",
-        "summary": "Send this review to Ayush about the clients that failed before making a readiness request?",
-        "body": "On #17291 (170233fab), the Ollama server started, but each of the 797 readiness-client creates failed before the HTTP request: `failed to get Nvidia driver version: failed to open /dev/nvidiactl: operation not permitted` [1]. The server requests a GPU. The client requests only its image and a link to the server [2]. This device-selection code matches bab22586d. Should a client that requests no GPU need a driver-version lookup when the worker sets `--nvproxy=true`?\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31\n[2]: https://github.com/google/gvisor/blob/bab22586d/pkg/test/llmutil/llmutil.go#L154-L166"
-      }
+      "settledReviews": [
+        {
+          "kind": "review",
+          "status": "settled",
+          "head": "bab22586d8048207c4838be25f38ed41bcd98410",
+          "url": "https://github.com/google/gvisor/pull/16485/files#diff-1dc829f21764f85b856a4bf53ab11bf0f37472af77cb5e8384df3c24bb03b216R89",
+          "title": "Report the TestLLM client-create failures",
+          "summary": "Send this review to Ayush about the clients that failed before making a readiness request?",
+          "body": "On #17291 (170233fab), the Ollama server started, but each of the 797 readiness-client creates failed before the HTTP request: `failed to get Nvidia driver version: failed to open /dev/nvidiactl: operation not permitted` [1]. The server requests a GPU. The client requests only its image and a link to the server [2]. This device-selection code matches bab22586d. Should a client that requests no GPU need a driver-version lookup when the worker sets `--nvproxy=true`?\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31\n[2]: https://github.com/google/gvisor/blob/bab22586d/pkg/test/llmutil/llmutil.go#L154-L166\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "note": "Posted the approved inline question about the non-GPU readiness client’s driver lookup.",
+          "at": "2026-11-12T10:20:04Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16485#discussion_r4549116273"
+        }
+      ]
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:938",
@@ -75955,7 +75965,7 @@
       "title": "Share toolchain args and features across runtime stages",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938",
       "status": "open",
-      "updatedAt": "2026-11-12T05:39:44+00:00",
+      "updatedAt": "2026-11-12T10:22:34+00:00",
       "summary": "The static ASan symbolizer fails to compile with unmapped C++ actions on the proposed toolchain. Keeping the complete argument list in the caller’s configuration fixes that build and preserves bootstrap sharing.",
       "evidence": [
         {
@@ -75967,15 +75977,21 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "baa2066bd9f6830d078228a9047649f8334f712e",
-        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938/files#diff-e7d8be841079bafe098625e6532ea9bab03d4112d1badddc4c887a5253b6e914R299",
-        "title": "Send the static ASan symbolizer fix to the #938 author",
-        "summary": "Post one inline review on the default toolchain arguments?",
-        "body": "The unmapped build fails here when compiling the static ASan symbolizer. The include path points to the dynamic build of libc++, but the module map lists headers from the static build. Selecting `@llvm//toolchain:toolchain_args` directly in the default arm keeps those paths together [1]. Each of the three bootstrap argument lists still has one configured instance.\n\nWith that change on Linux AMD64, all 61 mapped tests passed and all 139 unmapped targets built [2].\n\n[1]: https://github.com/tamird/hermetic-llvm/commit/7c9e7687d\n[2]: https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "review",
+          "status": "settled",
+          "head": "baa2066bd9f6830d078228a9047649f8334f712e",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938/files#diff-e7d8be841079bafe098625e6532ea9bab03d4112d1badddc4c887a5253b6e914R299",
+          "title": "Send the static ASan symbolizer fix to the #938 author",
+          "summary": "Post one inline review on the default toolchain arguments?",
+          "body": "We’re evaluating this for gVisor’s switch to hermetic-llvm. Its Linux cross-builds select both glibc and musl [3], so sharing the bootstrap toolchain across configurations is useful to us.\n\nThe unmapped build fails here when compiling the static ASan symbolizer. The include path points to the dynamic build of libc++, but the module map lists headers from the static build. Selecting `@llvm//toolchain:toolchain_args` directly in the default arm keeps those paths together [1]. Each of the three bootstrap argument lists still has one configured instance.\n\nWith that change on Linux AMD64, all 61 mapped tests passed and all 139 unmapped targets built [2].\n\n[1]: https://github.com/tamird/hermetic-llvm/commit/7c9e7687d\n[2]: https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062\n[3]: https://github.com/tamird/gvisor/commit/8178e3fe5\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "note": "Posted the verified correction and explained why gVisor’s cross-builds benefit from sharing bootstrap configurations.",
+          "at": "2026-11-12T10:20:09Z",
+          "postedURL": "https://github.com/hermeticbuild/hermetic-llvm/pull/938#discussion_r4549117254"
+        }
+      ]
     },
     {
       "id": "pr:17083",
@@ -75988,7 +76004,7 @@
       "title": "unix: block connect(2) while the accept queue is full",
       "url": "https://github.com/google/gvisor/pull/17083",
       "status": "open",
-      "updatedAt": "2026-11-12T07:25:07+00:00",
+      "updatedAt": "2026-11-12T10:22:34+00:00",
       "summary": "The C++ lint job on Copybara import #17531 and its first retry reported the same 11 missing-include warnings in accept_bind.cc. The approved source at 65afc4e12 has the same file. A five-line fix adds four direct includes and the Bazel logging dependency. The project’s pinned clang-tidy reproduced all 11 warnings on the source and passed on the fix.",
       "evidence": [
         {
@@ -76016,14 +76032,26 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43174587259/artifacts/13923806226"
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
-        "url": "https://github.com/google/gvisor/pull/17083#issuecomment-new",
-        "title": "Share the five-line C++ lint fix with the author",
-        "summary": "Post the tested fix on #17083 for @sam10ridh?",
-        "body": "@sam10ridh, the C++ lint job on #17531 reported 11 missing-include warnings in `accept_bind.cc`. Its first retry reported the same 11. [Failed import job](https://buildkite.com/gvisor/pipeline/builds/54633#01a1ce7b-d869-4b4c-a69b-426ce9a86215)\n\n[This five-line fix](https://github.com/tamird/gvisor/commit/07039a3aa) adds the four headers that declare the names used by the test and the Bazel dependency for `test/util/logging.h`. The project’s clang-tidy reproduced all 11 warnings on 65afc4e12 and reported none on the amended file. [Passing check](https://github.com/tamird/gvisor/actions/runs/43174587259/job/131035638662)\n\nPosted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
+          "url": "https://github.com/google/gvisor/pull/17083#issuecomment-new",
+          "title": "Share the five-line C++ lint fix with the author",
+          "summary": "Post the tested fix on #17083 for @sam10ridh?",
+          "body": "@sam10ridh, the C++ lint job on #17531 reported 11 missing-include warnings in `accept_bind.cc`. Its first retry reported the same 11. [Failed import job](https://buildkite.com/gvisor/pipeline/builds/54633#01a1ce7b-d869-4b4c-a69b-426ce9a86215)\n\n[This five-line fix](https://github.com/tamird/gvisor/commit/07039a3aa) adds the four headers that declare the names used by the test and the Bazel dependency for `test/util/logging.h`. The project’s clang-tidy reproduced all 11 warnings on 65afc4e12 and reported none on the amended file. [Passing check](https://github.com/tamird/gvisor/actions/runs/43174587259/job/131035638662)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "declined",
+          "note": "Tamir withdrew the proposed CI comment. Keep the lint evidence on the work map.",
+          "at": "2026-11-12T10:22:34+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
+        "observedAt": "2026-11-12T10:22:34+00:00",
+        "disposition": "The contributor declined posting about this CI finding.",
+        "nextAction": "Retain the tested include changes here. Revisit only if the author asks for help interpreting the result or new evidence changes the diagnosis."
       }
     },
     {
@@ -76031,12 +76059,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/check-nic-info-stack-lock",
-      "head": "8ceb51f216ffb44c7edc62ed4fa42a3a3508e976",
+      "head": "086b82de617401078acdbb5c3cc2dde615e9d02d",
       "title": "Check the stack read lock when collecting NIC information",
-      "url": "https://github.com/tamird/gvisor/commit/8ceb51f21",
+      "url": "https://github.com/google/gvisor/pull/17545",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-12T08:08:14+00:00",
+      "status": "Published as #17545",
+      "updatedAt": "2026-11-12T10:24:30+00:00",
       "summary": "The two NIC information queries hold the stack read lock while copying the NIC name and coordinator. The proposal makes that documented requirement checkable. On Linux AMD64 and ARM64, the stock analyzer accepted an unlocked call. With the annotation, it rejected only that call and accepted shared and exclusive lock holders. The unmodified production callers passed on both architectures.",
       "evidence": [
         {
@@ -76054,18 +76082,36 @@
         {
           "label": "NIC multicast change that touched the helper",
           "url": "https://github.com/google/gvisor/pull/16059"
+        },
+        {
+          "label": "Published gVisor PR #17545 at 086b82de6",
+          "url": "https://github.com/google/gvisor/pull/17545"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "8ceb51f216ffb44c7edc62ed4fa42a3a3508e976",
-        "baseHead": "f5828756d24ee60ebce2cb407dbb06dd853ad7ca",
-        "url": "https://github.com/tamird/gvisor/commit/8ceb51f21",
-        "title": "Check the stack read lock when collecting NIC information",
-        "body": "SetNICName and SetNICCoordinator update the NIC’s name and coordinator under the stack mutex. Both NIC information queries hold its read lock while nicInfo copies those fields. Replace the helper’s prose precondition with +checklocksread:s.mu so Nogo checks future callers.\n\nThe stack Nogo target passed on AMD64 and ARM64. Before the change, it accepted all three control calls. With the annotation it accepted shared and exclusive holders and rejected the unlocked call on both architectures.\n\nA separate field-guard experiment produced 12 findings per architecture. Nogo could not equate the stack whose mutex the caller held with the stack reached through the NIC pointer. The proposed change checks the helper’s entry contract.\n\nPrepared by Codex on behalf of @tamird.",
-        "summary": "Review the single commit for submission to gVisor.",
-        "requestedAt": "2026-11-12T08:08:14+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "8ceb51f216ffb44c7edc62ed4fa42a3a3508e976",
+          "baseHead": "f5828756d24ee60ebce2cb407dbb06dd853ad7ca",
+          "url": "https://github.com/tamird/gvisor/commit/8ceb51f21",
+          "title": "Check the stack read lock when collecting NIC information",
+          "body": "SetNICName and SetNICCoordinator update the NIC’s name and coordinator under the stack mutex. Both NIC information queries hold its read lock while nicInfo copies those fields. Replace the helper’s prose precondition with +checklocksread:s.mu so Nogo checks future callers.\n\nThe stack Nogo target passed on AMD64 and ARM64. Before the change, it accepted all three control calls. With the annotation it accepted shared and exclusive holders and rejected the unlocked call on both architectures.\n\nA separate field-guard experiment produced 12 findings per architecture. Nogo could not equate the stack whose mutex the caller held with the stack reached through the NIC pointer. The proposed change checks the helper’s entry contract.\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Review the single commit for submission to gVisor.",
+          "requestedAt": "2026-11-12T08:08:14+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17545",
+          "at": "2026-11-12T10:24:30+00:00",
+          "note": "The approved patch was rebased without changes onto 816bc580a and published at 086b82de6 in #17545."
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "disposition": "The approved change was published as #17545.",
+        "owner": "Agent",
+        "sourceHead": "086b82de617401078acdbb5c3cc2dde615e9d02d",
+        "observedAt": "2026-11-12T10:24:30+00:00",
+        "nextAction": "Follow CI and maintainer feedback on #17545."
       }
     },
     {
@@ -76074,11 +76120,11 @@
       "repo": "tamird/gvisor",
       "group": "tests",
       "ref": "proposal/http-benchmark-readiness-errors",
-      "head": "f574a3be17a7628d7b04a690158e8816e022a7fb",
-      "url": "https://github.com/tamird/gvisor/commit/f574a3be1",
+      "head": "92c2c4ff86b674a8d910e2227312e161f1d4613d",
+      "url": "https://github.com/google/gvisor/pull/17546",
       "title": "Stop HTTP benchmarks when the server probe fails",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-12T08:11:59+00:00",
+      "status": "Published as #17546",
+      "updatedAt": "2026-11-12T10:24:30+00:00",
       "summary": "When the benchmarks/util image was missing, stock started Hey for both servers. Nginx passed and Node failed to parse a NaN latency. The fix reported the missing image on port 80 for Nginx and 8080 for Node, before either run started Hey. After restoring the image, both benchmarks passed. The six original Docker event logs record which containers started. Four aggregate flags compared an explicit :latest tag with names Docker emitted without the tag.",
       "evidence": [
         {
@@ -76096,19 +76142,89 @@
         {
           "label": "Stock Node readiness call before Hey",
           "url": "https://github.com/google/gvisor/blob/f5828756d/test/benchmarks/network/node_test.go#L108"
+        },
+        {
+          "label": "Published gVisor PR #17546 at 92c2c4ff8",
+          "url": "https://github.com/google/gvisor/pull/17546"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "f574a3be17a7628d7b04a690158e8816e022a7fb",
-        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
-        "url": "https://github.com/tamird/gvisor/commit/f574a3be1",
-        "title": "Stop HTTP benchmarks when the server probe fails",
-        "body": "The Nginx, Apache and Node benchmarks discard errors from the server readiness probe. If the probe cannot start, they still launch the timed HTTP client.\n\nReport the probe error with the server and port before starting Hey. In a controlled run with the probe image missing, stock Nginx passed and stock Node reported a NaN latency. With the fix, both reported the missing image and neither started Hey. Both passed when the probe image was restored.\n\nPrepared by Codex on behalf of @tamird.",
-        "summary": "Review the single commit for submission to gVisor.",
-        "requestedAt": "2026-11-12T08:11:59+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "f574a3be17a7628d7b04a690158e8816e022a7fb",
+          "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+          "url": "https://github.com/tamird/gvisor/commit/f574a3be1",
+          "title": "Stop HTTP benchmarks when the server probe fails",
+          "body": "The Nginx, Apache and Node benchmarks discard errors from the server readiness probe. If the probe cannot start, they still launch the timed HTTP client.\n\nReport the probe error with the server and port before starting Hey. In a controlled run with the probe image missing, stock Nginx passed and stock Node reported a NaN latency. With the fix, both reported the missing image and neither started Hey. Both passed when the probe image was restored.\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Review the single commit for submission to gVisor.",
+          "requestedAt": "2026-11-12T08:11:59+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17546",
+          "at": "2026-11-12T10:24:30+00:00",
+          "note": "The approved patch was rebased without changes onto 816bc580a and published at 92c2c4ff8 in #17546."
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "disposition": "The approved change was published as #17546.",
+        "owner": "Agent",
+        "sourceHead": "92c2c4ff86b674a8d910e2227312e161f1d4613d",
+        "observedAt": "2026-11-12T10:24:30+00:00",
+        "nextAction": "Follow CI and maintainer feedback on #17546."
       }
+    },
+    {
+      "id": "pr:17544",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17544,
+      "ref": "proposal/checkpoint-tsc-sample",
+      "head": "1819499c62ac98b182e567f6cf398fca63a7ce89",
+      "title": "Check TSC samples taken after restore",
+      "url": "https://github.com/google/gvisor/pull/17544",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-12T10:24:30+00:00"
+    },
+    {
+      "id": "pr:17545",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17545,
+      "ref": "proposal/check-nic-info-stack-lock",
+      "head": "086b82de617401078acdbb5c3cc2dde615e9d02d",
+      "title": "Check the stack read lock when collecting NIC information",
+      "url": "https://github.com/google/gvisor/pull/17545",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-12T10:24:30+00:00"
+    },
+    {
+      "id": "pr:17546",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17546,
+      "ref": "proposal/http-benchmark-readiness-errors",
+      "head": "92c2c4ff86b674a8d910e2227312e161f1d4613d",
+      "title": "Stop HTTP benchmarks when the server probe fails",
+      "url": "https://github.com/google/gvisor/pull/17546",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-12T10:24:30+00:00"
+    },
+    {
+      "id": "pr:17547",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17547,
+      "ref": "fix/node-http10-close-event",
+      "head": "fb415d423cd04ac8d3ce8f405a052ccfc8d711b1",
+      "title": "test/runtimes: backport Node’s HTTP/1.0 close test",
+      "url": "https://github.com/google/gvisor/pull/17547",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-12T10:27:56+00:00"
     }
   ],
   "edges": [
@@ -100676,7 +100792,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T09:42:01+00:00",
+      "updatedAt": "2026-11-12T10:13:48+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -100941,7 +101057,7 @@
           ]
         },
         {
-          "text": "On master 56ffe2272 and compiler integration a066005a6, Gazelle rejected gVisor’s non-root gazelle_override before @gvisor//:release could compile. Scoping gVisor’s Go overrides and Linux header selection to its root let a plain consumer resolve protobuf, but the resulting 1,683-byte source still opened the executable. A consuming root that adopted the ten Go overrides, the three Bazel module overrides and the header selection got the same 963-byte patched source as the gVisor root. The ARM64 target and AMD64 execution GoCompilePkg actions both declared that file.",
+          "text": "On master 56ffe2272 and compiler integration a066005a6, Gazelle rejected gVisor’s non-root gazelle_override before @gvisor//:release could compile. The qualification changed gVisor’s MODULE.bazel to give its Linux 6.18 header selection (#16804) and its ten Go override tags (one module_override and nine gazelle_override tags) root-only extension usages. A plain consumer could then resolve protobuf, but the 1,683-byte source still opened the executable. The successful consumer explicitly adopted the Go overrides, selected the same headers and supplied gVisor’s three Bazel module overrides. Its ARM64 target and AMD64 execution compile actions used the gVisor root’s 963-byte patched protobuf source. The fileset build tested these changes together.",
           "evidence": [
             {
               "label": "Default consumer on both original trees",
@@ -100950,6 +101066,10 @@
             {
               "label": "Default and adopting modules, protobuf source hashes and configured compile actions",
               "url": "https://github.com/tamird/gvisor/actions/runs/43189980677/artifacts/13932001376"
+            },
+            {
+              "label": "The qualification edits the supplier module and constructs the adopting module",
+              "url": "https://github.com/tamird/gvisor/blob/664916b51/test/rbe/downstream_release.py#L128-L166"
             }
           ]
         },
@@ -101612,7 +101732,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T05:39:44+00:00",
+      "updatedAt": "2026-11-12T10:22:34+00:00",
       "summary": "Follow intermittent failures on source PRs, Copybara imports, master, and release builds. The individual investigations link to the first useful error and the retry and name the next diagnostic.",
       "findings": [
         {
@@ -101666,7 +101786,7 @@
           ]
         }
       ],
-      "nextStep": "Read new failures and recovered jobs across contributors. Group matching test failures by their actual error, check existing issues and fixes, and keep the investigation open until the fix has been exercised.",
+      "nextStep": "Read new failures and recovered jobs across contributors. Group matching test failures by their actual error, check existing issues and fixes, and keep the investigation open until the fix has been exercised. Keep status-only reports here. Propose a public CI reply only for a substantive diagnosis, requested interpretation or verified fix.",
       "evidence": [
         {
           "label": "GitHub issues mentioning “flaky”",
@@ -105800,7 +105920,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T03:27:32+00:00",
+      "updatedAt": "2026-11-12T10:24:30+00:00",
       "summary": "On KVM, TestCheckpointRestoreAdjustedTSC treated a sample written after restore as a new measurement. The guest had already read its monotonic clock before checkpoint. The next sample showed the expected TSC increase.",
       "findings": [
         {
@@ -105834,7 +105954,7 @@
           ]
         }
       ],
-      "nextStep": "The contributor can review the single-commit test correction for submission to gVisor.",
+      "nextStep": "Follow CI and maintainer feedback on #17544. After landing, check subsequent KVM checkpoint runs for the same assertion.",
       "evidence": [
         {
           "label": "Guest measurement and write",
@@ -105843,19 +105963,29 @@
         {
           "label": "Host selection of the first post-restore sample",
           "url": "https://github.com/google/gvisor/blob/2f5253abf/runsc/container/container_save_restore_test.go#L2573-L2589"
+        },
+        {
+          "label": "Published gVisor PR #17544 at 1819499c6",
+          "url": "https://github.com/google/gvisor/pull/17544"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "requestedAt": "2026-11-12T03:27:32+00:00",
-        "head": "3958a8ef4bd8d933bb68f7bdae8a5d55e98926aa",
-        "baseHead": "2f5253abfaa87b6d62d79a0da60942e773389934",
-        "url": "https://github.com/tamird/gvisor/commit/3958a8ef4",
-        "title": "Check TSC samples taken after restore",
-        "body": "The guest can read its clocks before checkpoint and write the result after restore. In the KVM failure, the guest sampled its monotonic clock before checkpoint and reported that value after restore. The test used this line to check the TSC offset [1].\n\nWait for two new readings before the next checkpoint. The guest writes each reading before sampling again, so the second one was taken after restore. Keep the monotonicity checks on every reading.\n\nThe original test failed when the guest was held between sampling and writing. The revised test passed both the forced interleaving and an ordinary KVM run, and still failed when the injected offset was omitted [2].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54574/jobs/01a1cd33-cec7-42d6-8656-408406593c90/artifacts/01a1cd3b-9208-422a-82d0-6221dbfb7bbd\n[2]: https://github.com/tamird/gvisor/actions/runs/43146220995/artifacts/13912830656\n\nFixes: d5f2e7f30 (\"runsc: Add test for VDSO time reading with adjusted TSC.\")\n\nPrepared by Codex on behalf of @tamird.",
-        "summary": "Open the tested KVM clock correction against gVisor?"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "requestedAt": "2026-11-12T03:27:32+00:00",
+          "head": "3958a8ef4bd8d933bb68f7bdae8a5d55e98926aa",
+          "baseHead": "2f5253abfaa87b6d62d79a0da60942e773389934",
+          "url": "https://github.com/tamird/gvisor/commit/3958a8ef4",
+          "title": "Check TSC samples taken after restore",
+          "body": "The guest can read its clocks before checkpoint and write the result after restore. In the KVM failure, the guest sampled its monotonic clock before checkpoint and reported that value after restore. The test used this line to check the TSC offset [1].\n\nWait for two new readings before the next checkpoint. The guest writes each reading before sampling again, so the second one was taken after restore. Keep the monotonicity checks on every reading.\n\nThe original test failed when the guest was held between sampling and writing. The revised test passed both the forced interleaving and an ordinary KVM run, and still failed when the injected offset was omitted [2].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54574/jobs/01a1cd33-cec7-42d6-8656-408406593c90/artifacts/01a1cd3b-9208-422a-82d0-6221dbfb7bbd\n[2]: https://github.com/tamird/gvisor/actions/runs/43146220995/artifacts/13912830656\n\nFixes: d5f2e7f30 (\"runsc: Add test for VDSO time reading with adjusted TSC.\")\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Open the tested KVM clock correction against gVisor?",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/17544",
+          "at": "2026-11-12T10:24:30+00:00",
+          "note": "The approved patch was rebased without changes onto 816bc580a and published at 1819499c6 in #17544."
+        }
+      ]
     },
     {
       "id": "investigation:hermetic-llvm-bootstrap-stages",
@@ -105863,7 +105993,7 @@
       "group": "bazel",
       "status": "active",
       "owner": "Compiler toolchain integration",
-      "updatedAt": "2026-11-12T05:39:44+00:00",
+      "updatedAt": "2026-11-12T10:22:34+00:00",
       "summary": "Each supplier PR preserved the GNU and musl bootstrap link arguments on its own. Together they made Bazel reject the bootstrap C++ toolchain during analysis because it lacked static_link_cpp_runtimes. The five gVisor compiler prerequisites remain unchanged.",
       "findings": [
         {
@@ -105962,7 +106092,7 @@
           ]
         }
       ],
-      "nextStep": "Share the qualified three-file correction with the #938 author after contributor review. Combining #938 with #909 also requires the separate bootstrap link fix.",
+      "nextStep": "Follow the supplier’s response to the static ASan symbolizer fix. Combining #938 with #909 also requires the separate bootstrap link fix.",
       "evidence": [
         {
           "label": "Runtime link libraries #909",
@@ -106211,7 +106341,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T08:42:54+00:00",
+      "updatedAt": "2026-11-12T10:27:56+00:00",
       "summary": "Node 22.2.0 shard 3 checked Socket.closed at a fixed deadline and observed false. The same shard passed on retry. Node already waits for the close event in newer releases.",
       "findings": [
         {
@@ -106270,22 +106400,32 @@
         {
           "label": "Image manifest, per-runtime test hashes and original and delayed test logs",
           "url": "https://github.com/tamird/gvisor/actions/runs/43167070037/artifacts/13922850238"
+        },
+        {
+          "label": "Published Node HTTP/1.0 test backport and pinned-suite rationale",
+          "url": "https://github.com/google/gvisor/pull/17547"
         }
       ],
-      "nextStep": "Contributor review of the Node test backport for the pinned image.",
+      "nextStep": "Follow CI and review on #17547. The adjacent pinned response-timer test remains a separate finding.",
       "repo": "google/gvisor",
-      "head": "c776a5072f70a9aa43579604c1976478e1a05084",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "requestedAt": "2026-11-12T06:53:57+00:00",
-        "head": "c776a5072f70a9aa43579604c1976478e1a05084",
-        "baseHead": "79c4fcfcee9d02ff0d94196d8119f4831c35c332",
-        "url": "https://github.com/tamird/gvisor/commit/c776a5072",
-        "title": "test/runtimes: backport Node’s HTTP/1.0 close test",
-        "body": "The pinned Node 22.2.0 test checks the HTTP/1.0 client socket 100 ms\nafter it writes the request. An AMD64 runtime shard still saw an open\nsocket and passed on retry [1] [2].\n\nBackport the test fix by Arne Keller and Luigi Pinca [3]. Check that\nthe server has ended the socket when the response finishes and wait for\nthe client's close event. Keep the HTTP/1.1 reuse checks and the\nexisting image timeout adjustments.\n\nDelaying the HTTP response by 250 ms reproduced the assertion on runc\nand systrap. The packaged test passed both with and without that delay\non each runtime [4].\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce24-f1e8-48c4-b72b-0c54ee6deae8\n[2]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce33-161a-4991-9c1e-06e4d2ac55f3\n[3]: https://github.com/nodejs/node/commit/b6fe731c5\n[4]: https://github.com/tamird/gvisor/actions/runs/43167070037/artifacts/13922850238\n\nPrepared by Codex on behalf of @tamird.",
-        "summary": "Open the one-commit test backport against gVisor? The original timed check failed on both runtimes with a delayed response; the packaged event-based test passed."
-      }
+      "head": "fb415d423cd04ac8d3ce8f405a052ccfc8d711b1",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "requestedAt": "2026-11-12T06:53:57+00:00",
+          "head": "c776a5072f70a9aa43579604c1976478e1a05084",
+          "baseHead": "79c4fcfcee9d02ff0d94196d8119f4831c35c332",
+          "url": "https://github.com/tamird/gvisor/commit/c776a5072",
+          "title": "test/runtimes: backport Node’s HTTP/1.0 close test",
+          "body": "The pinned Node 22.2.0 test checks the HTTP/1.0 client socket 100 ms\nafter it writes the request. An AMD64 runtime shard still saw an open\nsocket and passed on retry [1] [2].\n\nBackport the test fix by Arne Keller and Luigi Pinca [3]. Check that\nthe server has ended the socket when the response finishes and wait for\nthe client's close event. Keep the HTTP/1.1 reuse checks and the\nexisting image timeout adjustments.\n\nDelaying the HTTP response by 250 ms reproduced the assertion on runc\nand systrap. The packaged test passed both with and without that delay\non each runtime [4].\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce24-f1e8-48c4-b72b-0c54ee6deae8\n[2]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce33-161a-4991-9c1e-06e4d2ac55f3\n[3]: https://github.com/nodejs/node/commit/b6fe731c5\n[4]: https://github.com/tamird/gvisor/actions/runs/43167070037/artifacts/13922850238\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Open the one-commit test backport against gVisor? The original timed check failed on both runtimes with a delayed response; the packaged event-based test passed.",
+          "outcome": "approved-with-changes",
+          "note": "The contributor approved the code and requested a rationale for keeping the pinned Node suite, with citations tied to claims. #17547 publishes the same patch at fb415d423 with that rationale.",
+          "at": "2026-11-12T10:22:34+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17547"
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-trace-testall-fcntl",
@@ -106293,7 +106433,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T09:06:56+00:00",
+      "updatedAt": "2026-11-12T10:25:57+00:00",
       "summary": "On ARM64, TestAll saw every required trace event except MESSAGE_SYSCALL_FCNTL. The workload checked fcntl(F_GETFL) and exited successfully. Six writes to the remote sink returned EAGAIN. The log did not record their message types. Buildkite #54644 passed after the same-head retry.",
       "findings": [
         {
@@ -106339,21 +106479,30 @@
         {
           "label": "Native ARM64 comparison of the complete TestAll and an isolated socketpair marker on stock and candidate",
           "url": "https://github.com/tamird/gvisor/actions/runs/43184625954"
+        },
+        {
+          "label": "The sink retries the same writev record after EAGAIN",
+          "url": "https://github.com/google/gvisor/blob/56ffe2272/pkg/sentry/seccheck/sinks/remote/remote.go#L224-L240"
         }
       ],
-      "nextStep": "Review the single-commit change to TestAll for submission to gVisor.",
+      "nextStep": "Keep the missing fcntl event under investigation. The test setting controls retries of the same complete writev record. In the controlled run the reader drained after the first EAGAIN, so one retry delivered the record. The original six EAGAINs did not identify the records or when the reader drained. Establish what should end retries before proposing a cutoff.",
       "repo": "google/gvisor",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "requestedAt": "2026-11-12T09:06:56+00:00",
-        "head": "dcf8de077c91352e612bc0fa23576b86b8e2d6a0",
-        "baseHead": "56ffe22724925a43ab36b6f1a72009e0a69e7c81",
-        "url": "https://github.com/tamird/gvisor/commit/dcf8de077",
-        "title": "test/trace: retry transient remote sink writes in TestAll",
-        "body": "TestAll requires at least one message of every configured type. On an ARM64 run, the remote sink reported six EAGAIN drops and the receiver collected no fcntl message [1]. The receiver already drains the socket in parallel and waits for disconnect before checking the messages.\n\nAllow the test sink ten retries when its socket is temporarily full. Keep the existing event checks and the normal sink configuration.\n\nOn native ARM64, four ordinary runs each received two fcntl messages. In two controlled trials per revision, the original sink dropped a marked message and the revised sink delivered it on its first retry [2].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54644/jobs/01a1cebd-acbc-485a-851d-52831fbcc1d8/artifacts/01a1cec6-cf40-48e8-a1f2-278554edc06f\n[2]: https://github.com/tamird/gvisor/actions/runs/43186788252/artifacts/13928519398\n\nPrepared by Codex on behalf of @tamird.",
-        "summary": "Open the tested change to retry transient sink writes in TestAll?"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "requestedAt": "2026-11-12T09:06:56+00:00",
+          "head": "dcf8de077c91352e612bc0fa23576b86b8e2d6a0",
+          "baseHead": "56ffe22724925a43ab36b6f1a72009e0a69e7c81",
+          "url": "https://github.com/tamird/gvisor/commit/dcf8de077",
+          "title": "test/trace: retry transient remote sink writes in TestAll",
+          "body": "TestAll requires at least one message of every configured type. On an ARM64 run, the remote sink reported six EAGAIN drops and the receiver collected no fcntl message [1]. The receiver already drains the socket in parallel and waits for disconnect before checking the messages.\n\nAllow the test sink ten retries when its socket is temporarily full. Keep the existing event checks and the normal sink configuration.\n\nOn native ARM64, four ordinary runs each received two fcntl messages. In two controlled trials per revision, the original sink dropped a marked message and the revised sink delivered it on its first retry [2].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54644/jobs/01a1cebd-acbc-485a-851d-52831fbcc1d8/artifacts/01a1cec6-cf40-48e8-a1f2-278554edc06f\n[2]: https://github.com/tamird/gvisor/actions/runs/43186788252/artifacts/13928519398\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Open the tested change to retry transient sink writes in TestAll?",
+          "outcome": "changes-requested",
+          "note": "The contributor accepted the diagnosis and asked whether the write itself should retry and how the test-only setting reaches that code.",
+          "at": "2026-11-12T10:22:34+00:00"
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-moby-network-namespace",
