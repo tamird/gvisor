@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T07:15:37+00:00",
+    "updatedAt": "2026-11-12T07:25:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -75907,6 +75907,55 @@
         "summary": "Post one inline review on the default toolchain arguments?",
         "body": "The unmapped build fails here when compiling the static ASan symbolizer. The include path points to the dynamic build of libc++, but the module map lists headers from the static build. Selecting `@llvm//toolchain:toolchain_args` directly in the default arm keeps those paths together [1]. Each of the three bootstrap argument lists still has one configured instance.\n\nWith that change on Linux AMD64, all 61 mapped tests passed and all 139 unmapped targets built [2].\n\n[1]: https://github.com/tamird/hermetic-llvm/commit/7c9e7687d\n[2]: https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "pr:17083",
+      "type": "pr",
+      "group": "tests",
+      "repo": "google/gvisor",
+      "number": 17083,
+      "ref": "samridh/unix-connect-wait",
+      "head": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
+      "title": "unix: block connect(2) while the accept queue is full",
+      "url": "https://github.com/google/gvisor/pull/17083",
+      "status": "open",
+      "updatedAt": "2026-11-12T07:25:07+00:00",
+      "summary": "The C++ lint job on Copybara import #17531 and its first retry reported the same 11 missing-include warnings in accept_bind.cc. The approved source at 65afc4e12 has the same file. A five-line fix adds four direct includes and the Bazel logging dependency. The project’s pinned clang-tidy reproduced all 11 warnings on the source and passed on the fix.",
+      "evidence": [
+        {
+          "label": "Copybara import #17531",
+          "url": "https://github.com/google/gvisor/pull/17531"
+        },
+        {
+          "label": "Build 54633, original C++ lint failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54633#01a1ce7b-d869-4b4c-a69b-426ce9a86215"
+        },
+        {
+          "label": "First retry, same 11 diagnostics",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54633#01a1ce89-f9dc-4005-9b62-4537d78b7a89"
+        },
+        {
+          "label": "Five-line fix on the contributor’s source",
+          "url": "https://github.com/tamird/gvisor/commit/07039a3aa"
+        },
+        {
+          "label": "Original source diagnostics and compile command",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43173668200/artifacts/13922569916"
+        },
+        {
+          "label": "Passing lint log and compile command",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43174587259/artifacts/13923806226"
+        }
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
+        "url": "https://github.com/google/gvisor/pull/17083#issuecomment-new",
+        "title": "Share the five-line C++ lint fix with the author",
+        "summary": "Post the tested fix on #17083 for @sam10ridh?",
+        "body": "@sam10ridh, the C++ lint job on #17531 reported 11 missing-include warnings in `accept_bind.cc`. Its first retry reported the same 11. [Failed import job](https://buildkite.com/gvisor/pipeline/builds/54633#01a1ce7b-d869-4b4c-a69b-426ce9a86215)\n\n[This five-line fix](https://github.com/tamird/gvisor/commit/07039a3aa) adds the four headers that declare the names used by the test and the Bazel dependency for `test/util/logging.h`. The project’s clang-tidy reproduced all 11 warnings on 65afc4e12 and reported none on the amended file. [Passing check](https://github.com/tamird/gvisor/actions/runs/43174587259/job/131035638662)\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -105879,5 +105928,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-12T07:15:37+00:00"
+  "updatedAt": "2026-11-12T07:25:07+00:00"
 }
