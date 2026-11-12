@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T15:05:14+00:00",
+    "updatedAt": "2026-11-12T15:31:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5708,8 +5708,8 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.",
-      "updatedAt": "2026-11-12T15:05:14+00:00",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.",
+      "updatedAt": "2026-11-12T15:29:05+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6479,6 +6479,10 @@
         {
           "label": "Minimal ARM64 consuming root · cgroup2 source selection and subsequent Nogo failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/43242407780/artifacts/13955967390"
+        },
+        {
+          "label": "Stock rules_go with #16098, matched Nogo inputs and all nine cross-built ARM64 files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43244998205/artifacts/13959050709"
         }
       ],
       "refinement": {
@@ -30572,14 +30576,14 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T15:00:58+00:00",
-      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork rebase c2204517c carries the two MODULE hunks from hermetic-llvm #892 to preserve the two backends now selected by merged #15940. Validation is in progress on the fork.",
+      "updatedAt": "2026-11-12T15:31:37+00:00",
+      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. On master 59b69962b and the revision, the parser selects only AArch64 and X86. The newer LLVM source adds 210 configured C++ compilations per architecture (2,725 to 2,935 on AMD64 and 2,722 to 2,932 on ARM64). LLVM accounts for 184 and zlib for 26. The old comparison predates #15940. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "Contributor",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-06T19:15:56.025Z",
-        "disposition": "Published #17114 at the contributor-approved source. All four parser targets built and the remote parser test passed.",
-        "nextAction": "Follow the existing review requests and upstream checks on #17114. The source-input workstream owns the separate parity failures.",
+        "observedAt": "2026-11-12T15:31:37+00:00",
+        "disposition": "The published source conflicts with merged #15940. The native parser tests and license audit passed on the same tree as b61e5fd37.",
+        "nextAction": "Review b61e5fd37 for publication on the existing #17114.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17114",
           "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
@@ -30755,6 +30759,30 @@
         {
           "label": "Fork rebase preserving both parser backends",
           "url": "https://github.com/tamird/gvisor/commit/c2204517c"
+        },
+        {
+          "label": "Revised source preserving both backends and recording the new graph cost",
+          "url": "https://github.com/tamird/gvisor/commit/b61e5fd37"
+        },
+        {
+          "label": "AMD64 and ARM64 parser action graphs on current master and the revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43243591033/artifacts/13956307302"
+        },
+        {
+          "label": "Native AMD64 and ARM64 parser qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43243591033"
+        },
+        {
+          "label": "Original failed LLVM translation units and compiler stderr locations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42273255642/artifacts/13532960461"
+        },
+        {
+          "label": "Original AMD64 Clang diagnostic and retained RDFGraph parser action on both backends",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43247286285/artifacts/13958366224"
+        },
+        {
+          "label": "Uncached native AMD64 and ARM64 TestParser XML, ELF machine IDs and 224-dependency license audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43243591033/artifacts/13957948156"
         }
       ],
       "refinement": {
@@ -30785,6 +30813,17 @@
         "checkedVersion": "0.8.26",
         "blocking": false,
         "nextAction": "Inspect the published source for hermetic-llvm #883 (3dd710dd9) and #892 (17f6a3008). If both are present, evaluate removing the local Linux header backport and verify that the parser still builds only the X86 and AArch64 backends selected by gVisor #15940."
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "requestedAt": "2026-11-12T15:31:37+00:00",
+        "head": "b61e5fd3754ebdf6a9a9173eb9ecc08a08c408b3",
+        "baseHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+        "url": "https://github.com/tamird/gvisor/commit/b61e5fd37",
+        "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
+        "body": "The NVIDIA driver compatibility parser builds Clang from a separate LLVM\n22 development snapshot. That archive needs a local Bazel 9 patch and\nits own zlib rule.\n\nBuild the parser from hermetic-llvm's LLVM 23.1.2 archive. Keep the\nAArch64 and X86 backends that the parser uses by backporting the change\nthat makes the other seven development dependencies of hermetic-llvm\n[1]. With the same two backends, the parser has 210 more configured C++\ncompilations on each of AMD64 and ARM64. Of those, 184 are in LLVM and\n26 are in zlib [2].\n\nRecord the licenses of the linked components against the archive\nchecksum. LLVM's root notice includes Apache-2.0 with the LLVM exception\nand the legacy NCSA terms. LLVM Support's regex code also carries\nBSD-3-Clause and Spencer-94 notices. Select the CC0-1.0 option offered\nby BLAKE3.\n\n[1]: https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008\n[2]: https://github.com/tamird/gvisor/actions/runs/43243591033/artifacts/13956307302",
+        "summary": "Publish b61e5fd37 on #17114? The native AMD64 and ARM64 parser tests and the 224-dependency license audit passed. The revision preserves both supported backends, carries the supplier backport in gVisor’s root module, and records the measured 210 additional C++ compilations per architecture."
       }
     },
     {
@@ -59835,8 +59874,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T15:00:58+00:00",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. The locked guest retry used the same release manifest. Bazel timed out downloading the pinned qemu-system-arm 6.2 package from Ubuntu’s snapshot archive before either guest produced a test result. With all 202 pinned package archives available, the same LLVM-built Sentry (SHA-256 prefix be8778419) booted the probe as PID 1 under systrap in both ARM64 QEMU guests. On kernel 7.3.0-070300rc3-generic, AT_PAGESZ and sysconf returned 4,096. On 6.8.0-138-generic-64k both returned 65,536. Both tests ran uncached and exited 0.",
+      "updatedAt": "2026-11-12T15:28:13+00:00",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. The locked guest retry used the same release manifest. Bazel timed out downloading the pinned qemu-system-arm 6.2 package from Ubuntu’s snapshot archive before either guest produced a test result. With all 202 pinned package archives available, the same LLVM-built Sentry (SHA-256 prefix be8778419) booted the probe as PID 1 under systrap in both ARM64 QEMU guests. On kernel 7.3.0-070300rc3-generic, AT_PAGESZ and sysconf returned 4,096. On 6.8.0-138-generic-64k both returned 65,536. Both tests ran uncached and exited 0.\n\nOn the same integration, the declared Clang driver compiled and clang++ linked a static aarch64-linux-musl probe (SHA-256 prefix c49fb618f). The probe had no interpreter or shared-library dependencies. All nine release files matched the preceding run byte for byte. The same probe and Sentry be8778419 ran as PID 1 under systrap in two uncached QEMU tests. AT_PAGESZ and sysconf returned 4,096 bytes on the 7.3.0-070300rc3-generic kernel and 65,536 on 6.8.0-138-generic-64k. This run also removed the GNU cross-compiler installation used to build the earlier probe.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -59937,6 +59976,10 @@
         {
           "label": "Uncached 4 KiB and 64 KiB ARM64 guest XML, logs and input verification",
           "url": "https://github.com/tamird/gvisor/actions/runs/43239108200/artifacts/13955670068"
+        },
+        {
+          "label": "Clang-built static musl probe, nine release hashes and both uncached guest results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43244273528/artifacts/13956109226"
         }
       ],
       "settledReviews": [
@@ -100825,7 +100868,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T15:05:14+00:00",
+      "updatedAt": "2026-11-12T15:29:05+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -101134,6 +101177,15 @@
             {
               "label": "Gazelle #2513 · per-repository Go proto generation control",
               "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+            }
+          ]
+        },
+        {
+          "text": "With the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.",
+          "evidence": [
+            {
+              "label": "Stock rules_go with #16098, matched Nogo inputs and all nine cross-built ARM64 files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43244998205/artifacts/13959050709"
             }
           ]
         }
