@@ -1,35 +1,78 @@
-name: CI
-
-"on":
+name: Compare OpenJDK VM monitoring on the archived CI runtime
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/java21-monitor-54744]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  monitor:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the original runtime and Java image
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 022
+          git init -q .
+          git fetch -q --depth=2 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 5fc911bc988d4143ee59f6fb9b6066b2a7a5ebe9
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/runtimes/qualification_java_monitor'
+          w="$RUNNER_TEMP/java-monitor"
+          mkdir -p "$w"/{runtime,trace,receipt,docker-client}
+          echo "JAVA_MONITOR=$w" >> "$GITHUB_ENV"
+          echo "DOCKER_CONFIG=$w/docker-client" >> "$GITHUB_ENV"
+          echo 'DOCKER_HOST=unix:///tmp/gv-echo-54744.sock' >> "$GITHUB_ENV"
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          chmod +x "$w/bazel"
+          curl -qfsSL --retry 2 https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54744/jobs/01a1d1cd-54e2-460c-8842-43901607f3b6/artifacts/01a1d1e1-9c23-4cbf-9f7f-7747374fb197 -o "$w/runtime.tgz"
+          echo "02c53811c11b603b5ede5cb2fdf73d30ea991ccf9b5e4b39dca680334f194502  $w/runtime.tgz" | sha256sum -c -
+          python3 - "$w" <<'PY'
+          import json, pathlib, sys, tarfile
+          w = pathlib.Path(sys.argv[1])
+          names = ["runsc", "containerd-shim-runsc-v1"] + ["gvisor-bin/" + s for s in ("gvisor_sentry", "checkpointgofer", "runsc-netgofer", "runsc-metric-server", "runsc-fd-parking", "gvisor-sentry-prewarmer", "gvisor-proc-umounter")]
+          with tarfile.open(w / "runtime.tgz") as archive:
+              for name in names:
+                  member = archive.getmember("buildkite_runtime/" + name)
+                  assert member.isfile() and 0 < member.size < 150_000_000
+                  out = w / "runtime" / name
+                  out.parent.mkdir(exist_ok=True)
+                  out.write_bytes(archive.extractfile(member).read())
+                  out.chmod(0o755)
+          args = ["--platform=systrap", "--network=sandbox"]
+          (w / "daemon.json").write_text(json.dumps({"runtimes":{"monitor-ci":{"path":str(w / "runtime/runsc"),"runtimeArgs":args}}}))
+          PY
+      - name: Create the isolated job bridge and pull the pinned image
+        shell: bash
+        run: |
+          set -euo pipefail
+          d=/tmp/gv-echo-54744
+          sudo -n mkdir -m 700 "$d"
+          sudo -n dockerd --config-file="$JAVA_MONITOR/daemon.json" --host="$DOCKER_HOST" --group="$(id -gn)" \
+            --pidfile="$d/pid" --data-root="$d/data" --exec-root="$d/exec" --bridge=none \
+            --iptables=false --ip-forward=false --ip-masq=false --userland-proxy=false > "$JAVA_MONITOR/daemon.log" 2>&1 &
+          for i in {1..45}; do docker info >/dev/null 2>&1 && break; sleep 1; done
+          test "$(docker info --format '{{.DockerRootDir}}')" = "$d/data"
+          docker network create --driver bridge --subnet 172.30.193.0/24 --opt com.docker.network.bridge.enable_ip_masquerade=false monitor54744
+          docker pull --platform=linux/amd64 us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/java21_x86_64@sha256:c5a1419701eea132bc82193018a09a91296a8d9e96492495a72dd84040e0bb47
+          curl -qfsSL --retry 2 https://raw.githubusercontent.com/openjdk/jdk21u/jdk-21.0.13-ga/test/jdk/sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.java -o "$JAVA_MONITOR/MonitorVmStartTerminate.java"
+          echo "26607d05167c44a55a5c0c2e62c93ffc62f57e86c2e8f2b2665d16db5ace5439  $JAVA_MONITOR/MonitorVmStartTerminate.java" | sha256sum -c -
+      - name: Compare the two jtreg fixtures on runc and archived runsc
+        shell: bash
+        run: |
+          set -eu
+          "$JAVA_MONITOR/bazel" --nosystem_rc --nohome_rc test --config=x86_64 \
+            --remote_executor= --remote_cache= --bes_backend= --jobs=2 --lockfile_mode=off \
+            --module_mirrors=https://bcr.cloudflaremirrors.com --strategy=TestRunner=local \
+            --nocache_test_results --flaky_test_attempts=1 --test_timeout=4800 \
+            --test_env=DOCKER_HOST --test_env=DOCKER_CONFIG --test_env=JAVA_MONITOR --test_output=errors \
+            //test/runtimes/qualification_java_monitor:monitor
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: java-monitor-results
+          path: ${{ runner.temp }}/java-monitor/receipt/*
+          retention-days: 14
+          if-no-files-found: warn
