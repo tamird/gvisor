@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T20:54:31+00:00",
+    "updatedAt": "2026-11-12T21:05:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -8312,14 +8312,14 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-12T20:54:31+00:00",
-      "summary": "The published rebase contains one mergeable commit. The source tree is identical to 3aaa8098b. Seven Linux targets passed all 106 records, and the benchmark proxy rejected four invalid inputs and forwarded traffic in both directions. The four TCP throughput benchstat rows identify the earlier revision on which the measurements ran.",
+      "updatedAt": "2026-11-12T21:05:49+00:00",
+      "summary": "The published rebase contains one mergeable commit. The source tree is identical to 3aaa8098b. Seven Linux targets passed all 106 records, and the benchmark proxy rejected four invalid inputs and forwarded traffic in both directions. The four TCP throughput benchstat rows identify the earlier revision on which the measurements ran. The PR description also gives benchstat output for all nine address microbenchmarks. The current revision and its parent ran the same October fixture for 12 paired samples on one pinned Linux AMD64 CPU.",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "6eb3e7f3e5469c441b523c2da93feb5189cc827f",
-        "observedAt": "2026-11-12T20:54:31+00:00",
+        "observedAt": "2026-11-12T21:05:49+00:00",
         "disposition": "Published 6eb3e7f3e as one mergeable commit. GitHub retains approval. The previous two Copybara exports are closed.",
-        "nextAction": "Follow import of the new head. The agent is remeasuring the address microbenchmark because its original table is unavailable.",
+        "nextAction": "Follow the Copybara import of 6eb3e7f3e.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730",
           "https://github.com/tamird/gvisor/commit/3aaa8098b",
@@ -8327,7 +8327,8 @@
           "https://github.com/tamird/gvisor/actions/runs/43299873539",
           "https://github.com/tamird/gvisor/actions/runs/43299873539/job/131467855388",
           "https://github.com/tamird/gvisor/actions/runs/43299873539/artifacts/13982666321",
-          "https://github.com/tamird/gvisor/commit/6eb3e7f3e"
+          "https://github.com/tamird/gvisor/commit/6eb3e7f3e",
+          "https://github.com/tamird/gvisor/actions/runs/43305013086/artifacts/13983222922"
         ],
         "mergeable": "MERGEABLE"
       },
@@ -8591,6 +8592,10 @@
         {
           "label": "Published netip rebase with the four archived benchstat rows",
           "url": "https://github.com/tamird/gvisor/commit/6eb3e7f3e"
+        },
+        {
+          "label": "Address microbenchmarks on the published rebase and its parent, 12 paired samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43305013086/artifacts/13983222922"
         }
       ],
       "number": 15730,
