@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T05:55:57+00:00",
+    "updatedAt": "2026-11-12T06:27:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5709,7 +5709,7 @@
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
       "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
-      "updatedAt": "2026-11-12T01:12:58+00:00",
+      "updatedAt": "2026-11-12T06:27:42+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6451,6 +6451,14 @@
         {
           "label": "Native vDSO prerequisite merged through #16983",
           "url": "https://github.com/google/gvisor/commit/f855fc7c1"
+        },
+        {
+          "label": "Current compiler prerequisites with rules_go 0.65.0 and the new release archives",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43167092334"
+        },
+        {
+          "label": "Systrap /bin/true, two AArch64 ELFs and explicit GCC passed; archive fetch timed out",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43167092334/artifacts/13920807374"
         }
       ],
       "refinement": {
@@ -41618,9 +41626,9 @@
       "title": "Stage both release architectures with one Bazel target",
       "url": "https://github.com/tamird/gvisor/commit/1824f3ee0",
       "group": "release",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-07T09:26:58+00:00",
-      "summary": "One Bazel target stages a Debian package and two tarballs for each architecture. The revision maps generated-source filenames in the stamped release profile so a direct build and the staging target embed the same names. Ordinary developer builds keep their configured source paths.\n\nOn compiler and packaging integration f462794c0, all six stamped packages matched byte for byte. All nine installed executables matched in each format on AMD64 and ARM64. Twelve fresh package actions ran on native workers for their target architecture. The AMD64 CLI printed release-20261106.0. A separate check found that netgofer in those packages still reported (devel). The version prerequisite now sets the same label on both programs; both native architectures passed the matching and mismatching release checks.\n\nThe release line tables use bazel-out/cfg/bin for generated files. Reading those files required the matching configured output directory. Debugger source substitution has not been tested.",
+      "status": "Superseded",
+      "updatedAt": "2026-11-12T06:22:38+00:00",
+      "summary": "The architecture split is in #16490. The publisher uses its same six package outputs and rejects a missing architecture before signing. The older proposal also mapped generated-source paths for stamped builds. The publisher now tracks that check.",
       "evidence": [
         {
           "label": "Installed release identity on native AMD64 and ARM64; the source-version prerequisite supplies this correction",
@@ -41749,6 +41757,10 @@
         {
           "label": "Strict-lock offline release and negative inputs",
           "url": "https://github.com/tamird/gvisor/actions/runs/40902546567"
+        },
+        {
+          "label": "Current publisher built on the public architecture split",
+          "url": "https://github.com/tamird/gvisor/commit/9dbd43879"
         }
       ],
       "refinement": {
@@ -41760,24 +41772,16 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
-        "disposition": "Contributor review requested",
-        "observedAt": "2026-11-07T04:31:18+00:00",
+        "owner": "Release packaging",
+        "disposition": "Native archives are covered by #16490 and the staged release publisher.",
+        "observedAt": "2026-11-12T06:22:38+00:00",
         "sourceHead": "1824f3ee0a9e500491535331312ac08fe8da5004",
-        "nextAction": "Review the release-only path mapping. Open the revised publisher after the source-export version change, the Buildkite Bazelisk hook in #16904 and the declared LLVM compiler land.",
+        "nextAction": "Follow the staged release publisher for labeled builds and the CI caller.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16490",
+          "https://github.com/tamird/gvisor/commit/9dbd43879",
           "https://github.com/tamird/gvisor/actions/runs/42337163017/artifacts/13560294242",
-          "https://github.com/tamird/gvisor/compare/d58d385a8..1824f3ee0",
-          "https://github.com/tamird/gvisor/commit/f462794c0",
-          "https://github.com/tamird/gvisor/compare/a303ec933...d58d385a8",
-          "https://github.com/tamird/gvisor/compare/2c0b9071a..d58d385a8",
-          "https://github.com/tamird/gvisor/actions/runs/41192639560/artifacts/13039296853",
-          "https://github.com/tamird/gvisor/actions/runs/41179358011/artifacts/13035026611",
-          "https://github.com/tamird/gvisor/actions/runs/41181562756/artifacts/13035475625",
-          "https://github.com/tamird/gvisor/actions/runs/41175683641/artifacts/13033387866",
-          "https://github.com/tamird/gvisor/commit/11013b7d6",
-          "https://github.com/tamird/gvisor/actions/runs/41359642500/artifacts/13104458912",
-          "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
+          "https://github.com/tamird/gvisor/actions/runs/42399661675/artifacts/13585307666"
         ]
       },
       "settledReviews": [
@@ -41789,19 +41793,21 @@
           "summary": "Review the staging change for submission after the source-export version change a303ec933, the Buildkite Bazelisk hook eafcb8392 and the declared LLVM compiler bcb5de5b2 land. The Python release step keeps its separate Docker command. The earlier archive evidence and the missing-ARM64-input rejection still apply.",
           "at": "2026-11-07T04:09:41+00:00",
           "outcome": "superseded"
+        },
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "1824f3ee0a9e500491535331312ac08fe8da5004",
+          "baseHead": "a303ec9336e4844e589cd35c891301856369038a",
+          "url": "https://github.com/tamird/gvisor/commit/1824f3ee0",
+          "title": "Stage both release architectures with Bazel",
+          "body": "The release job builds each architecture separately, copies files into\na staging directory, then extracts the compressed tarballs to identify\nthe architecture again when signing them.\n\nBuild the two Debian packages and four tarballs with one command:\nbazel build //debian:release-artifacts. Keep each architecture's files\ntogether so the publisher can select the destination from the path.\nRequire all six files before signing. A caller with a prebuilt set\ncan sign it without starting Bazel.\n\nMap output paths in the release_version profile. Go records generated\nsource filenames in the executable, and the architecture transition\notherwise adds a configuration suffix that a direct build does not use.\nKeep physical generated-source paths available to ordinary debug builds.",
+          "summary": "One Bazel target stages a Debian package and two tarballs for each architecture. The revision maps generated-source filenames in the stamped release profile so a direct build and the staging target embed the same names. Ordinary developer builds keep their configured source paths.\n\nOn compiler and packaging integration f462794c0, all six stamped packages matched byte for byte. All nine installed executables matched in each format on AMD64 and ARM64. Twelve fresh package actions ran on native workers for their target architecture. The AMD64 CLI printed release-20261106.0. A separate check found that netgofer in those packages still reported (devel). The version prerequisite now sets the same label on both programs; both native architectures passed the matching and mismatching release checks.\n\nThe release line tables use bazel-out/cfg/bin for generated files. Reading those files required the matching configured output directory. Debugger source substitution has not been tested.",
+          "requestedAt": "2026-11-07T04:31:18+00:00",
+          "at": "2026-11-12T06:22:38+00:00",
+          "outcome": "Superseded by #16490 and the staged release publisher. The release-label check is retained on the publisher."
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "1824f3ee0a9e500491535331312ac08fe8da5004",
-        "baseHead": "a303ec9336e4844e589cd35c891301856369038a",
-        "url": "https://github.com/tamird/gvisor/commit/1824f3ee0",
-        "title": "Stage both release architectures with Bazel",
-        "body": "The release job builds each architecture separately, copies files into\na staging directory, then extracts the compressed tarballs to identify\nthe architecture again when signing them.\n\nBuild the two Debian packages and four tarballs with one command:\nbazel build //debian:release-artifacts. Keep each architecture's files\ntogether so the publisher can select the destination from the path.\nRequire all six files before signing. A caller with a prebuilt set\ncan sign it without starting Bazel.\n\nMap output paths in the release_version profile. Go records generated\nsource filenames in the executable, and the architecture transition\notherwise adds a configuration suffix that a direct build does not use.\nKeep physical generated-source paths available to ordinary debug builds.",
-        "summary": "One Bazel target stages a Debian package and two tarballs for each architecture. The revision maps generated-source filenames in the stamped release profile so a direct build and the staging target embed the same names. Ordinary developer builds keep their configured source paths.\n\nOn compiler and packaging integration f462794c0, all six stamped packages matched byte for byte. All nine installed executables matched in each format on AMD64 and ARM64. Twelve fresh package actions ran on native workers for their target architecture. The AMD64 CLI printed release-20261106.0. A separate check found that netgofer in those packages still reported (devel). The version prerequisite now sets the same label on both programs; both native architectures passed the matching and mismatching release checks.\n\nThe release line tables use bazel-out/cfg/bin for generated files. Reading those files required the matching configured output directory. Debugger source substitution has not been tested.",
-        "requestedAt": "2026-11-07T04:31:18+00:00"
-      }
+      ]
     },
     {
       "id": "branch:overlay-close-lifetime",
@@ -65007,13 +65013,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/release-staging-standalone",
-      "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76",
+      "head": "9dbd438791b322ce0d8e4f3c1393581b51155b2b",
       "title": "Stage release downloads and checksums with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/2306ebce4",
+      "url": "https://github.com/tamird/gvisor/commit/9dbd43879",
       "group": "release",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-08T23:04:47+00:00",
-      "summary": "Bazel already knows each archive’s target architecture. This revision stages the Debian package and both download archives for AMD64 and ARM64, with one SHA512 checkfile per archive. Tagged builds add the wheel and source distribution. Debian signing and APT index generation stay on the trusted release host. The earlier shell publisher a7e84cf82 was withdrawn after review.\n\nThe tested commit 3432ab916 has the same source tree as the proposal. Bazel configured four native archive checksums in both modes, one Flit action for a tagged release and none for an untagged one. The local staging fixture reproduced a failure when a declared wheel appeared as a symlink. The corrected stager checked the opened file, copied both distributions, and replaced them with an empty directory on the next untagged build. Default and prebuilt Make paths rejected an incomplete release before signing. The default archive build was suppressed for that control.\n\nOn the separate integration d6f54c947, twelve fresh remote actions produced eight payloads and six SHA512 checkfiles. The offline stock and candidate publishers agreed for head, nightly, tagged, older-tag, ignored-tag and prebuilt-input releases. Tagged host checksum calls fell from 16 to zero. A disposable key signed the APT outputs. The test intercepted Twine and performed no cloud publication.\n\nThe immediate parent bb565d846 combines the #16490 architecture split and the Flit prerequisites. Buildkite activation also needs the host Bazel bootstrap from #16904 and a working toolchain for both target architectures. The deployed release queue remains unverified. Both release jobs forward the worker’s Bazel cache and execution options. With the options unset, both invocations matched their previous arguments.",
+      "status": "Reconciling the release caller",
+      "updatedAt": "2026-11-12T06:27:42+00:00",
+      "summary": "The release job can take all six native packages and their download checksums from one Bazel build. The staged publisher accepts prebuilts without invoking Bazel and leaves Debian signing on the release host. The current integration uses #16490, #16766 and the Flit backend on master after #17191. Tagged and untagged Bazel graphs each use the same six native files for both staging targets and compute the four tarball checksums. The tagged graph stages the exact versioned Flit output; the untagged graph has no Flit producer.",
       "evidence": [
         {
           "label": "Eight Linux observations of the actual Bazel arguments with and without worker options",
@@ -65070,14 +65076,26 @@
         {
           "label": "Single master-based commit and production/presubmit entry points",
           "url": "https://github.com/tamird/gvisor/commit/c661271ae"
+        },
+        {
+          "label": "Current tagged and untagged Bazel actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43167576390"
+        },
+        {
+          "label": "Earlier equivalence of the six stamped native packages",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42337163017/artifacts/13560294242"
+        },
+        {
+          "label": "Original action records for both configurations; the verifier expected the old unversioned Flit path",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43167576390/artifacts/13921145917"
         }
       ],
       "refinement": {
         "before": {
-          "head": "a7e84cf82cdaaf71a1b95aa654835c827cf5c320"
+          "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76"
         },
         "after": {
-          "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76"
+          "head": "9dbd438791b322ce0d8e4f3c1393581b51155b2b"
         }
       },
       "settledReviews": [
@@ -65092,31 +65110,34 @@
           "body": "Buildkite stages the release files before it signs them. The Make\npublisher still probes the Docker builder and attempts an image build.\n\nPass staged input paths directly to the publisher. Read directory\nentries without splitting filenames, and follow only explicitly named\npackage files. Bazel can supply the same interface from its configured\noutputs. Local Make retains its package and signing-key prerequisites.",
           "outcome": "changes-requested",
           "at": "2026-11-07T17:19:43+00:00"
+        },
+        {
+          "status": "pending",
+          "kind": "proposal",
+          "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76",
+          "baseHead": "bb565d84650bd92fd525d05f934aeea8ac058dec",
+          "url": "https://github.com/tamird/gvisor/commit/2306ebce4",
+          "title": "Stage release downloads and checksums with Bazel",
+          "requestedAt": "2026-11-07T18:40:14+00:00",
+          "summary": "Open this standalone PR after the architecture split and Flit prerequisites land? It moves archive layout and checksums into Bazel and keeps Debian signing on the trusted host. Activation requires host Bazel and a working compiler for both targets.",
+          "body": "The release publisher extracts runsc from each tarball to identify\nits architecture, then hashes the same archive for each download\nalias. Bazel knows the target architecture when it builds the archive.\n\nUse //debian:release-inputs to stage the Debian package and both\ndownload archives for AMD64 and ARM64 in one build. Compute each\narchive checksum once. Tagged releases also stage the wheel and\nsource distribution. Other builds produce an empty Python directory\nso a wheel from an earlier release cannot be promoted.\n\nDebian signing stays on the trusted release host, which holds the\nprivate key. The host signs copies of the packages before building\nthe APT indexes.",
+          "at": "2026-11-12T06:22:38+00:00",
+          "outcome": "Rebased after #17191 renamed the release rule; retained as the earlier comparison."
         }
       ],
       "followup": {
-        "owner": "Release workstream owner",
-        "sourceHead": "2306ebce48ca1fa926651eaa58ff07a6da0cef76",
-        "observedAt": "2026-11-08T23:04:47+00:00",
-        "disposition": "The contributor requested a broader design with less release logic in shell. The earlier a7e84cf82 proposal remains withdrawn. The replacement moves unsigned staging and per-archive checksums to Bazel and keeps signing on the release host.",
-        "nextAction": "Review the standalone staging commit. Coordinate submission with the architecture split and Flit prerequisites, and verify the native host Bazel and compiler before enabling the release queue.",
+        "owner": "Release packaging",
+        "sourceHead": "9dbd438791b322ce0d8e4f3c1393581b51155b2b",
+        "observedAt": "2026-11-12T06:27:42+00:00",
+        "disposition": "Native staging and tagged Python wiring verified on current sources.",
+        "nextAction": "When combining with explicit versioning, pass the native release label from Buildkite and compare all six direct and staged stamped packages. Check generated-source paths and retain the release-only mapping where needed. Update the mirror comment about file(1), and verify the host Bazelisk and cross toolchain before enabling the release queue. Local source builds through Make still default to the builder.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8a31f6378",
-          "https://github.com/tamird/gvisor/actions/runs/42402026987/artifacts/13585454586",
-          "https://github.com/tamird/gvisor/actions/runs/42401367486/artifacts/13585765912",
+          "https://github.com/tamird/gvisor/actions/runs/43167576390",
+          "https://github.com/google/gvisor/pull/16490",
+          "https://github.com/google/gvisor/pull/16904",
+          "https://github.com/tamird/gvisor/actions/runs/42337163017/artifacts/13560294242",
           "https://github.com/tamird/gvisor/actions/runs/42399661675/artifacts/13585307666"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76",
-        "baseHead": "bb565d84650bd92fd525d05f934aeea8ac058dec",
-        "url": "https://github.com/tamird/gvisor/commit/2306ebce4",
-        "title": "Stage release downloads and checksums with Bazel",
-        "requestedAt": "2026-11-07T18:40:14+00:00",
-        "summary": "Open this standalone PR after the architecture split and Flit prerequisites land? It moves archive layout and checksums into Bazel and keeps Debian signing on the trusted host. Activation requires host Bazel and a working compiler for both targets.",
-        "body": "The release publisher extracts runsc from each tarball to identify\nits architecture, then hashes the same archive for each download\nalias. Bazel knows the target architecture when it builds the archive.\n\nUse //debian:release-inputs to stage the Debian package and both\ndownload archives for AMD64 and ARM64 in one build. Compute each\narchive checksum once. Tagged releases also stage the wheel and\nsource distribution. Other builds produce an empty Python directory\nso a wheel from an earlier release cannot be promoted.\n\nDebian signing stays on the trusted release host, which holds the\nprivate key. The host signs copies of the packages before building\nthe APT indexes."
       }
     },
     {
@@ -78751,29 +78772,6 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:staged-release-tag",
-      "to": "branch:release-archives-versioned",
-      "reason": "The staging change is based on the explicit release/version proposal and forwards its release label.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/a303ec933",
-        "https://github.com/tamird/gvisor/commit/2c0b9071a"
-      ]
-    },
-    {
-      "type": "depends_on",
-      "from": "pr:16904",
-      "to": "branch:release-archives-versioned",
-      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
-      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
-    },
-    {
-      "type": "depends_on",
-      "from": "branch:hermetic-compiler-review",
-      "to": "branch:release-archives-versioned",
-      "reason": "Both architectures’ release binaries need declared C and C++ toolchains on native workers."
-    },
-    {
-      "type": "depends_on",
       "from": "pr:16697",
       "to": "branch:epoll-modify-preserve",
       "reason": "Keeps the originally attached FUSE queue available across abort and remount.",
@@ -79893,6 +79891,13 @@
         "https://github.com/tamird/gvisor/commit/9e1db6e55",
         "https://github.com/tamird/gvisor/actions/runs/42369034089/artifacts/13572523189"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16904",
+      "to": "branch:staged-release-publication",
+      "reason": "The two native release jobs set DOCKER_BUILD=false. This hook puts Bazelisk on their PATH and shuts down the same server afterward.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     }
   ],
   "investigations": [
@@ -80016,9 +80021,18 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T05:41:15+00:00",
+      "updatedAt": "2026-11-12T06:22:38+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "At #16495, one sender paused new data for 32.85 s. For 290 consecutive ACKs before the first timeout, it counted 131 packets in flight against a window of 132. Repairing the oldest hole used its last slot. The receiver had missed 131 packets near the end of the flight and SACKed one later packet. Two runs without the ACK observer showed the same pattern on the wire. Linux has not been measured with this loss pattern.",
+          "evidence": [
+            {
+              "label": "Sender decisions and packet captures at both ends",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43163573663/artifacts/13920256562"
+            }
+          ]
+        },
         {
           "text": "Across eight alternating pairs of parent 990581308 and #16495 ffac28a03 against Linux, the gVisor sender sent first in all 16 runs. The propagation queues recorded no drops. The receiver rate was 1.252 MiB/s on the parent and 1.208 MiB/s on the candidate (benchstat p = 0.721). The median of each run’s longest new-data gap was 112.5 ms and 108.7 ms, respectively (p = 0.574). One parent run had a 27.7-second gap. Two candidate runs had 1.16- and 1.69-second gaps. The paired measurements did not establish a throughput improvement. Cumulative ACKs continued during the 27.7-second gap. Across the three gaps, some repeated ranges had earlier SACK coverage, but none had already been cumulatively acknowledged.",
           "evidence": [
@@ -82159,7 +82173,7 @@
           ]
         }
       ],
-      "nextStep": "Examine what limited new data before the first timeout in the two patched transfers with pauses over 32 seconds.",
+      "nextStep": "Compare Linux and gVisor with the same tail losses and SACK coverage. Measure the flight estimate and the packets sent on each ACK.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -82640,6 +82654,10 @@
         {
           "label": "Which sender limit holds back new data during paced repairs?",
           "url": "https://github.com/tamird/gvisor/actions/runs/43163573663"
+        },
+        {
+          "label": "Observed and control runs on the shared queue",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43163573663/artifacts/13920256562"
         }
       ],
       "comparisons": [
@@ -89193,7 +89211,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-11T12:32:04+00:00",
+      "updatedAt": "2026-11-12T06:22:38+00:00",
       "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
         {
@@ -89918,7 +89936,7 @@
           ]
         }
       ],
-      "nextStep": "Open the approved single-waiter change (be0aab89c) after gVisor #16860 merges.",
+      "nextStep": "Follow #17502 for review of the single-waiter optimization. It opened after #16860 merged.",
       "evidence": [
         {
           "label": "Eight paired Nginx restores and linked decoder disassembly",
@@ -90375,6 +90393,14 @@
         {
           "label": "Four published encoder changes together on master 975fb1722",
           "url": "https://github.com/tamird/gvisor/commit/c9e35f48a"
+        },
+        {
+          "label": "Single-waiter PR",
+          "url": "https://github.com/google/gvisor/pull/17502"
+        },
+        {
+          "label": "Merged callback-table prerequisite",
+          "url": "https://github.com/google/gvisor/pull/16860"
         }
       ],
       "comparisons": [
@@ -105752,7 +105778,47 @@
           "url": "https://github.com/google/gvisor/pull/14849"
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-node-http10-close",
+      "title": "Node HTTP/1.0 test checks the socket before close",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T06:22:38+00:00",
+      "summary": "Node 22.2.0 shard 3 checked Socket.closed at a fixed deadline and observed false. The same shard passed on retry. Node already waits for the close event in newer releases.",
+      "findings": [
+        {
+          "text": "The proposed Node 26 image includes the upstream fix. A one-file test backport lets the current image use it while the upgrade is pending.",
+          "evidence": [
+            {
+              "label": "Upstream event-based test",
+              "url": "https://github.com/nodejs/node/pull/55959"
+            },
+            {
+              "label": "Backport on the current image",
+              "url": "https://github.com/tamird/gvisor/commit/b274be266"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Original failed shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce24-f1e8-48c4-b72b-0c54ee6deae8"
+        },
+        {
+          "label": "Passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce33-161a-4991-9c1e-06e4d2ac55f3"
+        },
+        {
+          "label": "Packaged Node test on runc and systrap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43167070037"
+        }
+      ],
+      "nextStep": "Inspect the packaged test under both runtimes, including a delayed HTTP response.",
+      "repo": "google/gvisor"
     }
   ],
-  "updatedAt": "2026-11-12T05:55:57+00:00"
+  "updatedAt": "2026-11-12T06:27:42+00:00"
 }
