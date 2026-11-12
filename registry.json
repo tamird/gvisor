@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T14:27:57+00:00",
+    "updatedAt": "2026-11-12T15:05:14+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5708,8 +5708,8 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation.",
-      "updatedAt": "2026-11-12T10:13:48+00:00",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.",
+      "updatedAt": "2026-11-12T15:05:14+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6471,6 +6471,14 @@
         {
           "label": "Native vDSO prerequisite merged through #16983",
           "url": "https://github.com/google/gvisor/commit/f855fc7c1"
+        },
+        {
+          "label": "ARM64 consuming root · standalone Go archive, bare release and nine matching ELF files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43237139320/artifacts/13953442966"
+        },
+        {
+          "label": "Minimal ARM64 consuming root · cgroup2 source selection and subsequent Nogo failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43242407780/artifacts/13955967390"
         }
       ],
       "refinement": {
@@ -30564,8 +30572,8 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T15:10:52+00:00",
-      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review.",
+      "updatedAt": "2026-11-12T15:00:58+00:00",
+      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork rebase c2204517c carries the two MODULE hunks from hermetic-llvm #892 to preserve the two backends now selected by merged #15940. Validation is in progress on the fork.",
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
@@ -30743,6 +30751,10 @@
         {
           "label": "Parser change on the classifier prerequisite",
           "url": "https://github.com/tamird/gvisor/commit/5c019e9e6"
+        },
+        {
+          "label": "Fork rebase preserving both parser backends",
+          "url": "https://github.com/tamird/gvisor/commit/c2204517c"
         }
       ],
       "refinement": {
@@ -59823,8 +59835,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T14:21:57+00:00",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. The locked guest retry used the same release manifest. Bazel timed out downloading the pinned qemu-system-arm 6.2 package from Ubuntu’s snapshot archive before either guest produced a test result.",
+      "updatedAt": "2026-11-12T15:00:58+00:00",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. The locked guest retry used the same release manifest. Bazel timed out downloading the pinned qemu-system-arm 6.2 package from Ubuntu’s snapshot archive before either guest produced a test result. With all 202 pinned package archives available, the same LLVM-built Sentry (SHA-256 prefix be8778419) booted the probe as PID 1 under systrap in both ARM64 QEMU guests. On kernel 7.3.0-070300rc3-generic, AT_PAGESZ and sysconf returned 4,096. On 6.8.0-138-generic-64k both returned 65,536. Both tests ran uncached and exited 0.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -59921,6 +59933,10 @@
         {
           "label": "Locked guest retry with the original package fetch error and empty test-result map",
           "url": "https://github.com/tamird/gvisor/actions/runs/43201966448/artifacts/13936134168"
+        },
+        {
+          "label": "Uncached 4 KiB and 64 KiB ARM64 guest XML, logs and input verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43239108200/artifacts/13955670068"
         }
       ],
       "settledReviews": [
@@ -100809,7 +100825,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T10:13:48+00:00",
+      "updatedAt": "2026-11-12T15:05:14+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -101098,6 +101114,28 @@
               "url": "https://app.buildbuddy.io/invocation/97d5b505-340e-4f71-baea-c7bc09002553"
             }
           ]
+        },
+        {
+          "text": "With the root-only supplier settings already applied, a consuming module with no overrides built a 2,034-byte Linux ARM64 seqnum Go archive. Its release target failed compiling cgroup2 for the shim. Removing only the benchmark override and its patch from the previously successful consuming root preserved all nine release ELF hashes. Its two Go compile configurations used the patched 963-byte protobuf source; the bare root used the 1,683-byte source that reads the executable.",
+          "evidence": [
+            {
+              "label": "ARM64 consuming root · standalone Go archive, bare release and nine matching ELF files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43237139320/artifacts/13953442966"
+            }
+          ]
+        },
+        {
+          "text": "The bare root compiled cgroup2/stats with only doc.go, leaving stats.Metrics undefined. Adding only the existing cgroups directive selected its shipped metrics.pb.go and compiled cgroup2. That consuming root still failed the release at gVisor Nogo’s metric_go_proto import (“not a package file”). The control exercised gVisor’s existing directive on pinned Gazelle 0.51.3. Upstream Gazelle merged a narrower generation control in #2513 after that release.",
+          "evidence": [
+            {
+              "label": "Minimal ARM64 consuming root · cgroup2 source selection and subsequent Nogo failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43242407780/artifacts/13955967390"
+            },
+            {
+              "label": "Gazelle #2513 · per-repository Go proto generation control",
+              "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+            }
+          ]
         }
       ],
       "nextStep": "Wait for the first golang.org/x/tools tag that contains CL 858482, then verify the full lint build on an empty worker. The v0.52.0 tag predates the merged goimports change.",
@@ -101149,6 +101187,14 @@
         {
           "label": "Current Gazelle proposal for containerd/cgroups metrics",
           "url": "https://github.com/tamird/bazel-gazelle/commit/761d7b804faacf022c6c593703d2da28e4e4c495"
+        },
+        {
+          "label": "ARM64 consuming root · standalone Go archive, bare release and nine matching ELF files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43237139320/artifacts/13953442966"
+        },
+        {
+          "label": "Minimal ARM64 consuming root · cgroup2 source selection and subsequent Nogo failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43242407780/artifacts/13955967390"
         }
       ]
     },
@@ -101825,8 +101871,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T01:30:45+00:00",
-      "summary": "In release build #7690 on 49df41f68, TestGPUHello_12_8 built vectorAdd with driver 615.71.09 installed. Its first cudaMalloc failed with “no CUDA-capable device is detected”. The same sample and driver passed on the same-commit retry. The cause remains unknown.",
+      "updatedAt": "2026-11-12T15:00:58+00:00",
+      "summary": "Three CUDA 12.8 vectorAdd failures occurred in the runc baseline. The native container built the sample, then reported no CUDA-capable device on its first allocation. In release #7758 the host had already reported two T4 GPUs. Container device visibility at the failure remains unknown.",
       "findings": [
         {
           "text": "The failed log shows the sample linking at line 50433 and reports the device allocation error at line 50438. On retry, vectorAdd and TestGPUHello_12_8 passed at lines 50500 and 50502.",
@@ -101853,9 +101899,22 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54545#01a1cd09-335e-4dc0-ba5d-58c232c6730f"
             }
           ]
+        },
+        {
+          "text": "The runtime command preceding the error selected runc in release #7690 (driver 615.71.09), pipeline #54545, and release #7758 (driver 580.159.04). In #7758 host nvidia-smi saw two T4s. The gVisor leg for that driver had yet to run when runc failed. The retry passed both runtimes.",
+          "evidence": [
+            {
+              "label": "Release #7758 · runc allocation with driver 580.159.04",
+              "url": "https://buildkite.com/gvisor/release/builds/7758#01a1cc40-c18e-4115-ab8a-2a8161cc6767"
+            },
+            {
+              "label": "Release #7758 · runc and gVisor passed on retry",
+              "url": "https://buildkite.com/gvisor/release/builds/7758#01a1ce6c-761a-4a2e-aca7-43e5cf40856e"
+            }
+          ]
         }
       ],
-      "nextStep": "On recurrence, compare GPU visibility on the host and inside the test container immediately before the sample's first allocation.",
+      "nextStep": "On the next failing runc baseline, compare nvidia-smi on the host with the devices visible inside that same container immediately before vectorAdd starts.",
       "evidence": [
         {
           "label": "Source revision 49df41f68",
@@ -101868,6 +101927,14 @@
         {
           "label": "54545 passing retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54545#01a1cd09-335e-4dc0-ba5d-58c232c6730f"
+        },
+        {
+          "label": "Release #7758 · runc allocation with driver 580.159.04",
+          "url": "https://buildkite.com/gvisor/release/builds/7758#01a1cc40-c18e-4115-ab8a-2a8161cc6767"
+        },
+        {
+          "label": "Release #7758 · runc and gVisor passed on retry",
+          "url": "https://buildkite.com/gvisor/release/builds/7758#01a1ce6c-761a-4a2e-aca7-43e5cf40856e"
         }
       ]
     },
@@ -106610,6 +106677,67 @@
       ],
       "nextStep": "On recurrence, record the namespace-open return time, Sentry host PID identity and liveness, and the namespace inode observed before reexec. These distinguish a transient lookup failure from the process exiting before start.",
       "repo": "google/gvisor"
+    },
+    {
+      "id": "investigation:ci-buildkite-apt-lock",
+      "title": "Buildkite package setup exhausted a release job waiting for dpkg",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T15:00:58+00:00",
+      "summary": "An Ubuntu release worker spent 59 minutes updating package indexes and attempting to install the same packages. The dpkg frontend lock stayed with unattended-upgrades. The job timed out before its CUDA test started and the automatic retry passed.",
+      "findings": [
+        {
+          "text": "The original job logged 623 lock refusals from 07:37:14 through 08:35:58 UTC, each naming unattended-upgr PID 3661. The worker ran apt-get update again on each turn.",
+          "evidence": [
+            {
+              "label": "Release #7761 · pre-command timed out before the CUDA test",
+              "url": "https://buildkite.com/gvisor/release/builds/7761#01a1cc9d-18f4-43ef-98cd-ba0a8c5131e9"
+            },
+            {
+              "label": "Release #7761 · successful automatic retry",
+              "url": "https://buildkite.com/gvisor/release/builds/7761#01a1cee6-7248-424b-88c3-a802d47b65b2"
+            }
+          ]
+        },
+        {
+          "text": "In an isolated Ubuntu 22.04 package database, the original hook attempted three installations and began a fourth update before the control stopped it. With one refresh and one installation, a brief dpkg lock cleared and the exact kernel headers installed in 3.174 seconds. A held lock returned 100 after 120.155 seconds. A missing package returned 100 in 0.168 seconds. Fallback-header and no-header cases both installed the base packages.",
+          "evidence": [
+            {
+              "label": "Ubuntu 22.04 · real APT/dpkg lock, header and missing-package controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43241995732/artifacts/13956211034"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Review the one-commit hook change that lets APT wait for the dpkg lock and reports a persistent provisioning failure to Buildkite.",
+      "evidence": [
+        {
+          "label": "Release #7761 · pre-command timed out before the CUDA test",
+          "url": "https://buildkite.com/gvisor/release/builds/7761#01a1cc9d-18f4-43ef-98cd-ba0a8c5131e9"
+        },
+        {
+          "label": "Release #7761 · successful automatic retry",
+          "url": "https://buildkite.com/gvisor/release/builds/7761#01a1cee6-7248-424b-88c3-a802d47b65b2"
+        },
+        {
+          "label": "Ubuntu 22.04 · real APT/dpkg lock, header and missing-package controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43241995732/artifacts/13956211034"
+        }
+      ],
+      "repo": "google/gvisor",
+      "head": "fdf95a111903ab4ba7d37dfd2f8083d8ff228b75",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "fdf95a111903ab4ba7d37dfd2f8083d8ff228b75",
+        "baseHead": "59b69962bd510505fa8538aa1c4dcc61f615edd3",
+        "url": "https://github.com/tamird/gvisor/commit/fdf95a111",
+        "title": "Bound Buildkite’s wait for the dpkg lock",
+        "body": "A release worker reported the same dpkg lock error 623 times while unattended-upgrades held the lock. The pre-command hook refreshed the package lists before each attempt and exhausted the CUDA job’s hour before it could run a test [1].\n\nRefresh the index once, choose the available headers and install the packages together. Give apt-get two minutes to acquire the dpkg lock, the timeout Jammy apt uses when running noninteractively. Let APT retry transient downloads and report installation errors to Buildkite.\n\n[1]: https://buildkite.com/gvisor/release/builds/7761#01a1cc9d-18f4-43ef-98cd-ba0a8c5131e9\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Open the one-commit Buildkite pre-command correction against gVisor?",
+        "requestedAt": "2026-11-12T15:00:58+00:00"
+      }
     }
   ],
   "updatedAt": "2026-11-12T08:42:54+00:00"
