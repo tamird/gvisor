@@ -1,54 +1,166 @@
-name: Build an ARM64 consumer with the cgroups default
+name: Boot the zero-directive ARM64 consumer release
 on:
   push:
-    branches: [qualification/compiler-consumer-gazelle-2513]
-permissions: {contents: read}
+    branches: [qualification/compiler-zero-directive-4k-guest]
+permissions: {}
 jobs:
-  release:
+  pair:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 95
+    timeout-minutes: 125
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 2, persist-credentials: false}
-      - name: Bind the compiler integration and released Bazel client
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the candidate, the unchanged guest harness and both stock clients
         run: |
           set -euo pipefail
-          area="$RUNNER_TEMP/downstream-release"
-          mkdir -p "$area/results" "$area/dist"
-          test "$(git rev-parse HEAD^)" = a066005a68e743f3c8bc0d974a2c6c87f414ba18
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/downstream_release.py' ':!test/rbe/downstream_nogo_16098.patch'
-          cp test/rbe/downstream_release.py "$area/"
-          cp test/rbe/downstream_nogo_16098.patch "$area/pr16098.patch"
-          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$area/bazel"
-          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 -H 'Accept: application/octet-stream' https://api.github.com/repos/cerisier/glibc-headers/releases/assets/253918436 -o "$area/dist/x86_64-linux-gnu.2.28.tar.zst"
-          cd "$area"
-          sha256sum --check <<'SUMS'
-          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          test "$(git rev-parse HEAD^)" = 4d6c80934852377b460243941e59563ef0ccd0b2
+          test "$(git rev-parse HEAD^^)" = a066005a68e743f3c8bc0d974a2c6c87f414ba18
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/downstream_guest.py'
+          test "$(cat .bazelversion)" = 9.3.1
+          w="$RUNNER_TEMP/paired-stub-guest"
+          mkdir -m 700 "$w" "$w/dist"
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git ec4ced798422d27e533369b02d41b06f21b798c1
+          test "$(git rev-parse FETCH_HEAD)" = ec4ced798422d27e533369b02d41b06f21b798c1
+          musl=8d8327953fd0b9b267c14bdb87a1352219749d38
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git "$musl"
+          test "$(git rev-parse FETCH_HEAD)" = "$musl"
+          git show ec4ced798422d27e533369b02d41b06f21b798c1:MODULE.bazel > "$w/harness-MODULE.bazel"
+          git show ec4ced798422d27e533369b02d41b06f21b798c1:MODULE.bazel.lock > "$w/harness-MODULE.bazel.lock"
+          test "$(git hash-object "$w/harness-MODULE.bazel.lock")" = 32e3c5291e42bd48a5c283f43c5836abbdcd8896
+          for filename in guest_debs.py paired_stub_guest.py; do
+            git show "$musl:.github/qualification/$filename" > "$w/$filename"
+          done
+          for filename in harness.BUILD guest.sh; do
+            git show "$musl:test/rbe/paired_stub_guest/$filename" > "$w/$filename"
+          done
+          cp test/rbe/downstream_release.py .github/qualification/downstream_guest.py "$w/"
+          cp test/rbe/downstream_nogo_16098.patch "$w/pr16098.patch"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 -H 'Accept: application/octet-stream' https://api.github.com/repos/cerisier/glibc-headers/releases/assets/253918436 -o "$w/dist/x86_64-linux-gnu.2.28.tar.zst"
+          cd "$w"
+          for v in 9.3.1 8.8.1; do
+            curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 "https://releases.bazel.build/$v/release/bazel-$v-linux-x86_64" -o "bazel${v%%.*}"
+          done
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel9
+          5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  bazel8
           8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3  dist/x86_64-linux-gnu.2.28.tar.zst
           SUMS
-          chmod +x bazel
-          ./bazel --version >results/bazel-version.txt
-      - name: Compare the pinned Gazelle and the upstream change, then build the ARM64 release
+          chmod 700 bazel8 bazel9
+      - name: Verify all nine downstream release files and the static musl probe
+        id: release
+        timeout-minutes: 58
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
-          area="$RUNNER_TEMP/downstream-release"
-          rc="$area/client.bazelrc"
           umask 077
+          : "${BUILDBUDDY_API_KEY:?existing BuildBuddy key is required}"
+          w="$RUNNER_TEMP/paired-stub-guest"
+          rc="$w/compiler.rc"
           trap 'rm -f "$rc"' EXIT
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --remote_default_exec_properties=OSFamily=linux' 'build --remote_default_exec_properties=Arch=amd64' 'build --remote_default_exec_properties=workload-isolation-type=oci' 'build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } >"$rc"
+          cat > "$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io
+          build --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io
+          build --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote
+          build --noremote_local_fallback
+          build --remote_download_outputs=toplevel
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=Arch=amd64
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
           unset BUILDBUDDY_API_KEY
-          python3 -B "$area/downstream_release.py"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/downstream_guest.py" release
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/downstream_guest.py" probe
+          "$w/bazel9" --nosystem_rc --nohome_rc shutdown
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
+        if: always() && !cancelled()
         with:
-          name: downstream-cgroups-default
-          path: ${{ runner.temp }}/downstream-release/results/
+          name: zero-directive-arm64-release
+          path: |
+            ${{ runner.temp }}/paired-stub-guest/downstream-release-arm64.tar.gz
+            ${{ runner.temp }}/paired-stub-guest/release-manifest.sha256
+          if-no-files-found: warn
+          compression-level: 0
           retention-days: 14
+      - name: Obtain all 202 checksum-pinned Ubuntu archives
+        timeout-minutes: 15
+        run: |
+          w="$RUNNER_TEMP/paired-stub-guest"
+          python3 -IB "$w/guest_debs.py" distfiles "$w"
+      - name: Stage the verified downstream release and musl probe in the guest
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/paired-stub-guest"
+          git checkout -q --detach ec4ced798422d27e533369b02d41b06f21b798c1
+          test "$(git rev-parse HEAD)" = ec4ced798422d27e533369b02d41b06f21b798c1
+          test "$(cat .bazelversion)" = 8.8.1
+          test "$(git hash-object MODULE.bazel.lock)" = 32e3c5291e42bd48a5c283f43c5836abbdcd8896
+          dst=test/rbe/paired_stub_guest
+          mkdir "$dst"
+          cp "$w/harness.BUILD" "$dst/BUILD"
+          cp "$w/guest.sh" "$dst/guest.sh"
+          chmod 755 "$dst/guest.sh"
+          mv "$w/inputs" "$dst/inputs"
+          git diff --exit-code
+      - name: Run the declared 4 KiB TCG guest through the original fork executor
+        id: guests
+        timeout-minutes: 60
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?existing BuildBuddy key is required}"
+          w="$RUNNER_TEMP/paired-stub-guest"
+          rc="$w/executor.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          bazel=(env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 "$w/bazel8" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx5g --bazelrc=test/rbe/qualification.bazelrc --bazelrc="$rc")
+          common=(--config=rbe --config=x86_64 --jobs=40 --lockfile_mode=error "--distdir=$w/dist" --keep_going --remote_download_outputs=minimal)
+          targets=(//test/rbe/paired_stub_guest:page4k)
+          inputs_rc=0
+          "${bazel[@]}" build "${common[@]}" --output_groups=guest_inputs --build_event_json_file="$w/guest-inputs.bep" "${targets[@]}" > "$w/guest-inputs.log" 2>&1 || inputs_rc=$?
+          python3 -IB "$w/downstream_guest.py" check
+          test "$inputs_rc" = 0
+          outcome=0
+          "${bazel[@]}" test "${common[@]}" --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 --test_sharding_strategy=disabled \
+            --modify_execution_info='^TestRunner$=+no-remote-cache' '--remote_download_regex=.*[/]test[.](log|xml)$' --test_timeout=300 \
+            --build_event_json_file="$w/guests.bep" --build_event_publish_all_actions "${targets[@]}" > "$w/remote.log" 2>&1 || outcome=$?
+          printf '%s\n' "$outcome" > "$w/remote.exit"
+          exit "$outcome"
+      - name: Verify the uncached guest TestResult and the workload
+        if: always() && !cancelled() && steps.guests.outcome != 'skipped'
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/paired-stub-guest"
+          test ! -e "$w/executor.rc"
+          test -f "$w/remote.exit" || exit 0
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/downstream_guest.py" collect
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: zero-directive-arm64-4k-guest
+          path: |
+            ${{ runner.temp }}/downstream-release/results/report.json
+            ${{ runner.temp }}/paired-stub-guest/release.json
+            ${{ runner.temp }}/paired-stub-guest/consumer.MODULE.bazel
+            ${{ runner.temp }}/paired-stub-guest/ubuntu-distfiles.json
+            ${{ runner.temp }}/paired-stub-guest/guest-inputs.json
+            ${{ runner.temp }}/paired-stub-guest/guests.json
+            ${{ runner.temp }}/paired-stub-guest/page*-test.*
           if-no-files-found: error
+          retention-days: 14
