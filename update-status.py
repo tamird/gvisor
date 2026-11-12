@@ -472,6 +472,8 @@ def review_watch_handoff(prs: list[dict], previous: dict) -> list[dict]:
     watches = review_watches()
     nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]}
     mention = re.compile(r"(?<![\w-])@" + re.escape(OWNER) + r"(?![\w-])", re.I)
+    previous_prs = {(pr.get("repo", REPO), pr["number"]): pr for collection in ("prs", "reviewPRs")
+                    for pr in previous.get(collection, [])}
     records = []
     for pr in prs:
         key = pr.get("repo", REPO), pr["number"]
@@ -486,6 +488,10 @@ def review_watch_handoff(prs: list[dict], previous: dict) -> list[dict]:
             continue
         prior = {entry["id"]: entry for entry in previous.get("reviewWatchHandoff", [])
                  if (entry["repo"], entry["number"]) == key}
+        # A successfully inspected message leaves reviewWatchHandoff. Keep
+        # its verified first observation across later changes of the PR head.
+        old_heads = previous_prs.get(key, {}).get("inspectedReviewHeads", {})
+        inspected_heads = {} if pr["feedback"]["complete"] else old_heads.copy()
         items = pr["feedback"]["items"]
         threads = {}
         for item in items:
@@ -511,11 +517,13 @@ def review_watch_handoff(prs: list[dict], previous: dict) -> list[dict]:
             if not (direct or follows_reviewer or mention.search(item["body"]) or (not complete and old)):
                 continue
             review_head = (item.get("commit") or {}).get("oid")
-            first_head = old.get("firstObservedHead", pr["head"])
+            first_head = old.get("firstObservedHead") or old_heads.get(item["id"]) or pr["head"]
             if any(ack["id"] == item["id"] and ack["url"] == item["url"]
                    and ack["updatedAt"] == item["updatedAt"]
                    and ack["head"] == (review_head or first_head) and ack.get("evidence")
                    for ack in watch.get("inspected", [])):
+                if not review_head:
+                    inspected_heads[item["id"]] = first_head
                 continue
             assigned = matches_feedback_assignment(pr, item, followup.get("actionableComment", {}))
             current_action = (followup.get("sourceHead") == pr["head"] and item["url"] in followup.get("evidence", [])
@@ -542,6 +550,10 @@ def review_watch_handoff(prs: list[dict], previous: dict) -> list[dict]:
                     retained.update(claimed=False, owner=watch["owner"],
                                     action="Recheck the earlier reply against the new revision.")
                 records.append(retained)
+        if inspected_heads:
+            pr["inspectedReviewHeads"] = inspected_heads
+        else:
+            pr.pop("inspectedReviewHeads", None)
     return sorted(records, key=lambda entry: (entry["updatedAt"], entry["url"]))
 
 

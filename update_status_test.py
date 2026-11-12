@@ -1107,6 +1107,16 @@ class CollectorHistoryTest(unittest.TestCase):
             missing, = updater.review_watch_handoff([partial], prior)
             self.assertEqual(missing["id"], "reply")
             self.assertFalse(missing["feedbackComplete"])
+            watch["inspected"].append({"id": reply["id"], "url": reply["url"], "head": pr["head"],
+                                       "updatedAt": LATER, "evidence": reply["url"]})
+            self.assertEqual(updater.review_watch_handoff([pr], prior), [])
+            inspected = {"reviewPRs": [copy.deepcopy(pr)], "reviewWatchHandoff": []}
+            changed_head = {**pr, "head": "f" * 40}
+            self.assertEqual(updater.review_watch_handoff([changed_head], inspected), [])
+            after_push = {"reviewPRs": [changed_head], "reviewWatchHandoff": []}
+            with mock.patch.dict(reply, updatedAt="2026-12-01T00:00:00Z"):
+                reopened, = updater.review_watch_handoff([changed_head], after_push)
+                self.assertEqual((reopened["id"], reopened["firstObservedHead"]), (reply["id"], pr["head"]))
             request["updatedAt"] = "2026-12-01T00:00:00Z"
             root_response = {**root, "id": "response", "createdAt": "2026-12-01T00:00:00Z"}
             pr["feedback"]["items"].append(root_response)
