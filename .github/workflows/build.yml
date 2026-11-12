@@ -1,35 +1,94 @@
-name: CI
-
-"on":
+name: Validate checkpoint sampling across two KVM restores
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/checkpoint-tsc-sample]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  consumer-tests:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 110
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the fallback and public Linux inputs
+        id: bootstrap
+        timeout-minutes: 13
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/netip-wildcard"
+          mkdir -m 700 "$w" "$w/receipt"
+          mkdir -p "$RUNNER_TEMP/recvbuf/dist"
+          echo '{"verified":false,"stage":"setup"}' > "$w/receipt/result.json"
+          product=6e248fc034d67e6c0ec1b0fec3e337604d63fd22
+          base=2f5253abfaa87b6d62d79a0da60942e773389934
+          prep=1dd5c8738089670485a347cfb85dad07b92d0e0d
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          inputs=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          git init -q .
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$prep" "$assets" "$inputs" 885416118fc84d4ec6ba1cb7629a4f4bd346e051 e561842c9a84cda7f6ac0e19d51263caab2d5ea2
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$product"
+          test "$(git rev-parse "$product^{tree}")" = 586cd6097c3bcbdb4e15086aaf8be3e55061a307
+          test "$(git rev-parse "$product^")" = "$base"
+          git diff --exit-code "$product" "$GITHUB_SHA" -- . ':!.github/workflows/build.yml' ':!.github/qualification/checkpoint_tsc.py'
+          git show "$GITHUB_SHA:.github/qualification/checkpoint_tsc.py" > "$w/check.py"
+          git show 885416118fc84d4ec6ba1cb7629a4f4bd346e051:.github/qualification/netip_wildcard.py > "$w/native.py"
+          git show "$prep:.github/qualification/go_branch_netgofer.py" > "$w/previous.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          git show "$inputs:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          git checkout -q --detach "$product"
+          test "$(cat .bazelversion)" = 9.3.1
+          cd "$w"
+          test "$(git hash-object --no-filters previous.py)" = 0c1db7071558c5f9c8de45b60ba625183bd8a400
+          test "$(git hash-object --no-filters public_assets.py)" = 9a3f571087a1438113a3a067c300e26fcb0ca9e8
+          test "$(git hash-object --no-filters tldk_public_inputs.py)" = 1f3f7d4d75810ad60941772776e01f3b71b3b171
+          curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o bazel
+          echo '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel' | sha256sum -c -
+          chmod +x bazel
+          docker pull --platform=linux/amd64 gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          mkdir "$w/home"
+          python3 - "$w/receipt/host-before.json" <<'PY'
+          import json, os, stat, sys
+          from pathlib import Path
+          s = os.stat("/dev/kvm")
+          d = dict(uid=s.st_uid, gid=s.st_gid, mode=stat.S_IMODE(s.st_mode), major=os.major(s.st_rdev), minor=os.minor(s.st_rdev))
+          assert os.getuid() != 0 and s.st_gid != 0 and stat.S_ISCHR(s.st_mode)
+          Path(sys.argv[1]).write_text(json.dumps(dict(uid=os.getuid(), gid=os.getgid(), device=d)) + "\n")
+          PY
+      - name: Run the adjusted TSC test with ordinary and forced sampling boundaries
+        if: steps.bootstrap.outcome == 'success'
+        timeout-minutes: 90
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/netip-wildcard"
+          luid=$(id -u)
+          lgid=$(id -g)
+          kgid=$(stat -c %g /dev/kvm)
+          docker run --rm --runtime=runc --init --user "$luid:$kgid" --group-add "$lgid" \
+            --device=/dev/kvm --privileged --entrypoint /bin/bash \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=$GITHUB_WORKSPACE" \
+            --mount "type=bind,src=$w,dst=$w" \
+            --mount "type=bind,src=$RUNNER_TEMP/recvbuf,dst=$RUNNER_TEMP/recvbuf" \
+            --workdir "$GITHUB_WORKSPACE" -e HOME="$w/home" -e USER=runner \
+            -e RUNNER_TEMP="$RUNNER_TEMP" -e LANG=C.UTF-8 \
+            gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a -c \
+            'set -e; test "$(id -u)" != 0; exec python3 -B "$RUNNER_TEMP/netip-wildcard/check.py"'
+      - name: Verify the public CI worker device was left untouched
+        if: always() && steps.bootstrap.outcome == 'success'
+        run: |
+          w="$RUNNER_TEMP/netip-wildcard/receipt"
+          python3 - "$w" <<'PY'
+          import json, os, stat, sys
+          from pathlib import Path
+          p = Path(sys.argv[1])
+          s = os.stat("/dev/kvm")
+          current = dict(uid=s.st_uid, gid=s.st_gid, mode=stat.S_IMODE(s.st_mode), major=os.major(s.st_rdev), minor=os.minor(s.st_rdev))
+          before = json.loads((p / "host-before.json").read_text())
+          (p / "host-after.json").write_text(json.dumps(current) + "\n")
+          assert current == before["device"]
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: checkpoint-tsc-sampling-kvm
+          path: ${{ runner.temp }}/netip-wildcard/receipt
+          if-no-files-found: error
+          retention-days: 14
