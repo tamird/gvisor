@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T01:01:41+00:00",
+    "updatedAt": "2026-11-12T01:12:58+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5704,9 +5704,9 @@
       "title": "Build C and C++ with the declared LLVM toolchains",
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Approved; waiting for the five compiler prerequisites",
       "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
-      "updatedAt": "2026-11-11T19:43:51+00:00",
+      "updatedAt": "2026-11-12T01:12:58+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6471,14 +6471,26 @@
           "summary": "Open the compiler switch after the native vDSO, systrap and sidecar prerequisites land and both optional plugin executables link and start on the submission base? Their current GNU links fail on missing static pthread and dl. The earlier approval covered a larger change with a separate NVIDIA parser migration.",
           "outcome": "superseded",
           "at": "2026-11-05T21:24:09.459393Z"
+        },
+        {
+          "kind": "proposal",
+          "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
+          "baseHead": "08d8f2fa224198e1f9b1cd495cfeab50d7ac333f",
+          "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
+          "title": "Build C and C++ with the declared LLVM toolchains",
+          "requestedAt": "2026-11-10T21:39:45+00:00",
+          "summary": "Open this single compiler PR after #16522, #16516, #17067, #17114 and the TLDK port in #17444 land?",
+          "body": "The Coral toolchain looks for GCC and target headers under /usr. An\nAMD64 worker therefore needs an installed cross-compiler to build the\nvDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the LLVM 0.8.24 module already in\nMODULE.bazel. Bazel selects the compiler for the execution platform and\nthe sysroot for the target. Keep GNU17 and C++17 and remove the Coral\nrepositories, toolchain definitions and patches.\n\nThe three runsc sidecars provide their own entry points and use Linux\nUAPI headers. Only the signal stub needs target libc headers for its\nsignal and ucontext types.\n\nThe GNU sysroot has no static libc. The race runtime and the optional\nnetwork stack both link C into the Go executable. Use the LLVM musl\nsysroot for their static links on the default Linux target. Keep an\nexplicitly selected C toolchain or custom platform on its own libc.",
+          "outcome": "approved",
+          "at": "2026-11-12T01:12:58+00:00"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Compiler migration",
         "sourceHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
-        "disposition": "The installed systrap plugin and runc exchanged TCP and UDP. The original workflow failed on an obsolete GCC query label and a query that looked for auto on a pure=True runsc target. The actual release target kept its ordinary mode, and all three corrected GCC queries passed.",
-        "observedAt": "2026-11-11T00:47:02+00:00",
-        "nextAction": "Review the revision for publication after #16522, #16516, #17067, #17114 and the TLDK port in #17444 land. To compare with the earlier approved source, run git -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 8178e3fe5^!.",
+        "disposition": "The contributor approved 8178e3fe5 for publication once the five prerequisite PRs have landed.",
+        "observedAt": "2026-11-12T01:12:58+00:00",
+        "nextAction": "Open the approved compiler migration after #16522, #16516, #17067, #17114 and #17444 merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17444",
           "https://github.com/tamird/gvisor/commit/8178e3fe5",
@@ -6487,17 +6499,6 @@
           "https://github.com/tamird/gvisor/commit/244ef8019",
           "https://github.com/tamird/gvisor/commit/bcb5de5b2"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
-        "baseHead": "08d8f2fa224198e1f9b1cd495cfeab50d7ac333f",
-        "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
-        "title": "Build C and C++ with the declared LLVM toolchains",
-        "requestedAt": "2026-11-10T21:39:45+00:00",
-        "summary": "Open this single compiler PR after #16522, #16516, #17067, #17114 and the TLDK port in #17444 land?",
-        "body": "The Coral toolchain looks for GCC and target headers under /usr. An\nAMD64 worker therefore needs an installed cross-compiler to build the\nvDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the LLVM 0.8.24 module already in\nMODULE.bazel. Bazel selects the compiler for the execution platform and\nthe sysroot for the target. Keep GNU17 and C++17 and remove the Coral\nrepositories, toolchain definitions and patches.\n\nThe three runsc sidecars provide their own entry points and use Linux\nUAPI headers. Only the signal stub needs target libc headers for its\nsignal and ucontext types.\n\nThe GNU sysroot has no static libc. The race runtime and the optional\nnetwork stack both link C into the Go executable. Use the LLVM musl\nsysroot for their static links on the default Linux target. Keep an\nexplicitly selected C toolchain or custom platform on its own libc."
       }
     },
     {
@@ -31934,24 +31935,26 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-httpd-upstream-current",
-      "head": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
+      "head": "f70947d47b4651eaa6cef826b3e8b34d2f71e7dd",
       "title": "Pin upstream Apache test images",
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T01:01:41+00:00",
-      "summary": "The Apache image change conflicts with master's new Redis mapping. The previous Apache export #16879 closed. The prior qualification covered eight image contexts on AMD64 and ARM64, seven Make operations, and the contents and modes of 35 unrelated benchmark entries.",
+      "updatedAt": "2026-11-12T01:12:58+00:00",
+      "summary": "The Apache image rebase keeps the Redis mapping that landed on master. All added and removed lines in the proposal are unchanged. Six build-context archives were checked on the revised source. The previous Apache export #16879 closed.",
       "followup": {
-        "owner": "CI image maintenance",
-        "sourceHead": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
-        "observedAt": "2026-11-12T01:01:41+00:00",
-        "disposition": "Source rebase in progress on the adjacent Apache and Redis image records.",
-        "nextAction": "Preserve the Redis mapping and the approved Apache change, then verify the catalog and publish the equivalent rebase.",
+        "owner": "Maintainer",
+        "sourceHead": "f70947d47b4651eaa6cef826b3e8b34d2f71e7dd",
+        "observedAt": "2026-11-12T01:12:58+00:00",
+        "disposition": "Published the context-only rebase at f70947d47. GitHub verified it was mergeable with one commit.",
+        "nextAction": "Await maintainer review and import of the rebased Apache image pin.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16466",
-          "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612"
+          "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612",
+          "https://github.com/tamird/gvisor/commit/f70947d47",
+          "https://github.com/tamird/gvisor/actions/runs/43131698938/job/130897131920"
         ],
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       },
       "evidence": [
         {
@@ -32001,6 +32004,14 @@
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a"
+        },
+        {
+          "label": "Published revision",
+          "url": "https://github.com/tamird/gvisor/commit/f70947d47"
+        },
+        {
+          "label": "Six build-context archives on the revised source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43131698938/job/130897131920"
         }
       ],
       "number": 16466,
@@ -32026,11 +32037,12 @@
       },
       "refinement": {
         "before": {
-          "head": "f53888791f36f5ecf1996c08a840b706262b49e3"
-        },
-        "after": {
           "head": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
           "base": "2552c678794e048487e1d18e9c81729b67fc119a"
+        },
+        "after": {
+          "head": "f70947d47b4651eaa6cef826b3e8b34d2f71e7dd",
+          "base": "2f5253abfaa87b6d62d79a0da60942e773389934"
         }
       }
     },
@@ -34164,13 +34176,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "11fc65fd99396932faecf9b8ed2c298fe7288f70",
+      "head": "4e034130e26ee192130ec828c5ea135612536f26",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-12T00:09:42+00:00",
-      "summary": "On 11fc65fd9 Lucas confirmed that the first-pass check is nonblocking and recommended approval. His review is recorded as COMMENTED. Formal approval is still outstanding.\n\nThe four commits were squashed to 11fc65fd9 with the same source tree as 244010f9c. The PR awaits maintainer review.\n\nLucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
+      "updatedAt": "2026-11-12T01:12:58+00:00",
+      "summary": "The three C sidecars now use the compiler and linker flags in runsc/sidecar.bzl. The generated Go-branch README directs consumers to that file in the corresponding master commit. The shell exporter and the proposed Go exporter in #15106 produced the same 385-byte README, and the archive retained the C sources for all three sidecars.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -34307,15 +34319,21 @@
         {
           "label": "Lucas’s review confirming first-pass is nonblocking and recommending approval",
           "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-5862954807"
+        },
+        {
+          "label": "Published revision",
+          "url": "https://github.com/tamird/gvisor/commit/4e034130e"
         }
       ],
       "number": 16522,
       "refinement": {
         "before": {
-          "head": "11fc65fd99396932faecf9b8ed2c298fe7288f70"
+          "head": "11fc65fd99396932faecf9b8ed2c298fe7288f70",
+          "base": "61a70083c96e207179500c29a2db85da204914bf"
         },
         "after": {
-          "head": "4e034130e26ee192130ec828c5ea135612536f26"
+          "head": "4e034130e26ee192130ec828c5ea135612536f26",
+          "base": "6ff6a1f498df61c356ed0c7d8597b04b2bed86a9"
         }
       },
       "settledReviews": [
@@ -34353,18 +34371,32 @@
           "outcome": "approved",
           "at": "2026-11-07T03:03:10+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16522#issuecomment-6701385343"
+        },
+        {
+          "kind": "amendment",
+          "head": "4e034130e26ee192130ec828c5ea135612536f26",
+          "baseHead": "11fc65fd99396932faecf9b8ed2c298fe7288f70",
+          "url": "https://github.com/tamird/gvisor/commit/4e034130e",
+          "requestedAt": "2026-11-12T00:09:42+00:00",
+          "title": "Point Go branch users to the C sidecars’ shared build flags",
+          "summary": "Publish the README correction on #16522? The PR moves the compiler and linker flags out of the three BUILD files. The exported README still directs users to those files.",
+          "body": "The README now names runsc/sidecar.bzl on the corresponding master commit. The shell exporter and the proposed Go exporter in #15106 emitted the same 385-byte README, and the archive retained all three sidecars’ C sources.\n\ngit -C ~/code/gvisor range-diff 11fc65fd9^! 4e034130e^!",
+          "outcome": "approved",
+          "at": "2026-11-12T01:12:58+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16522"
         }
       ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "4e034130e26ee192130ec828c5ea135612536f26",
-        "baseHead": "11fc65fd99396932faecf9b8ed2c298fe7288f70",
-        "url": "https://github.com/tamird/gvisor/commit/4e034130e",
-        "requestedAt": "2026-11-12T00:09:42+00:00",
-        "title": "Point Go branch users to the C sidecars’ shared build flags",
-        "summary": "Publish the README correction on #16522? The PR moves the compiler and linker flags out of the three BUILD files. The exported README still directs users to those files.",
-        "body": "The README now names runsc/sidecar.bzl on the corresponding master commit. The shell exporter and the proposed Go exporter in #15106 emitted the same 385-byte README, and the archive retained all three sidecars’ C sources.\n\ngit -C ~/code/gvisor range-diff 11fc65fd9^! 4e034130e^!"
+      "followup": {
+        "owner": "Maintainer",
+        "observedAt": "2026-11-12T01:12:58+00:00",
+        "sourceHead": "4e034130e26ee192130ec828c5ea135612536f26",
+        "mergeable": "MERGEABLE",
+        "disposition": "Published the approved README correction at 4e034130e. Lucas recommended approval on the earlier head; formal review of the amended source is pending.",
+        "nextAction": "Await formal review and import of the shared C sidecar rules.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16522",
+          "https://github.com/tamird/gvisor/commit/4e034130e"
+        ]
       }
     },
     {
