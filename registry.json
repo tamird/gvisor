@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T22:28:54+00:00",
+    "updatedAt": "2026-11-12T22:33:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34707,14 +34707,15 @@
       ],
       "followup": {
         "owner": "Maintainer",
-        "observedAt": "2026-11-12T01:12:58+00:00",
+        "observedAt": "2026-11-12T22:33:32+00:00",
         "sourceHead": "4e034130e26ee192130ec828c5ea135612536f26",
         "mergeable": "MERGEABLE",
-        "disposition": "Published the approved README correction at 4e034130e. Lucas recommended approval on the earlier head; formal review of the amended source is pending.",
-        "nextAction": "Await formal review and import of the shared C sidecar rules.",
+        "disposition": "The experimental review on 4e034130e confirmed all review items were addressed. GitHub recorded it as COMMENTED. Formal maintainer approval is still pending.",
+        "nextAction": "Await formal maintainer review of the shared C sidecar rules.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
-          "https://github.com/tamird/gvisor/commit/4e034130e"
+          "https://github.com/tamird/gvisor/commit/4e034130e",
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-5881399202"
         ]
       }
     },
@@ -103964,8 +103965,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T20:24:14+00:00",
-      "summary": "Four builds stopped while the test DUT was retrieving IPv6 addresses. Each affected TCP target ran and passed uncached in the same-head retry.",
+      "updatedAt": "2026-11-12T22:33:32+00:00",
+      "summary": "Six builds stopped during the IPv6 address dump before their PacketImpact TCP tests could start. The affected targets passed when retried on the same source.",
       "findings": [
         {
           "text": "The affected TCP tests were unaccepted sequence numbers (#53950), handshake window size (#53959), TCP_INFO (#53965) and TIME_WAIT reset (#53975). Their retries took 7.3, 0.6, 0.8 and 1.5 seconds respectively. #53975 separately reproduced the connected UDP receive failure.",
@@ -104001,6 +104002,35 @@
             {
               "label": "#53975 retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/53975#01a1c1b2-abdb-4b26-b05f-fca67aed7abf"
+            }
+          ]
+        },
+        {
+          "text": "The handshake window test in #54741 and the zero-window probe in #54744 both stopped with “results may be incomplete or inconsistent”. Both builds used the single-attempt address lookup. #17288 still carries the retry separately.",
+          "evidence": [
+            {
+              "label": "#54741 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54741#01a1d1c2-4c59-4d50-aa74-78806cbc0e06"
+            },
+            {
+              "label": "#54741 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54741#01a1d1ca-58fa-4934-a4f4-ede82c2a2f67"
+            },
+            {
+              "label": "#54744 failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54744#01a1d1cd-54dd-4e90-b20b-f67f46517ae6"
+            },
+            {
+              "label": "#54744 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54744#01a1d1d5-a6fb-4411-a5f6-fea1535358b8"
+            },
+            {
+              "label": "Address lookup used in #54741",
+              "url": "https://github.com/google/gvisor/blob/37532592d/test/packetimpact/netdevs/netlink/netlink.go#L43"
+            },
+            {
+              "label": "Address lookup used in #54744",
+              "url": "https://github.com/google/gvisor/blob/5fc911bc9/test/packetimpact/netdevs/netlink/netlink.go#L43"
             }
           ]
         }
