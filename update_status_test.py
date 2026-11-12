@@ -58,6 +58,12 @@ class ApprovedBranchTest(unittest.TestCase):
             with mock.patch.dict(proposal, status="Approved; waiting for #16860"), mock.patch.dict(
                     proposal["followup"], owner="State workstream"):
                 self.assertEqual(work(parent, other)["nextWork"], row)
+            with mock.patch.dict(proposal["settledReviews"][0], head="series", squashedHead="abc"):
+                self.assertEqual(work(parent, other)["nextWork"], row)
+                with mock.patch.dict(proposal["settledReviews"][0], squashedHead="other"):
+                    self.assertIsNone(work(parent, other)["nextWork"])
+                with mock.patch.dict(proposal["settledReviews"][0], outcome="changes-requested"):
+                    self.assertIsNone(work(parent, other)["nextWork"])
             for changes in ({"head": "def"}, {"status": "Retired; prerequisite obsolete"}, {"inactive": True},
                             {"contributorChangesRequested": {"head": "abc"}},
                             {"contributorReview": {"status": "pending"}},

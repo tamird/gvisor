@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-11T23:26:49+00:00",
+    "updatedAt": "2026-11-12T00:09:42+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4197,22 +4197,25 @@
       "group": "runtime",
       "status": "open",
       "summary": "The requested post-#16046 rebase is published at 57834789e0f3 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at ad6ccc6be236 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe reviewer-assignment workflow failed after selecting reviewers: GitHub POST requested_reviewers returned HTTP 500 at 16:55:30 UTC. The log contains no source diagnosis; no rerun, manual reviewer request or public reply has been made.\n\nThe contributor approved exact 46ad8cc5b22b84e9116e68567532cab9e8b664c7, and ready PR #15449 is now open against master. Root verified the single commit, head, reviewed body and thread metadata. The standing sweep owns CI, import and review follow-up.\n\nThe contributor-requested Read/cursor amendment is public and tracked at 46ad8cc5b22b84e9116e68567532cab9e8b664c7. Its complete owning obligations now have passing composed evidence. The original https://app.buildbuddy.io/invocation/c574883b-21c5-47d9-bb6f-e475aa2faa80 remains FAILED before runtime because the mapped-write qualification context left an unused io import; its actual tun_nogo passed both CPU analyses. The one-line qualified-only correction dfe4d9af5a95de70c3532d639ba93fc4a0441b1d passes https://app.buildbuddy.io/invocation/1b2c3b0a-6185-40f4-99a0-42a8b4bab724 in 211.698 seconds. Both complete shared/directfs TUN suites execute 44 named entries: 42 passes and the two existing WriteToDownDevice skips. Tundev Nogo passes both CPU analyses; the already-passed tun_nogo is reused.\n\nIndependent cumulative peer 40a95d085143 verifies both saved archives, 398 indexed files, four raw compact traces and all original uncached 300-second Action/Command/stdout/XML joins, with no local spawns. Source composition preserves the separate mapped writer/MTU context while applying the exact reviewed Read/Device.Write functions; this is not an exact standalone whole-file run. Existing suites do not directly exercise truncated-read or partial-EFAULT contracts. That renewed review request is resolved by the approved publication above.\n\nPrior proposal and source-specific evidence:\n\nThe independent TUN proposal is refreshed, public and tracked at fb54693011eb96d5d75e1af74a0944e86ab95061 on upstream e1bc. Both production blobs exactly match the reviewed original 900d proposal. It keeps segmented Buffer ownership through Device and file-description I/O, copying only fixed-size input headers and preserving the existing write-size guard and Go heap allocation. The future sentry-managed storage consumer remains separate. Complete source/lifetime and historical evidence peer 770a7bccd844 is closed. The contributor answered with questions and requested changes to the segmented TUN proposal. Root owns the source/design response; that earlier revision was superseded by the approved 46ad publication above. Prior evidence below remains source-specific historical proof.\n\nPrimary metadata recovered from parent cd518896 confirms COMPLETE/OK in 232.963 seconds at tested composition d59821c91, with both full shared/DirectFS syscall owners and both production Nogo owners PASSED. All five changed I/O functions and the complete tundev source match that tested composition; its Device also contains separate errno/MTU setup changes, so this is source-specific composed evidence.\n\nThe prior closed record reports 22 XML cases per syscall owner (21 passes plus the existing WriteToDownDevice skip), and AMD64/ARM64 analysis for both Nogo owners. Five requested old CAS output/summary objects are unavailable; those detailed case and architecture observations remain historical, not freshly replayed. No new standalone run, ARM runtime, mapped-storage/restore or performance claim is made.",
-      "updatedAt": "2026-10-30T15:50:57.471231+00:00",
+      "updatedAt": "2026-11-12T00:09:42+00:00",
       "followup": {
-        "disposition": "Mechanical rebase delivered; current-head review and checks",
-        "owner": "external_sweeps",
-        "nextAction": "Follow current-head public checks, genuine maintainer replies and any new import through the existing sweep. Historical approvals and imports do not cover the rebased head; do not duplicate the delivered notice.",
-        "sourceHead": "57834789e0f3343fc67a6bf2eb12544ea867a632",
+        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
+        "owner": "TUN I/O",
+        "nextAction": "Check buffer ownership across TUN reads and writes. Address headroom reuse and cover truncated reads and segmented buffers.",
+        "sourceHead": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
         "evidence": [
           "https://github.com/google/gvisor/pull/15449",
           "https://github.com/google/gvisor/actions/runs/37655169313/job/112908325933",
           "https://github.com/tamird/gvisor/commit/ad6ccc6be2369707e07deac0670a15f340041c4d",
-          "https://github.com/tamird/gvisor/commit/57834789e0f3343fc67a6bf2eb12544ea867a632"
+          "https://github.com/tamird/gvisor/commit/57834789e0f3343fc67a6bf2eb12544ea867a632",
+          "https://github.com/google/gvisor/pull/15449#discussion_r4544574527",
+          "https://github.com/google/gvisor/pull/15449#discussion_r4544574534",
+          "https://github.com/google/gvisor/pull/15449#discussion_r4544574539"
         ],
         "reviewedAt": "2026-10-09T19:16:38.099061+00:00",
         "reviewDecision": null,
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00"
+        "observedAt": "2026-11-12T00:09:42+00:00"
       },
       "head": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
       "number": 15449,
@@ -13340,7 +13343,8 @@
           "kind": "proposal",
           "head": "e1ec0fd6a841da016483565d9f6548196c1c835b",
           "outcome": "approved",
-          "at": "2026-11-05T14:49:32.851579Z"
+          "at": "2026-11-05T14:49:32.851579Z",
+          "squashedHead": "b6df34ebaeae02936ac59ea8f9cf802b8ba5fb96"
         }
       ],
       "refinement": {
@@ -29634,7 +29638,7 @@
       "url": "https://github.com/google/gvisor/pull/16770",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T23:29:29.400226+00:00",
+      "updatedAt": "2026-11-12T00:09:42+00:00",
       "summary": "With a FIN or its last data byte unread, Linux and netstack ACK a probe at the receive-window edge; both stop after the application drains the queue. All 56 netstack cases and 54 of 56 on Linux 7.0 passed. Two unchanged established-state cases expected silence and received an ACK.",
       "evidence": [
         {
@@ -29698,7 +29702,18 @@
           "outcome": "approved",
           "at": "2026-10-30T23:29:29.400226+00:00"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "TCP receive",
+        "sourceHead": "894bc9006ef39928d75f77d1075bc92c0472cd89",
+        "observedAt": "2026-11-12T00:09:42+00:00",
+        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
+        "nextAction": "Account for FIN’s sequence byte in the closed receiver’s window-edge comparison, and check the behavior with and without unread data against Linux.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16770#discussion_r4544575279",
+          "https://github.com/google/gvisor/pull/16770#discussion_r4544575285"
+        ]
+      }
     },
     {
       "id": "branch:nft-compat-inet-autoload",
@@ -30168,17 +30183,18 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T00:10:05+00:00",
+      "updatedAt": "2026-11-12T00:09:42+00:00",
       "summary": "An eight-segment CUBIC flight entered fast recovery. The receiver SACKed the seven segments past the hole and held its cumulative ACK fixed. When the repair timed out, Linux kept ssthresh at 7. The previous head 4a4e33cfc reduced it from 14 to 9. Fork source 8a79ae452 held it at 14. All four no-ACK and half-segment-ACK packet cases across the two stacks and all eight Reno/CUBIC repeated-timeout sender cases passed on the paired run. The standalone amendment 8427512c2 simplifies the reduction condition. On that exact source, gVisor kept ssthresh at 14 as cwnd dropped from 17 to 1 on entry to Loss. Both of its no-ACK and half-segment-ACK packet cases and all eight Reno/CUBIC repeated-timeout sender cases passed on fresh local TestRunner executions.\n\nThe earlier message-only amendment 4a4e33cfc was published with its PR body synchronized. It names retransmitTimerExpired as the destination of the one-segment congestion-window reset. The parent and source tree are unchanged, so the existing packet evidence applies; that message-only decision is complete.\n\nThe published packetimpact test at 67260334d reads TCP_INFO after two retransmission timeouts. Both the no-ACK and half-segment-ACK cases passed on Linux and gVisor in fresh AMD64 runs. The reply on Lucas’s original review thread describes both cases. The earlier instrumented test measured the threshold directly: with no ACK, Linux held at 5 and gVisor at 4; after a half-segment ACK both reduced it to 2.\n\nEarlier implementation at c25ba441f: It starts a new loss episode on any advancing cumulative ACK, including a partial-segment ACK, while a SACK alone does not reset the episode. A zero-window probe with no data in flight retains the congestion window and threshold. The focused remote qualification passes 425 records. If #15604 lands first, synchronize its two new HandleRTOExpired test calls with this signature; neither PR independently requires the other.\n\nEarlier source-specific record:\n\nThe approved e396b8c8a proposal is delivered as #16419 at d13561b12 with an identical diff. That submission was completed. Current public checks and maintainer review are tracked on the PR.\n\nA ten-segment flight set the slow-start threshold to five segments with Reno and seven with CUBIC on the first timeout. When the same retransmission timed out again, the sender reduced the threshold to two. The published change preserves five or seven until a timeout reaches new data, as RFC 5681 requires. In separate tests with no ACK and a half-segment ACK, the old code failed four cases per run; both corrected runs passed all 13 cases. These tests cover repeated timeouts on the same bytes; #16393 reported advancing oldest data.\n\nBroader validation passed 536 records across TCP, race, packet and analyzer checks, with one existing RACK skip. All seven packet cases passed. Each analyzer passed for AMD64 and ARM64; the runtime checks were on AMD64.\n\nThe integration at 185276b5b, which includes this fix, also passed its selected public socket slice: 11 targets and 38 sharded attempts, with 1,686 positive records, 32 known skips and no failures or missing results. Coverage includes ordinary AMD64, emulated ARM64 variants including 64 KiB pages, and separate AMD64 UNIX-stream save/restore cases. The TCP suite itself excludes save/restore. This is integration evidence, separate from the standalone repeated-timeout regression.\n\nThe approved amendment is now published on #16419 at 8427512c2. The contributor approved the additional CUBIC comparison and the reply was posted on Lucas’s original thread.",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "TCP recovery",
         "sourceHead": "8427512c2e8f6c0f1ece278d57df65202da6f0e8",
-        "observedAt": "2026-11-08T00:10:05+00:00",
-        "disposition": "Published the approved 8427512c2 source and posted the approved CUBIC comparison in the original review thread.",
-        "nextAction": "Follow maintainer review and import of #16419.",
+        "observedAt": "2026-11-12T00:09:42+00:00",
+        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
+        "nextAction": "Rebase the ssthresh change onto the zero-window guard that already landed in #16595. Preserve the congestion-window assertions and correct the PR text.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
-          "https://github.com/google/gvisor/pull/16419#discussion_r4504268180"
+          "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
+          "https://github.com/google/gvisor/pull/16419#discussion_r4544573717"
         ]
       },
       "evidence": [
@@ -34004,7 +34020,7 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-11T22:04:38+00:00",
+      "updatedAt": "2026-11-12T00:09:42+00:00",
       "summary": "On 11fc65fd9 Lucas confirmed that the first-pass check is nonblocking and recommended approval. His review is recorded as COMMENTED. Formal approval is still outstanding.\n\nThe four commits were squashed to 11fc65fd9 with the same source tree as 244010f9c. The PR awaits maintainer review.\n\nLucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
       "evidence": [
         {
@@ -34147,12 +34163,10 @@
       "number": 16522,
       "refinement": {
         "before": {
-          "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
-          "base": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
+          "head": "11fc65fd99396932faecf9b8ed2c298fe7288f70"
         },
         "after": {
-          "head": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
-          "base": "e9961d5d844e709e8aab6b7215b482b198325a86"
+          "head": "4e034130e26ee192130ec828c5ea135612536f26"
         }
       },
       "settledReviews": [
@@ -34191,7 +34205,18 @@
           "at": "2026-11-07T03:03:10+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16522#issuecomment-6701385343"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "4e034130e26ee192130ec828c5ea135612536f26",
+        "baseHead": "11fc65fd99396932faecf9b8ed2c298fe7288f70",
+        "url": "https://github.com/tamird/gvisor/commit/4e034130e",
+        "requestedAt": "2026-11-12T00:09:42+00:00",
+        "title": "Point Go branch users to the C sidecars’ shared build flags",
+        "summary": "Publish the README correction on #16522? The PR moves the compiler and linker flags out of the three BUILD files. The exported README still directs users to those files.",
+        "body": "The README now names runsc/sidecar.bzl on the corresponding master commit. The shell exporter and the proposed Go exporter in #15106 emitted the same 385-byte README, and the archive retained all three sidecars’ C sources.\n\ngit -C ~/code/gvisor range-diff 11fc65fd9^! 4e034130e^!"
+      }
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -38184,7 +38209,8 @@
           "kind": "proposal",
           "head": "82f0e4f38f65529f18851f196504957874ec56fa",
           "outcome": "approved",
-          "at": "2026-10-30T10:46:19.726076+00:00"
+          "at": "2026-10-30T10:46:19.726076+00:00",
+          "squashedHead": "bf6e0e67074facccb06e1f64450e97140ca72bff"
         }
       ],
       "followup": {
@@ -38192,7 +38218,7 @@
         "sourceHead": "bf6e0e67074facccb06e1f64450e97140ca72bff",
         "observedAt": "2026-11-08T13:27:04+00:00",
         "disposition": "Final two commits approved",
-        "nextAction": "Submit the approved two commits after the stable waiter/host notifier, plugin, VFIO, FUSE, gofer, and Unix provider changes. #16739 fixes rejected peer registration; bound host sockets still need correct error propagation. Remove the old overlay method when installing the approved stable replacement; do not publish a blanket rejection.",
+        "nextAction": "Submit the approved change as one commit after the stable waiter/host notifier, plugin, VFIO, FUSE, gofer, and Unix provider changes. #16739 fixes rejected peer registration; bound host sockets still need correct error propagation. Remove the old overlay method when installing the approved stable replacement; do not publish a blanket rejection.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/3ded0a3d6...82f0e4f38",
           "https://github.com/google/gvisor/pull/16739",
@@ -56832,16 +56858,18 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-07T12:02:13+00:00",
+      "updatedAt": "2026-11-12T00:09:42+00:00",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Networking",
         "sourceHead": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
-        "observedAt": "2026-11-07T12:02:13+00:00",
-        "disposition": "The reviewed change is on #16957 at fea7e15b6.",
-        "nextAction": "Follow #16957 for maintainer review and import.",
+        "observedAt": "2026-11-12T00:09:42+00:00",
+        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
+        "nextAction": "Use the test’s existing netlink socket while checking both veth MTUs, account for checkpoint boundaries, and assert the exact MTU now that #16984 has landed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
-          "https://github.com/tamird/gvisor/commit/fea7e15b6"
+          "https://github.com/tamird/gvisor/commit/fea7e15b6",
+          "https://github.com/google/gvisor/pull/16957#discussion_r4544574909",
+          "https://github.com/google/gvisor/pull/16957#discussion_r4544574912"
         ]
       },
       "refinement": {
@@ -79253,7 +79281,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "updatedAt": "2026-11-11T23:39:28+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -81363,9 +81391,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
             }
           ]
+        },
+        {
+          "text": "In the two shared-link runs with CUBIC and RACK enabled, all 218 and 129 missing copies associated with the timeouts reached the forward queue while 100 admitted frames were still between its taps. The queue limit was 100 packets. The losses clustered within 648 ms and 316 ms, ending before the first timeout. The ensuing 109 and 81 timeouts spanned 43.61 s and 32.64 s. At 38 of the 129 drops in the second run, gVisor payloads alone occupied all 100 positions. Each of the 108 and 81 qualifying first sends after a timeout passed the queue with no earlier gVisor payloads left between its taps.",
+          "evidence": [
+            {
+              "label": "Ingress and egress timestamps, timeout log and queue counters for both senders",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare competing traffic and queue occupancy at the missing sends to explain when repeated copies encounter the full forward queue. The four-arm capture establishes where those copies were lost.",
+      "nextStep": "Compare how many distinct holes are repaired per timeout, and how long recovery takes, with and without a candidate recovery change under the same competing-flow workload. The packet captures explain where the original copies were lost.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -100044,11 +100081,11 @@
     {
       "id": "investigation:ci-flake-java-datagram-fd-count",
       "title": "Java DatagramChannel test sees the open descriptor count change by one",
-      "status": "active",
+      "status": "concluded",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T23:26:49+00:00",
-      "summary": "Five builds failed OpenJDK’s Unref.java when the descriptor count changed by one. Each failed shard passed on the same source when rerun. gVisor’s published Java 21 exclusion in #17377 matches the exclusion in its pinned OpenJDK.",
+      "updatedAt": "2026-11-12T00:06:31+00:00",
+      "summary": "OpenJDK’s Unref.java intermittently counted one fewer open descriptor. After the Java 21 exclusion landed in gVisor, the previously failing shard ran and passed on master.",
       "findings": [
         {
           "text": "Builds 54134 (c7d58cefd) and 54152 (e53b9ea39) started with 11 open descriptors and counted 10 immediately after opening and closing a datagram channel. Both failed line 72.",
@@ -100156,9 +100193,22 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54531#01a1cccc-0eda-46b9-a440-3c35b110302d"
             }
           ]
+        },
+        {
+          "text": "On the master commit that merged #17377, Java shard 33 of 40 ran the java21 Bazel target and passed in 161.9 s. This is the same shard that ran the intermittent descriptor-count check. All 40 default Java shards eventually passed, including two that retried.",
+          "evidence": [
+            {
+              "label": "Master commit that merged the exclusion",
+              "url": "https://github.com/google/gvisor/commit/6ff6a1f49"
+            },
+            {
+              "label": "Master Java shard 33, build 54540",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54540#01a1cced-cc1a-47c6-927b-032de949836d"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow #17377 and its tested export #17427 through landing, then check the first directfs Java shard 33 on master.",
+      "nextStep": "Reopen if Unref.java is selected again or the same descriptor-count assertion recurs.",
       "evidence": [
         {
           "label": "Published Java 21 exclusion at 6dd410ba8",
@@ -103517,11 +103567,11 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T22:50:51+00:00",
+      "updatedAt": "2026-11-12T00:06:31+00:00",
       "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
       "findings": [
         {
-          "text": "NVIDIA published the kernel module source for this patch. The source tag permits an ABI comparison with the nearest supported driver. Compatibility and installation remain unverified.",
+          "text": "NVIDIA published the kernel-module source for 580.196.07, allowing a direct comparison with 580.178.04.",
           "evidence": [
             {
               "label": "NVIDIA 580.196.07 source release",
@@ -103530,7 +103580,7 @@
           ]
         },
         {
-          "text": "The proposed registration adds the driver in one source file. The pinned AMD64 and ARM64 installer hashes matched NVIDIA’s published SHA256 values. The CPU-only qualification is running.",
+          "text": "The registration uses NVIDIA’s published SHA256 values for the AMD64 and ARM64 installers.",
           "evidence": [
             {
               "label": "Fork registration for NVIDIA 580.196.07",
@@ -103541,9 +103591,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43114713878"
             }
           ]
+        },
+        {
+          "text": "The parent rejected all 348 entries for NVIDIA 580.196.07 across 18 of 21 COS images. With the registration all 21 images passed. The driver comparison found zero differences in the ABI records, aliases and constants consumed by nvproxy. The checksum and parity tests and all 99 nvproxy cases passed on the Linux worker. Hardware execution remains untested.",
+          "evidence": [
+            {
+              "label": "COS stock and corrected test results, ABI diff and installer checksums",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43117337335/artifacts/13901706883"
+            }
+          ]
         }
       ],
-      "nextStep": "Check the registration against the published driver ABI and the installed host driver requirements using the qualification results.",
+      "nextStep": "Open the registration as a gVisor PR after contributor review.",
       "evidence": [
         {
           "label": "Container-Optimized OS driver check, build #54517",
@@ -103552,8 +103611,29 @@
         {
           "label": "NVIDIA 580.196.07 source release",
           "url": "https://github.com/NVIDIA/open-gpu-kernel-modules/releases/tag/580.196.07"
+        },
+        {
+          "label": "Single-file driver registration",
+          "url": "https://github.com/tamird/gvisor/commit/3dfdf32f7"
+        },
+        {
+          "label": "COS stock and corrected test results, ABI diff and installer checksums",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43117337335/artifacts/13901706883"
         }
-      ]
+      ],
+      "repo": "google/gvisor",
+      "head": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
+        "baseHead": "088adcd04f24c6230879074a3fab38535b62ebec",
+        "url": "https://github.com/tamird/gvisor/commit/3dfdf32f7",
+        "requestedAt": "2026-11-12T00:06:31+00:00",
+        "title": "nvproxy: Support NVIDIA driver 580.196.07",
+        "summary": "Open the tested single-file registration on gVisor? All 21 COS images and the version, checksum and ABI checks passed on a CPU-only worker.",
+        "body": "Container-Optimized OS now selects 580.196.07 as the default driver\non some images. On these hosts runsc reports \"unsupported Nvidia\ndriver version\" when it registers GPU devices.\n\nRegister the x86-64 and ARM64 installers with the 580.178.04 ABI.\nThis keeps the same supported controls and their capability checks."
+      }
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
