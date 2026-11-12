@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T05:45:10+00:00",
+    "updatedAt": "2026-11-12T05:55:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -105617,12 +105617,12 @@
     },
     {
       "id": "investigation:hermetic-llvm-race-boot",
-      "title": "Find why the LLVM race test cannot start on scratch workers",
+      "title": "LLVM race boot tests on native scratch workers",
       "group": "bazel",
       "status": "active",
       "owner": "Agent qualification",
-      "updatedAt": "2026-11-12T05:45:10+00:00",
-      "summary": "With the analysis conflict removed, LLVM linked the race guest on both native workers. Each TestRunner then failed to execute the outer boot_test binary.",
+      "updatedAt": "2026-11-12T05:55:57+00:00",
+      "summary": "Linking the outer boot_test executable statically let both native workers run the race-enabled guest through systrap. The stock executable requested a dynamic loader missing from each worker image.",
       "findings": [
         {
           "text": "Bazel reported conflicting actions for outputs from musl, libc++ and compiler-rt while analyzing //runsc/boot:boot_test with --config=race. Both attempts stopped before TestRunner or a guest started. The five gVisor compiler prerequisites remain unchanged.",
@@ -105634,7 +105634,7 @@
           ]
         },
         {
-          "text": "A follow-up runs integrated TestRun on native AMD64 and ARM64 with an analysis change for Bazel #31806. The first AMD64 step returned nonzero. Its cause and the ARM64 outcome await the original action and test records.",
+          "text": "The follow-up exercised the Bazel #31806 analysis change on native AMD64 and ARM64. Both workers reached TestRunner on the integrated source.",
           "evidence": [
             {
               "label": "Two native race-boot checks",
@@ -105654,9 +105654,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43156104857/artifacts/13917649103"
             }
           ]
+        },
+        {
+          "text": "Both workers found the stock boot_test executable and verified its checksum. AMD64 lacked /lib64/ld-linux-x86-64.so.2 and ARM64 lacked /lib/ld-linux-aarch64.so.1. With a statically linked outer executable, each uncached TestRun ran /test_app echo through systrap. The test passed in 1.22 s on AMD64 and 1.10 s on ARM64. The workflow failed afterward when its reader looked for the guest under a Bazel convenience symlink and could not independently verify the guest checksum.",
+          "evidence": [
+            {
+              "label": "Stock ELF loader checks, static TestRun logs and XML for both architectures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43162812516/artifacts/13919192754"
+            }
+          ]
         }
       ],
-      "nextStep": "Run the real TestRun wrapper on both architectures with the outer executable linked statically. The baseline found the outer binary on each scratch worker, verified its checksum, and reproduced ENOENT because its ELF interpreter was absent.",
+      "nextStep": "Use these results when consolidating the compiler integration. If the fork keeps this scratch-worker race test, link its outer executable statically. The explicit race-flag scope worked around the custom Bazel client’s analysis conflict. Upstream CI runs the boot unit test without --config=race and exercises runsc do true in a separate race smoke test.",
       "evidence": [
         {
           "label": "Native AMD64 and ARM64 race boot test analysis on the integrated compiler",
@@ -105675,8 +105684,8 @@
           "url": "https://github.com/bazelbuild/bazel/issues/31806"
         },
         {
-          "label": "Outer executable and interpreter on both scratch workers",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43162812516"
+          "label": "Stock ELF loader checks, static TestRun logs and XML for both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43162812516/artifacts/13919192754"
         }
       ]
     },
@@ -105745,5 +105754,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-12T05:45:10+00:00"
+  "updatedAt": "2026-11-12T05:55:57+00:00"
 }
