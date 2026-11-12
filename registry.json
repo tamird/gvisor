@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T21:24:10+00:00",
+    "updatedAt": "2026-11-12T21:31:54+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108494,6 +108494,58 @@
         {
           "label": "Both hostinet cases passed in the sibling shard",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e4-4f86-8802-9c6c11dabf1c/artifacts/01a1d1a0-3cd6-42de-b5dd-6e99e957a662"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-podman-rootless-oom-score",
+      "title": "Rootless Podman failed to open oom_score_adj during startup",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T21:31:54+00:00",
+      "summary": "Build #54733 failed to start an Alpine container as podman-testuser. runsc received EACCES opening /proc/171324/oom_score_adj and Podman exited with status 126.",
+      "findings": [
+        {
+          "text": "The startup error preceded the cleanup errors. Nine nearby completed Podman controls passed. The next two attempts on this build exited with status −1 and did not confirm another EACCES.",
+          "evidence": [
+            {
+              "label": "Original Podman startup failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54733#01a1d18b-cc2b-4707-b154-070cf38bb555"
+            },
+            {
+              "label": "Attempt results for build #54733",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54733/data/jobs"
+            }
+          ]
+        },
+        {
+          "text": "On the tested source, runsc accepts EACCES if it can confirm the sandbox process has exited. The log records neither the result of that check nor when the sandbox exited.",
+          "evidence": [
+            {
+              "label": "How runsc handles EACCES on oom_score_adj",
+              "url": "https://github.com/google/gvisor/blob/728f546af/runsc/container/container.go#L2066-L2082"
+            },
+            {
+              "label": "Original Podman startup failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54733#01a1d18b-cc2b-4707-b154-070cf38bb555"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Capture the process-liveness result and sandbox exit timing at the denied open during rootless startup.",
+      "evidence": [
+        {
+          "label": "Original Podman startup failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54733#01a1d18b-cc2b-4707-b154-070cf38bb555"
+        },
+        {
+          "label": "Attempt results for build #54733",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54733/data/jobs"
+        },
+        {
+          "label": "How runsc handles EACCES on oom_score_adj",
+          "url": "https://github.com/google/gvisor/blob/728f546af/runsc/container/container.go#L2066-L2082"
         }
       ]
     }
