@@ -326,7 +326,8 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         binding["sourceHead"] = pr["head"]
         triaged = (pr.get("reviewsComplete") and pr.get("threads", {}).get("complete")
                    and pr.get("feedback", {}).get("complete") and node.get("head", pr["head"]) == pr["head"]
-                   and any(record.get("reason") == "author-feedback" and record.get("binding") == binding
+                   and any(record.get("reason") == "author-feedback" and record.get("action") != "batch-cleanup"
+                           and record.get("binding") == binding
                            for record in followup.get("attentionDispositions", [])))
         rebase = current_rebase_request(pr, OWNER) if pr is source else None
         for item in items:

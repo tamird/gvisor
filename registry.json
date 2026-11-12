@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T22:16:57+00:00",
+    "updatedAt": "2026-11-12T22:24:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -99211,7 +99211,7 @@
       "status": "active",
       "group": "tests",
       "owner": "Source PR owners",
-      "updatedAt": "2026-11-12T07:15:37+00:00",
+      "updatedAt": "2026-11-12T22:24:49+00:00",
       "summary": "All 20 inline threads on the 43 contributor PRs merged November 7–12 have replies. Seven PRs had inline feedback. Each merged the reviewed head, including the fixes requested in approving reviews. The earlier audit covers 654 source PRs.",
       "findings": [
         {
@@ -99489,7 +99489,7 @@
           ]
         },
         {
-          "text": "#16594 (approved; tested fix on the rollup): Return immediately when the mount promise is already resolved after registering. Waiting on an already signaled entry can still select the timeout.",
+          "text": "The VFS early return was first tested on the rollup, then applied directly to #16594. It handles a mount promise that resolves just after registration.",
           "evidence": [
             {
               "label": "Original review suggestion",
@@ -99498,11 +99498,15 @@
             {
               "label": "Reply linking the tested fix",
               "url": "https://github.com/google/gvisor/pull/16594#discussion_r4407457075"
+            },
+            {
+              "label": "Fix on the original VFS PR",
+              "url": "https://github.com/google/gvisor/pull/16594#discussion_r4450157064"
             }
           ]
         },
         {
-          "text": "#16605 (approved; tested fix on the rollup): Check that a DSACK advances the round boundary and refreshes persistence even after the window multiplier saturates.",
+          "text": "The RACK saturation test was first tested on the rollup, then applied directly to #16605. It checks that a DSACK advances the round boundary and refreshes persistence after the window multiplier saturates.",
           "evidence": [
             {
               "label": "Original review suggestion",
@@ -99511,6 +99515,10 @@
             {
               "label": "Reply linking the tested fix",
               "url": "https://github.com/google/gvisor/pull/16605#discussion_r4407457965"
+            },
+            {
+              "label": "Test on the original TCP PR",
+              "url": "https://github.com/google/gvisor/pull/16605#discussion_r4450138015"
             }
           ]
         },
@@ -99532,7 +99540,7 @@
           ]
         }
       ],
-      "nextStep": "Inspect new review bodies as well as inline threads. For each actionable item, verify the original or follow-up change and answer the reviewer. Carry unfinished edits through an import or merge.",
+      "nextStep": "Check review bodies and inline threads on each sweep. Apply optional edits to the original PR while it is open, including after approval. If an import lands first, verify its contents and send a follow-up for any omitted edits. Reply on the original thread once the change is published.",
       "evidence": [
         {
           "label": "Full audit of the 654 public source PRs",

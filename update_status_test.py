@@ -1323,6 +1323,7 @@ class CollectorHistoryTest(unittest.TestCase):
 
     def test_reviewer_handoff_tracks_latest_reply_and_top_level_events(self) -> None:
         pr = retained(raw_pr(5))
+        pr.update(reviewDecision="APPROVED", approvedHead=pr["head"])
         finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
                    "isOutdated": False, "body": "[🤖] Recycled allocation is slower.", "createdAt": OLD,
                    "updatedAt": OLD, "url": pr["url"] + "#discussion_r1",
@@ -1346,6 +1347,13 @@ class CollectorHistoryTest(unittest.TestCase):
             binding["sourceHead"] = pr["head"]
             self.registry["nodes"][0]["followup"]["attentionDispositions"] = [
                 {"reason": "author-feedback", "binding": copy.deepcopy(binding)}]
+            disposition = self.registry["nodes"][0]["followup"]["attentionDispositions"][0]
+            disposition["action"] = "batch-cleanup"
+            handoff = updater.reviewer_handoff([pr], previous)
+            self.assertEqual([item["id"] for item in handoff if item["awaitingAuthor"]], ["finding"])
+            self.assertEqual(updater.worker_handoff({"prs": [pr], "reviewerHandoff": handoff}, [])["nextWork"]["id"], "finding")
+            self.assertEqual(updater.reviewer_handoff([{**pr, "status": "merged"}], previous), [])
+            del disposition["action"]
             self.assertEqual(updater.reviewer_handoff([pr], previous), [])
             reply = {**finding, "id": "reply", "createdAt": LATER, "updatedAt": LATER,
                      "body": "I am measuring the affected path.", "author": {"login": "tamird", "__typename": "User"}}

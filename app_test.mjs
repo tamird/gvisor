@@ -1763,7 +1763,7 @@ function assignedCommentNode() {
   return node;
 }
 
-test('a queued nit leaves the approved import on its normal path and reopens on new feedback', () => {
+test('an optional nit stays on its approved source until it lands', () => {
   const node = attentionNode(16496), pr = node.github, context = client();
   pr.imports = [attentionImport(node, 16542)];
   pr.threads = { complete: true, unresolved: 1, total: 1 };
@@ -1774,18 +1774,13 @@ test('a queued nit leaves the approved import on its normal path and reopens on 
   const binding = JSON.parse(vm.runInContext('JSON.stringify(attentionDispositionEvidence(nodeInput, "author-feedback"))', context));
   node.followup = { attentionDispositions: [{ reason: 'author-feedback', action: 'batch-cleanup',
     title: 'Queued for cleanup', nextAction: 'Reply on the original thread after the cleanup.', evidence: [comment.url], binding }] };
-  assert.deepEqual(idsFor(node), ['maintainer-merge']);
-  comment.body = 'Please fix this before import.';
-  assert.ok(idsFor(node).includes('author-feedback'));
-  comment.body = 'Mention the reserved thread.';
-  const reply = { ...comment, id: 'reply', author: { login: 'tamird' }, body: 'Fixed in the cleanup commit.', createdAt: '2026-10-28T13:00:00Z' };
-  comment.createdAt = '2026-10-28T00:00:00Z';
-  pr.feedback.items.push(reply);
-  assert.ok(idsFor(node).includes('maintainer-response')); // The reply is not bound yet.
-  node.followup.attentionDispositions[0].binding = JSON.parse(vm.runInContext('JSON.stringify(attentionDispositionEvidence(nodeInput, "author-feedback"))', context));
-  assert.deepEqual(idsFor(node), ['maintainer-merge']);
-  pr.feedback.items.push({ ...comment, id: 'followup', body: 'Found another issue.', createdAt: '2026-10-28T14:00:00Z' });
-  assert.ok(idsFor(node).includes('author-feedback'));
+  assert.deepEqual(idsFor(node), ['author-feedback']);
+  context.snapshotInput.workStates[node.id] = { 'waiting-merge': { scope: pr.head, since: null, basis: 'unknown' } };
+  const states = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.ok(states['author-feedback']); assert.equal(states['waiting-merge'], undefined);
+  pr.status = 'merged';
+  assert.ok(!idsFor(node).includes('author-feedback'));
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["author-feedback"]', context), undefined);
 });
 
 test('assigned top-level feedback blocks merge attention without rewriting approval', () => {

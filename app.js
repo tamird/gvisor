@@ -498,7 +498,9 @@ function attentionDispositionEvidence(node, reason, replacementId, nodes = model
 }
 function attentionDisposition(node, reason) {
   const record = node.followup?.attentionDispositions?.find(item => item.reason === reason);
-  if (!record?.binding || !record.title || !record.nextAction || !record.evidence?.length) return null;
+  // Old snapshots record some suggestions for a later batch. Approval never
+  // transfers an open PR’s review work to a separate change.
+  if (!record?.binding || record.action === "batch-cleanup" || !record.title || !record.nextAction || !record.evidence?.length) return null;
   const current = attentionDispositionEvidence(node, reason, record.replacement);
   return current && evidenceJSON(current) === evidenceJSON(record.binding) ? record : null;
 }
@@ -619,9 +621,7 @@ function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
     const disposition = attentionDisposition(node, id === "agent-import-conflict" ? "author-conflicts" : id);
     if (disposition) {
-      // The separate cleanup record owns this suggestion. Other reasons,
-      // including the import's normal merge state, still belong to this PR.
-      if (disposition.action === "batch-cleanup" || disposition.action === "prefer-alternative") return;
+      if (disposition.action === "prefer-alternative") return;
       const dispositionId = disposition.action === "ci-infrastructure-retry" ? "maintainer-ci-infrastructure" : "maintainer-triaged";
       const existing = reasons.find(item => item.id === dispositionId);
       const triage = `${disposition.title}. ${disposition.nextAction}`;
@@ -829,7 +829,7 @@ function attentionReasons(node, owner) {
   if (reviewHold) add("maintainer-unknown", reviewHold.reason, "Maintainer requested a hold");
   if (!reviewHold && review.unknown && !review.incomplete && !followupBlocked)
     add("maintainer-response", "A reviewer decision remains unresolved without an identified author change.");
-  if (!reviewHold && review.response && !newWaitComment && attentionDisposition(node, "author-feedback")?.action !== "batch-cleanup")
+  if (!reviewHold && review.response && !newWaitComment)
     add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
   if (!reviewHold && !approved && !exported && !restoreLabel && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
@@ -2237,9 +2237,12 @@ function stateRecords(snapshot, node) {
     const threads = reviewAttention(pr, registry.meta.owner).unanswered;
     const assigned = actionableComment(node);
     const rebase = requestedRebase(pr, registry.meta.owner);
-    if (threads.length || assigned || rebase) records["author-feedback"] = { scope: pr.head, since: null, basis: "unknown",
-      qualifier: [threads.length && `${threads.length} unanswered review thread${threads.length === 1 ? "" : "s"}`,
-        assigned && "Assigned review follow-up", rebase && "Requested rebase"].filter(Boolean).join("; "), url: safeURL(rebase?.url || threads[0]?.url || assigned?.url) };
+    if (threads.length || assigned || rebase) {
+      delete records["waiting-merge"];
+      records["author-feedback"] = { scope: pr.head, since: null, basis: "unknown",
+        qualifier: [threads.length && `${threads.length} unanswered review thread${threads.length === 1 ? "" : "s"}`,
+          assigned && "Assigned review follow-up", rebase && "Requested rebase"].filter(Boolean).join("; "), url: safeURL(rebase?.url || threads[0]?.url || assigned?.url) };
+    }
   }
   if (decision && !contributorDecisionNeedsRefresh(node)) {
     const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];
