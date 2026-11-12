@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T22:24:49+00:00",
+    "updatedAt": "2026-11-12T22:28:54+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108541,7 +108541,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T22:16:57+00:00",
+      "updatedAt": "2026-11-12T22:28:54+00:00",
       "summary": "Build #54733 failed to start an Alpine container as podman-testuser. runsc received EACCES opening /proc/171324/oom_score_adj and Podman exited with status 126.",
       "findings": [
         {
@@ -108578,9 +108578,18 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54740#01a1d1b9-be02-4b51-b87f-11f6ce80c15f"
             }
           ]
+        },
+        {
+          "text": "With diagnostic logging on the source from #54733, all 48 rootless runs printed Hello, world and exited 0. Each directfs setting ran 12 immediate echoes and 12 one-second controls with Podman 3.4.4 as UID 1002 on Linux 6.8.0-1070-azure. None returned EACCES.",
+          "evidence": [
+            {
+              "label": "48 original Podman results and process diagnostics",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43318639229/artifacts/13989787857"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture the process-liveness result and sandbox exit timing at the denied open during rootless startup.",
+      "nextStep": "On the next failure, use the diagnostics to identify which process owned oom_score_adj and whether its pidfd indicated exit when open returned EACCES.",
       "evidence": [
         {
           "label": "Original Podman startup failure",
@@ -108597,6 +108606,10 @@
         {
           "label": "Podman on replacement import",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54740#01a1d1b9-be02-4b51-b87f-11f6ce80c15f"
+        },
+        {
+          "label": "48 original Podman results and process diagnostics",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43318639229/artifacts/13989787857"
         }
       ]
     }
