@@ -13,7 +13,7 @@ RUN curl -o node-${VERSION}.tar.gz https://nodejs.org/dist/${VERSION}/node-${VER
  && tar -zxf node-${VERSION}.tar.gz \
  && rm -f node-${VERSION}.tar.gz
 
-# Patch in a timeout increase to reduce test flakiness on gVisor
+# Allow slower platforms more time and test HTTP socket reuse without deadlines.
 WORKDIR /root/node-${VERSION}
 COPY timeouts.patch /tmp/timeouts.patch
 RUN patch -p1 --no-backup-if-mismatch < /tmp/timeouts.patch \
