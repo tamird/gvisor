@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-12T21:27:51.856024+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-12T21:31:54+00:00",
+  "registryDate": "2026-11-12T22:16:57+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -459244,7 +459244,7 @@
         "since": "2026-11-12T21:24:10+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-12T21:24:10+00:00"
+        "observedAt": "2026-11-12T21:42:17+00:00"
       }
     },
     "pr:bazel-contrib/rules_shell:64": {
@@ -459326,6 +459326,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-12T21:24:10+00:00"
+      }
+    },
+    "investigation:ci-flake-hostinet-loopback-unreachable": {
+      "contributor-review": {
+        "scope": "7b0e57daf4c7857a8343e072f69eb1b70151a8e1",
+        "since": "2026-11-12T21:42:17+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-12T21:42:17+00:00"
       }
     }
   },

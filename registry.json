@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T21:31:54+00:00",
+    "updatedAt": "2026-11-12T22:16:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -76263,7 +76263,7 @@
         "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
         "observedAt": "2026-11-12T21:24:10+00:00",
         "disposition": "Fabian received the gVisor use case. Jay closed the PR and asked for an issue about declaring the inputs.",
-        "nextAction": "Review the proposed Gazelle issue on checking declared inputs.",
+        "nextAction": "Review the proposed issue about the configured Gazelle executable.",
         "evidence": [
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4547568345",
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4553360799",
@@ -76274,11 +76274,11 @@
         "kind": "issue",
         "status": "pending",
         "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "requestedAt": "2026-11-12T21:24:10+00:00",
+        "requestedAt": "2026-11-12T21:42:17+00:00",
         "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
-        "title": "Run Gazelle’s diff check on declared inputs",
-        "summary": "File the proposed issue describing gVisor’s declared package inputs and asking Gazelle to supply its repository configuration inside the check.",
-        "body": "Could Gazelle provide a rule that runs `gazelle update -mode=diff` on caller-declared inputs and supplies its own Bzlmod repository configuration? We want Bazel to cache the check and run it on a remote worker.\n\ngVisor checks 218 named package directories with `-r=false -index=none`. Our [prototype](https://github.com/tamird/gvisor/blob/49d0bc55a/tools/lint_sources.bzl#L19-L55) gives Bazel the files beneath those directories, including `go:embed` data, plus ancestor BUILD files and root configuration. It preserves their relative paths. Adding a new Go file to a listed package or changing a parent’s `gazelle:resolve` directive produced the [same diff as running Gazelle in the checkout](https://github.com/tamird/gvisor/actions/runs/41211321121/artifacts/13046890088). A new package is checked once we add its directory to the list.\n\nThe missing piece is dependency resolution. When the root module renames Gazelle to `my_gazelle`, the ordinary launcher emits `@my_gazelle//v2/config`. Running the binary without the repository map drops that dependency. The [check action](https://github.com/tamird/gvisor/blob/49d0bc55a/tools/lint/BUILD#L61-L82) only passes the map through to Gazelle. Keeping that step in a Gazelle-owned rule would let the format change as planned in #2413. We can try that interface in gVisor. Follow-up to #2514.\n\nPrepared by Codex on behalf of @tamird."
+        "title": "Use the configured Gazelle executable in a Bazel action",
+        "summary": "Ask Gazelle to expose its configured executable to Bazel actions. gVisor can supply the source tree and package list.",
+        "body": "Jay raised a problem with sandboxing `gazelle_test` in #2514: how do you declare every file Gazelle might read? Using `go_library.srcs` would miss exactly the case we want CI to catch: a new `.go` file nobody has added to the BUILD file yet.\n\ngVisor already lists the 218 directories it checks with `-r=false -index=none`. Our [repository rule](https://github.com/tamird/gvisor/blob/49d0bc55a/tools/lint_sources.bzl#L19-L81) walks the checkout, watches directory entries and writes a BUILD file with one filegroup for Gazelle. It includes files under the listed directories (including `go:embed` data), ancestor BUILD files and root configuration. Adding an unlisted `.go` file took the sandbox from 1,269 inputs to 1,270 and produced the same missing-source diff as the checkout. A new package still needs an entry in our directory list. [Test results](https://github.com/tamird/gvisor/actions/runs/41211321121/artifacts/13046890088)\n\nCould Gazelle provide a shell-free executable for Bazel actions that applies the same Bzlmod configuration as `bazel run //:gazelle`? We can supply the input tree and `-repo_root`. The raw executable loses the `@my_gazelle//v2/config` dependency when we rename the module to `my_gazelle`; the configured launcher gets it right but requires Bash. Gazelle would retain ownership of the repository map and could change its format in #2413.\n\nPrepared by Codex on behalf of @tamird."
       }
     },
     {
@@ -108451,7 +108451,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T21:24:10+00:00",
+      "updatedAt": "2026-11-12T21:42:17+00:00",
       "summary": "In build #54736, localhost TCP connects returned ENETUNREACH in two hostinet cases. The cgroupv2 shard passed when retried on the same commit.",
       "findings": [
         {
@@ -108479,6 +108479,19 @@
               "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e4-4f86-8802-9c6c11dabf1c/artifacts/01a1d1a0-3cd6-42de-b5dd-6e99e957a662"
             }
           ]
+        },
+        {
+          "text": "A separate procfs check showed which task supplied the saved namespace. The parent selected thread-group leader 49834 for caller 49837. The revision selected caller 50448 with leader 50442. The probe never entered a namespace. The existing specutils target passed on native Linux.",
+          "evidence": [
+            {
+              "label": "One-line namespace correction",
+              "url": "https://github.com/tamird/gvisor/commit/7b0e57daf"
+            },
+            {
+              "label": "Linux path resolution on the parent and the fix",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43311052343/artifacts/13986391854"
+            }
+          ]
         }
       ],
       "nextStep": "Record the caller and process-leader network namespace inodes when restoring a namespace. At each connect, capture the socket namespace cookie, loopback link state and local routing table to establish which namespace lost its route.",
@@ -108494,8 +108507,25 @@
         {
           "label": "Both hostinet cases passed in the sibling shard",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e4-4f86-8802-9c6c11dabf1c/artifacts/01a1d1a0-3cd6-42de-b5dd-6e99e957a662"
+        },
+        {
+          "label": "Linux path resolution on the parent and the fix",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43311052343/artifacts/13986391854"
         }
-      ]
+      ],
+      "repo": "google/gvisor",
+      "head": "7b0e57daf4c7857a8343e072f69eb1b70151a8e1",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "7b0e57daf4c7857a8343e072f69eb1b70151a8e1",
+        "baseHead": "2a653cea7b2054a2dc9c6419337d3de8031275d6",
+        "url": "https://github.com/tamird/gvisor/commit/7b0e57daf",
+        "title": "Restore the calling thread's namespace in runsc",
+        "body": "ApplyNS joins a namespace on a locked OS thread. It first opens\n/proc/self/ns to save the previous namespace, but that directory\nbelongs to the thread group leader. If the thread starts in a different\nnetwork namespace, restoring the saved handle puts it in the leader's.\n\nOpen the namespace under /proc/thread-self/ns, as the sandbox network\ntests already do (962441d4e).",
+        "requestedAt": "2026-11-12T21:42:17+00:00",
+        "summary": "Open the independently verified ApplyNS correction. Whether it caused the loopback failure is still unknown."
+      }
     },
     {
       "id": "investigation:ci-flake-podman-rootless-oom-score",
@@ -108503,11 +108533,11 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T21:31:54+00:00",
+      "updatedAt": "2026-11-12T22:16:57+00:00",
       "summary": "Build #54733 failed to start an Alpine container as podman-testuser. runsc received EACCES opening /proc/171324/oom_score_adj and Podman exited with status 126.",
       "findings": [
         {
-          "text": "The startup error preceded the cleanup errors. Nine nearby completed Podman controls passed. The next two attempts on this build exited with status −1 and did not confirm another EACCES.",
+          "text": "Startup under directfs=false printed Hello, world. Under directfs=true the startup error preceded the cleanup errors. Nine nearby completed Podman controls passed. Four more attempts on the same build exited with status −1 and did not confirm another EACCES.",
           "evidence": [
             {
               "label": "Original Podman startup failure",
@@ -108531,6 +108561,15 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54733#01a1d18b-cc2b-4707-b154-070cf38bb555"
             }
           ]
+        },
+        {
+          "text": "Build #54733 was canceled. Build #54740 ran the same source tree on another worker. Both Podman runs printed Hello, world.",
+          "evidence": [
+            {
+              "label": "Podman on replacement import",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54740#01a1d1b9-be02-4b51-b87f-11f6ce80c15f"
+            }
+          ]
         }
       ],
       "nextStep": "Capture the process-liveness result and sandbox exit timing at the denied open during rootless startup.",
@@ -108546,6 +108585,10 @@
         {
           "label": "How runsc handles EACCES on oom_score_adj",
           "url": "https://github.com/google/gvisor/blob/728f546af/runsc/container/container.go#L2066-L2082"
+        },
+        {
+          "label": "Podman on replacement import",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54740#01a1d1b9-be02-4b51-b87f-11f6ce80c15f"
         }
       ]
     }
