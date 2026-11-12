@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T03:53:57+00:00",
+    "updatedAt": "2026-11-12T04:22:51+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5709,6 +5709,10 @@
       "updatedAt": "2026-11-12T01:12:58+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
+        {
+          "label": "Native AMD64 and ARM64 race boot test analysis on the integrated compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43153554425/artifacts/13914881939"
+        },
         {
           "label": "Installed systrap and runc traffic, ELF files and platform selections",
           "url": "https://github.com/tamird/gvisor/actions/runs/42898754604/artifacts/13805865588"
@@ -55844,12 +55848,20 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-11T14:38:33+00:00",
-      "summary": "The published analyzer now reports a range callback that changes the caller’s lock state at the range keyword. The owning Nogo test passed on AMD64 and ARM64.",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "summary": "The analyzer reports a range callback that changes the caller’s lock state at the range keyword. Across all 41 affected Nogo targets on AMD64 and ARM64, the audit found no production suppression to remove for this change. The two newer lisafs renameMu suppressions also remained necessary on current master.",
       "evidence": [
         {
-          "label": "Baseline and PR suppression comparison",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43040187707"
+          "label": "First 30 Nogo targets on Linux AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43043802664/artifacts/13869100783"
+        },
+        {
+          "label": "Remaining 11 Nogo targets on Linux AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43050234408/artifacts/13870502621"
+        },
+        {
+          "label": "Two newer renameMu suppressions introduced in lisafs",
+          "url": "https://github.com/google/gvisor/commit/8e090bf67"
         },
         {
           "label": "Published amendment and reply",
@@ -56028,19 +56040,7 @@
           "note": "Published the approved single commit and replied on the original thread."
         }
       ],
-      "number": 16868,
-      "followup": {
-        "owner": "Agent qualification",
-        "sourceHead": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
-        "observedAt": "2026-11-11T14:38:33+00:00",
-        "disposition": "The published callback analysis is under review for existing checklocks suppressions.",
-        "nextAction": "Compare diagnostics on the baseline and the PR before deciding which suppressions can be removed.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/43040187707",
-          "https://github.com/google/gvisor/pull/16868#discussion_r4536990180",
-          "https://github.com/google/gvisor/pull/16868"
-        ]
-      }
+      "number": 16868
     },
     {
       "id": "branch:go-helper-images",
@@ -58454,9 +58454,17 @@
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T08:02:28+00:00",
-      "summary": "Aditya incorporated the tested RACK cancellation. The final slow-start threshold stayed at 2 with and without #16081. Both timestamp controls passed. When this change is combined with #17023, one reordered segment can leave an Eifel response pending after the sender enters Disorder.",
+      "updatedAt": "2026-11-12T04:22:51+00:00",
+      "summary": "Aditya incorporated the tested RACK cancellation. The final slow-start threshold stayed at 2 with and without #16081. Both timestamp controls passed. When this change is combined with #17023, one reordered segment can leave an Eifel response pending after the sender enters Disorder. On integration source ce7e3e298 the two TCP packages passed 73 cases while retaining the direct repair from export #17514. Restoring the earlier enterRecovery/leaveRecovery calls changed ssthresh from 2 to 14 and failed the targeted test. The export is still open.",
       "evidence": [
+        {
+          "label": "Integrated TCP packages passed 73 cases and the recovery control changed ssthresh from 2 to 14",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43153418835/artifacts/13915011858"
+        },
+        {
+          "label": "Open export of the direct repair",
+          "url": "https://github.com/google/gvisor/pull/17514"
+        },
         {
           "label": "Author incorporated the tested RACK change",
           "url": "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777"
@@ -75672,6 +75680,51 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204"
         ]
+      }
+    },
+    {
+      "id": "pr:16485",
+      "type": "pr",
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "number": 16485,
+      "ref": "device-cgroup",
+      "head": "bab22586d8048207c4838be25f38ed41bcd98410",
+      "title": "Confine the sandbox to a device cgroup",
+      "url": "https://github.com/google/gvisor/pull/16485",
+      "status": "open",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "summary": "The #17291 export failed to create all 797 TestLLM readiness clients on an Ubuntu GPU worker. Its runtime device-selection changes match the current source. The client asks for an image and a server link. Only the Ollama server explicitly requests a GPU.",
+      "evidence": [
+        {
+          "label": "Original runtime archive, including the server and 797 failed client creates",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31"
+        },
+        {
+          "label": "Build 54587 export",
+          "url": "https://github.com/google/gvisor/pull/17291"
+        },
+        {
+          "label": "HTTP client requests an image and server link",
+          "url": "https://github.com/google/gvisor/blob/bab22586d/pkg/test/llmutil/llmutil.go#L154-L166"
+        },
+        {
+          "label": "Ollama server requests the GPU",
+          "url": "https://github.com/google/gvisor/blob/bab22586d/test/gpu/ollama/ollama.go#L125-L145"
+        },
+        {
+          "label": "All 797 failures and same-head attempts",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Agpu-ollama-readiness"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "bab22586d8048207c4838be25f38ed41bcd98410",
+        "url": "https://github.com/google/gvisor/pull/16485/files#diff-1dc829f21764f85b856a4bf53ab11bf0f37472af77cb5e8384df3c24bb03b216R89",
+        "title": "Report the TestLLM client-create failures",
+        "summary": "Send this review to Ayush about the clients that failed before making a readiness request?",
+        "body": "On #17291 (170233fab), the Ollama server started, but each of the 797 readiness-client creates failed before the HTTP request: `failed to get Nvidia driver version: failed to open /dev/nvidiactl: operation not permitted` [1]. The server requests a GPU. The client requests only its image and a link to the server [2]. This device-selection code matches bab22586d. Should a client that requests no GPU need a driver-version lookup when the worker sets `--nvproxy=true`?\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31\n[2]: https://github.com/google/gvisor/blob/bab22586d/pkg/test/llmutil/llmutil.go#L154-L166"
       }
     }
   ],
@@ -97220,15 +97273,32 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T03:27:32+00:00",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
-          "text": "The #16868 owner is checking which existing callback suppressions can be removed. The comparison job ended with a failure status; its baseline and PR diagnostic records still need inspection.",
+          "text": "The #16868 audit neutralized 306 checklocks directives across 74 Go files in pkg, runsc and test. All 41 affected Nogo targets, including templates, ran on AMD64 and ARM64. Production diagnostic locations and messages matched after normalizing temporary SSA identifiers and printed locksets. Only the synthetic callback that held its guard lost a warning. Both analyzers still diagnosed its unlocked twin. The audited source had no production suppressions specific to this change.",
           "evidence": [
             {
-              "label": "Compare existing suppressions on baseline and PR",
-              "url": "https://github.com/tamird/gvisor/actions/runs/43040187707"
+              "label": "First 30 Nogo targets on Linux AMD64 and ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43043802664/artifacts/13869100783"
+            },
+            {
+              "label": "Remaining 11 Nogo targets on Linux AMD64 and ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43050234408/artifacts/13870502621"
+            }
+          ]
+        },
+        {
+          "text": "After the original audit, two lisafs connection-test suppressions were introduced on master. Removing only those comments produced byte-identical missing-renameMu diagnostics for Init and RemoveFromConn on AMD64 and ARM64, both on master and with #16868 integrated. Restoring the two comments passed the owning target uncached. Neither call supplies a callback the proposed analyzer can infer. On master 2f5253abf, neutralizing all four older directives in the only two suppression-bearing files changed since the audit also left diagnostic locations and categories identical on both architectures.",
+          "evidence": [
+            {
+              "label": "Two newer renameMu suppressions introduced in lisafs",
+              "url": "https://github.com/google/gvisor/commit/8e090bf67"
+            },
+            {
+              "label": "Callback analysis under review",
+              "url": "https://github.com/google/gvisor/pull/16868"
             }
           ]
         },
@@ -101018,7 +101088,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
       "summary": "Three Buildkite runs stopped at the first wire dump with “error printing state: unreachable”. A native AMD64 workload reproduced the error on two of eight valid guest checkpoints. Stock mistook saved page data for a stream header. #17208 dumped all eight and the guests restored.",
       "findings": [
         {
@@ -101121,6 +101191,23 @@
             {
               "label": "Same-head container-test retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54409#01a1cab9-2ccb-4b53-a667-c12f6a562451"
+            }
+          ]
+        },
+        {
+          "text": "In build 54599 the KVM wire-to-graph-to-wire test again exited 128 with “error printing state: unreachable” at hop 0. The retry passed the container target. The public job uploaded 67 artifacts and no checkpoint image. The post-command hook selects test logs and boot/gofer logs from the test directory. The build preceded the proposed #17208 change.",
+          "evidence": [
+            {
+              "label": "Original KVM hop-0 test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54599/jobs/01a1cde0-36c4-4848-9e26-48f88a074341/artifacts/01a1cde8-da92-471b-91e9-c30453fdc603"
+            },
+            {
+              "label": "Same-head container-test retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54599#01a1cdea-7ded-45d8-9438-36508c5b51de"
+            },
+            {
+              "label": "Buildkite post-command artifact selection",
+              "url": "https://github.com/google/gvisor/blob/4acb74842/.buildkite/hooks/post-command#L17-L37"
             }
           ]
         }
@@ -101720,8 +101807,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T03:27:32+00:00",
-      "summary": "Six syscall shards across four builds finished their guest tests, then failed on a watchdog warning emitted during startup. Their Sentry stacks show waits at three points in lisafs. The earlier UDP loopback failure waited for the fourth channel reply.",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "summary": "Seven syscall shards across five builds finished their guest tests, then failed on a watchdog warning emitted during startup. Five Sentry stacks waited for a channel connection after receiving the lisafs replies. Two others waited for the fourth channel reply or for a pathname walk.",
       "findings": [
         {
           "text": "Three channel requests completed within 1.5 ms. The fourth waited 60.001 seconds. At the 30-second watchdog threshold, the Sentry was still waiting in lisafs.Client.StartChannels. The boot log shows the client stack and the reply time.",
@@ -101786,9 +101873,39 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54571#01a1cd3d-170b-458c-b6c8-fa7785b58bdc"
             }
           ]
+        },
+        {
+          "text": "In build 54599 the KVM guest passed TCPPassiveCloseNoTimeWaitTest, but the Sentry had waited in StartChannels and flipcall.Connect during startup. It received all four ChannelResp replies by 04:01:38.860265 UTC and mounted the root filesystem at 04:02:38.860927. The gofer logged no event in that minute. The same-head syscall shard passed on retry.",
+          "evidence": [
+            {
+              "label": "Sentry watchdog stack and all four replies",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54599/jobs/01a1cdd9-bbd4-4778-84b3-a59f5d26656f/artifacts/01a1cdec-27b3-4e67-805d-3eef7a5915fa"
+            },
+            {
+              "label": "Paired gofer log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54599/jobs/01a1cdd9-bbd4-4778-84b3-a59f5d26656f/artifacts/01a1cdec-256e-4833-8c1c-7facb1cd3a33"
+            },
+            {
+              "label": "Passing same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54599#01a1cdec-db36-429d-b387-220dc2b3ab98"
+            }
+          ]
+        },
+        {
+          "text": "A fork-only syscall runner passed runsc a per-container trace path in Bazel’s undeclared-output root, outside the per-test log directory deleted on success. An uncached UnameTest.Sanity passed under native AMD64 systrap. Its original outputs.zip contains the 164,496-byte Sentry trace and the 35,064-byte gofer trace for the same container. Go 1.27.3 decoded both with scheduler samples, including the lisafs client watchdog and the server’s StartConnection. This run exercised normal startup.",
+          "evidence": [
+            {
+              "label": "Original Bazel outputs.zip, both traces, decoded profiles and UnameTest.Sanity results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43152939138/artifacts/13914936647"
+            },
+            {
+              "label": "One-line fork runner change",
+              "url": "https://github.com/tamird/gvisor/commit/181e464f6"
+            }
+          ]
         }
       ],
-      "nextStep": "Collect a runtime Go execution trace with runsc --trace and a per-container %CID% path under the syscall runner’s artifacts directory. The runtime writes a separate .gofer trace. Align the client wait with the gofer’s scheduling and blocked operations during a recurrence.",
+      "nextStep": "Capture the same two execution traces during a slow lisafs startup. Align the Sentry wait with the gofer’s scheduling and blocked operations to determine what held up the reply or connection.",
       "evidence": [
         {
           "label": "Master commit 9832d5d69",
@@ -102973,7 +103090,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T01:50:23+00:00",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
       "summary": "Seven ARM64 jobs timed out in nested Docker bridge builds or privileged container runs with VFS or overlay storage. Two AMD64 jobs on build 54543 timed out in the same privileged VFS bridge test under systrap and KVM. Both same-head retries passed.",
       "findings": [
         {
@@ -103037,6 +103154,23 @@
             {
               "label": "Nested Docker commands",
               "url": "https://github.com/google/gvisor/blob/3155b079644cd08ccfe900607bc8d3986b8ce148/test/image/image_test.go#L677-L721"
+            }
+          ]
+        },
+        {
+          "text": "In build 54597, AMD64 cgroup v2 and ARM64 both reached the 15-minute test timeout in TestDockerWithOverlay/docker_run_bridge_network_non_privileged. Both test stacks were waiting for the nested Docker command’s logs. The ARM64 retry ran and passed all five targets.",
+          "evidence": [
+            {
+              "label": "ARM64 original test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54597/jobs/01a1cda3-1c2a-47e0-8d9b-72f7f9c65f7f/artifacts/01a1cdbd-9dcb-43fc-88fc-9368f8de7ce1"
+            },
+            {
+              "label": "AMD64 cgroup-v2 original test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54597/jobs/01a1cdc4-fd45-48b0-ba6e-c38dc98262bb/artifacts/01a1cdd8-ca09-4bb9-8f26-14c933100459"
+            },
+            {
+              "label": "Passing ARM64 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54597#01a1cdbe-8046-4b66-b0ce-26d5d9fd6f9c"
             }
           ]
         }
@@ -104956,7 +105090,119 @@
           "url": "https://github.com/tamird/hermetic-llvm/commit/b253312fd"
         }
       ]
+    },
+    {
+      "id": "investigation:gpu-ollama-readiness",
+      "title": "Ollama readiness clients fail before reaching the server",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI investigation",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "summary": "The Ubuntu GPU job failed three times on the #17291 device-cgroup export. In the final run the Ollama server started, but 797 readiness clients failed during container creation. runsc could not open /dev/nvidiactl to read the driver version.",
+      "findings": [
+        {
+          "text": "Build 54587 ran the same source on two Ubuntu GPU agents. Three completed attempts timed out in the GET / readiness loop; one other attempt was interrupted. The final attempt passed CUDA availability and the CUDA 12.8 smoke test before it started the Ollama container in 1.224 seconds. The log recorded the readiness timeout about ten minutes later. Build 54596 ran a different source and passed translation, code generation and OCR in 438.64 seconds.",
+          "evidence": [
+            {
+              "label": "First failure on the first GPU agent",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54587#01a1cd64-26c3-4985-9891-842682c27522"
+            },
+            {
+              "label": "Second GPU agent",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54587#01a1cd96-e817-4223-bb6d-af23e215290f"
+            },
+            {
+              "label": "Same-head repeat on the second agent",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54587#01a1cdc4-7a0f-48e9-8378-07fddb5a0df5"
+            },
+            {
+              "label": "Passing TestLLM on a different source",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54596#01a1cda1-b7e6-428f-b398-ebfa01e0d1a9"
+            }
+          ]
+        },
+        {
+          "text": "The archive contains one TestLLM server boot that executed Ollama and 797 other TestLLM create logs. Every one of those 797 logged “failed to get Nvidia driver version: failed to open /dev/nvidiactl: operation not permitted”. Their boot logs were empty. The repeated readiness requests could not reach HTTP. The same job passed the CUDA smoke tests. The source of the device permission failure has not been isolated.",
+          "evidence": [
+            {
+              "label": "Original runtime archive, including the server and 797 failed client creates",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31"
+            },
+            {
+              "label": "Source pull request",
+              "url": "https://github.com/google/gvisor/pull/16485"
+            }
+          ]
+        },
+        {
+          "text": "The affected export cites an older source in its Copybara footer. Compared with the live source bab22586d, all added and removed lines matched across 14 of the 15 changed files. The remaining differences were in the sandbox-posture test helper. The Ollama server asks for a GPU and its network clients ask only for their image and a server link. The failed worker enabled nvproxy globally. This comparison does not establish behavior on a host without NVIDIA hardware.",
+          "evidence": [
+            {
+              "label": "HTTP client requests an image and server link",
+              "url": "https://github.com/google/gvisor/blob/bab22586d/pkg/test/llmutil/llmutil.go#L154-L166"
+            },
+            {
+              "label": "Ollama server requests the GPU",
+              "url": "https://github.com/google/gvisor/blob/bab22586d/test/gpu/ollama/ollama.go#L125-L145"
+            },
+            {
+              "label": "Build 54587 export",
+              "url": "https://github.com/google/gvisor/pull/17291"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Track the review on source #16485. Compare the same client container on the source and its parent on one GPU worker to isolate the device-permission failure.",
+      "evidence": [
+        {
+          "label": "Original runtime archive, including the server and 797 failed client creates",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31"
+        },
+        {
+          "label": "Affected source export",
+          "url": "https://github.com/google/gvisor/pull/17291"
+        },
+        {
+          "label": "Ollama readiness loop",
+          "url": "https://github.com/google/gvisor/blob/170233fab/test/gpu/ollama/ollama.go#L220-L232"
+        },
+        {
+          "label": "Source review",
+          "url": "https://tamird.github.io/gvisor/#pr%3A16485"
+        }
+      ]
+    },
+    {
+      "id": "investigation:hermetic-llvm-race-boot",
+      "title": "Integrated LLVM race boot test stops in Bazel analysis",
+      "group": "bazel",
+      "status": "active",
+      "owner": "Agent qualification",
+      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "summary": "On the integrated compiler source e47624715, the race-instrumented boot test stopped during Bazel analysis on the Linux AMD64 and ARM64 configurations. The standalone race guest linked on both architectures.",
+      "findings": [
+        {
+          "text": "Bazel reported conflicting actions for outputs from musl, libc++ and compiler-rt while analyzing //runsc/boot:boot_test with --config=race. Both attempts stopped before TestRunner or a guest started. The five gVisor compiler prerequisites remain unchanged.",
+          "evidence": [
+            {
+              "label": "Native AMD64 and ARM64 race boot test analysis on the integrated compiler",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43153554425/artifacts/13914881939"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare the two configured producers of the first conflicting output in the integrated boot test and the standalone link. Check the same output on both architectures.",
+      "evidence": [
+        {
+          "label": "Native AMD64 and ARM64 race boot test analysis on the integrated compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43153554425/artifacts/13914881939"
+        },
+        {
+          "label": "Integrated source",
+          "url": "https://github.com/tamird/gvisor/commit/e47624715"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-11T18:03:07+00:00"
+  "updatedAt": "2026-11-12T04:22:51+00:00"
 }
