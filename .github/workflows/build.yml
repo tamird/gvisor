@@ -1,7 +1,7 @@
-name: Compare the published TCP recovery fix on the shared CUBIC queue with sender timeout traces
+name: Observe sender allowance during CUBIC repairs
 on:
   push:
-    branches: [qualification/tcp-16495-cubic-gap-repairs]
+    branches: [qualification/tcp-16495-cubic-ack-allowance]
 permissions:
   contents: read
 jobs:
@@ -22,24 +22,10 @@ jobs:
       - name: Reconcile receiver bytes, settings and packet observations
         if: always()
         run: python3 "$RUNNER_TEMP/current-shared-report.py"
-      - name: Run the pinned benchstat tool on the verified transfers
-        run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/tcp-public"
-          tools_source=2b51abee8530385431b7225198fdd5cd65e78696
-          git fetch --quiet --no-tags --depth=1 origin "$tools_source"
-          git checkout --quiet --detach "$tools_source"
-          target=@org_golang_x_perf//cmd/benchstat
-          bazel build --jobs=5 "$target"
-          mapfile -t bins < <(bazel cquery --output=files "$target" | while read -r file; do if test -x "$file"; then echo "$file"; fi; done)
-          test "${#bins[@]}" = 1
-          tool="$PWD/${bins[0]}"
-          (cd "$out"; "$tool" stock.bench fixed.bench | tee benchstat.txt)
-          grep -q '^SharedLinkCUBIC' "$out/benchstat.txt"
       - name: Publish the existing synthetic WAN evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-16495-cubic-gap-repairs
+          name: tcp-16495-cubic-ack-allowance
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error

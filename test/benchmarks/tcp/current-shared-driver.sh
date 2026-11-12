@@ -11,9 +11,8 @@ finish() {
 }
 trap finish EXIT
 [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
-stock=99058130824e4d3166bf0e376f9b15b6ad50146c
 fixed=ffac28a03554b62419747c41f389bdc9bfe303d9
-[[ "$(git rev-parse HEAD~2)" == "$fixed" && "$(git rev-parse "$fixed^")" == "$stock" ]]
+[[ "$(git rev-parse HEAD~3)" == "$fixed" ]]
 git diff --exit-code "$fixed" HEAD -- . ':(exclude)test/benchmarks/tcp' ':(exclude).github/workflows/build.yml'
 public="$RUNNER_TEMP/tcp-public"
 mkdir -p "$public"
@@ -23,14 +22,11 @@ uname -a > "$out/worker.txt"
 phase=build
 mkdir -p "$RUNNER_TEMP/tcp-public"
 public="$RUNNER_TEMP/tcp-public"
-printf '%s\n' "$stock" "$fixed" "$GITHUB_SHA" > "$public/source-heads"
-changed=(pkg/tcpip/transport/tcp/{rack,snd,state}.go pkg/tcpip/transport/tcp/test/e2e/{BUILD,tcp_rack_test.go})
-for variant in stock fixed; do
-  ref=${!variant}
-  git restore --source="$ref" -- "${changed[@]}"
-  git diff --exit-code "$ref" -- . ':(exclude)test/benchmarks/tcp' ':(exclude).github/workflows/build.yml'
+printf '%s\n' "$fixed" "$fixed" "$GITHUB_SHA" > "$public/source-heads"
+for variant in control observed; do
   git apply test/benchmarks/tcp/rto-observer.patch
-  git diff --no-ext-diff "$ref" -- pkg/tcpip/transport/tcp/snd.go > "$public/$variant-observer.patch"
+  if [[ "$variant" == observed ]]; then git apply test/benchmarks/tcp/ack-allowance-observer.patch; fi
+  git diff --no-ext-diff "$fixed" -- pkg/tcpip/transport/tcp/snd.go > "$public/$variant-observer.patch"
   helpers="$RUNNER_TEMP/tcp-benchmark-helpers/$variant"
   mkdir -p "$helpers"
   bazel build --jobs=5 //test/benchmarks/tcp:{tcp_proxy,nsjoin}
@@ -40,15 +36,19 @@ for variant in stock fixed; do
     cp "$path" "$helpers/$tool"
   done
   grep -a -q "WANRTO ns=" "$helpers/tcp_proxy"
+  if [[ "$variant" == observed ]]; then
+    grep -a -q "WANACK ns=" "$helpers/tcp_proxy"
+    git apply --reverse test/benchmarks/tcp/ack-allowance-observer.patch
+  fi
   git apply --reverse test/benchmarks/tcp/rto-observer.patch
-  cp "$RUNNER_TEMP/tcp-benchmark-helpers/stock/tcp_proxy" "$helpers/tcp_native_proxy"
+  cp "$RUNNER_TEMP/tcp-benchmark-helpers/control/tcp_proxy" "$helpers/tcp_native_proxy"
   sha256sum "$helpers"/{tcp_proxy,tcp_native_proxy,nsjoin} >> "$public/helpers.sha256"
-  printf '%s %s %s\n' "$variant" "$ref" "$(git rev-parse "$ref:pkg/tcpip/transport/tcp")" >> "$public/sender-trees"
+  printf '%s %s %s\n' "$variant" "$fixed" "$(git rev-parse "$fixed:pkg/tcpip/transport/tcp")" >> "$public/sender-trees"
 done
 base_helpers="$RUNNER_TEMP/tcp-benchmark-helpers"
-cmp "$base_helpers/stock/tcp_native_proxy" "$base_helpers/fixed/tcp_native_proxy"
-cmp "$base_helpers/stock/nsjoin" "$base_helpers/fixed/nsjoin"
-if cmp -s "$base_helpers/stock/tcp_proxy" "$base_helpers/fixed/tcp_proxy"; then exit 1; fi
+cmp "$base_helpers/control/tcp_native_proxy" "$base_helpers/observed/tcp_native_proxy"
+cmp "$base_helpers/control/nsjoin" "$base_helpers/observed/nsjoin"
+if cmp -s "$base_helpers/control/tcp_proxy" "$base_helpers/observed/tcp_proxy"; then exit 1; fi
 git diff --exit-code HEAD -- .
 bazel run --jobs=5 --script_path="$RUNNER_TEMP/start-tcp-trial" //test/benchmarks/tcp:tcp_benchmark
 cp "$out/worker.txt" "$RUNNER_TEMP/tcp-public/worker.txt"
@@ -65,8 +65,8 @@ run_pair() {
 phase=trials
 status=0
 for pair in {1..8}; do
-  variants=(stock fixed)
-  if (( pair % 2 == 0 )); then variants=(fixed stock); fi
+  variants=(control observed)
+  if (( pair % 2 == 0 )); then variants=(observed control); fi
   for variant in "${variants[@]}"; do
     printf 'primary%d-%s cubic primary\n' "$pair" "$variant"
   done

@@ -1,11 +1,13 @@
 """Report the two competing senders over the same portion of a transfer."""
 import csv
 import json
+import gzip
 import os
 import re
 from statistics import median
 from pathlib import Path
 import subprocess
+import shutil
 from flight_capture import capture
 from timeout_repair import measure
 from datetime import datetime, timezone
@@ -125,7 +127,7 @@ destination=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
 destination.mkdir(exist_ok=True)
 heads=(destination/"source-heads").read_text().splitlines() if (destination/"source-heads").exists() else []
 verdict={"heads":heads,"baseline":heads[0] if heads else None,"harness":os.environ["GITHUB_SHA"],"passed":{},"failures":{},"missing":[]}
-expected=[(f"primary{pair}-{arm}", "cubic") for pair in range(1, 9) for arm in ("stock", "fixed")]
+expected=[(f"primary{pair}-{arm}", "cubic") for pair in range(1, 9) for arm in ("control", "observed")]
 for arm,cc in expected:
     experiment=cc+"-netstack"
     name=arm+"/plain/"+experiment
@@ -144,6 +146,15 @@ for arm,cc in expected:
         if log.is_file():
             cfg=[line for line in log.read_text(errors="replace").splitlines() if "WANCONFIG" in line or " rack=" in line]
             (public/(side+"-socket-config.txt")).write_text("\n".join(cfg)+"\n")
+            if side == "primary":
+                with log.open() as src, gzip.open(public/"sender-ack-decisions.txt.gz", "wt") as dst:
+                    for line in src:
+                        if "WANACK " in line:
+                            dst.write(line[line.index("WANACK "):])
+    for dev in ("client.1", "server.1"):
+        pcap = folder/"results"/f"{dev}.pcap"
+        if pcap.is_file():
+            shutil.copyfile(pcap, public/pcap.name)
     for fn in ("qdisc-before.txt","qdisc-after.txt","interface-features.txt","settings.txt","client.1-capture.txt","client2.1-capture.txt","server.1-capture.txt", "ping.txt", "ping-phases.tsv", "queue-samples.txt"):
         src=folder/"results"/fn
         if src.is_file():
@@ -161,6 +172,10 @@ for arm,cc in expected:
         d=trial(root/arm,"plain",experiment)
         d["wire"]=wire
         d["repairs"] = measure(public, events, wire["netstack"]["client_port"])
+        with gzip.open(public/"sender-ack-decisions.txt.gz", "rt") as decisions:
+            rows = sum(f' port={wire["netstack"]["client_port"]} ' in line for line in decisions)
+        assert arm.endswith("-observed") or rows == 0, (arm, rows)
+        d["advancing_sack_decisions"] = rows
         assert d["wire"]["linux"]["client_port"] in d["native_config_ports"]
         d["start"]=(folder/"start").read_text().strip()
         d["end"]=(folder/"finish").read_text().strip()
@@ -212,9 +227,9 @@ for arm,cc in expected:
     except (AssertionError,KeyError,StopIteration,ValueError,IndexError,OSError,subprocess.SubprocessError) as exc:
         verdict["failures"][name]={"reason":repr(exc),"diagnostics":diagnostics(folder)}
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
-verdict["scope"] = "The current #16495 head and its parent compete with the same Linux sender. The 100-packet queue carries the 50 ms one-way propagation delay. Both versions log actual retransmission timeouts. gVisor starts first in every trial."
+verdict["scope"] = "Both arms run the same #16495 head against the same Linux competitor. Only the observed arm captures send allowance on advancing SACK-bearing ACKs. The 100-packet queue carries the 50 ms one-way propagation delay. Both versions log actual retransmission timeouts. gVisor starts first in every trial."
 schedule = [f"primary{pair}-{arm} cubic primary" for pair in range(1, 9)
-            for arm in (("stock", "fixed") if pair % 2 else ("fixed", "stock"))]
+            for arm in (("control", "observed") if pair % 2 else ("observed", "control"))]
 verdict["schedule"] = (destination / "schedule.txt").read_text().splitlines() if (destination / "schedule.txt").is_file() else []
 verdict["actual_start_order"] = sorted(verdict["passed"], key=lambda name: verdict["passed"][name]["start"])
 results = list(verdict["passed"].values())
@@ -225,7 +240,7 @@ if (verdict["schedule"] == schedule
         and all(r["order_verified"] and r["wire"]["netstack"]["horizon_s"] > 40 for r in results)
         and max(r["unloaded_ping"]["median_ms"] for r in results) - min(r["unloaded_ping"]["median_ms"] for r in results) <= 3):
     verdict["status"] = "pass"
-    for variant in ("stock", "fixed"):
+    for variant in ("control", "observed"):
         with (destination / (variant + ".bench")).open("w") as out:
             for pair in range(1, 9):
                 result = verdict["passed"][f"primary{pair}-{variant}/plain/cubic-netstack"]

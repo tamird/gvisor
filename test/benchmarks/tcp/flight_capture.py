@@ -9,7 +9,8 @@ import subprocess
 def capture(d, public, name):
     fields = ("frame.time_epoch", "tcp.srcport", "tcp.dstport", "tcp.seq_raw",
               "tcp.ack_raw", "tcp.len", "tcp.flags", "tcp.options.sack_le",
-              "tcp.options.sack_re", "tcp.options.sack_perm", "tcp.options.timestamp.tsval")
+              "tcp.options.sack_re", "tcp.options.sack_perm", "tcp.options.timestamp.tsval",
+              "tcp.window_size_value", "tcp.window_size")
     traces = {}
     for dev in ("client.1", "client2.1", "server.1"):
         path = d / f"{dev}.pcap"
