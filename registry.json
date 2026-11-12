@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T16:43:40+00:00",
+    "updatedAt": "2026-11-12T17:09:09Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60971,7 +60971,7 @@
       "url": "https://github.com/google/gvisor/pull/17028",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-12T16:43:40+00:00",
+      "updatedAt": "2026-11-12T17:05:32+00:00",
       "summary": "The author enabled the Docker userland proxy by default and mounted the data tmpfs with exec. With #16666, the author reports two successful restores in each checkpoint mode. The earlier test used the proxy-disabled bridge path and stopped before checkpoint. The agent is independently testing both proxy-enabled modes on the author’s revision.",
       "evidence": [
         {
@@ -61021,6 +61021,10 @@
         {
           "label": "Independent stopping and leave-running qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/43261490300"
+        },
+        {
+          "label": "Repeat both checkpoint modes without the runner’s external DNS search suffix",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43264967908"
         }
       ],
       "settledReviews": [
@@ -61052,13 +61056,14 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
-        "observedAt": "2026-11-12T16:43:40+00:00",
+        "observedAt": "2026-11-12T17:05:32+00:00",
         "disposition": "The author supplied the reproduction instructions and clarified that the proxy-disabled path still needs per-interface route_localnet support. The independent comparison uses e17281fec plus the specified #16666 revision.",
-        "nextAction": "Check both stopping and leave-running checkpoint modes in the fork run. Verify two restores with no skips in each mode against the author’s reproduction.",
+        "nextAction": "Compare stopping and leave-running checkpoints on the published image and the author’s lightweight fixture in the rerun without the external DNS search suffix.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17028#discussion_r4547514694",
           "https://github.com/hky1999/gvisor/blob/e17281fec8dea3f23e6c3a573f12943a72c0e21f/test/e2e/dind_checkpoint.txt",
-          "https://github.com/tamird/gvisor/actions/runs/43261490300"
+          "https://github.com/tamird/gvisor/actions/runs/43261490300",
+          "https://github.com/tamird/gvisor/actions/runs/43264967908"
         ]
       }
     },
@@ -61184,12 +61189,12 @@
       "type": "issue",
       "repo": "bazel-contrib/rules_python",
       "number": 2500,
-      "title": "Let a packaged child select its own runfiles",
+      "title": "Support native binary-based stage1 bootstrap",
       "url": "https://github.com/bazel-contrib/rules_python/issues/2500",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T18:02:27+00:00",
-      "summary": "Upstream hermetic-launcher #96 at 0b5abb565 contains the finalizer and launcher stub. They let a packaged child select runfiles containing its bootstrap. Review identified that the default toolchain still pins a finalizer that rejects the new option and a template without its marker. The prepared Starlark API at 44a48ed35 can land with the pin update after the maintainers publish a tag containing both binaries.\n\nThe combined implementation at cb36641e5 passed all 22 launcher integration cases on native AMD64. An independently packaged Python child failed with the stock launcher and with the option unset. Naming its stage-two bootstrap selected the child’s own runfiles and started it. Direct launches and launches from a parent that declared the child also passed. The Starlark companion was prepared on 2d0fdd797. Its tree differed from the tested implementation by one README line. The final upstream revision changes only a Windows test fixture’s manifest filename and its comment. The finalizer, stub and companion implementation are identical to the versions tested on AMD64.",
+      "updatedAt": "2026-11-12T17:09:09Z",
+      "summary": "The packaged-plugin example can select the intended release in the parent process. For a separately installed child, clear RUNFILES_DIR and RUNFILES_MANIFEST_FILE for that exec. A declared data dependency can inherit the parent's runfiles. The contributor closed hermetic-launcher #95 and withdrew PR #96. Its required-path probe and binary pin update are no longer prerequisites for this example. The broader rules_python bootstrap issue remains open.",
       "evidence": [
         {
           "label": "Upstream finalizer and stub change, 0b5abb565",
@@ -61230,6 +61235,14 @@
         {
           "label": "Additional partial-tree and executable-alias controls",
           "url": "https://github.com/tamird/rules_python/actions/runs/42194884935/artifacts/13490564991"
+        },
+        {
+          "label": "Maintainer’s alternative launcher settings",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6739577311"
+        },
+        {
+          "label": "Published response on package selection and closure of the probe PR",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6830457613"
         }
       ],
       "settledReviews": [
@@ -76433,6 +76446,89 @@
           "at": "2026-11-12T16:10:22+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17555",
           "note": "The contributor approved the standalone change and requested the source advisory beside the policy in MODULE.bazel. #17555 adds those four comment lines and retains the tested behavior."
+        }
+      ]
+    },
+    {
+      "id": "issue:hermeticbuild/hermetic-launcher:95",
+      "type": "issue",
+      "repo": "hermeticbuild/hermetic-launcher",
+      "number": 95,
+      "title": "Let a packaged child select its own runfiles",
+      "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95",
+      "group": "bazel",
+      "status": "closed",
+      "updatedAt": "2026-11-12T17:09:09Z",
+      "summary": "Closed as not planned after the contributor answered both maintainer comments. Two releases may contain the same bootstrap path, so a required-path probe cannot distinguish them. The parent in the reported case can clear RUNFILES_DIR and RUNFILES_MANIFEST_FILE when it executes a separately installed plugin and pass them through to a declared data dependency.",
+      "evidence": [
+        {
+          "label": "Runfiles discovery and responsibility of the parent process",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6738934176"
+        },
+        {
+          "label": "Two proposed launcher modes",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6739577311"
+        },
+        {
+          "label": "Existing required-path implementation",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/pull/96"
+        },
+        {
+          "label": "Published response on package selection and closure of the probe PR",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6830457613"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6739577311",
+          "title": "Close the probe PR and issue with a reply",
+          "summary": "Approve closing PR #96, posting this reply on issue #95 after the PR closes, and then closing issue #95.",
+          "body": "Thanks, Malte. I closed #96. I borrowed the bootstrap check from rules_python, but two releases can contain the same path. Even finding every required file could still select the wrong release. In my example the parent knows when it’s starting a separately installed plugin. It can clear `RUNFILES_DIR` and `RUNFILES_MANIFEST_FILE` for that exec and pass them through when it runs a declared data dependency. That resolves the case I opened this issue for.\n\nPosted by Codex on behalf of @tamird.",
+          "requestedAt": "2026-11-12T17:06:34+00:00",
+          "addresses": [
+            {
+              "id": "IC_kwDOQm7LK88AAAABkav5oA",
+              "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6738934176",
+              "updatedAt": "2026-11-09T11:28:32Z"
+            },
+            {
+              "id": "IC_kwDOQm7LK88AAAABkbXJ3w",
+              "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6739577311",
+              "updatedAt": "2026-11-09T12:05:42Z"
+            }
+          ],
+          "outcome": "posted",
+          "postedURL": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6830457613",
+          "at": "2026-11-12T17:09:03Z"
+        }
+      ]
+    },
+    {
+      "id": "pr:hermeticbuild/hermetic-launcher:96",
+      "type": "pr",
+      "repo": "hermeticbuild/hermetic-launcher",
+      "number": 96,
+      "ref": "required-runfile",
+      "head": "0b5abb565fd3066fa3c24f158b52f88af9faeddf",
+      "title": "Select runfiles that contain a required path",
+      "url": "https://github.com/hermeticbuild/hermetic-launcher/pull/96",
+      "group": "bazel",
+      "status": "closed",
+      "updatedAt": "2026-11-12T17:08:56Z",
+      "summary": "The contributor withdrew the required-path probe and closed this PR without merging it. Checking for the bootstrap path could still select the wrong release if two runfiles trees both contain that path.",
+      "evidence": [
+        {
+          "label": "Design discussion on the upstream issue",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6739577311"
+        },
+        {
+          "label": "Packaged-child comparisons and controls",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42397328659/artifacts/13583808395"
+        },
+        {
+          "label": "Published response on package selection and closure of the probe PR",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6830457613"
         }
       ]
     }
