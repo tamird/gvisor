@@ -1,35 +1,105 @@
-name: CI
-
-"on":
+name: Compare CUBIC recovery with a retained tail
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/rack-retained-tail-wire]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Run the same bounded packetimpact cases on both senders
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = ffac28a03554b62419747c41f389bdc9bfe303d9
+        git diff --quiet HEAD^ HEAD -- . ':(exclude).github/workflows/build.yml' ':(exclude)test/packetimpact/tests/tcp_rack_test.go'
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        test -x /sbin/iptables-nft
+        test -x /sbin/ip6tables-nft
+        test -x /usr/bin/x86_64-linux-gnu-gcc
+        mkdir -p "$RUNNER_TEMP/retained-tail"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        export XTABLES_LOCKFILE=$RUNNER_TEMP/tail-xtables.lock
+        touch "$XTABLES_LOCKFILE"
+        out=$RUNNER_TEMP/retained-tail
+        uname -r > "$out/kernel"
+        cat /proc/sys/net/ipv4/tcp_recovery > "$out/linux-tcp-recovery"
+        git rev-parse HEAD HEAD^ > "$out/source"
+        rc_all=0
+        for backend in native netstack; do
+          label=tcp_rack_${backend}_test
+          dest=$out/$backend
+          mkdir "$dest"
+          bep=$RUNNER_TEMP/$backend.jsonl
+          code=0
+          bazelisk --bazelrc="$rc" test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
+            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
+            --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
+            --nocache_test_results --test_output=all --test_filter='^TestRACK(RetainedTail|WithSACK)$' --test_timeout=180 \
+            "--build_event_json_file=$bep" --build_event_json_file_path_conversion=false \
+            "//test/packetimpact/tests:$label" > "$RUNNER_TEMP/$backend-build.log" 2>&1 || code=$?
+          echo "$code" > "$dest/exit"
+          sed -nE '/^(ERROR|FATAL)|GEOMETRY|ROUND n=|FINAL cumulative=|--- (FAIL|PASS): TestRACK/p' "$RUNNER_TEMP/$backend-build.log" | tail -30
+          root="bazel-testlogs/test/packetimpact/tests/$label"
+          if test -f "$root/test.log"; then cp "$root/test.log" "$dest/test.log"; fi
+          if test -f "$root/test.xml"; then cp "$root/test.xml" "$dest/test.xml"; fi
+          if test -d "$root/test.outputs"; then cp -RL "$root/test.outputs" "$dest/outputs"; fi
+          if ! jq -s '[.[] | select(.testResult != null) | .testResult | {status, cachedLocally, executionInfo: (.executionInfo | {strategy, cachedRemotely, exitCode})}] | select(length == 1 and .[0].status == "PASSED" and (.[0].cachedLocally != true) and (.[0].executionInfo.cachedRemotely != true) and (.[0].executionInfo.strategy | . == "local" or . == "standalone"))' --exit-status "$bep" > "$dest/execution.json"; then rc_all=1; fi
+          if ! test "$code" = 0 || ! test -s "$dest/test.log" || ! test "$(grep -c 'GEOMETRY base=' "$dest/test.log")" = 2 || ! test "$(grep -c 'FINAL cumulative=' "$dest/test.log")" = 2; then rc_all=1; fi
+        done
+        exit "$rc_all"
+    - name: Retain primary wire traces and native socket measurements
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: rack-retained-tail-wire
+        path: ${{ runner.temp }}/retained-tail/
+        if-no-files-found: error
