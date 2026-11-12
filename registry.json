@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T01:58:25+00:00",
+    "updatedAt": "2026-11-12T02:15:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -75575,6 +75575,73 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43133311587/job/130902467001"
         }
       ]
+    },
+    {
+      "id": "pr:nodejs/node:67426",
+      "type": "pr",
+      "group": "ci-flakes",
+      "repo": "nodejs/node",
+      "number": 67426,
+      "ref": "test/http-double-end-socket-reuse",
+      "head": "12d77270681e0a8ce9732a40633f65d1f1d161a9",
+      "title": "test: reuse one socket in the HTTP double-end test",
+      "url": "https://github.com/nodejs/node/pull/67426",
+      "status": "open",
+      "updatedAt": "2026-11-12T02:12:07+00:00",
+      "summary": "Tamir signed and submitted the loopback HTTP test. All 15 controls passed on the identical proposed tree before submission.",
+      "evidence": [
+        {
+          "label": "Original native and gVisor qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43136166387/artifacts/13907398080"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "12d77270681e0a8ce9732a40633f65d1f1d161a9",
+        "observedAt": "2026-11-12T02:12:07+00:00",
+        "disposition": "Tamir submitted the signed fix.",
+        "nextAction": "Follow the Node review and checks.",
+        "evidence": [
+          "https://github.com/nodejs/node/pull/67426"
+        ]
+      }
+    },
+    {
+      "id": "pr:17374",
+      "type": "pr",
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "number": 17374,
+      "ref": "botir/pgalloc-reference-accounting",
+      "head": "65a9e6eaa73a78b79223441f21069a71fdf58059",
+      "title": "Separate MemoryFile sharing counts from allocation occupancy",
+      "url": "https://github.com/google/gvisor/pull/17374",
+      "status": "open",
+      "summary": "For 16,384 separated shared pages, MemoryFile.SaveTo took 5.35 ms on the parent, 6.31 ms on the PR and 5.49 ms with a forward iterator. Five v1 checkpoints matched byte for byte across all three arms; each revision read the other’s images. The timing fixture had no committed page data. The mixed-size compatibility fixture included one dirty page.",
+      "updatedAt": "2026-11-12T02:15:41+00:00",
+      "evidence": [
+        {
+          "label": "Single tested follow-up on Botir’s current commit",
+          "url": "https://github.com/tamird/gvisor/commit/16e4cb0d5"
+        },
+        {
+          "label": "Original benchstat, cross-reader tests and wire checksums",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43138059865/artifacts/13909320177"
+        },
+        {
+          "label": "Current exporter’s repeated sharing-tree lookup",
+          "url": "https://github.com/google/gvisor/blob/65a9e6eaa/pkg/sentry/pgalloc/save_restore.go#L125"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "65a9e6eaa73a78b79223441f21069a71fdf58059",
+        "url": "https://github.com/google/gvisor/pull/17374/files#diff-81d28367db8030cd58361c2be05c26ba5d03db34f330cc8a9d76774f8f1b1a7dR125",
+        "title": "Ask about walking the sharing index forward during checkpoint export",
+        "summary": "Post this inline review on the current exporter with the tested one-file follow-up?",
+        "body": "Could appendExactRefRanges carry the sharing iterator forward between occupied ranges? The occupied ranges are already ordered. I tried a single forward pass per page-size class [1].\n\nI saved 16,384 shared 4 KiB pages interleaved with single-page holes across a 128 MiB span. The benchmark had no committed page data. Across 12 interleaved runs, metadata export took 2.32 ms on the parent, 3.17 ms on this PR, and 2.40 ms with the forward iterator. MemoryFile.SaveTo took 5.35, 6.31 and 5.49 ms respectively. The contiguous and scattered unshared controls showed no significant difference [2].\n\n[1]: https://github.com/tamird/gvisor/commit/16e4cb0d5\n[2]: https://github.com/tamird/gvisor/actions/runs/43138059865/artifacts/13909320177\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -104342,9 +104409,22 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI benchmark investigation",
-      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "updatedAt": "2026-11-12T02:12:07+00:00",
       "summary": "On master builds 54540 and 54548, BenchmarkRestoreEmpty and BenchmarkRestoreNginx failed before recording restore samples on both KVM and systrap. Docker tried to bind-mount /proc/0/ns/net into its network namespace directory and got ENOENT.",
       "findings": [
+        {
+          "text": "On the private Docker 24.0.9 daemon with systrap, both original restore benchmarks produced samples. Empty ran 133 iterations at 304.4 ms/op. The earlier TCP-readiness Nginx benchmark ran 86 at 502.7 ms/op. The HTTP-200 Nginx revision is being tested on the same worker.",
+          "evidence": [
+            {
+              "label": "Docker server version and both original benchmark results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43133193404/artifacts/13908771016"
+            },
+            {
+              "label": "HTTP-200 Nginx benchmark on the same worker",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43138518704"
+            }
+          ]
+        },
         {
           "text": "The two benchmarks report the daemon error at startup_test.go lines 232 and 339. Both restore targets use private networking. Build 49169 recorded the same failure immediately after #15137 switched the benchmarks away from host networking; that change documented the separate Docker 28 restore problem.",
           "evidence": [
@@ -104418,7 +104498,7 @@
           ]
         }
       ],
-      "nextStep": "Record the actual Docker server version on an affected worker and compare the daemon’s namespace lookup with the shim’s Create, State and Start PID values. Run the same private-network restore against Docker 27 with the same runsc and images. Use that control to decide how to retain restore samples on a supported server.",
+      "nextStep": "Check the HTTP-200 Nginx comparison on the supported Docker worker and identify the Docker daemon version in the failing public jobs. Use the runtime controls to decide how to keep collecting restore samples.",
       "evidence": [
         {
           "label": "Master build 54540, KVM and systrap benchmark log",
@@ -104480,19 +104560,28 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T01:58:25+00:00",
+      "updatedAt": "2026-11-12T02:12:07+00:00",
       "summary": "Build 54544’s Node 22.2.0 shard logged “Sending req no 1”, then exceeded the deadline in parallel/test-http-outgoing-end-cork.js before logging a completed response. The same agent’s next attempt timed out in a different test and a later attempt passed on another agent.",
       "findings": [
+        {
+          "text": "Tamir signed and submitted one commit to Node. Its full Git tree and test blob match the qualified revision. The gVisor fixture backport is being checked separately.",
+          "evidence": [
+            {
+              "label": "Submitted Node source",
+              "url": "https://github.com/nodejs/node/commit/12d772706"
+            },
+            {
+              "label": "Packaged gVisor fixture qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43137464797"
+            }
+          ]
+        },
         {
           "text": "The proposed Node test sends two requests over one keep-alive socket, checks both response bodies and requires the second write to drain. All 15 expected outcomes matched on Node 28 nightly, and on pinned Node 22.2.0 under native Linux and gVisor systrap. The revised test passed normally and with an event-loop pause in all three environments. Each unfinished-second-response control hit the harness deadline.",
           "evidence": [
             {
-              "label": "Review the Node test commit",
+              "label": "Qualified Node test commit",
               "url": "https://github.com/tamird/node/commit/29e91d2e3"
-            },
-            {
-              "label": "Open the prefilled Node pull request after personal sign-off",
-              "url": "https://github.com/nodejs/node/compare/main...tamird:node:test/http-double-end-socket-reuse?expand=1&title=test%3A+reuse+one+socket+in+the+HTTP+double-end+test&body=The+HTTP+double-end+test+can+time+out+on+its+first+request+before+it+exercises+socket+reuse.+Limit+the+keep-alive+agent+to+one+socket%2C+send+two+requests%2C+and+verify+both+complete+bodies.+The+second+response+must+use+the+first+socket+and+drain+a+write+larger+than+its+high+water+mark.+The+test+runner+bounds+an+incomplete+response.%0A%0AThe+previous+test+reached+its+deadline+after+a+deliberate+event-loop+pause+on+Node+28+nightly+and+Node+22.2.0+on+native+Linux+and+gVisor.+The+revised+test+completed+in+all+three+environments+and+detected+an+unfinished+second+response.+%5BTest+results%5D%28https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F43136166387%29%0A%0AAssisted-by%3A+Codex"
             },
             {
               "label": "Fifteen native and systrap outcomes on the exact proposed test",
@@ -104549,6 +104638,10 @@
       ],
       "evidence": [
         {
+          "label": "Node #67426, submitted with personal sign-off",
+          "url": "https://github.com/nodejs/node/pull/67426"
+        },
+        {
           "label": "54544 original Node shard 3/8 log",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54544/jobs/01a1cd01-21b9-4542-b50a-411fe42207ba/artifacts/01a1cd0a-e412-4f01-8df8-ceef385fd7f6"
         },
@@ -104581,12 +104674,8 @@
           "url": "https://github.com/google/gvisor/blob/6dd09915e/images/runtimes/nodejs22.2.0/timeouts.patch"
         },
         {
-          "label": "Review the Node test commit",
+          "label": "Qualified Node test commit",
           "url": "https://github.com/tamird/node/commit/29e91d2e3"
-        },
-        {
-          "label": "Open the prefilled Node pull request after personal sign-off",
-          "url": "https://github.com/nodejs/node/compare/main...tamird:node:test/http-double-end-socket-reuse?expand=1&title=test%3A+reuse+one+socket+in+the+HTTP+double-end+test&body=The+HTTP+double-end+test+can+time+out+on+its+first+request+before+it+exercises+socket+reuse.+Limit+the+keep-alive+agent+to+one+socket%2C+send+two+requests%2C+and+verify+both+complete+bodies.+The+second+response+must+use+the+first+socket+and+drain+a+write+larger+than+its+high+water+mark.+The+test+runner+bounds+an+incomplete+response.%0A%0AThe+previous+test+reached+its+deadline+after+a+deliberate+event-loop+pause+on+Node+28+nightly+and+Node+22.2.0+on+native+Linux+and+gVisor.+The+revised+test+completed+in+all+three+environments+and+detected+an+unfinished+second+response+%5B1%5D.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F43136166387%2Fartifacts%2F13907398080%0A%0AAssisted-by%3A+Codex"
         },
         {
           "label": "Fifteen native and systrap outcomes on the exact proposed test",
@@ -104597,19 +104686,24 @@
           "url": "https://github.com/tamird/gvisor/commit/2821a89fd"
         }
       ],
-      "nextStep": "Tamir can review the single fork commit, add his personal DCO sign-off and submit the prefilled Node pull request. The separate gVisor backport replaces this test’s timeout patch in the pinned Node 22.2.0 image; its packaged-image check is pending.",
+      "nextStep": "Follow Node #67426 and validate the separate gVisor fixture backport in its packaged Node 22.2.0 image.",
       "repo": "nodejs/node",
-      "head": "29e91d2e3d044e26809ea80130d3364dd3df8813",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "29e91d2e3d044e26809ea80130d3364dd3df8813",
-        "baseHead": "933cb117c91c961880d0b00fd9b6b75ff4580484",
-        "url": "https://github.com/tamird/node/commit/29e91d2e3",
-        "title": "test: reuse one socket in the HTTP double-end test",
-        "body": "The HTTP double-end test can time out on its first request before it exercises socket reuse. Limit the keep-alive agent to one socket, send two requests, and verify both complete bodies. The second response must use the first socket and drain a write larger than its high water mark. The test runner bounds an incomplete response.\n\nThe previous test reached its deadline after a deliberate event-loop pause on Node 28 nightly and Node 22.2.0 on native Linux and gVisor. The revised test completed in all three environments and detected an unfinished second response [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43136166387/artifacts/13907398080\n\nAssisted-by: Codex",
-        "summary": "Review the single test commit, add your personal DCO sign-off, and submit it to Node? The two-request test covers socket reuse on a slow worker and detects an unfinished second response."
-      }
+      "head": "12d77270681e0a8ce9732a40633f65d1f1d161a9",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "29e91d2e3d044e26809ea80130d3364dd3df8813",
+          "baseHead": "933cb117c91c961880d0b00fd9b6b75ff4580484",
+          "url": "https://github.com/tamird/node/commit/29e91d2e3",
+          "title": "test: reuse one socket in the HTTP double-end test",
+          "body": "The HTTP double-end test can time out on its first request before it exercises socket reuse. Limit the keep-alive agent to one socket, send two requests, and verify both complete bodies. The second response must use the first socket and drain a write larger than its high water mark. The test runner bounds an incomplete response.\n\nThe previous test reached its deadline after a deliberate event-loop pause on Node 28 nightly and Node 22.2.0 on native Linux and gVisor. The revised test completed in all three environments and detected an unfinished second response [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43136166387/artifacts/13907398080\n\nAssisted-by: Codex",
+          "summary": "Tamir signed and submitted the tested Node change.",
+          "outcome": "approved",
+          "at": "2026-11-12T02:12:07+00:00",
+          "postedURL": "https://github.com/nodejs/node/pull/67426"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
