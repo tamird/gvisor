@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Check Java DatagramChannel echo on the CI bridge
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/java21-adaptor-echo-54693]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  echo:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the original runtime and Java image
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 022
+          git init -q .
+          git fetch -q --depth=2 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 302d0f54521dec173d8763a036637336bc3044ce
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/runtimes/qualification_java_echo'
+          w="$RUNNER_TEMP/java-echo"
+          mkdir -p "$w"/{runtime,trace,receipt,docker-client}
+          echo "JAVA_ECHO=$w" >> "$GITHUB_ENV"
+          echo "DOCKER_CONFIG=$w/docker-client" >> "$GITHUB_ENV"
+          echo 'DOCKER_HOST=unix:///tmp/gv-echo-54693.sock' >> "$GITHUB_ENV"
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          chmod +x "$w/bazel"
+          curl -qfsSL --retry 2 https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54693/jobs/01a1d0d3-7176-4f4c-a18f-201e8d724220/artifacts/01a1d0ed-a5cd-46fd-861d-c0d6eb02c794 -o "$w/runtime.tgz"
+          echo "2e32c38bd80c38fce0c4c4e6d1f8165dbb412095ee35204dda15a3f20c2df1f7  $w/runtime.tgz" | sha256sum -c -
+          python3 - "$w" <<'PY'
+          import json, pathlib, sys, tarfile
+          w = pathlib.Path(sys.argv[1])
+          names = ["runsc", "containerd-shim-runsc-v1"] + ["gvisor-bin/" + s for s in ("gvisor_sentry", "checkpointgofer", "runsc-netgofer", "runsc-metric-server", "runsc-fd-parking", "gvisor-sentry-prewarmer", "gvisor-proc-umounter")]
+          with tarfile.open(w / "runtime.tgz") as archive:
+              for name in names:
+                  member = archive.getmember("buildkite_runtime/" + name)
+                  assert member.isfile() and 0 < member.size < 150_000_000
+                  out = w / "runtime" / name
+                  out.parent.mkdir(exist_ok=True)
+                  out.write_bytes(archive.extractfile(member).read())
+                  out.chmod(0o755)
+          args = ["--platform=systrap", "--network=sandbox", "--strace", "--strace-syscalls=sendto,recvfrom", "--strace-log-size=0", "--debug-log=" + str(w / "trace") + "/"]
+          (w / "daemon.json").write_text(json.dumps({"runtimes":{"echo-ci":{"path":str(w / "runtime/runsc"),"runtimeArgs":args}}}))
+          PY
+      - name: Create the isolated job bridge and pull the pinned image
+        shell: bash
+        run: |
+          set -euo pipefail
+          d=/tmp/gv-echo-54693
+          sudo -n mkdir -m 700 "$d"
+          sudo -n dockerd --config-file="$JAVA_ECHO/daemon.json" --host="$DOCKER_HOST" --group="$(id -gn)" \
+            --pidfile="$d/pid" --data-root="$d/data" --exec-root="$d/exec" --bridge=none \
+            --iptables=false --ip-forward=false --ip-masq=false --userland-proxy=false > "$JAVA_ECHO/daemon.log" 2>&1 &
+          for i in {1..45}; do docker info >/dev/null 2>&1 && break; sleep 1; done
+          test "$(docker info --format '{{.DockerRootDir}}')" = "$d/data"
+          docker network create --driver bridge --subnet 172.30.193.0/24 --opt com.docker.network.bridge.enable_ip_masquerade=false echo54693
+          docker pull --platform=linux/amd64 us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/java21_x86_64@sha256:c5a1419701eea132bc82193018a09a91296a8d9e96492495a72dd84040e0bb47
+      - name: Run only AdaptorBasic under the archived runtime
+        shell: bash
+        run: |
+          set -eu
+          "$JAVA_ECHO/bazel" --nosystem_rc --nohome_rc test --config=x86_64 \
+            --remote_executor= --remote_cache= --bes_backend= --jobs=2 --lockfile_mode=off \
+            --module_mirrors=https://bcr.cloudflaremirrors.com --strategy=TestRunner=local \
+            --nocache_test_results --flaky_test_attempts=1 --test_timeout=2200 \
+            --test_env=DOCKER_HOST --test_env=DOCKER_CONFIG --test_env=JAVA_ECHO --test_output=errors \
+            //test/runtimes/qualification_java_echo:adaptor_basic
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: java-echo-socket-results
+          path: ${{ runner.temp }}/java-echo/receipt/run-*.json
+          retention-days: 14
+          if-no-files-found: warn
