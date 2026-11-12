@@ -223,6 +223,7 @@ COHORT_IMAGES = {
         "systemd-services",
         "ubi10-init",
     ],
+    "systemd_journal_validation": ["systemd-integ"],
     "nested_runtime": [
         "basic/integrationtest",
     ],

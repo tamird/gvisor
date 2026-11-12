@@ -69,7 +69,7 @@ docker_test(
         "main_test.go",
         "systemd_test.go",
     ],
-    cohort = "runtime",
+    cohort = "systemd_journal_validation",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     embed = [":integration"],
