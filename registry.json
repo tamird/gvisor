@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T04:22:51+00:00",
+    "updatedAt": "2026-11-12T04:36:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29951,26 +29951,29 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/systemd-daemon-journal-readiness",
-      "head": "056d21cee8bc662737520aca579c2bc5d5936e85",
+      "head": "cdf05cf3cf2c3ec196bc94dfaba9b025f437c229",
       "title": "Wait for the systemd test daemon's journal entry",
       "url": "https://github.com/google/gvisor/pull/16391",
       "group": "tests",
       "status": "open",
-      "summary": "The systemd tests now wait for their daemon's greeting in the journal instead of assuming an active service and main PID mean the record is already available. Both system and user service tests continue to read their own journals and fail if the greeting never appears. Contributor-approved exact source 056d21cee8bc662737520aca579c2bc5d5936e85 is delivered as open, ready-for-review PR #16391. No prerequisite or contributor decision remains.\n\nThe public Buildkite 52341 cgroup-v2 attempt missed the greeting and its retry passed. That log does not establish whether the process had written the record or journald had processed it. Private validation held the system service's write until its first real journal query returned: the original assertion failed and the correction passed. The ungated packaged user-service case passed in both. Each run used one uncached remote AMD64 test action and the same source-built systemd image, with no skips or missing cases. The original native exit 3 and FAIL verdict are retained; the corrected native exit 0 and PASS verdict are separate. The corrected result contains three positive XML records: the two named cases and their Go parent. No whole-systemd-suite or other-CPU coverage is claimed.\n\nOriginal execution finished at 20:29:23.885 UTC, with its FAIL verdict after 0.54 seconds and local verification after 4.60 seconds. Corrected execution finished at 20:29:03.961 UTC, with its PASS verdict after 0.42 seconds and local verification after 6.41 seconds. Neither run needed manual recovery. The artificial write gate exists only in private validation; the proposed public change is confined to test readiness.",
+      "summary": "The open #16391 waits for the daemon’s greeting in each service’s own systemd journal. On master 4ca0cfcb1, ARM64 build #54606 observed the service running with PID 99, but the first journal query contained only systemd’s own messages. The test subsequently observed restart PIDs 110 and 140. All five targets ran on the same-head ARM64 retry, and the owning integration target passed in 9.8 seconds. The failed log does not distinguish a delayed first write from a delayed journal entry.\n\nThe public Buildkite 52341 cgroup-v2 attempt missed the greeting and its retry passed. That log does not establish whether the process had written the record or journald had processed it. Private validation held the system service's write until its first real journal query returned: the original assertion failed and the correction passed. The ungated packaged user-service case passed in both. Each run used one uncached remote AMD64 test action and the same source-built systemd image, with no skips or missing cases. The original native exit 3 and FAIL verdict are retained; the corrected native exit 0 and PASS verdict are separate. The corrected result contains three positive XML records: the two named cases and their Go parent. No whole-systemd-suite or other-CPU coverage is claimed.\n\nOriginal execution finished at 20:29:23.885 UTC, with its FAIL verdict after 0.54 seconds and local verification after 4.60 seconds. Corrected execution finished at 20:29:03.961 UTC, with its PASS verdict after 0.42 seconds and local verification after 6.41 seconds. Neither run needed manual recovery. The artificial write gate exists only in private validation; the proposed public change is confined to test readiness.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "056d21cee8bc662737520aca579c2bc5d5936e85",
-        "disposition": "Contributor-approved exact source delivered as #16391",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing intake. Preserve the controlled original failure and corrected success; no repeated contributor decision or broader systemd coverage claim.",
+        "sourceHead": "cdf05cf3cf2c3ec196bc94dfaba9b025f437c229",
+        "disposition": "GitHub reports APPROVED and MERGEABLE and retains the ready-to-pull label. The recorded October 29 approval predates the current head’s November 4 rebase. Matching export #16966 closed without merging.",
+        "nextAction": "Monitor the existing source PR and any subsequent import through the ordinary status collector.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16391",
           "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85",
           "https://app.buildbuddy.io/invocation/4767a761-bc41-4ca1-b344-02040a49f9c8",
           "https://app.buildbuddy.io/invocation/d79a9983-7ee7-4b90-8afd-f5ff261a5f36",
           "https://buildkite.com/gvisor/pipeline/builds/52341#01a17492-9cc8-4ed6-8f60-ef24b99b87ec",
-          "https://buildkite.com/gvisor/pipeline/builds/52341#01a1749c-730b-4a0b-a7c2-fcfb0ed0a8f7"
+          "https://buildkite.com/gvisor/pipeline/builds/52341#01a1749c-730b-4a0b-a7c2-fcfb0ed0a8f7",
+          "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54606/jobs/01a1cdf0-dfae-4fba-82fc-a85c5b7348ad/artifacts/01a1cdfa-b82f-4caf-9b4c-c1b7c6c582e7",
+          "https://buildkite.com/gvisor/pipeline/builds/54606#01a1cdfb-6f97-4f07-9f62-d32ff7da2d8b",
+          "https://github.com/google/gvisor/pull/16966"
         ],
-        "observedAt": "2026-10-25T20:42:47.994980+00:00"
+        "observedAt": "2026-11-12T04:36:35+00:00"
       },
       "evidence": [
         {
@@ -29996,9 +29999,21 @@
         {
           "label": "Public cgroup-v2 retry passed",
           "url": "https://buildkite.com/gvisor/pipeline/builds/52341#01a1749c-730b-4a0b-a7c2-fcfb0ed0a8f7"
+        },
+        {
+          "label": "#54606 ARM64 service journal and observed daemon PIDs",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54606/jobs/01a1cdf0-dfae-4fba-82fc-a85c5b7348ad/artifacts/01a1cdfa-b82f-4caf-9b4c-c1b7c6c582e7"
+        },
+        {
+          "label": "#54606 ARM64 retry executed all five targets",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54606#01a1cdfb-6f97-4f07-9f62-d32ff7da2d8b"
+        },
+        {
+          "label": "Closed matching export #16966",
+          "url": "https://github.com/google/gvisor/pull/16966"
         }
       ],
-      "updatedAt": "2026-10-25T20:42:47.994980+00:00",
+      "updatedAt": "2026-11-12T04:36:35+00:00",
       "number": 16391
     },
     {
@@ -72365,8 +72380,8 @@
       "group": "ci-flakes",
       "head": "cf2a26737bd6a255ef74c136a3c6fd06f5a5ab30",
       "status": "open",
-      "updatedAt": "2026-11-09T21:46:42+00:00",
-      "summary": "A blocked recv slept until timeout even though poll showed a pending error. Listening for EventErr makes recv return ECONNREFUSED as Linux does. Linux and corrected gVisor each passed all 22 UDP records and eight focused reruns. Withholding ICMP hit the intended failure on both. The native AMD64 comparison used the exact two changed files on the RBE integration tree. The standalone PR head also passed all 22 UDP records on Linux and all 22 on gVisor in the project’s native AMD64 builder. On its parent, the original test passed on both stacks. With just the revised test, Linux returned ECONNREFUSED and gVisor timed out after 10.13 seconds with EAGAIN.",
+      "updatedAt": "2026-11-12T04:36:35+00:00",
+      "summary": "A blocked recv slept until timeout even though poll showed a pending error. Listening for EventErr makes recv return ECONNREFUSED as Linux does. Linux and corrected gVisor each passed all 22 UDP records and eight focused reruns. Withholding ICMP hit the intended failure on both. The native AMD64 comparison used the exact two changed files on the RBE integration tree. The standalone PR head also passed all 22 UDP records on Linux and all 22 on gVisor in the project’s native AMD64 builder. On its parent, the original test passed on both stacks. With just the revised test, Linux returned ECONNREFUSED and gVisor timed out after 10.13 seconds with EAGAIN.\n\nWhile #17312 remained open, export 492b790cc hit the original success-instead-of-ECONNREFUSED assertion. Its log reports neither a byte count nor an EAGAIN timeout. The same target passed on retry. The specific cause of this instance is open.",
       "evidence": [
         {
           "label": "Standalone PR head, both UDP suites on native AMD64",
@@ -72391,6 +72406,14 @@
         {
           "label": "Standalone sources and original XML, logs and packet captures",
           "url": "https://app.buildbuddy.io/invocation/8d399a5a-fe21-4a7f-b420-d0349b3ce675"
+        },
+        {
+          "label": "#54608 first-recv assertion on the #17249 export",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54608/jobs/01a1cdf5-1330-4ab1-938d-5fcdbfcf8deb/artifacts/01a1cdfb-ba6e-4e71-ba34-8ad481e62a77"
+        },
+        {
+          "label": "#54608 retry reran the UDP target in 9.2 seconds",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54608#01a1cdfc-42b7-4f19-aaed-2e555bddedfb"
         }
       ],
       "settledReviews": [
@@ -100646,11 +100669,28 @@
       "title": "Printing inline checkpoint memory",
       "status": "concluded",
       "owner": "Agent",
-      "updatedAt": "2026-11-08T17:19:18+00:00",
-      "summary": "The contributor approved the opt-in reader for historical inline checkpoints. The final reader and revised tests are under upstream review in #17208 at ebcea451d. The existing generic command keeps its original text and HTML behavior. The earlier corpus covered 59 and 56 regions; fresh checkpoints verified 64 and 62, all on the same bytes subsequently restored.",
+      "updatedAt": "2026-11-12T04:36:35+00:00",
+      "summary": "At the current #17208 head, 912702589, runsc statefile FILE and runsc statefile -html FILE recognize Sentry checkpoints by their CPUID and Kernel roots. No -checkpoint option is needed. Other roots still use the generic printer. With the ordinary commands, the ARM64 autosave control found all 63 wire and 62 graph regions. The older opt-in experiment used different images and found 64 and 62 regions.",
       "findings": [
         {
-          "text": "Use runsc statefile -checkpoint FILE (or -checkpoint -html FILE) to inspect existing Sentry memory checkpoints. The option is listed by runsc help statefile. Historical images have no unambiguous format marker, so the default generic command can still print incomplete output. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings. The nine files add 603 lines and remove 74. Of the additions, 255 are permanent tests and 29 are BUILD declarations. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context. The earlier split-page and filesystem-only checks passed. That run exposed the generic short-frame difference that the final native run verifies on stock, the intermediate reader and the corrected reader.",
+          "text": "On #17208 at 912702589, the standard text and HTML commands counted all 63 wire and 62 graph regions on native ARM64, compared with four per image on stock. All four autosave output hashes matched the direct CLI. Both images restored PID 1 and two 8,192-byte files. Separately, stock failed to print two of eight valid AMD64 checkpoints. This default reader printed the same eight files and all guests restored.",
+          "evidence": [
+            {
+              "label": "Current single-commit automatic reader on #17208",
+              "url": "https://github.com/google/gvisor/pull/17208"
+            },
+            {
+              "label": "Default text and HTML, 63/62 regions and same-image ARM64 restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42502900602/artifacts/13626871767"
+            },
+            {
+              "label": "Eight unchanged AMD64 checkpoints, original failures and same-image restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42701281118/artifacts/13713937201"
+            }
+          ]
+        },
+        {
+          "text": "Earlier opt-in prototype 2d112a931 required runsc statefile -checkpoint FILE (or -checkpoint -html FILE). Its default remained generic. On native ARM64, two original images had 64 and 62 regions. The generic text and HTML commands each reported 3 regions in the wire image and 4 in the graph image. Their output stayed byte-identical before and after the change. The explicit mode matched every region in both renderers. The same images restored PID 1 and two files of 8,192 bytes. Removing or duplicating the private MemoryFile failed on both encodings. The nine files add 603 lines and remove 74. Of the additions, 255 are permanent tests and 29 are BUILD declarations. The two printers share graph traversal and use pgalloc’s format definitions to find the owner graph and consume one private MemoryFile per owner. The earlier draft added 407 non-test lines, compared with 348 here. EOF just after the first two graphs is valid for a split checkpoint and cannot identify an entirely missing inline tail without external context. The earlier split-page and filesystem-only checks passed. That run exposed the generic short-frame difference that that prototype’s final native run verified on stock, the intermediate reader and the corrected reader.",
           "evidence": [
             {
               "label": "One-commit checkpoint reader proposal",
@@ -100719,7 +100759,7 @@
           ]
         },
         {
-          "text": "On native ARM64 the reader matched the independent byte walk for both MemoryFiles in each checkpoint. The split-page text and HTML outputs matched stock, and all four guest restores verified the original file contents. The reader does not independently count private MemoryFiles against the list of owners.",
+          "text": "In the earlier inspection experiment, the native ARM64 reader matched the independent byte walk for both MemoryFiles in each checkpoint. The split-page text and HTML outputs matched stock, and all four guest restores verified the original file contents. That prototype did not independently count private MemoryFiles against the list of owners.",
           "evidence": [
             {
               "label": "Original checkpoints, independent page boundaries and four guest restores",
@@ -100748,7 +100788,19 @@
       "nextStep": "Follow the published default reader on #17208. If #17236 lands, preserve its separate split-restore version checks when reconciling pgalloc.LoadFrom.",
       "evidence": [
         {
-          "label": "Inspect existing inline checkpoints",
+          "label": "Current single-commit automatic reader on #17208",
+          "url": "https://github.com/google/gvisor/pull/17208"
+        },
+        {
+          "label": "Default text and HTML, 63/62 regions and same-image ARM64 restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42502900602/artifacts/13626871767"
+        },
+        {
+          "label": "Eight unchanged AMD64 checkpoints, original failures and same-image restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42701281118/artifacts/13713937201"
+        },
+        {
+          "label": "Earlier opt-in reader",
           "url": "https://github.com/tamird/gvisor/commit/2d112a931"
         },
         {
@@ -100802,10 +100854,6 @@
         {
           "label": "Known metadata boundary and restored contents",
           "url": "https://github.com/tamird/gvisor/actions/runs/42358887259/artifacts/13569127013"
-        },
-        {
-          "label": "Published checkpoint inspector and revised tests",
-          "url": "https://github.com/google/gvisor/pull/17208"
         },
         {
           "label": "Native test suites and four regression controls",
@@ -101369,8 +101417,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T21:14:56+00:00",
-      "summary": "A blocking receive on a connected UDP socket returned successfully where the packet test expected ECONNREFUSED. It recurred on #54388 while the upstream fix was still open.",
+      "updatedAt": "2026-11-12T04:36:35+00:00",
+      "summary": "In several CI builds the first receive on a connected UDP socket succeeded where PacketImpact expected ECONNREFUSED. Build #54608 reproduced that assertion on an unrelated source export while the proposed correction in #17312 was still open.",
       "findings": [
         {
           "text": "The two failing logs point to the same receive assertion. On each retry, the UDP ICMP-error target was the only one of 82 tests to rerun and passed in 9.7 seconds. Its log does not report the individual passing subtest.",
@@ -101496,6 +101544,23 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc6c-e19d-4ae2-8c2a-71351cf71bf9"
             }
           ]
+        },
+        {
+          "text": "On #17249’s export 492b790cc, the first recv in Connected/PortUnreachable returned a value other than -1. The assertion at line 316 reported success after 2.11 seconds. The numeric return, bytes and errno were not logged. The test sent its follow-up datagram before waiting for the reader. The sole artifact had no packet capture, syscall trace, timeout, poll or SO_ERROR result. On another Ubuntu AMD64 worker, the retry reran just the UDP target and passed in 9.2 seconds. #17312’s separate controlled test demonstrated a missed wakeup with EAGAIN; the #54608 log cannot identify its cause.",
+          "evidence": [
+            {
+              "label": "#54608 first-recv assertion on the #17249 export",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54608/jobs/01a1cdf5-1330-4ab1-938d-5fcdbfcf8deb/artifacts/01a1cdfb-ba6e-4e71-ba34-8ad481e62a77"
+            },
+            {
+              "label": "#54608 retry reran the UDP target in 9.2 seconds",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54608#01a1cdfc-42b7-4f19-aaed-2e555bddedfb"
+            },
+            {
+              "label": "Test at the failing export’s exact revision",
+              "url": "https://github.com/google/gvisor/blob/492b790cc/test/packetimpact/tests/udp_icmp_error_propagation_test.go#L310-L347"
+            }
+          ]
         }
       ],
       "nextStep": "The blocked-receive fix and packet regression are in #17312. After it lands, check for further failures of the same UDP assertion in CI.",
@@ -101535,6 +101600,18 @@
         {
           "label": "#54502 PacketImpact retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54502#01a1cc6c-e19d-4ae2-8c2a-71351cf71bf9"
+        },
+        {
+          "label": "#54608 first-recv assertion on the #17249 export",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54608/jobs/01a1cdf5-1330-4ab1-938d-5fcdbfcf8deb/artifacts/01a1cdfb-ba6e-4e71-ba34-8ad481e62a77"
+        },
+        {
+          "label": "#54608 retry reran the UDP target in 9.2 seconds",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54608#01a1cdfc-42b7-4f19-aaed-2e555bddedfb"
+        },
+        {
+          "label": "Test at the failing export’s exact revision",
+          "url": "https://github.com/google/gvisor/blob/492b790cc/test/packetimpact/tests/udp_icmp_error_propagation_test.go#L310-L347"
         }
       ]
     },
@@ -101544,10 +101621,28 @@
       "status": "active",
       "owner": "CI flake triage",
       "group": "ci-flakes",
-      "updatedAt": "2026-11-09T18:35:40+00:00",
-      "summary": "TestUnshareUsernsWithoutSetfcap timed out collecting container logs on the cgroup-v1 Docker shard for the import of #17060. The same shard passed on its linked retry.",
-      "findings": [],
-      "nextStep": "Compare the exit status and stderr from unshare -Ur ls with the five-second Docker log wait. The owning target passed uncached on retry in 37.1 seconds. The public log does not record an individual case result.",
+      "updatedAt": "2026-11-12T04:36:35+00:00",
+      "summary": "TestUnshareUsernsWithoutSetfcap timed out in the cgroup-v1 Docker job while collecting the container’s output on the separate exports of #17060 and #17182. The owning target passed on retry in both builds.",
+      "findings": [
+        {
+          "text": "On #17182’s export 6ed3e932a, integration_test.go:1269 reported a deadline while reading the container logs. The captured logs field was empty. The whole case took 24.55 seconds. Buildkite reported a termination signal and exit -1 on the first retry, before any Bazel test result. The second retry executed all five targets on the same commit. The owning integration target passed in 60.7 seconds. The retry log reports the target result without naming individual passing cases.",
+          "evidence": [
+            {
+              "label": "#54607 original test log on #17182’s export",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54607/jobs/01a1cdf3-0d39-4bd0-aec4-ca098e791558/artifacts/01a1cdfe-c4ac-4810-a589-c4c470ec3ca4"
+            },
+            {
+              "label": "#54607 interrupted first retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54607#01a1cdff-9543-4089-847e-c23d3c844926"
+            },
+            {
+              "label": "#54607 passing second retry, five targets executed",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54607#01a1ce06-e7ce-4709-adc1-5e4ab34413f4"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Capture the exit status and stderr of unshare -Ur ls alongside the five-second Docker log wait on a failing attempt. The logs do not establish whether the process itself returned an error.",
       "evidence": [
         {
           "label": "#53945 failed attempt",
@@ -101560,6 +101655,18 @@
         {
           "label": "Source PR #17060",
           "url": "https://github.com/google/gvisor/pull/17060"
+        },
+        {
+          "label": "#54607 original test log on #17182’s export",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54607/jobs/01a1cdf3-0d39-4bd0-aec4-ca098e791558/artifacts/01a1cdfe-c4ac-4810-a589-c4c470ec3ca4"
+        },
+        {
+          "label": "#54607 interrupted first retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54607#01a1cdff-9543-4089-847e-c23d3c844926"
+        },
+        {
+          "label": "#54607 passing second retry, five targets executed",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54607#01a1ce06-e7ce-4709-adc1-5e4ab34413f4"
         }
       ]
     },
@@ -105204,5 +105311,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-12T04:22:51+00:00"
+  "updatedAt": "2026-11-12T04:36:35+00:00"
 }
