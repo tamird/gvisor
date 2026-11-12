@@ -1,35 +1,31 @@
-name: CI
-
-"on":
+name: Check Jammy APT provisioning in isolated Bazel tests
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-jammy-apt-locks]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  apt:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Select the two published package provisioning snippets
+        run: |
+          set -euo pipefail
+          git show 59b69962bd510505fa8538aa1c4dcc61f615edd3:.buildkite/hooks/pre-command >test/rbe/buildkite_apt/stock-hook
+          git show 231174c3357ca881860cdbf4c1ba9a7ac0f42b1f:.buildkite/hooks/pre-command >test/rbe/buildkite_apt/candidate-hook
+          test -n "$(command -v bazel)"
+          /usr/bin/apt-get --version
+      - name: Run the real apt-get with a temporary package database and lock
+        run: |
+          bazel --ignore_all_rc_files test --lockfile_mode=off --strategy=TestRunner=local --test_output=errors --cache_test_results=no //test/rbe/buildkite_apt:apt_lock_test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: jammy-package-lock-results
+          path: bazel-testlogs/test/rbe/buildkite_apt/apt_lock_test/
+          if-no-files-found: warn
