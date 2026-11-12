@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T04:36:35+00:00",
+    "updatedAt": "2026-11-12T04:52:02+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4079,18 +4079,20 @@
       "group": "runtime",
       "status": "open",
       "summary": "Published a5e521f7d orders external storage restoration and restores direct slice reads for heap-backed buffers. Both restore-order controls failed on former public head 5af539b23. The amendment passed 329 ordinary cases and the same 329 cases under native AMD64 race detection with the explicit Bazel LLVM toolchain flag. Nogo passed on AMD64 and ARM64. The separate pgalloc integration passed all five restore and cleanup modes. The paired benchmarks show the eight-view loop back at the pre-PR median, with ReadAt and multi-view ReadAt still 3.92% and 2.08% slower. The original race build and its zero-case diagnosis remain linked below.",
-      "updatedAt": "2026-11-04T15:06:47.009477+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "followup": {
         "owner": "Agent",
-        "disposition": "Approved code, description and both replies published",
-        "nextAction": "Follow the public review.",
-        "observedAt": "2026-11-04T15:06:47.009477+00:00",
+        "disposition": "Approved code, description and both replies published. The review recommends approval and calls out a condition for future callers. This revision documents the supported size and has no production caller of NewViewWithExternalStorage.",
+        "nextAction": "Require each future caller to validate external lengths in [1, MaxChunkSize] before passing untrusted input to NewViewWithExternalStorage. The buffer change awaits maintainer review.",
+        "observedAt": "2026-11-12T04:48:53+00:00",
         "sourceHead": "a5e521f7d2b149674006a4a2c5762db56f75da94",
         "providerHead": "a5e521f7d2b149674006a4a2c5762db56f75da94",
         "evidence": [
           "https://github.com/google/gvisor/pull/15443",
           "https://github.com/google/gvisor/pull/15443#discussion_r4469241827",
-          "https://github.com/google/gvisor/pull/15443#discussion_r4469242548"
+          "https://github.com/google/gvisor/pull/15443#discussion_r4469242548",
+          "https://github.com/google/gvisor/pull/15443#pullrequestreview-5866951790",
+          "https://github.com/google/gvisor/blob/a5e521f7d/pkg/buffer/view.go#L86-L96"
         ]
       },
       "head": "a5e521f7d2b149674006a4a2c5762db56f75da94",
@@ -4197,7 +4199,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "TUN I/O preserves segmented packet buffers. Device.Write owns the buffer it receives, reads the fixed headers, and transfers the remaining views to the packet. Device.Read releases the queued packet before prepending the packet-information header. An unshared first view with sufficient headroom can reuse it; a shared view keeps the header separate. The tests cover today’s heap-backed views. Externally owned memory is proposed separately in #15443.",
-      "updatedAt": "2026-11-12T00:48:14+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "followup": {
         "disposition": "The split-header and headroom cases passed. The no-PI syscall test read four bytes of the first UDP payload and then the complete second datagram on native Linux and systrap. Withholding the second datagram produced the expected five-second timeout. The approved revision and replies are published.",
         "owner": "Maintainer",
@@ -4218,12 +4220,13 @@
           "https://github.com/tamird/gvisor/actions/runs/43128154178/artifacts/13904721689",
           "https://github.com/google/gvisor/pull/15449#discussion_r4544888779",
           "https://github.com/google/gvisor/pull/15449#discussion_r4544888983",
-          "https://github.com/google/gvisor/pull/15449#discussion_r4544889131"
+          "https://github.com/google/gvisor/pull/15449#discussion_r4544889131",
+          "https://github.com/google/gvisor/pull/15449#pullrequestreview-5866955549"
         ],
         "reviewedAt": "2026-10-09T19:16:38.099061+00:00",
         "reviewDecision": null,
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-11-12T00:48:14+00:00"
+        "observedAt": "2026-11-12T04:48:53+00:00"
       },
       "head": "0441369f5058b76a6e38677f3e501022f6c07e15",
       "number": 15449,
@@ -29724,7 +29727,7 @@
       "url": "https://github.com/google/gvisor/pull/16770",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-12T00:28:53+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "summary": "With a FIN or its last data byte unread, Linux and netstack ACK a probe at the receive-window edge; both stop after the application drains the queue. All 56 netstack cases and 54 of 56 on Linux 7.0 passed. Two unchanged established-state cases expected silence and received an ACK.",
       "evidence": [
         {
@@ -29818,7 +29821,7 @@
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "a4edcc73eed1eea4cfb7b88fdf2f1deb89952415",
-        "observedAt": "2026-11-12T00:28:53+00:00",
+        "observedAt": "2026-11-12T04:48:53+00:00",
         "disposition": "Published the reviewed source citation and answered both of Lucas’s original threads. Current Linux accepts a FIN byte beyond the window when the payload fits. The existing wire tests use a data probe.",
         "nextAction": "Follow Lucas’s review of the current commit.",
         "evidence": [
@@ -29828,7 +29831,8 @@
           "https://github.com/torvalds/linux/commit/91934d444",
           "https://github.com/tamird/gvisor/commit/a4edcc73e",
           "https://github.com/google/gvisor/pull/16770#discussion_r4544763355",
-          "https://github.com/google/gvisor/pull/16770#discussion_r4544763569"
+          "https://github.com/google/gvisor/pull/16770#discussion_r4544763569",
+          "https://github.com/google/gvisor/pull/16770#pullrequestreview-5866956863"
         ]
       }
     },
@@ -30315,12 +30319,12 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-12T00:48:14+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "summary": "Keep the congestion threshold across repeated timeouts without an advancing ACK and when a timeout interrupts fast recovery. Master already preserves cwnd and ssthresh on an idle zero-window probe. The amendment drops the duplicate early return and retains both TestZeroWindowSend assertions. Five original XML files contain 20 passing records with zero skips.",
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e",
-        "observedAt": "2026-11-12T00:48:14+00:00",
+        "observedAt": "2026-11-12T04:48:53+00:00",
         "disposition": "The rebase keeps the single persist guard from 597f36270 and both zero-window assertions. The commit and PR description explain the behavior already supplied by master. The approved revision and replies are published.",
         "nextAction": "Await maintainer review of the revised recovery change.",
         "evidence": [
@@ -30330,7 +30334,8 @@
           "https://github.com/tamird/gvisor/commit/52ed6dad4",
           "https://github.com/tamird/gvisor/actions/runs/43125532274",
           "https://github.com/tamird/gvisor/actions/runs/43125532274/artifacts/13904437554",
-          "https://github.com/google/gvisor/pull/16419#discussion_r4544891392"
+          "https://github.com/google/gvisor/pull/16419#discussion_r4544891392",
+          "https://github.com/google/gvisor/pull/16419#pullrequestreview-5866954223"
         ]
       },
       "evidence": [
@@ -42372,7 +42377,7 @@
       "url": "https://github.com/google/gvisor/pull/16761",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "summary": "After checkpointing an open /dev/random file, fresh EPOLL_CTL_ADD returned EPERM in both stock gofer modes. The ordinary syscall test passes on Linux and the four corrected gVisor configurations.",
       "evidence": [
         {
@@ -42430,7 +42435,19 @@
           "at": "2026-10-30T20:59:38.674936+00:00"
         }
       ],
-      "number": 16761
+      "number": 16761,
+      "followup": {
+        "owner": "Upstream import",
+        "disposition": "Lucas’s later formal review approved the same source. Copybara export #17509 cites that revision.",
+        "nextAction": "Follow export #17509.",
+        "sourceHead": "38104a3919e6ba9f3292056c2d22ebfdf57feb82",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16761#pullrequestreview-5866952876",
+          "https://github.com/google/gvisor/pull/16761#pullrequestreview-5867176835",
+          "https://github.com/google/gvisor/pull/17509"
+        ]
+      }
     },
     {
       "id": "pr:16697",
@@ -44781,7 +44798,7 @@
       "url": "https://github.com/google/gvisor/pull/16764",
       "status": "open",
       "summary": "Linux and the standalone correction pass all four shared read boundaries; stock returned three bytes instead of EINVAL for a short header, omitted TUN_PKT_STRIP, returned one byte instead of EFAULT for an inaccessible header, and consumed a packet on a zero-byte read. The full corrected TUN suite passed 24 cases with the existing down-device skip. This is independent of #15449.",
-      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "evidence": [
         {
           "label": "Linux UAPI declares native-order flags and network-order protocol",
@@ -44828,6 +44845,16 @@
         "after": {
           "head": "12141aeb30fa79076391cbb6b111cf3c8378e68e"
         }
+      },
+      "followup": {
+        "owner": "Upstream review",
+        "disposition": "The review verified the TUN read ordering and recommended approval. GitHub records the review as a comment.",
+        "nextAction": "Await maintainer review.",
+        "sourceHead": "12141aeb30fa79076391cbb6b111cf3c8378e68e",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16764#pullrequestreview-5866953232"
+        ]
       }
     },
     {
@@ -45648,7 +45675,7 @@
           "url": "https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L3113-L3116"
         }
       ],
-      "updatedAt": "2026-10-30T20:59:38.674936+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "status": "open",
       "number": 16757,
       "settledReviews": [
@@ -45658,7 +45685,19 @@
           "outcome": "approved",
           "at": "2026-10-30T20:25:22.790363+00:00"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Upstream import",
+        "disposition": "Lucas’s later formal review approved the same source. Copybara export #17508 cites that revision.",
+        "nextAction": "Follow export #17508.",
+        "sourceHead": "b616271679703669920b1f2b7fff567ccd8ff069",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16757#pullrequestreview-5866952434",
+          "https://github.com/google/gvisor/pull/16757#pullrequestreview-5867153145",
+          "https://github.com/google/gvisor/pull/17508"
+        ]
+      }
     },
     {
       "id": "branch:declared-jekyll-site",
@@ -52675,7 +52714,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -52684,7 +52723,19 @@
           "at": "2026-11-02T20:41:55Z"
         }
       ],
-      "number": 16864
+      "number": 16864,
+      "followup": {
+        "owner": "Upstream review",
+        "disposition": "The review recommends approval and asks about first-pass build 591. Its status is red. The maintainers have advised contributors to ignore first-pass results while that pipeline is being set up.",
+        "nextAction": "Await maintainer review.",
+        "sourceHead": "90a37644f7c3e99f4c21954dc9e4181a494094ec",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16864#pullrequestreview-5866950504",
+          "https://buildkite.com/gvisor/first-pass/builds/591",
+          "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255"
+        ]
+      }
     },
     {
       "id": "branch:buildkite-native-plugin",
@@ -55863,7 +55914,7 @@
       "url": "https://github.com/google/gvisor/pull/16868",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "summary": "The analyzer reports a range callback that changes the caller’s lock state at the range keyword. Across all 41 affected Nogo targets on AMD64 and ARM64, the audit found no production suppression to remove for this change. The two newer lisafs renameMu suppressions also remained necessary on current master.",
       "evidence": [
         {
@@ -56055,7 +56106,17 @@
           "note": "Published the approved single commit and replied on the original thread."
         }
       ],
-      "number": 16868
+      "number": 16868,
+      "followup": {
+        "owner": "Upstream review",
+        "disposition": "The follow-up review verified the range-body position correction and reported no findings.",
+        "nextAction": "Await maintainer review.",
+        "sourceHead": "d5cd4802bf8f5576d374b00616a9b8f5251057ba",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16868#pullrequestreview-5866611889"
+        ]
+      }
     },
     {
       "id": "branch:go-helper-images",
@@ -57097,12 +57158,12 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "c2fa04be29f7bef74e8d2bad6ffa8d2a12438926",
-        "observedAt": "2026-11-12T01:01:41+00:00",
-        "disposition": "The contributor approved the amendment and it is published at c2fa04be2.",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "disposition": "The contributor approved the amendment and it is published at c2fa04be2. Both original review threads have replies covering how the revised test handles save/restore and checks the exact MTU.",
         "nextAction": "Await maintainer review of the revised source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
@@ -57114,7 +57175,8 @@
           "https://github.com/tamird/gvisor/actions/runs/43127680146/artifacts/13903029313",
           "https://github.com/tamird/gvisor/actions/runs/43128668664/artifacts/13904502692",
           "https://github.com/google/gvisor/pull/16957#discussion_r4544966854",
-          "https://github.com/google/gvisor/pull/16957#discussion_r4544967033"
+          "https://github.com/google/gvisor/pull/16957#discussion_r4544967033",
+          "https://github.com/google/gvisor/pull/16957#pullrequestreview-5866956256"
         ]
       },
       "refinement": {
@@ -57176,6 +57238,31 @@
           "postedURL": "https://github.com/google/gvisor/pull/16957#discussion_r4544967033"
         }
       ]
+    },
+    {
+      "id": "pr:16958",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16958,
+      "ref": "review/task-foreign-fd",
+      "head": "d2de4e5fe1ed5541e75b58493525cf753bd3f865",
+      "title": "Keep the target's descriptor table stable during lookup",
+      "url": "https://github.com/google/gvisor/pull/16958",
+      "group": "runtime",
+      "status": "Open; approved source exported",
+      "followup": {
+        "owner": "Upstream import",
+        "disposition": "Lucas’s later formal review approved the same source. Copybara export #17510 cites that revision.",
+        "nextAction": "Follow export #17510.",
+        "sourceHead": "d2de4e5fe1ed5541e75b58493525cf753bd3f865",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16958#pullrequestreview-5866951389",
+          "https://github.com/google/gvisor/pull/16958#pullrequestreview-5867205465",
+          "https://github.com/google/gvisor/pull/17510"
+        ]
+      },
+      "updatedAt": "2026-11-12T04:51:10+00:00"
     },
     {
       "id": "branch:veth-port-mtu",
@@ -58248,7 +58335,7 @@
       "url": "https://github.com/google/gvisor/pull/16999",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "summary": "Delivered as #16999 after #16403 landed through #16986. The approved 19b9ac70f patch is unchanged in ed556a288 on ebb46ee1d. When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
       "evidence": [
         {
@@ -58295,13 +58382,16 @@
       "followup": {
         "owner": "root",
         "sourceHead": "ed556a288cb5512afa5b9d06c2c3c95dd0e31746",
-        "observedAt": "2026-11-04T20:45:45.283369+00:00",
-        "disposition": "Approved follow-up delivered as #16999",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "disposition": "Approved follow-up delivered as #16999. The review recommends approval and notes failed first-pass build 603. The maintainers have advised contributors to ignore first-pass results while that pipeline is being set up.",
         "nextAction": "Follow upstream review and CI on #16999; no contributor decision remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16999",
           "https://github.com/google/gvisor/pull/16986",
-          "https://github.com/google/gvisor/pull/16999#issuecomment-6807084113"
+          "https://github.com/google/gvisor/pull/16999#issuecomment-6807084113",
+          "https://github.com/google/gvisor/pull/16999#pullrequestreview-5866950816",
+          "https://buildkite.com/gvisor/first-pass/builds/603",
+          "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255"
         ]
       },
       "number": 16999
@@ -59634,7 +59724,7 @@
       "url": "https://github.com/google/gvisor/pull/17064",
       "title": "Remove stale file descriptor lock requirements",
       "status": "open",
-      "updatedAt": "2026-11-11T02:10:26+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "summary": "Remove the stale caller-lock requirement on FDTable.GetFDs. The rebase preserves that file byte for byte. Master already removed the obsolete VFSPipe comment in d6786915f.",
       "evidence": [
         {
@@ -59687,15 +59777,16 @@
         }
       },
       "followup": {
-        "owner": "Agent",
+        "owner": "Upstream import",
         "sourceHead": "68eb2f443ab14dae2cf23a04a3662fe3187e38be",
-        "observedAt": "2026-11-11T02:10:26+00:00",
-        "disposition": "The updated source is mergeable. Ryan's approval and export #17149 identify the prior source 1ee6b64ae.",
-        "nextAction": "Follow review of 68eb2f443 and its Copybara export. The earlier export still conflicts.",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "disposition": "Lucas approved 68eb2f443. The open Copybara export #17149 now cites the approved source.",
+        "nextAction": "Follow the checks and import of #17149.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/1ee6b64ae...68eb2f443",
           "https://github.com/google/gvisor/pull/17064#pullrequestreview-5806238222",
-          "https://github.com/google/gvisor/pull/17149"
+          "https://github.com/google/gvisor/pull/17149",
+          "https://github.com/google/gvisor/pull/17064#pullrequestreview-5866979324"
         ]
       }
     },
@@ -74069,17 +74160,18 @@
       "url": "https://github.com/google/gvisor/pull/17445",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-11T11:11:00+00:00",
+      "updatedAt": "2026-11-12T04:48:53+00:00",
       "summary": "The published revision returns completed Docker stdout and stderr alongside read and inspect errors. Its native Linux controls retained output on both cancellation and timeout.",
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
-        "observedAt": "2026-11-11T11:11:00+00:00",
-        "disposition": "Published 4cd80a062 and answered the review.",
+        "observedAt": "2026-11-12T04:48:53+00:00",
+        "disposition": "Published 4cd80a062 and answered the review. The follow-up review confirmed that a deadline preserves partial output and reported no findings.",
         "nextAction": "Follow upstream checks and review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17445#discussion_r4536989728",
-          "https://github.com/google/gvisor/pull/17445"
+          "https://github.com/google/gvisor/pull/17445",
+          "https://github.com/google/gvisor/pull/17445#pullrequestreview-5866657813"
         ]
       },
       "evidence": [
@@ -105311,5 +105403,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-12T04:36:35+00:00"
+  "updatedAt": "2026-11-12T04:52:02+00:00"
 }
