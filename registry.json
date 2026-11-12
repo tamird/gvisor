@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T18:11:37+00:00",
+    "updatedAt": "2026-11-12T19:22:51+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27835,22 +27835,14 @@
       "title": "Validate proxy ports before network setup",
       "url": "https://github.com/google/gvisor/pull/16345",
       "group": "analysis",
-      "status": "Published as #16345",
-      "summary": "The proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
-      "updatedAt": "2026-10-24T15:25:05.305627+00:00",
-      "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
-        "observedAt": "2026-10-24T15:25:05.305627+00:00",
-        "disposition": "Approved pointer-receiver correction delivered as #16345",
-        "nextAction": "Follow current-head public checks and maintainer review through the existing watcher. No repeat contributor question.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16345",
-          "https://github.com/tamird/gvisor/commit/e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
-          "https://app.buildbuddy.io/invocation/2006618e-bf44-4f2b-9858-b24168e82a82"
-        ]
-      },
+      "status": "Merged in #16345",
+      "summary": "The port validation change landed in #16345 at 9cd4b50be.",
+      "updatedAt": "2026-11-12T19:16:56+00:00",
       "evidence": [
+        {
+          "label": "Merged source",
+          "url": "https://github.com/google/gvisor/commit/9cd4b50be"
+        },
         {
           "label": "Delivered public PR",
           "url": "https://github.com/google/gvisor/pull/16345"
@@ -28900,30 +28892,19 @@
       "title": "Reject out-of-range ports in the TCP benchmark proxy",
       "url": "https://github.com/google/gvisor/pull/16345",
       "group": "analysis",
-      "status": "Open; reviewer feedback applied",
-      "summary": "The current source is approved and labeled ready to pull. Copybara reports success for internal change 1012595678. Public export #16894 closed without merging; a replacement has yet to appear.\n\nBoth the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR’s port validation. The original reviewer received the results. The standalone script correction is #17184. The separate Go replacement is under contributor review.\n\nEarlier record:\n\nThe approved amendment is published at 641a5c300. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nThe amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged.\n\nEarlier source-specific history:\n\nCurrent public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL. The description now makes clear that the client dials and the server listens.",
-      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "status": "merged",
+      "summary": "Merged as 9cd4b50be on November 12 after Copybara export #17517 landed. The proxy rejects invalid native forwarding ports before starting the retry loop.",
+      "updatedAt": "2026-11-12T19:16:56+00:00",
       "number": 16345,
-      "followup": {
-        "owner": "Maintainer",
-        "sourceHead": "641a5c300750a72805d4cacbcd71c92f91f5d46f",
-        "observedAt": "2026-11-10T11:40:34+00:00",
-        "disposition": "The approved source still has its import label.",
-        "nextAction": "Wait for Copybara to publish the replacement for closed export #16894.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16345",
-          "https://github.com/google/gvisor/pull/16894",
-          "https://github.com/google/gvisor/pull/16345#issuecomment-6707013553",
-          "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943",
-          "https://github.com/tamird/gvisor/actions/runs/42372178933",
-          "https://github.com/tamird/gvisor/commit/9c541c3ae",
-          "https://github.com/tamird/gvisor/actions/runs/42371214043/artifacts/13573662056",
-          "https://github.com/tamird/gvisor/commit/98fcb4c0d",
-          "https://github.com/google/gvisor/commit/30fa3bd85",
-          "https://github.com/google/gvisor/pull/16345"
-        ]
-      },
       "evidence": [
+        {
+          "label": "Completed Copybara export",
+          "url": "https://github.com/google/gvisor/pull/17517"
+        },
+        {
+          "label": "Merged source",
+          "url": "https://github.com/google/gvisor/commit/9cd4b50be"
+        },
         {
           "label": "Published standalone benchmark correction",
           "url": "https://github.com/google/gvisor/pull/17184"
@@ -30640,49 +30621,34 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T18:11:37+00:00",
-      "summary": "Tamir approved using the released BCR module with necessary backports. The agent is preparing one rebased, tested amendment to #17114; each retained patch must link its upstream change in the header.\n\n#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The amendment will use released BCR llvm 0.8.26 and carry only the necessary backports. Each patch header will link the corresponding upstream change. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. After #15940 landed, both master and the LLVM 23.1.2 parser select only X86 and AArch64. Configured C++ compile actions increase from 2,725 to 2,935 on AMD64 and from 2,722 to 2,932 on ARM64. Of the 210 additional actions on each, 184 compile LLVM and 26 compile zlib. Supplier revisions 17f6a3008 and 8a3f5bd77 yield the same graph. The published PR description still quotes a reduction of 141 from the earlier 20-versus-nine-backend comparison. Neither graph measures elapsed build time. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe earlier patch-free qualification compared upstream hermetic-llvm revisions. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.\n\nThe published 7fca7c54f conflicts in MODULE.bazel against ccf8c9479. The patch-free fork revision ea1d3141c, which pins supplier 17f6a3008, merges cleanly there. Patch-free product 647f8a21e builds on ccf8c9479 with supplier 8a3f5bd77. TestParser ran uncached on native Linux x86_64 and AArch64. The ELF machine IDs were 62 and 183 respectively. The audit covered all 224 licenses. Downstream consumers also need the root-module policy in #16804.",
+      "updatedAt": "2026-11-12T19:16:56+00:00",
+      "summary": "The proposed rebase moves the NVIDIA driver parser to the LLVM 23.1.2 archive supplied by the released llvm 0.8.26 module. Its two backports link to the upstream Linux header and backend changes. Compared with current two-backend master, the parser configures 210 additional C++ compilations on each architecture (184 LLVM, 26 zlib).\n\nTestParser ran uncached on native AMD64 and ARM64 and the audit verified all 224 license entries on 06177ff66. The sole change in the final ecdca71e5 is exporting the new patch file alongside the existing one. A direct Bazel query found both source labels on that revision.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-12T18:11:37+00:00",
-        "disposition": "Tamir declined the supplier release request. The preparatory archive-pin tests remain historical evidence. The public PR requires a rebase.",
-        "nextAction": "Rebase #17114 onto current master using released BCR llvm 0.8.26. Keep only necessary backports with links to the upstream changes in their patch headers, verify both native parsers and the license audit, and present one tested amendment for contributor review.",
+        "observedAt": "2026-11-12T19:16:56+00:00",
+        "disposition": "The released BCR module and linked backports are ready for contributor review.",
+        "nextAction": "After approval, update the existing #17114 branch and replace the obsolete backend comparison in its description.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17114",
-          "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
-          "https://github.com/tamird/gvisor/actions/runs/42276297996/artifacts/13531918912",
-          "https://github.com/tamird/gvisor/actions/runs/42183941511/artifacts/13487853263",
-          "https://github.com/tamird/gvisor/commit/7fca7c54f",
-          "https://github.com/tamird/gvisor/actions/runs/42183956039/artifacts/13486364802",
-          "https://github.com/tamird/gvisor/actions/runs/42183941511/artifacts/13486474282",
-          "https://github.com/tamird/gvisor/actions/runs/42183941511",
-          "https://github.com/tamird/gvisor/commit/17d37fc9a",
-          "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
-          "https://app.buildbuddy.io/invocation/2476c02c-1d7a-4ecd-9ce5-9ed8c5635e55",
-          "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9",
-          "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008",
-          "https://app.buildbuddy.io/invocation/9f4b6536-8166-4896-9259-bce7f4f6b19b",
-          "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review",
-          "https://github.com/google/gvisor/commit/0245c1dfa",
-          "https://github.com/tamird/gvisor/commit/74353add6",
-          "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267",
-          "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037",
-          "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359",
-          "https://github.com/tamird/gvisor/commit/ea1d3141c",
-          "https://github.com/tamird/gvisor/actions/runs/43252864197",
-          "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960156770",
-          "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960266517",
-          "https://github.com/hermeticbuild/hermetic-llvm/commit/8a3f5bd77",
-          "https://github.com/google/gvisor/pull/16804",
-          "https://github.com/google/gvisor/commit/ccf8c9479",
-          "https://github.com/tamird/gvisor/actions/runs/43272221335",
-          "https://github.com/tamird/gvisor/commit/647f8a21e",
-          "https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13969368929",
-          "https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13967768714"
+          "https://github.com/tamird/gvisor/commit/ecdca71e5",
+          "https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13970389261",
+          "https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13971747081",
+          "https://github.com/google/gvisor/pull/17114"
         ]
       },
       "evidence": [
+        {
+          "label": "Load both patches through their public Bazel labels",
+          "url": "https://github.com/tamird/gvisor/commit/ecdca71e5"
+        },
+        {
+          "label": "Both native action counts against the same two-backend master",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13971747081"
+        },
+        {
+          "label": "Native parser tests and full license audit on 06177ff66",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13970389261"
+        },
         {
           "label": "Linux comparison of the actual #17114 review queue at BCR 0.8.26 and a simulated newer release",
           "url": "https://github.com/tamird/gvisor/actions/runs/42493422171/artifacts/13621833297"
@@ -30906,10 +30872,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "5c019e9e6d5116841ee1dcbdee426437e9739027"
+          "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63"
         },
         "after": {
-          "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63"
+          "head": "ecdca71e522093e7c0fa29315c824de5265e3edf"
         }
       },
       "settledReviews": [
@@ -30946,7 +30912,18 @@
           "note": "Tamir approved carrying the necessary backports against the released BCR module, with links to the upstream changes in the patch headers. The proposed release request was never sent."
         }
       ],
-      "number": 17114
+      "number": 17114,
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+        "head": "ecdca71e522093e7c0fa29315c824de5265e3edf",
+        "url": "https://github.com/tamird/gvisor/commit/ecdca71e5",
+        "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
+        "summary": "Publish the single-commit rebase and update #17114’s description? Both native parsers and all 224 license records passed before the final one-line patch export. Bazel found both public labels on the proposed commit.\n\nCompared with the last revision you reviewed:\ngit -C ~/code/gvisor range-diff --creation-factor=999 b61e5fd37^! ecdca71e5^!",
+        "requestedAt": "2026-11-12T19:16:56+00:00",
+        "body": "The NVIDIA driver compatibility parser builds Clang from a separate LLVM archive that needs a local Bazel 9 patch and its own zlib rule. Use the LLVM 23.1.2 archive from the released llvm 0.8.26 module instead.\n\nKeep the Linux 6.18 header default and the AArch64 and X86 backends selected by #15940. The released module combines backend requests, so backport the upstream change that makes the other seven development dependencies. With both backends held constant, the parser configures 210 more C++ compilations on each architecture, 184 in LLVM and 26 in zlib [1].\n\nRecord the licenses of the linked components against the archive checksum. LLVM's root notice includes Apache-2.0 with the LLVM exception and the legacy NCSA terms. LLVM Support's regex code also carries BSD-3-Clause and Spencer-94 notices. Select the CC0-1.0 option offered by BLAKE3.\n\nTestParser passed uncached on native AMD64 and ARM64, and the audit verified all 224 license entries [2]. The only subsequent change exports the new patch alongside the existing one. Bazel resolves both labels on the final commit.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13971747081\n[2]: https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13970389261\n\nPrepared by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:licensecheck-go-digest-notices",
@@ -36351,11 +36328,15 @@
         {
           "label": "Published host-layout generator rebase",
           "url": "https://github.com/tamird/gvisor/commit/49fcf45ec"
+        },
+        {
+          "label": "Landed import #17404",
+          "url": "https://github.com/google/gvisor/pull/17404"
         }
       ],
-      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "status": "open",
-      "summary": "The published rebase 49fcf45ec retains all 128 changed lines and the ready-to-pull label. Across nine packages, all 18 outputs configured for Linux AMD64 and ARM64 matched master byte for byte. All 386 generated tests ran on native macOS ARM64 with zero skips or failures. All nine GoHostLayout actions use the declared generator and Go sources. The private import remains a separate check.",
+      "summary": "Import #17404 landed the complete change. Replaying the current source on the imported tree left every file unchanged.",
       "refinement": {
         "before": {
           "head": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd"
@@ -36364,30 +36345,6 @@
           "head": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
           "base": "3238f32db235efb5f8fe03d0490a07e2c53f1bf6"
         }
-      },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
-        "providerHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
-        "observedAt": "2026-11-11T21:14:56+00:00",
-        "disposition": "Reviewed change rebased and verified mergeable",
-        "nextAction": "Follow the existing import and the checks on 49fcf45ec.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16591",
-          "https://github.com/tamird/gvisor/commit/6264dbadc8d73f914c64acee7e8067018adbffd6",
-          "https://github.com/tamird/gvisor/commit/6264dbadc",
-          "https://github.com/google/gvisor/pull/16591#discussion_r4460655109",
-          "https://github.com/google/gvisor/pull/16591#discussion_r4460655119",
-          "https://github.com/tamird/gvisor/compare/71a996f39...6264dbadc",
-          "https://github.com/tamird/gvisor/actions/runs/41762208277/artifacts/13291492843",
-          "https://github.com/tamird/gvisor/commit/876b93eba2466c097e383346041a3ad7c2c3a5ec",
-          "https://github.com/google/gvisor/pull/16591#discussion_r4470795080",
-          "https://github.com/google/gvisor/pull/16591#discussion_r4470795662",
-          "https://github.com/tamird/gvisor/commit/28a27e004b",
-          "https://github.com/tamird/gvisor/compare/28a27e004...49fcf45ec",
-          "https://github.com/tamird/gvisor/commit/49fcf45ec"
-        ],
-        "mergeable": "MERGEABLE"
       },
       "settledReviews": [
         {
@@ -36427,6 +36384,19 @@
         "diffSha256": "b91234229d3bb2c00b296bac793d4f84f8ca0f698b2f588ff6574a7172f1a074",
         "summary": "All 128 changed lines, affected file names and mode declarations match the source @parth-opensrc approved.",
         "evidence": "https://github.com/tamird/gvisor/compare/28a27e004...49fcf45ec"
+      },
+      "landedPatch": {
+        "head": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
+        "method": "merge-tree-identical",
+        "upstreamHead": "3767e597a341236280bff142471f063a755ec2ff",
+        "upstreamTree": "e0ba6286b100ea78f180af84b689a40713d44562",
+        "replayedTree": "e0ba6286b100ea78f180af84b689a40713d44562",
+        "verifiedAt": "2026-11-12T19:22:51+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17404",
+          "https://github.com/google/gvisor/commit/3767e597a",
+          "https://github.com/tamird/gvisor/commit/49fcf45ec"
+        ]
       }
     },
     {
@@ -76308,13 +76278,25 @@
       "repo": "google/gvisor",
       "number": 16485,
       "ref": "device-cgroup",
-      "head": "bab22586d8048207c4838be25f38ed41bcd98410",
+      "head": "7fb83c5740b7f0d71e8cef46aba429f97d5f5a8f",
       "title": "Confine the sandbox to a device cgroup",
       "url": "https://github.com/google/gvisor/pull/16485",
       "status": "open",
-      "updatedAt": "2026-11-12T17:56:14+00:00",
-      "summary": "Xin reports that internal TestBootPosture fails on bab22586d because the reference process lists a v1 device cgroup whose devices.list is outside the mounted hierarchy. The helper propagates the read error before comparing the inherited policy. Xin asked the author to handle unavailable observations.\n\nThe #17291 export failed to create all 797 TestLLM readiness clients on an Ubuntu GPU worker. Its runtime device-selection changes match the current source. The client asks for an image and a server link. Only the Ollama server explicitly requests a GPU.",
+      "updatedAt": "2026-11-12T19:16:56+00:00",
+      "summary": "Ayush moved the NVIDIA driver lookup before entering the sandbox cgroup and added an unknown result for an unavailable reference cgroup. A separate interrupted device-filter update can leave the recorded program ID stale. The author documented a failing retry on the new head.",
       "evidence": [
+        {
+          "label": "Interrupted filter installation on the current head",
+          "url": "https://github.com/google/gvisor/pull/16485#discussion_r4554695902"
+        },
+        {
+          "label": "Author’s answer about the unavailable reference cgroup",
+          "url": "https://github.com/google/gvisor/pull/16485#issuecomment-6832255939"
+        },
+        {
+          "label": "Author’s answer about the GPU client",
+          "url": "https://github.com/google/gvisor/pull/16485#discussion_r4554578670"
+        },
         {
           "label": "Original runtime archive, including the server and 797 failed client creates",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31"
@@ -76361,13 +76343,25 @@
       ],
       "followup": {
         "owner": "PR author",
-        "sourceHead": "bab22586d8048207c4838be25f38ed41bcd98410",
-        "observedAt": "2026-11-12T17:56:14+00:00",
-        "disposition": "The inherited-policy test can fail during its reference-process lookup when the v1 device controller is outside the visible mount.",
-        "nextAction": "Address the reported unavailable reference policy while preserving the distinction between an observed matching policy and an unknown one.",
+        "sourceHead": "7fb83c5740b7f0d71e8cef46aba429f97d5f5a8f",
+        "observedAt": "2026-11-12T19:16:56+00:00",
+        "disposition": "The author answered both the GPU client question and Xin’s report about an inaccessible cgroup.",
+        "nextAction": "Address or resolve the newly reported stale filter ID on an interrupted update. The CI investigation tracks verification of the separate GPU client fix.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16485#issuecomment-6831205551",
-          "https://github.com/google/gvisor/blob/bab22586d/pkg/test/sandboxposture/sandboxposture.go#L1524"
+          "https://github.com/google/gvisor/pull/16485#discussion_r4554578670",
+          "https://github.com/google/gvisor/pull/16485#issuecomment-6832255939",
+          "https://github.com/google/gvisor/pull/16485#discussion_r4554695902"
+        ]
+      },
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABD3la7g",
+            "url": "https://github.com/google/gvisor/pull/16485#discussion_r4554578670",
+            "head": "7fb83c5740b7f0d71e8cef46aba429f97d5f5a8f",
+            "updatedAt": "2026-11-12T18:24:48Z",
+            "evidence": "https://github.com/google/gvisor/blob/7fb83c574/runsc/container/container.go"
+          }
         ]
       }
     },
@@ -76804,6 +76798,26 @@
         {
           "label": "Published response on package selection and closure of the probe PR",
           "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95#issuecomment-6830457613"
+        }
+      ]
+    },
+    {
+      "id": "pr:17568",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17568,
+      "ref": "research/pty-flush-writable-notification-v2",
+      "head": "63ff9616fe4c004db00310ea45b6e06a521f803c",
+      "title": "Register the PTY writer before flushing its input",
+      "url": "https://github.com/google/gvisor/pull/17568",
+      "group": "ci-flakes",
+      "status": "open",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
+      "summary": "The published test registers the PTY writer before flushing input. The latest amendment wraps a test comment to match clang-format 23.1.1.",
+      "evidence": [
+        {
+          "label": "Formatter amendment",
+          "url": "https://github.com/tamird/gvisor/commit/63ff9616f"
         }
       ]
     }
@@ -102492,7 +102506,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T10:22:34+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "summary": "Follow intermittent failures on source PRs, Copybara imports, master, and release builds. The individual investigations link to the first useful error and the retry and name the next diagnostic.",
       "findings": [
         {
@@ -102542,6 +102556,32 @@
             {
               "label": "GitHub pipeline setting for deleted branches",
               "url": "https://buildkite.com/docs/pipelines/source-control/github#running-builds-on-pull-requests"
+            }
+          ]
+        },
+        {
+          "text": "The AMD64 syscall shard in build 54705 received SIGHUP during git clone and exited with −1 before any tests ran. The same-head retry passed.",
+          "evidence": [
+            {
+              "label": "Interrupted checkout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b0c6-4353-b5a7-9eeb925665c1"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d100-6831-46bf-b344-0db8b7eed1b7"
+            }
+          ]
+        },
+        {
+          "text": "Buildkite canceled the cgroup v1 Docker shard in build 54705 after two of five tests and 14 seconds in image_test. The log reports the cancellation signal and Make’s termination. It contains no failed assertion. The retry passed.",
+          "evidence": [
+            {
+              "label": "Canceled Docker tests",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b0ea-4619-b9c8-a9f21b8a710c"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10e-58a3-41b9-b29b-cdddbca01a71"
             }
           ]
         }
@@ -102956,7 +102996,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T05:14:08+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "summary": "In several CI builds the first receive on a connected UDP socket succeeded where PacketImpact expected ECONNREFUSED. Builds #54608 and #54611 reproduced the assertion while #17312 was open. Neither original preserved the numeric return from recv.",
       "findings": [
         {
@@ -103111,6 +103151,19 @@
             {
               "label": "#54611 passing target retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54611#01a1ce21-7323-4dfd-8447-c4c4c870d5e7"
+            }
+          ]
+        },
+        {
+          "text": "In build 54704 the AMD64 Connected/PortUnreachable case reached line 316: recv succeeded when the test expected ECONNREFUSED. The original log omitted the return value. The same-head retry ran this target and passed in 10.8 seconds.",
+          "evidence": [
+            {
+              "label": "Packetimpact failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54704#01a1d0f9-822f-443f-810a-fdeaada90e80"
+            },
+            {
+              "label": "Focused retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54704#01a1d104-34b0-4206-b841-4146a7ac079e"
             }
           ]
         }
@@ -104229,7 +104282,7 @@
       "title": "Docker-in-Docker commands outlive their exec deadline",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected. AMD64 VFS also reached the 900-second deadline on both KVM and systrap in build 54543.",
       "findings": [
         {
@@ -104342,6 +104395,19 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-9cee-488a-92a2-ec625cc4f3e2"
             }
           ]
+        },
+        {
+          "text": "The timeout in swgso AMD64 build 54706 occurred while reading output from a nested privileged bridge container. The later retry ran image_test in 102.9 seconds. The guest’s reason for hanging remains unknown.",
+          "evidence": [
+            {
+              "label": "15-minute Docker timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54706#01a1d0fc-a584-411d-aaa1-934f6f5905e3"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54706#01a1d11d-086a-4dc0-85f4-a7d8ee4e7761"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -104443,7 +104509,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T18:11:37+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "summary": "The Node 22.2.0 test tick-processor/test-tick-processor-preprocess-flag timed out on #17425 (040ae629f) and #17428 (aa0152a6a). The Node target passed on each same-head retry.",
       "findings": [
         {
@@ -104508,6 +104574,19 @@
             {
               "label": "Recovered second attempt with the original --preprocess option",
               "url": "https://github.com/tamird/gvisor/actions/runs/42920261725/artifacts/13811765961"
+            }
+          ]
+        },
+        {
+          "text": "The unknown-symbol test in build 54704 warned of a broken profile before Node reported TIMEOUT. This case passes no profProcessFlags, so the --preprocess retry correction in nodejs/node#67411 does not explain this failure.",
+          "evidence": [
+            {
+              "label": "Original Node shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54704#01a1d0f9-8238-4a5e-a298-f5e4cdd98e50"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54704#01a1d107-a048-4660-a372-f116a4dc26d5"
             }
           ]
         }
@@ -104776,7 +104855,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T12:17:56+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "summary": "Two Node 22.2.0 debugger tests timed out in Buildkite build 54379. Both failing shards ran again and passed on the same source.",
       "findings": [
         {
@@ -104826,6 +104905,27 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43014104301/artifacts/13853099766"
             }
           ]
+        },
+        {
+          "text": "In build 54705, debugger-low-level and debugger-heap-profiler failed in common/debugger.js:90. The same shard reached Node’s outer timeout in debugger-list. A second shard timed out in the same debugger helper on debugger-random-port. Both retries passed.",
+          "evidence": [
+            {
+              "label": "Original Node shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10b-472c-a8cc-5a0a6c83fcbe"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10a-8576-42d8-8bb0-f7f2b2cd48cc"
+            },
+            {
+              "label": "Original Node shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10b-4650-a9fc-f6a62a9a8959"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10a-74d5-419c-986a-86b11e7a81ed"
+            }
+          ]
         }
       ],
       "nextStep": "Capture the last debugger prompt and child-process state during a failing full shard, along with its test ordering and concurrency.",
@@ -104862,7 +104962,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T16:36:30+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "summary": "Seven ARM64 jobs timed out in nested Docker bridge builds or privileged container runs with VFS or overlay storage. Two AMD64 jobs on build 54543 timed out in the same privileged VFS bridge test under systrap and KVM. Both same-head retries passed.",
       "findings": [
         {
@@ -104956,6 +105056,19 @@
             {
               "label": "Same-head Buildkite retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54670#01a1d00f-f35e-4c32-b532-ce927f7fa928"
+            }
+          ]
+        },
+        {
+          "text": "Build 54706 reached the 15-minute deadline reading a nested privileged bridge container’s output in Process.Logs (image_test.go:663). The swgso AMD64 shard had not yet reached WaitExitStatus. After one interrupted retry, the next retry ran image_test and passed in 102.9 seconds.",
+          "evidence": [
+            {
+              "label": "15-minute Docker timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54706#01a1d0fc-a584-411d-aaa1-934f6f5905e3"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54706#01a1d11d-086a-4dc0-85f4-a7d8ee4e7761"
             }
           ]
         }
@@ -105236,7 +105349,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T17:16:13+00:00",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
       "summary": "The stock packet-mode test expected a single TIOCPKT_DATA header for a translated line. Limiting its first native read to three bytes reproduced the same byte-comparison failure. The proposed one-byte case and the neighboring newline-translation case both passed on native Linux and systrap.",
       "findings": [
         {
@@ -105262,6 +105375,19 @@
             {
               "label": "One-byte PTY test proposal",
               "url": "https://github.com/tamird/gvisor/commit/8a64c10e3"
+            }
+          ]
+        },
+        {
+          "text": "In native AMD64 build 54704, PacketModeWriteReplicaToMaster failed the data comparison at pty.cc:881 (memcmp returned −13). This is the packet-mode test changed by #17484.",
+          "evidence": [
+            {
+              "label": "Native syscall failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54704#01a1d0f9-81f6-41b7-b71a-fc98282393a8"
+            },
+            {
+              "label": "Packet-mode test change",
+              "url": "https://github.com/google/gvisor/pull/17484"
             }
           ]
         }
@@ -107022,8 +107148,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI investigation",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
-      "summary": "The Ubuntu GPU job failed three times on the #17291 device-cgroup export. In the final run the Ollama server started, but 797 readiness clients failed during container creation. runsc could not open /dev/nvidiactl to read the driver version.",
+      "updatedAt": "2026-11-12T19:16:56+00:00",
+      "summary": "The 797 readiness clients in the affected GPU run tried to read the NVIDIA driver from inside their restricted cgroup. The author confirmed the regression and moved the lookup before joining the cgroup on 7fb83c574.",
       "findings": [
         {
           "text": "Build 54587 ran the same source on two Ubuntu GPU agents. Three completed attempts timed out in the GET / readiness loop; one other attempt was interrupted. The final attempt passed CUDA availability and the CUDA 12.8 smoke test before it started the Ollama container in 1.224 seconds. The log recorded the readiness timeout about ten minutes later. Build 54596 ran a different source and passed translation, code generation and OCR in 438.64 seconds.",
@@ -107075,10 +107201,27 @@
               "url": "https://github.com/google/gvisor/pull/17291"
             }
           ]
+        },
+        {
+          "text": "The new createRoot reads the driver version before RunInCgroup and passes the value into sandbox creation. The author says even a sandbox initially started without a GPU needs the driver version because a later subcontainer can request one.",
+          "evidence": [
+            {
+              "label": "Author’s explanation on the original thread",
+              "url": "https://github.com/google/gvisor/pull/16485#discussion_r4554578670"
+            },
+            {
+              "label": "Lookup in createRoot",
+              "url": "https://github.com/google/gvisor/blob/7fb83c574/runsc/container/container.go"
+            }
+          ]
         }
       ],
-      "nextStep": "Track the review on source #16485. Compare the same client container on the source and its parent on one GPU worker to isolate the device-permission failure.",
+      "nextStep": "Check the Ubuntu GPU TestLLM job on an export containing 7fb83c574 to verify that the readiness clients start and reach the Ollama server.",
       "evidence": [
+        {
+          "label": "Author’s correction on the source PR",
+          "url": "https://github.com/google/gvisor/pull/16485#discussion_r4554578670"
+        },
         {
           "label": "Original runtime archive, including the server and 797 failed client creates",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31"
@@ -107588,7 +107731,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T18:09:55+00:00",
+      "updatedAt": "2026-11-12T19:16:56+00:00",
       "summary": "The native PTY flush test saw the replica become writable between two immediate polls, before the master flushed its input. A test-only change registers the replica with epoll before filling it and checks that flushing wakes the registered writer.",
       "findings": [
         {
@@ -107624,6 +107767,10 @@
       ],
       "evidence": [
         {
+          "label": "Published test correction",
+          "url": "https://github.com/google/gvisor/pull/17568"
+        },
+        {
           "label": "Test at the second poll",
           "url": "https://github.com/google/gvisor/blob/de7d65b3b/test/syscalls/linux/pty.cc#L2829"
         },
@@ -107644,20 +107791,26 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43275075683/artifacts/13971026227"
         }
       ],
-      "nextStep": "Review the single test commit for submission to google/gvisor.",
+      "nextStep": "Follow review and CI on #17568. After import, check subsequent native PTY flush failures against the registered-writer assertion.",
       "repo": "google/gvisor",
       "head": "5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
-        "baseHead": "ccf8c9479bad5a0210c33e6e6c93f7829fbb2026",
-        "url": "https://github.com/tamird/gvisor/commit/5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
-        "requestedAt": "2026-11-12T18:09:55+00:00",
-        "title": "Register the PTY writer before flushing its input",
-        "summary": "Decide whether to submit this test-only change to google/gvisor.",
-        "body": "The native PTY flush test observed a writable replica after its first poll had found the writer blocked [1]. The failure occurred before the master flushed its input. The waiter also signaled that it had started before entering poll, so the test slept for a second before issuing the flush.\n\nRegister the replica with epoll before filling it. If writable readiness is already pending after a write returns EAGAIN, consume the event and refill the queue. Flush the master's input, wait for the registered EPOLLOUT event, and write one byte to confirm the replica can use the newly available space.\n\nThe candidate passed 16 uncached native Linux runs and 16 systrap runs. Removing gVisor's replica-writable notification made epoll_wait time out after 20 seconds. The original Buildkite shard passed on retry [2], and the stock test passed 24 native runs in the separate comparison [3].\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0c2-5068-4825-bd4b-98e4e38d48ba\n[2]: https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0d1-6e5c-4a41-92af-7520c5d0c291\n[3]: https://github.com/tamird/gvisor/actions/runs/43275075683/artifacts/13971026227"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
+          "baseHead": "ccf8c9479bad5a0210c33e6e6c93f7829fbb2026",
+          "url": "https://github.com/tamird/gvisor/commit/5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
+          "requestedAt": "2026-11-12T18:09:55+00:00",
+          "title": "Register the PTY writer before flushing its input",
+          "summary": "Decide whether to submit this test-only change to google/gvisor.",
+          "body": "The native PTY flush test observed a writable replica after its first poll had found the writer blocked [1]. The failure occurred before the master flushed its input. The waiter also signaled that it had started before entering poll, so the test slept for a second before issuing the flush.\n\nRegister the replica with epoll before filling it. If writable readiness is already pending after a write returns EAGAIN, consume the event and refill the queue. Flush the master's input, wait for the registered EPOLLOUT event, and write one byte to confirm the replica can use the newly available space.\n\nThe candidate passed 16 uncached native Linux runs and 16 systrap runs. Removing gVisor's replica-writable notification made epoll_wait time out after 20 seconds. The original Buildkite shard passed on retry [2], and the stock test passed 24 native runs in the separate comparison [3].\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0c2-5068-4825-bd4b-98e4e38d48ba\n[2]: https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0d1-6e5c-4a41-92af-7520c5d0c291\n[3]: https://github.com/tamird/gvisor/actions/runs/43275075683/artifacts/13971026227",
+          "outcome": "approved",
+          "at": "2026-11-12T19:16:56+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17568",
+          "note": "Published the approved single commit as #17568."
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-node-net-hex-write-timeout",
@@ -107743,8 +107896,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T18:11:37+00:00",
-      "summary": "On 302d0f545, AdaptorBasic completed four UDP echoes before the fifth exchange stopped. The server logged Network is unreachable while the client waited in receive0.",
+      "updatedAt": "2026-11-12T19:17:10+00:00",
+      "summary": "The original AdaptorBasic server logged ENETUNREACH on its fifth echo. Three traced repeats with the archived runtime and original Java image passed all 15 echoes. The failed send’s destination remains unknown.",
       "findings": [
         {
           "text": "The test sources are OpenJDK jdk-21.0.3-ga (05f18b106), while the runtime is Ubuntu’s OpenJDK 21.0.2+13. The server bound to 172.17.0.4:16606 and the client logged [::]:49501. A later OpenJDK change bound the AdaptorBasic server to loopback, removing non-loopback routing from the test. The cause of the fifth send’s ENETUNREACH remains open. The OpenJDK review concerned a macOS port collision. This run used distinct ports and did not log the fifth reply’s destination.",
@@ -107784,9 +107937,31 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54693#01a1d0ee-4134-44c8-9eab-ee193cb645a8"
             }
           ]
+        },
+        {
+          "text": "The fork replay used the archived #54693 runtime and original image. AdaptorBasic passed once, including its five initial echoes. The collector looked for .boot files, while runsc wrote .boot.txt. It recorded no native address pairs and stopped before attempts two and three.",
+          "evidence": [
+            {
+              "label": "First fork replay and archived results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43278503848/artifacts/13972256113"
+            }
+          ]
+        },
+        {
+          "text": "Three runs with the archived runtime and original Java image passed. Each traced five echo pairs. All 15 replies sent 42 bytes to the same IPv4-mapped bridge address and client port returned by recvfrom. The failing upstream attempt did not capture its send destination.",
+          "evidence": [
+            {
+              "label": "Three jtreg results with the socket traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43288239637/artifacts/13976856072"
+            }
+          ]
         }
       ],
       "evidence": [
+        {
+          "label": "Three passing repeats with traced server addresses and client ports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43288239637/artifacts/13976856072"
+        },
         {
           "label": "Original Java runtime shard",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54693#01a1d0d3-7176-4f4c-a18f-201e8d724220"
@@ -107804,7 +107979,85 @@
           "url": "https://github.com/openjdk/jdk/commit/8ec378a6c"
         }
       ],
-      "nextStep": "Capture both the address received by the echo server and its send destination if ENETUNREACH recurs."
+      "nextStep": "Capture the server’s recvfrom peer and sendto destination on a failing attempt; the passing repeats establish the address and port only for successful exchanges."
+    },
+    {
+      "id": "investigation:ci-flake-node-worker-arraybuffer-zerofill",
+      "title": "Node’s worker ArrayBuffer zero-fill test times out",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
+      "summary": "Node reported TIMEOUT in worker-arraybuffer-zerofill on shard 1 of build 54705.",
+      "findings": [
+        {
+          "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
+          "evidence": [
+            {
+              "label": "Original Node shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10b-4650-a9fc-f6a62a9a8959"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10a-74d5-419c-986a-86b11e7a81ed"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Run the zero-fill case by itself with the original Node image and native and gVisor runtimes. Capture the worker and parent stacks on a timeout.",
+      "evidence": [
+        {
+          "label": "Original Node shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10b-4650-a9fc-f6a62a9a8959"
+        },
+        {
+          "label": "Passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10a-74d5-419c-986a-86b11e7a81ed"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-node-error-serdes",
+      "title": "Node’s error serialization test times out",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T19:22:51+00:00",
+      "summary": "Build 54705 hit Node’s TIMEOUT in error-serdes on shard 7. The retry passed.",
+      "findings": [
+        {
+          "text": "The same test timed out in build 54544. Neither log identifies the operation still running at the deadline.",
+          "evidence": [
+            {
+              "label": "Original Node shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10c-4775-8cba-197eab3d37cd"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10a-6c26-4cb4-8e5a-15beda8c5141"
+            },
+            {
+              "label": "Earlier error-serdes timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd0b-b9e6-4ca1-899c-edfd23122fcf"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Repeat error-serdes by itself with the original Node image and capture the parent and child stacks if it stalls.",
+      "evidence": [
+        {
+          "label": "Original Node shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10c-4775-8cba-197eab3d37cd"
+        },
+        {
+          "label": "Passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10a-6c26-4cb4-8e5a-15beda8c5141"
+        },
+        {
+          "label": "Earlier error-serdes timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd0b-b9e6-4ca1-899c-edfd23122fcf"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-12T08:42:54+00:00"
