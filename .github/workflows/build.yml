@@ -1,7 +1,7 @@
-name: Verify toolchain libraries on freestanding and hosted Linux links
+name: Compare staged Linux toolchains and their bootstrap links
 on:
   push:
-    branches: [qualification/native-sidecars-empty-worker]
+    branches: [qualification/llvm-runtime-stage-link-libraries]
 permissions:
   contents: read
 jobs:
@@ -16,8 +16,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/hermetic-llvm
-          ref: 321ef8af9d59c2cce56e5f777bd1d7fc4859aac9
-          fetch-depth: 2
+          ref: 7b1a340bfc71c507113354cb363bfb5b19539ca5
+          fetch-depth: 3
           path: llvm
           persist-credentials: false
       - name: Compare the freestanding link and verify hosted and bootstrap defaults
@@ -38,6 +38,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: linux-unwind-link
+          name: linux-runtime-stage-links
           path: ${{ runner.temp }}/sidecar-evidence
           if-no-files-found: error
