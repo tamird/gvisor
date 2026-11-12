@@ -1,18 +1,17 @@
-name: Observe a SACK-on forwarding stall
+name: Capture the beginning of a SACK-on forwarding stall
 on:
   push:
-    branches: [qualification/tcp-sack-proxy-stall]
+    branches: [qualification/tcp-sack-proxy-onset]
 permissions:
   contents: read
-  actions: read
 jobs:
   capture:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-proxy-stall'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-proxy-onset'
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 6, persist-credentials: false}
+      with: {fetch-depth: 8, persist-credentials: false}
     - name: Prepare the existing native Linux TCP tools
       run: |
         set -euo pipefail
@@ -26,15 +25,13 @@ jobs:
     - name: Validate the typed publication
       id: privacy
       if: always()
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        GH_TOKEN: ${{ github.token }}
       run: python3 test/rbe/tcp_mss_forwarder.py scan
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ${{ always() && steps.privacy.outcome == 'success' }}
       with:
-        name: tcp-sack-proxy-stall
+        name: tcp-sack-proxy-onset
         path: |
           ${{ runner.temp }}/mss-forwarder/public/build.json
           ${{ runner.temp }}/mss-forwarder/public/result.json
+          ${{ runner.temp }}/mss-forwarder/public/*.headers
         if-no-files-found: error

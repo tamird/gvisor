@@ -1,8 +1,8 @@
 """Observe one SACK-on bulk socket, with bounded independent packet evidence."""
 
+from collections.abc import Iterator
 from decimal import Decimal
 import hashlib
-import ipaddress
 import json
 import math
 import os
@@ -22,10 +22,10 @@ def wire(directory):
     processes = {}
     record = {"started": time.time_ns(), "diagnostics": {}}
 
-    def start(kind, expression, cap):
+    def start(kind, expression, cap, device="server.1"):
         log = (directory / f"{kind}.log").open("w")
-        proc = subprocess.Popen(["tcpdump", "-Z", "root", "-n", "-U", "-s", "128",
-                                 "-i", "server.1", "-c", str(cap), "-w",
+        proc = subprocess.Popen(["tcpdump", "-Z", "root", "-n", "-B", "32768", "-s", "128",
+                                 "-i", device, "-c", str(cap), "-w",
                                  str(directory / f"{kind}.pcap"), expression],
                                 stdout=subprocess.DEVNULL, stderr=log)
         processes[kind] = (proc, log)
@@ -39,6 +39,8 @@ def wire(directory):
     flow = "tcp and host 10.0.0.3 and host 10.0.0.2 and port 44000"
     try:
         start("syn", f"{flow} and (tcp[tcpflags] & tcp-syn != 0)", 32)
+        for device in ("server.1", "client.1"):
+            start(device, flow, 262144, device)
         (directory / "wire-ready").touch()
         deadline = time.monotonic() + 65
         while not (directory / "wire-stop").exists() and time.monotonic() < deadline:
@@ -69,19 +71,44 @@ FIELDS = ["frame.time_epoch", "ip.src", "ip.dst", "tcp.srcport", "tcp.dstport",
           "tcp.len", "tcp.options"]
 
 
-def headers(path):
+def headers(path: Path, port: int | None = None) -> Iterator[list[str]]:
     argv = ["tshark", "-n", "-r", str(path), "-T", "fields", "-E", "separator=|"]
+    if port is not None:
+        argv.extend(["-Y", f"tcp.port == {port}"])
     for name in FIELDS:
         argv.extend(["-e", name])
-    text = command(argv)
-    rows = []
-    for line in text.splitlines():
-        row = line.split("|")
-        require(len(row) == len(FIELDS) and all(re.fullmatch(r"[0-9a-fx.:,]*", v) for v in row), "unexpected header data")
-        require({ipaddress.IPv4Address(row[i]) for i in (1, 2)} ==
-                {ipaddress.IPv4Address("10.0.0.2"), ipaddress.IPv4Address("10.0.0.3")}, "unrelated addresses")
-        rows.append(row)
-    return rows
+    addresses = {"10.0.0.2", "10.0.0.3"}
+    with subprocess.Popen(argv, text=True, stdout=subprocess.PIPE) as proc:
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            row = line.rstrip("\n").split("|")
+            require(len(row) == len(FIELDS) and all(re.fullmatch(r"[0-9a-fx.:,]*", v) for v in row), "unexpected packet field")
+            require(set(row[1:3]) == addresses, "unrelated addresses")
+            yield row
+        require(proc.wait() == 0, f"tshark failed on {path.name}")
+
+
+def save_onset(directory: Path, device: str, port: int, rto_ns: int | None, drops: int) -> dict:
+    first = last = None
+    syn = set()
+    packets = 0
+    path = PUBLIC / f"{device}.headers"
+    with path.open("w") as out:
+        for row in headers(directory / f"{device}.pcap", port):
+            require(set(row[3:5]) == {"44000", str(port)}, "unrelated flow")
+            out.write("|".join(row) + "\n")
+            ns = int(Decimal(row[0]) * 1_000_000_000)
+            first = min(first, ns) if first is not None else ns
+            last = max(last, ns) if last is not None else ns
+            if int(row[5], 16) & 2:
+                syn.add((row[1], int(row[5], 16) & 0x3f))
+            packets += 1
+    handshake = {("10.0.0.2", 2), ("10.0.0.3", 18)} <= syn
+    return {"packets": packets, "first_ns": first, "last_ns": last,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "handshake": handshake, "dropped_by_kernel": drops,
+            "covers_first_rto": bool(handshake and drops == 0 and rto_ns is not None
+                                     and first is not None and last is not None and first < rto_ns < last)}
 
 
 def interior(iperf):
@@ -133,7 +160,7 @@ def retain(directory, trial):
         if path.exists():
             try:
                 trial.setdefault("pcap_metadata", {})[kind]={"bytes":path.stat().st_size,"sha256":hashlib.sha256(path.read_bytes()).hexdigest()}
-                meta[kind] = headers(path)
+                meta[kind] = list(headers(path))
             except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 errors[kind] = type(exc).__name__
     stats = directory / "link-stats.json"
@@ -207,7 +234,7 @@ def validate(trial):
     return {"port":port, "bulk_samples":len(samples), "bulk_decisions":len(events),
             "first_retained_bulk_rto_ns":rto and rto["At"],
             "first_rto_known": rto is not None and (not server["events_dropped"] or rto in server["events"][:512]),
-            "wire_scope":"SYNs throughout; other headers only after the no-return trigger",
+            "wire_scope":"Both taps start before the handshake and retain up to 262144 frames each. The last captured packet bounds each trace. An extra sender capture starts after the no-return trigger.",
             "negotiated_scale_offers":scales, "sender_scale_readback":samples[0]["Sender"]["Scale"],
             "posttrigger_frames_before_after_rto":([sum(t<rto["At"] for t in wire_times),sum(t>=rto["At"] for t in wire_times)] if rto else None),
             "capture_counts":{k:{label:int(n) for n,label in v["counts"]} for k,v in diag.items()},
@@ -245,6 +272,15 @@ def attempts():
         try:
             trial["receiver"]=interior(trial["originals"]["iperf.json"])
             trial["observations"]=validate(trial)
+            if trial["receiver"]["stall"] or i == 7:
+                obs = trial["observations"]
+                first_rto = obs["first_retained_bulk_rto_ns"] if obs["first_rto_known"] else None
+                trial["onset"] = {}
+                for device in ("server.1", "client.1"):
+                    observer = trial["originals"]["wire.json"]["diagnostics"][device]
+                    require(observer["exit"] == 0, f"tcpdump failed on {device}")
+                    drops = obs["capture_counts"][device]["dropped by kernel"]
+                    trial["onset"][device] = save_onset(directory, device, obs["port"], first_rto, drops)
             trial["verified"]=True
         except (KeyError,TypeError,ValueError) as exc:
             trial.update(verified=False,error=str(exc)[:160])

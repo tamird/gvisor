@@ -39,7 +39,8 @@ def put(path, value):
 
 
 def source():
-    require(command(["git", "rev-parse", "HEAD^"]) == "3ae4d9e8cf77c809e34b84b20f8c590724c1657d", "measured carrier parent")
+    require(command(["git", "rev-parse", "HEAD^"]) == "ffa97cc23cf828410d46f99b24d0138f1fc2707b", "measured carrier parent")
+    require(not command(["git", "diff", "--name-only", "HEAD^", "--", "pkg", "runsc", "tools", "test/benchmarks", "MODULE.bazel", ".bazelrc"]), "measured sources or workload changed")
     allowed = {"pkg/tcpip/adapters/gonet/gonet.go", "pkg/tcpip/transport/tcp/rack.go", "pkg/tcpip/transport/tcp/snd.go"}
     require(set(command(["git", "diff", "--name-only", BASE, "--", "pkg", "runsc", "tools", "MODULE.bazel", ".bazelrc"]).splitlines()) == allowed, "instrumented product identities")
     require(not command(["git", "diff", FIXTURE, "--", "test/benchmarks/tcp/BUILD","test/benchmarks/tcp/nsjoin.c"]), "compiled owners changed")
@@ -378,7 +379,15 @@ def recover():
 def scan():
     require(PUBLIC.is_dir(), "no evidence directory")
     for p in PUBLIC.iterdir():
-        require(p.name in {"build.json", "result.json"} and p.is_file() and not p.is_symlink(), "unexpected output")
+        require(p.is_file() and not p.is_symlink(), "unexpected output")
+        if p.name in {"server.1.headers", "client.1.headers"}:
+            # These are tshark's numeric TCP fields, one line per bulk-flow packet.
+            require(p.stat().st_size <= 96 << 20, "oversized packet index")
+            with p.open("rb") as stream:
+                for line in stream:
+                    require(line.count(b"|") == 10 and re.fullmatch(rb"[0-9a-fx.:,|]*\n", line), "unexpected packet field")
+            continue
+        require(p.name in {"build.json", "result.json"}, "unexpected output")
         content = p.read_bytes()
         require(len(content) <= 24_000_000, "oversized report")
         for name in ("BUILDBUDDY_API_KEY", "GH_TOKEN", "GITHUB_TOKEN"):
