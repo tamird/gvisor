@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T09:06:56+00:00",
+    "updatedAt": "2026-11-12T09:42:29+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5708,10 +5708,18 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1.",
-      "updatedAt": "2026-11-12T06:45:49+00:00",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. An external Bazel module that explicitly adopted gVisor’s dependency overrides also cross-built the full nine-file ARM64 release. Both the unmodified master and the compiler integration reject the default downstream module at Gazelle evaluation.",
+      "updatedAt": "2026-11-12T09:42:01+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
+        {
+          "label": "Downstream ARM64 release, nine ELF identities and target and execution protobuf compile inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43189980677/artifacts/13932001376"
+        },
+        {
+          "label": "Unmodified master and compiler integration reject the same non-root Gazelle override",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43188866070/artifacts/13929208646"
+        },
         {
           "label": "Compiler and five prerequisites on master 79c4fcfce with rules_go 0.65.0",
           "url": "https://github.com/tamird/gvisor/commit/a066005a6"
@@ -80218,7 +80226,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T09:06:56+00:00",
+      "updatedAt": "2026-11-12T09:42:29+00:00",
       "summary": "The original reporter’s stall has a tested repair. In a separate 40-segment test, gVisor #16495 sent one or 31 repairs on the first ACK depending on the SACK layout. With ascending SACK traversal and #15432’s flight accounting, it sent 31 repairs in both layouts. Linux sent four in each.",
       "findings": [
         {
@@ -82423,6 +82431,15 @@
             {
               "label": "Sender decisions and packet captures at both ends",
               "url": "https://github.com/tamird/gvisor/actions/runs/43163573663/artifacts/13920256562"
+            }
+          ]
+        },
+        {
+          "text": "With byte-based proportional rate reduction and the revised estimate of bytes in flight, the two wire captures showed native Linux and gVisor sending the same segments in each of six short cases. The interrupted-retransmission-timeout control passed on the reference and failed on the candidate. With one of 3,501 bytes still outstanding, the reference sent the next 500-byte write and the candidate withheld it. Eleven other lifecycle cases passed on the candidate. The open question is whether the flight estimate or the send allowance accounts for the withheld write.",
+          "evidence": [
+            {
+              "label": "Six paired packet captures and interrupted-timeout lifecycle controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43191149157/artifacts/13930623993"
             }
           ]
         }
@@ -100642,7 +100659,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-11T12:39:44+00:00",
+      "updatedAt": "2026-11-12T09:42:01+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -100711,7 +100728,7 @@
           ]
         },
         {
-          "text": "An external gVisor license target failed on the codespell wheel when only marked dev-only. Isolating the load restored the gVisor root license check with development dependencies disabled. The external Go target hit an existing Gazelle restriction on both stock and isolated sources; downstream Go support is not yet qualified.",
+          "text": "An external gVisor license target failed on the codespell wheel when only marked dev-only. Isolating the load restored the gVisor root license check with development dependencies disabled. The external Go target hit an existing Gazelle restriction on both stock and isolated sources.",
           "evidence": [
             {
               "label": "Root, dev-disabled and external module controls",
@@ -100903,6 +100920,28 @@
             {
               "label": "Development-only modules and the downstream Netlink version",
               "url": "https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643111398"
+            }
+          ]
+        },
+        {
+          "text": "On master 56ffe2272 and compiler integration a066005a6, Gazelle rejected gVisor’s non-root gazelle_override before @gvisor//:release could compile. Scoping gVisor’s Go overrides and Linux header selection to its root let a plain consumer resolve protobuf, but the resulting 1,683-byte source still opened the executable. A consuming root that adopted the ten Go overrides, the three Bazel module overrides and the header selection got the same 963-byte patched source as the gVisor root. The ARM64 target and AMD64 execution GoCompilePkg actions both declared that file.",
+          "evidence": [
+            {
+              "label": "Default consumer on both original trees",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43188866070/artifacts/13929208646"
+            },
+            {
+              "label": "Default and adopting modules, protobuf source hashes and configured compile actions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43189980677/artifacts/13932001376"
+            }
+          ]
+        },
+        {
+          "text": "The adopting module cross-built all nine public release files on an AMD64 GNU worker. Each output had an AArch64 ELF header: runsc, containerd-shim-runsc-v1, checkpointgofer, gvisor-proc-umounter, gvisor-sentry-prewarmer, gvisor_sentry, runsc-fd-parking, runsc-metric-server and runsc-netgofer. This build did not execute the ARM64 outputs.",
+          "evidence": [
+            {
+              "label": "Build of @gvisor//:release from the consuming module",
+              "url": "https://app.buildbuddy.io/invocation/97d5b505-340e-4f71-baea-c7bc09002553"
             }
           ]
         }
