@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T17:42:39+00:00",
+    "updatedAt": "2026-11-12T18:01:54+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6509,6 +6509,10 @@
         {
           "label": "The nine recovered ARM64 release files and SHA-256 manifest",
           "url": "https://github.com/tamird/gvisor/actions/runs/43255315077/artifacts/13961069039"
+        },
+        {
+          "label": "External consumer ARM64 64 KiB flavor qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43273371399"
         }
       ],
       "refinement": {
@@ -17568,10 +17572,10 @@
       "head": "06a73ca10996bd195ddedfe9dcca489c03460923",
       "title": "Strengthen trace event validation",
       "group": "tests",
-      "status": "open",
-      "summary": "Current public head 06a73ca10996 remains open. This change strengthens trace timestamps, workload-file offset checks and argv validation; it does not change Makefile or BUILD selection and is not a prerequisite for #10045 selection restoration. All five formerly excluded labels, including trace, are already selected on public 7bffefa9185a. Earlier runtime evidence below retains its original source identity.\n\nHistorical source and qualification record:\n\nThe requested post-#16046 rebase is published at 408c0759a058 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved amendment scopes fixture-specific read/write offset bounds to read-write.txt, preserving generic checks for other files. The original full-unit failure came from valid dynamic-loader reads of libc.so.6 at offsets 848 and 896. Both complete architecture owners and both-architecture Nogo checks pass on the corrected integration; the exact public head, description and reply are verified. No contributor decision remains.\n\nPublished as ready PR #15936 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nStrengthen timestamp, file-offset and exec-argument checks in the existing trace suite. Full AMD64 validation passes. Full ARM64 validation exposed a separate fchdir producer defect; after that independent correction, both complete native-namespace owners pass with no skips or missing results. The correction and these assertion improvements remain separate changes.",
+      "status": "merged",
+      "summary": "Source 06a73ca10996 landed in 56ffe2272. This change strengthens trace timestamps, workload-file offset checks and argv validation; it does not change Makefile or BUILD selection and is not a prerequisite for #10045 selection restoration. All five formerly excluded labels, including trace, are already selected on public 7bffefa9185a. Earlier runtime evidence below retains its original source identity.\n\nHistorical source and qualification record:\n\nThe requested post-#16046 rebase is published at 408c0759a058 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved amendment scopes fixture-specific read/write offset bounds to read-write.txt, preserving generic checks for other files. The original full-unit failure came from valid dynamic-loader reads of libc.so.6 at offsets 848 and 896. Both complete architecture owners and both-architecture Nogo checks pass on the corrected integration; the exact public head, description and reply are verified. No contributor decision remains.\n\nPublished as ready PR #15936 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nStrengthen timestamp, file-offset and exec-argument checks in the existing trace suite. Full AMD64 validation passes. Full ARM64 validation exposed a separate fchdir producer defect; after that independent correction, both complete native-namespace owners pass with no skips or missing results. The correction and these assertion improvements remain separate changes.",
       "url": "https://github.com/google/gvisor/pull/15936",
-      "updatedAt": "2026-10-25T17:45:37.300367+00:00",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "followup": {
         "owner": "Codex",
         "disposition": "Independent trace assertion strengthening; current public head remains under review",
@@ -17618,6 +17622,10 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/408c0759a0588e58707336dc40585e469b9aa8be"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/56ffe2272"
         }
       ],
       "number": 15936,
@@ -18024,19 +18032,20 @@
       "title": "Limit LLVM parser targets to supported architectures",
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15940",
-      "status": "open",
-      "updatedAt": "2026-11-09T05:30:03+00:00",
-      "summary": "Etienne reapproved 786caf36a on October 27 and restored the ready to pull label on October 28. Copybara updated #16324 to export that exact revision, then closed it without merging on November 4. #15940 remains open with the label present. Both Copybara status checks report success. No replacement public export has appeared.\n\nBefore the October 27 reapproval, the export referred to 1e4bf6e and Etienne’s October 24 review predated the rebase. The two revisions made the same change to MODULE.bazel.",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
+      "summary": "Etienne reapproved 786caf36a on October 27 and restored the ready to pull label the next day. Export #16324 closed without merging on November 4. Upstream imported the same final source as e2b96b8cf on November 12.\n\nBefore the October 27 reapproval, the export referred to 1e4bf6e and Etienne’s October 24 review predated the rebase. The two revisions made the same change to MODULE.bazel.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Current source approved and labeled; waiting for a replacement Copybara export",
+        "owner": "Complete",
+        "disposition": "Upstream merged source 786caf36a as e2b96b8cf.",
         "sourceHead": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
-        "observedAt": "2026-11-09T05:30:03+00:00",
-        "nextAction": "Watch for a replacement public export of 786caf36a and follow its checks when it appears.",
+        "observedAt": "2026-11-12T11:17:20Z",
+        "nextAction": "Complete. Upstream merged the reviewed change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15940#pullrequestreview-5674906523",
           "https://github.com/google/gvisor/pull/15940#event-34510011808",
-          "https://github.com/google/gvisor/pull/16324#event-35170129357"
+          "https://github.com/google/gvisor/pull/16324#event-35170129357",
+          "https://github.com/google/gvisor/commit/e2b96b8cf"
         ],
         "attentionDispositions": [
           {
@@ -18122,6 +18131,10 @@
         {
           "label": "Copybara closed the export on November 4",
           "url": "https://github.com/google/gvisor/pull/16324#event-35170129357"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/e2b96b8cf"
         }
       ],
       "refinement": {
@@ -26857,17 +26870,18 @@
       "title": "Reuse the pinned Redis image for benchmarks",
       "url": "https://github.com/google/gvisor/pull/17477",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
-      "summary": "The old placement created a Bazel package boundary that removed other test sources. Revision ff8702412 reuses the existing :redis target and preserves all 36 other benchmark sources and their modes. Six config and layer digest comparisons matched the basic Redis image on each architecture. The AMD64 image completed SET and GET. The approved change is open upstream as #17477.",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
+      "summary": "The old placement created a Bazel package boundary that removed other test sources. Revision ff8702412 reuses the existing :redis target and preserves all 36 other benchmark sources and their modes. Six config and layer digest comparisons matched the basic Redis image on each architecture. The AMD64 image completed SET and GET. Upstream merged #17477 as dc26e6472.",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Complete",
         "sourceHead": "ff87024126fd9c232c355f1a31b1e2484a3e6a57",
-        "observedAt": "2026-11-11T14:01:21+00:00",
-        "disposition": "The approved change is open upstream as #17477.",
-        "nextAction": "Follow the upstream review and checks.",
+        "observedAt": "2026-11-11T23:53:13Z",
+        "disposition": "Upstream merged source ff8702412 as dc26e6472.",
+        "nextAction": "Complete. Upstream merged the reviewed change.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17477"
+          "https://github.com/google/gvisor/pull/17477",
+          "https://github.com/google/gvisor/commit/dc26e6472"
         ]
       },
       "evidence": [
@@ -26886,6 +26900,10 @@
         {
           "label": "Originally approved source",
           "url": "https://github.com/tamird/gvisor/commit/2b507a7ba"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/dc26e6472"
         }
       ],
       "number": 17477
@@ -30614,14 +30632,14 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T17:42:39+00:00",
-      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. On master 59b69962b and the revision, the parser selects only AArch64 and X86. The newer LLVM source adds 210 configured C++ compilations per architecture (2,725 to 2,935 on AMD64 and 2,722 to 2,932 on ARM64). LLVM accounts for 184 and zlib for 26. The old comparison predates #15940. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe contributor requested a hermetic-llvm dependency update in place of the local patches. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.\n\nThe published 7fca7c54f conflicts in MODULE.bazel against ccf8c9479. The patch-free fork revision ea1d3141c, which pins supplier 17f6a3008, merges cleanly there. CI qualification of supplier HEAD 8a3f5bd77 is in progress. Downstream consumers also need the root-module policy in #16804.",
+      "updatedAt": "2026-11-12T18:01:54+00:00",
+      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. After #15940 landed, both master and the LLVM 23.1.2 parser select only X86 and AArch64. Configured C++ compile actions increase from 2,725 to 2,935 on AMD64 and from 2,722 to 2,932 on ARM64. Of the 210 additional actions on each, 184 compile LLVM and 26 compile zlib. Supplier revisions 17f6a3008 and 8a3f5bd77 yield the same graph. The published PR description still quotes a reduction of 141 from the earlier 20-versus-nine-backend comparison. Neither graph measures elapsed build time. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe contributor requested a hermetic-llvm dependency update in place of the local patches. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.\n\nThe published 7fca7c54f conflicts in MODULE.bazel against ccf8c9479. The patch-free fork revision ea1d3141c, which pins supplier 17f6a3008, merges cleanly there. Patch-free product 647f8a21e builds on ccf8c9479 with supplier 8a3f5bd77. TestParser ran uncached on native Linux x86_64 and AArch64. The ELF machine IDs were 62 and 183 respectively. The audit covered all 224 licenses. Downstream consumers also need the root-module policy in #16804.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-12T17:42:39+00:00",
-        "disposition": "Fork revision ea1d3141c merges cleanly against ccf8c9479. The published head conflicts in MODULE.bazel. BCR llvm remains at 0.8.26.",
-        "nextAction": "Qualify supplier 8a3f5bd77 against the patch-free parser revision. Check the downstream consumer with #16804 and retain the BCR release watch.",
+        "observedAt": "2026-11-12T18:01:54+00:00",
+        "disposition": "Fork revision ea1d3141c merges cleanly against ccf8c9479. The published head conflicts in MODULE.bazel. BCR llvm remains at 0.8.26. Patch-free product 647f8a21e builds on ccf8c9479 with supplier 8a3f5bd77. TestParser ran uncached on native Linux x86_64 and AArch64. The ELF machine IDs were 62 and 183 respectively. The audit covered all 224 licenses.",
+        "nextAction": "Watch for a BCR release containing #883 and #892, qualified at supplier 8a3f5bd77. Once published, replace the temporary source pin with the released module and recheck the parser and downstream root policy from #16804.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17114",
           "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
@@ -30650,7 +30668,10 @@
           "https://github.com/hermeticbuild/hermetic-llvm/commit/8a3f5bd77",
           "https://github.com/google/gvisor/pull/16804",
           "https://github.com/google/gvisor/commit/ccf8c9479",
-          "https://github.com/tamird/gvisor/actions/runs/43272221335"
+          "https://github.com/tamird/gvisor/actions/runs/43272221335",
+          "https://github.com/tamird/gvisor/commit/647f8a21e",
+          "https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13969368929",
+          "https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13967768714"
         ]
       },
       "evidence": [
@@ -30695,7 +30716,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42183956039/artifacts/13486364802"
         },
         {
-          "label": "20 and 9 backends; 141 fewer configured C++ compilations per architecture",
+          "label": "Historical action counts before #15940, comparing 20 and nine backends",
           "url": "https://github.com/tamird/gvisor/actions/runs/42183941511/artifacts/13486474282"
         },
         {
@@ -30861,6 +30882,18 @@
         {
           "label": "Parser qualification on supplier 8a3f5bd77",
           "url": "https://github.com/tamird/gvisor/actions/runs/43272221335"
+        },
+        {
+          "label": "Patch-free product qualified against 8a3f5bd77",
+          "url": "https://github.com/tamird/gvisor/commit/647f8a21e"
+        },
+        {
+          "label": "Native parser test binaries, test records and 224-license audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13969368929"
+        },
+        {
+          "label": "8a3f5bd77 artifact with matching backend and CppCompile counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13967768714"
         }
       ],
       "refinement": {
@@ -30900,6 +30933,16 @@
         "module": "llvm",
         "checkedVersion": "0.8.26",
         "nextAction": "When a BCR llvm release includes #883 and #892 (through 17f6a3008), replace the tested source pin with its ordinary bazel_dep and recheck the generated repository, native parser tests and license audit."
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "issue",
+        "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+        "requestedAt": "2026-11-12T18:01:54+00:00",
+        "url": "https://github.com/hermeticbuild/hermetic-llvm/issues/new",
+        "title": "Publish an llvm module release with the kernel headers and backend defaults",
+        "summary": "Decide whether to file this supplier release request.",
+        "body": "Could you publish a new BCR version of `llvm` that includes #883 and #892? gVisor uses the first to select Linux 6.18 headers and the second to build its NVIDIA driver parser for X86 and AArch64. The latest BCR version (0.8.26) predates both.\n\nWith 8a3f5bd77, google/gvisor#17114 can drop both local LLVM patches. The parser test passed on native AMD64 and ARM64 [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13969368929\n\nPrepared by Codex on behalf of @tamird."
       }
     },
     {
@@ -32473,22 +32516,23 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/proc-immutable-pid-dirs-synthetic",
-      "head": "542182833d848ed8eee0289ef59275cad83079d1",
+      "head": "7b4ac67e907d150e6b36f8c9f628eb55cc84cb73",
       "title": "Reject writes to immutable proc task directories",
       "url": "https://github.com/google/gvisor/pull/16473",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "Linux rejects writable opens on existing task directories with EISDIR. Both gVisor configurations returned EPERM on the old code. The amendment also preserves the credential check on internal mountpoints. All seven fresh test and analyzer owners passed; 69 cases, none skipped or missing. The four review threads have individual replies.",
-      "updatedAt": "2026-10-29T09:20:29.299794+00:00",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "followup": {
-        "owner": "root",
-        "sourceHead": "542182833d848ed8eee0289ef59275cad83079d1",
-        "observedAt": "2026-10-29T09:20:29.299794+00:00",
-        "disposition": "Published the exact formatter output; upstream lint passed",
-        "nextAction": "Await the reviewer’s response on the published procfs amendment. The wrap changed no tokens.",
+        "owner": "Complete",
+        "sourceHead": "7b4ac67e907d150e6b36f8c9f628eb55cc84cb73",
+        "observedAt": "2026-11-11T18:16:03Z",
+        "disposition": "Upstream merged source 7b4ac67e9 as 4c7e4fa85.",
+        "nextAction": "Complete. Upstream merged the reviewed change.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/40702036225/job/122864112872",
-          "https://github.com/google/gvisor/actions/runs/40848020007/job/123360215216"
+          "https://github.com/google/gvisor/actions/runs/40848020007/job/123360215216",
+          "https://github.com/google/gvisor/commit/4c7e4fa85"
         ]
       },
       "evidence": [
@@ -32575,6 +32619,10 @@
         {
           "label": "All five lint checks passed on the formatted head",
           "url": "https://github.com/google/gvisor/actions/runs/40848020007/job/123360215216"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/4c7e4fa85"
         }
       ],
       "number": 16473,
@@ -38074,9 +38122,9 @@
       "title": "Report the conflicting record lock's owner",
       "url": "https://github.com/google/gvisor/pull/16618",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
-      "updatedAt": "2026-11-03T14:48:57.209577+00:00",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "evidence": [
         {
           "label": "Published upstream as #16618",
@@ -38121,19 +38169,24 @@
         {
           "label": "Posted inline reply 2",
           "url": "https://github.com/google/gvisor/pull/16618#discussion_r4456248953"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/3cce89aed"
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "Complete",
         "sourceHead": "da05e74d9febb9c6430bfc94d6406684eaab66df",
-        "observedAt": "2026-11-03T14:48:57.209577+00:00",
-        "disposition": "Published amendment; all approved inline replies posted",
-        "nextAction": "Follow the public review and import checks.",
+        "observedAt": "2026-11-12T05:02:05Z",
+        "disposition": "Upstream merged source da05e74d9 as 3cce89aed.",
+        "nextAction": "Complete. Upstream merged the reviewed change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16618",
           "https://github.com/tamird/gvisor/commit/da05e74d9",
           "https://github.com/google/gvisor/pull/16618#discussion_r4456248355",
-          "https://github.com/google/gvisor/pull/16618#discussion_r4456248953"
+          "https://github.com/google/gvisor/pull/16618#discussion_r4456248953",
+          "https://github.com/google/gvisor/commit/3cce89aed"
         ]
       },
       "number": 16618,
@@ -49468,8 +49521,8 @@
       "title": "Check the locks used to retire TCP forwarding requests",
       "url": "https://github.com/google/gvisor/pull/16852",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "summary": "The request mutex protects its forwarder pointer. The forwarder mutex protects the shared map of pending tuples. The control produced exactly two diagnostics on each of AMD64 and ARM64. With the guards, the analyzer and all four forwarder tests passed, including three ECN subcases. The review head adds two lines to document when packet readers must finish.",
       "evidence": [
         {
@@ -49491,6 +49544,10 @@
         {
           "label": "Two source locations on each architecture and seven named XML entries",
           "url": "https://github.com/tamird/gvisor/actions/runs/41234335902/artifacts/13055236437"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/f0d4d6e88"
         }
       ],
       "settledReviews": [
@@ -50556,8 +50613,8 @@
       "title": "Keep a load callback with its waiting object",
       "url": "https://github.com/google/gvisor/pull/16860",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-08T22:38:49+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "summary": "The decoder registers value delivery and a wakeup together when it discovers that one object needs another. Both can use one callback record. On a 50,000-file checkpoint that removes 50,108 records. In 16 paired runs it reduced DecodeStatefile time by 5.09% and allocated bytes by 11.42%.",
       "evidence": [
         {
@@ -50575,6 +50632,10 @@
         {
           "label": "Counts by producer for the 50,000-file checkpoint",
           "url": "https://github.com/tamird/gvisor/actions/runs/41329255858/artifacts/13092843079"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/433589e14"
         }
       ],
       "settledReviews": [
@@ -52070,9 +52131,9 @@
       "title": "Keep the first TCP repair timestamp through recovery",
       "url": "https://github.com/google/gvisor/pull/16851",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-07T12:02:13+00:00",
-      "summary": "TCP can miss evidence that a timeout was unnecessary when the timestamp wraps or a second timeout clears the first retransmission’s timestamp. Keep that timestamp until recovery ends and compare the ACK’s echo in TCP serial order.\n\nRyan approved the public head and requested a test comment explaining why the first repair’s timestamp precedes zero in serial order. The fork amendment changes only comments and blank lines. The PR remains ready to pull at 47e4c458f.",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
+      "summary": "TCP can miss evidence that a timeout was unnecessary when the timestamp wraps or a second timeout clears the first retransmission’s timestamp. Keep that timestamp until recovery ends and compare the ACK’s echo in TCP serial order.\n\nRyan requested an explanation of why the first repair’s timestamp precedes zero in TCP serial order. The comment landed with source 74952bf99 in upstream commit 59b69962b.",
       "evidence": [
         {
           "label": "Ryan’s inline request to explain the serial-order timestamp",
@@ -52101,6 +52162,10 @@
         {
           "label": "Reply on the original review",
           "url": "https://github.com/google/gvisor/pull/16851#discussion_r4501607215"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/59b69962b"
         }
       ],
       "settledReviews": [
@@ -52136,15 +52201,16 @@
         }
       },
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Complete",
         "sourceHead": "74952bf99e98a628b5621812118bd24b381168b7",
-        "observedAt": "2026-11-07T12:02:13+00:00",
-        "disposition": "Ryan approved the prior revision. The explanatory comment is present on the new head and the reviewer has been asked to reapprove.",
-        "nextAction": "Confirm a fresh approval and import of 74952bf99. The existing import #17180 names the previous head.",
+        "observedAt": "2026-11-12T14:31:14Z",
+        "disposition": "Upstream merged source 74952bf99 as 59b69962b.",
+        "nextAction": "Complete. Upstream merged the reviewed change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16851",
           "https://github.com/tamird/gvisor/commit/74952bf99",
-          "https://github.com/google/gvisor/pull/16851#discussion_r4501607215"
+          "https://github.com/google/gvisor/pull/16851#discussion_r4501607215",
+          "https://github.com/google/gvisor/commit/59b69962b"
         ]
       }
     },
@@ -63777,8 +63843,8 @@
       "repo": "google/gvisor",
       "number": 17151,
       "url": "https://github.com/google/gvisor/pull/17151",
-      "status": "open",
-      "updatedAt": "2026-11-06T23:37:40.578Z",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "evidence": [
         {
           "label": "Matched parent and corrected tidy and go_marshal build",
@@ -63791,6 +63857,10 @@
         {
           "label": "Published upstream",
           "url": "https://github.com/google/gvisor/pull/17151"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/3238f32db"
         }
       ],
       "settledReviews": [
@@ -65473,8 +65543,8 @@
       "title": "Build release archives without a host shell",
       "url": "https://github.com/google/gvisor/pull/17191",
       "group": "release",
-      "status": "open",
-      "updatedAt": "2026-11-09T20:48:02+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "summary": "The public release targets build archives with the declared BSD tar tool. Make obtained both ordinary AMD64 downloads from those targets, and GNU tar extracted the publisher’s runsc member. All nine staged executables matched. Both architectures configured eight Tar actions under the public labels. Ryan’s four requested changes are published in one commit.",
       "evidence": [
         {
@@ -65504,6 +65574,10 @@
         {
           "label": "Single blank line after the approved source",
           "url": "https://github.com/tamird/gvisor/compare/657d01de1..384154787"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/2aeb4d899"
         }
       ],
       "settledReviews": [
@@ -65532,14 +65606,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Complete",
         "sourceHead": "8469c237d9f493a9183f50ea7de304cd13fcf91a",
-        "observedAt": "2026-11-09T20:48:02+00:00",
-        "disposition": "Published and answered all four requests in one review.",
-        "nextAction": "Ryan can re-review the direct archive targets. GitHub returned HTTP 404 for the additional native re-review request.",
+        "observedAt": "2026-11-11T19:40:17Z",
+        "disposition": "Upstream merged source 8469c237d as 2aeb4d899.",
+        "nextAction": "Complete. Upstream merged the reviewed change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17191#pullrequestreview-5832449994",
-          "https://github.com/tamird/gvisor/actions/runs/42693686825/artifacts/13708987254"
+          "https://github.com/tamird/gvisor/actions/runs/42693686825/artifacts/13708987254",
+          "https://github.com/google/gvisor/commit/2aeb4d899"
         ]
       },
       "number": 17191,
@@ -68655,12 +68730,12 @@
       "repo": "google/gvisor",
       "number": 17227,
       "url": "https://github.com/google/gvisor/pull/17227",
-      "status": "open",
+      "status": "merged",
       "ref": "research/sandbox-wait-status-lock",
       "head": "1d1cc9d5559d6ffbd1a174b95e0658cce2487a74",
       "title": "Check locking of the sandbox exit status",
       "group": "analysis",
-      "updatedAt": "2026-11-08T13:46:38Z",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "summary": "Both analyzers accepted the existing guards. Removing them exposed two distinct unlocked accesses on each of AMD64 and ARM64: the cached read and the address passed to wait4.",
       "evidence": [
         {
@@ -68670,6 +68745,10 @@
         {
           "label": "Approved change published as #17227",
           "url": "https://github.com/google/gvisor/pull/17227"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/39815d5ed"
         }
       ],
       "settledReviews": [
@@ -68688,14 +68767,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Complete",
         "sourceHead": "1d1cc9d5559d6ffbd1a174b95e0658cce2487a74",
-        "observedAt": "2026-11-08T13:46:38Z",
-        "disposition": "Published the approved change as #17227.",
-        "nextAction": "Follow #17227 for maintainer review and import.",
+        "observedAt": "2026-11-12T00:19:31Z",
+        "disposition": "Upstream merged source 1d1cc9d55 as 39815d5ed.",
+        "nextAction": "Complete. Upstream merged the reviewed change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17227",
-          "https://github.com/tamird/gvisor/commit/1d1cc9d55"
+          "https://github.com/tamird/gvisor/commit/1d1cc9d55",
+          "https://github.com/google/gvisor/commit/39815d5ed"
         ]
       }
     },
@@ -72784,8 +72864,8 @@
       "url": "https://github.com/google/gvisor/pull/17311",
       "group": "rbe",
       "head": "125585fde855513c1ab42e0574e196e0350030d3",
-      "status": "open",
-      "updatedAt": "2026-11-09T21:00:08+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "summary": "One workspace option tries the Cloudflare mirror before each module archive’s release host. A caller using a private registry can disable it with --module_mirrors=. The three CI jobs and ordinary local builds use the same setting.",
       "evidence": [
         {
@@ -72811,6 +72891,10 @@
         {
           "label": "Real Make query in the Docker builder read the public rc",
           "url": "https://github.com/tamird/gvisor/actions/runs/42692991725/artifacts/13707178979"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/4ca0cfcb1"
         }
       ],
       "settledReviews": [
@@ -73645,8 +73729,8 @@
       "url": "https://github.com/google/gvisor/pull/17377",
       "ref": "research/java21-unref-descriptor-count",
       "head": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
-      "status": "open",
-      "updatedAt": "2026-11-10T17:29:34+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "summary": "Four builds failed Unref.java when the JVM-wide descriptor count differed by one. All four passed on a same-head retry. OpenJDK saw the extra descriptor on Linux and excludes the test on all platforms. Adding its one CSV entry changed gVisor’s Java 21 selection from 6,984 tests to 6,983. The pinned image listed 7,078 tests. Applying the whole upstream list would skip 19 additional tests that gVisor still runs. Two of those passed on the original failing build’s runtime, along with the neighboring DatagramChannel/Connect test.",
       "evidence": [
         {
@@ -73672,6 +73756,10 @@
         {
           "label": "Published upstream PR #17377",
           "url": "https://github.com/google/gvisor/pull/17377"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/google/gvisor/commit/6ff6a1f49"
         }
       ]
     },
@@ -75784,8 +75872,8 @@
       "url": "https://github.com/bazelbuild/bazel/pull/32595",
       "title": "[9.4.0] Honor module mirrors for the implicit Bazel Central Registry",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "summary": "The reviewed 9.4 backport adapts the default registry selection to the release branch’s ImmutableSet. On native ARM64 macOS, the release build accepted both nominal BCR spellings and placed the mirror first for rules_cc. The upstream Python regression passed.",
       "evidence": [
         {
@@ -75803,6 +75891,10 @@
         {
           "label": "Original contribution",
           "url": "https://github.com/bazelbuild/bazel/pull/32541"
+        },
+        {
+          "label": "Upstream merge commit",
+          "url": "https://github.com/bazelbuild/bazel/commit/0b1ff8355"
         }
       ]
     },
@@ -76149,8 +76241,8 @@
       "title": "Separate MemoryFile sharing counts from allocation occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "For 16,384 separated shared pages, MemoryFile.SaveTo took 5.35 ms on the parent, 6.31 ms on the PR and 5.49 ms with a forward iterator. Five v1 checkpoints matched byte for byte across all three arms; each revision read the other’s images. The timing fixture had no committed page data. The mixed-size compatibility fixture included one dirty page.",
-      "updatedAt": "2026-11-12T02:46:27+00:00",
+      "summary": "For 16,384 separated shared pages, MemoryFile.SaveTo took 5.35 ms on the parent, 6.31 ms on the PR and 5.49 ms with a forward iterator. Five v1 checkpoints matched byte for byte across all three arms; each revision read the other’s images. The timing fixture had no committed page data. The mixed-size compatibility fixture included one dirty page.\n\nBotir addressed Ayush’s fragmented whole-range reference update observation in 736823ca0, then added removal and insertion coverage at 65a9e6eaa. Tamir’s measured checkpoint exporter follow-up still applies to SaveTo.",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
       "evidence": [
         {
           "label": "Single tested follow-up on Botir’s current commit",
@@ -76167,6 +76259,18 @@
         {
           "label": "Posted inline checkpoint review",
           "url": "https://github.com/google/gvisor/pull/17374#discussion_r4545607204"
+        },
+        {
+          "label": "Fragmented reference update review",
+          "url": "https://github.com/google/gvisor/pull/17374#discussion_r4544139653"
+        },
+        {
+          "label": "Linear reference updates",
+          "url": "https://github.com/google/gvisor/commit/736823ca0"
+        },
+        {
+          "label": "Whole-range reference coverage",
+          "url": "https://github.com/google/gvisor/commit/65a9e6eaa"
         }
       ],
       "settledReviews": [
@@ -76205,8 +76309,8 @@
       "title": "Confine the sandbox to a device cgroup",
       "url": "https://github.com/google/gvisor/pull/16485",
       "status": "open",
-      "updatedAt": "2026-11-12T10:22:34+00:00",
-      "summary": "The #17291 export failed to create all 797 TestLLM readiness clients on an Ubuntu GPU worker. Its runtime device-selection changes match the current source. The client asks for an image and a server link. Only the Ollama server explicitly requests a GPU.",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
+      "summary": "Xin reports that internal TestBootPosture fails on bab22586d because the reference process lists a v1 device cgroup whose devices.list is outside the mounted hierarchy. The helper propagates the read error before comparing the inherited policy. Xin asked the author to handle unavailable observations.\n\nThe #17291 export failed to create all 797 TestLLM readiness clients on an Ubuntu GPU worker. Its runtime device-selection changes match the current source. The client asks for an image and a server link. Only the Ollama server explicitly requests a GPU.",
       "evidence": [
         {
           "label": "Original runtime archive, including the server and 797 failed client creates",
@@ -76227,6 +76331,14 @@
         {
           "label": "All 797 failures and same-head attempts",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Agpu-ollama-readiness"
+        },
+        {
+          "label": "Xin’s internal CI report",
+          "url": "https://github.com/google/gvisor/pull/16485#issuecomment-6831205551"
+        },
+        {
+          "label": "Reference process reads devices.list",
+          "url": "https://github.com/google/gvisor/blob/bab22586d/pkg/test/sandboxposture/sandboxposture.go#L1524"
         }
       ],
       "settledReviews": [
@@ -76243,7 +76355,18 @@
           "at": "2026-11-12T10:20:04Z",
           "postedURL": "https://github.com/google/gvisor/pull/16485#discussion_r4549116273"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "PR author",
+        "sourceHead": "bab22586d8048207c4838be25f38ed41bcd98410",
+        "observedAt": "2026-11-12T17:56:14+00:00",
+        "disposition": "The inherited-policy test can fail during its reference-process lookup when the v1 device controller is outside the visible mount.",
+        "nextAction": "Address the reported unavailable reference policy while preserving the distinction between an observed matching policy and an unknown one.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16485#issuecomment-6831205551",
+          "https://github.com/google/gvisor/blob/bab22586d/pkg/test/sandboxposture/sandboxposture.go#L1524"
+        ]
+      }
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:938",
@@ -100906,10 +101029,53 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-12T01:50:23+00:00",
-      "lastReviewedAt": "2026-11-11T14:52:21+00:00",
+      "updatedAt": "2026-11-12T17:56:14+00:00",
+      "lastReviewedAt": "2026-11-12T17:46:22.845465+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
+        {
+          "text": "The November 12 sweep inspected 90 changed URLs through 17:46 UTC, representing 87 distinct source revisions. The 69 pull requests had 79 review threads, each read to completion. Current replies and revisions address Lucas’s changes on TUN ownership, TCP recovery, receive-window and veth work. On #16770 the later probe is data without FIN. Tamir answered why the existing test does not assert a separate FIN-bearing window-edge packet.",
+          "evidence": [
+            {
+              "label": "FIN probe scope and Linux source comparison",
+              "url": "https://github.com/google/gvisor/pull/16770#discussion_r4544763569"
+            },
+            {
+              "label": "Published TUN ownership revision",
+              "url": "https://github.com/google/gvisor/commit/0441369f5"
+            }
+          ]
+        },
+        {
+          "text": "Fourteen source cards retained an open status after GitHub recorded their merges. Seven still described pending review or import. The live worker and attention queue had already removed these sources. The stored records now link their actual merge commits, including the LLVM backend restriction and TCP first-repair timestamp.",
+          "evidence": [
+            {
+              "label": "LLVM backend restriction landed",
+              "url": "https://github.com/google/gvisor/commit/e2b96b8cf"
+            },
+            {
+              "label": "TCP first-repair timestamp landed",
+              "url": "https://github.com/google/gvisor/commit/59b69962b"
+            }
+          ]
+        },
+        {
+          "text": "On #16485 a new internal CI report covers a v1 device policy outside the test’s visible cgroup mount. The changed source set contained no other addition reading devices.list. The three PRs adding context.Background to Go tests were other authors’ changes. The gVisor shell match is the entrypoint of the DinD workload. The new Fastlane, Buildifier, Gazelle and Node patch files explain their upstream differences.",
+          "evidence": [
+            {
+              "label": "Internal CI report",
+              "url": "https://github.com/google/gvisor/pull/16485#issuecomment-6831205551"
+            },
+            {
+              "label": "Devices list lookup",
+              "url": "https://github.com/google/gvisor/blob/bab22586d/pkg/test/sandboxposture/sandboxposture.go#L1524"
+            },
+            {
+              "label": "Node 22.2.0 HTTP backport",
+              "url": "https://github.com/google/gvisor/pull/17547"
+            }
+          ]
+        },
         {
           "text": "All review threads on the 37 Tamir-authored gVisor PRs merged since November 7 at 11:59 UTC were paged to completion. No unresolved inline request ended with an unanswered reviewer comment. The sweep found no new unanswered inline request or substantive top-level comment on those merged PRs. On #17191 Ryan confirmed all four release-archive requests were addressed. All four TCP annotation separators in 3171566a5 were still applicable on 2f5253abf and are staged for the next cleanup.",
           "evidence": [
