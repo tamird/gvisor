@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T09:54:04+00:00",
+    "updatedAt": "2026-11-12T10:03:08+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -80230,7 +80230,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T09:42:29+00:00",
+      "updatedAt": "2026-11-12T10:03:08+00:00",
       "summary": "The original reporter’s stall has a tested repair. In a separate 40-segment test, gVisor #16495 sent one or 31 repairs on the first ACK depending on the SACK layout. With ascending SACK traversal and #15432’s flight accounting, it sent 31 repairs in both layouts. Linux sent four in each.",
       "findings": [
         {
@@ -82439,16 +82439,29 @@
           ]
         },
         {
-          "text": "With byte-based proportional rate reduction and the revised estimate of bytes in flight, the two wire captures showed native Linux and gVisor sending the same segments in each of six short cases. The interrupted-retransmission-timeout control passed on the reference and failed on the candidate. With one of 3,501 bytes still outstanding, the reference sent the next 500-byte write and the candidate withheld it. Eleven other lifecycle cases passed on the candidate. The open question is whether the flight estimate or the send allowance accounts for the withheld write.",
+          "text": "With byte-based proportional rate reduction and the revised estimate of bytes in flight, the two wire captures showed native Linux and gVisor sending the same segments in each of six short cases. The interrupted-retransmission-timeout control passed on the reference and failed on the candidate. With one of 3,501 bytes still outstanding, the reference sent the next 500-byte write and the candidate withheld it. Eleven other lifecycle cases passed on the candidate. That comparison left open whether the flight estimate or the send allowance accounted for the withheld write.",
           "evidence": [
             {
               "label": "Six paired packet captures and interrupted-timeout lifecycle controls",
               "url": "https://github.com/tamird/gvisor/actions/runs/43191149157/artifacts/13930623993"
             }
           ]
+        },
+        {
+          "text": "Five uncached runs of the same manual-clock test isolated the interrupted-timeout failure. The reference and flight-accounting-only runs passed. The send allowance alone and the allowance with revised flight accounting both failed. In both failures the second threshold reduction left a congestion window of two packets with two outstanding, holding back a new 500-byte write. Applying #16419’s rule to keep the existing threshold when the timeout interrupts recovery left a window of three with two outstanding. The combined version then passed the original assertions, including the next independent timeout and recovery. Only that rule from #16419 was exercised.",
+          "evidence": [
+            {
+              "label": "Original test log and XML for all five configurations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43195365588/artifacts/13933695428"
+            },
+            {
+              "label": "Change to preserve the threshold across an interrupted recovery",
+              "url": "https://github.com/google/gvisor/pull/16419"
+            }
+          ]
         }
       ],
-      "nextStep": "Test a recovery send allowance based on newly delivered data, as described in RFC 9937. Compare retransmissions and new data in the 40-segment test, then measure the same allowance on the shared queue before attributing its 32.85 s pause. The 16 existing Linux transfers lost at most 43 consecutive originals.",
+      "nextStep": "Check whether the full #16419 change preserves the packet and interrupted-timeout results. A comparable shared-queue run is still needed to determine how the combined changes affect the previously observed 32.85 s pause.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
