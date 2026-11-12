@@ -40,6 +40,36 @@ func sackBlockLess(a, b header.SACKBlock) bool {
 	return a.Start.LessThan(b.Start)
 }
 
+// sackedIn returns the number of bytes of b covered by retained SACK ranges.
+func (s *SACKScoreboard) sackedIn(b header.SACKBlock) seqnum.Size {
+	if s.Empty() {
+		return 0
+	}
+	var total seqnum.Size
+	s.ranges.DescendLessOrEqual(b, func(r header.SACKBlock) bool {
+		if r.Start != b.Start && b.Start.LessThan(r.End) {
+			end := r.End
+			if b.End.LessThan(end) {
+				end = b.End
+			}
+			total += b.Start.Size(end)
+		}
+		return false
+	})
+	s.ranges.AscendGreaterOrEqual(b, func(r header.SACKBlock) bool {
+		if !r.Start.LessThan(b.End) {
+			return false
+		}
+		end := r.End
+		if b.End.LessThan(end) {
+			end = b.End
+		}
+		total += r.Start.Size(end)
+		return true
+	})
+	return total
+}
+
 // SACKScoreboard stores a set of disjoint SACK ranges.
 //
 // +stateify savable

@@ -377,6 +377,16 @@ func (rc *rackControl) exitRecovery() {
 //
 // +checklocks:rc.snd.ep.mu
 func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
+	lost, _ := rc.detectLossChanges(rcvTime)
+	return lost
+}
+
+// detectLossChanges distinguishes a new loss indication from a hole already
+// marked on a prior ACK. Only a new loss disqualifies PRR's SafeACK.
+//
+// +checklocks:rc.snd.ep.mu
+func (rc *rackControl) detectLossChanges(rcvTime tcpip.MonotonicTime) (int, int) {
+	newlyLost := 0
 	var timeout time.Duration
 	numLost := 0
 	clockResolution := rc.snd.ep.stack.ClockResolution()
@@ -398,6 +408,10 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			// zero during recovery.
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
+				if seg.rackInFlight != 0 {
+					seg.rackInFlight = 0
+					newlyLost++
+				}
 				seg.lost = true
 				numLost++
 			} else {
@@ -419,7 +433,7 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 	if timeout != 0 && !rc.snd.reorderTimer.enabled() {
 		rc.snd.reorderTimer.enable(timeout)
 	}
-	return numLost
+	return numLost, newlyLost
 }
 
 // reorderTimerExpired will retransmit the segments which have not been acked
@@ -448,6 +462,9 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	}
 
 	fastRetransmit := rc.snd.enterRACKRecovery()
+	if rc.snd.FastRecovery.Active {
+		rc.snd.updatePRR(0, false, fastRetransmit)
+	}
 	rc.DoRecovery(nil, fastRetransmit)
 	return nil
 }

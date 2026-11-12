@@ -1,7 +1,7 @@
-name: Measure TCP recovery after one ACK
+name: Compare PRR with native TCP recovery
 on:
   push:
-    branches: [qualification/rack-recovery-ack-budget]
+    branches: [qualification/rack-prr-ack-budget]
 permissions:
   contents: read
 jobs:
@@ -20,8 +20,8 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = 841f3a2601f76eda5de7761f4ce7fdfdf9dd818e
-        git diff --quiet HEAD^ HEAD -- . ':(exclude).github/workflows/build.yml' ':(exclude)test/packetimpact/tests/tcp_rack_test.go'
+        test "$(git rev-parse HEAD^)" = 0ccb351638e1a53b35967474598afd0e71ddbf13
+        git diff --quiet HEAD^ HEAD -- test/packetimpact pkg/tcpip/transport/tcp/test
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
         platform=$RUNNER_TEMP/fifo_platform
         printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
@@ -96,11 +96,38 @@ jobs:
           if ! test "$code" = 0 || ! test -s "$dest/test.log" || ! test "$(grep -c 'GEOMETRY base=' "$dest/test.log")" = 6 || ! test "$(grep -c 'BUDGET case=.* phase=second ' "$dest/test.log")" = 6; then rc_all=1; fi
           test -s "$dest/outputs/tcp_rack_test_tb-0-test.pcap" || rc_all=1
         done
+        # Retain the original Go assertions for normal SACK operation, recovery
+        # exit and interruption, a fresh episode, and endpoint close and reset.
+        candidate=$(git rev-parse HEAD)
+        cases='Test(RTOInterruptsSACKRecovery|RACKTLPFallbackRTO|SACKRecovery|RecoveryEntry|DetectSpuriousRecoveryWithRTO|ShutdownRead|ResetDuringClose|SendOnResetConnection)'
+        for arm in prr reference; do
+          if test "$arm" = reference; then git checkout --quiet --detach "$candidate^"; fi
+          dest=$out/lifecycle-$arm
+          mkdir -p "$dest"
+          git rev-parse HEAD > "$dest/source"
+          bep=$dest/events.jsonl
+          code=0
+          bazelisk --bazelrc="$rc" test --config=x86_64 --lockfile_mode=off --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
+            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_sharding_strategy=disabled --nocache_test_results \
+            "--test_filter=^${cases}$" --test_timeout=110 --test_output=errors \
+            "--build_event_json_file=$bep" --build_event_json_file_path_conversion=false \
+            //pkg/tcpip/transport/tcp/test/e2e:{tcp_rack_test,tcp_sack_test,tcp_test} > "$RUNNER_TEMP/lifecycle-$arm.log" 2>&1 || code=$?
+          echo "$code" > "$dest/exit"
+          for label in tcp_rack_test tcp_sack_test tcp_test; do
+            logdir=bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/$label
+            mkdir -p "$dest/$label"
+            for file in test.log test.xml; do
+              if test -f "$logdir/$file"; then cp "$logdir/$file" "$dest/$label/$file"; fi
+            done
+          done
+          if ! jq -se '[.[] | select(.testResult != null) | .testResult] | length == 3 and all(.[]; .status == "PASSED" and (.cachedLocally != true) and (.executionInfo.cachedRemotely != true) and (.executionInfo.strategy | . == "local" or . == "standalone"))' "$bep" > /dev/null; then rc_all=1; fi
+          if ! test "$code" = 0; then tail -40 "$RUNNER_TEMP/lifecycle-$arm.log"; rc_all=1; fi
+        done
         exit "$rc_all"
     - name: Retain native and gVisor socket samples and packet captures
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: rack-recovery-ack-budget
+        name: rack-prr-ack-budget
         path: ${{ runner.temp }}/retained-tail/
         if-no-files-found: error
