@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T15:50:34+00:00",
+    "updatedAt": "2026-11-12T16:10:22+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30004,7 +30004,7 @@
       "url": "https://github.com/google/gvisor/pull/16391",
       "group": "tests",
       "status": "open",
-      "summary": "The open #16391 waits for the daemon’s greeting in each service’s own systemd journal. On master 4ca0cfcb1, ARM64 build #54606 observed the service running with PID 99, but the first journal query contained only systemd’s own messages. The test subsequently observed restart PIDs 110 and 140. All five targets ran on the same-head ARM64 retry, and the owning integration target passed in 9.8 seconds. The failed log does not distinguish a delayed first write from a delayed journal entry.\n\nThe public Buildkite 52341 cgroup-v2 attempt missed the greeting and its retry passed. That log does not establish whether the process had written the record or journald had processed it. Private validation held the system service's write until its first real journal query returned: the original assertion failed and the correction passed. The ungated packaged user-service case passed in both. Each run used one uncached remote AMD64 test action and the same source-built systemd image, with no skips or missing cases. The original native exit 3 and FAIL verdict are retained; the corrected native exit 0 and PASS verdict are separate. The corrected result contains three positive XML records: the two named cases and their Go parent. No whole-systemd-suite or other-CPU coverage is claimed.\n\nOriginal execution finished at 20:29:23.885 UTC, with its FAIL verdict after 0.54 seconds and local verification after 4.60 seconds. Corrected execution finished at 20:29:03.961 UTC, with its PASS verdict after 0.42 seconds and local verification after 6.41 seconds. Neither run needed manual recovery. The artificial write gate exists only in private validation; the proposed public change is confined to test readiness.\n\nOn master 16ae0d214, the same system-service test failed in 11.83 s in the AMD64 cgroup-v2 integration partition of #54671. At the first query, the service was active with PID 92 and its journal contained only systemd’s own entries. The test later observed restart PIDs 102 and 134. The same-head retry executed all five targets and the owning integration test passed in 11.1 s. The failure does not establish whether the shell had written its greeting by the first query. The existing #16391 polls each service’s own journal for that greeting.",
+      "summary": "The open #16391 waits for the daemon’s greeting in each service’s own systemd journal. On master 4ca0cfcb1, ARM64 build #54606 observed the service running with PID 99, but the first journal query contained only systemd’s own messages. The test subsequently observed restart PIDs 110 and 140. All five targets ran on the same-head ARM64 retry, and the owning integration target passed in 9.8 seconds. The failed log does not distinguish a delayed first write from a delayed journal entry.\n\nThe public Buildkite 52341 cgroup-v2 attempt missed the greeting and its retry passed. That log does not establish whether the process had written the record or journald had processed it. Private validation held the system service's write until its first real journal query returned: the original assertion failed and the correction passed. The ungated packaged user-service case passed in both. Each run used one uncached remote AMD64 test action and the same source-built systemd image, with no skips or missing cases. The original native exit 3 and FAIL verdict are retained; the corrected native exit 0 and PASS verdict are separate. The corrected result contains three positive XML records: the two named cases and their Go parent. No whole-systemd-suite or other-CPU coverage is claimed.\n\nOriginal execution finished at 20:29:23.885 UTC, with its FAIL verdict after 0.54 seconds and local verification after 4.60 seconds. Corrected execution finished at 20:29:03.961 UTC, with its PASS verdict after 0.42 seconds and local verification after 6.41 seconds. Neither run needed manual recovery. The artificial write gate exists only in private validation; the proposed public change is confined to test readiness.\n\nOn master 16ae0d214, the same system-service test failed in 11.83 s in the AMD64 cgroup-v2 integration partition of #54671. At the first query, the service was active with PID 92 and its journal contained only systemd’s own entries. The test later observed restart PIDs 102 and 134. The same-head retry executed all five targets and the owning integration test passed in 11.1 s. The failure does not establish whether the shell had written its greeting by the first query. The existing #16391 polls each service’s own journal for that greeting.\n\nA native control kept the existing test daemon alive with stdout blocked through the full journal wait. The unchanged helper made 159 real journalctl reads in 59.910 seconds. Its expected failure named the missing greeting and printed the unit’s actual Started entry. The service restart checks still ran and observed a new PID after the kill. The earlier matched delayed-write control passed on the same helper.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "cdf05cf3cf2c3ec196bc94dfaba9b025f437c229",
@@ -30067,6 +30067,10 @@
         {
           "label": "Same-head cgroup-v2 retry, five executed targets",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54671#01a1d02d-2165-4abe-b834-6979559cd973"
+        },
+        {
+          "label": "Real silent-service control, 159 journal reads, final diagnostic and native TestSystemdSimpleDaemon XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43254402928/artifacts/13960883531"
         }
       ],
       "updatedAt": "2026-11-12T15:48:26+00:00",
@@ -30592,14 +30596,14 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T15:48:26+00:00",
-      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. On master 59b69962b and the revision, the parser selects only AArch64 and X86. The newer LLVM source adds 210 configured C++ compilations per architecture (2,725 to 2,935 on AMD64 and 2,722 to 2,932 on ARM64). LLVM accounts for 184 and zlib for 26. The old comparison predates #15940. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe contributor requested a hermetic-llvm dependency update in place of the local patches. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. Its two-backend graph, native parser and license checks are in progress.",
+      "updatedAt": "2026-11-12T16:06:26+00:00",
+      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. On master 59b69962b and the revision, the parser selects only AArch64 and X86. The newer LLVM source adds 210 configured C++ compilations per architecture (2,725 to 2,935 on AMD64 and 2,722 to 2,932 on ARM64). LLVM accounts for 184 and zlib for 26. The old comparison predates #15940. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe contributor requested a hermetic-llvm dependency update in place of the local patches. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-12T15:48:26+00:00",
-        "disposition": "The contributor returned b61e5fd37 for revision.",
-        "nextAction": "Validate the patch-free fork pin, then update the upstream PR to the first BCR llvm release containing hermetic-llvm #883 and #892.",
+        "observedAt": "2026-11-12T16:06:26+00:00",
+        "disposition": "The patch-free fork revision passed both native parser tests and the 224-record license audit. BCR llvm 0.8.26 predates the two merged supplier fixes.",
+        "nextAction": "When a BCR llvm release includes #883 and #892 (through 17f6a3008), replace the tested source pin with its ordinary bazel_dep and recheck the generated repository, native parser tests and license audit.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17114",
           "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
@@ -30622,7 +30626,9 @@
           "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037",
           "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359",
           "https://github.com/tamird/gvisor/commit/ea1d3141c",
-          "https://github.com/tamird/gvisor/actions/runs/43252864197"
+          "https://github.com/tamird/gvisor/actions/runs/43252864197",
+          "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960156770",
+          "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960266517"
         ]
       },
       "evidence": [
@@ -30809,6 +30815,14 @@
         {
           "label": "Two-backend graph, native parser and license checks for the patch-free pin",
           "url": "https://github.com/tamird/gvisor/actions/runs/43252864197"
+        },
+        {
+          "label": "Generated header default, both backends and configured compiler action counts on the patch-free pin",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960266517"
+        },
+        {
+          "label": "Uncached native parser XMLs and ELF digests on both architectures, plus all 224 license records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960156770"
         }
       ],
       "refinement": {
@@ -30844,11 +30858,10 @@
       "number": 17114,
       "releaseWait": {
         "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "confirmedAt": "2026-11-08T15:03:52+00:00",
+        "confirmedAt": "2026-11-12T16:06:26+00:00",
         "module": "llvm",
         "checkedVersion": "0.8.26",
-        "blocking": false,
-        "nextAction": "Inspect the published source for hermetic-llvm #883 (3dd710dd9) and #892 (17f6a3008). If both are present, evaluate removing the local Linux header backport and verify that the parser still builds only the X86 and AArch64 backends selected by gVisor #15940."
+        "nextAction": "When a BCR llvm release includes #883 and #892 (through 17f6a3008), replace the tested source pin with its ordinary bazel_dep and recheck the generated repository, native parser tests and license audit."
       }
     },
     {
@@ -76330,6 +76343,55 @@
       "group": "ci-flakes",
       "status": "open",
       "updatedAt": "2026-11-12T15:50:34+00:00"
+    },
+    {
+      "id": "pr:17555",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "research/go-deps-root-policy-master",
+      "title": "Let other Bazel modules build gVisor Go packages",
+      "url": "https://github.com/google/gvisor/pull/17555",
+      "group": "bazel",
+      "status": "open",
+      "summary": "A downstream Bazel module depending only on gVisor failed to evaluate seqnum and waiter because Gazelle rejected gVisor’s non-root overrides. With the standalone MODULE change, the same consumer built both libraries on Linux AMD64 with Bazel 9.3.1. Ordinary gVisor root builds kept the same nine proto generation directives and byte-identical patched protobuf source. Both downstream builds and a gVisor build using --ignore_dev_dependency select upstream protobuf, which reads its executable during initialization. A consumer can adopt the patch explicitly. The approved revision adds a source citation beside that policy in MODULE.bazel and is open as #17555.",
+      "updatedAt": "2026-11-12T16:10:22+00:00",
+      "head": "9bf33eaed7927c8c9459202bfecb7097dba5c205",
+      "evidence": [
+        {
+          "label": "Single-commit change to the gVisor root Go dependency policy",
+          "url": "https://github.com/tamird/gvisor/commit/f9eee9066"
+        },
+        {
+          "label": "Unchanged and corrected downstream library builds, resolved directives and protobuf sources",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43252252612/artifacts/13959553101"
+        },
+        {
+          "label": "Existing --ignore_dev_dependency and explicit downstream patch controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40906632925/artifacts/12912351679"
+        },
+        {
+          "label": "Published single-commit downstream Go library fix, including the Gazelle guidance beside the override policy",
+          "url": "https://github.com/google/gvisor/pull/17555"
+        }
+      ],
+      "number": 17555,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "f9eee906656b50557d47a7d614b9fe5d66a1406c",
+          "baseHead": "59b69962bd510505fa8538aa1c4dcc61f615edd3",
+          "url": "https://github.com/tamird/gvisor/commit/f9eee9066",
+          "title": "Let other Bazel modules build gVisor Go packages",
+          "body": "Gazelle rejects go_deps overrides declared outside the root module.\nAs a result, a project that depends on gVisor cannot build even\n//pkg/tcpip/seqnum or //pkg/waiter. Gazelle fails while evaluating\ngVisor's overrides, before it compiles either package.\n\nKeep the Go module declarations and repository imports visible to\nconsumers. Attach only the protobuf patch and nine proto generation\noverrides to a development-only use of go_deps, as Gazelle recommends\n[1]. A normal build from the gVisor checkout still applies all ten.\n\nA consuming project gets upstream protobuf unless it selects gVisor's\npatch itself. The patch avoids reading the executable during protobuf\ninitialization [2]. Passing --ignore_dev_dependency in the gVisor\ncheckout also selects upstream protobuf.\n\n[1]: https://github.com/bazel-contrib/bazel-gazelle/issues/1768#issuecomment-2027776185\n[2]: https://github.com/google/gvisor/commit/dba564686\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "Review the standalone root-only Gazelle policy change for ordinary downstream Go libraries.",
+          "requestedAt": "2026-11-12T16:06:26+00:00",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-12T16:10:22+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17555",
+          "note": "The contributor approved the standalone change and requested the source advisory beside the policy in MODULE.bazel. #17555 adds those four comment lines and retains the tested behavior."
+        }
+      ]
     }
   ],
   "edges": [
