@@ -1,3 +1,3 @@
-load(":select_object.bzl", "support_compile")
+load(":select_object.bzl", "probe")
 
-support_compile(name = "support")
+probe(name = "object")

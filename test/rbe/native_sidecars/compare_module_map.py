@@ -19,8 +19,8 @@ PACKAGE.mkdir()
 shutil.copyfile(SOURCE / "support.BUILD", PACKAGE / "BUILD.bazel")
 shutil.copyfile(SOURCE / "select_object.bzl", PACKAGE / "select_object.bzl")
 CLI = ["bazel", f"--bazelrc={TMP / 'sidecar.bazelrc'}"]
-FLAGS = ["--config=remote", "--jobs=60", "--experimental_output_paths=strip"]
-PROBE = "//support_map_probe:support"
+FLAGS = ["--config=remote", "--jobs=60", "--nocheck_visibility", "--experimental_output_paths=strip"]
+PROBE = "//support_map_probe:object"
 QUERY = f'inputs(".*PrettyStackTrace.cpp", mnemonic("CppCompile", deps({PROBE})))'
 BASE = "8a3f5bd77702fc0de58252e715404fcac1eed24e"
 STAGES = "baa2066bd9f6830d078228a9047649f8334f712e"
@@ -50,11 +50,11 @@ def bazel(name, command, args):
     return result
 
 
-def inspect(name, revision, *, caller_args=False, mapped=False):
+def inspect(name, revision, *, caller_args=False):
     subprocess.run(["git", "switch", "--quiet", "--detach", revision], cwd=ROOT, check=True)
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     assert head == revision
-    flags = ["--config=cpp_path_mapping"] if mapped else []
+    flags = []
     config_file = ROOT / "toolchain/BUILD.bazel"
     original = config_file.read_text()
     if caller_args:
@@ -62,17 +62,35 @@ def inspect(name, revision, *, caller_args=False, mapped=False):
         assert original.count(before) == 1
         config_file.write_text(original.replace(before, before.replace("stage_independent_args_list", "cc_args_list")))
     try:
-        row = RESULTS[name] = {"head": head, "callerArgs": caller_args, "cppPathMapping": mapped}
+        row = RESULTS[name] = {"head": head, "callerArgs": caller_args, "cppPathMapping": False}
         record()
         query = bazel(name + "-action", "aquery", [
             *flags, "--include_param_files", "--noinclude_artifacts", "--output=jsonproto", QUERY,
         ])
         query.check_returncode()
         graph = json.loads(query.stdout)
-        actions = graph["actions"]
+        actions = [
+            action for action in graph["actions"]
+            if "-D_LIBCPP_ABI_NAMESPACE=__InternalSymbolizer" in action["arguments"]
+            and "internal_symbolizer_linux_x86_64_gnu_2_28-dbg-" in action["arguments"][action["arguments"].index("-o") + 1]
+        ]
         assert len(actions) == 1, len(actions)
         action = actions[0]
         args = action["arguments"]
+        # This qualification requests one existing action via the production
+        # symbolizer. Compare every argument with the real top-level test
+        # graph before compiling; an execution-platform Support is different.
+        production = bazel(name + "-fission-graph", "aquery", [
+            "--include_param_files", "--noinclude_artifacts", "--output=jsonproto",
+            QUERY.replace(PROBE, "//:asan_fission_debug_package_test"),
+        ])
+        production.check_returncode()
+        identical = sum(a["arguments"] == args for a in json.loads(production.stdout)["actions"])
+        row.update(argumentCount=len(args), identicalFissionActions=identical)
+        record()
+        assert identical == 1, row
+        if revision == STAGES:
+            assert len(args) == 141, len(args)
         compiler = next(v for v in args if v.endswith("/clang++"))
         inc = [args[i + 1] for i, v in enumerate(args) if v == "-isystem"]
         maps = [v.split("=", 1)[1] for v in args if v.startswith("-fmodule-map-file=") and v.endswith("/module_map.modulemap")]
@@ -84,7 +102,7 @@ def inspect(name, revision, *, caller_args=False, mapped=False):
         record()
         # Download the independently requested module map even if the compiler
         # subsequently fails. Its exec-root path must equal the compiler's input.
-        map_run = bazel(name + "-map", "build", [*flags, "--remote_download_outputs=toplevel", "--output_groups=toolchain_map", PROBE])
+        map_run = bazel(name + "-map", "build", [*flags, "--remote_download_outputs=toplevel", "--output_groups=physical_map", PROBE])
         map_run.check_returncode()
         map_file = E2E / maps[0]
         data = map_file.read_bytes()
@@ -93,14 +111,20 @@ def inspect(name, revision, *, caller_args=False, mapped=False):
         for header in ("type_traits", "utility", "iterator", "cstddef", "stddef.h"):
             mapped_paths = [h.decode() for h in re.findall(rb'textual header "([^"]+/' + header.encode() + rb')"', data)]
             row["headers"][header] = {"map": mapped_paths, "searched": [str(Path(i) / header) for i in inc]}
+        traits = row["headers"]["type_traits"]
+        row["typeTraitsPathMatches"] = any(
+            mapped.endswith(search) for mapped in traits["map"] for search in traits["searched"]
+        )
+        record()
         result = bazel(name + "-object", "build", [*flags, "--remote_download_outputs=toplevel", PROBE])
         row["objectExit"] = result.returncode
         row["missingModuleExport"] = "does not depend on a module exporting" in result.stderr
         if result.returncode == 0:
             contents = (E2E / obj).read_bytes()
-            row["ELF"] = contents[:4] == b"\x7fELF"
+            row["objectMagic"] = contents[:4].hex()
+            row["bitcode"] = contents[:4] in (b"BC\xc0\xde", b"\xde\xc0\x17\x0b")
             row["objectSHA256"] = hashlib.sha256(contents).hexdigest()
-            assert row["ELF"]
+            assert row["bitcode"]
         print(name, "type_traits", json.dumps(row["headers"]["type_traits"]), flush=True)
         record()
         return row
@@ -111,14 +135,11 @@ def inspect(name, revision, *, caller_args=False, mapped=False):
 
 os.environ["USE_BAZEL_VERSION"] = (ROOT / ".bazelversion").read_text().strip()
 baseline = inspect("base", BASE)
-assert baseline["objectExit"] == 0
 stages = inspect("original", STAGES)
 combined = inspect("combined", COMBINED)
-if stages["missingModuleExport"] or combined["missingModuleExport"]:
-    inspect("caller-configuration", COMBINED, caller_args=True)
-else:
-    # The upstream lane first builds with C++ path mapping enabled, then
-    # removes the opt-in in the same output base. Exercise that exact order.
-    inspect("original-opt-in", STAGES, mapped=True)
-    inspect("original-after-opt-in", STAGES)
+fixed = inspect("caller-configuration", COMBINED, caller_args=True)
+for row in (baseline, fixed):
+    assert row["typeTraitsPathMatches"] and row["objectExit"] == 0, row
+for row in (stages, combined):
+    assert not row["typeTraitsPathMatches"] and row["objectExit"] and row["missingModuleExport"], row
 record()

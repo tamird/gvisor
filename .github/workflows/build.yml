@@ -1,7 +1,7 @@
-name: Compare the LLVM Support compile and its actual toolchain module map
+name: Compare the ASan fission symbolizer compile and its module map
 on:
   push:
-    branches: [qualification/llvm-runtime-stage-module-map]
+    branches: [qualification/llvm-runtime-stage-symbolizer-map]
 permissions:
   contents: read
 jobs:
@@ -38,6 +38,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: llvm-support-module-map
+          name: llvm-asan-fission-symbolizer-map
           path: ${{ runner.temp }}/sidecar-evidence
           if-no-files-found: error
