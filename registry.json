@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T08:32:13+00:00",
+    "updatedAt": "2026-11-12T08:42:54+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -65016,25 +65016,57 @@
       "id": "branch:staged-release-publication",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/release-staging-standalone",
-      "head": "9dbd438791b322ce0d8e4f3c1393581b51155b2b",
+      "ref": "research/release-staging-explicit-label",
+      "head": "6cbcb14d9706952a5ad4fc4ba00cf88e54af9d0b",
       "title": "Stage release downloads and checksums with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/9dbd43879",
+      "url": "https://github.com/tamird/gvisor/commit/6cbcb14d9",
       "group": "release",
-      "status": "Reconciling the release caller",
-      "updatedAt": "2026-11-12T06:27:42+00:00",
-      "summary": "The release job can take all six native packages and their download checksums from one Bazel build. The staged publisher accepts prebuilts without invoking Bazel and leaves Debian signing on the release host. The current integration uses #16490, #16766 and the Flit backend on master after #17191. Tagged and untagged Bazel graphs each use the same six native files for both staging targets and compute the four tarball checksums. The tagged graph stages the exact versioned Flit output; the untagged graph has no Flit producer.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-12T08:41:06+00:00",
+      "summary": "Buildkite uses one make release for both presubmit and publication. Bazel stages both Debian packages and all four download archives, plus their checkfiles and the manifest the signing host reads. Compared with the earlier proposal, combining each tarball’s copy and checksum cuts native staging from ten actions to six. Each Debian package takes one copy. Make drops its list of six pathnames and the host checksum pass. Tagged releases stage the wheel and sdist selected for that run.",
       "evidence": [
+        {
+          "label": "Full GNU AMD64 and ARM64 release binaries, archive comparisons and Python version",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43176426328/artifacts/13925627434"
+        },
+        {
+          "label": "Original four Debian control digests reproduced by changing only the changelog date",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43182484719/artifacts/13927860727"
+        },
+        {
+          "label": "Final Docker handoff, two package signatures, cache replay and Python promotion controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43183793765/artifacts/13927976532"
+        },
+        {
+          "label": "Separate Debian changelog timestamp fix",
+          "url": "https://github.com/google/gvisor/pull/16587"
+        },
+        {
+          "label": "Tested integration parent for the one-commit publisher",
+          "url": "https://github.com/tamird/gvisor/commit/5247e58e2"
+        },
+        {
+          "label": "Previous staged publisher",
+          "url": "https://github.com/tamird/gvisor/commit/9dbd43879"
+        },
+        {
+          "label": "Native release-label prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/8b4856bbd"
+        },
+        {
+          "label": "Declared Flit build prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/be90b4814"
+        },
         {
           "label": "Eight Linux observations of the actual Bazel arguments with and without worker options",
           "url": "https://github.com/tamird/gvisor/actions/runs/42532731429/artifacts/13638022199"
         },
         {
-          "label": "Standalone proposal and permanent description",
+          "label": "Earlier standalone publisher proposal",
           "url": "https://github.com/tamird/gvisor/commit/8a31f6378"
         },
         {
-          "label": "Clean prerequisite parent for this single commit",
+          "label": "Earlier standalone integration parent",
           "url": "https://github.com/tamird/gvisor/commit/bb565d846"
         },
         {
@@ -65054,11 +65086,11 @@
           "url": "https://github.com/google/gvisor/pull/16490"
         },
         {
-          "label": "Declared Flit prerequisite",
+          "label": "Earlier revision of the Flit prerequisite",
           "url": "https://github.com/tamird/gvisor/commit/6650e2f29"
         },
         {
-          "label": "Buildkite host Bazel bootstrap, gVisor #16904",
+          "label": "Host Bazel bootstrap for eventual builder retirement",
           "url": "https://github.com/google/gvisor/pull/16904"
         },
         {
@@ -65078,11 +65110,11 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42386105556/artifacts/13578969295"
         },
         {
-          "label": "Single master-based commit and production/presubmit entry points",
+          "label": "Earlier production and presubmit entry points",
           "url": "https://github.com/tamird/gvisor/commit/c661271ae"
         },
         {
-          "label": "Current tagged and untagged Bazel actions",
+          "label": "Tagged and untagged actions on the earlier publisher",
           "url": "https://github.com/tamird/gvisor/actions/runs/43167576390"
         },
         {
@@ -65096,10 +65128,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "2306ebce48ca1fa926651eaa58ff07a6da0cef76"
+          "head": "9dbd438791b322ce0d8e4f3c1393581b51155b2b"
         },
         "after": {
-          "head": "9dbd438791b322ce0d8e4f3c1393581b51155b2b"
+          "head": "6cbcb14d9706952a5ad4fc4ba00cf88e54af9d0b"
         }
       },
       "settledReviews": [
@@ -65131,17 +65163,27 @@
       ],
       "followup": {
         "owner": "Release packaging",
-        "sourceHead": "9dbd438791b322ce0d8e4f3c1393581b51155b2b",
-        "observedAt": "2026-11-12T06:27:42+00:00",
-        "disposition": "Native staging and tagged Python wiring verified on current sources.",
-        "nextAction": "When combining with explicit versioning, pass the native release label from Buildkite and compare all six direct and staged stamped packages. Check generated-source paths and retain the release-only mapping where needed. Update the mirror comment about file(1), and verify the host Bazelisk and cross toolchain before enabling the release queue. Local source builds through Make still default to the builder.",
+        "sourceHead": "6cbcb14d9706952a5ad4fc4ba00cf88e54af9d0b",
+        "observedAt": "2026-11-12T08:41:06+00:00",
+        "disposition": "Both production and presubmit consume the same Bazel stage through the existing builder. The full GNU build verified the native label and all six production outputs. On AMD64 and ARM64 the independent and staged builds produced identical archive data. Replacing only the changelog date reproduced all four original Debian control hashes. The separate date fix is #16587.",
+        "nextAction": "After contributor review and the three source prerequisites land, rebase the single publisher commit for submission. The final signing fixture used small native payloads, real Debian signing and a cache mounted at different paths. After a clean it recorded 22 remote-cache hits. Only the final release promoted Python in the reused directory. Cloud commands were recorded locally.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/43167576390",
-          "https://github.com/google/gvisor/pull/16490",
-          "https://github.com/google/gvisor/pull/16904",
-          "https://github.com/tamird/gvisor/actions/runs/42337163017/artifacts/13560294242",
-          "https://github.com/tamird/gvisor/actions/runs/42399661675/artifacts/13585307666"
+          "https://github.com/tamird/gvisor/actions/runs/43176426328/artifacts/13925627434",
+          "https://github.com/tamird/gvisor/actions/runs/43182484719/artifacts/13927860727",
+          "https://github.com/tamird/gvisor/actions/runs/43183793765/artifacts/13927976532",
+          "https://github.com/google/gvisor/pull/16587"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "6cbcb14d9706952a5ad4fc4ba00cf88e54af9d0b",
+        "baseHead": "5247e58e2e7e229ec2bde2161e9215ee19f5b1bc",
+        "url": "https://github.com/tamird/gvisor/commit/6cbcb14d9",
+        "title": "Stage release downloads and checksums with Bazel",
+        "body": "The release host extracts runsc from each archive to determine its architecture and hashes the archive again for every download directory. Bazel already knows the architecture when it builds the package. Its cache may be mounted at a different path on the signing host, so handing the signer a directory of absolute symlinks can leave it with unreadable files.\n\nStage the AMD64 and ARM64 Debian packages and download archives as regular files in //debian:release-inputs. Write each download's SHA512 checkfile once, alongside the file. Have presubmit and production call make release with that target. Pass its manifest to the host that holds the Debian signing key. Keep Bazel diagnostics on stderr so package warnings cannot become part of the manifest path.\n\nPass the native release label to Bazel and keep the separate Python version chosen by Artifact Registry. On a final release, upload and promote only the wheel and source distribution staged for that invocation. Give master and nightly builds an empty Python stage so they cannot promote a wheel left by a previous release.\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Review this one-commit publisher for submission after the architecture split, declared Flit build and native release label land.",
+        "requestedAt": "2026-11-12T08:41:06+00:00"
       }
     },
     {
@@ -79874,20 +79916,20 @@
       "from": "pr:16490",
       "to": "branch:staged-release-publication",
       "type": "depends_on",
-      "reason": "The architecture split supplies //debian:release-packages, which the staging rule consumes.",
+      "reason": "The architecture split provides both configured //debian:release-packages outputs for staging.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16490",
-        "https://github.com/tamird/gvisor/commit/2306ebce4"
+        "https://github.com/tamird/gvisor/commit/6cbcb14d9"
       ]
     },
     {
       "from": "branch:bazel-python-release",
       "to": "branch:staged-release-publication",
       "type": "depends_on",
-      "reason": "Tagged publication stages the wheel and source distribution produced by the declared Flit target //sandboxexec/sandbox/python:dist.",
+      "reason": "Tagged builds stage the wheel and sdist produced by the declared Flit target //sandboxexec/sandbox/python:dist.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/6650e2f29",
-        "https://github.com/tamird/gvisor/commit/2306ebce4"
+        "https://github.com/tamird/gvisor/commit/be90b4814",
+        "https://github.com/tamird/gvisor/commit/6cbcb14d9"
       ]
     },
     {
@@ -80031,10 +80073,13 @@
     },
     {
       "type": "depends_on",
-      "from": "pr:16904",
+      "from": "branch:staged-release-tag",
       "to": "branch:staged-release-publication",
-      "reason": "The two native release jobs set DOCKER_BUILD=false. This hook puts Bazelisk on their PATH and shuts down the same server afterward.",
-      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
+      "reason": "The release caller passes the native label consumed by runsc and the Debian package version rule.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/8b4856bbd",
+        "https://github.com/tamird/gvisor/commit/6cbcb14d9"
+      ]
     }
   ],
   "investigations": [
@@ -106077,7 +106122,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T06:53:57+00:00",
+      "updatedAt": "2026-11-12T08:42:54+00:00",
       "summary": "Node 22.2.0 shard 3 checked Socket.closed at a fixed deadline and observed false. The same shard passed on retry. Node already waits for the close event in newer releases.",
       "findings": [
         {
@@ -106103,6 +106148,23 @@
             {
               "label": "Final single-commit backport",
               "url": "https://github.com/tamird/gvisor/commit/c776a5072"
+            }
+          ]
+        },
+        {
+          "text": "Build 54648’s goferfs shard hit the original timed assertion at line 67 of test-http-remove-connection-header-persists-connection.js and a second timed assertion at line 61 of test-http-remove-header-stays-removed.js. Its retry used a cached result and executed zero test targets. Node fixed the second test separately by checking socket.end() when the response emits finish. The pending one-file backport covers the first test.",
+          "evidence": [
+            {
+              "label": "Original goferfs shard reporting both assertions",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54648#01a1cec3-1b95-42e2-bb82-00202f2feff0"
+            },
+            {
+              "label": "Cached goferfs retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54648#01a1cecf-38b5-4a5d-b375-eecf0a628ac5"
+            },
+            {
+              "label": "Upstream event-based fix for the second Node test",
+              "url": "https://github.com/nodejs/node/commit/9bb6a1a79"
             }
           ]
         }
@@ -106135,7 +106197,79 @@
         "body": "The pinned Node 22.2.0 test checks the HTTP/1.0 client socket 100 ms\nafter it writes the request. An AMD64 runtime shard still saw an open\nsocket and passed on retry [1] [2].\n\nBackport the test fix by Arne Keller and Luigi Pinca [3]. Check that\nthe server has ended the socket when the response finishes and wait for\nthe client's close event. Keep the HTTP/1.1 reuse checks and the\nexisting image timeout adjustments.\n\nDelaying the HTTP response by 250 ms reproduced the assertion on runc\nand systrap. The packaged test passed both with and without that delay\non each runtime [4].\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce24-f1e8-48c4-b72b-0c54ee6deae8\n[2]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce33-161a-4991-9c1e-06e4d2ac55f3\n[3]: https://github.com/nodejs/node/commit/b6fe731c5\n[4]: https://github.com/tamird/gvisor/actions/runs/43167070037/artifacts/13922850238\n\nPrepared by Codex on behalf of @tamird.",
         "summary": "Open the one-commit test backport against gVisor? The original timed check failed on both runtimes with a delayed response; the packaged event-based test passed."
       }
+    },
+    {
+      "id": "investigation:ci-flake-trace-testall-fcntl",
+      "title": "ARM64 TestAll misses the fcntl trace event",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T08:41:06+00:00",
+      "summary": "On ARM64, TestAll observed every required trace event except MESSAGE_SYSCALL_FCNTL. The workload would exit if fcntl(F_GETFL) failed, and runsc do exited successfully. The same revision passed when Buildkite re-executed the trace target.",
+      "findings": [
+        {
+          "text": "The original log records six remote-sink EAGAIN drops over 113 microseconds with zero retries. The log does not identify the dropped message types. The receiver reads concurrently and waits for EOF. The failure predates the timestamp and argument changes in #15936.",
+          "evidence": [
+            {
+              "label": "Original ARM64 test.log with the missing event and six write errors",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54644/jobs/01a1cebd-acbc-485a-851d-52831fbcc1d8/artifacts/01a1cec6-cf40-48e8-a1f2-278554edc06f"
+            },
+            {
+              "label": "Later trace timestamp and argument changes",
+              "url": "https://github.com/google/gvisor/pull/15936"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Same-head uncached trace target passed on retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54644#01a1cec7-a65b-42bc-8fd5-e09be53e5856"
+        },
+        {
+          "label": "Test-only candidate configuring ten bounded remote-sink retries",
+          "url": "https://github.com/tamird/gvisor/commit/dcf8de077"
+        },
+        {
+          "label": "Native ARM64 comparison of the complete TestAll and an isolated socketpair marker on stock and candidate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43184625954"
+        }
+      ],
+      "nextStep": "Inspect the native ARM64 results for the complete TestAll and socketpair marker on both revisions. Check whether bounded retries deliver the marked write under the tested backpressure. The original log cannot identify which event was dropped.",
+      "repo": "google/gvisor"
+    },
+    {
+      "id": "investigation:ci-flake-moby-network-namespace",
+      "title": "Moby DNS test loses a network namespace during container startup",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T08:42:54+00:00",
+      "summary": "On master 56ffe2272, the nested Docker daemon returned ENOENT while mounting /proc/542/ns/net into its netns directory for TestIntDNSAsExtDNS/only_self. Container startup stopped before the test could check the DNS response.",
+      "findings": [
+        {
+          "text": "The sibling self_then_ext case passed in the same job. A same-head retry re-executed the single test target and passed in 25.1 seconds. The failing log identifies the mount operation but does not show whether its source or destination disappeared.",
+          "evidence": [
+            {
+              "label": "Failing master test.log with the namespace mount failure and sibling case",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54650/jobs/01a1cece-e696-4ca6-862e-88355b398c15/artifacts/01a1ced2-e1eb-490a-b086-8890cd751fb2"
+            },
+            {
+              "label": "Uncached retry of the same target",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54650#01a1ced3-ab95-4b38-83ae-e0966aac5c5b"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Pinned Moby test starts and attaches the container before checking the DNS result",
+          "url": "https://github.com/moby/moby/blob/docker-v29.8.1/integration/network/dns_test.go#L83-L91"
+        }
+      ],
+      "nextStep": "At the next failure, capture the lifetime of the short-lived container process and creation and removal of the destination namespace mountpoint to identify which side vanished.",
+      "repo": "google/gvisor"
     }
   ],
-  "updatedAt": "2026-11-12T08:32:13+00:00"
+  "updatedAt": "2026-11-12T08:42:54+00:00"
 }

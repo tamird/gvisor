@@ -602,20 +602,30 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
               "trigger": trigger, "description": description}
     # A conflict with master does not change which source Copybara exported.
     open_export = next((item for item in active if item["status"] == "open"), None)
-    if (pr.get("status") == "open" and pr.get("importPolicy", "copybara") == "copybara"
-            and pr.get("githubReviewDecision") == "APPROVED"
-            and scope == "exact" and open_export and trigger["state"] == "present"
-            and binding["complete"] and binding["labelsComplete"] and not approval and not effective_approval(pr)
-            and pr.get("repo", "google/gvisor") == "google/gvisor"
-            and not pr.get("revisionChanged") and pr.get("branchHead", pr["head"]) == pr["head"]
-            and pr.get("reviewDismissals", {}).get("complete") and pr.get("feedback", {}).get("complete")):
+    if (not open_export or scope != "exact" or not binding["complete"] or trigger["state"] != "present"
+            or pr.get("status") != "open" or pr.get("importPolicy", "copybara") != "copybara"
+            or pr.get("repo", "google/gvisor") != "google/gvisor" or pr.get("revisionChanged")
+            or pr.get("branchHead", pr["head"]) != pr["head"] or not pr.get("feedback", {}).get("complete")):
+        return result
+    if (comparison and comparison.get("source", {}).get("head") == pr["head"]
+            and any(comparison.get("export", {}).get("head") == item["head"] for item in active)
+            and not (comparison.get("comparison", {}).get("normalized_delta_identical") is True
+                     and comparison.get("comparison", {}).get("modes_identical") is True)):
+        return result
+    # Copybara can resolve a source conflict when it generates the export.
+    # A later change to master or either branch invalidates that observation.
+    current_approval = effective_approval(pr)
+    if (pr.get("mergeable") == "CONFLICTING" and current_approval and pr.get("branchHead") == pr["head"]
+            and len(active) == 1 and state == "open" and open_export.get("mergeable") == "MERGEABLE"
+            and not open_export.get("revisionChanged") and open_export.get("branchHead") == open_export["head"]
+            and open_export.get("base") and open_export["base"] == pr.get("base")):
+        result["mergeableExport"] = {key: open_export[key] for key in ("number", "head", "base")}
+        result["description"] = f"Copybara export #{open_export['number']} integrates the approved source on the current base."
+    if (pr.get("githubReviewDecision") == "APPROVED" and not approval and not current_approval
+            and pr.get("reviewDismissals", {}).get("complete")):
         review = effective_approval(pr, require_fresh=False)
         dismissed = {row.get("review", {}).get("id") for row in pr["reviewDismissals"].get("items", [])}
-        mismatch = (comparison and comparison.get("source", {}).get("head") == pr["head"]
-                    and any(comparison.get("export", {}).get("head") == item["head"] for item in active)
-                    and not (comparison.get("comparison", {}).get("normalized_delta_identical") is True
-                             and comparison.get("comparison", {}).get("modes_identical") is True))
-        if review and review.get("id") and review["id"] not in dismissed and not mismatch:
+        if review and review.get("id") and review["id"] not in dismissed:
             result["reviewedExport"] = {"number": open_export["number"], "head": open_export["head"], "reviewId": review["id"]}
             if state != "conflicting":
                 result["description"] = "GitHub reports approval and Copybara has opened an export of this source. The review predates this source revision."

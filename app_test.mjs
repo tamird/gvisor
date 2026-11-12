@@ -2709,6 +2709,44 @@ test('a fresh mergeable head overrides old conflict metadata', () => {
   assert.ok(!idsFor(node).includes('author-conflicts'));
 });
 
+test('an approved source can conflict while its exact Copybara export can merge', () => {
+  const node = attentionNode(16621), pr = node.github, exported = attentionImport(node, 17533);
+  const base = 'c'.repeat(40);
+  Object.assign(pr, {repo: 'google/gvisor', authorLogin: 'tamird', base, branchHead: pr.head,
+    labels: ['ready to pull'], mergeable: 'CONFLICTING', imports: [exported]});
+  Object.assign(exported, {base, branchHead: exported.head});
+  const comment = {id: 'request', kind: 'comment', body: 'Please rebase.', url: pr.url + '#issuecomment-1',
+    author: {login: 'reviewer', __typename: 'User'}, createdAt: '2026-10-14T00:00:00Z'};
+  const cases = [pr, ...[
+    {status: 'closed'}, {status: 'draft'}, {mergeable: 'UNKNOWN'}, {mergeable: 'CONFLICTING'},
+    {base: 'd'.repeat(40)}, {branchHead: 'e'.repeat(40)}, {sourceHead: 'f'.repeat(40)}, {revisionChanged: true},
+  ].map(changes => ({...pr, imports: [{...exported, ...changes}]})),
+  {...pr, reviewDecision: 'CHANGES_REQUESTED'}, {...pr, feedback: {...pr.feedback, complete: false}},
+  {...pr, feedback: {...pr.feedback, items: [...pr.feedback.items, comment]},
+    rebaseRequest: {id: comment.id, head: pr.head, updatedAt: comment.createdAt}}];
+  const records = JSON.parse(execFileSync('python3', ['-B', '-c', `import json, sys
+from importlib import import_module
+from work_states import public_import_disposition
+collector = import_module("update-status")
+rows = []
+for pr in json.load(sys.stdin):
+    pr["publicImportDisposition"] = public_import_disposition(pr)
+    handoff = collector.mergeability_handoff(collector.check_report([pr], {}), {})
+    rows.append([pr, any(row["scope"] == "source" for row in handoff)])
+print(json.dumps(rows))`], {cwd: new URL('.', import.meta.url), input: JSON.stringify(cases), encoding: 'utf8'}));
+  for (const [i, [current, assigned]] of records.entries()) {
+    assert.equal(assigned, i > 0);
+    assert.equal(idsFor({...node, github: current}).includes('author-conflicts'), assigned);
+  }
+  // A newer patch comparison or a live refresh can invalidate the snapshot.
+  const [current] = records[0];
+  const comparison = {source: {head: pr.head}, export: {head: exported.head},
+    comparison: {normalized_delta_identical: true, modes_identical: false}};
+  assert.ok(idsFor({...node, github: current, importPatchComparison: comparison}).includes('author-conflicts'));
+  current.base = 'd'.repeat(40);
+  assert.ok(idsFor({...node, github: current}).includes('author-conflicts'));
+});
+
 test('provider branch mismatch routes refresh without rewriting PR evidence', () => {
   const node = attentionNode(), context = client();
   node.github.mergeable = 'CONFLICTING'; node.github.branchHead = 'd'.repeat(40);

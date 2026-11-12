@@ -569,6 +569,12 @@ function publicImportDisposition(node, legacySnapshot = false) {
     return record;
   return null;
 }
+function exportPatchDiffers(node, imports) {
+  const comparison = node.importPatchComparison;
+  return comparison?.source?.head === node.github.head && imports.some(item =>
+    ["open", "draft"].includes(item.status) && item.head === comparison.export?.head)
+    && !(comparison.comparison?.normalized_delta_identical === true && comparison.comparison?.modes_identical === true);
+}
 function reviewedExport(node) {
   const pr = node?.github, receipt = pr?.publicImportDisposition?.reviewedExport;
   if (!receipt || pr.status !== "open" || !usesImports(pr) || pr.githubReviewDecision !== "APPROVED" || pr.revisionChanged
@@ -578,10 +584,7 @@ function reviewedExport(node) {
   if (!record || record.scope !== "exact" || !["open", "conflicting"].includes(record.state) || record.trigger.state !== "present"
       || !record.binding.complete || !record.binding.labelsComplete || !pr.feedback?.complete || !pr.reviewDismissals?.complete) return false;
   const review = pr.feedback.items.find(item => item.id === receipt.reviewId);
-  const comparison = node.importPatchComparison;
-  if (comparison?.source?.head === pr.head && record.binding.imports.some(item =>
-      ["open", "draft"].includes(item.status) && item.head === comparison.export?.head)
-      && !(comparison.comparison?.normalized_delta_identical === true && comparison.comparison?.modes_identical === true)) return false;
+  if (exportPatchDiffers(node, record.binding.imports)) return false;
   return review?.kind === "review" && maintainerReview(pr, review) && review.state === "APPROVED" && review.commit?.oid === pr.head
     && !pr.reviewRequests?.some(item => item.login === review.author?.login)
     && !pr.feedback.items.some(item => item.kind === "review" && item.author?.login === review.author?.login
@@ -659,7 +662,17 @@ function attentionReasons(node, owner) {
     return reasons;
   }
   const landed = landedPatch(node);
-  if (!landed && pr.head && conflictRecord(pr)) add("author-conflicts", mergeDescription(pr));
+  const importDisposition = publicImportDisposition(node);
+  const exportedConflict = importDisposition?.mergeableExport;
+  const rebase = requestedRebase(pr, owner);
+  if (!landed && pr.head && conflictRecord(pr)) {
+    const integrated = exportedConflict && !pr.revisionChanged && pr.branchHead === pr.head && pr.feedback?.complete
+      && !exportPatchDiffers(node, importDisposition.binding.imports)
+      && effectiveReviewDecision(pr) === "APPROVED" && pr.base === exportedConflict.base
+      && pr.imports.some(item => item.number === exportedConflict.number && item.head === exportedConflict.head
+        && !item.revisionChanged && item.branchHead === item.head && item.base === pr.base);
+    if (!integrated || rebase) add("author-conflicts", mergeDescription(pr));
+  }
   if (pr.revisionChanged || !pr.head) {
     add("agent-refresh", "Current source revision or its review/check evidence needs a public snapshot refresh.");
     return reasons;
@@ -685,7 +698,6 @@ function attentionReasons(node, owner) {
   const comment = actionableComment(node), feedback = [];
   const newWaitComment = node.releaseWait?.head === pr.head && pr.feedback?.items?.findLast(item => (item.kind === "comment" || item.kind === "review" && item.state !== "APPROVED" && item.body?.trim())
     && item.author?.login !== owner && Date.parse(item.updatedAt || item.createdAt) > Date.parse(node.releaseWait.confirmedAt));
-  const rebase = requestedRebase(pr, owner);
   if (!landed && rebase) feedback.push(`@${rebase.author.login} asked for a rebase: ${rebase.url}.`);
   if (review.unanswered.length) feedback.push("Review the unanswered threads: " + review.unanswered.map(item => safeURL(item.url) || "thread in PR details").join(", ") + ".");
   if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level ${comment.kind}: ${comment.url}. GitHub's review decision is unchanged.`);
@@ -700,7 +712,6 @@ function attentionReasons(node, owner) {
   if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
     add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
   const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
-  const importDisposition = publicImportDisposition(node);
   const lineage = importLineage(node, !!importDisposition?.binding.amendment);
   const active = lineage.filter(item => ["open", "draft"].includes(item.status));
   // Only old snapshots need the direct fallback. New snapshots share this

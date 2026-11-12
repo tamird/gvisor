@@ -1061,7 +1061,10 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"} or observation["sourceBranchMismatch"]
             if active and unresolved:
                 issue = {**observation, "followup": assignment}
-                if (repo == REPO and is_source and source["status"] == "open" and not delivered
+                covered = source.get("publicImportDisposition", {}).get("mergeableExport")
+                if is_source and covered and not current_rebase_request(source, OWNER):
+                    issue["mergeableExport"] = covered
+                elif (repo == REPO and is_source and source["status"] == "open" and not delivered
                         and source.get("authorLogin") == OWNER and source.get("headOwner") == OWNER
                         and pr["mergeable"] == "CONFLICTING" and not observation["sourceBranchMismatch"]):
                     # A review assignment on this same head can predate a change to master.
@@ -1150,7 +1153,8 @@ def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
     """Keep current source blockers actionable even when no observation changed."""
     records = []
     for observation in report.get("mergeabilityIssues", []):
-        if observation["scope"] == "older-source-import" or observation.get("sourceAlreadyLanded"):
+        if (observation["scope"] == "older-source-import" or observation.get("sourceAlreadyLanded")
+                or observation.get("mergeableExport")):
             continue
         if observation["sourceBranchMismatch"]:
             action = ("Reconcile the PR and fork branch heads, and independently check both against the current base. "
