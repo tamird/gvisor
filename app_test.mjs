@@ -185,6 +185,15 @@ test('review outreach follows only the observed open gVisor source', () => {
   const read = () => vm.runInContext('currentOutreach(pr)', c);
   vm.runInContext('validateSnapshot(snapshotInput, registryInput); liveSnapshot = snapshotInput;', c);
   assert.equal(read().reviewer, 'reviewer');
+  c.snapshotInput.outreachPostingMode = 'rotations';
+  assert.equal(read().status, 'paused');
+  row.sourceRotation = true;
+  assert.equal(read().status, 'due');
+  c.snapshotInput.outreachPostingMode = 'paused';
+  assert.equal(read().status, 'paused');
+  c.snapshotInput.outreachPostingMode = 'unknown';
+  assert.equal(read().status, 'paused');
+  c.snapshotInput.outreachPostingMode = 'all';
   // A newer base can conflict without changing the head used by the cached request.
   c.pr.github.mergeable = 'CONFLICTING';
   assert.equal(read(), null);

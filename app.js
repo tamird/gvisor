@@ -796,7 +796,7 @@ function attentionReasons(node, owner) {
   const followupBlocked = reasons.some(item => item.owner === "agent" || ["maintainer-triaged", "maintainer-ci-infrastructure", "maintainer-import-refresh", "maintainer-reapproval"].includes(item.id));
   if (reviewHold) add("maintainer-unknown", reviewHold.reason, "Maintainer requested a hold");
   if (!reviewHold && review.unknown && !review.incomplete && !followupBlocked)
-    add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
+    add("maintainer-response", "A reviewer decision remains unresolved without an identified author change.");
   if (!reviewHold && review.response && !newWaitComment && attentionDisposition(node, "author-feedback")?.action !== "batch-cleanup")
     add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
   if (!reviewHold && !approved && !exported && !restoreLabel && !followupBlocked && !review.response && !review.unknown)
@@ -1883,11 +1883,19 @@ function appendSettledPublications(parent, node) {
     }
   }
 }
+function outreachPauseNotice(snapshot) {
+  if (snapshot?.outreachPostingMode === "rotations") return "Only reviewer rotations are enabled. Initial requests, repeat reminders and import follow-ups are paused.";
+  if (snapshot?.outreachPostingMode === "paused") return "Automated GitHub review requests and reminders are paused. Read-only monitoring continues.";
+  if (snapshot?.outreachPostingMode === "unknown") return "The collector could not verify whether GitHub outreach is enabled. Read-only monitoring continues.";
+  return "";
+}
 function currentOutreach(node) {
   const pr = node.github;
   if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open" || pr.mergeable === "CONFLICTING" || node.reviewOutreachHold) return null;
   const row = liveSnapshot?.reviewOutreach?.[pr.number];
   if (row?.head !== pr.head || row?.kind === "import-status" && !currentHeadApproval(pr) && !reviewedExport(node)) return null;
+  if (row && outreachPauseNotice(liveSnapshot)
+      && !(liveSnapshot.outreachPostingMode === "rotations" && row.sourceRotation === true && row.kind !== "import-status")) return { ...row, status: "paused" };
   return row;
 }
 function appendOutreach(parent, node) {
@@ -1897,7 +1905,9 @@ function appendOutreach(parent, node) {
   const importing = row.kind === "import-status";
   section.append(element("h3", "", importing ? "Approved import follow-up" : "Review outreach"));
   const due = new Date(row.dueAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-  if (["due", "verify-mergeability"].includes(row.status)) {
+  if (row.status === "paused") {
+    section.append(element("p", "detail-meta", outreachPauseNotice(liveSnapshot)));
+  } else if (["due", "verify-mergeability"].includes(row.status)) {
     if (row.status === "verify-mergeability") section.append(element("p", "detail-meta", "GitHub is recalculating mergeability. Check the current PR head and base before sending."));
     section.append(element("p", "", `${row.channel === "request" ? "Request a GitHub review from" : "Mention"} @${row.reviewer}. ${row.reason}`), link("Reviewer evidence ↗", row.evidence));
   } else if (row.status === "needs-reviewer") {
@@ -2214,6 +2224,9 @@ function attachReviewRequests(requests, nodes, ids) {
 function applyLive(snapshot, nextRegistry = registry) {
   const focusedInvestigation = view === "investigations" ? document.activeElement?.closest(".investigation-card")?.id : null;
   liveSnapshot = snapshot;
+  const notice = $("outreach-pause");
+  notice.textContent = outreachPauseNotice(snapshot);
+  notice.hidden = !notice.textContent;
   const scrollPositions = ["table-pane", "investigations-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
@@ -2538,6 +2551,8 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
             !Number.isFinite(Date.parse(item.updatedAt))))) throw new Error("Invalid gVisor CI flake report");
     }
   }
+  if (snapshot.outreachPostingMode !== undefined && !["all", "rotations", "paused", "unknown"].includes(snapshot.outreachPostingMode))
+    throw new Error("Invalid outreach posting status");
   if (snapshot.reviewOutreach !== undefined) {
     if (!snapshot.reviewOutreach || typeof snapshot.reviewOutreach !== "object" || Array.isArray(snapshot.reviewOutreach))
       throw new Error("Invalid gVisor review outreach");

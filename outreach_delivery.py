@@ -23,6 +23,31 @@ class GitHubError(RuntimeError):
         self.limited = limited
 
 
+def posting_mode(paused: str | None, rotations: str | None) -> str:
+    if paused == "false":
+        return "all"
+    if paused == "true":
+        return "rotations" if rotations == "true" else "paused"
+    return "unknown"
+
+
+def live_posting_mode() -> str:
+    # Scope output to the two switches. The workflow snapshot and caller
+    # environment can be stale by the time a reviewer is contacted.
+    query = ('.variables[] | select(.name == "WORK_MAP_POSTING_PAUSED" or '
+             '.name == "WORK_MAP_REVIEW_ROTATIONS_ENABLED") | [.name,.value] | @tsv')
+    result = subprocess.run(["gh", "api", "--hostname", "github.com", "--paginate",
+                             f"repos/{FORK}/actions/variables?per_page=100", "--jq", query],
+                            text=True, capture_output=True, check=True, timeout=30)
+    switches = dict(line.split("\t") for line in result.stdout.splitlines())
+    return posting_mode(switches.get("WORK_MAP_POSTING_PAUSED"), switches.get("WORK_MAP_REVIEW_ROTATIONS_ENABLED"))
+
+
+def allows_post(mode: str, fresh: dict | None = None) -> bool:
+    return mode == "all" or (mode == "rotations" and fresh is not None
+                             and fresh.get("kind") != "import-status" and fresh.get("sourceRotation") is True)
+
+
 def api(path: str, data: dict | None = None) -> dict:
     command = ["gh", "api", "--hostname", "github.com", "--include"]
     if data is not None:
@@ -88,7 +113,8 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
             or action["channel"] not in {"request", "comment"} or not action["body"].endswith(marker)
             or f"@{reviewer}" not in action["body"]):
         raise ValueError("Invalid review-outreach destination or body")
-    checked = confirmation(action, refresh())
+    current = refresh()
+    checked = confirmation(action, current)
     if checked["status"] != "due":
         return checked
     if not registry_is_published(registry_oid):
@@ -100,6 +126,8 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
             observed = api(requests + "?per_page=100")
             return any(row["login"].lower() == reviewer.lower() for row in observed["users"])
 
+        if not allows_post(live_posting_mode(), current):
+            return {"status": "held"}
         try:
             api(requests, {"reviewers": [reviewer]})
         except GitHubError as error:
@@ -112,7 +140,8 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
                 raise
             # A definite rejection can mean the PR author lacks triage access.
             # Re-read the PR and the registry before falling back to a mention.
-            checked = confirmation(action, refresh())
+            current = refresh()
+            checked = confirmation(action, current)
             if checked["status"] != "due":
                 return checked
             if not registry_is_published(registry_oid):
@@ -123,6 +152,8 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
             return {**checked, "status": "requested", "reviewer": reviewer}
 
     comments = f"repos/{REPO}/issues/{number}/comments"
+    if not allows_post(live_posting_mode(), current):
+        return {"status": "held"}
     posted = api(comments, {"body": action["body"]})
     comment_id = posted.get("id")
     if type(comment_id) is not int:
@@ -135,13 +166,18 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
 
 
 def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, maintainers: set[str],
-            fetch_fresh: Callable[[int], dict], *, active_reviewers: set[str], post: bool, registry_oid: str) -> None:
+            fetch_fresh: Callable[[int], dict], *, active_reviewers: set[str], post: bool, registry_oid: str, mode: str) -> None:
     from outreach import outreach_states, plan, reviewer_history
 
     if owner != "tamird" or registry["meta"]["repo"] != REPO:
         raise ValueError("Review outreach is configured only for tamird's gVisor PRs")
-    plans = sorted((a for a in snapshot.get("reviewOutreach", {}).values() if a.get("status") in {"due", "verify-mergeability"}),
+    plans = sorted((a for a in snapshot.get("reviewOutreach", {}).values()
+                    if a.get("status") in {"due", "verify-mergeability"} and allows_post(mode, a)),
                    key=lambda a: (a["dueAt"], a["number"]))
+    if mode != "all":
+        held = [a["number"] for a in snapshot.get("reviewOutreach", {}).values()
+                if a.get("status") in {"due", "verify-mergeability"} and not allows_post(mode, a)]
+        print(json.dumps({"outreachPostingMode": mode, "held": sorted(held)}))
     if not plans:
         return
     if post and api("user").get("login") != owner:
@@ -172,13 +208,15 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
             if instant.astimezone(PACIFIC).weekday() >= 5:
                 return None
             current = plan(pr, nodes.get(number, {}), outreach_states(latest, registry).get(str(number), {}),
-                           at, owner, maintainers, history, preferred=scheduled["reviewer"])
+                           at, owner, maintainers, history, preferred=scheduled["reviewer"],
+                           rotations_only=mode == "rotations")
             return {**current, "base": pr.get("base"), "mergeable": pr.get("mergeable")} if current else None
 
         if not post:
-            result = confirmation(scheduled, refresh())
+            current = refresh()
+            result = confirmation(scheduled, current)
             if result["status"] == "due":
-                result["status"] = "would-send"
+                result["status"] = "would-send" if allows_post(mode, current) else "held"
         else:
             try:
                 result = send_one(scheduled, refresh, owner, registry_oid)

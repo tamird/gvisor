@@ -5,6 +5,7 @@ import argparse
 from collections import Counter, defaultdict
 import http.client
 import json
+import os
 import re
 import subprocess
 import sys
@@ -19,7 +20,7 @@ from ci_flakes import collect as collect_ci_flakes
 from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
-from outreach_delivery import load_registry, registry_is_published
+from outreach_delivery import allows_post, live_posting_mode, load_registry, posting_mode, registry_is_published
 from reviewer_selection import GENERIC_REVIEW, needs_reviewer_paths, recent_reviewer_work, reviewer_governance
 from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, pr_identity, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
@@ -1216,6 +1217,10 @@ def refresh_reminder_imports(raw: dict, previous: dict) -> list[dict]:
 
 def reapproval_reminders(post: bool = False) -> None:
     """Use the existing snapshot as an index, then refresh before each write."""
+    mode = live_posting_mode() if post else snapshot_posting_mode()
+    if post and not allows_post(mode):
+        print(f"Reapproval and import reminders are held ({mode}).")
+        return
     snapshot = json.loads((ROOT / "github-status.json").read_text())
     nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]
              if node["type"] == "pr"}
@@ -1225,6 +1230,11 @@ def reapproval_reminders(post: bool = False) -> None:
         if identity.stdout.strip() != OWNER:
             raise RuntimeError("Reminder credential does not belong to the configured owner")
     maintainers, active_reviewers, _ = fetch_maintainers(include_specialties=True)
+    def report(action: dict) -> None:
+        if action.get("status") == "due" and not allows_post(mode):
+            action = {**action, "status": "held", "reason": f"outreach-mode-{mode}"}
+        print(json.dumps(action))
+
     print("Review-reminder eligibility is separate from public-import progress. A skipped reminder is not an import all-clear.")
     for pr in snapshot["prs"]:
         if pr.get("repo") != "google/gvisor" or pr.get("status") != "open":
@@ -1240,7 +1250,7 @@ def reapproval_reminders(post: bool = False) -> None:
         # Import recovery needs fresh timeline, labels, and export lineage.
         # A new successor suppresses the public reminder.
         if node.get("reapproval", {}).get("head") != pr["head"] and not refresh_imports:
-            print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers, active_reviewers=active_reviewers)))
+            report(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers, active_reviewers=active_reviewers))
             continue
         raw = fetch_numbers([pr["number"]], timeline=refresh_imports, repo=pr["repo"], team_details=False)[pr["number"]]
         recheck_unknown_mergeability([raw], repo=pr["repo"])
@@ -1261,10 +1271,13 @@ def reapproval_reminders(post: bool = False) -> None:
             # import-recovery transition must wait for that lookup.
             plan.update(status="deferred", reason="import-trigger-changed-needs-fresh-lineage")
         if not post or plan["status"] != "due":
-            print(json.dumps(plan))
+            report(plan)
             continue
         if not registry_is_published(REGISTRY_OID):
             print(json.dumps({**plan, "status": "deferred", "reason": "registry-changed"}))
+            return
+        if not allows_post(live_posting_mode()):
+            print("Reapproval and import reminders are held.")
             return
         # Never retry this mutation: an interrupted response may have posted.
         # The next scheduled run reads the exact marker from GitHub history.
@@ -1377,7 +1390,19 @@ def feedback_sweep(registry: dict, prs: list[dict], previous: dict, checked_at: 
             "changedWork": changes}
 
 
-def main() -> None:
+def snapshot_posting_mode() -> str:
+    # The scheduled collector receives the repository variable from Actions.
+    # Manual collection uses the same fork setting with its current credential.
+    if "WORK_MAP_POSTING_PAUSED" in os.environ:
+        return posting_mode(os.environ["WORK_MAP_POSTING_PAUSED"], os.environ.get("WORK_MAP_REVIEW_ROTATIONS_ENABLED"))
+    try:
+        return live_posting_mode()
+    except (OSError, subprocess.SubprocessError, ValueError) as error:
+        print(f"Could not read GitHub outreach settings: {error}", file=sys.stderr)
+        return "unknown"
+
+
+def main(*, outreach_mode: str = "unknown") -> None:
     global requests
     policies = repository_policies(REGISTRY)
     output = ROOT / "github-status.json"
@@ -1468,6 +1493,7 @@ def main() -> None:
             pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, OWNER, approval)
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "reviewAuthority": "gvisor-maintainers", "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
+                "outreachPostingMode": outreach_mode,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
                 "incomingReviewRequests": incoming, "incomingReviewScan": scan,
                 "reviewPRs": review_prs, "reviewerHandoff": reviewer_handoff(prs, previous),
@@ -1501,7 +1527,8 @@ def main() -> None:
     for pr in prs:
         number = str(pr["number"])
         node = nodes.get((pr.get("repo"), pr["number"]), {})
-        if action := outreach_plan(pr, node, source_states.get(number, {}), checked_at, OWNER, maintainers, history):
+        if action := outreach_plan(pr, node, source_states.get(number, {}), checked_at, OWNER, maintainers, history,
+                                  rotations_only=outreach_mode == "rotations"):
             snapshot["reviewOutreach"][number] = action
     # Allocate equally qualified reviewers across this batch, in deadline
     # order. A larger backlog changes the distribution, not the number due.
@@ -1512,9 +1539,9 @@ def main() -> None:
     for row in due:
         number = row["number"]
         action = outreach_plan(by_number[number], nodes.get((REPO, number), {}), source_states[str(number)],
-                               checked_at, OWNER, maintainers, history, planned=planned)
+                               checked_at, OWNER, maintainers, history, planned=planned, rotations_only=outreach_mode == "rotations")
         snapshot["reviewOutreach"][str(number)] = action
-        if action["status"] in {"due", "verify-mergeability"}:
+        if action["status"] in {"due", "verify-mergeability"} and allows_post(outreach_mode, action):
             planned[action["reviewer"].lower()] += 1
     if cleanup := branch_cleanup_handoff(REGISTRY, checked_at):
         snapshot["branchCleanup"] = cleanup
@@ -1705,7 +1732,10 @@ def incoming_review_handoff() -> None:
 
 def review_outreach(post: bool = False) -> None:
     from outreach_delivery import deliver
-
+    mode = live_posting_mode() if post else snapshot_posting_mode()
+    if mode in {"paused", "unknown"}:
+        print(f"Source review outreach is held ({mode}).")
+        return
     snapshot = json.loads((ROOT / "github-status.json").read_text())
     sources = {pr["number"]: pr for pr in snapshot["prs"] if pr.get("repo") == REPO}
     maintainers, active_reviewers, specialties = fetch_maintainers(include_specialties=True)
@@ -1731,7 +1761,7 @@ def review_outreach(post: bool = False) -> None:
         return current
 
     deliver(snapshot, REGISTRY, datetime.now(timezone.utc).isoformat(), OWNER, maintainers, fresh,
-            active_reviewers=active_reviewers, post=post, registry_oid=REGISTRY_OID)
+            active_reviewers=active_reviewers, post=post, registry_oid=REGISTRY_OID, mode=mode)
 
 
 if __name__ == "__main__":
@@ -1751,4 +1781,4 @@ if __name__ == "__main__":
     elif arguments.reapproval_reminders:
         reapproval_reminders(post=arguments.reapproval_reminders == "post")
     else:
-        main()
+        main(outreach_mode=snapshot_posting_mode())

@@ -27,16 +27,19 @@ def business_deadline(start: str | datetime, days: int) -> datetime:
     return local
 
 
-def requested_in_comment(item: dict, number: int) -> set[str]:
+def requested_in_comment(item: dict, number: int, *, source_only: bool = False) -> set[str]:
     """Count visible requests by the PR author, including hand-written ones."""
     body = item.get("body", "")
     marker = MARKER.search(body)
-    if marker and int(marker[1]) == number:
+    if not source_only and marker and int(marker[1]) == number:
         return {marker[3].lower()}
     # Quoted reviews, code examples and sign-offs don't contact a reviewer.
     text = re.sub(r"\x60\x60\x60.*?(?:\x60\x60\x60|$)", "", body, flags=re.S)
     names = set()
     for line in text.splitlines():
+        if source_only and re.search(r"\b(?:internal (?:change|CL)|CL [0-9]+|ready to pull|"
+                                     r"(?:import|export) status)\b", line, re.I):
+            continue
         if not line.lstrip().startswith(">") and ASK.search(line):
             names.update(name.lower() for name in MENTION.findall(line))
     return names
@@ -194,7 +197,8 @@ def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, 
 
 
 def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, maintainers: set[str],
-         history: History, *, planned: dict[str, int] | None = None, preferred: str | None = None) -> dict | None:
+         history: History, *, planned: dict[str, int] | None = None, preferred: str | None = None,
+         rotations_only: bool = False) -> dict | None:
     """Decide the next request from the same observations the sender verifies."""
     now = instant(now)
     if (pr.get("repo") != "google/gvisor" or pr.get("authorLogin") != owner
@@ -258,6 +262,8 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     activity = started
     owner_activity = started
     contacts = {}
+    source_contacts = {}
+    other_recipients = set()
     current = {r["login"].lower() for r in pr["reviewRequests"] if r.get("login")}
     responses = {}
     automatic = set()
@@ -284,6 +290,8 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         else:
             contact = (asked, "")
             contacts[reviewer] = max(contacts.get(reviewer, contact), contact)
+            if (event.get("actor") or {}).get("__typename") == "User":
+                source_contacts[reviewer] = max(source_contacts.get(reviewer, asked), asked)
     for item in pr["feedback"]["items"]:
         who = item.get("author") or {}
         if who.get("__typename") != "User" or who.get("login", "").lower() in {"copybara-service","googlebot"}:
@@ -293,13 +301,20 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
             continue
         login = who["login"].lower()
         if login == owner.lower() and REAPPROVAL_MARKER in item.get("body", ""):
+            other_recipients.update(name.lower() for name in MENTION.findall(item["body"].split("Posted by Codex", 1)[0]))
             continue
+        if login != owner.lower() and item["kind"] in {"comment", "inline"}:
+            other_recipients.update(requested_in_comment(item, number, source_only=True) - {login})
         asks = requested_in_comment(item, number) if login == owner.lower() and item["kind"] in {"comment","inline"} else set()
         if asks:
+            # Import-status comments have the same marker as source reviews.
+            source_asks = requested_in_comment(item, number, source_only=True)
             asked = instant(item.get("createdAt")) or at
             contact = (asked, item.get("url") or "")
             for name in asks:
                 contacts[name] = max(contacts.get(name, contact), contact)
+                if name in source_asks:
+                    source_contacts[name] = max(source_contacts.get(name, asked), asked)
             continue
         if item.get("state") == "DISMISSED" or (login != owner.lower() and item.get("body", "").lstrip().startswith("[🤖")):
             continue
@@ -311,11 +326,15 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     prior = {name for name, (at, _) in contacts.items() if not (
         name in responses and at < responses[name] < owner_activity)}
     last_contact = max((contacts[name] for name in prior if contacts[name][0] >= started), default=None)
+    rotation = False
     if last_contact is not None and last_contact[0] > activity:
+        rotation = any(source_contacts.get(name) == last_contact[0] for name in prior)
         due = business_deadline(last_contact[0], 2)
     else:
         due = business_deadline(activity, 5)
     info = {"number": number, "head": head, "lastActivity": activity.isoformat(), "dueAt": due.isoformat()}
+    if rotation:
+        info["sourceRotation"] = True
     if last_contact is not None:
         at, url = last_contact
         info["lastContactAt"] = at.isoformat()
@@ -328,7 +347,8 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         return {**info, "status": "waiting"}
     # A reviewer who responded on a previous revision is eligible again after
     # new source lands. An unanswered or still-pending request is not repeated.
-    excluded = prior | removed
+    contacted = contacts.keys() | seen_requests | current | removed | other_recipients
+    excluded = contacted if rotations_only else prior | removed
     manual_current = current & prior
     candidates = get_reviewer_candidates(pr, history, excluded | manual_current, current, now, planned=planned)
     candidates = [c for c in candidates if c["login"].lower() not in excluded | manual_current
@@ -338,6 +358,8 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         return {**info, "status": "needs-reviewer"}
     candidate = candidates[0]
     who = candidate["login"]
+    if who.lower() in contacted:
+        info.pop("sourceRotation", None)
     channel = candidate["channel"]
     scope = candidate["scope"]
     key = f"{number}:{head}:{who.lower()}"

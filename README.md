@@ -340,6 +340,14 @@ of review requirements.
 
 ### Review requests on idle gVisor pull requests
 
+When `WORK_MAP_POSTING_PAUSED=true`, initial requests, repeat reminders,
+reapproval and import follow-ups are held. Setting
+`WORK_MAP_REVIEW_ROTATIONS_ENABLED=true` permits source review requests to a
+different, previously uncontacted reviewer after two business days without
+activity following a personal review request. Snapshot collection continues.
+Both senders read the fork variables again before each GitHub write. If the
+credential cannot verify the policy, it cannot post.
+
 The work map checks open gVisor PRs authored by Tamir. After five Pacific
 business days without a source change or human discussion, it looks for an
 active reviewer who has reviewed the affected code or maintains that area.

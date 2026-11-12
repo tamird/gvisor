@@ -2034,6 +2034,22 @@ class ProviderStatusTest(unittest.TestCase):
         self.assertIn("description", updater.CHECKS.split("... on StatusContext", 1)[1])
 
 
+class PostingModeTest(unittest.TestCase):
+    def test_direct_post_cannot_bypass_a_pause_or_unreadable_switch(self):
+        for sender in (updater.reapproval_reminders, updater.review_outreach):
+            with mock.patch.object(updater, "fetch_maintainers") as inventory:
+                for mode in ("paused", "unknown"):
+                    with mock.patch.object(updater, "live_posting_mode", return_value=mode):
+                        sender(post=True)
+                with mock.patch.object(updater, "live_posting_mode", side_effect=subprocess.TimeoutExpired("gh", 30)):
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        sender(post=True)
+                inventory.assert_not_called()
+        with mock.patch.object(updater, "live_posting_mode", return_value="rotations"), mock.patch.object(updater, "fetch_maintainers") as inventory:
+            updater.reapproval_reminders(post=True)
+            inventory.assert_not_called()
+
+
 class ReapprovalReminderTest(unittest.TestCase):
 
     def test_twice_rebased_export_reminder(self):
@@ -2089,6 +2105,8 @@ class ReapprovalReminderTest(unittest.TestCase):
                 self.assertIn("#16879", closed["body"])
 
     def setUp(self) -> None:
+        self.enterContext(mock.patch.object(updater, "live_posting_mode", return_value="all"))
+        self.enterContext(mock.patch.object(updater, "snapshot_posting_mode", return_value="all"))
         self.maintainers = frozenset({"maintainer", "another-maintainer", "nybidari", "aaltinaydev"})
         self.now = datetime(2026, 10, 22, 16, 30, tzinfo=timezone.utc)
         self.raw = raw_pr(7, head=8)

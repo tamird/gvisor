@@ -11,6 +11,7 @@ import outreach_delivery as delivery
 
 class ReviewDeliveryTest(unittest.TestCase):
     def setUp(self):
+        self.mode = self.enterContext(patch.object(delivery, "live_posting_mode", return_value="all"))
         self.number = 123
         self.key = f"123:{'a' * 40}:reviewer"
         self.versions = {"head": "a" * 40, "base": "b" * 40}
@@ -30,6 +31,38 @@ class ReviewDeliveryTest(unittest.TestCase):
 
     def send(self):
         return delivery.send_one(self.action, self.live, "tamird", self.registry_oid)
+
+    def test_only_fresh_source_rotations_may_write_during_a_pause(self):
+        self.mode.return_value = "rotations"
+        for channel in ("request", "comment"):
+            self.action.update(channel=channel, sourceRotation=True)
+            for stale in ({"sourceRotation": False}, {"kind": "import-status"}, {}):
+                fresh = {**self.action, **stale}
+                if not stale:
+                    fresh.pop("sourceRotation")
+                self.live.return_value = fresh
+                self.assertEqual(self.send()["status"], "held")
+                self.api.assert_not_called()
+        self.action["channel"] = "request"
+        self.live.side_effect = [self.action, {**self.action, "sourceRotation": False}]
+        self.api.side_effect = [delivery.GitHubError(403, "Forbidden"), {"users": []}]
+        self.assertEqual(self.send()["status"], "held")
+        self.assertEqual(self.api.call_count, 2)
+
+    def test_native_and_mention_follow_fresh_rotation_only(self):
+        self.mode.return_value = "rotations"
+        self.action["sourceRotation"] = True
+        self.live.return_value = self.action
+        self.api.side_effect = [{}, {"users": [{"login": "reviewer"}]}]
+        self.assertEqual(self.send()["status"], "requested")
+        self.action["channel"] = "comment"
+        self.api.side_effect = [{"id": 456}, self.receipt]
+        self.assertEqual(self.send()["status"], "commented")
+        self.api.reset_mock()
+        self.mode.side_effect = subprocess.CalledProcessError(1, "gh")
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.send()
+        self.api.assert_not_called()
 
     def test_confirm_native_request(self):
         self.api.side_effect = [{}, {"users": [{"login": "Reviewer"}]}]
@@ -136,6 +169,15 @@ class ReviewDeliveryTest(unittest.TestCase):
 
 
 class GitHubStatusTest(unittest.TestCase):
+    def test_fork_switches_are_read_fresh_even_with_a_conflicting_environment(self):
+        with patch.dict(delivery.os.environ, {"WORK_MAP_POSTING_PAUSED": "false"}), patch("subprocess.run") as run:
+            for paused, rotations, expected in (("false", "true", "all"), ("true", "true", "rotations"),
+                                               ("true", "false", "paused"), ("true", "", "paused"),
+                                               ("", "true", "unknown"), ("bad", "true", "unknown")):
+                run.return_value.stdout = f"WORK_MAP_POSTING_PAUSED\t{paused}\nWORK_MAP_REVIEW_ROTATIONS_ENABLED\t{rotations}\n"
+                self.assertEqual(delivery.live_posting_mode(), expected)
+                self.assertIn("repos/tamird/gvisor/actions/variables?per_page=100", run.call_args.args[0])
+
     @patch("subprocess.run")
     def test_secondary_limit_with_generic_forbidden_status(self, run):
         run.return_value = subprocess.CompletedProcess([], 1,

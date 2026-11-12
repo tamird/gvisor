@@ -162,6 +162,30 @@ class OutreachTest(unittest.TestCase):
         p["headRebasedFrom"] = "c" * 40
         self.assertEqual(action(p, node={"outreachReviewClock": proof})["status"], "waiting")
 
+    def test_rotation_requires_a_source_request_and_an_uncontacted_reviewer(self):
+        p = pr()
+        p["reviewTimeline"]["items"] = [ask("alice", "2026-11-03T18:00:00Z")]
+        row = action(p, rotations_only=True)
+        self.assertEqual((row["sourceRotation"], row["reviewer"]), (True, "bob"))
+        p["feedback"]["items"] = [comment("alice", "Testing passed", "2026-11-04T18:00:00Z")]
+        self.assertNotIn("sourceRotation", action(p, rotations_only=True))
+        p["feedback"]["items"] = []
+        p["reviewTimeline"]["items"][0]["actor"]["__typename"] = "Bot"
+        self.assertNotIn("sourceRotation", action(p, rotations_only=True))
+        p["reviewTimeline"]["items"] = []
+        marker = f"<!-- gvisor-review-outreach 1:{HEAD}:alice -->"
+        p["feedback"]["items"] = [comment("tamird", "@alice, could you review the internal CL? " + marker,
+                                           "2026-11-03T18:00:00Z")]
+        self.assertNotIn("sourceRotation", action(p, rotations_only=True))
+        p["feedback"]["items"] = [comment("tamird", "@alice, could you review the Go import data handling?",
+                                           "2026-11-03T18:00:00Z")]
+        self.assertTrue(action(p, rotations_only=True)["sourceRotation"])
+        p["feedback"]["items"].append(comment("alice", "@bob, please review those changes", START))
+        self.assertEqual(action(p, rotations_only=True)["status"], "needs-reviewer")
+        p["feedback"]["items"].pop()
+        p["reviewTimeline"]["items"] = [ask("alice", "2026-11-05T18:00:00Z"), ask("bob", OLD, bot=True)]
+        self.assertEqual(action(p, rotations_only=True)["status"], "needs-reviewer")
+
     def test_recent_personal_contact_and_rotation(self):
         url = "https://github.com/google/gvisor/pull/1#issuecomment-123"
         for channel in ("request", "comment"):
