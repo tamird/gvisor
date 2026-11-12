@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T03:03:09+00:00",
+    "updatedAt": "2026-11-12T03:27:32+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97220,7 +97220,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-11T14:38:33+00:00",
+      "updatedAt": "2026-11-12T03:27:32+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -97524,6 +97524,15 @@
             {
               "label": "Original server observations",
               "url": "https://github.com/tamird/gvisor/actions/runs/42533671518/artifacts/13639230782"
+            }
+          ]
+        },
+        {
+          "text": "A kernfs cursor kept pointing to its second member when the callback preserved the read lock. After the callback unlocked, removed the current member and relocked, the saved cursor returned nil while a new walk reached the second member. A pointer into the semaphore’s fixed slice survived the same unlock/relock and read the new value 17. Nogo on AMD64 and ARM64 missed the stale kernfs uses through direct and helper calls. It separately reported the artificial callback’s unmet entry-lock requirement.",
+          "evidence": [
+            {
+              "label": "Native cursor and semaphore controls, plus both Linux analyzer outputs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43145041295/artifacts/13910989588"
             }
           ]
         }
@@ -101711,7 +101720,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T03:03:09+00:00",
+      "updatedAt": "2026-11-12T03:27:32+00:00",
       "summary": "Six syscall shards across four builds finished their guest tests, then failed on a watchdog warning emitted during startup. Their Sentry stacks show waits at three points in lisafs. The earlier UDP loopback failure waited for the fourth channel reply.",
       "findings": [
         {
@@ -101779,7 +101788,7 @@
           ]
         }
       ],
-      "nextStep": "Capture the gofer stack and thread scheduling during the minute-long delay. Correlate it with the Sentry’s outstanding channel request, flipcall connection or Walk request.",
+      "nextStep": "Collect a runtime Go execution trace with runsc --trace and a per-container %CID% path under the syscall runner’s artifacts directory. The runtime writes a separate .gofer trace. Align the client wait with the gofer’s scheduling and blocked operations during a recurrence.",
       "evidence": [
         {
           "label": "Master commit 9832d5d69",
@@ -104809,7 +104818,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T03:03:09+00:00",
+      "updatedAt": "2026-11-12T03:27:32+00:00",
       "summary": "On KVM, TestCheckpointRestoreAdjustedTSC treated a sample written after restore as a new measurement. The guest had already read its monotonic clock before checkpoint. The next sample showed the expected TSC increase.",
       "findings": [
         {
@@ -104828,9 +104837,22 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54574#01a1cd3d-3c88-42c9-b09c-4389aed3202d"
             }
           ]
+        },
+        {
+          "text": "On native Linux KVM the host held measurements 2 and 4 across their respective checkpoints. Stock failed the first offset check by 9,862,509,185 cycles. The correction passed the same forced interleaving and the ordinary test. Omitting the offset still failed the corrected check by 9,241,884,500 cycles. Each test reported all 30 readings.",
+          "evidence": [
+            {
+              "label": "Four KVM controls with original Bazel logs and XML",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43146220995/artifacts/13912830656"
+            },
+            {
+              "label": "Single-commit correction",
+              "url": "https://github.com/tamird/gvisor/commit/3958a8ef4"
+            }
+          ]
         }
       ],
-      "nextStep": "Synchronize a complete guest sampling iteration with each host restore. Exercise a pre-checkpoint measurement written after restore, and keep the monotonicity and offset checks for measurements taken after restore.",
+      "nextStep": "The contributor can review the single-commit test correction for submission to gVisor.",
       "evidence": [
         {
           "label": "Guest measurement and write",
@@ -104840,7 +104862,18 @@
           "label": "Host selection of the first post-restore sample",
           "url": "https://github.com/google/gvisor/blob/2f5253abf/runsc/container/container_save_restore_test.go#L2573-L2589"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "requestedAt": "2026-11-12T03:27:32+00:00",
+        "head": "3958a8ef4bd8d933bb68f7bdae8a5d55e98926aa",
+        "baseHead": "2f5253abfaa87b6d62d79a0da60942e773389934",
+        "url": "https://github.com/tamird/gvisor/commit/3958a8ef4",
+        "title": "Check TSC samples taken after restore",
+        "body": "The guest can read its clocks before checkpoint and write the result after restore. In the KVM failure, the guest sampled its monotonic clock before checkpoint and reported that value after restore. The test used this line to check the TSC offset [1].\n\nWait for two new readings before the next checkpoint. The guest writes each reading before sampling again, so the second one was taken after restore. Keep the monotonicity checks on every reading.\n\nThe original test failed when the guest was held between sampling and writing. The revised test passed both the forced interleaving and an ordinary KVM run, and still failed when the injected offset was omitted [2].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54574/jobs/01a1cd33-cec7-42d6-8656-408406593c90/artifacts/01a1cd3b-9208-422a-82d0-6221dbfb7bbd\n[2]: https://github.com/tamird/gvisor/actions/runs/43146220995/artifacts/13912830656\n\nFixes: d5f2e7f30 (\"runsc: Add test for VDSO time reading with adjusted TSC.\")\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Open the tested KVM clock correction against gVisor?"
+      }
     },
     {
       "id": "investigation:hermetic-llvm-bootstrap-stages",
