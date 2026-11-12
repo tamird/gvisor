@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T08:11:59+00:00",
+    "updatedAt": "2026-11-12T08:32:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -80158,8 +80158,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T07:53:21+00:00",
-      "summary": "The original reporter’s stall has a tested repair. In a separate 40-segment flight, shifting two selectively acknowledged segments from the middle to the end changed the first recovery response on gVisor #16495 from one retransmission to 31. Linux retransmitted four in both cases.",
+      "updatedAt": "2026-11-12T08:32:13+00:00",
+      "summary": "The original reporter’s stall has a tested repair. In a separate 40-segment test, gVisor #16495 sent one or 31 repairs on the first ACK depending on the SACK layout. With ascending SACK traversal and #15432’s flight accounting, it sent 31 repairs in both layouts. Linux sent four in each.",
       "findings": [
         {
           "text": "The first packet comparison stopped before it could send either experimental SACK. During warm-up Linux reached windows of 8 and 15 packets at 536 bytes per segment. gVisor reached 4 on both sockets at 500 bytes per segment. Both passed the existing RACK/SACK control. These runs leave open how Linux handles the 290 repeated ACKs observed on #16495.",
@@ -80171,7 +80171,7 @@
           ]
         },
         {
-          "text": "At #16495, one sender paused new data for 32.85 s. For 290 consecutive ACKs before the first timeout, it counted 131 packets in flight against a window of 132. Repairing the oldest hole used its last slot. The receiver had missed 131 packets near the end of the flight and SACKed one later packet. Two runs without the ACK observer showed the same pattern on the wire. Linux has not been measured with this loss pattern.",
+          "text": "At #16495, one sender paused new data for 32.85 s. For 290 consecutive ACKs before the first timeout, it counted 131 packets in flight against a window of 132. Repairing the oldest hole used its last slot. The receiver had missed 131 packets near the end of the flight and SACKed one later packet. Two runs without the ACK observer showed the same pattern on the wire. The 131 missing originals totaled 178,148 bytes. On the competing Linux flow the longest consecutive loss was 20 originals. The maximum was 43 across all 672,024 originals in the 16 Linux captures. These captures contain no Linux example of the 131-packet loss.",
           "evidence": [
             {
               "label": "Sender decisions and packet captures at both ends",
@@ -82330,9 +82330,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43176759322/artifacts/13924741825"
             }
           ]
+        },
+        {
+          "text": "On #16495 the first ACK credited one or three of the four SACKed segments. Walking the SACK blocks in ascending order as in #15634 credited all four and RACK marked all 36 missing originals lost in both layouts. After the mandatory retransmission, the sender still counted 31 or one in flight against a congestion window of 31. Adding #15432’s flight accounting excluded 30 RACK-marked segments in the one-at-the-end case. Both senders then counted one in flight. In each capture the first ACK triggered 31 retransmissions (16,616 bytes) and zero new bytes. The next ACK triggered the last five repairs and all 2,144 queued bytes, 34.04 and 34.03 ms after the first ACK. Both receivers acknowledged all 44 segments without a timeout. Linux’s first response was four repairs (2,144 bytes) in both layouts.",
+          "evidence": [
+            {
+              "label": "First ACK on #16495 and with ascending SACK traversal",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43180033449/artifacts/13926227309"
+            },
+            {
+              "label": "Combined RACK and SACK changes, sender counters and captures for both flights",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43182431138/artifacts/13926469853"
+            },
+            {
+              "label": "Native Linux packet captures, socket samples and send-buffer control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43176759322/artifacts/13924741825"
+            }
+          ]
         }
       ],
-      "nextStep": "On the first ACK, compare which segments gVisor credits as received and marks lost, and how many of those it still counts in flight. Replay both SACK layouts with the ascending range traversal from #15634 and calculate the flight count proposed in #15432 on the identical sender state. The larger 131-hole transfer still needs a matched Linux trace.",
+      "nextStep": "Compare how each sender paces repairs after it marks the same segments lost. For the larger shared-queue stall, a matched Linux control would need 131 consecutive missing originals followed by one delivered segment. The 16 available Linux captures reached at most 43.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -82829,6 +82846,14 @@
         {
           "label": "Native Linux packet captures, socket samples and send-buffer control",
           "url": "https://github.com/tamird/gvisor/actions/runs/43176759322/artifacts/13924741825"
+        },
+        {
+          "label": "First ACK on #16495 and with ascending SACK traversal",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43180033449/artifacts/13926227309"
+        },
+        {
+          "label": "Combined RACK and SACK changes, sender counters and captures for both flights",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43182431138/artifacts/13926469853"
         }
       ],
       "comparisons": [
@@ -101751,8 +101776,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T11:11:00+00:00",
-      "summary": "TestSystemdMultiUser timed out waiting for Bob’s user@1002.service on Buildkite. On a four-CPU AMD64 systrap worker, the same deadline also expired waiting for Alice’s user@1001.service.",
+      "updatedAt": "2026-11-12T08:32:13+00:00",
+      "summary": "TestSystemdMultiUser has timed out waiting for both Bob’s and Alice’s systemd user managers on Buildkite. An isolated AMD64 systrap run also timed out waiting for Alice.",
       "findings": [
         {
           "text": "On ARM64 build 54383 for #17433, Bob’s PAM session opened and the startup log ended after the libbpf warning. The job passed on retry on the same head. Healthy trials also emitted the warning.",
@@ -101822,9 +101847,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42950256234/artifacts/13826291267"
             }
           ]
+        },
+        {
+          "text": "In ARM64 build #54645 on export #17518 at 6b7ec45ae, Alice’s user@1001.service was still activating after PAM opened her session. TestSystemdMultiUser timed out at systemd_test.go:914 after 70.35 s. This is the first recorded public CI example affecting Alice. The same-head retry reran all five targets and the integration runtime test passed in 31.1 s. The original journal does not identify the pending unit.",
+          "evidence": [
+            {
+              "label": "ARM64 test.log with Alice’s manager still activating",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54645/jobs/01a1cebe-7369-446f-8fd0-e0fc7aabee7b/artifacts/01a1cecb-f22a-4c1e-8ba7-d6f5d46afac8"
+            },
+            {
+              "label": "Same-head ARM64 retry passed the integration test",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54645#01a1cecc-a136-4e7b-91e2-81171885520a"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture the user-scoped pending unit, journal and process wait state of both managers when the original CI readiness check times out. The earlier isolated timeout affected Alice and the field failures affected Bob.",
+      "nextStep": "Capture the pending user-scoped unit, journal and process wait state of both managers when CI’s readiness check times out. Alice’s PAM session had already opened in the ARM64 failure.",
       "evidence": [
         {
           "label": "ARM64 failed-job artifact on #17433",
@@ -101853,6 +101891,14 @@
         {
           "label": "gVisor #14716",
           "url": "https://github.com/google/gvisor/pull/14716"
+        },
+        {
+          "label": "ARM64 test.log with Alice’s manager still activating",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54645/jobs/01a1cebe-7369-446f-8fd0-e0fc7aabee7b/artifacts/01a1cecb-f22a-4c1e-8ba7-d6f5d46afac8"
+        },
+        {
+          "label": "Same-head ARM64 retry passed the integration test",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54645#01a1cecc-a136-4e7b-91e2-81171885520a"
         }
       ]
     },
@@ -105114,7 +105160,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T00:28:53+00:00",
+      "updatedAt": "2026-11-12T08:32:13+00:00",
       "summary": "The native runc Ruby benchmark failed while creating its FUSE server on 3238f32db. The helper could see both tmpfs mounts but could not see the host FUSE device.",
       "findings": [
         {
@@ -105138,6 +105184,31 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43105062304/artifacts/13893973900"
             }
           ]
+        },
+        {
+          "text": "On master 79c4fcfce (#54624) and f5828756d (#54629), the native runc ABSL case and four Ruby FUSE cases each stopped at helper setup with ENOENT. All ten cases recorded timings under both runsc KVM and systrap. Native variants without FUSE recorded 30 timings in total. On #54629 the original Ruby job stopped before runc. Its retry reached runc and recorded the four FUSE setup failures. These jobs did not probe the device path inside the helper.",
+          "evidence": [
+            {
+              "label": "Master #54624, ABSL benchmark retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54624#01a1ce68-df99-43e4-925f-6a619ab8e538"
+            },
+            {
+              "label": "Master #54624, Ruby benchmark",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54624#01a1ce54-ddb0-4e7d-afee-3b9fe1cdcb92"
+            },
+            {
+              "label": "Master #54629, ABSL benchmark",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce66-e508-4f34-8eb7-3956f0e5cedd"
+            },
+            {
+              "label": "Master #54629, original Ruby job stopped before runc",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce66-e50c-45e1-a620-fb5ff7c1bc7b"
+            },
+            {
+              "label": "Master #54629, Ruby benchmark retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce79-117b-4cce-bb69-3907e917cf04"
+            }
+          ]
         }
       ],
       "nextStep": "Check whether passing the FUSE device to the native benchmark container is sufficient for the existing helper to mount, run the benchmark and clean up.",
@@ -105157,6 +105228,26 @@
         {
           "label": "Build #54548, native ABSL FUSE benchmark",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54548#01a1cd07-d84d-4305-bd64-adfa4e895bef"
+        },
+        {
+          "label": "Master #54624, ABSL benchmark retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54624#01a1ce68-df99-43e4-925f-6a619ab8e538"
+        },
+        {
+          "label": "Master #54624, Ruby benchmark",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54624#01a1ce54-ddb0-4e7d-afee-3b9fe1cdcb92"
+        },
+        {
+          "label": "Master #54629, ABSL benchmark",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce66-e508-4f34-8eb7-3956f0e5cedd"
+        },
+        {
+          "label": "Master #54629, original Ruby job stopped before runc",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce66-e50c-45e1-a620-fb5ff7c1bc7b"
+        },
+        {
+          "label": "Master #54629, Ruby benchmark retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce79-117b-4cce-bb69-3907e917cf04"
         }
       ]
     },
@@ -106046,5 +106137,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-12T08:11:59+00:00"
+  "updatedAt": "2026-11-12T08:32:13+00:00"
 }
