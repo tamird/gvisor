@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T07:25:07+00:00",
+    "updatedAt": "2026-11-12T07:53:21+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -80074,8 +80074,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T07:15:37+00:00",
-      "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
+      "updatedAt": "2026-11-12T07:53:21+00:00",
+      "summary": "The original reporter’s stall has a tested repair. In a separate 40-segment flight, shifting two selectively acknowledged segments from the middle to the end changed the first recovery response on gVisor #16495 from one retransmission to 31. Linux retransmitted four in both cases.",
       "findings": [
         {
           "text": "The first packet comparison stopped before it could send either experimental SACK. During warm-up Linux reached windows of 8 and 15 packets at 536 bytes per segment. gVisor reached 4 on both sockets at 500 bytes per segment. Both passed the existing RACK/SACK control. These runs leave open how Linux handles the 290 repeated ACKs observed on #16495.",
@@ -82233,9 +82233,22 @@
               "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
+        },
+        {
+          "text": "Both CUBIC senders had 40 segments of 536 bytes in flight, four queued and four selectively acknowledged. Moving two of the acknowledged segments from the middle to the end changed gVisor #16495 from one repair per ACK with no new data through 161 ms to 31 repairs on the first ACK and all four queued segments sent by 35 ms. Linux 7.0 marked 36 segments lost and sent 4, 5, 6, 7 and 8 repairs on the first five ACKs in both cases. New data appeared at 163 and 161 ms. Neither sender reached a retransmission timeout. Native Linux needed a larger send buffer to stage the same flight. Its effective SO_SNDBUF rose from 46,080 to 524,288 bytes.",
+          "evidence": [
+            {
+              "label": "gVisor #16495, first-flight packet captures and socket samples",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43174728892/artifacts/13924710072"
+            },
+            {
+              "label": "Native Linux packet captures, socket samples and send-buffer control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43176759322/artifacts/13924741825"
+            }
+          ]
         }
       ],
-      "nextStep": "Match the segment size and grow the congestion window on both senders without eliciting a warm-up retransmission. Then compare the packets sent after one or three segments beyond the last hole are selectively acknowledged.",
+      "nextStep": "On the first ACK, compare which segments gVisor credits as received and marks lost, and how many of those it still counts in flight. Replay both SACK layouts with the ascending range traversal from #15634 and calculate the flight count proposed in #15432 on the identical sender state. The larger 131-hole transfer still needs a matched Linux trace.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -82724,6 +82737,14 @@
         {
           "label": "Matched Linux and #16495 packet test, one or three SACKed segments beyond the last hole",
           "url": "https://github.com/tamird/gvisor/actions/runs/43169213472"
+        },
+        {
+          "label": "gVisor #16495, first-flight packet captures and socket samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43174728892/artifacts/13924710072"
+        },
+        {
+          "label": "Native Linux packet captures, socket samples and send-buffer control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43176759322/artifacts/13924741825"
         }
       ],
       "comparisons": [
@@ -105928,5 +105949,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-12T07:25:07+00:00"
+  "updatedAt": "2026-11-12T07:53:21+00:00"
 }
