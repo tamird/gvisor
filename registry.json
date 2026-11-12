@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T19:40:14+00:00",
+    "updatedAt": "2026-11-12T20:04:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25497,20 +25497,20 @@
       "id": "branch:rules-img-rust",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-rust-protobuf37-review",
-      "head": "4b21538bf21567c09e57a36c9749ff25b7332669",
+      "ref": "proposal/rules-img-rust-released-notice",
+      "head": "795ae79af8e45ae42f964148e4e5e1fc5b4bb1e2",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/4b21538bf",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-12T19:38:25+00:00",
-      "summary": "The stock checker verified all 224 entries after adding rules_rs 0.1.3. Removing its entry failed verification; Fetch recovered the pinned archive and Apache-2.0 license without changing another row. The Rust image still waits for the declared compiler and the Protobuf producer lockfiles in #16254.\n\nTwo source links in the local rules_rs patch use the verified nine-character revision. The patch hunks, catalog and prior approval are unchanged.\n\nBCR rules_rs 0.2.2 was the first release to include the upstream notice export ef65be177. The latest release, 0.2.4, also includes it. The approved image still pins 0.1.3. Test it with the packaged public notice and remove the local patch. The declared compiler and Protobuf producer lockfiles remain prerequisites.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nApproved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
+      "url": "https://github.com/tamird/gvisor/commit/795ae79af",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-12T20:04:13+00:00",
+      "summary": "The Rust image builds with Bazel and packages a static executable for Linux AMD64 and ARM64. rules_rs 0.2.4 now exports the standard-library notice used by the image. That removes the 46-line patch from the previously approved 0.1.3 version.\n\nThe image foundations and Linux headers landed in #16307 and #16236. The declared C/C++ compiler and the Protobuf producer lockfiles in #16254 remain prerequisites.\n\nLocal Bazel 8.8.1 on macOS cross-compiled both Linux images. Each OCI archive matched the approved patched 0.1.3 build and the 0.2.2 build byte for byte (AMD64 47b287c2a, ARM64 cbf7a433a). Each image contains the Rust 1.99.1 standard-library notice, 1,499,465 bytes with SHA-256 starting 5647be074. Runtime execution on Linux was outside this comparison.\n\nThe compiler integration 405b9a9b4 plus the three release changes passed Verify for all 224 license entries under Bazel 8.8.1 and 9.3.1. The stock license verifier reported the same three errors on the approved source and on this revision. They concern CC-BY-SA-4.0 in go-digest and NCSA in kythe_release and llvm-raw.",
       "followup": {
         "owner": "root",
-        "sourceHead": "4b21538bf21567c09e57a36c9749ff25b7332669",
-        "observedAt": "2026-11-12T19:38:25+00:00",
-        "disposition": "BCR release includes the public Rust notice",
-        "nextAction": "Test the Rust image with rules_rs 0.2.4 and its public notice, then remove the local patch. The compiler and #16254 remain prerequisites for submitting the image.",
+        "sourceHead": "795ae79af8e45ae42f964148e4e5e1fc5b4bb1e2",
+        "observedAt": "2026-11-12T19:57:09+00:00",
+        "disposition": "Released rules_rs supplies its standard-library notice",
+        "nextAction": "Review the dependency change from patched 0.1.3 to released 0.2.4. The compiler and #16254 remain prerequisites for opening the PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42249934608/artifacts/13521150238",
           "https://github.com/hermeticbuild/rules_rs/pull/333",
@@ -25526,6 +25526,18 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Previous image with patched rules_rs 0.1.3",
+          "url": "https://github.com/tamird/gvisor/commit/4b21538bf"
+        },
+        {
+          "label": "First release with the public Rust notice",
+          "url": "https://registry.bazel.build/modules/rules_rs/0.2.2"
+        },
+        {
+          "label": "Compiler integration used for the 224-entry catalog check",
+          "url": "https://github.com/tamird/gvisor/commit/405b9a9b4"
+        },
         {
           "label": "Upstream Rust notice export",
           "url": "https://github.com/hermeticbuild/rules_rs/commit/ef65be177"
@@ -25623,11 +25635,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26"
+          "head": "4b21538bf21567c09e57a36c9749ff25b7332669"
         },
         "after": {
-          "head": "4b21538bf21567c09e57a36c9749ff25b7332669"
+          "head": "795ae79af8e45ae42f964148e4e5e1fc5b4bb1e2"
         }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "795ae79af8e45ae42f964148e4e5e1fc5b4bb1e2",
+        "baseHead": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
+        "url": "https://github.com/tamird/gvisor/commit/795ae79af",
+        "title": "Build the Rust image with rules_img and rules_rs",
+        "body": "Build the Rust example with declared, pinned toolchains so compilation\ncan run as a remote Bazel action. Package its static executable in a\nscratch image containing no compiler or build environment.\n\nUse rules_rs toolchains and keep execution-host selection separate from\nthe Linux musl image targets. Preserve the command and working\ndirectory, select musl for ordinary Make builds, and provide a combined\nAMD64/ARM64 image target. Keep C++ runtime libraries out of the\npure-Rust executable.\n\nPackage the standard-library notice from the selected Rust distribution\nthrough the public rules_rs toolchain target [1]. Include the native\nruntime notices and record the dependencies and their license terms.\n\nGroup go_deps declarations before use_repo so Buildifier, run by\ntools/lint.sh in make lint, and bazel mod tidy agree on MODULE.bazel\nformatting.\n\n[1]: https://github.com/hermeticbuild/rules_rs/commit/ef65be177",
+        "summary": "Use released rules_rs 0.2.4 after the compiler and #16254 land? It removes the local 46-line patch. The complete AMD64 and ARM64 Linux images, including both notice files, each matched the approved build byte for byte. The compiler integration’s license verifier accepted all 224 entries under Bazel 8.8.1 and 9.3.1.",
+        "requestedAt": "2026-11-12T19:57:09+00:00"
       }
     },
     {
@@ -78871,11 +78894,10 @@
     {
       "from": "pr:16097",
       "to": "branch:rules-img-rust",
-      "type": "depends_on",
-      "reason": "Satisfied foundation: #16097 closed in favor of merged Copybara import #16307 (c3e0783a). This historical source edge is not a remaining delivery gate. Any separate context exports, license, compiler or registry prerequisites remain independent.",
+      "type": "includes",
+      "reason": "The Rust image uses the basic-image targets that landed through import #16307 on October 24.",
       "evidence": [
-        "https://github.com/google/gvisor/pull/16307",
-        "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+        "https://github.com/google/gvisor/pull/16307"
       ]
     },
     {
@@ -78888,9 +78910,11 @@
     {
       "from": "pr:16236",
       "to": "branch:rules-img-rust",
-      "type": "depends_on",
-      "reason": "Qualified together with the declared compiler and current Linux header composition.",
-      "evidence": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+      "type": "includes",
+      "reason": "The Linux UAPI header selection used by the Rust image landed on October 28.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16236"
+      ]
     },
     {
       "from": "branch:rules-img-scratch-leaf-images",
@@ -101071,7 +101095,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-12T19:38:25+00:00",
+      "updatedAt": "2026-11-12T19:53:38+00:00",
       "lastReviewedAt": "2026-11-12T17:46:22.845465+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -101512,7 +101536,7 @@
           ]
         },
         {
-          "text": "The November 12 audit covered 364 active gVisor work-map revisions and 72 distinct patch files by content. #17114 now cites both landed hermetic-llvm commits. #16663 now cites the landed Buildifier commit. For the Rust image, BCR already includes the upstream notice export; test dropping that patch. wrk2’s upstream change is still open. The Node SNI patch that cites a merged PR appears only in two older integration branches.",
+          "text": "The November 12 audit covered 364 active gVisor work-map revisions and 72 distinct patch files by content. #17114 now cites both landed hermetic-llvm commits. #16663 now cites the landed Buildifier commit. The revised Rust image uses the released notice export and drops its local backport. wrk2’s upstream change is still open. The Node SNI patch that cites a merged PR appears only in two older integration branches.",
           "evidence": [
             {
               "label": "NVIDIA parser amendment",
@@ -101545,6 +101569,10 @@
             {
               "label": "Landed Node SNI change",
               "url": "https://github.com/nodejs/node/commit/727e0cac7"
+            },
+            {
+              "label": "Rust image using the released notice",
+              "url": "https://github.com/tamird/gvisor/commit/795ae79af"
             }
           ]
         }
@@ -104361,7 +104389,7 @@
       "title": "Docker-in-Docker commands outlive their exec deadline",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T19:22:51+00:00",
+      "updatedAt": "2026-11-12T20:04:13+00:00",
       "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected. AMD64 VFS also reached the 900-second deadline on both KVM and systrap in build 54543.",
       "findings": [
         {
@@ -104485,6 +104513,23 @@
             {
               "label": "Passing retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54706#01a1d11d-086a-4dc0-85f4-a7d8ee4e7761"
+            }
+          ]
+        },
+        {
+          "text": "Build 54721 reached the 15-minute deadline in Process.Logs for a privileged nested Docker bridge command. The same shard passed on retry. Build 54719 separately reached the 15-minute deadline in the nonprivileged overlay case.",
+          "evidence": [
+            {
+              "label": "Privileged bridge timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54721#01a1d134-c3ad-41ed-a335-1c2bc1a34b80"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54721#01a1d14b-832c-49a5-9215-bed5b386563f"
+            },
+            {
+              "label": "Nonprivileged overlay timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54719#01a1d130-4eda-4a05-8e2f-390ff9490fce"
             }
           ]
         }
@@ -105190,7 +105235,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "Contributor",
-      "updatedAt": "2026-11-11T14:48:06+00:00",
+      "updatedAt": "2026-11-12T20:04:13+00:00",
       "summary": "Five AMD64 job failures on four commits stopped during crictl runp. Four reported RunPodSandbox DeadlineExceeded with RST_STREAM CANCEL. Containerd 2.0.8 reported context deadline exceeded. All five targets passed on their direct same-commit retries.",
       "findings": [
         {
@@ -105358,6 +105403,19 @@
             {
               "label": "Native ARM64 OCI archive and executable verification",
               "url": "https://github.com/tamird/gvisor/actions/runs/43035569499/artifacts/13863147216"
+            }
+          ]
+        },
+        {
+          "text": "Build 54725 hit the RunPodSandbox deadline in containerd 2.0.8 TestCrictlSanity/enableGrouping. The same shard passed on retry.",
+          "evidence": [
+            {
+              "label": "Containerd 2.0.8 RunPodSandbox deadline",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54725#01a1d13f-90d7-4d72-9d29-765b97d635c7"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54725#01a1d14a-413d-4834-9f21-30d3c97db9d8"
             }
           ]
         }
@@ -107940,7 +107998,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T18:09:55+00:00",
+      "updatedAt": "2026-11-12T20:04:13+00:00",
       "summary": "The IPv6 subcase of TestFilterInputDropDifferentUDPPort timed out before installing any iptables rule or sending a packet.",
       "findings": [
         {
@@ -107953,6 +108011,19 @@
             {
               "label": "Same-head retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54696#01a1d0e4-bb64-4015-a3aa-54d3568af899"
+            }
+          ]
+        },
+        {
+          "text": "The IPv4 TestFilterOutputInvertUIDAndGIDOwner case timed out in Docker’s create operation after ten seconds. The retry passed.",
+          "evidence": [
+            {
+              "label": "IPv4 Docker create deadline",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54727#01a1d144-70e1-4a51-a669-7d317cff0374"
+            },
+            {
+              "label": "Passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54727#01a1d14d-80af-48a5-ace2-3377b1f482e1"
             }
           ]
         }
@@ -108135,6 +108206,49 @@
         {
           "label": "Earlier error-serdes timeout",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd0b-b9e6-4ca1-899c-edfd23122fcf"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-native-coarse-monotonic-clock",
+      "title": "Native Linux’s coarse monotonic clock went backward by 85 ns",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T20:04:13+00:00",
+      "summary": "On native AMD64 Linux, clock_gettime(CLOCK_MONOTONIC_COARSE) returned 584.206975730 s immediately after 584.206975815 s. The same shard passed on retry.",
+      "findings": [
+        {
+          "text": "The failing target was clock_gettime_test_native. The test compares adjacent libc clock_gettime readings and uses a separate clock to bound the loop. The log omits CPU IDs, the kernel clocksource and the libc call path.",
+          "evidence": [
+            {
+              "label": "Backward clock read in the original native shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54723#01a1d136-4ec9-48ae-9d98-4beb40bfd163"
+            },
+            {
+              "label": "Passing retry of the same shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54723#01a1d149-ad84-41c1-9072-213752570fa4"
+            },
+            {
+              "label": "Comparison of adjacent clock_gettime readings",
+              "url": "https://github.com/google/gvisor/blob/d4fac8b91/test/syscalls/linux/clock_gettime.cc#L112-L125"
+            }
+          ]
+        }
+      ],
+      "nextStep": "On the affected worker, record the kernel clocksource and CPU for both reads. Compare the libc and raw syscall paths to see where the backward step first appears.",
+      "evidence": [
+        {
+          "label": "Backward clock read in the original native shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54723#01a1d136-4ec9-48ae-9d98-4beb40bfd163"
+        },
+        {
+          "label": "Passing retry of the same shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54723#01a1d149-ad84-41c1-9072-213752570fa4"
+        },
+        {
+          "label": "Comparison of adjacent clock_gettime readings",
+          "url": "https://github.com/google/gvisor/blob/d4fac8b91/test/syscalls/linux/clock_gettime.cc#L112-L125"
         }
       ]
     }
