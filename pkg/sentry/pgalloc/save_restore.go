@@ -111,6 +111,7 @@ func (f *MemoryFile) appendExactRefRanges(dst []*pgallocpb.UnfreeRangeProto, unf
 	appendRange := func(start, end, refs uint64) {
 		dst = append(dst, &pgallocpb.UnfreeRangeProto{Start: start, End: end, Refs: refs})
 	}
+	extra := f.extraRefs.FirstSegment()
 	for s := unfree.FirstSegment(); s.Ok(); s = s.NextSegment() {
 		baseRefs := s.Value().refs
 		if baseRefs == 0 {
@@ -122,7 +123,10 @@ func (f *MemoryFile) appendExactRefRanges(dst []*pgallocpb.UnfreeRangeProto, unf
 		}
 
 		pos := s.Start()
-		for extra := f.extraRefs.LowerBoundSegment(pos); pos < s.End(); {
+		for extra.Ok() && extra.End() <= pos {
+			extra = extra.NextSegment()
+		}
+		for pos < s.End() {
 			if !extra.Ok() || extra.Start() >= s.End() {
 				appendRange(pos, s.End(), 1)
 				break
@@ -141,7 +145,9 @@ func (f *MemoryFile) appendExactRefRanges(dst []*pgallocpb.UnfreeRangeProto, unf
 			}
 			appendRange(pos, end, 1+count)
 			pos = end
-			extra = extra.NextSegment()
+			if end == extra.End() {
+				extra = extra.NextSegment()
+			}
 		}
 	}
 	return dst
