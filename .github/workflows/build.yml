@@ -1,7 +1,7 @@
-name: Compare the ASan fission symbolizer compile and its module map
+name: Check complete caller arguments in the supplier C++ jobs
 on:
   push:
-    branches: [qualification/llvm-runtime-stage-symbolizer-map]
+    branches: [qualification/llvm-runtime-stage-fission-jobs]
 permissions:
   contents: read
 jobs:
@@ -12,15 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
-      - name: Check out the combined source including the original stage-sharing commit
+      - name: Check out the caller-configuration repair directly above PR 938
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/hermetic-llvm
-          ref: b253312fd2f6b047d8a70781c7623f6e2c1d4064
-          fetch-depth: 4
+          ref: 14ebf27eb3eead0d725f66c0ff1f0f484b20fa8c
+          fetch-depth: 2
           path: llvm
           persist-credentials: false
-      - name: Compile one LLVM Support object and inspect its header map
+      - name: Configure the existing remote executor
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -32,12 +32,11 @@ jobs:
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/sidecar.bazelrc"
-          unset BUILDBUDDY_API_KEY
-          cd llvm
-          python3 ../test/rbe/native_sidecars/compare_module_map.py
+      - name: Run the supplier's mapped test, unmapped build and ASan fission test
+        run: python3 test/rbe/native_sidecars/validate_fission_jobs.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: llvm-asan-fission-symbolizer-map
+          name: llvm-caller-configuration-fission-jobs
           path: ${{ runner.temp }}/sidecar-evidence
           if-no-files-found: error
