@@ -1,27 +1,26 @@
-name: Measure TCP recovery after one ACK
+name: Qualify TCP recovery before comparing shared-queue delivery
 on:
   push:
-    branches: [qualification/rack-recovery-ack-budget]
+    branches: [qualification/rack-prr-full-threshold-shared]
 permissions:
   contents: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 105
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         fetch-depth: 2
         persist-credentials: false
-    - name: Compare native and gVisor CUBIC with the same receiver feedback
+    - name: Qualify the complete threshold change and build measured senders
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = 841f3a2601f76eda5de7761f4ce7fdfdf9dd818e
-        git diff --quiet HEAD^ HEAD -- . ':(exclude).github/workflows/build.yml' ':(exclude)test/packetimpact/tests/tcp_rack_test.go'
+        test "$(git rev-parse HEAD^)" = 0ccb351638e1a53b35967474598afd0e71ddbf13
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
         platform=$RUNNER_TEMP/fifo_platform
         printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
@@ -47,7 +46,7 @@ jobs:
           printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
             'build --bes_backend=grpcs://remote.buildbuddy.io' \
             'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
-            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --spawn_strategy=processwrapper-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
             'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
             'build --remote_accept_cached' \
             "build --inject_repository=fifo_platform=$platform" \
@@ -58,49 +57,25 @@ jobs:
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } > "$rc"
         unset BUILDBUDDY_API_KEY
+
         if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         fi
-        test -x /sbin/iptables-nft
-        test -x /sbin/ip6tables-nft
-        test -x /usr/bin/x86_64-linux-gnu-gcc
-        mkdir -p "$RUNNER_TEMP/retained-tail"
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
-        export XTABLES_LOCKFILE=$RUNNER_TEMP/tail-xtables.lock
-        touch "$XTABLES_LOCKFILE"
-        out=$RUNNER_TEMP/retained-tail
-        uname -r > "$out/kernel"
-        cat /proc/sys/net/ipv4/tcp_recovery > "$out/linux-tcp-recovery"
-        git rev-parse HEAD HEAD^ > "$out/source"
-        rc_all=0
-        for label in tcp_rack_native_test tcp_rack_netstack_test; do
-          dest=$out/$label
-          mkdir "$dest"
-          bep=$RUNNER_TEMP/$label.jsonl
-          code=0
-          bazelisk --bazelrc="$rc" test --config=x86_64 --lockfile_mode=off --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
-            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
-            --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
-            --nocache_test_results --test_output=all --test_filter='^TestRACK(FeedbackBudget|WithSACK)$' --test_timeout=180 \
-            "--build_event_json_file=$bep" --build_event_json_file_path_conversion=false \
-            "//test/packetimpact/tests:$label" > "$RUNNER_TEMP/$label-build.log" 2>&1 || code=$?
-          echo "$code" > "$dest/exit"
-          sed -nE '/^(ERROR|FATAL)|SETUP sport=|FLIGHT base=|GEOMETRY|BUDGET case=|SO_SNDBUF=|--- (FAIL|PASS): TestRACK/p' "$RUNNER_TEMP/$label-build.log" | tail -30
-          root="bazel-testlogs/test/packetimpact/tests/$label"
-          if test -f "$root/test.log"; then cp "$root/test.log" "$dest/test.log"; fi
-          if test -f "$root/test.xml"; then cp "$root/test.xml" "$dest/test.xml"; fi
-          if test -d "$root/test.outputs"; then cp -RL "$root/test.outputs" "$dest/outputs"; fi
-          if ! jq -s '[.[] | select(.testResult != null) | .testResult | {status, cachedLocally, executionInfo: (.executionInfo | {strategy, cachedRemotely, exitCode})}]' "$bep" > "$dest/execution.json"; then rc_all=1; fi
-          if ! jq -e 'length == 1 and .[0].status == "PASSED" and (.[0].cachedLocally != true) and (.[0].executionInfo.cachedRemotely != true) and (.[0].executionInfo.strategy | . == "local" or . == "standalone")' "$dest/execution.json" > /dev/null; then rc_all=1; fi
-          if ! test "$code" = 0 || ! test -s "$dest/test.log" || ! test "$(grep -c 'GEOMETRY base=' "$dest/test.log")" = 6 || ! test "$(grep -c 'BUDGET case=.* phase=second ' "$dest/test.log")" = 6; then rc_all=1; fi
-          test -s "$dest/outputs/tcp_rack_test_tb-0-test.pcap" || rc_all=1
-        done
-        exit "$rc_all"
-    - name: Retain native and gVisor socket samples and packet captures
+        sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        bash test/benchmarks/tcp/qualify-senders.sh "$rc"
+    - name: Measure ordinary competing transfers on the shared queue
+      run: bash test/benchmarks/tcp/current-shared-driver.sh
+    - name: Reconcile receiver bytes with original sender and queue records
+      if: ${{ !cancelled() }}
+      run: |
+        if test -f "$RUNNER_TEMP/qualification/current-shared/completion.json"; then
+          python3 -B test/benchmarks/tcp/current-shared-report.py
+        fi
+    - name: Retain the original test and benchmark records
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: rack-recovery-ack-budget
-        path: ${{ runner.temp }}/retained-tail/
+        name: rack-prr-full-threshold-shared
+        path: ${{ runner.temp }}/tcp-public/
         if-no-files-found: error

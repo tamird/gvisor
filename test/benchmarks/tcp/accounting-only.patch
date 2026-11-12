@@ -1,0 +1,22 @@
+--- a/pkg/tcpip/transport/tcp/snd.go
++++ b/pkg/tcpip/transport/tcp/snd.go
+@@ -1316,6 +1316,9 @@
+ 	recoverFS, delivered, sent, remaining, pipe int64
+ }
+ 
++// Enable only the flight estimator in the accounting-only benchmark.
++const qualificationPRR = false
++
+ // updatePRR computes RFC 9937's delivery budget. The pipe estimate is in
+ // bytes even though the sender advertises its congestion window in segments.
+ // A reordering timer can initiate recovery without a new ACK: permit the
+@@ -1323,6 +1326,9 @@
+ //
+ // +checklocks:s.ep.mu
+ func (s *sender) updatePRR(delivered int64, safe, enter bool) {
++	if !qualificationPRR {
++		return
++	}
+ 	p := &s.prr
+ 	mss := int64(s.MaxPayloadSize)
+ 	if enter {

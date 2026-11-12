@@ -1,0 +1,72 @@
+--- a/pkg/tcpip/transport/tcp/snd.go
++++ b/pkg/tcpip/transport/tcp/snd.go
+@@ -16,6 +16,7 @@
+ 
+ import (
+ 	"fmt"
++	"os"
+ 	"math"
+ 	"sort"
+ 	"time"
+@@ -634,6 +635,10 @@
+ 
+ 	s.ep.stack.Stats().TCP.Timeouts.Increment()
+ 	s.ep.stats.SendErrors.Timeouts.Increment()
++
++	if id := s.ep.TransportEndpointInfo.ID; id.RemotePort == 44000 {
++		fmt.Fprintf(os.Stderr, "WANRTO ns=%d port=%d una=%d nxt=%d\n", time.Now().UnixNano(), id.LocalPort, uint32(s.SndUna), uint32(s.SndNxt))
++	}
+ 
+ 	// Set TLPRxtOut to false according to
+ 	// https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.6.1.
+@@ -1692,6 +1697,7 @@
+ 		s.SetPipe()
+ 	}
+ 
++	oldUna := s.SndUna
+ 	ack := rcvdSeg.ackNumber
+ 	fastRetransmit := false
+ 	// Do not leave fast recovery, if the ACK is out of range.
+@@ -1865,6 +1871,15 @@
+ 		}
+ 	}
+ 
++	// Snapshot only advancing SACK-bearing ACKs on the benchmark sender.
++	observe := s.ep.TransportEndpointInfo.ID.RemotePort == 44000 && oldUna.LessThan(s.SndUna) && len(rcvdSeg.parsedOptions.SACKBlocks) != 0
++	var pipeBefore int
++	var retransBefore uint64
++	if observe {
++		pipeBefore = s.Outstanding
++		retransBefore = s.ep.stats.SendErrors.Retransmits.Value()
++	}
++
+ 	if s.ep.SACKPermitted && s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+ 		// Update RACK reorder window.
+ 		// See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.2
+@@ -1904,6 +1919,26 @@
+ 	// that the window opened up, or the congestion window was inflated due
+ 	// to a duplicate ack during fast recovery. This will also re-enable
+ 	// the retransmit timer if needed.
++	if observe {
++		// Read both inputs to the sendData loop just before it executes.
++		// The write queue includes transmitted but cumulatively unacked bytes.
++		nxt := s.SndNxt
++		cwnd, pipe := s.SndCwnd, s.Outstanding
++		s.ep.sndQueueInfo.sndQueueMu.Lock()
++		used := s.ep.sndQueueInfo.SndBufUsed
++		s.ep.sndQueueInfo.sndQueueMu.Unlock()
++		queued := -1
++		nextFresh := false
++		if next := s.writeNext; next != nil {
++			queued = next.payloadSize()
++			nextFresh = !s.isAssignedSequenceNumber(next) || !next.sequenceNumber.LessThan(nxt)
++		}
++		retrans := s.ep.stats.SendErrors.Retransmits.Value() - retransBefore
++		s.sendData()
++		fmt.Fprintf(os.Stderr, "WANACK ns=%d port=%d ack=%d ts=%d olduna=%d nxt=%d after=%d rwnd=%d cwnd=%d pipe0=%d pipe=%d afterpipe=%d used=%d nextbytes=%d fresh=%t rtx=%d recovery=%t interrupted=%t mss=%d\n",
++			time.Now().UnixNano(), s.ep.TransportEndpointInfo.ID.LocalPort, uint32(rcvdSeg.ackNumber), rcvdSeg.parsedOptions.TSVal, uint32(oldUna), uint32(nxt), uint32(s.SndNxt), uint32(s.SndWnd), cwnd, pipeBefore, pipe, s.Outstanding, used, queued, nextFresh, retrans, s.FastRecovery.Active, s.sackRecoveryInterrupted, s.MaxPayloadSize)
++		return
++	}
+ 	s.sendData()
+ }
+ 
