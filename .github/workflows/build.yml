@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Verify the accept_bind C++ headers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/accept-bind-include-cleaner]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  lint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Fetch the contributor's and amended sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^^)" = 65afc4e121b577d5675faba0b77ae8edea9c5c63
+          receipt="$RUNNER_TEMP/accept-bind-include-cleaner"
+          mkdir -p "$receipt" "$RUNNER_TEMP/accept-bind-bin"
+          ln -s "$(command -v bazelisk)" "$RUNNER_TEMP/accept-bind-bin/bazel"
+          echo "$RUNNER_TEMP/accept-bind-bin" >> "$GITHUB_PATH"
+          git rev-parse HEAD HEAD^ HEAD^^ > "$receipt/sources.txt"
+          git diff HEAD^^ HEAD^ -- test/syscalls/linux/BUILD test/syscalls/linux/accept_bind.cc > "$receipt/includes.diff"
+      - name: Run the pinned clang-tidy on the amended Bazel compile command
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/accept-bind-include-cleaner"
+          bazel --version | tee "$receipt/bazel.txt"
+          grep -qx 'bazel 9.3.1' "$receipt/bazel.txt"
+          git checkout -q --detach "$GITHUB_SHA^"
+          python3 tools/gen_compile_commands.py //test/syscalls/linux:accept_bind_test
+          python3 - "$receipt/amended-command.json" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          db = Path("compile_commands.json")
+          src = Path("test/syscalls/linux/accept_bind.cc").resolve()
+          rows = [row for row in json.loads(db.read_text()) if Path(row["file"]) == src]
+          assert len(rows) == 1
+          encoded = json.dumps(rows, indent=2) + "\n"
+          db.write_text(encoded)
+          Path(sys.argv[1]).write_text(encoded)
+          PY
+          status=0
+          tools/lint.sh clang-tidy > "$receipt/amended.log" 2>&1 || status=$?
+          echo "$status" > "$receipt/amended.status"
+          cat "$receipt/amended.log"
+          if test "$status" -ne 0; then
+            tidy="$HOME/.cache/gvisor/lint/clang-tidy-22.1.8/clang_tidy/data/bin/clang-tidy"
+            "$tidy" -p . --config-file=.clang-tidy --export-fixes="$receipt/fixes.yml" \
+              test/syscalls/linux/accept_bind.cc > "$receipt/diagnostics.txt" 2>&1
+          fi
+          test "$(cat "$receipt/amended.status")" -eq 0
+          grep -q 'clang-tidy: 1 sources analyzed.' "$receipt/amended.log"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: accept-bind-include-cleaner
+          path: ${{ runner.temp }}/accept-bind-include-cleaner/
+          if-no-files-found: error
+          retention-days: 14
