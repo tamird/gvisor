@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T02:15:41+00:00",
+    "updatedAt": "2026-11-12T02:48:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -75618,7 +75618,7 @@
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
       "summary": "For 16,384 separated shared pages, MemoryFile.SaveTo took 5.35 ms on the parent, 6.31 ms on the PR and 5.49 ms with a forward iterator. Five v1 checkpoints matched byte for byte across all three arms; each revision read the other’s images. The timing fixture had no committed page data. The mixed-size compatibility fixture included one dirty page.",
-      "updatedAt": "2026-11-12T02:15:41+00:00",
+      "updatedAt": "2026-11-12T02:46:27+00:00",
       "evidence": [
         {
           "label": "Single tested follow-up on Botir’s current commit",
@@ -75631,16 +75631,35 @@
         {
           "label": "Current exporter’s repeated sharing-tree lookup",
           "url": "https://github.com/google/gvisor/blob/65a9e6eaa/pkg/sentry/pgalloc/save_restore.go#L125"
+        },
+        {
+          "label": "Posted inline checkpoint review",
+          "url": "https://github.com/google/gvisor/pull/17374#discussion_r4545607204"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "65a9e6eaa73a78b79223441f21069a71fdf58059",
-        "url": "https://github.com/google/gvisor/pull/17374/files#diff-81d28367db8030cd58361c2be05c26ba5d03db34f330cc8a9d76774f8f1b1a7dR125",
-        "title": "Ask about walking the sharing index forward during checkpoint export",
-        "summary": "Post this inline review on the current exporter with the tested one-file follow-up?",
-        "body": "Could appendExactRefRanges carry the sharing iterator forward between occupied ranges? The occupied ranges are already ordered. I tried a single forward pass per page-size class [1].\n\nI saved 16,384 shared 4 KiB pages interleaved with single-page holes across a 128 MiB span. The benchmark had no committed page data. Across 12 interleaved runs, metadata export took 2.32 ms on the parent, 3.17 ms on this PR, and 2.40 ms with the forward iterator. MemoryFile.SaveTo took 5.35, 6.31 and 5.49 ms respectively. The contiguous and scattered unshared controls showed no significant difference [2].\n\n[1]: https://github.com/tamird/gvisor/commit/16e4cb0d5\n[2]: https://github.com/tamird/gvisor/actions/runs/43138059865/artifacts/13909320177\n\nPosted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "review",
+          "status": "settled",
+          "head": "65a9e6eaa73a78b79223441f21069a71fdf58059",
+          "url": "https://github.com/google/gvisor/pull/17374/files#diff-81d28367db8030cd58361c2be05c26ba5d03db34f330cc8a9d76774f8f1b1a7dR125",
+          "title": "Ask about walking the sharing index forward during checkpoint export",
+          "summary": "Post this inline review on the current exporter with the tested one-file follow-up?",
+          "body": "Could appendExactRefRanges carry the sharing iterator forward between occupied ranges? The occupied ranges are already ordered. I tried a single forward pass per page-size class [1].\n\nI saved 16,384 shared 4 KiB pages interleaved with single-page holes across a 128 MiB span. The benchmark had no committed page data. Across 12 interleaved runs, metadata export took 2.32 ms on the parent, 3.17 ms on this PR, and 2.40 ms with the forward iterator. MemoryFile.SaveTo took 5.35, 6.31 and 5.49 ms respectively. The contiguous and scattered unshared controls showed no significant difference [2].\n\n[1]: https://github.com/tamird/gvisor/commit/16e4cb0d5\n[2]: https://github.com/tamird/gvisor/actions/runs/43138059865/artifacts/13909320177\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-12T02:46:27+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17374#discussion_r4545607204"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "65a9e6eaa73a78b79223441f21069a71fdf58059",
+        "observedAt": "2026-11-12T02:46:27+00:00",
+        "disposition": "Tamir approved the review and the forward-iterator comparison was posted on the exporter.",
+        "nextAction": "Follow the author’s response on the checkpoint exporter.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17374#discussion_r4545607204"
+        ]
       }
     }
   ],
@@ -104409,19 +104428,32 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI benchmark investigation",
-      "updatedAt": "2026-11-12T02:12:07+00:00",
+      "updatedAt": "2026-11-12T02:48:00+00:00",
       "summary": "On master builds 54540 and 54548, BenchmarkRestoreEmpty and BenchmarkRestoreNginx failed before recording restore samples on both KVM and systrap. Docker tried to bind-mount /proc/0/ns/net into its network namespace directory and got ENOENT.",
       "findings": [
         {
-          "text": "On the private Docker 24.0.9 daemon with systrap, both original restore benchmarks produced samples. Empty ran 133 iterations at 304.4 ms/op. The earlier TCP-readiness Nginx benchmark ran 86 at 502.7 ms/op. The HTTP-200 Nginx revision is being tested on the same worker.",
+          "text": "On native AMD64 with systrap, Docker 24.0.9 and overlay2, the restore benchmarks ran the same timed code as master. Empty completed 146 iterations at 289.30 ms/op. Nginx completed 84 iterations at 823.47 ms/op through HTTP 200. All seven XML test records passed. The earlier control ran 133 Empty iterations at 304.42 ms/op and 86 Nginx iterations at 502.66 ms/op with TCP readiness. The two Nginx measurements use different readiness checks.",
           "evidence": [
             {
               "label": "Docker server version and both original benchmark results",
               "url": "https://github.com/tamird/gvisor/actions/runs/43133193404/artifacts/13908771016"
             },
             {
-              "label": "HTTP-200 Nginx benchmark on the same worker",
-              "url": "https://github.com/tamird/gvisor/actions/runs/43138518704"
+              "label": "Docker 24.0.9 Empty and HTTP-200 Nginx results, XML and original test log",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43138518704/artifacts/13910042751"
+            }
+          ]
+        },
+        {
+          "text": "Build 54548’s retained systrap archive contains 1,423 runsc command logs, including 157 starts and 64 checkpoints. It contains zero restore commands. KVM and systrap both logged the Docker daemon’s /proc/0/ns/net failure after checkpoint. The later systrap setup cleared the KVM command logs. The successful Docker 24 control recorded 332 restore commands. The failing build’s archive includes neither the daemon version nor its journal.",
+          "evidence": [
+            {
+              "label": "54548 systrap command archive after the KVM logs were cleared",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54548/jobs/01a1cd07-d855-4e56-9bd0-2975fb098259/artifacts/01a1cd2c-2053-407c-9ffd-42a93667837a"
+            },
+            {
+              "label": "Docker 24.0.9 Empty and HTTP-200 Nginx results, XML and original test log",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43138518704/artifacts/13910042751"
             }
           ]
         },
@@ -104498,7 +104530,7 @@
           ]
         }
       ],
-      "nextStep": "Check the HTTP-200 Nginx comparison on the supported Docker worker and identify the Docker daemon version in the failing public jobs. Use the runtime controls to decide how to keep collecting restore samples.",
+      "nextStep": "Identify the Docker server version and obtain its journal around the checkpoint task’s creation and network namespace lookup. The retained systrap logs end before runsc restore. Compare the daemon sequence with the supported Docker 24 run.",
       "evidence": [
         {
           "label": "Master build 54540, KVM and systrap benchmark log",
@@ -104549,8 +104581,16 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/49152#01a0f8d6-f41e-440e-85f9-96129e4e752c"
         },
         {
-          "label": "Matched Docker 24.0.9 replay in progress",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43133193404"
+          "label": "Docker server version and both original benchmark results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43133193404/artifacts/13908771016"
+        },
+        {
+          "label": "Docker 24.0.9 Empty and HTTP-200 Nginx results, XML and original test log",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43138518704/artifacts/13910042751"
+        },
+        {
+          "label": "54548 systrap command archive after the KVM logs were cleared",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54548/jobs/01a1cd07-d855-4e56-9bd0-2975fb098259/artifacts/01a1cd2c-2053-407c-9ffd-42a93667837a"
         }
       ]
     },
@@ -104560,19 +104600,19 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T02:12:07+00:00",
+      "updatedAt": "2026-11-12T02:39:53+00:00",
       "summary": "Build 54544’s Node 22.2.0 shard logged “Sending req no 1”, then exceeded the deadline in parallel/test-http-outgoing-end-cork.js before logging a completed response. The same agent’s next attempt timed out in a different test and a later attempt passed on another agent.",
       "findings": [
         {
-          "text": "Tamir signed and submitted one commit to Node. Its full Git tree and test blob match the qualified revision. The gVisor fixture backport is being checked separately.",
+          "text": "Tamir signed and submitted one commit to Node. The test in the rebuilt gVisor 22.2.0 image matches his submitted test byte for byte and preserves the shared timeout adjustment. The packaged runner passed on native AMD64 (86.858 ms) and systrap (144.743 ms). Both completed after a 1.25-second event-loop pause and timed out when the second response was deliberately left unfinished.",
           "evidence": [
             {
               "label": "Submitted Node source",
               "url": "https://github.com/nodejs/node/commit/12d772706"
             },
             {
-              "label": "Packaged gVisor fixture qualification",
-              "url": "https://github.com/tamird/gvisor/actions/runs/43137464797"
+              "label": "Packaged Node 22.2.0 image, ordinary runners and positive and negative controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43137464797/artifacts/13910171040"
             }
           ]
         },
@@ -104642,6 +104682,10 @@
           "url": "https://github.com/nodejs/node/pull/67426"
         },
         {
+          "label": "Packaged Node 22.2.0 image, ordinary runners and positive and negative controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43137464797/artifacts/13910171040"
+        },
+        {
           "label": "54544 original Node shard 3/8 log",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54544/jobs/01a1cd01-21b9-4542-b50a-411fe42207ba/artifacts/01a1cd0a-e412-4f01-8df8-ceef385fd7f6"
         },
@@ -104686,7 +104730,7 @@
           "url": "https://github.com/tamird/gvisor/commit/2821a89fd"
         }
       ],
-      "nextStep": "Follow Node #67426 and validate the separate gVisor fixture backport in its packaged Node 22.2.0 image.",
+      "nextStep": "Follow Node #67426. The qualified gVisor Node 22.2.0 fixture backport is on the fork.",
       "repo": "nodejs/node",
       "head": "12d77270681e0a8ce9732a40633f65d1f1d161a9",
       "settledReviews": [
