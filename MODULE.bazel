@@ -982,3 +982,13 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# The author's lightweight fixture uses the unmodified Docker 29.8.1 dind base.
+img_pull(
+    name = "checkpoint_dind_amd64",
+    digest = "sha256:754ce04dd9dee9ef015680b8529fc49608efb75f30322a54780e7aab32698a47",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/docker",
+    tag = "29.8.1-dind",
+)

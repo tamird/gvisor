@@ -1,35 +1,81 @@
-name: CI
-
-"on":
+name: Compare both DinD fixtures with a local DNS search path
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/dind-checkpoint-local-dns]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  checkpoint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify the corrected test and TCP restore patch
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/dind-stream"
+          mkdir -p "$d"
+          cp .github/qualification/dind_stream.py "$d/driver.py"
+          cp .github/qualification/dind_probe.py .github/qualification/dind_public_inputs.py "$d/"
+          test "$(git rev-parse HEAD^)" = 20ef59e9e32af0819bfaf9124e96f31d51aa7b65
+      - name: Stage the original Docker and Moby images
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" \
+            python3 -B "$RUNNER_TEMP/dind-stream/dind_public_inputs.py"
+      - name: Install the signed Ubuntu cross compiler
+        run: |
+          set -euo pipefail
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            src="$RUNNER_TEMP/dind-stream/ubuntu.list"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' > "$src"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' >> "$src"
+            repositories=(-o "Dir::Etc::sourcelist=$src" -o 'Dir::Etc::sourceparts=-')
+            sudo apt-get "${repositories[@]}" -qq update
+            sudo apt-get "${repositories[@]}" -y --no-install-recommends install g++-aarch64-linux-gnu
+          fi
+          /usr/bin/aarch64-linux-gnu-gcc --version
+      - name: Package the documented lightweight fixture with Bazel
+        id: lightweight
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          image=library/busybox@sha256:b7f3d86d6e84fc17718c48bcde1450807faa2d56704205c697b4bd5df7b9e29f
+          for reg in mirror.gcr.io docker.io; do
+            if docker pull --platform linux/amd64 "$reg/$image"; then
+              docker tag "$reg/$image" busybox:latest
+              break
+            fi
+          done
+          test "$(docker image inspect -f '{{.Id}}' busybox:latest)" = sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d
+          docker save --output qualification/dind_fixture/busybox.tar busybox:latest
+          label=//qualification/dind_fixture:lightweight_archive
+          clean=(env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP")
+          "${clean[@]}" bazel build --config=x86_64 -c opt --jobs=3 "$label"
+          archive=$("${clean[@]}" bazel cquery --config=x86_64 -c opt --output=files "$label")
+          cp "$archive" "$RUNNER_TEMP/dind-stream/lightweight.tar"
+      - name: Verify exact runtime and integration test source
+        run: |
+          set -euo pipefail
+          if [[ -f qualification/dind_fixture/busybox.tar ]]; then
+            mv qualification/dind_fixture/busybox.tar "$RUNNER_TEMP/dind-stream/busybox-input.tar"
+          fi
+          git switch --detach 20ef59e9e32af0819bfaf9124e96f31d51aa7b65
+          test "$(git rev-parse 'HEAD^{tree}')" = 0ef71f6ae7f14987dc0d96217cc9cee14f41dbf8
+          git diff --quiet HEAD
+      - name: Run and retain both original restore cases
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" BAZEL="$(command -v bazel)" \
+            python3 -B "$RUNNER_TEMP/dind-stream/driver.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: dind-local-dns-results
+          path: |
+            ${{ runner.temp }}/dind-stream/published-test.log
+            ${{ runner.temp }}/dind-stream/lightweight-test.log
+            ${{ runner.temp }}/dind-stream/published-test.xml
+            ${{ runner.temp }}/dind-stream/lightweight-test.xml
+            ${{ runner.temp }}/dind-stream/result.json
+          retention-days: 14
+          if-no-files-found: warn
