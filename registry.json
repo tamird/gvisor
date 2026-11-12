@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T01:50:23+00:00",
+    "updatedAt": "2026-11-12T01:58:25+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -104480,7 +104480,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T01:50:23+00:00",
+      "updatedAt": "2026-11-12T01:58:25+00:00",
       "summary": "Build 54544’s Node 22.2.0 shard logged “Sending req no 1”, then exceeded the deadline in parallel/test-http-outgoing-end-cork.js before logging a completed response. The same agent’s next attempt timed out in a different test and a later attempt passed on another agent.",
       "findings": [
         {
@@ -104586,7 +104586,7 @@
         },
         {
           "label": "Open the prefilled Node pull request after personal sign-off",
-          "url": "https://github.com/nodejs/node/compare/main...tamird:node:test/http-double-end-socket-reuse?expand=1&title=test%3A+reuse+one+socket+in+the+HTTP+double-end+test&body=The+HTTP+double-end+test+can+time+out+on+its+first+request+before+it+exercises+socket+reuse.+Limit+the+keep-alive+agent+to+one+socket%2C+send+two+requests%2C+and+verify+both+complete+bodies.+The+second+response+must+use+the+first+socket+and+drain+a+write+larger+than+its+high+water+mark.+The+test+runner+bounds+an+incomplete+response.%0A%0AThe+previous+test+reached+its+deadline+after+a+deliberate+event-loop+pause+on+Node+28+nightly+and+Node+22.2.0+on+native+Linux+and+gVisor.+The+revised+test+completed+in+all+three+environments+and+detected+an+unfinished+second+response.+%5BTest+results%5D%28https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F43136166387%29%0A%0AAssisted-by%3A+Codex"
+          "url": "https://github.com/nodejs/node/compare/main...tamird:node:test/http-double-end-socket-reuse?expand=1&title=test%3A+reuse+one+socket+in+the+HTTP+double-end+test&body=The+HTTP+double-end+test+can+time+out+on+its+first+request+before+it+exercises+socket+reuse.+Limit+the+keep-alive+agent+to+one+socket%2C+send+two+requests%2C+and+verify+both+complete+bodies.+The+second+response+must+use+the+first+socket+and+drain+a+write+larger+than+its+high+water+mark.+The+test+runner+bounds+an+incomplete+response.%0A%0AThe+previous+test+reached+its+deadline+after+a+deliberate+event-loop+pause+on+Node+28+nightly+and+Node+22.2.0+on+native+Linux+and+gVisor.+The+revised+test+completed+in+all+three+environments+and+detected+an+unfinished+second+response+%5B1%5D.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F43136166387%2Fartifacts%2F13907398080%0A%0AAssisted-by%3A+Codex"
         },
         {
           "label": "Fifteen native and systrap outcomes on the exact proposed test",
@@ -104607,7 +104607,7 @@
         "baseHead": "933cb117c91c961880d0b00fd9b6b75ff4580484",
         "url": "https://github.com/tamird/node/commit/29e91d2e3",
         "title": "test: reuse one socket in the HTTP double-end test",
-        "body": "The HTTP double-end test can time out on its first request before it exercises socket reuse. Limit the keep-alive agent to one socket, send two requests, and verify both complete bodies. The second response must use the first socket and drain a write larger than its high water mark. The test runner bounds an incomplete response.\n\nThe previous test reached its deadline after a deliberate event-loop pause on Node 28 nightly and Node 22.2.0 on native Linux and gVisor. The revised test completed in all three environments and detected an unfinished second response. [Test results](https://github.com/tamird/gvisor/actions/runs/43136166387)\n\nAssisted-by: Codex",
+        "body": "The HTTP double-end test can time out on its first request before it exercises socket reuse. Limit the keep-alive agent to one socket, send two requests, and verify both complete bodies. The second response must use the first socket and drain a write larger than its high water mark. The test runner bounds an incomplete response.\n\nThe previous test reached its deadline after a deliberate event-loop pause on Node 28 nightly and Node 22.2.0 on native Linux and gVisor. The revised test completed in all three environments and detected an unfinished second response [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43136166387/artifacts/13907398080\n\nAssisted-by: Codex",
         "summary": "Review the single test commit, add your personal DCO sign-off, and submit it to Node? The two-request test covers socket reuse on a slow worker and detects an unfinished second response."
       }
     }
