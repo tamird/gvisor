@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T17:09:09Z",
+    "updatedAt": "2026-11-12T17:17:24Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60971,8 +60971,8 @@
       "url": "https://github.com/google/gvisor/pull/17028",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-12T17:05:32+00:00",
-      "summary": "The author enabled the Docker userland proxy by default and mounted the data tmpfs with exec. With #16666, the author reports two successful restores in each checkpoint mode. The earlier test used the proxy-disabled bridge path and stopped before checkpoint. The agent is independently testing both proxy-enabled modes on the author’s revision.",
+      "updatedAt": "2026-11-12T17:17:24Z",
+      "summary": "The independent run verified two stopping and two leave-running restores on each of the published Moby and lightweight images, with zero skips. It used e17281fec with #16666 at 5edf5d13c and the Docker userland proxy enabled. The TCP stream, container identity, iptables and network checks passed after all eight restores. Setting the outer daemon’s DNS search list to a single dot removed the runner search suffix that had caused the initial lookup to time out. The contributor posted these results in the author’s reproduction thread.",
       "evidence": [
         {
           "label": "Both subtests failed at container creation",
@@ -61025,6 +61025,14 @@
         {
           "label": "Repeat both checkpoint modes without the runner’s external DNS search suffix",
           "url": "https://github.com/tamird/gvisor/actions/runs/43264967908"
+        },
+        {
+          "label": "Logs and XML for both images and checkpoint modes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43264967908/artifacts/13967370611"
+        },
+        {
+          "label": "Published checkpoint verification in the author’s reproduction thread",
+          "url": "https://github.com/google/gvisor/pull/17028#discussion_r4553823747"
         }
       ],
       "settledReviews": [
@@ -61051,19 +61059,28 @@
           "at": "2026-11-11T17:16:13+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17028#discussion_r4540977846",
           "note": "Posted the approved follow-up on the author’s original thread about the missing per-interface route_localnet setting."
+        },
+        {
+          "kind": "reply",
+          "url": "https://github.com/google/gvisor/pull/17028#discussion_r4547514694",
+          "head": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
+          "title": "Confirm both checkpoint modes on both images",
+          "summary": "Eight restores verified with zero skips after removing the runner’s external DNS search suffix.",
+          "body": "@hky1999, thanks for the reproduction instructions. I confirmed the result on e17281fec with #16666 applied (5edf5d13c), using Docker 27.5.1 outside and 29.8.1 inside. With the userland proxy enabled, stopping and leave-running each passed two checkpoint/restore rounds on the published Moby image and two on your lightweight image. The existing TCP stream advanced after all eight restores, and the container identity, iptables and network checks passed.\n\nOne detail for GitHub-hosted runners: I set `\"dns-search\": [\".\"]` on the outer daemon. With the runner’s default search suffix, the initial `nslookup server` timed out before the first checkpoint. [Logs for both images](https://github.com/tamird/gvisor/actions/runs/43264967908/artifacts/13967370611).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "posted",
+          "at": "2026-11-12T17:17:24Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17028#discussion_r4553823747"
         }
       ],
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
-        "observedAt": "2026-11-12T17:05:32+00:00",
-        "disposition": "The author supplied the reproduction instructions and clarified that the proxy-disabled path still needs per-interface route_localnet support. The independent comparison uses e17281fec plus the specified #16666 revision.",
-        "nextAction": "Compare stopping and leave-running checkpoints on the published image and the author’s lightweight fixture in the rerun without the external DNS search suffix.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/17028#discussion_r4547514694",
-          "https://github.com/hky1999/gvisor/blob/e17281fec8dea3f23e6c3a573f12943a72c0e21f/test/e2e/dind_checkpoint.txt",
-          "https://github.com/tamird/gvisor/actions/runs/43261490300",
-          "https://github.com/tamird/gvisor/actions/runs/43264967908"
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABDw2RRg",
+            "url": "https://github.com/google/gvisor/pull/17028#discussion_r4547514694",
+            "head": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
+            "updatedAt": "2026-11-12T07:25:09Z",
+            "evidence": "https://github.com/google/gvisor/pull/17028#discussion_r4553823747"
+          }
         ]
       }
     },
