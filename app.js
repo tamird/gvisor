@@ -1818,12 +1818,8 @@ function drawTable(nodes) {
       const revision = refinementComparison(node, decision);
       title.append(link((decision.title || "Review proposed change") + (revision ? ` · ${revision.label}` : ""), decision.url, "decision-source"));
     }
-    for (const [kind, plural] of [["review", "reviews"], ["reply", "replies"], ["issue", "issues"]]) {
-      const count = decisions.filter(decision => decision.kind === kind).length;
-      if (count) {
-        const name = count === 1 ? kind : plural;
-        title.append(button(`Read ${count === 1 ? "" : count + " "}draft ${name}`, () => select(node.id), "decision-source"));
-      }
+    for (const decision of decisions.filter(item => ["review", "reply", "issue"].includes(item.kind))) {
+      title.append(readDraftLink(node, decision, decisions.length === 1 ? "Read draft " + decision.kind : decision.title));
     }
     const action = humanAction(node);
     if (action) title.append(submissionLink(action, "human-action-source"));
@@ -1903,7 +1899,7 @@ function appendHumanAction(parent, node) {
   const section = element("section", "detail-section human-action");
   section.append(element("h3", "", action.title), element("p", "", action.summary),
     element("p", "detail-meta", `Prepared commit ${action.head}`),
-    element("div", "decision-body", action.body), submissionLink(action),
+    readDraftLink(node, action), submissionLink(action),
     link("Read contribution policy ↗", action.policyURL));
   for (const item of node.evidence || []) {
     if (item.label && safeURL(item.url)) section.append(link(item.label + " ↗", item.url, "relation-source"));
@@ -1958,6 +1954,11 @@ function appendOutreach(parent, node) {
   if (row.lastActivityURL && row.lastActivityURL !== row.lastContactURL) section.append(link("Last human activity ↗", row.lastActivityURL));
   parent.append(section);
 }
+function readDraftLink(node, draft, label = "Read draft") {
+  const anchor = element("a", "decision-source", label);
+  draftURL(node.id, draft, location.href).then(url => { anchor.href = url.href; });
+  return anchor;
+}
 function appendContributorDecisions(parent, node, decisions) {
   let showedComparison = false;
   for (const decision of decisions) {
@@ -1977,12 +1978,7 @@ function appendContributorDecisions(parent, node, decisions) {
         showedComparison = true;
       }
     }
-    if (decision.body) {
-      section.append(element("div", "decision-body", decision.body));
-    }
-    if (decision.replyBody) {
-      section.append(element("h4", "", "Reply to reviewer"), element("div", "decision-body", decision.replyBody));
-    }
+    if (decision.body) section.append(readDraftLink(node, decision));
     if (decision.kind === "issue") {
       const form = decision.url + "?title=" + encodeURIComponent(decision.title) + "&body=" + encodeURIComponent(decision.body);
       section.append(link("Open prefilled issue ↗", form));

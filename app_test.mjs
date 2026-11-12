@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { webcrypto } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import test from 'node:test';
@@ -7,7 +8,8 @@ import vm from 'node:vm';
 function client() {
   const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
   assert.ok(source.endsWith('start();\n'));
-  const context = vm.createContext({ URL });
+  const context = vm.createContext({ URL, crypto: webcrypto, TextEncoder });
+  vm.runInContext(readFileSync(new URL('./draft.js', import.meta.url), 'utf8'), context);
   vm.runInContext(source.slice(0, -'start();\n'.length), context);
   context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-12T18:05:00Z' } };
   context.snapshotInput = { schema: 1, repo: 'google/gvisor', owner: 'tamird', checkedAt: '2026-10-12T11:48:00Z',
@@ -928,17 +930,11 @@ test('offline amendment cards show their own recorded ranges above the proposed 
   const sections = details.children.filter(child => child.className === 'detail-section contributor-decision');
   assert.equal(sections.length, 3);
   assert.ok(!sections[0].children.some(child => child.className === 'range-diff'));
-  const textBlocks = section => section.children.filter(child => child.className === 'decision-body').map(child => child.textContent);
-  assert.deepEqual(textBlocks(sections[1]), ['Proposed text', 'Reply about this amendment']);
-  assert.deepEqual(textBlocks(sections[2]), ['Proposed text']);
-  const replyLabel = sections[1].children.findIndex(child => child.textContent === 'Reply to reviewer');
-  assert.ok(replyLabel > 0);
-  assert.equal(sections[1].children[replyLabel - 1].textContent, 'Proposed text');
-  assert.equal(sections[1].children[replyLabel + 1].textContent, 'Reply about this amendment');
+  assert.ok(sections.every(section => section.children.some(child => child.textContent === 'Read draft')));
   for (const [section, expected] of [[sections[1], `${before}^! ${base}..${after}`],
     [sections[2], `--creation-factor=999 ${before}^! ${alternate}^!`]]) {
     const group = section.children.find(child => child.className === 'range-diff');
-    const prose = section.children.find(child => child.className === 'decision-body');
+    const prose = section.children.find(child => child.textContent === 'Read draft');
     assert.ok(section.children.indexOf(group) < section.children.indexOf(prose));
     assert.match(group.children[0].textContent, /Recorded PR revision/);
     assert.equal(group.children[1].value, `git -C ~/code/gvisor range-diff ${expected}`);
@@ -3482,4 +3478,25 @@ test('ungrouped combined human attention copies both reviews and manual actions'
     'https://tamird.github.io/gvisor/?view=table&reason=review-changes#branch%3Afix',
     'https://tamird.github.io/gvisor/?view=table&reason=human-submission#issue%3Agoogle%2Fbenchmark%3A1634',
   ]);
+});
+
+test('draft links preserve the original decision, including a second reply on the same head', async () => {
+  const c = client();
+  c.node = { id: 'pr:example/repo:42' };
+  c.first = { kind: 'reply', head: 'a'.repeat(40), url: 'https://github.com/example/repo/pull/42', title: 'Reply', body: 'First answer.' };
+  c.second = { ...c.first, body: 'Second answer with `code`.' };
+  c.current = 'https://tamird.github.io/gvisor/?view=table&reason=post-reply';
+  c.node.contributorReview = c.first;
+  c.node.additionalReviews = [c.second];
+  const url = await vm.runInContext('draftURL(node.id, second, current)', c);
+  assert.equal(url.pathname, '/gvisor/draft.html');
+  assert.equal(decodeURIComponent(url.hash.slice(1)), c.node.id);
+  c.key = url.searchParams.get('draft');
+  assert.equal(await vm.runInContext('findDraft(node, key)', c), c.second);
+  c.node.additionalReviews = [];
+  assert.equal(await vm.runInContext('findDraft(node, key)', c), null);
+  c.node.settledReviews = [{ ...c.second, outcome: 'posted' }];
+  assert.equal((await vm.runInContext('findDraft(node, key)', c)).body, c.second.body);
+  c.draftURLInput = url;
+  assert.equal(vm.runInContext('draftReturnURL(draftURLInput).href', c), c.current + '#pr%3Aexample%2Frepo%3A42');
 });

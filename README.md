@@ -1112,3 +1112,9 @@ The command prints an archive commit. `git show <archive>:refs.tsv` lists
 `local` or `fork`, the original name and its full commit. Restore a local row
 with `git update-ref refs/heads/<name> <oid> 0000000000000000000000000000000000000000`.
 The archive also stores the original local reflogs in `reflogs.json`.
+
+Open **Read draft** on a card to read the complete proposed post, issue or
+PR description. The address identifies the text shown, including a
+reviewer's reply attached to an amendment. The reader uses the MIT-licensed
+[markdown-it 15.0.3 distribution](https://www.npmjs.com/package/markdown-it/v/15.0.3)
+in `vendor/`. The browser renders Markdown locally with embedded HTML disabled.

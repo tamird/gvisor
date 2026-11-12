@@ -37,3 +37,25 @@
 
 /* A pending decision links to its source and exposes the proposed text in details. */
 .decision-source{display:block;margin-top:5px;font-size:11px;color:var(--blue);text-decoration:underline}.decision-body{font-size:12px;line-height:1.6;color:var(--text);white-space:pre-wrap}
+
+/* Drafts have the width of a document. Tables and code keep their columns
+   and scroll independently on small screens. */
+.draft-page { display: block; height: auto; overflow: auto; }
+.draft-reader { display: block; width: min(100%, calc(74ch + 6rem)); font-size: 1rem; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 3rem) 4rem; box-sizing: border-box; }
+.draft-reader nav { margin-bottom: 2.5rem; }
+.draft-reader a { color: var(--blue); text-decoration: underline; text-underline-offset: .16em; }
+.draft-reader header { border-bottom: 1px solid var(--line); padding-bottom: .75rem; margin-bottom: 1.5rem; }
+#draft-context { font-size: .86rem; color: var(--muted); }
+#draft-title { font-size: clamp(1.65rem, 4vw, 2.3rem); line-height: 1.18; margin: .5rem 0; overflow-wrap: anywhere; }
+.draft-markdown { font-size: 1rem; line-height: 1.65; overflow-wrap: anywhere; }
+.draft-markdown p, .draft-markdown ul, .draft-markdown ol, .draft-markdown blockquote { margin: 0 0 1.1em; }
+.draft-markdown li > p { margin-bottom: .4em; }
+.draft-markdown code { font-size: .9em; background: var(--panel); }
+.draft-markdown pre, .draft-markdown table { display: block; max-width: 100%; overflow: auto; }
+.draft-markdown pre { padding: 1em; background: var(--panel); line-height: 1.45; }
+.draft-markdown blockquote { padding-left: 1em; border-left: 3px solid var(--line); color: var(--muted); }
+.draft-markdown table { width: max-content; min-width: 0; font-size: .9em; margin-bottom: 1.1em; }
+.draft-markdown th, .draft-markdown td { position: static; padding: .35em .7em; }
+.draft-markdown img { max-width: 100%; height: auto; }
+#draft-source { display: inline-block; margin-top: 1rem; }
+#draft-source[hidden] { display: none; }
