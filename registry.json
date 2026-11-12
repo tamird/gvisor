@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T05:14:08+00:00",
+    "updatedAt": "2026-11-12T05:45:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -75849,6 +75849,39 @@
         "summary": "Send this review to Ayush about the clients that failed before making a readiness request?",
         "body": "On #17291 (170233fab), the Ollama server started, but each of the 797 readiness-client creates failed before the HTTP request: `failed to get Nvidia driver version: failed to open /dev/nvidiactl: operation not permitted` [1]. The server requests a GPU. The client requests only its image and a link to the server [2]. This device-selection code matches bab22586d. Should a client that requests no GPU need a driver-version lookup when the worker sets `--nvproxy=true`?\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54587/jobs/01a1cdc4-7a0f-48e9-8378-07fddb5a0df5/artifacts/01a1cde4-268f-441d-a824-847868a18a31\n[2]: https://github.com/google/gvisor/blob/bab22586d/pkg/test/llmutil/llmutil.go#L154-L166"
       }
+    },
+    {
+      "id": "pr:hermeticbuild/hermetic-llvm:938",
+      "type": "pr",
+      "group": "bazel",
+      "repo": "hermeticbuild/hermetic-llvm",
+      "number": 938,
+      "ref": "toolchain-stage-config",
+      "head": "baa2066bd9f6830d078228a9047649f8334f712e",
+      "title": "Share toolchain args and features across runtime stages",
+      "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938",
+      "status": "open",
+      "updatedAt": "2026-11-12T05:39:44+00:00",
+      "summary": "The static ASan symbolizer fails to compile with unmapped C++ actions on the proposed toolchain. Keeping the complete argument list in the caller’s configuration fixes that build and preserves bootstrap sharing.",
+      "evidence": [
+        {
+          "label": "Three-file correction on #938",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/7c9e7687d"
+        },
+        {
+          "label": "Mapped tests, unmapped build and configuration counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "baa2066bd9f6830d078228a9047649f8334f712e",
+        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938/files#diff-e7d8be841079bafe098625e6532ea9bab03d4112d1badddc4c887a5253b6e914R299",
+        "title": "Send the static ASan symbolizer fix to the #938 author",
+        "summary": "Post one inline review on the default toolchain arguments?",
+        "body": "The unmapped build fails here when compiling the static ASan symbolizer. The include path points to the dynamic build of libc++, but the module map lists headers from the static build. Selecting `@llvm//toolchain:toolchain_args` directly in the default arm keeps those paths together [1]. Each of the three bootstrap argument lists still has one configured instance.\n\nWith that change on Linux AMD64, all 61 mapped tests passed and all 139 unmapped targets built [2].\n\n[1]: https://github.com/tamird/hermetic-llvm/commit/7c9e7687d\n[2]: https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -79983,11 +80016,11 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T05:11:48+00:00",
+      "updatedAt": "2026-11-12T05:41:15+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
-          "text": "Across eight alternating pairs of parent 990581308 and #16495 ffac28a03 against Linux, the gVisor sender sent first in all 16 runs. The propagation queues recorded no drops. The receiver rate was 1.252 MiB/s on the parent and 1.208 MiB/s on the candidate (benchstat p = 0.721). The longest new-data gap was 112.5 ms and 108.7 ms, respectively (p = 0.574). One parent run had a 27.7-second gap. Two candidate runs had 1.16- and 1.69-second gaps. The paired measurements did not establish a throughput improvement. Cumulative ACKs continued during the 27.7-second gap. Across the three gaps, some repeated ranges had earlier SACK coverage, but none had already been cumulatively acknowledged.",
+          "text": "Across eight alternating pairs of parent 990581308 and #16495 ffac28a03 against Linux, the gVisor sender sent first in all 16 runs. The propagation queues recorded no drops. The receiver rate was 1.252 MiB/s on the parent and 1.208 MiB/s on the candidate (benchstat p = 0.721). The median of each run’s longest new-data gap was 112.5 ms and 108.7 ms, respectively (p = 0.574). One parent run had a 27.7-second gap. Two candidate runs had 1.16- and 1.69-second gaps. The paired measurements did not establish a throughput improvement. Cumulative ACKs continued during the 27.7-second gap. Across the three gaps, some repeated ranges had earlier SACK coverage, but none had already been cumulatively acknowledged.",
           "evidence": [
             {
               "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -82111,9 +82144,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
             }
           ]
+        },
+        {
+          "text": "With CUBIC and RACK sharing a 100-frame queue with a native Linux sender, #16495 increased median goodput from 45.50 to 794.62 KiB/s and reduced the median longest pause in new data from 43.317 to 1.454 seconds. Seven of eight matched pairs improved. Every patched run recovered the entire first-timeout flight within 1.551 seconds; only three parent runs did so by capture end. Two patched runs still had pauses of over 32 seconds. Both began before the first timeout. In the middle of those pauses, 290 and 305 repairs respectively started at the preceding cumulative ACK, about one per 101–102 ms. Advertised windows and send-queue occupancy were absent from the archive.",
+          "evidence": [
+            {
+              "label": "Eight alternating pairs, packet captures and benchstat",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43159656803/artifacts/13918113226"
+            },
+            {
+              "label": "Updated TCP review guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the parent and #16495 in eight counterbalanced pairs on the same competing-flow workload. Use each receiver’s byte ranges and sender retransmissions to compare loss recovery and throughput across matched runs.",
+      "nextStep": "Examine what limited new data before the first timeout in the two patched transfers with pauses over 32 seconds.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -82588,8 +82634,12 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
         },
         {
-          "label": "Eight counterbalanced parent and #16495 pairs",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43159656803"
+          "label": "Eight alternating pairs, packet captures and benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43159656803/artifacts/13918113226"
+        },
+        {
+          "label": "Which sender limit holds back new data during paced repairs?",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43163573663"
         }
       ],
       "comparisons": [
@@ -98490,9 +98540,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "updatedAt": "2026-11-12T05:45:10+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Use #16081 for Newt’s scripted burst-loss case. Compare onset traces from the separate CUBIC/SACK proxy and Windows #10343 reports before assigning their first loss. Keep the M003 Reno control independent. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019.",
+      "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019.",
       "findings": [
         {
           "text": "Reusing the receive buffers in #17187 reduced whole-Sentry allocations per GiB received by 63.16% on the single-worker TCP download (p < 0.001). Skipping flow parsing in #17188 alone yielded 55.48k allocations/GiB against 55.36k on stock (p = 0.378). The earlier two-build comparison had measured a 63.18% reduction with both changes applied.",
@@ -99519,6 +99569,32 @@
             {
               "label": "Fork integration only",
               "url": "https://github.com/tamird/gvisor/commit/316c960a9"
+            }
+          ]
+        },
+        {
+          "text": "In the stalled Linux proxy run, the sender entered RACK recovery at 36 ms. By the first timeout at 799 ms, the cumulative ACK had advanced 10,199,792 bytes. The early capture retained only handshakes. All 16 frames from the triggered capture followed that timeout. The Windows report gives transfer rates and segment sizes. Neither archive locates the first missing bytes. The Linux rerun captures both ends before the handshake.",
+          "evidence": [
+            {
+              "label": "Linux sender decisions and captured headers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41463753991/artifacts/13149709139"
+            },
+            {
+              "label": "Windows reporter’s measurements",
+              "url": "https://github.com/google/gvisor/issues/10343#issuecomment-2113392374"
+            },
+            {
+              "label": "Two-ended Linux proxy capture",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43161876586"
+            }
+          ]
+        },
+        {
+          "text": "In eight new native Linux proxy trials with SACK enabled, every interior receiver interval delivered data. None recorded a bulk-flow retransmission timeout. The retained pair of captures begins at the handshake and covers the same first 3.7 seconds at both taps, with zero capture drops. These runs give no trace of the original stall.",
+          "evidence": [
+            {
+              "label": "Eight receiver traces, sender counters and two packet-header captures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43161876586/artifacts/13919246296"
             }
           ]
         }
@@ -101150,7 +101226,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T18:39:36+00:00",
+      "updatedAt": "2026-11-12T05:39:44+00:00",
       "summary": "Follow intermittent failures on source PRs, Copybara imports, master, and release builds. The individual investigations link to the first useful error and the retry and name the next diagnostic.",
       "findings": [
         {
@@ -101171,6 +101247,35 @@
             {
               "label": "Passing syscall retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54191#01a1c63a-2323-417d-89a3-c62badab8d03"
+            }
+          ]
+        },
+        {
+          "text": "In three builds, Copybara merged the PR and deleted its branch before the Buildkite hook fetched it. All 15 failed attempts stopped at the branch check, including 10 automatic retries. No test started on those attempts. The original hook prevents a second run after merge. Buildkite now supports canceling builds on branch deletion. All three builds were running at deletion. The public data do not show whether the pipeline enabled that GitHub setting or received the deletion event.",
+          "evidence": [
+            {
+              "label": "Six failed attempts on #17516",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54613"
+            },
+            {
+              "label": "Three failed attempts on #17506",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54605"
+            },
+            {
+              "label": "Six failed attempts on #17408",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54573"
+            },
+            {
+              "label": "Purpose of gVisor’s branch check",
+              "url": "https://github.com/google/gvisor/commit/46c375f46"
+            },
+            {
+              "label": "Buildkite branch-deletion cancellation",
+              "url": "https://buildkite.com/docs/pipelines/configure/canceling-builds"
+            },
+            {
+              "label": "GitHub pipeline setting for deleted branches",
+              "url": "https://buildkite.com/docs/pipelines/source-control/github#running-builds-on-pull-requests"
             }
           ]
         }
@@ -105306,7 +105411,7 @@
       "group": "bazel",
       "status": "active",
       "owner": "Compiler toolchain integration",
-      "updatedAt": "2026-11-12T05:12:56+00:00",
+      "updatedAt": "2026-11-12T05:39:44+00:00",
       "summary": "Each supplier PR preserved the GNU and musl bootstrap link arguments on its own. Together they made Bazel reject the bootstrap C++ toolchain during analysis because it lacked static_link_cpp_runtimes. The five gVisor compiler prerequisites remain unchanged.",
       "findings": [
         {
@@ -105366,7 +105471,7 @@
           ]
         },
         {
-          "text": "Fork commit 14ebf27eb on #938 keeps the three bootstrap argument lists shared while selecting the complete toolchain’s arguments in the caller’s configuration. Its regression checks cover static and dynamic callers. The supplier’s mapped test, unmapped C++ build and full ASan fission test are running against that revision.",
+          "text": "Fork commit 14ebf27eb on #938 keeps the three bootstrap argument lists shared while selecting the complete toolchain’s arguments in the caller’s configuration. Its regression checks cover static and dynamic callers. The first run forced a local-only header parser onto a remote worker. The later qualification used each action’s declared strategy.",
           "evidence": [
             {
               "label": "Fork correction on #938",
@@ -105377,9 +105482,35 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43159441285"
             }
           ]
+        },
+        {
+          "text": "The repaired #938 and the combined #909/#938 tree both passed the actual ASan fission symbolizer test and preserved bootstrap stage sharing. The first full mapped build forced a local-only header check onto RBE.",
+          "evidence": [
+            {
+              "label": "Symbolizer results and local-only header check",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43159441285/artifacts/13916898845"
+            },
+            {
+              "label": "Mapped and unmapped builds on the revised source",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43160637144"
+            }
+          ]
+        },
+        {
+          "text": "Keeping the complete toolchain arguments in the caller’s configuration passed all 61 mapped tests and built all 139 unmapped targets on native AMD64. The static ASan fission test also passed with #909 applied. Each bootstrap argument list still has one configured instance, and the musl query fell from 545 configured toolchain targets to 544.",
+          "evidence": [
+            {
+              "label": "Three-file correction on #938",
+              "url": "https://github.com/tamird/hermetic-llvm/commit/7c9e7687d"
+            },
+            {
+              "label": "Mapped tests, unmapped build and configuration counts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062"
+            }
+          ]
         }
       ],
-      "nextStep": "Keep libc++ headers and their module map in the caller’s configuration, then validate the supplier’s full ASan fission test and its mapped and unmapped C++ jobs. The bootstrap link-library adjustment remains separately necessary when #909 and #938 are combined.",
+      "nextStep": "Share the qualified three-file correction with the #938 author after contributor review. Combining #938 with #909 also requires the separate bootstrap link fix.",
       "evidence": [
         {
           "label": "Runtime link libraries #909",
@@ -105394,12 +105525,12 @@
           "url": "https://github.com/tamird/hermetic-llvm/commit/b253312fd"
         },
         {
-          "label": "Fork correction on #938",
-          "url": "https://github.com/tamird/hermetic-llvm/commit/14ebf27eb"
+          "label": "Three-file correction on #938",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/7c9e7687d"
         },
         {
-          "label": "Supplier checks on the corrected #938",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43159441285"
+          "label": "Mapped tests, unmapped build and configuration counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062"
         }
       ]
     },
@@ -105486,12 +105617,12 @@
     },
     {
       "id": "investigation:hermetic-llvm-race-boot",
-      "title": "Integrated LLVM race boot test stops in Bazel analysis",
+      "title": "Find why the LLVM race test cannot start on scratch workers",
       "group": "bazel",
       "status": "active",
       "owner": "Agent qualification",
-      "updatedAt": "2026-11-12T05:12:56+00:00",
-      "summary": "On the integrated compiler source e47624715, the race-instrumented boot test stopped during Bazel analysis on the Linux AMD64 and ARM64 configurations. The standalone race guest linked on both architectures.",
+      "updatedAt": "2026-11-12T05:45:10+00:00",
+      "summary": "With the analysis conflict removed, LLVM linked the race guest on both native workers. Each TestRunner then failed to execute the outer boot_test binary.",
       "findings": [
         {
           "text": "Bazel reported conflicting actions for outputs from musl, libc++ and compiler-rt while analyzing //runsc/boot:boot_test with --config=race. Both attempts stopped before TestRunner or a guest started. The five gVisor compiler prerequisites remain unchanged.",
@@ -105514,9 +105645,18 @@
               "url": "https://github.com/bazelbuild/bazel/issues/31806"
             }
           ]
+        },
+        {
+          "text": "Two Bazel configurations produced the same musl object path and action key. Explicitly setting the race flag’s existing default scope eliminated the duplicate output in this experiment. Both architectures then linked the guest byte-for-byte as in the standalone check. The wrappers returned ENOENT before Go ran any tests. The GNU control stopped earlier in Nogo's standard-library analysis.",
+          "evidence": [
+            {
+              "label": "Action owners, guest ELF hashes and both workers’ TestRunner errors",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43156104857/artifacts/13917649103"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the two configured producers of the first conflicting output in the integrated boot test and the standalone link. Check the same output on both architectures.",
+      "nextStep": "Run the real TestRun wrapper on both architectures with the outer executable linked statically. The baseline found the outer binary on each scratch worker, verified its checksum, and reproduced ENOENT because its ELF interpreter was absent.",
       "evidence": [
         {
           "label": "Native AMD64 and ARM64 race boot test analysis on the integrated compiler",
@@ -105533,6 +105673,10 @@
         {
           "label": "Bazel configured-output conflict",
           "url": "https://github.com/bazelbuild/bazel/issues/31806"
+        },
+        {
+          "label": "Outer executable and interpreter on both scratch workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43162812516"
         }
       ]
     },
@@ -105601,5 +105745,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-12T05:14:08+00:00"
+  "updatedAt": "2026-11-12T05:45:10+00:00"
 }
