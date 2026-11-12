@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T01:30:45+00:00",
+    "updatedAt": "2026-11-12T01:50:23+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -99516,10 +99516,23 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-11T14:52:21+00:00",
+      "updatedAt": "2026-11-12T01:50:23+00:00",
       "lastReviewedAt": "2026-11-11T14:52:21+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
+        {
+          "text": "All review threads on the 37 Tamir-authored gVisor PRs merged since November 7 at 11:59 UTC were paged to completion. No unresolved inline request ended with an unanswered reviewer comment. The sweep found no new unanswered inline request or substantive top-level comment on those merged PRs. On #17191 Ryan confirmed all four release-archive requests were addressed. All four TCP annotation separators in 3171566a5 were still applicable on 2f5253abf and are staged for the next cleanup.",
+          "evidence": [
+            {
+              "label": "Ryan’s verification of all four release archive changes",
+              "url": "https://github.com/google/gvisor/pull/17191#pullrequestreview-5833388244"
+            },
+            {
+              "label": "Four TCP lock annotation separators",
+              "url": "https://github.com/tamird/gvisor/commit/3171566a5"
+            }
+          ]
+        },
         {
           "text": "Across the same 187-head sample, 14 added patch files represented four distinct paths. The wrk2, TLDK and DPDK patches already explained their changes. The Buildifier patch needed a header, now published on #16663. The Fastlane backport arrived after this sample and received a header before contributor review.",
           "evidence": [
@@ -99893,6 +99906,14 @@
         {
           "label": "State design",
           "url": "https://github.com/google/gvisor/issues/16216"
+        },
+        {
+          "label": "Ryan’s verification of all four release archive changes",
+          "url": "https://github.com/google/gvisor/pull/17191#pullrequestreview-5833388244"
+        },
+        {
+          "label": "Four TCP lock annotation separators",
+          "url": "https://github.com/tamird/gvisor/commit/3171566a5"
         }
       ],
       "group": "tests"
@@ -102799,13 +102820,34 @@
     },
     {
       "id": "investigation:ci-flake-dind-bridge",
-      "title": "ARM64 nested Docker bridge tests time out",
+      "title": "Nested Docker bridge tests time out on ARM64 and AMD64",
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T00:28:53+00:00",
-      "summary": "Seven of nine recent ARM64 Docker job failures with exit code 2 timed out in a nested bridge-network command. Two were building an image and five were running a privileged container. Both storage drivers were affected.",
+      "updatedAt": "2026-11-12T01:50:23+00:00",
+      "summary": "Seven ARM64 jobs timed out in nested Docker bridge builds or privileged container runs with VFS or overlay storage. Two AMD64 jobs on build 54543 timed out in the same privileged VFS bridge test under systrap and KVM. Both same-head retries passed.",
       "findings": [
+        {
+          "text": "Both AMD64 jobs on build 54543 reached 900 seconds in TestDockerWithVFS/docker_run_bridge_network_privileged. On each platform, the preceding host-network docker run completed apk add curl and apk info with exit status 0. The privileged bridge run then began mount setup on the same Alpine image and produced no exit status. Removing a completed container leaves the image available for the next run. The logs do not locate the wait inside the bridge command. The uncached retries passed in 127.3 seconds on systrap and 50 seconds on KVM.",
+          "evidence": [
+            {
+              "label": "54543 systrap nested Docker runtime log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54543/jobs/01a1ccfb-5efe-4386-9aac-ae2383d398d0/artifacts/01a1cd0f-c020-45d5-9054-93593ab84286"
+            },
+            {
+              "label": "54543 KVM nested Docker runtime log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54543/jobs/01a1ccfb-5efa-422a-8895-129cc7f95666/artifacts/01a1cd0f-c47a-49ca-b626-5368892a747e"
+            },
+            {
+              "label": "54543 systrap retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-8b6c-4768-8506-86b057de053a"
+            },
+            {
+              "label": "54543 KVM retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-9cee-488a-92a2-ec625cc4f3e2"
+            }
+          ]
+        },
         {
           "text": "The overlay build on #54388 spent 14m36s in docker_build_bridge_network before image_test reached its 900.1-second limit. On the same commit the retry ran image_test uncached and passed in 93.9 seconds. The VFS build on #54275 timed out in the same subtest.",
           "evidence": [
@@ -102850,7 +102892,7 @@
           ]
         }
       ],
-      "nextStep": "On the next occurrence with #17445, read the inner dockerd output captured at the command deadline and identify whether image lookup, package download or command execution stopped making progress.",
+      "nextStep": "Use the inner dockerd output captured by #17445 to distinguish a bridge DNS or HTTPS wait during apk add curl from a process that failed to exit. Both host-network runs on build 54543 had already used the same local image.",
       "evidence": [
         {
           "label": "#54388 ARM64 overlay build log",
@@ -102863,6 +102905,22 @@
         {
           "label": "Build #54549, nested Docker bridge timeout before #17445",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54549#01a1cd09-68e2-4c9b-9a33-d0fee1db1fa4"
+        },
+        {
+          "label": "54543 systrap nested Docker runtime log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54543/jobs/01a1ccfb-5efe-4386-9aac-ae2383d398d0/artifacts/01a1cd0f-c020-45d5-9054-93593ab84286"
+        },
+        {
+          "label": "54543 KVM nested Docker runtime log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54543/jobs/01a1ccfb-5efa-422a-8895-129cc7f95666/artifacts/01a1cd0f-c47a-49ca-b626-5368892a747e"
+        },
+        {
+          "label": "54543 systrap retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-8b6c-4768-8506-86b057de053a"
+        },
+        {
+          "label": "54543 KVM retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-9cee-488a-92a2-ec625cc4f3e2"
         }
       ]
     },
@@ -104422,9 +104480,43 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "updatedAt": "2026-11-12T01:50:23+00:00",
       "summary": "Build 54544’s Node 22.2.0 shard logged “Sending req no 1”, then exceeded the deadline in parallel/test-http-outgoing-end-cork.js before logging a completed response. The same agent’s next attempt timed out in a different test and a later attempt passed on another agent.",
       "findings": [
+        {
+          "text": "The proposed Node test sends two requests over one keep-alive socket, checks both response bodies and requires the second write to drain. All 15 expected outcomes matched on Node 28 nightly, and on pinned Node 22.2.0 under native Linux and gVisor systrap. The revised test passed normally and with an event-loop pause in all three environments. Each unfinished-second-response control hit the harness deadline.",
+          "evidence": [
+            {
+              "label": "Review the Node test commit",
+              "url": "https://github.com/tamird/node/commit/29e91d2e3"
+            },
+            {
+              "label": "Open the prefilled Node pull request after personal sign-off",
+              "url": "https://github.com/nodejs/node/compare/main...tamird:node:test/http-double-end-socket-reuse?expand=1&title=test%3A+reuse+one+socket+in+the+HTTP+double-end+test&body=The+HTTP+double-end+test+can+time+out+on+its+first+request+before+it+exercises+socket+reuse.+Limit+the+keep-alive+agent+to+one+socket%2C+send+two+requests%2C+and+verify+both+complete+bodies.+The+second+response+must+use+the+first+socket+and+drain+a+write+larger+than+its+high+water+mark.+The+test+runner+bounds+an+incomplete+response.%0A%0AThe+previous+test+reached+its+deadline+after+a+deliberate+event-loop+pause+on+Node+28+nightly+and+Node+22.2.0+on+native+Linux+and+gVisor.+The+revised+test+completed+in+all+three+environments+and+detected+an+unfinished+second+response.+%5BTest+results%5D%28https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F43136166387%29%0A%0AAssisted-by%3A+Codex"
+            },
+            {
+              "label": "Fifteen native and systrap outcomes on the exact proposed test",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43136166387/artifacts/13907398080"
+            },
+            {
+              "label": "Backport to the pinned gVisor test image",
+              "url": "https://github.com/tamird/gvisor/commit/2821a89fd"
+            }
+          ]
+        },
+        {
+          "text": "The pinned image sets a one-second request deadline and a two-second total deadline. A 1.25-second event-loop pause reproduced the original assertion before DNS, connect or server activity. The original shard reached 30 tests in 53 seconds versus 3 seconds on its same-agent retry. The failed CI job did not record request-phase timings.",
+          "evidence": [
+            {
+              "label": "Pinned-image timers and native Linux and systrap controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43135243338/artifacts/13907585968"
+            },
+            {
+              "label": "Node 22 image timeout changes",
+              "url": "https://github.com/google/gvisor/blob/6dd09915e/images/runtimes/nodejs22.2.0/timeouts.patch"
+            }
+          ]
+        },
         {
           "text": "The original log reports ERR_ASSERTION from the first-request timer. The test only logs again after end, so the log leaves the response headers, body progress and underlying cause unknown. The available host log tails record Docker veth lifecycle events without CPU-pressure or OOM measurements. A separate riscv64 report contains the same first-request assertion.",
           "evidence": [
@@ -104479,9 +104571,45 @@
         {
           "label": "Related Node riscv64 report",
           "url": "https://github.com/nodejs/node/issues/54499"
+        },
+        {
+          "label": "Pinned-image timers and native Linux and systrap controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43135243338/artifacts/13907585968"
+        },
+        {
+          "label": "Node 22 image timeout changes",
+          "url": "https://github.com/google/gvisor/blob/6dd09915e/images/runtimes/nodejs22.2.0/timeouts.patch"
+        },
+        {
+          "label": "Review the Node test commit",
+          "url": "https://github.com/tamird/node/commit/29e91d2e3"
+        },
+        {
+          "label": "Open the prefilled Node pull request after personal sign-off",
+          "url": "https://github.com/nodejs/node/compare/main...tamird:node:test/http-double-end-socket-reuse?expand=1&title=test%3A+reuse+one+socket+in+the+HTTP+double-end+test&body=The+HTTP+double-end+test+can+time+out+on+its+first+request+before+it+exercises+socket+reuse.+Limit+the+keep-alive+agent+to+one+socket%2C+send+two+requests%2C+and+verify+both+complete+bodies.+The+second+response+must+use+the+first+socket+and+drain+a+write+larger+than+its+high+water+mark.+The+test+runner+bounds+an+incomplete+response.%0A%0AThe+previous+test+reached+its+deadline+after+a+deliberate+event-loop+pause+on+Node+28+nightly+and+Node+22.2.0+on+native+Linux+and+gVisor.+The+revised+test+completed+in+all+three+environments+and+detected+an+unfinished+second+response.+%5BTest+results%5D%28https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F43136166387%29%0A%0AAssisted-by%3A+Codex"
+        },
+        {
+          "label": "Fifteen native and systrap outcomes on the exact proposed test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43136166387/artifacts/13907398080"
+        },
+        {
+          "label": "Backport to the pinned gVisor test image",
+          "url": "https://github.com/tamird/gvisor/commit/2821a89fd"
         }
       ],
-      "nextStep": "Compare uncached runs of the pinned test with time-stamped request, response and end events and a matched worker control. Check the first failing boundary before changing the test deadline."
+      "nextStep": "Tamir can review the single fork commit, add his personal DCO sign-off and submit the prefilled Node pull request. The separate gVisor backport replaces this test’s timeout patch in the pinned Node 22.2.0 image; its packaged-image check is pending.",
+      "repo": "nodejs/node",
+      "head": "29e91d2e3d044e26809ea80130d3364dd3df8813",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "29e91d2e3d044e26809ea80130d3364dd3df8813",
+        "baseHead": "933cb117c91c961880d0b00fd9b6b75ff4580484",
+        "url": "https://github.com/tamird/node/commit/29e91d2e3",
+        "title": "test: reuse one socket in the HTTP double-end test",
+        "body": "The HTTP double-end test can time out on its first request before it exercises socket reuse. Limit the keep-alive agent to one socket, send two requests, and verify both complete bodies. The second response must use the first socket and drain a write larger than its high water mark. The test runner bounds an incomplete response.\n\nThe previous test reached its deadline after a deliberate event-loop pause on Node 28 nightly and Node 22.2.0 on native Linux and gVisor. The revised test completed in all three environments and detected an unfinished second response. [Test results](https://github.com/tamird/gvisor/actions/runs/43136166387)\n\nAssisted-by: Codex",
+        "summary": "Review the single test commit, add your personal DCO sign-off, and submit it to Node? The two-request test covers socket reuse on a slow worker and detects an unfinished second response."
+      }
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
