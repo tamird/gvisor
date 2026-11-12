@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T16:28:11+00:00",
+    "updatedAt": "2026-11-12T16:43:40+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60966,13 +60966,13 @@
       "number": 17028,
       "repo": "google/gvisor",
       "ref": "upstream/dind-integration-20261105",
-      "head": "4a7e1de519aed4a4a27f6430114e03754589ff37",
+      "head": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
       "title": "Checkpoint subtests now use Docker-compatible names",
       "url": "https://github.com/google/gvisor/pull/17028",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T17:16:13+00:00",
-      "summary": "The author addressed the container-name failure in 4a7e1de51 by using leave-running-%t before dockerutil.MakeContainer. The author’s reply leaves the full nested Docker checkpoint run pending.\n\nDocker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.\n\nWith hyphenated names and the Docker/containerd test setup corrected, both modes started the inner Moby 29.8.1 daemon. Each daemon exited while creating its default bridge because /proc/sys/net/ipv4/conf/docker0/route_localnet was missing. This gVisor revision exposes route_localnet under all and default. Both tests stopped before checkpoint.",
+      "updatedAt": "2026-11-12T16:43:40+00:00",
+      "summary": "The author enabled the Docker userland proxy by default and mounted the data tmpfs with exec. With #16666, the author reports two successful restores in each checkpoint mode. The earlier test used the proxy-disabled bridge path and stopped before checkpoint. The agent is independently testing both proxy-enabled modes on the author’s revision.",
       "evidence": [
         {
           "label": "Both subtests failed at container creation",
@@ -61009,6 +61009,18 @@
         {
           "label": "Published route_localnet follow-up",
           "url": "https://github.com/google/gvisor/pull/17028#discussion_r4540977846"
+        },
+        {
+          "label": "Author’s reproduction and four reported restores",
+          "url": "https://github.com/google/gvisor/pull/17028#discussion_r4547514694"
+        },
+        {
+          "label": "Exact checkpoint reproduction instructions",
+          "url": "https://github.com/hky1999/gvisor/blob/e17281fec8dea3f23e6c3a573f12943a72c0e21f/test/e2e/dind_checkpoint.txt"
+        },
+        {
+          "label": "Independent stopping and leave-running qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43261490300"
         }
       ],
       "settledReviews": [
@@ -61039,15 +61051,14 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "4a7e1de519aed4a4a27f6430114e03754589ff37",
-        "observedAt": "2026-11-11T17:16:13+00:00",
-        "disposition": "The author fixed the container names. The reviewed follow-up supplied the observed Docker bridge error and asked how to test the combined series.",
-        "nextAction": "Follow the author’s answer about the per-interface route_localnet setting before rerunning both checkpoint modes.",
+        "sourceHead": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
+        "observedAt": "2026-11-12T16:43:40+00:00",
+        "disposition": "The author supplied the reproduction instructions and clarified that the proxy-disabled path still needs per-interface route_localnet support. The independent comparison uses e17281fec plus the specified #16666 revision.",
+        "nextAction": "Check both stopping and leave-running checkpoint modes in the fork run. Verify two restores with no skips in each mode against the author’s reproduction.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17028#pullrequestreview-5800533338",
-          "https://github.com/google/gvisor/pull/17028#discussion_r4492765208",
-          "https://github.com/google/gvisor/pull/17028#discussion_r4534767081",
-          "https://github.com/google/gvisor/pull/17028#discussion_r4540977846"
+          "https://github.com/google/gvisor/pull/17028#discussion_r4547514694",
+          "https://github.com/hky1999/gvisor/blob/e17281fec8dea3f23e6c3a573f12943a72c0e21f/test/e2e/dind_checkpoint.txt",
+          "https://github.com/tamird/gvisor/actions/runs/43261490300"
         ]
       }
     },
@@ -75819,7 +75830,7 @@
       "group": "bazel",
       "status": "open",
       "summary": "Ordinary Gazelle and a sandboxed BUILD-file check can pass the same public input to -repo_config. On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
-      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "updatedAt": "2026-11-12T16:43:40+00:00",
       "evidence": [
         {
           "label": "Single supplier commit for a public repository-map input",
@@ -75836,16 +75847,25 @@
         {
           "label": "Published upstream as bazel-contrib/bazel-gazelle#2514",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514"
+        },
+        {
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4547568345",
+          "label": "Fabian’s question about the gVisor use case"
+        },
+        {
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4553360799",
+          "label": "Posted explanation and private-file alternative"
         }
       ],
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "observedAt": "2026-11-12T01:01:41+00:00",
-        "disposition": "The approved single commit is published.",
-        "nextAction": "Follow upstream review and checks.",
+        "observedAt": "2026-11-12T16:43:40+00:00",
+        "disposition": "Fabian asked how gVisor consumes the file before making it public API. Tamir’s same-thread answer explains that the presubmit passes it to Gazelle and proposes a sandboxable diff rule that keeps the file private.",
+        "nextAction": "Await Fabian’s response on the proposed Gazelle rule.",
         "evidence": [
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514"
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4547568345",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4553360799"
         ]
       }
     },
@@ -75861,7 +75881,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
-      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "updatedAt": "2026-11-12T16:36:30+00:00",
       "evidence": [
         {
           "label": "Container-Optimized OS driver check, build #54517",
@@ -75885,13 +75905,17 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Upstream import",
         "sourceHead": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
-        "observedAt": "2026-11-12T01:01:41+00:00",
-        "disposition": "The approved single commit is published.",
-        "nextAction": "Follow upstream review and checks.",
+        "observedAt": "2026-11-12T16:36:30+00:00",
+        "disposition": "Etienne approved 3dfdf32f7 and labeled #17511 ready to pull. Copybara closed #17527 unmerged after opening #17550 for the same source. Both exports have the identical version.go patch. The replacement passed public Buildkite, internal Buildkite and Go tests. Tamir asked Etienne about the closure on #17527.",
+        "nextAction": "Await import of #17550 or a maintainer response to Tamir’s existing question. After the registration lands, check the master COS driver job for 580.196.07.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17511"
+          "https://github.com/google/gvisor/pull/17511",
+          "https://github.com/google/gvisor/pull/17511#pullrequestreview-5869656224",
+          "https://github.com/google/gvisor/pull/17527#issuecomment-6829535543",
+          "https://github.com/google/gvisor/pull/17550",
+          "https://buildkite.com/gvisor/pipeline/builds/54668"
         ]
       }
     },
@@ -102974,7 +102998,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T05:11:48+00:00",
+      "updatedAt": "2026-11-12T16:36:30+00:00",
       "summary": "Eight syscall shards across six builds finished their guest tests and failed on a watchdog warning emitted during startup. Six Sentry stacks waited for a channel connection after the lisafs replies. The other two waited for a fourth channel reply or a pathname walk.",
       "findings": [
         {
@@ -103085,6 +103109,19 @@
             {
               "label": "#54610 same-head raw-socket retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54610#01a1ce18-4b5b-4911-b990-346a0f054b4e"
+            }
+          ]
+        },
+        {
+          "text": "Build 54670 reproduced the watchdog in shard 1/8 of socket_inet_loopback_nogotsan_test_runsc_systrap_hostnet. A lisafs WalkReq took 60.001390 seconds. The green retry reused the cached result for that target, so it provides no fresh execution of the failing shard.",
+          "evidence": [
+            {
+              "label": "Original failed job in build 54670",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54670#01a1cff5-9e63-4512-b596-685ea4786170"
+            },
+            {
+              "label": "Same-head Buildkite retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54670#01a1d015-52f1-4be2-bd1d-ba55caabe46e"
             }
           ]
         }
@@ -104324,7 +104361,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "updatedAt": "2026-11-12T16:36:30+00:00",
       "summary": "Seven ARM64 jobs timed out in nested Docker bridge builds or privileged container runs with VFS or overlay storage. Two AMD64 jobs on build 54543 timed out in the same privileged VFS bridge test under systrap and KVM. Both same-head retries passed.",
       "findings": [
         {
@@ -104405,6 +104442,19 @@
             {
               "label": "Passing ARM64 retry",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54597#01a1cdbe-8046-4b66-b0ce-26d5d9fd6f9c"
+            }
+          ]
+        },
+        {
+          "text": "In build 54670, KVM //test/image:image_test timed out after 900.1 seconds. TestDockerWithOverlay/docker_run_bridge_network_non_privileged was waiting in Process.Logs. An uncached same-head retry ran the target and passed in 93.0 seconds.",
+          "evidence": [
+            {
+              "label": "Original failed job in build 54670",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54670#01a1cff5-9e92-4199-b5b8-53009426e2f1"
+            },
+            {
+              "label": "Same-head Buildkite retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54670#01a1d00f-f35e-4c32-b532-ce927f7fa928"
             }
           ]
         }
@@ -105822,7 +105872,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "updatedAt": "2026-11-12T16:36:30+00:00",
       "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
       "findings": [
         {
@@ -105855,9 +105905,34 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43117337335/artifacts/13901706883"
             }
           ]
+        },
+        {
+          "text": "Etienne approved #17511 at 3dfdf32f7 and added ready to pull. The source Copybara status links CL 1019767995. Its export #17527 passed public Buildkite and Go tests but had a failed private Buildkite status. The newer CL 1020006072 opened #17550 at 13:07 UTC for the same source. Its registration, both installers and resulting file are identical to #17527, #17511 and the independent #17540. Public Buildkite, internal Buildkite and Go tests passed on #17550. Copybara closed #17527 unmerged at 16:29 UTC and deleted its branch. The public timeline gives no reason for closure. Tamir asked Etienne at 16:32 UTC.",
+          "evidence": [
+            {
+              "label": "Etienne’s approval of exact source 3dfdf32f7",
+              "url": "https://github.com/google/gvisor/pull/17511#pullrequestreview-5869656224"
+            },
+            {
+              "label": "Tamir’s question on the closed export",
+              "url": "https://github.com/google/gvisor/pull/17527#issuecomment-6829535543"
+            },
+            {
+              "label": "Open replacement for the same source, CL 1020006072",
+              "url": "https://github.com/google/gvisor/pull/17550"
+            },
+            {
+              "label": "Passing public Buildkite pipeline on the replacement",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54668"
+            },
+            {
+              "label": "Independent PR with the identical registration",
+              "url": "https://github.com/google/gvisor/pull/17540"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow #17511 through review and import, then check the master COS driver job with 580.196.07 in its image list.",
+      "nextStep": "Await import of #17550 or a maintainer response to Tamir’s existing question. After the registration lands, check the master COS driver job for 580.196.07.",
       "evidence": [
         {
           "label": "Container-Optimized OS driver check, build #54517",
