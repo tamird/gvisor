@@ -1,35 +1,54 @@
-name: CI
-
-"on":
+name: Compare the Nogo export inputs of downstream ARM64 releases
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/compiler-consumer-nogo-import]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the compiler integration and released Bazel client
+        run: |
+          set -euo pipefail
+          area="$RUNNER_TEMP/downstream-release"
+          mkdir -p "$area/results" "$area/dist"
+          test "$(git rev-parse HEAD^)" = a066005a68e743f3c8bc0d974a2c6c87f414ba18
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/downstream_release.py' ':!test/rbe/downstream_nogo_16098.patch'
+          cp test/rbe/downstream_release.py "$area/"
+          cp test/rbe/downstream_nogo_16098.patch "$area/pr16098.patch"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$area/bazel"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 -H 'Accept: application/octet-stream' https://api.github.com/repos/cerisier/glibc-headers/releases/assets/253918436 -o "$area/dist/x86_64-linux-gnu.2.28.tar.zst"
+          cd "$area"
+          sha256sum --check <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3  dist/x86_64-linux-gnu.2.28.tar.zst
+          SUMS
+          chmod +x bazel
+          ./bazel --version >results/bazel-version.txt
+      - name: Compare the compiler inputs and build the downstream fileset if analysis succeeds
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          area="$RUNNER_TEMP/downstream-release"
+          rc="$area/client.bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --remote_default_exec_properties=OSFamily=linux' 'build --remote_default_exec_properties=Arch=amd64' 'build --remote_default_exec_properties=workload-isolation-type=oci' 'build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } >"$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -B "$area/downstream_release.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: downstream-nogo-export-comparison
+          path: ${{ runner.temp }}/downstream-release/results/
+          retention-days: 14
+          if-no-files-found: error
