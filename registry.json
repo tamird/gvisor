@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T17:17:24Z",
+    "updatedAt": "2026-11-12T17:28:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3230,7 +3230,7 @@
       "summary": "Both PacketImpact handshake targets passed uncached on Ubuntu ARM64 Firecracker workers with root and IPv6 requested. The native Linux and Netstack captures each show an IPv4 handshake and the full 11-byte payload. The previous attempt was still building when it timed out.\n\nThe shared BuildBuddy pool ran all nine docprocessor cases on an ARM64 Firecracker guest as UID 0 with IPv6 networking requested. A separate shared Linux 5.10.0 guest enforced a seccomp filter on both threads but reported the new filter count on only one. Linux 6.1 was tested under QEMU.\n\nThe earlier ARM64 Podman request was unscheduled and ran zero tests. Podman still needs its own image, nonroot storage and default networking checked. Nested KVM, 64 KiB pages and selection of a particular guest kernel each need separate evidence.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13603,
-      "updatedAt": "2026-11-09T02:49:58+00:00",
+      "updatedAt": "2026-11-12T17:28:55+00:00",
       "evidence": [
         {
           "label": "ARM64 Linux and Netstack handshakes, LLVM actions and both packet captures",
@@ -3280,7 +3280,17 @@
           "label": "First ARM64 attempt: build time limit, zero TestResults",
           "url": "https://github.com/tamird/gvisor/actions/runs/42547748690/artifacts/13644257975"
         }
-      ]
+      ],
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "IC_kwDODlcBtc8AAAABaqr_yg",
+            "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13603#issuecomment-6084558794",
+            "updatedAt": "2026-10-09T16:03:39Z",
+            "evidence": "https://github.com/tamird/gvisor/actions/runs/42551311111"
+          }
+        ]
+      }
     },
     {
       "id": "external:vhost",
@@ -55990,7 +56000,7 @@
       "url": "https://github.com/google/gvisor/pull/16834",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T11:25:21+00:00",
+      "updatedAt": "2026-11-12T17:28:55+00:00",
       "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.\n\nWith registry LLVM 0.8.24, Gazelle required a host env executable to configure either release. Applying #16834 let Bazel configure the optimized AMD64 and ARM64 releases and their x/sys/unix dependency. Both system binary directories stayed empty. These four configuration queries ran no build actions.",
       "evidence": [
         {
@@ -56021,7 +56031,17 @@
           "at": "2026-11-02T19:49:24Z",
           "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/issues/2499"
         }
-      ]
+      ],
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "IC_kwDOBrb7Vc8AAAABiMbCjQ",
+            "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/2499#issuecomment-6589694605",
+            "updatedAt": "2026-11-02T22:08:22Z",
+            "evidence": "https://github.com/google/gvisor/pull/16834#issuecomment-6766502528"
+          }
+        ]
+      }
     },
     {
       "id": "pr:16868",
@@ -61090,13 +61110,13 @@
       "number": 17026,
       "repo": "google/gvisor",
       "ref": "upstream/dind-topology-20261105",
-      "head": "fdb50904483cd093a14c7d4ed3bbbf645222dab1",
+      "head": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
       "title": "Root registry preserves child network namespace ownership",
       "url": "https://github.com/google/gvisor/pull/17026",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T16:50:58+00:00",
-      "summary": "The author addressed the nested-namespace review in fdb509044. Task.Clone and Task.Unshare now pass the root network namespace to the registry while retaining the child’s user namespace. New clone and unshare syscall tests cover both values of CLONE_NEWUSER. The author reports native, systrap, KVM and save results.\n\nThe existing netlink syscall test passed on Linux. On fdd009fd9 the guest entered the test and panicked on the second unshare. With the two production call sites corrected, GoogleTest recorded OK and the guest exited 0. The fork reporter subsequently marked the expected test-log output missing.",
+      "updatedAt": "2026-11-12T17:28:55+00:00",
+      "summary": "At 53cc614c1, Task.Clone and Task.Unshare use the root network namespace’s registry while retaining the child’s user namespace. BridgeVethRetainedNamespaceAcrossSave exercises bridge and veth connectivity to the child namespace after its creator exits. The author reports passing native Linux and ordinary, save and save-resume systrap runs and a failing frozen-base control.\n\nThe existing netlink syscall test passed on Linux. On fdd009fd9 the guest entered the test and panicked on the second unshare. With the two production call sites corrected, GoogleTest recorded OK and the guest exited 0. The fork reporter subsequently marked the expected test-log output missing.",
       "evidence": [
         {
           "label": "Existing netlink syscall case on native Linux",
@@ -61117,6 +61137,18 @@
         {
           "label": "Author’s revised implementation and test update",
           "url": "https://github.com/google/gvisor/pull/17026#discussion_r4534766408"
+        },
+        {
+          "label": "Root-registry selection on the current head",
+          "url": "https://github.com/hky1999/gvisor/blob/53cc614c1/pkg/sentry/kernel/task_clone.go#L205"
+        },
+        {
+          "label": "Retained bridge and veth namespace test",
+          "url": "https://github.com/hky1999/gvisor/blob/53cc614c1/test/syscalls/linux/socket_netlink_route.cc#L3689"
+        },
+        {
+          "label": "Author’s updated test matrix",
+          "url": "https://github.com/google/gvisor/pull/17026#discussion_r4547515175"
         }
       ],
       "settledReviews": [
@@ -61134,14 +61166,35 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "fdb50904483cd093a14c7d4ed3bbbf645222dab1",
-        "observedAt": "2026-11-11T16:50:58+00:00",
-        "disposition": "The author revised both callers and added the requested syscall coverage.",
+        "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
+        "observedAt": "2026-11-12T17:28:55+00:00",
+        "disposition": "The author retained the root-registry fix and credit and added the requested bridge/veth test. The reported runs cover the new head.",
         "nextAction": "Follow upstream integration or a new review request.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17026#pullrequestreview-5800533049",
           "https://github.com/google/gvisor/pull/17026#discussion_r4492764964",
-          "https://github.com/google/gvisor/pull/17026#discussion_r4534766408"
+          "https://github.com/google/gvisor/pull/17026#discussion_r4534766408",
+          "https://github.com/google/gvisor/pull/17026#discussion_r4547515175",
+          "https://github.com/hky1999/gvisor/blob/53cc614c1/pkg/sentry/kernel/task_clone.go#L205",
+          "https://github.com/hky1999/gvisor/blob/53cc614c1/test/syscalls/linux/socket_netlink_route.cc#L3689"
+        ]
+      },
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABDksLSA",
+            "url": "https://github.com/google/gvisor/pull/17026#discussion_r4534766408",
+            "updatedAt": "2026-11-11T06:39:14Z",
+            "head": "fdb50904483cd093a14c7d4ed3bbbf645222dab1",
+            "evidence": "https://github.com/hky1999/gvisor/blob/53cc614c1/pkg/sentry/kernel/task_clone.go#L205"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABDw2TJw",
+            "url": "https://github.com/google/gvisor/pull/17026#discussion_r4547515175",
+            "updatedAt": "2026-11-12T07:25:13Z",
+            "head": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
+            "evidence": "https://github.com/hky1999/gvisor/blob/53cc614c1/test/syscalls/linux/socket_netlink_route.cc#L3689"
+          }
         ]
       }
     },
@@ -76139,12 +76192,12 @@
       "repo": "hermeticbuild/hermetic-llvm",
       "number": 938,
       "ref": "toolchain-stage-config",
-      "head": "baa2066bd9f6830d078228a9047649f8334f712e",
+      "head": "fc824d720b6c5228575559b0f3fa2cc889323298",
       "title": "Share toolchain args and features across runtime stages",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938",
       "status": "open",
-      "updatedAt": "2026-11-12T10:22:34+00:00",
-      "summary": "The static ASan symbolizer fails to compile with unmapped C++ actions on the proposed toolchain. Keeping the complete argument list in the caller’s configuration fixes that build and preserves bootstrap sharing.",
+      "updatedAt": "2026-11-12T17:28:55+00:00",
+      "summary": "The author cherry-picked the static ASan symbolizer fix at fc824d720. Its complete tree matches the supplied change at 7c9e7687d. The complete toolchain argument list stays in the caller’s configuration, and the Bazel 9.x and last_rc rules_cc checks pass.",
       "evidence": [
         {
           "label": "Three-file correction on #938",
@@ -76153,6 +76206,14 @@
         {
           "label": "Mapped tests, unmapped build and configuration counts",
           "url": "https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062"
+        },
+        {
+          "label": "Author’s confirmation of the cherry-pick",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938#discussion_r4553537588"
+        },
+        {
+          "label": "Upstream commit with the verified tree",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/fc824d720"
         }
       ],
       "settledReviews": [
@@ -76169,7 +76230,18 @@
           "at": "2026-11-12T10:20:09Z",
           "postedURL": "https://github.com/hermeticbuild/hermetic-llvm/pull/938#discussion_r4549117254"
         }
-      ]
+      ],
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOORjXAc8AAAABD2l4NA",
+            "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938#discussion_r4553537588",
+            "updatedAt": "2026-11-12T16:53:52Z",
+            "head": "fc824d720b6c5228575559b0f3fa2cc889323298",
+            "evidence": "https://github.com/hermeticbuild/hermetic-llvm/commit/fc824d720"
+          }
+        ]
+      }
     },
     {
       "id": "pr:17083",
@@ -99356,7 +99428,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-12T05:45:10+00:00",
+      "updatedAt": "2026-11-12T17:28:55+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -100563,6 +100635,10 @@
         {
           "label": "Fork integration only",
           "url": "https://github.com/tamird/gvisor/commit/316c960a9"
+        },
+        {
+          "label": "Earlier inspection of the fallback review on PR #16887",
+          "url": "https://github.com/google/gvisor/commit/5d5f41675"
         }
       ],
       "reviewWatch": {
@@ -100595,7 +100671,7 @@
           {
             "id": "IC_kwDOB9IlXs8AAAABigD5dg",
             "url": "https://github.com/google/gvisor/pull/16887#issuecomment-6610286966",
-            "head": "430e65796267c361c86d13b66b4a4604975d0e13",
+            "head": "bba4c63b27424f09bbde372858ad47674714d252",
             "updatedAt": "2026-11-03T17:00:07Z",
             "evidence": "https://github.com/google/gvisor/pull/16887#pullrequestreview-5756434671"
           },
@@ -100616,9 +100692,9 @@
           {
             "id": "PRRC_kwDOB9IlXs8AAAABCuWdeA",
             "url": "https://github.com/google/gvisor/pull/16887#discussion_r4477787512",
-            "head": "bba4c63b27424f09bbde372858ad47674714d252",
+            "head": "ff79390649cbb3c92c1d775d609d758b90af6f0c",
             "updatedAt": "2026-11-05T07:40:00Z",
-            "evidence": "https://github.com/google/gvisor/issues/16670"
+            "evidence": "https://github.com/google/gvisor/blob/1668e58d4/pkg/tcpip/link/fdbased/endpoint_test.go#L904"
           },
           {
             "id": "PRRC_kwDOB9IlXs8AAAABCuWeuQ",
@@ -100630,9 +100706,9 @@
           {
             "id": "PRRC_kwDOB9IlXs8AAAABC9y94g",
             "url": "https://github.com/google/gvisor/pull/16887#discussion_r4493983202",
-            "head": "5d5f416752eba26aa322f80352dd61fbe3f4565b",
+            "head": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
             "updatedAt": "2026-11-06T15:14:55Z",
-            "evidence": "https://github.com/google/gvisor/commit/5d5f41675"
+            "evidence": "https://github.com/google/gvisor/blob/1668e58d4/pkg/tcpip/link/fdbased/endpoint.go#L588"
           },
           {
             "id": "PRRC_kwDOB9IlXs8AAAABC9164g",
