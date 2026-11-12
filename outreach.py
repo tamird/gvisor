@@ -38,7 +38,7 @@ def requested_in_comment(item: dict, number: int, *, source_only: bool = False) 
     names = set()
     for line in text.splitlines():
         if source_only and re.search(r"\b(?:internal (?:change|CL)|CL [0-9]+|ready to pull|"
-                                     r"(?:import|export) status)\b", line, re.I):
+                                     r"copybara (?:import|export)|(?:import|export) (?:status|PR|#[0-9]+))\b", line, re.I):
             continue
         if not line.lstrip().startswith(">") and ASK.search(line):
             names.update(name.lower() for name in MENTION.findall(line))

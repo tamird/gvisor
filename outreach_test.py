@@ -174,9 +174,11 @@ class OutreachTest(unittest.TestCase):
         self.assertNotIn("sourceRotation", action(p, rotations_only=True))
         p["reviewTimeline"]["items"] = []
         marker = f"<!-- gvisor-review-outreach 1:{HEAD}:alice -->"
-        p["feedback"]["items"] = [comment("tamird", "@alice, could you review the internal CL? " + marker,
-                                           "2026-11-03T18:00:00Z")]
-        self.assertNotIn("sourceRotation", action(p, rotations_only=True))
+        for target in ("internal CL", "Copybara export", "export PR #123"):
+            with self.subTest(target=target):
+                body = f"@alice, could you review the {target}? {marker}"
+                p["feedback"]["items"] = [comment("tamird", body, "2026-11-03T18:00:00Z")]
+                self.assertNotIn("sourceRotation", action(p, rotations_only=True))
         p["feedback"]["items"] = [comment("tamird", "@alice, could you review the Go import data handling?",
                                            "2026-11-03T18:00:00Z")]
         self.assertTrue(action(p, rotations_only=True)["sourceRotation"])
