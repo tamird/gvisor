@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T10:27:56+00:00",
+    "updatedAt": "2026-11-12T14:27:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59823,8 +59823,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T10:22:34+00:00",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. Neither guest produced a test result in this run.",
+      "updatedAt": "2026-11-12T14:21:57+00:00",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. The locked guest retry used the same release manifest. Bazel timed out downloading the pinned qemu-system-arm 6.2 package from Ubuntu’s snapshot archive before either guest produced a test result.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -59917,6 +59917,10 @@
         {
           "label": "Latest LLVM ARM64 release, stub arguments, GNU probe and guest result inventory",
           "url": "https://github.com/tamird/gvisor/actions/runs/43197555515/artifacts/13934866163"
+        },
+        {
+          "label": "Locked guest retry with the original package fetch error and empty test-result map",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43201966448/artifacts/13936134168"
         }
       ],
       "settledReviews": [
@@ -80346,7 +80350,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T10:03:08+00:00",
+      "updatedAt": "2026-11-12T10:46:41+00:00",
       "summary": "The original reporter’s stall has a tested repair. In a separate 40-segment test, gVisor #16495 sent one or 31 repairs on the first ACK depending on the SACK layout. With ascending SACK traversal and #15432’s flight accounting, it sent 31 repairs in both layouts. Linux sent four in each.",
       "findings": [
         {
@@ -82575,9 +82579,22 @@
               "url": "https://github.com/google/gvisor/pull/16419"
             }
           ]
+        },
+        {
+          "text": "Nine shared-queue transfers exercised the complete #16419 threshold change with the same instrumentation. The reference had 3, 3 and 3 retransmission timeouts. Flight accounting alone had 3, 3 and 0. With flight accounting and the per-ACK send allowance, all three runs had zero timeouts. Their longest gaps between new data packets were at most 101 ms despite 469, 506 and 284 forward queue drops. The receiver reported 6.21–8.04 Mbit/s on the reference, 4.32–9.11 with accounting alone and 6.90–7.32 with both changes. The earlier 32.85 s gap did not recur in any arm. These three runs per arm leave the throughput effect unresolved. All 12 uncached local Bazel test executions passed. The unchanged TestRTOInterruptsSACKRecovery passed in all three configurations before the transfers started.",
+          "evidence": [
+            {
+              "label": "Nine transfers, queue counters, packet captures and the twelve test executions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43198876547/artifacts/13935716815"
+            },
+            {
+              "label": "TCP reviewers’ guide with the shared-queue comparison",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
-      "nextStep": "Check whether the full #16419 change preserves the packet and interrupted-timeout results. A comparable shared-queue run is still needed to determine how the combined changes affect the previously observed 32.85 s pause.",
+      "nextStep": "Follow the recovery PRs in the TCP reviewer guide. The full #16419 comparison closes the interrupted-timeout check. Connecting the earlier 32.85 s stall to this change would require observing that stall under matched conditions.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -102469,7 +102486,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:27:10+00:00",
+      "updatedAt": "2026-11-12T14:27:57+00:00",
       "summary": "GitHub release downloads stopped independent gVisor jobs before their checks could run. The affected archives include Skylib, Protobuf and toml.bzl (HTTP 504), and rules_foreign_cc (HTTP 500).",
       "findings": [
         {
@@ -102602,7 +102619,7 @@
           ]
         }
       ],
-      "nextStep": "Follow gVisor’s workspace mirror in #17311 and the submitted Bazel backports in #32574 (10.0) and #32595 (9.4). Check the next dependency-download failure for the archive URL and whether the mirror was tried.",
+      "nextStep": "On the next dependency-download failure from a base containing gVisor’s workspace mirror (#17311), identify the archive URL and check whether Bazel attempted the configured mirror. The Bazel 9.4 backport landed in #32595. Follow the 10.0 backport in #32574.",
       "evidence": [
         {
           "label": "Independent Bazel fix for registry-scoped mirrors",
@@ -102671,6 +102688,10 @@
         {
           "label": "Published Bazel 9.4 manual backport",
           "url": "https://github.com/bazelbuild/bazel/pull/32595"
+        },
+        {
+          "label": "Bazel 9.4 release branch merge of the implicit registry mirror fix",
+          "url": "https://github.com/bazelbuild/bazel/commit/0b1ff8355"
         }
       ]
     },
@@ -106433,7 +106454,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T10:25:57+00:00",
+      "updatedAt": "2026-11-12T10:42:36+00:00",
       "summary": "On ARM64, TestAll saw every required trace event except MESSAGE_SYSCALL_FCNTL. The workload checked fcntl(F_GETFL) and exited successfully. Six writes to the remote sink returned EAGAIN. The log did not record their message types. Buildkite #54644 passed after the same-head retry.",
       "findings": [
         {
@@ -106459,6 +106480,15 @@
             {
               "label": "Single-commit test change",
               "url": "https://github.com/tamird/gvisor/commit/dcf8de077"
+            }
+          ]
+        },
+        {
+          "text": "Three more uncached TestAll executions ran on native ARM64, one with the original sink and two with write observation enabled. Each received both fcntl events. None reported EAGAIN, a dropped record or a retry. These runs provide no drain-time sample from which to choose a retry limit.",
+          "evidence": [
+            {
+              "label": "Three complete TestAll logs, XMLs and per-run write observations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43201050641/artifacts/13935458255"
             }
           ]
         }
