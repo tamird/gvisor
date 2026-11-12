@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T04:52:02+00:00",
+    "updatedAt": "2026-11-12T05:14:08+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71719,8 +71719,8 @@
       "url": "https://github.com/google/gvisor/pull/17288",
       "title": "Retry interrupted PacketImpact address dumps",
       "status": "open",
-      "updatedAt": "2026-11-09T17:17:34+00:00",
-      "summary": "An interrupted IPv6 address dump stopped an upstream PacketImpact DUT before its testbench started. The fix discards the partial reply and retries only that address family, up to ten attempts. All seven focused Linux controls passed in a private namespace. Two genuine kernel interruptions occurred during 16 successful lookups. An uninstrumented build on the standalone fork timed out after 22 minutes with no TestResult. A separate replay used the exact revised lookup file and unchanged SYN-SENT test on the previously verified ARM64 Firecracker runner integration. All four cases passed without skips. The capture showed payload in both directions on the queued-send connection, inbound payload on the queued-receive connection, and resets acknowledging the initial SYN on the two refused connections.",
+      "updatedAt": "2026-11-12T05:11:48+00:00",
+      "summary": "Interrupted IPv6 address dumps stopped upstream PacketImpact during DUT setup. In #54610 the zero-window-probe testbench never started. The same target passed on retry in 2.5 seconds. The fix discards the partial reply and retries only that address family, up to ten attempts. All seven focused Linux controls passed in a private namespace. Two genuine kernel interruptions occurred during 16 successful lookups. An uninstrumented build on the standalone fork timed out after 22 minutes with no TestResult. A separate replay used the exact revised lookup file and unchanged SYN-SENT test on the previously verified ARM64 Firecracker runner integration. All four cases passed without skips. The capture showed payload in both directions on the queued-send connection, inbound payload on the queued-receive connection, and resets acknowledging the initial SYN on the two refused connections.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -71745,6 +71745,14 @@
         {
           "label": "Original ARM64 Netstack test log, four passing XML cases and IPv4 capture",
           "url": "https://github.com/tamird/gvisor/actions/runs/42561653833/artifacts/13649910805"
+        },
+        {
+          "label": "#54610: incomplete IPv6 address dump during DUT startup",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54610/jobs/01a1ce07-1732-48fa-b1a5-cc7998a852c3/artifacts/01a1ce0f-5fe0-4a96-b875-c30772456911"
+        },
+        {
+          "label": "#54610: TCP zero-window target passed in 2.5 s on retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54610#01a1ce0f-e2ac-4af6-bca8-c3dd2b02114d"
         }
       ],
       "settledReviews": [
@@ -79975,7 +79983,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-11T23:39:28+00:00",
+      "updatedAt": "2026-11-12T05:11:48+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -82094,9 +82102,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
             }
           ]
+        },
+        {
+          "text": "In the two RACK-enabled shared-queue transfers, 188 completed intervals between retransmission timeouts each carried exactly two previously transmitted frames. Relative to the byte ranges missing at the start of each interval, 166 filled part of a range, one delivered no missing bytes, and 21 filled exactly one whole range. Seven of those 21 also filled part of another range. Median timeout spacing was 404 ms in both transfers. At the first timeout the receiver lacked 377,380 bytes from the outstanding flight in one transfer and 225,116 in the other. The former flight stayed incomplete over the remaining 43.77 seconds of capture. The latter completed after 33.01 seconds.",
+          "evidence": [
+            {
+              "label": "Original RACK-enabled queue captures and timeout events",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare how many distinct holes are repaired per timeout, and how long recovery takes, with and without a candidate recovery change under the same competing-flow workload. The packet captures explain where the original copies were lost.",
+      "nextStep": "Compare the parent and #16495 in eight counterbalanced pairs on the same competing-flow workload. Use each receiver’s byte ranges and sender retransmissions to compare loss recovery and throughput across matched runs.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -82569,6 +82586,10 @@
         {
           "label": "Four-arm queue captures, timeout events and packet-drop reconciliation",
           "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
+        },
+        {
+          "label": "Eight counterbalanced parent and #16495 pairs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43159656803"
         }
       ],
       "comparisons": [
@@ -101509,8 +101530,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T04:36:35+00:00",
-      "summary": "In several CI builds the first receive on a connected UDP socket succeeded where PacketImpact expected ECONNREFUSED. Build #54608 reproduced that assertion on an unrelated source export while the proposed correction in #17312 was still open.",
+      "updatedAt": "2026-11-12T05:14:08+00:00",
+      "summary": "In several CI builds the first receive on a connected UDP socket succeeded where PacketImpact expected ECONNREFUSED. Builds #54608 and #54611 reproduced the assertion while #17312 was open. Neither original preserved the numeric return from recv.",
       "findings": [
         {
           "text": "The two failing logs point to the same receive assertion. On each retry, the UDP ICMP-error target was the only one of 82 tests to rerun and passed in 9.7 seconds. Its log does not report the individual passing subtest.",
@@ -101653,6 +101674,19 @@
               "url": "https://github.com/google/gvisor/blob/492b790cc/test/packetimpact/tests/udp_icmp_error_propagation_test.go#L310-L347"
             }
           ]
+        },
+        {
+          "text": "Build #54611 at b6a2c227d reproduced Connected/PortUnreachable. After 2.05 seconds, line 316 reported that recv succeeded when it expected ECONNREFUSED. The log omitted the return value, received bytes and socket error state. The retry executed just the affected target and passed in 9.2 seconds. This observation leaves the blocked-reader wakeup mechanism unverified.",
+          "evidence": [
+            {
+              "label": "#54611 first-receive assertion",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54611/jobs/01a1ce1b-0d5b-4d94-bb7f-f934b38a1543/artifacts/01a1ce20-b942-494a-9767-9d4ad108a703"
+            },
+            {
+              "label": "#54611 passing target retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54611#01a1ce21-7323-4dfd-8447-c4c4c870d5e7"
+            }
+          ]
         }
       ],
       "nextStep": "The blocked-receive fix and packet regression are in #17312. After it lands, check for further failures of the same UDP assertion in CI.",
@@ -101704,6 +101738,14 @@
         {
           "label": "Test at the failing export’s exact revision",
           "url": "https://github.com/google/gvisor/blob/492b790cc/test/packetimpact/tests/udp_icmp_error_propagation_test.go#L310-L347"
+        },
+        {
+          "label": "#54611 first-receive assertion",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54611/jobs/01a1ce1b-0d5b-4d94-bb7f-f934b38a1543/artifacts/01a1ce20-b942-494a-9767-9d4ad108a703"
+        },
+        {
+          "label": "#54611 passing target retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54611#01a1ce21-7323-4dfd-8447-c4c4c870d5e7"
         }
       ]
     },
@@ -102006,8 +102048,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
-      "summary": "Seven syscall shards across five builds finished their guest tests, then failed on a watchdog warning emitted during startup. Five Sentry stacks waited for a channel connection after receiving the lisafs replies. Two others waited for the fourth channel reply or for a pathname walk.",
+      "updatedAt": "2026-11-12T05:11:48+00:00",
+      "summary": "Eight syscall shards across six builds finished their guest tests and failed on a watchdog warning emitted during startup. Six Sentry stacks waited for a channel connection after the lisafs replies. The other two waited for a fourth channel reply or a pathname walk.",
       "findings": [
         {
           "text": "Three channel requests completed within 1.5 ms. The fourth waited 60.001 seconds. At the 30-second watchdog threshold, the Sentry was still waiting in lisafs.Client.StartChannels. The boot log shows the client stack and the reply time.",
@@ -102102,6 +102144,23 @@
               "url": "https://github.com/tamird/gvisor/commit/181e464f6"
             }
           ]
+        },
+        {
+          "text": "On #54610, both raw-socket GTests passed. At 30 seconds Sentry was still mounting the root, waiting in lisafs.Client.StartChannels while channel workers waited in flipcall.Endpoint.Connect. The gofer had logged serving the root at 04:45:28 UTC and the root mount finished at 04:46:28. The same-head retry reran the affected shard and passed. The original logs leave the gofer’s scheduling during the gap unknown.",
+          "evidence": [
+            {
+              "label": "#54610 Sentry watchdog stacks",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54610/jobs/01a1ce07-1707-48d4-ac15-698730144b49/artifacts/01a1ce17-49d2-4f41-9ba4-55e281c84af8"
+            },
+            {
+              "label": "#54610 gofer log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54610/jobs/01a1ce07-1707-48d4-ac15-698730144b49/artifacts/01a1ce17-476b-45b2-92aa-80895ce82919"
+            },
+            {
+              "label": "#54610 same-head raw-socket retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54610#01a1ce18-4b5b-4911-b990-346a0f054b4e"
+            }
+          ]
         }
       ],
       "nextStep": "Capture the same two execution traces during a slow lisafs startup. Align the Sentry wait with the gofer’s scheduling and blocked operations to determine what held up the reply or connection.",
@@ -102117,6 +102176,18 @@
         {
           "label": "#53957 · passing retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53957#01a1c191-7c7d-499b-af59-45a29b0daa83"
+        },
+        {
+          "label": "#54610 Sentry watchdog stacks",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54610/jobs/01a1ce07-1707-48d4-ac15-698730144b49/artifacts/01a1ce17-49d2-4f41-9ba4-55e281c84af8"
+        },
+        {
+          "label": "#54610 gofer log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54610/jobs/01a1ce07-1707-48d4-ac15-698730144b49/artifacts/01a1ce17-476b-45b2-92aa-80895ce82919"
+        },
+        {
+          "label": "#54610 same-head raw-socket retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54610#01a1ce18-4b5b-4911-b990-346a0f054b4e"
         }
       ]
     },
@@ -103067,8 +103138,8 @@
       "title": "PHP’s 2.15 GB multipart upload fails across master and test builds",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T11:11:00+00:00",
-      "summary": "PHP 8.5.11 reported sapi/cli/tests/upload_2G.phpt as failed in seven attempts across six commits. Two were gVisor master commits (d887f126f and 93713c50f). Four were Google test commits.",
+      "updatedAt": "2026-11-12T05:11:48+00:00",
+      "summary": "The PHP 8.5.11 upload_2G.phpt case failed in eight attempts across seven commits, including two gVisor master commits. Build #54608 reproduced it in a batch of 50 PHPTs.",
       "findings": [
         {
           "text": "The master goferfs jobs failed in builds #54352 and #54360. The #54360 retry used a cached result. The Buildkite retry produced no fresh result for this individual case.",
@@ -103142,6 +103213,19 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42943209689/artifacts/13823555132"
             }
           ]
+        },
+        {
+          "text": "On 492b790cc the PHP runner marked the 2.15 GB upload as the only failure among 50 cases in the batch (15 passed, 34 skipped). The original log contains the case name and FAIL, without an expected/actual diff. The same-head retry ran one uncached shard and passed the target in 262.5 seconds. #17470 was open when the build ran.",
+          "evidence": [
+            {
+              "label": "#54608 original PHP shard",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54608/jobs/01a1cdf5-1330-4b5e-bbaf-f5f1361b723f/artifacts/01a1ce03-8f76-4783-bfde-1bda8d5a43d4"
+            },
+            {
+              "label": "#54608 PHP retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54608#01a1ce04-5a61-4032-845c-a21b6e9a005f"
+            }
+          ]
         }
       ],
       "nextStep": "When #17470 lands, inspect the expected and actual output from the next failing upload shard.",
@@ -103177,6 +103261,14 @@
         {
           "label": "PHP 8.5.11 test",
           "url": "https://github.com/php/php-src/blob/php-8.5.11/sapi/cli/tests/upload_2G.phpt"
+        },
+        {
+          "label": "#54608 original PHP shard",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54608/jobs/01a1cdf5-1330-4b5e-bbaf-f5f1361b723f/artifacts/01a1ce03-8f76-4783-bfde-1bda8d5a43d4"
+        },
+        {
+          "label": "#54608 PHP retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54608#01a1ce04-5a61-4032-845c-a21b6e9a005f"
         }
       ],
       "settledReviews": [
@@ -105214,7 +105306,7 @@
       "group": "bazel",
       "status": "active",
       "owner": "Compiler toolchain integration",
-      "updatedAt": "2026-11-12T03:53:57+00:00",
+      "updatedAt": "2026-11-12T05:12:56+00:00",
       "summary": "Each supplier PR preserved the GNU and musl bootstrap link arguments on its own. Together they made Bazel reject the bootstrap C++ toolchain during analysis because it lacked static_link_cpp_runtimes. The five gVisor compiler prerequisites remain unchanged.",
       "findings": [
         {
@@ -105272,6 +105364,19 @@
               "url": "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/43119656954/job/130856569425"
             }
           ]
+        },
+        {
+          "text": "Fork commit 14ebf27eb on #938 keeps the three bootstrap argument lists shared while selecting the complete toolchain’s arguments in the caller’s configuration. Its regression checks cover static and dynamic callers. The supplier’s mapped test, unmapped C++ build and full ASan fission test are running against that revision.",
+          "evidence": [
+            {
+              "label": "Fork correction on #938",
+              "url": "https://github.com/tamird/hermetic-llvm/commit/14ebf27eb"
+            },
+            {
+              "label": "Supplier checks on the corrected #938",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43159441285"
+            }
+          ]
         }
       ],
       "nextStep": "Keep libc++ headers and their module map in the caller’s configuration, then validate the supplier’s full ASan fission test and its mapped and unmapped C++ jobs. The bootstrap link-library adjustment remains separately necessary when #909 and #938 are combined.",
@@ -105287,6 +105392,14 @@
         {
           "label": "Combined-tree bootstrap repair b253312fd",
           "url": "https://github.com/tamird/hermetic-llvm/commit/b253312fd"
+        },
+        {
+          "label": "Fork correction on #938",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/14ebf27eb"
+        },
+        {
+          "label": "Supplier checks on the corrected #938",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43159441285"
         }
       ]
     },
@@ -105377,7 +105490,7 @@
       "group": "bazel",
       "status": "active",
       "owner": "Agent qualification",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "updatedAt": "2026-11-12T05:12:56+00:00",
       "summary": "On the integrated compiler source e47624715, the race-instrumented boot test stopped during Bazel analysis on the Linux AMD64 and ARM64 configurations. The standalone race guest linked on both architectures.",
       "findings": [
         {
@@ -105386,6 +105499,19 @@
             {
               "label": "Native AMD64 and ARM64 race boot test analysis on the integrated compiler",
               "url": "https://github.com/tamird/gvisor/actions/runs/43153554425/artifacts/13914881939"
+            }
+          ]
+        },
+        {
+          "text": "A follow-up runs integrated TestRun on native AMD64 and ARM64 with an analysis change for Bazel #31806. The first AMD64 step returned nonzero. Its cause and the ARM64 outcome await the original action and test records.",
+          "evidence": [
+            {
+              "label": "Two native race-boot checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43156104857"
+            },
+            {
+              "label": "Bazel configured-output conflict",
+              "url": "https://github.com/bazelbuild/bazel/issues/31806"
             }
           ]
         }
@@ -105399,9 +105525,81 @@
         {
           "label": "Integrated source",
           "url": "https://github.com/tamird/gvisor/commit/e47624715"
+        },
+        {
+          "label": "Two native race-boot checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43156104857"
+        },
+        {
+          "label": "Bazel configured-output conflict",
+          "url": "https://github.com/bazelbuild/bazel/issues/31806"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-dind-exec-fifo",
+      "title": "Nested runc’s exec FIFO open returns EINTR",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T05:11:48+00:00",
+      "summary": "In #17516’s cgroup-v1 Docker job, the non-privileged host-network case of TestDockerWithVFS failed in 0.85 seconds. The inner Docker command exited 125 while runc was reopening its exec FIFO.",
+      "findings": [
+        {
+          "text": "Build #54609 at 01e7d78af reported “reopen exec fifo: reopen fd 7: interrupted system call” and then “cannot start a stopped process.” The inner daemon was Docker 29.7.2. All five Docker targets ran on the same-head retry and passed, including image_test in 139.9 seconds. The record does not identify the interrupting signal or its handler flags.",
+          "evidence": [
+            {
+              "label": "#54609 VFS test and inner daemon log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54609/jobs/01a1ce02-4f79-48bd-bfe3-b65192ecb5bd/artifacts/01a1ce0f-dd4f-4680-89b5-b4ad49871ca4"
+            },
+            {
+              "label": "#54609 same-head image test retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54609#01a1ce10-954d-4de7-ad3c-7d2dfcc7926a"
+            }
+          ]
+        },
+        {
+          "text": "The tested gVisor source returns EINTR when a blocking FIFO open is interrupted. Linux restarts this open when the handler specifies SA_RESTART. Rajat Goel’s approved #14849 addresses that difference and currently conflicts with master. Its affected code overlaps changes to FIFO reader generation and descriptor cleanup.",
+          "evidence": [
+            {
+              "label": "gVisor FIFO open on the failing revision",
+              "url": "https://github.com/google/gvisor/blob/01e7d78af/pkg/sentry/kernel/pipe/vfs.go#L115-L138"
+            },
+            {
+              "label": "Linux FIFO open waits for its peer",
+              "url": "https://github.com/torvalds/linux/blob/v6.12/fs/pipe.c#L1085-L1100"
+            },
+            {
+              "label": "Existing FIFO restart correction and read/write regressions",
+              "url": "https://github.com/google/gvisor/pull/14849"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Follow the rebase of #14849, which includes blocking read and write open tests with SA_RESTART. A signal trace from a recurrence would establish which signal interrupted runc and whether its handler requested restart.",
+      "evidence": [
+        {
+          "label": "#54609 VFS test and inner daemon log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54609/jobs/01a1ce02-4f79-48bd-bfe3-b65192ecb5bd/artifacts/01a1ce0f-dd4f-4680-89b5-b4ad49871ca4"
+        },
+        {
+          "label": "#54609 same-head image test retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54609#01a1ce10-954d-4de7-ad3c-7d2dfcc7926a"
+        },
+        {
+          "label": "gVisor FIFO open on the failing revision",
+          "url": "https://github.com/google/gvisor/blob/01e7d78af/pkg/sentry/kernel/pipe/vfs.go#L115-L138"
+        },
+        {
+          "label": "Linux FIFO open waits for its peer",
+          "url": "https://github.com/torvalds/linux/blob/v6.12/fs/pipe.c#L1085-L1100"
+        },
+        {
+          "label": "Existing FIFO restart correction and read/write regressions",
+          "url": "https://github.com/google/gvisor/pull/14849"
         }
       ]
     }
   ],
-  "updatedAt": "2026-11-12T04:52:02+00:00"
+  "updatedAt": "2026-11-12T05:14:08+00:00"
 }
