@@ -462,8 +462,16 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 // segments in a full flight. The receiver then delivers all retransmissions
 // and fresh data and ACKs them once per simulated RTT.
 func TestRACKRetainedTail(t *testing.T) {
-	for _, terminal := range []int{1, 3} {
-		t.Run(fmt.Sprintf("terminal_%d", terminal), func(t *testing.T) {
+	cases := []int{1, 3}
+	if testbench.Native {
+		cases = append([]int{0}, cases...)
+	}
+	for _, terminal := range cases {
+		name := fmt.Sprintf("terminal_%d", terminal)
+		if terminal == 0 {
+			name = "default_send_buffer"
+		}
+		t.Run(name, func(t *testing.T) {
 			const wireMSS = 536
 			peerMSS := uint32(wireMSS)
 			if !testbench.Native {
@@ -552,10 +560,42 @@ func TestRACKRetainedTail(t *testing.T) {
 			}
 			const flight, queued = 40, 4
 			const tail, prefix = 30, 6
-			for i := 0; i < flight; i++ {
-				send(wireMSS)
+			if testbench.Native {
+				before := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_SNDBUF)
+				if terminal != 0 {
+					dut.SetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_SNDBUF, 256<<10)
+				}
+				buffer := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_SNDBUF)
+				t.Logf("SENDBUF sport=%d dport=%d base=%d default=%d effective=%d", sport, dport, base, before, buffer)
+				if terminal != 0 && buffer <= before {
+					t.Fatalf("could not increase send buffer above %d bytes", before)
+				}
+				accepted := 0
+				for i := 0; i <= flight; i++ {
+					size := wireMSS
+					if i == flight {
+						size = queued * wireMSS
+					}
+					n, err := dut.SendWithErrno(t.Context(), t, fd, make([]byte, size), unix.MSG_DONTWAIT)
+					if n != int32(size) {
+						info := dut.GetSockOptTCPInfo(t, fd)
+						t.Logf("CAPACITY write=%d accepted=%d requested=%d result=%d errno=%v cwnd=%d unacked=%d notsent=%d", i+1, accepted, size, n, err, info.SndCwnd, info.Unacked, info.NotSentBytes)
+						if terminal == 0 && n == -1 && err == unix.EAGAIN {
+							return
+						}
+						t.Fatalf("short measured socket write %d", i+1)
+					}
+					accepted += int(n)
+				}
+				if terminal == 0 {
+					t.Fatal("the original socket accepted the entire flight and backlog")
+				}
+			} else {
+				for i := 0; i < flight; i++ {
+					send(wireMSS)
+				}
+				send(queued * wireMSS)
 			}
-			send(queued * wireMSS)
 			checkFlight(flight, true)
 			// Each entry is the arrival order of the MSS. Zero means missing.
 			received := make([]int, flight+queued)
