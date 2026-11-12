@@ -77,8 +77,22 @@ function prIdentity(pr, data = registry) {
 function repositoryPolicies(data) { return data.meta.repositories || { [data.meta.repo]: "copybara" }; }
 function usesImports(pr) { return pr.importPolicy !== "none"; }
 function registryNodes(data) {
-  return [...data.nodes, ...(data.investigations || []).filter(item => item.group).map(item => ({ ...item,
+  const nodes = [...data.nodes, ...(data.investigations || []).filter(item => item.group).map(item => ({ ...item,
     type: "investigation", url: `https://tamird.github.io/gvisor/?view=investigations#${encodeURIComponent(item.id)}` }))];
+  const issues = new Set(nodes.filter(node => node.type === "issue").map(node => node.url));
+  for (const card of [...data.nodes, ...(data.investigations || [])]) {
+    for (const receipt of card.settledReviews || []) {
+      if (receipt.kind !== "issue" || !["approved", "posted"].includes(receipt.outcome) || issues.has(receipt.postedURL)) continue;
+      const match = /^https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/issues\/([1-9]\d*)$/.exec(receipt.postedURL);
+      if (!match) continue;
+      const [, repo, number] = match;
+      nodes.push({ id: `issue:${repo}:${number}`, type: "issue", repo, number: Number(number),
+        title: receipt.title || `${repo}#${number}`, group: card.group || "new",
+        status: "Tracked", url: receipt.postedURL, summary: receipt.summary });
+      issues.add(receipt.postedURL);
+    }
+  }
+  return nodes;
 }
 function label(node) {
   if (node.type === "pr") return `${node.repo && node.repo !== registry?.meta?.repo ? node.repo.split("/")[1] + " " : ""}#${node.number}`;
@@ -266,6 +280,7 @@ const DECISION_REASONS = [
 ];
 const ATTENTION_REASONS = [
   { id: "agent-review-outreach", owner: "agent", title: "Find or contact a reviewer" },
+  { id: "agent-issue-reply", owner: "agent", title: "Follow up on an issue we filed" },
   { id: "agent-review-reply", owner: "agent", title: "Follow up on a review we gave" },
   { id: "agent-requested-review", owner: "agent", title: "Incoming PR review requests" },
   { id: "agent-feedback-sweep", owner: "agent", title: "Audit earlier work against contributor guidance" },
@@ -614,6 +629,9 @@ function attentionReasons(node, owner) {
       else reasons.push({ ...ATTENTION_REASONS.find(item => item.id === dispositionId), detail: triage });
     } else if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
   };
+  const issueWork = node.issueFeedback?.filter(row => !row.claimed);
+  if (issueWork?.length) add("agent-issue-reply", issueWork.map(row =>
+    `@${row.author} · ${row.action}`).join(" "));
   if (node.reviewFollowups?.length) add("agent-review-reply", node.reviewFollowups.map(item =>
     `${item.owner || "Agent"} · @${item.author}: ${item.action || "Read the reply and follow up on the current revision."}`).join(" "));
   if (node.incomingReviewRequests?.length) {
@@ -1093,7 +1111,7 @@ function historical(node) {
   // A past delivery never hides a new decision or a live public PR. Curated
   // branch history is explicit: freeform status text can also describe work
   // that is still blocked, waiting for review or being validated.
-  if (contributorDecision(node) || contributorChanges(node) || humanAction(node) || node.status === "Agent work") return false;
+  if (contributorDecision(node) || contributorChanges(node) || humanAction(node) || node.issueFeedback?.length || node.status === "Agent work") return false;
   if (node.type === "pr" || node.type === "issue" && ["open", "closed"].includes(node.githubState)) return providerClosed(node);
   return node.inactive === true || ["resolved", "merged", "closed", "concluded", "withdrawn", "retired", "superseded"].includes(node.status?.toLowerCase());
 }
@@ -2032,9 +2050,14 @@ function drawDetails() {
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
   if (node.type === "issue" && node.unavailable)
     details.append(element("p", "detail-meta", `${node.unavailable} Last provider observation: ${node.checkedAt ? date(node.checkedAt) : "not recorded"}.`));
-  if (node.type === "issue" && node.githubState === "closed" && !contributorDecision(node) && !action)
+  if (node.type === "issue" && node.githubState === "closed" && !contributorDecision(node) && !action && !node.issueFeedback?.length)
     details.append(element("p", "detail-meta", "Closed upstream. No action is needed on this issue."));
-  if (node.type === "issue" && node.comments?.length) {
+  if (node.issueFeedback?.length) {
+    const section = element("section", "detail-section");
+    section.append(element("h3", "", "Issue comments awaiting follow-up"));
+    for (const row of node.issueFeedback) section.append(link(`@${row.author} · ${date(row.updatedAt)} ↗`, row.url));
+    details.append(section);
+  } else if (node.type === "issue" && node.comments?.length) {
     const latest = node.comments[0];
     details.append(link(`Latest issue comment · ${date(latest.updatedAt)} ↗`, latest.url, "relation-source"));
   }
@@ -2626,11 +2649,11 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         || !Number.isFinite(Date.parse(item.updatedAt));
     })) throw new Error("Invalid incoming PR review request");
   }
-  const issueNodes = (nextRegistry.nodes || []).filter(node => node.type === "issue" && node.repo && node.number);
+  const issueNodes = (snapshot.issueInventoryVersion === 2 ? registryNodes(nextRegistry) : nextRegistry.nodes || []).filter(node => node.type === "issue" && node.repo && node.number);
   if (issueNodes.length !== Object.keys(snapshot.issues).length || issueNodes.some(node => !Object.hasOwn(snapshot.issues, node.id)))
     throw new Error("Incomplete issue inventory");
   for (const [id, issue] of Object.entries(snapshot.issues)) {
-    const node = nextRegistry.nodes.find(node => node.id === id && node.type === "issue");
+    const node = issueNodes.find(node => node.id === id);
     if (!node || !["open", "closed", "unknown"].includes(issue.githubState)
         || (issue.githubState === "unknown" ? !issue.unavailable : !Number.isFinite(Date.parse(issue.updatedAt)))
         || (issue.githubStateReason != null && typeof issue.githubStateReason !== "string")
@@ -2638,6 +2661,12 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         || (issue.comments != null && (!Array.isArray(issue.comments) || issue.comments.some(comment =>
           !comment || typeof comment.url !== "string" || comment.url.split("#")[0] !== issue.githubURL
             || !/#issuecomment-\d+$/.test(comment.url) || !Number.isFinite(Date.parse(comment.updatedAt)))))
+        || (issue.issueFeedback != null && (issue.authorLogin !== nextRegistry.meta.owner ||
+          !Array.isArray(issue.issueFeedback) || issue.issueFeedback.some(row =>
+          !row || row.repo !== node.repo || row.number !== node.number || row.issue !== id || row.kind !== "issue-comment"
+          || !issue.comments?.some(comment => row.id === comment.id && row.url === comment.url &&
+            row.updatedAt === comment.updatedAt && row.author === comment.author?.login && comment.author?.__typename === "User"
+            && row.author !== nextRegistry.meta.owner))))
         || (issue.closedAt != null && !Number.isFinite(Date.parse(issue.closedAt)))
         || (issue.checkedAt != null && !Number.isFinite(Date.parse(issue.checkedAt)))
         || (issue.unavailable != null && (typeof issue.unavailable !== "string" || !issue.unavailable.trim()

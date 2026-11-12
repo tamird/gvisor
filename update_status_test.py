@@ -422,7 +422,7 @@ class IssueInventoryTest(unittest.TestCase):
     def setUp(self) -> None:
         self.nodes = [{"id": f"issue:{index}", "type": "issue", "repo": repo, "number": index}
                       for index, repo in enumerate(["buildbuddy-io/buildbuddy", "docker/compose"] * 5, 1)]
-        self.rows = {f"i{index}": {"issue": {
+        self.rows = {f"i{index}": {"visibility": "PUBLIC", "issue": {
             "url": f'https://github.com/{node["repo"]}/issues/{node["number"]}',
             "state": "CLOSED", "stateReason": "NOT_PLANNED", "closedAt": OLD, "updatedAt": LATER,
             "comments": {"nodes": [], "pageInfo": {"hasNextPage": False}},
@@ -484,6 +484,85 @@ class IssueInventoryTest(unittest.TestCase):
             {"issue": node["id"], "comment": new}, {"issue": node["id"], "comment": edited},
             {"issue": node["id"], "gap": issue["url"]}])
         self.assertEqual(list(updater.issue_discussions(after, {"issues": after})), [])
+
+    def test_filed_issue_feedback_survives_refresh_until_its_exact_answer(self) -> None:
+        repo, number = "hermeticbuild/hermetic-launcher", 95
+        url = f"https://github.com/{repo}/issues/{number}"
+        receipt = {"kind": "issue", "outcome": "approved", "postedURL": url}
+        source = {"id": "parent", "type": "branch", "settledReviews": [receipt, receipt,
+                  {"kind": "issue", "outcome": "approved", "url": url + "1"}], "evidence": [url + "2"]}
+        registry = {"nodes": [source]}
+        issue = self.rows["i0"]["issue"]
+        issue.update(id="I95", url=url, author={"login": updater.OWNER}, state="OPEN")
+        def comment(n, login, at, kind="User"):
+            return {"id": f"C{n}", "url": f"{url}#issuecomment-{n}", "author": {"login": login, "__typename": kind},
+                    "createdAt": at, "updatedAt": at}
+        first, second = comment(1, "maintainer", OLD), comment(2, "maintainer", LATER)
+        bot = comment(3, "robot", LATER, "Bot")
+        now = "2000-01-03T00:00:00Z"
+        answer = comment(4, updater.OWNER, now)
+        page = [first]
+        issue["comments"] = {"nodes": [second, bot], "pageInfo": {"hasNextPage": True, "endCursor": "page2"}}
+
+        def fetch(query, variables=None, **kwargs):
+            if variables is None:
+                self.assertEqual(kwargs["missing_issue_aliases"], {"i0"})
+                self.assertIn(f'issue(number:{number})', query)
+                return {"i0": {"visibility": "PUBLIC", "issue": copy.deepcopy(issue)}}
+            self.assertEqual(variables, {"id": "I95", "after": "page2"})
+            return {"node": {"url": url, "updatedAt": LATER, "repository": {"visibility": "PUBLIC"},
+                             "comments": {"nodes": copy.deepcopy(page), "pageInfo": {"hasNextPage": False}}}}
+
+        with mock.patch.object(updater, "REGISTRY", registry), mock.patch.object(updater, "graphql", side_effect=fetch):
+            def refresh(previous):
+                return {"issues": updater.collect_issues(previous)}
+
+            def selected(snapshot):
+                work = updater.worker_handoff(snapshot, [])
+                self.assertEqual(work["nextWork"], next(iter(work["issueFeedback"]), None))
+                return [r["id"] for r in work["issueFeedback"]]
+
+            observed = refresh({})
+            self.assertEqual(selected(observed), ["C1", "C2"])
+            # The same draft can cover two exact revisions. It remains visible
+            # while the contributor decides and clears only on delivery.
+            addresses = [{key: item[key] for key in ("id", "url", "updatedAt")} for item in [first, second]]
+            draft = {"kind": "reply", "status": "pending", "url": second["url"], "addresses": addresses}
+            source["contributorReview"] = draft
+            proposed = updater.worker_handoff(refresh(observed), [])
+            self.assertIsNone(proposed["nextWork"])
+            self.assertEqual([(r["id"], r["claimed"]) for r in proposed["issueFeedback"]], [("C1", True), ("C2", True)])
+            del source["contributorReview"]
+            # An unlinked post and a decision without its delivery receipt cannot settle either comment.
+            issue["comments"]["nodes"].insert(0, answer)
+            decision = {"kind": "reply", "outcome": "approved", "at": now, "url": first["url"]}
+            source["settledReviews"].append(decision)
+            repeated = refresh(observed)
+            self.assertEqual(selected(repeated), ["C1", "C2"])
+            decision["postedURL"] = answer["url"]
+            answered = refresh(repeated)
+            self.assertEqual(selected(answered), ["C2"])
+            self.assertEqual(selected(refresh(answered)), ["C2"])
+            first["updatedAt"] = "2000-01-04T00:00:00Z"
+            issue["state"] = "CLOSED"
+            issue["comments"]["nodes"].insert(0, comment(5, "maintainer", "2000-01-05T00:00:00Z"))
+            self.assertEqual(selected(refresh(answered)), ["C2", "C1", "C5"])
+            source["reviewWatch"] = {"inspected": [{"id": second["id"], "url": second["url"],
+                "updatedAt": second["updatedAt"], "evidence": url + "#issuecomment-4"}]}
+            self.assertEqual(selected(refresh(answered)), ["C1", "C5"])
+            second["updatedAt"] = "2000-01-06T00:00:00Z"
+            self.assertEqual(selected(refresh(answered)), ["C1", "C5", "C2"])
+            # A legacy, truncated closed issue didn't previously see page 2.
+            # Only a new or edited message since it was checked is a new obligation.
+            first["updatedAt"] = OLD
+            identity = next(iter(observed["issues"]))
+            legacy = {"issues": {identity: {"comments": [bot], "olderComments": True, "checkedAt": now}}}
+            self.assertEqual(selected(refresh(legacy)), ["C5", "C2"])
+            issue["author"] = {"login": "someone-else"}
+            self.assertEqual(selected(refresh(observed)), [])
+            # Removing publication authority clears even a stale snapshot from the worker.
+            source["settledReviews"].clear()
+            self.assertEqual(selected(observed), [])
 
     def test_retry_interrupted_query_within_request_budget(self) -> None:
         reply = {"data": {"viewer": {"login": "octocat"}, "rateLimit": {"cost": 1, "remaining": 4000}}}
@@ -1102,7 +1181,7 @@ class CollectorHistoryTest(unittest.TestCase):
             if missing_issue_aliases is not None:
                 updater.requests += 1
                 self.assertEqual(missing_issue_aliases, {"i0"})
-                return {"i0": {"issue": {"url": f"https://github.com/{second_repo}/issues/19", "state": "OPEN",
+                return {"i0": {"visibility": "PUBLIC", "issue": {"url": f"https://github.com/{second_repo}/issues/19", "state": "OPEN",
                                          "stateReason": None, "closedAt": None, "updatedAt": LATER,
                                          "comments": {"nodes": [], "pageInfo": {"hasNextPage": False}}}}}
             return regular_query(text, variables)

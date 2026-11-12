@@ -3100,6 +3100,30 @@ test('issue snapshot validates the provider identity and keeps a new explicit re
   assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid issue provider/);
 });
 
+test('a filed issue on a branch exposes each exact outstanding comment in the agent queue', () => {
+  const c = client(), repo = 'hermeticbuild/hermetic-launcher', number = 95;
+  const url = `https://github.com/${repo}/issues/${number}`, id = `issue:${repo}:${number}`;
+  const receipt = { kind: 'issue', outcome: 'approved', postedURL: url, title: 'Select runfiles' };
+  c.registryInput.nodes = [{ id: 'branch:launcher', type: 'branch', group: 'tools',
+    settledReviews: [receipt, receipt, { kind: 'issue', outcome: 'approved', url: url + '1' }] }];
+  const message = { id: 'C1', url: url + '#issuecomment-123', updatedAt: c.snapshotInput.checkedAt,
+    author: { login: 'maintainer', __typename: 'User' } };
+  const row = { repo, number, issue: id, id: message.id, url: message.url, updatedAt: message.updatedAt,
+    kind: 'issue-comment', author: 'maintainer', action: 'Read the issue comment and follow up.' };
+  Object.assign(c.snapshotInput, { issueInventoryVersion: 2, issues: { [id]: { githubState: 'closed', githubURL: url, authorLogin: 'tamird',
+    updatedAt: message.updatedAt, comments: [message], issueFeedback: [row] } } });
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput)', c);
+  const nodes = vm.runInContext('registryNodes(registryInput).filter(node => node.type === "issue")', c);
+  assert.deepEqual(Array.from(nodes, n => n.id), [id]);
+  c.issueNode = { ...nodes[0], ...c.snapshotInput.issues[id] };
+  assert.equal(vm.runInContext('historical(issueNode)', c), false);
+  assert.deepEqual(Array.from(vm.runInContext('attentionReasons(issueNode)', c), reason => reason.id), ['agent-issue-reply']);
+  row.url += '4';
+  assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', c), /Invalid issue provider/);
+  delete c.snapshotInput.issues[id];
+  assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', c), /Incomplete issue inventory/);
+});
+
 test('history deep links expose the selected record and its live dependency without adding a blocker', () => {
   const old = { id: 'branch:withdrawn', type: 'branch', title: 'Old proposal', status: 'Withdrawn', inactive: true };
   const live = { id: 'branch:replacement', type: 'branch', title: 'Replacement', status: 'Agent work' };

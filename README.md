@@ -168,6 +168,21 @@ assigned action. It stays visible with its owner while the work runs.
 A later message or edit prompts inspection again. New review invitations
 have their own scope and queue.
 
+Issue cards and posted issue receipts on project cards register the exact public
+issue with the same collector. On issues filed by the contributor, each human
+comment awaiting follow-up appears under **Agent work** and in the supervisor’s
+`issueFeedback`, ahead of new review invitations. The collector reads every
+comment page on these issues. When a reply is posted, record the incoming
+comment URL in the settled reply’s `url` and the answer in `postedURL`. The
+answer must come from the contributor on that issue and cover the latest edit.
+A reply proposal can list multiple comments in `addresses`, each with its
+`id`, `url` and `updatedAt`. Those exact revisions await one contributor
+decision and clear once the settled proposal has a verified posted answer.
+If a comment needs no public reply, record its exact `id`, `url`, `updatedAt`
+and an evidence link in the card’s `reviewWatch.inspected` list. Multiple
+comments can cite the same answer. Later edits or messages return to the
+queue, including replies on closed issues.
+
 For a registered external PR, a settled review also starts this handoff when
 GitHub confirms the linked inline comment or review was posted by our reviewer.
 The snapshot keeps that receipt even if it later falls outside the feedback

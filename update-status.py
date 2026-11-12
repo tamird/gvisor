@@ -1320,10 +1320,81 @@ def reapproval_reminders(post: bool = False) -> None:
             raise RuntimeError(f"PR #{pr['number']} changed while reminder {comment['html_url']} was posted")
 
 
+ISSUE_URL = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/issues/([1-9]\d*)")
+ISSUE_COMMENTS = "nodes{id url createdAt updatedAt author{login __typename}} pageInfo{hasNextPage endCursor}"
+
+
+def registered_issues(registry: dict) -> dict[str, dict]:
+    """An issue filed from another card is tracked even before it has a card of its own."""
+    nodes = {node["id"]: node for node in registry["nodes"] if node.get("type") == "issue"
+             and node.get("repo") and node.get("number")}
+    urls = {f'https://github.com/{node["repo"]}/issues/{node["number"]}' for node in nodes.values()}
+    for card in [*registry["nodes"], *registry.get("investigations", [])]:
+        for review in card.get("settledReviews", []):
+            url = review.get("postedURL") or ""
+            if (review["kind"] != "issue" or review["outcome"] not in {"approved", "posted"}
+                    or url in urls or not (match := ISSUE_URL.fullmatch(url))):
+                continue
+            repo, number = match.groups()
+            identity = f"issue:{repo}:{number}"
+            nodes[identity] = {"id": identity, "repo": repo, "number": int(number), "url": url}
+            urls.add(url)
+    return nodes
+
+
+def issue_feedback(node: dict, issue: dict, prior: dict, decisions: list[dict],
+                   inspected: set[tuple[str, str, str]]) -> list[dict]:
+    """Keep each new human message until its exact posted answer covers the latest edit."""
+    comments = issue["comments"]["nodes"]
+    own = {item["url"]: item for item in comments if (item.get("author") or {}).get("login") == OWNER}
+    prior_revisions = {item["url"]: item["updatedAt"] for item in prior.get("comments", [])}
+    pending = {item["url"] for item in prior.get("issueFeedback", [])}
+    # For existing open conversations, start at the last turn by the reporter.
+    # Subsequent turns only settle the particular comments that they address.
+    last_own = max((item["createdAt"] for item in own.values()), default="")
+    rows = []
+    for item in comments:
+        author = item.get("author") or {}
+        if author.get("__typename") != "User" or author["login"] == OWNER:
+            continue
+        url, revision = item["url"], item["updatedAt"]
+        # The old inventory kept the 20 most recently edited comments. A
+        # newly paginated historical comment predates that observation.
+        if url in prior_revisions:
+            fresh = prior_revisions[url] != revision
+        elif prior.get("olderComments") or "comments" not in prior:
+            fresh = bool(prior.get("checkedAt") and datetime.fromisoformat(revision)
+                         >= datetime.fromisoformat(prior["checkedAt"]))
+        else:
+            fresh = True
+        if not (url in pending or fresh or "issueFeedback" not in prior and issue["state"] == "OPEN"
+                and revision >= last_own):
+            continue
+        if (item["id"], url, revision) in inspected:
+            continue
+        comment = {"id": item["id"], "url": url, "updatedAt": revision}
+        covered = [decision for decision in decisions if comment in decision.get("addresses", [])
+                   or not decision.get("addresses") and decision.get("url") == url and decision.get("at")
+                   and datetime.fromisoformat(decision["at"]) >= datetime.fromisoformat(revision)]
+        if any((answer := own.get(decision.get("postedURL"))) and answer["createdAt"] >= revision for decision in covered):
+            continue
+        proposed = any(decision.get("status") == "pending" for decision in covered)
+        rows.append({"repo": node["repo"], "number": node["number"], "issue": node["id"],
+                     "kind": "issue-comment", "id": item["id"], "url": url, "updatedAt": revision,
+                     "author": author["login"], "claimed": proposed, "owner": "Contributor" if proposed else "Agent",
+                     "action": "Decide on the proposed reply." if proposed else "Read the issue comment and follow up."})
+    return rows
+
+
 def collect_issues(previous: dict) -> dict[str, dict]:
-    """Refresh every registered issue, including terminal records and reopening."""
-    nodes = [node for node in REGISTRY["nodes"] if node["type"] == "issue"
-             and node.get("repo") and node.get("number")]
+    """Refresh registered and filed issues, including closure, reopening and replies."""
+    nodes = list(registered_issues(REGISTRY).values())
+    cards = [*REGISTRY["nodes"], *REGISTRY.get("investigations", [])]
+    decisions = [decision for card in cards for decision in
+                 [card.get("contributorReview") or {}, *card.get("additionalReviews", []), *card.get("settledReviews", [])]
+                 if decision.get("kind") == "reply"]
+    inspected = {(row.get("id"), row.get("url"), row.get("updatedAt"))
+                 for card in cards for row in card.get("reviewWatch", {}).get("inspected", []) if row.get("evidence")}
     issues = {}
     for start in range(0, len(nodes), PR_BATCH_SIZE):
         batch = {f"i{index}": node for index, node in enumerate(nodes[start:start + PR_BATCH_SIZE], start)}
@@ -1332,29 +1403,50 @@ def collect_issues(previous: dict) -> dict[str, dict]:
         fields = []
         for alias, node in batch.items():
             owner, name = node["repo"].split("/")
-            fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{issue(number:{node["number"]})'
-                          '{url state stateReason closedAt updatedAt '
+            fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{visibility issue(number:{node["number"]})'
+                          '{id url state stateReason closedAt updatedAt author{login} '
                           'comments(first:20,orderBy:{field:UPDATED_AT,direction:DESC}){'
-                          'nodes{url updatedAt author{login}} pageInfo{hasNextPage}}}}')
+                          + ISSUE_COMMENTS + '}}}')
         response = graphql("query{" + " ".join(fields) + "}", missing_issue_aliases=set(batch))
         if set(response) != set(batch):
             raise RuntimeError("Issue inventory is incomplete; previous snapshot is unchanged")
         for alias, node in batch.items():
-            issue = (response[alias] or {}).get("issue")
-            if not issue or issue.get("url") != f'https://github.com/{node["repo"]}/issues/{node["number"]}':
-                prior = previous.get("issues", {}).get(node["id"])
+            repository = response[alias] or {}
+            issue = repository.get("issue")
+            prior = previous.get("issues", {}).get(node["id"], {})
+            if (repository.get("visibility") != "PUBLIC" or not issue
+                    or issue.get("url") != f'https://github.com/{node["repo"]}/issues/{node["number"]}'):
                 issues[node["id"]] = {**(prior or {"githubState": "unknown"}),
-                    "unavailable": "Issue missing or relocated; reconcile its provider identity."
+                    "unavailable": "Public issue unavailable or relocated; reconcile its provider identity."
                                    + (" Last observation retained." if prior else " No provider observation available."),
                     "unavailableAt": datetime.now(timezone.utc).isoformat()}
                 continue
             if issue.get("state") not in {"OPEN", "CLOSED"}:
                 raise RuntimeError(f'Invalid provider state for issue {node["id"]}')
+            author = (issue.get("author") or {}).get("login")
+            page = issue["comments"]
+            cursors = set()
+            while author == OWNER and page["pageInfo"]["hasNextPage"]:
+                cursor = page["pageInfo"].get("endCursor")
+                if not cursor or cursor in cursors:
+                    raise RuntimeError(f'Issue comment pagination stopped for {node["id"]}')
+                cursors.add(cursor)
+                result = graphql("query($id:ID!,$after:String!){node(id:$id){... on Issue{url updatedAt repository{visibility} "
+                                 "comments(first:100,after:$after,orderBy:{field:UPDATED_AT,direction:DESC}){"
+                                 + ISSUE_COMMENTS + "}}}}", {"id": issue["id"], "after": cursor})["node"]
+                if (not result or result["repository"]["visibility"] != "PUBLIC" or result["url"] != issue["url"]
+                        or result["updatedAt"] != issue["updatedAt"]):
+                    raise RuntimeError(f'Issue changed during comment pagination for {node["id"]}')
+                page = result["comments"]
+                issue["comments"]["nodes"].extend(page["nodes"])
             issues[node["id"]] = {"githubState": issue["state"].lower(), "githubStateReason": issue["stateReason"],
-                                  "githubURL": issue["url"], "closedAt": issue["closedAt"], "updatedAt": issue["updatedAt"],
+                                  "githubURL": issue["url"], "authorLogin": author, "closedAt": issue["closedAt"], "updatedAt": issue["updatedAt"],
                                   "checkedAt": datetime.now(timezone.utc).isoformat(),
                                   "comments": issue["comments"]["nodes"],
-                                  "olderComments": issue["comments"]["pageInfo"]["hasNextPage"]}
+                                  "olderComments": page["pageInfo"]["hasNextPage"]}
+            if author == OWNER:
+                baseline = prior or {"checkedAt": previous.get("checkedAt")}
+                issues[node["id"]]["issueFeedback"] = issue_feedback(node, issue, baseline, decisions, inspected)
     return issues
 
 
@@ -1513,6 +1605,7 @@ def main(*, outreach_mode: str = "unknown") -> None:
     snapshot = {"schema": 1, "reviewAuthority": "gvisor-maintainers", "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "outreachPostingMode": outreach_mode,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
+                "issueInventoryVersion": 2,
                 "incomingReviewRequests": incoming, "incomingReviewScan": scan,
                 "reviewPRs": review_prs, "reviewerHandoff": reviewer_handoff(prs, previous),
                 "reviewWatchHandoff": review_watch_handoff(prs + review_prs, previous),
@@ -1591,7 +1684,9 @@ def main(*, outreach_mode: str = "unknown") -> None:
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
     worker = worker_handoff(snapshot, snapshot["incomingReviewRequests"])
-    print(json.dumps({"workerHandoff": {k: v for k, v in worker.items() if k not in {"authorFeedback", "reviewFollowups"}}}))
+    print(json.dumps({"workerHandoff": {k: v for k, v in worker.items() if k not in {"authorFeedback", "reviewFollowups", "issueFeedback"}}}))
+    for record in worker["issueFeedback"]:
+        print(json.dumps({"issueFeedback": [record]}))
     for record in snapshot["incomingReviewRequests"]:
         print(json.dumps({"incomingReviewRequest": record}))
     for record in snapshot["reviewerHandoff"]:
@@ -1732,7 +1827,12 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
                 and (watched.get(key, {}).get("since") or pr.get("postedReview"))):
             reviewer_replies.append(row)
     unclaimed_replies = [row for row in reviewer_replies if not row.get("claimed")]
-    next_work = next(iter(unclaimed), None) or next(iter(unclaimed_replies), None) or next(iter(incoming), None)
+    issue_nodes = registered_issues(REGISTRY)
+    issue_replies = sorted((row for identity, issue in snapshot.get("issues", {}).items()
+                            if identity in issue_nodes and issue.get("authorLogin") == OWNER for row in issue.get("issueFeedback", [])),
+                           key=lambda row: (row["updatedAt"], row["url"]))
+    next_work = (next(iter(unclaimed), None) or next((row for row in issue_replies if not row.get("claimed")), None)
+                 or next(iter(unclaimed_replies), None) or next(iter(incoming), None))
     if next_work is None:
         next_work = next((row for (repo, _), pr in owned.items() if repo == REPO and (row := pr.get("terminalImportHandoff"))
                           and row["sourceHead"] == pr["head"] and row["imports"] == older_merged_imports(pr)), None)
@@ -1742,6 +1842,7 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     if next_work is None and ready:
         next_work = ready[0]
     return {"nextWork": next_work, "authorFeedback": pending, "reviewFollowups": reviewer_replies,
+            "issueFeedback": issue_replies,
             "unclaimed": len(unclaimed), "unclaimedReviewFollowups": len(unclaimed_replies),
             "overdue": sum(bool(row.get("overdue")) for row in unclaimed),
             "branchCleanup": cleanup, "approvedBranchesAfterMerge": ready}
