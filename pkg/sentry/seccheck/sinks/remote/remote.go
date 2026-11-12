@@ -220,14 +220,24 @@ func (r *remote) write(msg proto.Message, msgType pb.MessageType) {
 	var hdrOut [wire.HeaderStructSize]byte
 	hdr.MarshalUnsafe(hdrOut[:])
 
+	var blocked time.Time
 	backoff := r.initialBackoff
 	for i := 0; ; i++ {
 		_, err := unix.Writev(r.endpoint.FD(), [][]byte{hdrOut[:], out})
 		if err == nil {
+			if !blocked.IsZero() {
+				log.Debugf("TRACE_WRITE_RESULT type=%s status=delivered retries=%d elapsed_ns=%d", msgType, i, time.Since(blocked).Nanoseconds())
+			}
 			// Write succeeded, we're done!
 			return
 		}
+		if blocked.IsZero() && errors.Is(err, unix.EAGAIN) {
+			blocked = time.Now()
+		}
 		if !errors.Is(err, unix.EAGAIN) || i >= r.retries {
+			if !blocked.IsZero() {
+				log.Debugf("TRACE_WRITE_RESULT type=%s status=dropped retries=%d elapsed_ns=%d", msgType, i, time.Since(blocked).Nanoseconds())
+			}
 			log.Debugf("Write failed, dropping point: %v", err)
 			r.droppedCount.Add(1)
 			return
