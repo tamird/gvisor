@@ -1,35 +1,37 @@
 name: CI
-
-"on":
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/go-deps-standalone-public-libraries]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Pin the client and isolate the standalone patch
+        run: |
+          set -euo pipefail
+          area="$RUNNER_TEMP/go-deps-standalone"
+          mkdir -p "$area/results"
+          test "$(git rev-parse HEAD^)" = 59b69962bd510505fa8538aa1c4dcc61f615edd3
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/go_deps_standalone.py' ':!test/rbe/go_deps.patch'
+          cp test/rbe/{go_deps_standalone.py,go_deps.patch} "$area/"
+          git checkout --quiet --detach HEAD^
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$area/bazel"
+          cd "$area"
+          echo '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel' | sha256sum --check
+          chmod +x bazel
+          ./bazel --version >results/bazel-version.txt
+          uname -ms >results/runner.txt
+      - name: Build each public library from a separate root and inspect resolved sources
+        run: python3 -B "$RUNNER_TEMP/go-deps-standalone/go_deps_standalone.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: standalone-go-deps-comparison
+          path: ${{ runner.temp }}/go-deps-standalone/results/
+          if-no-files-found: error
+          retention-days: 14
