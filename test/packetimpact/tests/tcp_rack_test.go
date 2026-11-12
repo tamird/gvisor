@@ -181,6 +181,177 @@ func TestRACKTailProbeACK(t *testing.T) {
 	}
 }
 
+// TestRTOAfterPartialACK compares two losses with the same eight-segment flight.
+// Only the second connection advances the cumulative ACK between timeouts.
+func TestRTOAfterPartialACK(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		ackHalf bool
+	}{{"no_ack", false}, {"half_segment", true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			dut, conn, fd, mss := createSACKConnection(t)
+			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("reno"))
+			sendAndReceive(t, dut, conn, 1, fd, mss, true)
+			first := *conn.RemoteSeqNum(t)
+			sendAndReceive(t, dut, conn, 8, fd, mss, false)
+
+			// A tail-loss probe can retransmit the last segment. The first RTO
+			// retransmits the head of the flight and enters the Loss state.
+			_, rto := getRTTAndRTO(t, dut, fd)
+			if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(first))}, &testbench.Payload{Bytes: make([]byte, mss)}, 2*rto+time.Second); err != nil {
+				t.Fatalf("first retransmission at %d: %v", first, err)
+			}
+			before := dut.GetSockOptTCPInfo(t, fd)
+			if got, want := before.CaState, uint8(linux.TCP_CA_Loss); got != want {
+				t.Fatalf("congestion state after first retransmission = %d, want loss (%d)", got, want)
+			}
+			if before.SndSsthresh <= 2 {
+				t.Fatalf("first timeout threshold = %d, need >2 to distinguish another reduction", before.SndSsthresh)
+			}
+			next := first
+			if tc.ackHalf {
+				next = first.Add(seqnum.Size(mss / 2))
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(next))})
+			}
+			// A partial ACK may cause an immediate retransmission. Observe
+			// packets at the remaining sequence until the next timeout has
+			// reduced the threshold, or the measured RTO budget expires.
+			deadline := time.Now().Add(3*time.Microsecond*time.Duration(before.RTO) + time.Second)
+			for {
+				if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(next))}, &testbench.Payload{}, time.Until(deadline)); err != nil {
+					after := dut.GetSockOptTCPInfo(t, fd)
+					t.Fatalf("retransmission at %d; initial threshold=%d, current=%d, cwnd=%d, RTO=%d us: %v", next, before.SndSsthresh, after.SndSsthresh, after.SndCwnd, after.RTO, err)
+				}
+				after := dut.GetSockOptTCPInfo(t, fd)
+				if !tc.ackHalf {
+					if got, want := after.SndSsthresh, before.SndSsthresh; got != want {
+						t.Errorf("threshold after repeated timeout = %d, want %d", got, want)
+					}
+					return
+				}
+				if after.SndSsthresh < before.SndSsthresh {
+					return
+				}
+			}
+		})
+	}
+}
+
+// TestRTOInterruptsCubicRecovery checks that timing out the same outstanding
+// flight does not undo CUBIC's choice of threshold on entry to fast recovery.
+func TestRTOInterruptsCubicRecovery(t *testing.T) {
+	dut, conn, fd, mss := createSACKConnection(t)
+	dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("cubic"))
+	sendAndReceive(t, dut, conn, numPktsForRTT, fd, mss, true)
+	first := *conn.RemoteSeqNum(t)
+	const flight = 8
+	sendAndReceive(t, dut, conn, flight, fd, mss, false)
+
+	// Report the tail of the flight in reverse order. Leave the head missing
+	// throughout recovery, so SND.UNA never reaches the recovery boundary.
+	end := first.Add(seqnum.Size(flight * mss))
+	time.Sleep(simulatedRTT)
+	for i := flight - 1; i > 0; i-- {
+		block := header.SACKBlock{Start: first.Add(seqnum.Size(i * mss)), End: end}
+		var opts [40]byte
+		n := header.EncodeNOP(opts[:])
+		n += header.EncodeNOP(opts[n:])
+		n += header.EncodeSACKBlocks([]header.SACKBlock{block}, opts[n:])
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(first)), Options: opts[:n]})
+	}
+
+	head := &testbench.TCP{SeqNum: testbench.Uint32(uint32(first))}
+	data := &testbench.Payload{Bytes: make([]byte, mss)}
+	if _, err := conn.ExpectData(t, head, data, time.Second); err != nil {
+		t.Fatalf("fast retransmission of the head: %v", err)
+	}
+	before := dut.GetSockOptTCPInfo(t, fd)
+	t.Logf("fast recovery state=%d threshold=%d cwnd=%d", before.CaState, before.SndSsthresh, before.SndCwnd)
+	if before.CaState != linux.TCP_CA_Recovery || before.SndSsthresh <= 2 || before.RTO == 0 {
+		t.Fatalf("cannot distinguish another threshold reduction in state %d with ssthresh %d and RTO %d", before.CaState, before.SndSsthresh, before.RTO)
+	}
+
+	// Withhold the ACK for the repair. A further retransmission can be
+	// compared only after TCP_INFO confirms the transition to Loss.
+	deadline := time.Now().Add(3*time.Duration(before.RTO)*time.Microsecond + time.Second)
+	for {
+		if _, err := conn.ExpectData(t, head, data, time.Until(deadline)); err != nil {
+			t.Fatalf("timeout retransmission of the head: %v", err)
+		}
+		after := dut.GetSockOptTCPInfo(t, fd)
+		if after.CaState != linux.TCP_CA_Loss {
+			continue
+		}
+		t.Logf("timeout loss state=%d threshold=%d cwnd=%d", after.CaState, after.SndSsthresh, after.SndCwnd)
+		if got, want := after.SndSsthresh, before.SndSsthresh; got != want {
+			t.Errorf("ssthresh when a timeout interrupts fast recovery = %d, want %d", got, want)
+		}
+		return
+	}
+}
+
+// TestRepeatedZeroWindowProbeThreshold leaves sent data unacknowledged while
+// the peer keeps its window closed across repeated timeouts.
+func TestRepeatedZeroWindowProbeThreshold(t *testing.T) {
+	for _, cc := range []string{"reno", "cubic"} {
+		t.Run(cc, func(t *testing.T) {
+			dut, conn, fd, mss := createSACKConnection(t)
+			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte(cc))
+			sendAndReceive(t, dut, conn, numPktsForRTT, fd, mss, true)
+			first := *conn.RemoteSeqNum(t)
+			sendAndReceive(t, dut, conn, 8, fd, mss, false)
+
+			// Observe payload packets without imposing the connection's next
+			// expected TCP sequence number on retransmissions or probes.
+			observer := dut.Net.NewIPv4Conn(t, testbench.IPv4{}, testbench.IPv4{})
+			t.Cleanup(func() { observer.Close(t) })
+			synAck := conn.SynAck(t)
+			packets := testbench.Layers{nil, nil, &testbench.TCP{SrcPort: synAck.SrcPort, DstPort: synAck.DstPort}, &testbench.Payload{}}
+
+			// Reading the byte proves the window update was processed without
+			// acknowledging any of the outstanding flight.
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(first)), WindowSize: testbench.Uint16(0)}, &testbench.Payload{Bytes: []byte{'x'}})
+			if got := dut.Recv(t, fd, 1, 0); string(got) != "x" {
+				t.Fatalf("received %q, want byte carried by window update", got)
+			}
+			if got, want := dut.Send(t, fd, make([]byte, mss), 0), int32(mss); got != want {
+				t.Fatalf("queued write = %d, want %d", got, want)
+			}
+			before := dut.GetSockOptTCPInfo(t, fd)
+			probe := func() linux.TCPInfo {
+				t.Helper()
+				info := dut.GetSockOptTCPInfo(t, fd)
+				deadline := time.Now().Add(3*time.Duration(info.RTO)*time.Microsecond + time.Second)
+				for {
+					frame, err := observer.ExpectFrame(t, packets, time.Until(deadline))
+					if err != nil {
+						t.Fatalf("zero-window probe with outstanding data: %v", err)
+					}
+					seq := seqnum.Value(*frame[2].(*testbench.TCP).SeqNum)
+					if seq != first && seq != first-1 {
+						continue
+					}
+					info = dut.GetSockOptTCPInfo(t, fd)
+					if info.CaState != linux.TCP_CA_Loss {
+						continue
+					}
+					t.Logf("probe offset=%d cwnd=%d ssthresh=%d state=%d RTO=%d unacked=%d", int32(seq-first), info.SndCwnd, info.SndSsthresh, info.CaState, info.RTO, info.Unacked)
+					return info
+				}
+			}
+			firstProbe := probe()
+			if firstProbe.SndSsthresh <= 2 {
+				t.Fatalf("first probe threshold = %d, need >2 to distinguish another reduction", firstProbe.SndSsthresh)
+			}
+			secondProbe := probe()
+			t.Logf("thresholds before/first/second probe: %d/%d/%d", before.SndSsthresh, firstProbe.SndSsthresh, secondProbe.SndSsthresh)
+			if got, want := secondProbe.SndSsthresh, uint32(2); got != want {
+				t.Errorf("threshold after repeated zero-window probe = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
 // TestRACKTLPAllPacketsLost tests TLP when an entire flight of data is lost.
 func TestRACKTLPAllPacketsLost(t *testing.T) {
 	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
