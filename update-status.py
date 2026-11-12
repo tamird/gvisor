@@ -1056,7 +1056,9 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                     if actionable:
                         failure["actionCheckIds"] = actionable
                         failure["action"] = ("Use the diagnosis for these exact checks, or read their original results "
-                                             "and identify the source repair or CI recovery.")
+                                             "and identify the source repair or CI recovery. Keep status-only findings "
+                                             "on the work map. Propose a CI reply only when it adds a substantive "
+                                             "diagnosis, a requested interpretation, or a verified fix.")
                 failures.append(failure)
             unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"} or observation["sourceBranchMismatch"]
             if active and unresolved:

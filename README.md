@@ -446,6 +446,10 @@ reviewer's concern has been resolved.
 During each steering sweep, link proposed new PRs to the single commit a
 contributor is being asked to send. Keep range-diffs in the evidence. If a
 series is necessary, explain why and link its constituent commits separately.
+Keep CI results that the author can already see on the checks tab in the
+work map. Propose a public reply only when it adds a substantive diagnosis,
+answers a request to interpret a result, or provides a verified fix. Honor
+the contributor’s decision on the exact draft before considering it again.
 
 The active gVisor supervisor runs
 `python3 update-status.py --incoming-review-handoff` from this checkout at

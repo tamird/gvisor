@@ -1677,6 +1677,8 @@ class CheckReportTest(unittest.TestCase):
             self.assertEqual(row["head"], source["head"])
             self.assertIn(lint, row["failedChecks"])
             self.assertIn("original results", row["action"])
+            self.assertIn("Keep status-only findings on the work map", row["action"])
+            self.assertIn("diagnosis, a requested interpretation, or a verified fix", row["action"])
             self.assertEqual(row["recordedFollowup"], waiting)
             self.assertNotIn("followup", row)
             stable = updater.check_report([source], {"prs": [copy.deepcopy(source)]})
