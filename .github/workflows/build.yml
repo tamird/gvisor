@@ -1,35 +1,55 @@
-name: CI
-
-"on":
+name: Check Eifel on the exported tail-probe response
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/eifel-tail-export]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  tcp:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Verify the integrated TCP source and Bazel version
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/eifel-tail"
+          mkdir -m 700 "$work"
+          test "$(git rev-parse HEAD^)" = ce7e3e298509f29fe9c5c2dd2f4d9aa07161c445
+          test "$(git rev-parse HEAD^^1)" = 4acb748420c12e2c814194bb1fb1ad9e562204f4
+          test "$(git rev-parse HEAD^^2)" = 62277fb4a1eaaaf515d84d284ef080a71215f627
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/eifel_tail.py'
+          cp .github/qualification/eifel_tail.py "$work/"
+          git switch --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Test the combined source and two congestion-response controls
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          work="$RUNNER_TEMP/eifel-tail"
+          rc="$work/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=64 --remote_timeout=10m
+          build --host_platform=//tools/bazeldefs:linux_amd64 --extra_execution_platforms=//tools/bazeldefs:linux_amd64
+          build --remote_default_exec_properties=Arch=amd64 --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=firecracker
+          build --remote_default_exec_properties=container-image=docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "${BUILDBUDDY_API_KEY:?}" "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -B "$work/eifel_tail.py" "$work"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: eifel-tail-export
+          path: ${{ runner.temp }}/eifel-tail/receipts
+          if-no-files-found: warn
+          retention-days: 30
