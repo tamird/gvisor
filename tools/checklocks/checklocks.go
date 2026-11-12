@@ -30,6 +30,8 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"path/filepath"
+	"strings"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/buildssa"
@@ -185,6 +187,21 @@ func run(pass *analysis.Pass) (any, error) {
 	// Scan all code looking for invalid accesses.
 	state := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
 	for _, fn := range state.SrcFuncs {
+		file := filepath.Base(pass.Fset.Position(fn.Pos()).Filename)
+		if (file == "inode_impl_util.go" && fn.Name() == "nthLocked") ||
+			(file == "fd_impl_util.go" && fn.Name() == "IterDirents" && strings.Contains(fn.String(), "GenericDirectoryFD")) ||
+			(file == "semaphore.go" && fn.Name() == "findSem") ||
+			(file == "cursor_qualification_test.go" && (fn.Name() == "walkForQualification" || fn.Name() == "removeDuringReadForQualification")) {
+			for _, block := range fn.Blocks {
+				for i, inst := range block.Instrs {
+					name := "-"
+					if value, ok := inst.(ssa.Value); ok {
+						name = value.Name()
+					}
+					pass.Reportf(fn.Pos(), "CURSOR_SSA %s block=%d instruction=%02d %s %T %s", fn.Name(), block.Index, i, name, inst, inst.String())
+				}
+			}
+		}
 		// Import function facts generated above.
 		//
 		// Note that anonymous(closures) functions do not have an

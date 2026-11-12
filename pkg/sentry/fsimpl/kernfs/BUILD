@@ -179,3 +179,11 @@ go_test(
         "@com_github_google_go_cmp//cmp:go_default_library",
     ],
 )
+
+go_test(
+    name = "cursor_qualification_test",
+    size = "small",
+    srcs = ["cursor_qualification_test.go"],
+    embed = [":kernfs"],
+    deps = ["//pkg/sentry/vfs"],
+)

@@ -56,6 +56,22 @@ func signalled(ch chan struct{}) bool {
 	}
 }
 
+func TestSemaphoreStableMemberQualification(t *testing.T) {
+	s := &Set{sems: make([]sem, 1)}
+	s.mu.Lock()
+	saved := s.findSem(0)
+	s.mu.Unlock()
+	s.mu.Lock()
+	fresh := s.findSem(0)
+	fresh.value = 17
+	same, value := fresh == saved, saved.value
+	s.mu.Unlock()
+	if !same || value != 17 {
+		t.Fatalf("same member = %t, value = %d; want true, 17", same, value)
+	}
+	t.Logf("same member = %t, value = %d", same, value)
+}
+
 func TestBasic(t *testing.T) {
 	ctx := contexttest.Context(t)
 	set := &Set{obj: &ipc.Object{ID: 123}, sems: make([]sem, 1)}

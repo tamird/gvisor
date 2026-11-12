@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Inspect native kernfs cursor lifetime and Checklocks SSA
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/kernfs-cursor-owner-lifetime]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Prepare native Linux Bazel
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/cursor"
+          mkdir -p "$receipt"
+          git rev-parse HEAD HEAD^ > "$receipt/source"
+          test "$(git rev-parse HEAD^)" = 39815d5ed3fa840948b234be2b237088f1f0d1af
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -qfsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/bazel" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/bazel"
+      - name: Exercise the saved cursor and fixed-slice member
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/cursor"
+          "$RUNNER_TEMP/bazel" test --jobs=3 --module_mirrors=https://bcr.cloudflaremirrors.com --norun_validations --nocache_test_results --flaky_test_attempts=1 --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_output=errors --test_filter='Test(KernfsCursorQualification|SemaphoreStableMemberQualification)' //pkg/sentry/fsimpl/kernfs:cursor_qualification_test //pkg/sentry/kernel/semaphore:semaphore_test 2>&1 | tee "$receipt/native.console"
+          cp -L bazel-testlogs/pkg/sentry/fsimpl/kernfs/cursor_qualification_test/test.log "$receipt/kernfs.log"
+          cp -L bazel-testlogs/pkg/sentry/kernel/semaphore/semaphore_test/test.log "$receipt/semaphore.log"
+          for name in preserve direct helper callback; do
+            grep -F -- "--- PASS: TestKernfsCursorQualification/$name" "$receipt/kernfs.log"
+          done
+          grep -F 'same member = true, value = 17' "$receipt/semaphore.log"
+      - name: Capture the actual analyzer instruction stream
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/cursor"
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+            done > "$RUNNER_TEMP/cursor-jammy.list"
+            opts=(-o "Dir::Etc::sourcelist=$RUNNER_TEMP/cursor-jammy.list" -o Dir::Etc::sourceparts=-)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+          result=0
+          "$RUNNER_TEMP/bazel" test --jobs=3 --module_mirrors=https://bcr.cloudflaremirrors.com --nocache_test_results --flaky_test_attempts=1 --keep_going --test_output=errors //pkg/sentry/fsimpl/kernfs:kernfs_nogo //pkg/sentry/fsimpl/kernfs:cursor_qualification_test_nogo //pkg/sentry/kernel/semaphore:semaphore_nogo > "$receipt/nogo.console" 2>&1 || result=$?
+          tail -90 "$receipt/nogo.console"
+          test "$result" = 3
+          for target in pkg/sentry/fsimpl/kernfs/kernfs_nogo pkg/sentry/fsimpl/kernfs/cursor_qualification_test_nogo pkg/sentry/kernel/semaphore/semaphore_nogo; do
+            cp -L "bazel-testlogs/$target/test.log" "$receipt/${target##*/}.log"
+          done
+          for name in nthLocked IterDirents findSem walkForQualification removeDuringReadForQualification; do
+            grep -m1 -F "CURSOR_SSA $name " "$receipt/"*_nogo.log
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: kernfs-cursor-and-semaphore-member
+          path: ${{ runner.temp }}/cursor
+          if-no-files-found: error
+          retention-days: 14
