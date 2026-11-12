@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T16:10:22+00:00",
+    "updatedAt": "2026-11-12T16:28:11+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5708,8 +5708,8 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration, and this run did not execute them.",
-      "updatedAt": "2026-11-12T15:48:26+00:00",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.",
+      "updatedAt": "2026-11-12T16:19:21+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
         {
@@ -6491,6 +6491,14 @@
         {
           "label": "Unchanged downstream MODULE on three Gazelle versions, generated rules and nine ARM64 release files",
           "url": "https://github.com/tamird/gvisor/actions/runs/43250427119/artifacts/13959154334"
+        },
+        {
+          "label": "Zero-directive downstream 4 KiB guest, original log and XML with selected Sentry digest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43255315077/artifacts/13959994561"
+        },
+        {
+          "label": "The nine recovered ARM64 release files and SHA-256 manifest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43255315077/artifacts/13961069039"
         }
       ],
       "refinement": {
@@ -74795,12 +74803,12 @@
       "type": "pr",
       "repo": "bazel-contrib/bazel-gazelle",
       "ref": "fix/containerd-cgroups-generated-metrics",
-      "head": "bda5855871e245cb79e946ce035105c6869a67bf",
+      "head": "8912f160eaaea6f434f6b63a6b835a7196d20783",
       "title": "Build the shipped Go metrics for containerd/cgroups/v3",
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2513",
       "group": "bazel",
-      "status": "open",
-      "summary": "The proposed go_deps directive uses the Go metrics types shipped by containerd/cgroups/v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. Gazelle 0.51.3 with the same three directive lines selected both checked-in metrics.pb.go files, built both descriptor sets and built and started the gVisor containerd shim. The published revision has the same tree as the approved fork commit. The approved directive is open upstream as #2513 with the corrected title and commit description.",
+      "status": "merged",
+      "summary": "Gazelle merged #2513 as 45c5eebc1. Its go_deps default builds the Go metrics types shipped by containerd/cgroups/v3 and retains both proto_library targets. All ten published stable v3 releases run the acronym postprocessor and use the uppercase CPU field. gVisor currently pins Gazelle 0.51.3. The latest stable BCR version (0.54.0) and the latest prerelease (2.0.0-beta.2) both precede the fix.",
       "evidence": [
         {
           "label": "Approval on published revision bda585587",
@@ -74825,18 +74833,29 @@
         {
           "label": "Gazelle 761d7b804: 196 of 196 Linux tests passed in 2,650 Bazel actions",
           "url": "https://github.com/tamird/bazel-gazelle/actions/runs/43023215493/job/130531311355"
+        },
+        {
+          "label": "Gazelle merge containing the containerd/cgroups/v3 default",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/commit/45c5eebc1"
+        },
+        {
+          "label": "Gazelle versions in the Bazel Central Registry",
+          "url": "https://bcr.bazel.build/modules/gazelle/metadata.json"
         }
       ],
-      "updatedAt": "2026-11-11T14:10:12+00:00",
+      "updatedAt": "2026-11-12T16:23:52+00:00",
       "number": 2513,
       "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "bda5855871e245cb79e946ce035105c6869a67bf",
-        "observedAt": "2026-11-11T14:01:21+00:00",
-        "disposition": "The approved directive is open upstream as #2513 with the corrected title and commit description.",
-        "nextAction": "Follow the upstream review and checks.",
+        "owner": "Agent",
+        "sourceHead": "8912f160eaaea6f434f6b63a6b835a7196d20783",
+        "observedAt": "2026-11-12T16:23:52+00:00",
+        "disposition": "Upstream merged the change on November 11. The integration using the unreleased merge built all nine Linux ARM64 files, and its runsc and Sentry passed the 4 KiB systrap guest test.",
+        "nextAction": "Watch for a Gazelle BCR release containing 45c5eebc1, then raise gVisor’s minimum Gazelle version from 0.51.3 and verify the downstream build.",
         "evidence": [
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2513"
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2513",
+          "https://github.com/bazel-contrib/bazel-gazelle/commit/45c5eebc1",
+          "https://bcr.bazel.build/modules/gazelle/metadata.json",
+          "https://github.com/tamird/gvisor/actions/runs/43255315077/artifacts/13959994561"
         ]
       }
     },
@@ -100972,7 +100991,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T15:48:26+00:00",
+      "updatedAt": "2026-11-12T16:19:21+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -101303,11 +101322,24 @@
           ]
         },
         {
-          "text": "A three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration, and this run did not execute them.",
+          "text": "A three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.",
           "evidence": [
             {
               "label": "Unchanged downstream MODULE on three Gazelle versions, generated rules and nine ARM64 release files",
               "url": "https://github.com/tamird/gvisor/actions/runs/43250427119/artifacts/13959154334"
+            }
+          ]
+        },
+        {
+          "text": "The same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.",
+          "evidence": [
+            {
+              "label": "Zero-directive downstream 4 KiB guest, original log and XML with selected Sentry digest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43255315077/artifacts/13959994561"
+            },
+            {
+              "label": "The nine recovered ARM64 release files and SHA-256 manifest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43255315077/artifacts/13961069039"
             }
           ]
         }
@@ -103338,7 +103370,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T01:21:31+00:00",
+      "updatedAt": "2026-11-12T16:28:11+00:00",
       "summary": "TestSudo timed out three times each on #17391 and #17393 while the test waited for the traced sudo command. Rollback #17412 removed the regression from master. Botir’s draft reland #17432 includes the checked PTRACE_SEIZE fix and syscall regression.",
       "findings": [
         {
@@ -103507,7 +103539,7 @@
           ]
         },
         {
-          "text": "Tamir approved the author’s reland at fb1d78aea and asked that both sets of regression tests be carried through import. The fresh-sandbox tests check restoration of a previously patched syscall. The group-stop test also covers PTRACE_SEIZE and its reported stop. Copybara #17436 contains the executable change and currently lacks both sets of new cases.",
+          "text": "Tamir approved the author’s reland at fb1d78aea and asked that both sets of regression tests be carried through import. The fresh-sandbox tests check restoration of a previously patched syscall. The group-stop test also covers PTRACE_SEIZE and its reported stop. Copybara #17436 carried the executable change, omitted the new cases and closed unmerged.",
           "evidence": [
             {
               "label": "Approval on Botir’s source reland",
@@ -103518,9 +103550,22 @@
               "url": "https://github.com/google/gvisor/pull/17436"
             }
           ]
+        },
+        {
+          "text": "The replacement export #17556 (c3e77336c) matches the source #17432 (fb1d78aea) in all 24 file patches, including the group-stop test and both fresh-sandbox settings. The surrounding test/syscalls/BUILD differs between the bases. The export is open.",
+          "evidence": [
+            {
+              "label": "Source reland file changes",
+              "url": "https://github.com/google/gvisor/pull/17432/files"
+            },
+            {
+              "label": "Replacement export file changes",
+              "url": "https://github.com/google/gvisor/pull/17556/files"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the source reland #17432 and its import #17436. If the import lands first, compare the merged tests and reconcile any missing fresh-sandbox and PTRACE_SEIZE group-stop cases.",
+      "nextStep": "Follow #17556 through Buildkite and import. After it lands, verify the merged group-stop and fresh-sandbox regression tests ran.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -103609,6 +103654,10 @@
         {
           "label": "Posted approval on the tested reland and request to carry both sets of regression tests",
           "url": "https://github.com/google/gvisor/pull/17432#pullrequestreview-5851917183"
+        },
+        {
+          "label": "Replacement Copybara export with both sets of regression tests",
+          "url": "https://github.com/google/gvisor/pull/17556"
         }
       ],
       "settledReviews": [
