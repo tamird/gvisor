@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T01:12:58+00:00",
+    "updatedAt": "2026-11-12T01:30:45+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56040,7 +56040,7 @@
       "url": "https://github.com/tamird/gvisor/commit/0e306c458",
       "group": "bazel",
       "status": "Published as #16871",
-      "updatedAt": "2026-11-10T11:40:34+00:00",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
       "summary": "Rebased in 20b3a2343 onto deb6b3ea1.\n\nThe Ollama client, profiling helper and Hey image are published together in one commit. Removing their new Make entries restores the original PostgreSQL context mapping. The earlier six-image output and runtime checks remain tied to the measured source.",
       "evidence": [
         {
@@ -56078,6 +56078,10 @@
         {
           "label": "Published as one commit on f51a205a8, with the same tree as 99b9970fb",
           "url": "https://github.com/tamird/gvisor/commit/0e306c458"
+        },
+        {
+          "label": "All ten image archives from the exact rebased sources",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43133311587/job/130902467001"
         }
       ],
       "settledReviews": [
@@ -56091,9 +56095,9 @@
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "20b3a2343097da5c10c138d4cd5cd644c629a2a5",
-        "observedAt": "2026-11-10T11:40:34+00:00",
-        "disposition": "The published single-commit rebase 20b3a2343 applies to deb6b3ea1 and GitHub reports it is mergeable.",
-        "nextAction": "Review the rebased Go helper images.",
+        "observedAt": "2026-11-12T01:30:45+00:00",
+        "disposition": "The rebased source PR #16871 is open and mergeable. The ten-archive check exercised both revised image PRs.",
+        "nextAction": "Follow maintainer review of the published Go helper source at 8dc316391.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/20b3a2343",
           "https://github.com/google/gvisor/pull/16871",
@@ -60527,19 +60531,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-mariadb-upstream",
-      "head": "9352e7ae4170894cdcc38a8a85c31fe082f604d7",
+      "head": "030d4e7349a20e3bb3008763f5cd2d96a546c5f7",
       "title": "Pin the existing MariaDB fixture image",
       "url": "https://github.com/google/gvisor/pull/17092",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T07:46:49.356Z",
-      "summary": "The compatibility fixture uses the official MariaDB 12.3.2 image with pinned manifests for AMD64 and ARM64. The five-file patch on #17092 has the same added and removed lines as the approved source. The earlier AMD64 SQL round trip passed under runc and runsc. ARM64 qualification covered the archive, configuration and layers.",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "summary": "The rebased MariaDB fixture is mergeable and retains its ready-to-pull label. Open export #17124 points to the earlier 9352e7ae4, as recorded in its source footer. The ten-archive comparison exercised both revised image PRs.",
       "followup": {
-        "owner": "Image delivery",
-        "sourceHead": "9352e7ae4170894cdcc38a8a85c31fe082f604d7",
-        "observedAt": "2026-11-06T07:46:49.356Z",
-        "disposition": "Approved MariaDB image published after PostgreSQL merged",
-        "nextAction": "Follow CI and maintainer review on #17092.",
+        "owner": "Maintainer",
+        "sourceHead": "030d4e7349a20e3bb3008763f5cd2d96a546c5f7",
+        "observedAt": "2026-11-12T01:30:45+00:00",
+        "disposition": "The rebased MariaDB fixture is mergeable and retains its ready-to-pull label. Open export #17124 points to the earlier 9352e7ae4, as recorded in its source footer. The ten-archive comparison exercised both revised image PRs.",
+        "nextAction": "Follow the import of the current MariaDB source; #17124 still carries the earlier source.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
           "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00",
@@ -60551,8 +60555,12 @@
           "https://github.com/google/gvisor/pull/16379",
           "https://github.com/google/gvisor/pull/16430",
           "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
-          "https://github.com/tamird/gvisor/compare/50a6f3c30a99c0320937dc4d09525f830c927602...35eb15359d6d6ca384c3a68ac07be1adc8daad6d"
-        ]
+          "https://github.com/tamird/gvisor/compare/50a6f3c30a99c0320937dc4d09525f830c927602...35eb15359d6d6ca384c3a68ac07be1adc8daad6d",
+          "https://github.com/google/gvisor/pull/17092",
+          "https://github.com/tamird/gvisor/actions/runs/43133311587/job/130902467001",
+          "https://github.com/google/gvisor/pull/17124"
+        ],
+        "mergeable": "MERGEABLE"
       },
       "evidence": [
         {
@@ -60598,9 +60606,27 @@
         {
           "label": "Published MariaDB PR",
           "url": "https://github.com/google/gvisor/pull/17092"
+        },
+        {
+          "label": "All ten image archives from the exact rebased sources",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43133311587/job/130902467001"
+        },
+        {
+          "label": "Older MariaDB export",
+          "url": "https://github.com/google/gvisor/pull/17124"
         }
       ],
-      "number": 17092
+      "number": 17092,
+      "refinement": {
+        "before": {
+          "head": "9352e7ae4170894cdcc38a8a85c31fe082f604d7",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
+        },
+        "after": {
+          "head": "030d4e7349a20e3bb3008763f5cd2d96a546c5f7",
+          "base": "2f5253abfaa87b6d62d79a0da60942e773389934"
+        }
+      }
     },
     {
       "id": "branch:nic-detach-after-unlock",
@@ -75503,6 +75529,52 @@
           "https://github.com/google/gvisor/pull/17511"
         ]
       }
+    },
+    {
+      "id": "pr:16871",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/go-helper-images",
+      "title": "Build three Go helper images with Bazel",
+      "url": "https://github.com/google/gvisor/pull/16871",
+      "number": 16871,
+      "group": "bazel",
+      "status": "open",
+      "head": "8dc316391447193c51882d606da918974087f372",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "summary": "Rebased the Hey, Ollama and profiling-helper image builds onto master while preserving the Redis mapping. The ten-archive comparison exercised both revised image PRs. The Go helpers are awaiting review.",
+      "refinement": {
+        "before": {
+          "head": "20b3a2343097da5c10c138d4cd5cd644c629a2a5",
+          "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+        },
+        "after": {
+          "head": "8dc316391447193c51882d606da918974087f372",
+          "base": "2f5253abfaa87b6d62d79a0da60942e773389934"
+        }
+      },
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "8dc316391447193c51882d606da918974087f372",
+        "observedAt": "2026-11-12T01:30:45+00:00",
+        "mergeable": "MERGEABLE",
+        "disposition": "Rebased the Hey, Ollama and profiling-helper image builds onto master while preserving the Redis mapping. The ten-archive comparison exercised both revised image PRs. The Go helpers are awaiting review.",
+        "nextAction": "Await maintainer review of the three Go helper images.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16871",
+          "https://github.com/tamird/gvisor/actions/runs/43133311587/job/130902467001"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published one-commit source",
+          "url": "https://github.com/google/gvisor/pull/16871"
+        },
+        {
+          "label": "All ten image archives from the exact rebased sources",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43133311587/job/130902467001"
+        }
+      ]
     }
   ],
   "edges": [
@@ -98105,9 +98177,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-09T07:34:05+00:00",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
+      "nextStep": "Use #16081 for Newt’s scripted burst-loss case. Compare onset traces from the separate CUBIC/SACK proxy and Windows #10343 reports before assigning their first loss. Keep the M003 Reno control independent. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019.",
       "findings": [
         {
           "text": "Reusing the receive buffers in #17187 reduced whole-Sentry allocations per GiB received by 63.16% on the single-worker TCP download (p < 0.001). Skipping flow parsing in #17188 alone yielded 55.48k allocations/GiB against 55.36k on stock (p = 0.378). The earlier two-build comparison had measured a 63.18% reduction with both changes applied.",
@@ -99072,6 +99144,70 @@
               "url": "https://github.com/tamird/gvisor/commit/fc6a9528a"
             }
           ]
+        },
+        {
+          "text": "The shared-queue traces located 347 earlier transmissions associated with 189 of 190 timeouts in the full 100-packet queue, within the first 648 ms and 316 ms of the two runs. The following timeout sequences lasted 44 s and 33 s. These captures did not observe the onset of the separate CUBIC/SACK proxy or Windows #10343 failures. In the separate split-queue #16495 comparison, receiver rates were 1.252 and 1.208 MiB/s across eight pairs (p=.721).",
+          "evidence": [
+            {
+              "label": "Two shared-queue captures and qdisc counters",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
+            },
+            {
+              "label": "Separate CUBIC/SACK proxy trace",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41463753991/artifacts/13149709139"
+            },
+            {
+              "label": "Eight split-queue comparisons",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42708554879/artifacts/13716646876"
+            },
+            {
+              "label": "Updated TCP loss guide",
+              "url": "https://github.com/google/gvisor/issues/16670#user-content-tcp-review-loss"
+            }
+          ]
+        },
+        {
+          "text": "The #16081 scripted burst-loss comparison stalled five of five times on stock and zero of five with the change. A separate Net Switch replay logged zero queue drops across fourteen transfers. At the first gap in three stalled transfers on the PR-only arm the script dropped 19/19, 16/16 and 20/20 sends.",
+          "evidence": [
+            {
+              "label": "Original five-run stock and fixed comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41618271335/artifacts/13223281770"
+            },
+            {
+              "label": "Scripted Net Switch replay and per-transfer counters",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42346954870/artifacts/13564685595"
+            }
+          ]
+        },
+        {
+          "text": "#17022 supersedes the closed TCP recovery proposal #14458. #17023 separately changes retransmission after a spurious timeout. The review watch now follows both open PRs.",
+          "evidence": [
+            {
+              "label": "Author directs the earlier work to #17022",
+              "url": "https://github.com/google/gvisor/pull/14458#issuecomment-6662597769"
+            },
+            {
+              "label": "Current recovery proposal",
+              "url": "https://github.com/google/gvisor/pull/17022"
+            },
+            {
+              "label": "Retransmission after a spurious timeout",
+              "url": "https://github.com/google/gvisor/pull/17023"
+            }
+          ]
+        },
+        {
+          "text": "The maintainer requested a rebase of the conflicting third-party #15972. The public source still points to a6a26052f; 316c960a9 is a separate fork integration.",
+          "evidence": [
+            {
+              "label": "Maintainer rebase request",
+              "url": "https://github.com/google/gvisor/pull/15972#issuecomment-6749970505"
+            },
+            {
+              "label": "Fork integration only",
+              "url": "https://github.com/tamird/gvisor/commit/316c960a9"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -99178,13 +99314,56 @@
         {
           "label": "Fork prototype selecting MSS-sized tagged IPv6 writes",
           "url": "https://github.com/tamird/gvisor/commit/fc6a9528a"
+        },
+        {
+          "label": "Two shared-queue captures and qdisc counters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43045694615/artifacts/13868985692"
+        },
+        {
+          "label": "Separate CUBIC/SACK proxy trace",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41463753991/artifacts/13149709139"
+        },
+        {
+          "label": "Eight split-queue comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42708554879/artifacts/13716646876"
+        },
+        {
+          "label": "Updated TCP loss guide",
+          "url": "https://github.com/google/gvisor/issues/16670#user-content-tcp-review-loss"
+        },
+        {
+          "label": "Original five-run stock and fixed comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41618271335/artifacts/13223281770"
+        },
+        {
+          "label": "Scripted Net Switch replay and per-transfer counters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42346954870/artifacts/13564685595"
+        },
+        {
+          "label": "Author directs the earlier work to #17022",
+          "url": "https://github.com/google/gvisor/pull/14458#issuecomment-6662597769"
+        },
+        {
+          "label": "Current recovery proposal",
+          "url": "https://github.com/google/gvisor/pull/17022"
+        },
+        {
+          "label": "Retransmission after a spurious timeout",
+          "url": "https://github.com/google/gvisor/pull/17023"
+        },
+        {
+          "label": "Maintainer rebase request",
+          "url": "https://github.com/google/gvisor/pull/15972#issuecomment-6749970505"
+        },
+        {
+          "label": "Fork integration only",
+          "url": "https://github.com/tamird/gvisor/commit/316c960a9"
         }
       ],
       "reviewWatch": {
         "repo": "google/gvisor",
         "numbers": [
           14101,
-          14458,
           14579,
           15019,
           15325,
@@ -99195,6 +99374,8 @@
           16660,
           16793,
           16887,
+          17022,
+          17023,
           17082,
           17118,
           17264,
@@ -100657,7 +100838,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-10T11:21:05+00:00",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
       "summary": "In release build #7690 on 49df41f68, TestGPUHello_12_8 built vectorAdd with driver 615.71.09 installed. Its first cudaMalloc failed with “no CUDA-capable device is detected”. The same sample and driver passed on the same-commit retry. The cause remains unknown.",
       "findings": [
         {
@@ -100672,6 +100853,19 @@
               "url": "https://buildkite.com/gvisor/release/builds/7690#01a1c377-7547-4e97-9c4a-20d0b26664b5"
             }
           ]
+        },
+        {
+          "text": "Build 54545 failed TestGPUHello_12_8 on its vectorAdd cudaMalloc call: CUDA reported no CUDA-capable device. The same-build retry passed. The original does not establish why the device was unavailable.",
+          "evidence": [
+            {
+              "label": "54545 failed CUDA 12.8 vectorAdd check",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54545#01a1cd01-d4d4-4fde-a9ce-24267cb5e083"
+            },
+            {
+              "label": "54545 passing retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54545#01a1cd09-335e-4dc0-ba5d-58c232c6730f"
+            }
+          ]
         }
       ],
       "nextStep": "On recurrence, compare GPU visibility on the host and inside the test container immediately before the sample's first allocation.",
@@ -100679,6 +100873,14 @@
         {
           "label": "Source revision 49df41f68",
           "url": "https://github.com/google/gvisor/commit/49df41f686b28afc10031fca10b4e9231b093f32"
+        },
+        {
+          "label": "54545 failed CUDA 12.8 vectorAdd check",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54545#01a1cd01-d4d4-4fde-a9ce-24267cb5e083"
+        },
+        {
+          "label": "54545 passing retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54545#01a1cd09-335e-4dc0-ba5d-58c232c6730f"
         }
       ]
     },
@@ -102010,8 +102212,8 @@
       "title": "Docker-in-Docker commands outlive their exec deadline",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T11:20:49+00:00",
-      "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected.",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "summary": "Eight ARM64 image-test jobs were still reading bridge-network docker run output when the Go test timed out at 15 minutes. Each retry passed on the same head, taking 33.5–101.4 seconds. Both storage drivers were affected. AMD64 VFS also reached the 900-second deadline on both KVM and systrap in build 54543.",
       "findings": [
         {
           "text": "Three more bridge-network jobs reached the 15-minute test timeout while execProc.Logs waited for the nested command, apk add curl && apk info -d curl. This recurred in ARM64 VFS, ARM64 overlay and AMD64 cgroup-v1 VFS. Each direct retry passed. #17445 makes the exec reader honor the existing deadline. The original logs do not establish why the nested command stalled.",
@@ -102102,6 +102304,27 @@
               "url": "https://github.com/google/gvisor/pull/17445"
             }
           ]
+        },
+        {
+          "text": "On build 54543 the native AMD64 VFS jobs reached the 900-second suite deadline in TestDockerWithVFS/docker_run_bridge_network_privileged on both systrap and KVM. Their uncached same-head retries passed in 127.3 and 50 seconds respectively. The original logs establish the stalled command and outer deadline; they do not identify why the inner command stopped progressing.",
+          "evidence": [
+            {
+              "label": "54543 AMD64 systrap original",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1ccfb-5efe-4386-9aac-ae2383d398d0"
+            },
+            {
+              "label": "54543 AMD64 systrap uncached retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-8b6c-4768-8506-86b057de053a"
+            },
+            {
+              "label": "54543 AMD64 KVM original",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1ccfb-5efa-422a-8895-129cc7f95666"
+            },
+            {
+              "label": "54543 AMD64 KVM uncached retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-9cee-488a-92a2-ec625cc4f3e2"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -102160,6 +102383,22 @@
         {
           "label": "Native ARM64 bridge, exec and cancellation results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42912601233/artifacts/13808193511"
+        },
+        {
+          "label": "54543 AMD64 systrap original",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1ccfb-5efe-4386-9aac-ae2383d398d0"
+        },
+        {
+          "label": "54543 AMD64 systrap uncached retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-8b6c-4768-8506-86b057de053a"
+        },
+        {
+          "label": "54543 AMD64 KVM original",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1ccfb-5efa-422a-8895-129cc7f95666"
+        },
+        {
+          "label": "54543 AMD64 KVM uncached retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54543#01a1cd10-9cee-488a-92a2-ec625cc4f3e2"
         }
       ],
       "nextStep": "Follow #17445 for the deadline fix. The original cause of the slow bridge-mode Docker run remains unknown.",
@@ -104045,7 +104284,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI benchmark investigation",
-      "updatedAt": "2026-11-12T00:57:49+00:00",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
       "summary": "On master builds 54540 and 54548, BenchmarkRestoreEmpty and BenchmarkRestoreNginx failed before recording restore samples on both KVM and systrap. Docker tried to bind-mount /proc/0/ns/net into its network namespace directory and got ENOENT.",
       "findings": [
         {
@@ -104106,6 +104345,19 @@
               "url": "https://github.com/google/gvisor/blob/2f5253abf/test/benchmarks/base/startup_test.go#L201-L357"
             }
           ]
+        },
+        {
+          "text": "Before private networking landed, master build 49152 measured both restore cases on KVM: 100 Empty iterations at 365,780,470 ns/op and 37 Nginx iterations at 1,015,339,150 ns/op. Build 49155 completed only Empty. The historical Nginx workload checked TCP connectivity; the current workload checks HTTP 200. The historical number is not a current HTTP readiness measurement.",
+          "evidence": [
+            {
+              "label": "49152 KVM Empty and Nginx restore samples",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/49152#01a0f8d6-f41e-440e-85f9-96129e4e752c"
+            },
+            {
+              "label": "Matched Docker 24.0.9 replay in progress",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43133193404"
+            }
+          ]
         }
       ],
       "nextStep": "Record the actual Docker server version on an affected worker and compare the daemon’s namespace lookup with the shim’s Create, State and Start PID values. Run the same private-network restore against Docker 27 with the same runsc and images. Use that control to decide how to retain restore samples on a supported server.",
@@ -104153,8 +104405,83 @@
         {
           "label": "Empty and Nginx restore benchmarks on master",
           "url": "https://github.com/google/gvisor/blob/2f5253abf/test/benchmarks/base/startup_test.go#L201-L357"
+        },
+        {
+          "label": "49152 KVM Empty and Nginx restore samples",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/49152#01a0f8d6-f41e-440e-85f9-96129e4e752c"
+        },
+        {
+          "label": "Matched Docker 24.0.9 replay in progress",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43133193404"
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-node-http-cork-deadline",
+      "title": "Node HTTP cork test exceeded its first-request deadline",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T01:30:45+00:00",
+      "summary": "Build 54544’s Node 22.2.0 shard logged “Sending req no 1”, then exceeded the deadline in parallel/test-http-outgoing-end-cork.js before logging a completed response. The same agent’s next attempt timed out in a different test and a later attempt passed on another agent.",
+      "findings": [
+        {
+          "text": "The original log reports ERR_ASSERTION from the first-request timer. The test only logs again after end, so the log leaves the response headers, body progress and underlying cause unknown. The available host log tails record Docker veth lifecycle events without CPU-pressure or OOM measurements. A separate riscv64 report contains the same first-request assertion.",
+          "evidence": [
+            {
+              "label": "54544 original Node shard 3/8 log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54544/jobs/01a1cd01-21b9-4542-b50a-411fe42207ba/artifacts/01a1cd0a-e412-4f01-8df8-ceef385fd7f6"
+            },
+            {
+              "label": "54544 first failed job",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd01-21b9-4542-b50a-411fe42207ba"
+            },
+            {
+              "label": "Same-agent retry timed out in test-error-serdes",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd0b-b9e6-4ca1-899c-edfd23122fcf"
+            },
+            {
+              "label": "Passing retry on a different agent",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd13-d9d4-4be3-bf7f-3fc4a62046a8"
+            },
+            {
+              "label": "Node 22.2.0 first-request test and deadline",
+              "url": "https://github.com/nodejs/node/blob/v22.2.0/test/parallel/test-http-outgoing-end-cork.js#L53"
+            },
+            {
+              "label": "Related Node riscv64 report",
+              "url": "https://github.com/nodejs/node/issues/54499"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "54544 original Node shard 3/8 log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54544/jobs/01a1cd01-21b9-4542-b50a-411fe42207ba/artifacts/01a1cd0a-e412-4f01-8df8-ceef385fd7f6"
+        },
+        {
+          "label": "54544 first failed job",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd01-21b9-4542-b50a-411fe42207ba"
+        },
+        {
+          "label": "Same-agent retry timed out in test-error-serdes",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd0b-b9e6-4ca1-899c-edfd23122fcf"
+        },
+        {
+          "label": "Passing retry on a different agent",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd13-d9d4-4be3-bf7f-3fc4a62046a8"
+        },
+        {
+          "label": "Node 22.2.0 first-request test and deadline",
+          "url": "https://github.com/nodejs/node/blob/v22.2.0/test/parallel/test-http-outgoing-end-cork.js#L53"
+        },
+        {
+          "label": "Related Node riscv64 report",
+          "url": "https://github.com/nodejs/node/issues/54499"
+        }
+      ],
+      "nextStep": "Compare uncached runs of the pinned test with time-stamped request, response and end events and a matched worker control. Check the first failing boundary before changing the test deadline."
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
