@@ -13,7 +13,7 @@ RUN curl -o node-${VERSION}.tar.gz https://nodejs.org/dist/${VERSION}/node-${VER
  && tar -zxf node-${VERSION}.tar.gz \
  && rm -f node-${VERSION}.tar.gz
 
-# Patch in a timeout increase to reduce test flakiness on gVisor
+# Allow slower platforms more time and test HTTP socket reuse without deadlines.
 WORKDIR /root/node-${VERSION}
 COPY timeouts.patch /tmp/timeouts.patch
 RUN patch -p1 --no-backup-if-mismatch < /tmp/timeouts.patch \
@@ -25,12 +25,6 @@ RUN make -j $(nproc) test-build
 # Use node --check on the files we patched
 RUN out/Release/node --check test/common/index.js \
   && out/Release/node --check test/parallel/test-http-outgoing-end-cork.js
-
-# Select the certificate for www.nodejs.org in the CA interaction test.
-COPY tls-servername.patch /tmp/tls-servername.patch
-RUN patch -p1 --no-backup-if-mismatch < /tmp/tls-servername.patch \
-  && out/Release/node --check test/internet/test-tls-add-ca-cert.js \
-  && rm -f /tmp/tls-servername.patch
 
 # Including dumb-init emulates the Linux "init" process, preventing the failure
 # of tests involving worker processes.
