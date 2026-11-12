@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T06:27:42+00:00",
+    "updatedAt": "2026-11-12T06:54:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5708,10 +5708,22 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc.",
-      "updatedAt": "2026-11-12T06:27:42+00:00",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1.",
+      "updatedAt": "2026-11-12T06:45:49+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
+        {
+          "label": "Compiler and five prerequisites on master 79c4fcfce with rules_go 0.65.0",
+          "url": "https://github.com/tamird/gvisor/commit/a066005a6"
+        },
+        {
+          "label": "AMD64 release archive, nine installed files, ELF checks and packaged runsc version",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43169338386/artifacts/13921741428"
+        },
+        {
+          "label": "Native systrap /bin/true and explicit GCC test passed. Two ARM64 ELF files matched across Linux and macOS builders.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43167092334/artifacts/13920807374"
+        },
         {
           "label": "Native AMD64 and ARM64 race boot test analysis on the integrated compiler",
           "url": "https://github.com/tamird/gvisor/actions/runs/43153554425/artifacts/13914881939"
@@ -6451,14 +6463,6 @@
         {
           "label": "Native vDSO prerequisite merged through #16983",
           "url": "https://github.com/google/gvisor/commit/f855fc7c1"
-        },
-        {
-          "label": "Current compiler prerequisites with rules_go 0.65.0 and the new release archives",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43167092334"
-        },
-        {
-          "label": "Systrap /bin/true, two AArch64 ELFs and explicit GCC passed; archive fetch timed out",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43167092334/artifacts/13920807374"
         }
       ],
       "refinement": {
@@ -80021,7 +80025,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T06:22:38+00:00",
+      "updatedAt": "2026-11-12T06:54:35+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -82173,7 +82177,7 @@
           ]
         }
       ],
-      "nextStep": "Compare Linux and gVisor with the same tail losses and SACK coverage. Measure the flight estimate and the packets sent on each ACK.",
+      "nextStep": "Read the pending Linux and #16495 packet traces. Compare the flight estimate and the packets each sender emitted on the same ACK when one or three segments beyond the final hole had been SACKed.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -82658,6 +82662,10 @@
         {
           "label": "Observed and control runs on the shared queue",
           "url": "https://github.com/tamird/gvisor/actions/runs/43163573663/artifacts/13920256562"
+        },
+        {
+          "label": "Matched Linux and #16495 packet test, one or three SACKed segments beyond the last hole",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43169213472"
         }
       ],
       "comparisons": [
@@ -105785,7 +105793,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T06:22:38+00:00",
+      "updatedAt": "2026-11-12T06:53:57+00:00",
       "summary": "Node 22.2.0 shard 3 checked Socket.closed at a fixed deadline and observed false. The same shard passed on retry. Node already waits for the close event in newer releases.",
       "findings": [
         {
@@ -105796,8 +105804,21 @@
               "url": "https://github.com/nodejs/node/pull/55959"
             },
             {
-              "label": "Backport on the current image",
-              "url": "https://github.com/tamird/gvisor/commit/b274be266"
+              "label": "Backport of the Node test to the pinned gVisor image",
+              "url": "https://github.com/tamird/gvisor/commit/c776a5072"
+            }
+          ]
+        },
+        {
+          "text": "On AMD64 runc and systrap, the pinned test passed at normal response speed and failed at its 100 ms socket check when the response was delayed by 250 ms. The packaged Node fix passed both timings on each runtime. The final patch adds attribution above the tested hunks and applies to the same upstream test bytes.",
+          "evidence": [
+            {
+              "label": "Image manifest, per-runtime test hashes and original and delayed test logs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43167070037/artifacts/13922850238"
+            },
+            {
+              "label": "Final single-commit backport",
+              "url": "https://github.com/tamird/gvisor/commit/c776a5072"
             }
           ]
         }
@@ -105812,13 +105833,25 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce33-161a-4991-9c1e-06e4d2ac55f3"
         },
         {
-          "label": "Packaged Node test on runc and systrap",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43167070037"
+          "label": "Image manifest, per-runtime test hashes and original and delayed test logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43167070037/artifacts/13922850238"
         }
       ],
-      "nextStep": "Inspect the packaged test under both runtimes, including a delayed HTTP response.",
-      "repo": "google/gvisor"
+      "nextStep": "Contributor review of the Node test backport for the pinned image.",
+      "repo": "google/gvisor",
+      "head": "c776a5072f70a9aa43579604c1976478e1a05084",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "requestedAt": "2026-11-12T06:53:57+00:00",
+        "head": "c776a5072f70a9aa43579604c1976478e1a05084",
+        "baseHead": "79c4fcfcee9d02ff0d94196d8119f4831c35c332",
+        "url": "https://github.com/tamird/gvisor/commit/c776a5072",
+        "title": "test/runtimes: backport Node’s HTTP/1.0 close test",
+        "body": "The pinned Node 22.2.0 test checks the HTTP/1.0 client socket 100 ms\nafter it writes the request. An AMD64 runtime shard still saw an open\nsocket and passed on retry [1] [2].\n\nBackport the test fix by Arne Keller and Luigi Pinca [3]. Check that\nthe server has ended the socket when the response finishes and wait for\nthe client's close event. Keep the HTTP/1.1 reuse checks and the\nexisting image timeout adjustments.\n\nDelaying the HTTP response by 250 ms reproduced the assertion on runc\nand systrap. The packaged test passed both with and without that delay\non each runtime [4].\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce24-f1e8-48c4-b72b-0c54ee6deae8\n[2]: https://buildkite.com/gvisor/pipeline/builds/54616#01a1ce33-161a-4991-9c1e-06e4d2ac55f3\n[3]: https://github.com/nodejs/node/commit/b6fe731c5\n[4]: https://github.com/tamird/gvisor/actions/runs/43167070037/artifacts/13922850238\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Open the one-commit test backport against gVisor? The original timed check failed on both runtimes with a delayed response; the packaged event-based test passed."
+      }
     }
   ],
-  "updatedAt": "2026-11-12T06:27:42+00:00"
+  "updatedAt": "2026-11-12T06:54:35+00:00"
 }
