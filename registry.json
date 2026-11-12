@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T17:28:55+00:00",
+    "updatedAt": "2026-11-12T17:42:39+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30614,14 +30614,14 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T16:06:26+00:00",
-      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. On master 59b69962b and the revision, the parser selects only AArch64 and X86. The newer LLVM source adds 210 configured C++ compilations per architecture (2,725 to 2,935 on AMD64 and 2,722 to 2,932 on ARM64). LLVM accounts for 184 and zlib for 26. The old comparison predates #15940. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe contributor requested a hermetic-llvm dependency update in place of the local patches. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.",
+      "updatedAt": "2026-11-12T17:42:39+00:00",
+      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. On master 59b69962b and the revision, the parser selects only AArch64 and X86. The newer LLVM source adds 210 configured C++ compilations per architecture (2,725 to 2,935 on AMD64 and 2,722 to 2,932 on ARM64). LLVM accounts for 184 and zlib for 26. The old comparison predates #15940. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe contributor requested a hermetic-llvm dependency update in place of the local patches. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.\n\nThe published 7fca7c54f conflicts in MODULE.bazel against ccf8c9479. The patch-free fork revision ea1d3141c, which pins supplier 17f6a3008, merges cleanly there. CI qualification of supplier HEAD 8a3f5bd77 is in progress. Downstream consumers also need the root-module policy in #16804.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-12T16:06:26+00:00",
-        "disposition": "The patch-free fork revision passed both native parser tests and the 224-record license audit. BCR llvm 0.8.26 predates the two merged supplier fixes.",
-        "nextAction": "When a BCR llvm release includes #883 and #892 (through 17f6a3008), replace the tested source pin with its ordinary bazel_dep and recheck the generated repository, native parser tests and license audit.",
+        "observedAt": "2026-11-12T17:42:39+00:00",
+        "disposition": "Fork revision ea1d3141c merges cleanly against ccf8c9479. The published head conflicts in MODULE.bazel. BCR llvm remains at 0.8.26.",
+        "nextAction": "Qualify supplier 8a3f5bd77 against the patch-free parser revision. Check the downstream consumer with #16804 and retain the BCR release watch.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17114",
           "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
@@ -30646,7 +30646,11 @@
           "https://github.com/tamird/gvisor/commit/ea1d3141c",
           "https://github.com/tamird/gvisor/actions/runs/43252864197",
           "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960156770",
-          "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960266517"
+          "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960266517",
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/8a3f5bd77",
+          "https://github.com/google/gvisor/pull/16804",
+          "https://github.com/google/gvisor/commit/ccf8c9479",
+          "https://github.com/tamird/gvisor/actions/runs/43272221335"
         ]
       },
       "evidence": [
@@ -30841,6 +30845,22 @@
         {
           "label": "Uncached native parser XMLs and ELF digests on both architectures, plus all 224 license records",
           "url": "https://github.com/tamird/gvisor/actions/runs/43252864197/artifacts/13960156770"
+        },
+        {
+          "label": "Supplier HEAD under qualification",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/8a3f5bd77"
+        },
+        {
+          "label": "Root-only Linux header defaults for downstream consumers",
+          "url": "https://github.com/google/gvisor/pull/16804"
+        },
+        {
+          "label": "Upstream gVisor revision used for the conflict check",
+          "url": "https://github.com/google/gvisor/commit/ccf8c9479"
+        },
+        {
+          "label": "Parser qualification on supplier 8a3f5bd77",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43272221335"
         }
       ],
       "refinement": {
@@ -45323,8 +45343,8 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-08T20:58:46+00:00",
-      "summary": "Parent 706b124a2 and c31b2adc2 each restored the same parent checkpoint and verified all 100,000 tmpfs files. With a sibling holding 760 MiB under a shared 1 GiB limit, the OOM killer killed the sibling on both revisions. Both restore processes survived and completed verification. The two unpressured baselines had zero OOM kills. Each configuration ran once.\n\nThe 36 measured one-CPU restores on each build reached the first verified read in 670.0 ms on the parent, 554.0 ms with #16134 alone and 547.9 ms on this PR. Benchstat found no difference between the PR and #16134 on this workload (p=0.750).\n\nOn c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
+      "updatedAt": "2026-11-12T17:40:50+00:00",
+      "summary": "Parent 706b124a2 and c31b2adc2 each restored the same parent checkpoint and verified all 100,000 tmpfs files. With a sibling holding 760 MiB under a shared 1 GiB limit, the OOM killer killed the sibling on both revisions. Both restore processes survived and completed verification. The two unpressured baselines had zero OOM kills. Each configuration ran once.\n\nThe 36 measured one-CPU restores on each build reached the first verified read in 670.0 ms on the parent, 554.0 ms with #16134 alone and 547.9 ms on this PR. Benchstat found no difference between the PR and #16134 on this workload (p=0.750).\n\nOn c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.\n\nParth’s 32-sample C4 comparison tested 5068ecb10 against the combined #16134 and #16152 references on 0bbcbf9de. Unconstrained large-heap restore took 5.18% longer and peak checkpoint RSS increased 11.60%. The PR does not specify which state engine or compression the C4 benchmark used. The question about those settings remains open.",
       "evidence": [
         {
           "label": "Sibling-memory pressure: original cgroup counters and 100,000-file restore checks",
@@ -45493,6 +45513,22 @@
         {
           "label": "Public Firecracker guest: five controllers visible, workload UID 65534 could not create a child cgroup",
           "url": "https://github.com/tamird/gvisor/actions/runs/41998591313/artifacts/13401656446"
+        },
+        {
+          "label": "Guest checkpoint options on c31b2adc2",
+          "url": "https://github.com/google/gvisor/blob/c31b2adc2/runsc/boot/restore.go#L172"
+        },
+        {
+          "label": "Zero budget prevents or ends a GC suspension",
+          "url": "https://github.com/google/gvisor/blob/c31b2adc2/pkg/gccontrol/gccontrol.go#L289"
+        },
+        {
+          "label": "The current reader checks the leaf and its immediate parent",
+          "url": "https://github.com/google/gvisor/blob/c31b2adc2/runsc/cgroup/cgroup_v2.go#L413"
+        },
+        {
+          "label": "Ancestor-limit review on the later revision",
+          "url": "https://github.com/google/gvisor/pull/16735#discussion_r4469256063"
         }
       ],
       "head": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
@@ -45554,13 +45590,17 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "observedAt": "2026-11-06T15:58:09.697Z",
-        "disposition": "Published the save and restore measurements.",
-        "nextAction": "Await maintainer review.",
+        "owner": "PR author",
+        "observedAt": "2026-11-12T17:40:50+00:00",
+        "disposition": "The guest checkpoint on c31b2adc2 leaves its memory limit unset. A zero budget prevents or ends the GC suspension. The nested-cgroup case still depends on the open ancestor-limit fix in #16767.",
+        "nextAction": "Await Parth’s state-engine and compression settings for the C4 bigheap results. Compare like-for-like saves when those settings are known.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131",
-          "https://github.com/google/gvisor/pull/16735#issuecomment-6689167201"
+          "https://github.com/google/gvisor/pull/16735#issuecomment-6689167201",
+          "https://github.com/google/gvisor/blob/c31b2adc2/runsc/boot/restore.go#L172",
+          "https://github.com/google/gvisor/blob/c31b2adc2/pkg/gccontrol/gccontrol.go#L289",
+          "https://github.com/google/gvisor/pull/16735#discussion_r4444409895",
+          "https://github.com/google/gvisor/pull/16767"
         ],
         "sourceHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
         "providerHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf"
@@ -45570,16 +45610,16 @@
           {
             "id": "PRRC_kwDOB9IlXs8AAAABCmNvZg",
             "url": "https://github.com/google/gvisor/pull/16735#discussion_r4469256038",
-            "head": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
+            "head": "71b5044a65ffac66a4d41cd289788d7b9ad5ea22",
             "updatedAt": "2026-11-04T15:06:27Z",
-            "evidence": "https://github.com/google/gvisor/pull/16735#discussion_r4456530300"
+            "evidence": "https://github.com/google/gvisor/blob/c31b2adc2/runsc/boot/restore.go#L172"
           },
           {
             "id": "PRRC_kwDOB9IlXs8AAAABCmNvfw",
             "url": "https://github.com/google/gvisor/pull/16735#discussion_r4469256063",
-            "head": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
+            "head": "71b5044a65ffac66a4d41cd289788d7b9ad5ea22",
             "updatedAt": "2026-11-04T15:06:27Z",
-            "evidence": "https://github.com/google/gvisor/pull/16735#discussion_r4456530300"
+            "evidence": "https://github.com/google/gvisor/pull/16735#discussion_r4444409895"
           }
         ]
       }
@@ -60505,8 +60545,8 @@
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T11:32:25+00:00",
-      "summary": "Ayush updated the PR from b5062f222 to 18d419650 at 06:47 UTC on November 11, then to c6dd14a6d at 07:13 UTC. The current one-commit PR is based on 1f49f256e. All four existing review threads are resolved. The current request for review is addressed to @nybidari. Andrea closed #16953 in favor of #17082 after measuring Redis SET at 66.6k requests/s on #17082 and 66.8k on #16953. The measurements below apply to the named earlier revisions.\n\nAt b5062f222, draining the receive queue after a full-size 1,460-byte PSH segment triggered the delayed ACK. On four fresh connections, the ACK followed the start of the draining read by 0.99–3.45 ms on Netstack and 0.45–1.23 ms on native Linux 6.8. Leaving one byte queued or omitting PSH kept the ACK at 40.5–41.9 ms from packet arrival on both stacks. All eight uncached tests passed on AMD64, four with native Linux and four with Netstack.\n\nEarlier measurements at 981034f8b:\n\nThe delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nAfter 24 individually acknowledged segments, Linux ACKed a pushed 1,460-byte segment within 0.33–0.75 ms of starting the read that drained the socket. The PR waited 29.84–30.85 ms. Leaving one byte queued or omitting PSH kept both stacks near 40 ms from packet arrival. Each case ran on four fresh connections per stack. All four Linux test runs and all four netstack runs passed on AMD64. The workflow reported failure because its capture reader required all 1,514 Ethernet bytes. The capture retained 1,500 bytes, including every TCP header. The corrected reader verified the original packet lengths, sequence numbers and timestamps.",
+      "updatedAt": "2026-11-12T17:40:50+00:00",
+      "summary": "Ayush updated the PR from b5062f222 to 18d419650 at 06:47 UTC on November 11, then to c6dd14a6d at 07:13 UTC. The current one-commit PR is based on 1f49f256e. All four existing review threads are resolved. The current request for review is addressed to @nybidari. Andrea closed #16953 in favor of #17082 after measuring Redis SET at 66.6k requests/s on #17082 and 66.8k on #16953. On c6dd14a6d, First Pass ran tcp_delayed_ack_test in 21.4 seconds and fdbased_test in 0.1 seconds. Both passed. The measurements below apply to the named earlier revisions.\n\nAt b5062f222, draining the receive queue after a full-size 1,460-byte PSH segment triggered the delayed ACK. On four fresh connections, the ACK followed the start of the draining read by 0.99–3.45 ms on Netstack and 0.45–1.23 ms on native Linux 6.8. Leaving one byte queued or omitting PSH kept the ACK at 40.5–41.9 ms from packet arrival on both stacks. All eight uncached tests passed on AMD64, four with native Linux and four with Netstack.\n\nEarlier measurements at 981034f8b:\n\nThe delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.\n\nOn a loopback request/reply workload, stock sent four segments for a single write. Enabling #16953 and using #17082’s default each reduced that to two. When the client split a request across two writes with Nagle enabled, median time per request was 40.18 µs on stock, 40.414 ms on #16953 and 40.393 ms on #17082. With Nagle disabled, the corresponding medians were 39.33, 26.45 and 25.91 µs. All 36 sample runs completed without retransmissions.\n\nAfter 24 individually acknowledged segments, Linux ACKed a pushed 1,460-byte segment within 0.33–0.75 ms of starting the read that drained the socket. The PR waited 29.84–30.85 ms. Leaving one byte queued or omitting PSH kept both stacks near 40 ms from packet arrival. Each case ran on four fresh connections per stack. All four Linux test runs and all four netstack runs passed on AMD64. The workflow reported failure because its capture reader required all 1,514 Ethernet bytes. The capture retained 1,500 bytes, including every TCP header. The corrected reader verified the original packet lengths, sequence numbers and timestamps.",
       "evidence": [
         {
           "label": "Ayush requests review from @nybidari",
@@ -60607,6 +60647,10 @@
         {
           "label": "Published review feedback",
           "url": "https://github.com/google/gvisor/pull/17082#discussion_r4515162604"
+        },
+        {
+          "label": "Current-head delayed ACK and fdbased tests",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/1148#01a1c976-c065-48bb-80db-c477011a27c1"
         }
       ],
       "settledReviews": [
@@ -71130,13 +71174,13 @@
       "repo": "google/gvisor",
       "number": 17264,
       "ref": "botir/tcp-msg-more-upstream",
-      "head": "d364b74a18e734c3e5077b64716b6ac41b5f4e44",
+      "head": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
       "title": "Honor MSG_MORE on TCP writes",
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T15:41:58Z",
-      "summary": "This change adds a per-write cork. Its restore path overlaps #16671, and the truncated-write test expects the reader to be exhausted after a partial acceptance.",
+      "updatedAt": "2026-11-12T17:40:50+00:00",
+      "summary": "At 0aa0a1abf, beforeSave records whether the cork timer is armed while holding the endpoint lock. Restore rearms it from that saved state. TestMsgMoreTimerAfterRestore covers a pending MSG_MORE. TestTruncatedWritePush checks both five-byte return values, the accepted prefix on the wire and the remaining queued data. The TCP test target passed in 48.9 seconds. Whether concurrent writes can consume more reader bytes than they accept remains unverified in the pre-existing write path.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -71153,6 +71197,22 @@
         {
           "label": "Sentry retries the same reader",
           "url": "https://github.com/google/gvisor/blob/975fb1722/pkg/sentry/socket/netstack/netstack.go#L3407-L3442"
+        },
+        {
+          "label": "Cork timer state before save",
+          "url": "https://github.com/google/gvisor/blob/0aa0a1abf/pkg/tcpip/transport/tcp/endpoint_state.go#L51"
+        },
+        {
+          "label": "Pending MSG_MORE across restore",
+          "url": "https://github.com/google/gvisor/blob/0aa0a1abf/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go#L4038"
+        },
+        {
+          "label": "Partial writes and accepted wire data",
+          "url": "https://github.com/google/gvisor/blob/0aa0a1abf/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go#L4363"
+        },
+        {
+          "label": "First Pass TCP test on 0aa0a1abf",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/1026#01a1c17d-64d4-4b4f-aad8-4454095ac826"
         }
       ],
       "settledReviews": [
@@ -99428,7 +99488,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-12T17:28:55+00:00",
+      "updatedAt": "2026-11-12T17:40:50+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -100713,23 +100773,72 @@
           {
             "id": "PRRC_kwDOB9IlXs8AAAABC9164g",
             "url": "https://github.com/google/gvisor/pull/17082#discussion_r4494031586",
-            "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+            "head": "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8",
             "updatedAt": "2026-11-06T15:18:57Z",
-            "evidence": "https://github.com/google/gvisor/commit/10555b8fe"
+            "evidence": "https://github.com/google/gvisor/pull/17082#pullrequestreview-5804754005"
           },
           {
             "id": "PRRC_kwDOB9IlXs8AAAABC91-6Q",
             "url": "https://github.com/google/gvisor/pull/17082#discussion_r4494032617",
-            "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+            "head": "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8",
             "updatedAt": "2026-11-06T15:19:01Z",
-            "evidence": "https://github.com/google/gvisor/commit/10555b8fe"
+            "evidence": "https://github.com/google/gvisor/pull/17082#pullrequestreview-5804754005"
           },
           {
             "id": "IC_kwDOB9IlXs8AAAABjrINMQ",
             "url": "https://github.com/google/gvisor/pull/17082#issuecomment-6689000753",
-            "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+            "head": "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8",
             "updatedAt": "2026-11-06T15:50:13Z",
-            "evidence": "https://github.com/tamird/gvisor/actions/runs/42245055323/artifacts/13518805282"
+            "evidence": "https://github.com/google/gvisor/pull/17082#pullrequestreview-5804754005"
+          },
+          {
+            "id": "IC_kwDOB9IlXs8AAAABjR7INw",
+            "url": "https://github.com/google/gvisor/pull/17022#issuecomment-6662572087",
+            "updatedAt": "2026-11-05T15:54:53Z",
+            "head": "d0439e8b83fafeff675910fc544a393fb5d9f85c",
+            "evidence": "https://github.com/google/gvisor/pull/14458"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABC60XAQ",
+            "url": "https://github.com/google/gvisor/pull/17022#discussion_r4490860289",
+            "updatedAt": "2026-11-06T09:18:33Z",
+            "head": "c02d0940fd57e7c31432c81164f3e58f41795286",
+            "evidence": "https://github.com/google/gvisor/blob/62277fb4a/pkg/tcpip/transport/tcp/test/e2e/tcp_sack_test.go#L972"
+          },
+          {
+            "id": "IC_kwDOB9IlXs8AAAABjpFyMw",
+            "url": "https://github.com/google/gvisor/pull/16081#issuecomment-6686863923",
+            "updatedAt": "2026-11-06T14:13:01Z",
+            "head": "1b9768b199524246fe8e4fa66a0b623069778780",
+            "evidence": "https://github.com/google/gvisor/pull/16081#issuecomment-6689168373"
+          },
+          {
+            "id": "IC_kwDOB9IlXs8AAAABjwewdg",
+            "url": "https://github.com/google/gvisor/pull/17082#issuecomment-6694613110",
+            "updatedAt": "2026-11-06T20:22:07Z",
+            "head": "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8",
+            "evidence": "https://github.com/tamird/gvisor/actions/runs/42288031163/artifacts/13538692103"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABDkvf4w",
+            "url": "https://github.com/google/gvisor/pull/17082#discussion_r4534820835",
+            "updatedAt": "2026-11-11T06:48:03Z",
+            "head": "c6dd14a6d36f9a940f9ff46c7f1a80a8e837165e",
+            "evidence": "https://buildkite.com/gvisor/first-pass/builds/1148#01a1c976-c065-48bb-80db-c477011a27c1"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABDS9ztw",
+            "url": "https://github.com/google/gvisor/pull/17264#discussion_r4516180919",
+            "updatedAt": "2026-11-09T18:06:03Z",
+            "head": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
+            "evidence": "https://github.com/google/gvisor/blob/0aa0a1abf/pkg/tcpip/transport/tcp/endpoint_state.go#L281"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABDS91eg",
+            "url": "https://github.com/google/gvisor/pull/17264#discussion_r4516181370",
+            "updatedAt": "2026-11-09T18:06:06Z",
+            "head": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
+            "evidence": "https://github.com/google/gvisor/blob/0aa0a1abf/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go#L4363"
           }
         ]
       },
@@ -106568,7 +106677,7 @@
       "group": "bazel",
       "status": "active",
       "owner": "Compiler toolchain integration",
-      "updatedAt": "2026-11-12T10:22:34+00:00",
+      "updatedAt": "2026-11-12T17:40:50+00:00",
       "summary": "Each supplier PR preserved the GNU and musl bootstrap link arguments on its own. Together they made Bazel reject the bootstrap C++ toolchain during analysis because it lacked static_link_cpp_runtimes. The five gVisor compiler prerequisites remain unchanged.",
       "findings": [
         {
@@ -106665,9 +106774,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43160637144/artifacts/13918572062"
             }
           ]
+        },
+        {
+          "text": "The author cherry-picked the supplied static ASan fix at fc824d720. Its tree matches the supplied 7c9e7687d, including the changes qualified by the mapped and unmapped builds.",
+          "evidence": [
+            {
+              "label": "Author’s confirmation",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938#discussion_r4553537588"
+            },
+            {
+              "label": "Upstream cherry-pick",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/fc824d720"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the supplier’s response to the static ASan symbolizer fix. Combining #938 with #909 also requires the separate bootstrap link fix.",
+      "nextStep": "The author of #938 cherry-picked the static ASan symbolizer fix at fc824d720. If #909 and #938 are combined, carry the separately tested bootstrap link correction into that integration.",
       "evidence": [
         {
           "label": "Runtime link libraries #909",
@@ -106852,7 +106974,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T05:11:48+00:00",
+      "updatedAt": "2026-11-12T17:42:39+00:00",
       "summary": "In #17516’s cgroup-v1 Docker job, the non-privileged host-network case of TestDockerWithVFS failed in 0.85 seconds. The inner Docker command exited 125 while runc was reopening its exec FIFO.",
       "findings": [
         {
@@ -106884,6 +107006,19 @@
               "url": "https://github.com/google/gvisor/pull/14849"
             }
           ]
+        },
+        {
+          "text": "A separate master trace in #54674 shows the reader opening the FIFO successfully. Checkpoint interrupted the writer’s open with EINTR. The reader observed EOF before the writer reopened the FIFO and wrote all 16 bytes. A fresh run of the same case passed.",
+          "evidence": [
+            {
+              "label": "Master checkpoint trace of the FIFO reader and writer",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54674/jobs/01a1d02b-b088-42a0-9cb6-fa36add1c9ee/artifacts/01a1d038-a7e6-4b3b-92ca-bbc72b9768ff"
+            },
+            {
+              "label": "Same master case passed on a fresh retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54674#01a1d039-4199-41b2-9189-c384ff4bbb33"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the rebase of #14849, which includes blocking read and write open tests with SA_RESTART. A signal trace from a recurrence would establish which signal interrupted runc and whether its handler requested restart.",
@@ -106907,6 +107042,14 @@
         {
           "label": "Existing FIFO restart correction and read/write regressions",
           "url": "https://github.com/google/gvisor/pull/14849"
+        },
+        {
+          "label": "Master checkpoint trace of the FIFO reader and writer",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54674/jobs/01a1d02b-b088-42a0-9cb6-fa36add1c9ee/artifacts/01a1d038-a7e6-4b3b-92ca-bbc72b9768ff"
+        },
+        {
+          "label": "Same master case passed on a fresh retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54674#01a1d039-4199-41b2-9189-c384ff4bbb33"
         }
       ]
     },
@@ -107235,6 +107378,45 @@
           "note": "The contributor approved the one-commit change, published as #17554."
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-pty-flush-pollout",
+      "title": "Native PTY replica reported writable before the input flush",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T17:42:39+00:00",
+      "summary": "On de7d65b3b, the native TCFLSHWakesReplicaPolloutAfterMasterInputFlush test observed POLLOUT before flushing the master input. The same shard ran again and passed.",
+      "findings": [
+        {
+          "text": "The zero-time poll at pty.cc:697 observed no writable event. The second zero-time poll at line 2829 returned one ready descriptor before the test issued the flush. The retry reran the failing shard and reused only the other three shards.",
+          "evidence": [
+            {
+              "label": "Original native PtyTest failure on de7d65b3b",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0c2-5068-4825-bd4b-98e4e38d48ba"
+            },
+            {
+              "label": "Fresh failing shard passed on retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0d1-6e5c-4a41-92af-7520c5d0c291"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Test at the second poll",
+          "url": "https://github.com/google/gvisor/blob/de7d65b3b/test/syscalls/linux/pty.cc#L2829"
+        },
+        {
+          "label": "Original native PtyTest failure on de7d65b3b",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0c2-5068-4825-bd4b-98e4e38d48ba"
+        },
+        {
+          "label": "Fresh failing shard passed on retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0d1-6e5c-4a41-92af-7520c5d0c291"
+        }
+      ],
+      "nextStep": "Determine what made the replica writable between the two polls. Track this native pre-flush observation independently of #17484."
     }
   ],
   "updatedAt": "2026-11-12T08:42:54+00:00"
