@@ -1388,6 +1388,19 @@ class CollectorHistoryTest(unittest.TestCase):
             with self.subTest(body=body):
                 self.assertFalse(updater.top_level_triage({"kind": kind, "body": body}, {}, True))
 
+    def test_approval_with_generated_footer_only_settles_a_generic_body(self) -> None:
+        footer = ("\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up "
+                  "gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon")
+        for body, needs_triage in [
+            ("LGTM." + footer, False),
+            ("LGTM.\n\nPlease bound the caller's input.\n\nRecommend approval." + footer, True),
+            ("LGTM." + footer + " Please fix the test.", True),
+            ("LGTM.\n\n---\nA different review footer.", True),
+        ]:
+            with self.subTest(body=body):
+                item = {"kind": "review", "state": "APPROVED", "body": body}
+                self.assertEqual(updater.top_level_triage(item, {}, True), needs_triage)
+
     def test_reviewer_edit_releases_a_manually_claimed_comment(self) -> None:
         pr = retained(raw_pr(5))
         comment = {"id": "note", "kind": "comment", "createdAt": OLD, "updatedAt": OLD,

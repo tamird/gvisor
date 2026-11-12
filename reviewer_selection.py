@@ -16,6 +16,17 @@ GOVERNANCE = "https://github.com/google/gvisor/blob/master/governance/maintainer
 MENTION = re.compile(r"(?<![\w@])@([\w-]+)")
 ASK = re.compile(r"\b(review|re-review|approve|approval|ptal|take a look)\b", re.I)
 GENERIC_REVIEW = re.compile(r"(?:lgtm|thanks|approved|looks good(?: to me)?)[.! ]*", re.I)
+GEMINI_REVIEW_FOOTER = ("[🤖] This review is part of an experimental auto-review process to help speed up "
+                        "gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon")
+
+
+def is_generic_review(body: str) -> bool:
+    body = body.strip()
+    message, _, footer = body.rpartition("\n\n")
+    # GitHub returns the divider in body and omits it from bodyText.
+    if footer in (GEMINI_REVIEW_FOOTER, "---\n" + GEMINI_REVIEW_FOOTER):
+        body = message
+    return GENERIC_REVIEW.fullmatch(body) is not None
 
 
 def reviewer_governance(areas_text: str, maintainers_text: str) -> tuple[set[str], dict[str, set[str]]]:
@@ -45,7 +56,7 @@ def _time(value: datetime | str) -> datetime:
 def _reviewed_paths(body: str, paths: list[str]) -> list[str]:
     # A general comment on a many-file PR does not establish expertise in
     # every file. Inline comments are passed with their single reviewed path.
-    if not body.strip() or body.lstrip().startswith("[🤖") or GENERIC_REVIEW.fullmatch(body.strip()):
+    if not body.strip() or body.lstrip().startswith("[🤖") or is_generic_review(body):
         return []
     if len(paths) == 1:
         return paths

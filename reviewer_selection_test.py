@@ -105,6 +105,23 @@ class ReviewerSelectionTest(unittest.TestCase):
         self.work["feedback"]["items"][-1]["body"] = "[🤖🐸🤖] Review agent has no findings."
         self.assertEqual(self.picks(), [])
 
+    def test_generic_approval_with_footer_gives_no_single_file_experience(self):
+        footer = ("[🤖] This review is part of an experimental auto-review process to help speed up "
+                  "gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon")
+        item = self.work["feedback"]["items"][-1]
+        item.update(kind="review", state="APPROVED", body="LGTM.\n\n---\n" + footer)
+        del item["path"]
+        self.assertEqual(self.picks(), [])
+
+        # GitHub omits the Markdown divider from the daily sample's bodyText.
+        review = {"url": item["url"], "state": item["state"], "submittedAt": item["createdAt"],
+                  "bodyText": "LGTM.\n\n" + footer, "comments": {"nodes": []}}
+        pr = {"number": 1, "author": {"login": "author"}, "files": {"nodes": [{"path": self.path}]},
+              "reviews": {"nodes": [review]}}
+        sample = recent_reviewer_work(lambda _: {"a0": {"nodes": []}, "r0": {"nodes": [pr]}},
+                                      {"casey"}, {}, self.now)
+        self.assertEqual([item["paths"] for item in sample["observations"]], [{}])
+
     def test_multifile_review_does_not_imply_expertise_in_every_file(self):
         item = self.work["feedback"]["items"][-1]
         item["kind"] = "review"

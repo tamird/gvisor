@@ -21,7 +21,7 @@ from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import allows_post, live_posting_mode, load_registry, posting_mode, registry_is_published
-from reviewer_selection import GENERIC_REVIEW, needs_reviewer_paths, recent_reviewer_work, reviewer_governance
+from reviewer_selection import is_generic_review, needs_reviewer_paths, recent_reviewer_work, reviewer_governance
 from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, pr_identity, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
@@ -279,7 +279,7 @@ def top_level_triage(item: dict, prior: dict, newly_observed: bool) -> bool:
     if item["kind"] not in {"comment", "review"} or not (newly_observed or prior.get("needsTriage", prior.get("newOrChanged"))):
         return False
     body = item["body"].strip()
-    if GENERIC_REVIEW.fullmatch(body) or re.fullmatch(
+    if is_generic_review(body) or re.fullmatch(
             r"\[🤖\] Invalidating approval due to rebase as a means to notify @[\w-]+ to re-review\. "
             r"Current diff looks (?:identical to|different from) pre-rebase diff\.", body):
         return False
