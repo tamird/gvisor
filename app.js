@@ -1419,6 +1419,12 @@ function navigateFromURL() {
   if (view === "investigations" && selected)
     document.getElementById(selected)?.focus({ preventScroll: true });
 }
+function buildkiteFailureLabel(row) {
+  if (row.failedState === "timed_out") return "Timed out";
+  if (row.failedState === "expired") return "Expired";
+  return row.exitCode == null ? "Failed" : `Exit ${row.exitCode}`;
+}
+
 function tableNodes() { return model.nodes.filter((node) => matches(node) && visibleHistory(node)); }
 function investigationNextStep(item) {
   if (!item.defaultBranchCheck || item.status !== "active") return item.nextStep;
@@ -1477,7 +1483,7 @@ function appendCIFlakeScan(card, scan) {
       const build = element("td"); build.append(link(`${row.pipeline} #${row.build}`, url));
       if (row.pr) build.append(" · ", link(`PR #${row.pr}`, `https://github.com/google/gvisor/pull/${row.pr}`));
       const attempts = element("td");
-      attempts.append(link(row.exitCode == null ? "Failed" : `Exit ${row.exitCode}`, `${url}#${row.failedJob}`),
+      attempts.append(link(buildkiteFailureLabel(row), `${url}#${row.failedJob}`),
         " → ", link("Passed", `${url}#${row.passedJob}`));
       tr.append(job, build, attempts, element("td", "", date(row.finishedAt))); body.append(tr);
     }
@@ -2544,6 +2550,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
           !Number.isSafeInteger(row.build) || row.build < 1 || !/^[a-f0-9]{40}$/.test(row.head) ||
           (row.pr != null && (!Number.isSafeInteger(row.pr) || row.pr < 1)) || typeof row.job !== "string" || !row.job.trim() ||
           !uuid.test(row.failedJob) || !uuid.test(row.passedJob) || row.failedJob === row.passedJob ||
+          (row.failedState != null && !["finished", "timed_out", "expired"].includes(row.failedState)) ||
           !Number.isFinite(Date.parse(row.finishedAt)) || (row.exitCode != null && !Number.isInteger(row.exitCode))))
       throw new Error("Invalid CI flake scan");
     if (scan.actions) {

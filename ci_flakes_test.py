@@ -38,8 +38,13 @@ class FlakeTest(unittest.TestCase):
         self.assertEqual(snapshot, replay)
         self.assertEqual(snapshot["observations"], [{"pipeline": "pipeline", "build": 42, "head": HEAD,
                          "job": "unit", "failedJob": FIRST, "passedJob": LAST, "finishedAt": NOW,
-                         "exitCode": 2, "pr": 17269}])
+                         "exitCode": 2, "failedState": "finished", "pr": 17269}])
         self.assertEqual(snapshot["pipelines"]["pipeline"]["pending"], [])
+
+    def test_first_attempt_times_out_before_a_successful_retry(self):
+        first = dict(job(FIRST, False, LAST), state="timed_out", exit_status=-1)
+        result, = ci.recoveries("release", 42, BUILD, {FIRST: first, LAST: job(LAST, True)})
+        self.assertEqual((result["failedState"], result["exitCode"]), ("timed_out", -1))
 
     def test_missing_cyclic_or_wrong_shard_successor_is_incomplete(self):
         start = job(FIRST, False, SECOND)

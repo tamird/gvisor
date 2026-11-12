@@ -106,7 +106,7 @@ def recoveries(slug: str, number: int, build: dict, jobs: dict[str, dict]) -> li
         if not isinstance(finished, str) or datetime.fromisoformat(finished.replace("Z", "+00:00")).tzinfo is None:
             raise ValueError("Missing passing job completion time")
         record = {"pipeline": slug, "build": number, "head": build["commit_id"], "job": name,
-                  "failedJob": start_id, "passedJob": last["id"], "finishedAt": finished,
+                  "failedJob": start_id, "failedState": start["state"], "passedJob": last["id"], "finishedAt": finished,
                   "exitCode": start.get("exit_status") if type(start.get("exit_status")) is int else None}
         if isinstance(pr := build.get("pull_request"), dict) and (match := PR.fullmatch(str(pr.get("url")))):
             record["pr"] = int(match[1])

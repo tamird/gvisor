@@ -229,6 +229,24 @@ test('retry evidence must identify distinct attempts in the scanned pipeline', (
   const validate = () => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
   validate();  // A snapshot collected before CI intake is still usable.
   context.snapshotInput.ciFlakes = scan;
+  const attempt = scan.observations[0];
+  context.attemptInput = attempt;
+  const label = () => vm.runInContext('buildkiteFailureLabel(attemptInput)', context);
+  assert.equal(label(), 'Exit 2');
+  attempt.exitCode = -1;
+  assert.equal(label(), 'Exit -1');  // Older snapshots did not record the job state.
+  attempt.failedState = 'timed_out';
+  validate();
+  assert.equal(label(), 'Timed out');
+  attempt.failedState = 'expired';
+  assert.equal(label(), 'Expired');
+  attempt.failedState = 'canceled';
+  assert.throws(validate, /Invalid CI flake scan/);
+  attempt.failedState = 'finished';
+  assert.equal(label(), 'Exit -1');
+  attempt.exitCode = null;
+  assert.equal(label(), 'Failed');
+
   const report = { number: 17, title: 'Flaky neighbor test', kind: 'pr', state: 'merged',
     updatedAt: scan.checkedAt, url: 'https://github.com/google/gvisor/pull/17' };
   scan.actions = { status: 'ok', observations: [], reports: { sample: 'Recent titles', items: [report] } };
