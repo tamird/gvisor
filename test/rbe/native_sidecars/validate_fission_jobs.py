@@ -11,10 +11,10 @@ E2E = ROOT / "e2e/rules_cc"
 TMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TMP / "sidecar-evidence"
 OUT.mkdir()
-CANDIDATE = "14ebf27eb3eead0d725f66c0ff1f0f484b20fa8c"
+CANDIDATE = "7c9e7687d85d46b30225b4047d6cf6150446e69f"
 STAGES = "baa2066bd9f6830d078228a9047649f8334f712e"
 COMBINED = "b253312fd2f6b047d8a70781c7623f6e2c1d4064"
-COMBINED_TREE = "03d14c94b198a69b918fad2f1e55b4ae818d4329"
+COMBINED_TREE = "bbc6d319a9b5babf3e31ffd06ffee26025c9a10f"
 FISSION = "//:asan_fission_debug_package_test"
 STAGE = "//tests/runtime_stage:stage_independent_test"
 STRIP = "--experimental_output_paths=strip"
@@ -23,6 +23,26 @@ FAILURES = []
 
 def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
+
+
+def count_toolchain_targets(name: str) -> None:
+    expression = "deps(//tests/linux_linking:hello_x86_64_musl)"
+    result = subprocess.run(
+        ["bazel", f"--bazelrc={ROOT}/.github/workflows/ci.bazelrc", "--bazelrc=.bazelrc",
+         f"--bazelrc={TMP}/sidecar.bazelrc", "cquery", "--noannounce_rc", "--color=no",
+         "--output=label", expression],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    (OUT / (name + ".labels")).write_text(result.stdout)
+    labels = sorted({line for line in result.stdout.splitlines()
+                     if line.startswith(("//toolchain:", "//toolchain/")) and " (" in line})
+    package = sum(line.startswith("//toolchain:") for line in labels)
+    report = {"head": git("rev-parse", "HEAD"), "expression": expression, "exit": result.returncode,
+              "toolchainPackage": package, "includingSubpackages": len(labels), "labels": labels}
+    (OUT / (name + ".json")).write_text(json.dumps(report, indent=2) + "\n")
+    print(name, result.returncode, package, len(labels), flush=True)
+    if result.returncode or not package:
+        FAILURES.append(name)
 
 
 def check(name: str, cwd: Path, command: str, args: list[str], required_test: str = "") -> None:
@@ -83,6 +103,10 @@ os.environ["USE_BAZEL_VERSION"] = (ROOT / ".bazelversion").read_text().strip()
 version = subprocess.check_output(["bazel", "--version"], cwd=ROOT, text=True).strip()
 assert version == "bazel " + os.environ["USE_BAZEL_VERSION"], version
 
+subprocess.run(["git", "switch", "--quiet", "--detach", STAGES], cwd=ROOT, check=True)
+count_toolchain_targets("stage-sharing-source")
+subprocess.run(["git", "switch", "--quiet", "--detach", CANDIDATE], cwd=ROOT, check=True)
+count_toolchain_targets("stage-sharing-repair")
 check("stage", ROOT, "test", ["--nocache_test_results", STAGE], STAGE)
 check("mapped", E2E, "test", [STRIP, "--config=cpp_path_mapping", "--nocache_test_results", "//..."], FISSION)
 check("unmapped", E2E, "build", [STRIP, "//..."])
