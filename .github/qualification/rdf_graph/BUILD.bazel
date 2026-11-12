@@ -1,0 +1,3 @@
+load(":object.bzl", "rdf_graph_object")
+
+rdf_graph_object(name = "object")
