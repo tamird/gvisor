@@ -50,25 +50,31 @@ steps:
     label: ":ship: Release"
     if: build.branch == "master" || (build.tag != null && build.tag =~ /-staging/)
     commands:
-      # Stamps the binaries below with release-<name>.
+      # Prepare the local release tag before selecting native and Python versions.
       - ./.buildkite/scripts/release/tag.sh stage
       - |
+        set -e
         if [[ "$${BUILDKITE_TAG:-}" == release-*-staging ]]; then
           label="$${BUILDKITE_TAG%-staging}"
         else
-          # Untagged master and nightly packages use the nearest release.
+          # Master and nightly builds retain the revision from git describe.
           label="$$(git describe --always --tags --exclude 'release-*-staging' --abbrev=12 --dirty)"
         fi
-        make release-artifacts RELEASE_VERSION="$$label" BAZEL_OPTIONS=--compilation_mode=opt
-      - make artifacts-python
-      - make release RELEASE_NIGHTLY=$$RELEASE_NIGHTLY
-      - (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)
-      # Pushes release-<name> to GitHub.
-      - ./.buildkite/scripts/release/tag.sh publish
-      # Pushes the wheel from Artifact Registry to PyPI. Only runs if the rest
-      # of the release succeeded. This step does nothing if no wheel was built,
-      # as is the case for nightly builds.
-      - ./tools/make_python_release.sh publish-manifest repo/release
+        python_dist=
+        if [[ "$${RELEASE_NIGHTLY:-false}" != true ]] && git describe --exact-match --tags --match 'release-*' --exclude 'release-*-staging' HEAD >/dev/null 2>&1; then
+          # Keep this build's distributions for promotion after the native upload.
+          python_dist="$$(mktemp -d)"
+          trap 'rm -rf -- "$$python_dist"' EXIT
+        fi
+        make release BAZEL_OPTIONS=--compilation_mode=opt RELEASE_VERSION="$$label" RELEASE_NIGHTLY="$${RELEASE_NIGHTLY:-false}" PYTHON_RELEASE_DEST="$$python_dist"
+        (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)
+        # Pushes release-<name> to GitHub.
+        ./.buildkite/scripts/release/tag.sh publish
+        # Promote this build's wheel from Artifact Registry to PyPI only after
+        # the native release and its tag have been published.
+        if [[ -n "$$python_dist" ]]; then
+          ./tools/make_python_release.sh publish-manifest "$$python_dist"
+        fi
     agents:
       queue: "release"
   - <<: *common

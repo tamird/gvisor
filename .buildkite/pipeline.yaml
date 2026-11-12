@@ -287,8 +287,7 @@ steps:
     <<: *source_test
     label: ":ship: Release tests"
     commands:
-      - make artifacts-all
-      - make release
+      - make release BAZEL_OPTIONS=--compilation_mode=opt
     agents:
       arch: "amd64"
       queue: "default"
