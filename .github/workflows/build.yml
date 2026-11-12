@@ -1,35 +1,114 @@
-name: CI
-
-"on":
+name: Verify current release and boot sources with the released C toolchains
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-current-release-presubmit-20261112]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    defaults:
+      run:
+        shell: bash
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the tested tree and install the pinned Linux Bazel
+        id: setup
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/compiler-result"
+          mkdir -p "$out/dist" "$out/bin"
+          git rev-parse HEAD HEAD^ HEAD^^ | tee "$out/source"
+          test "$(git rev-parse --short=10 HEAD^)" = a066005a68
+          test "$(git rev-parse --short=9 HEAD^^)" = 79c4fcfce
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          test "$(cat .bazelversion)" = 9.3.1
+          grep 'name = "rules_go", version = "0.65.0"' MODULE.bazel
+          grep 'name = "llvm", version = "0.8.24"' MODULE.bazel
+          api=https://api.github.com/repos
+          fetch=(curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 -H 'Accept: application/octet-stream')
+          "${fetch[@]}" "$api/bazelbuild/bazel/releases/assets/661108421" -o "$out/bin/bazel"
+          "${fetch[@]}" "$api/cerisier/glibc-headers/releases/assets/253918436" -o "$out/dist/x86_64-linux-gnu.2.28.tar.zst"
+          (cd "$out" && sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bin/bazel
+          8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3  dist/x86_64-linux-gnu.2.28.tar.zst
+          SUMS
+          )
+          chmod 755 "$out/bin/bazel"
+          "$out/bin/bazel" --version | tee "$out/bazel-version"
+          echo "$out/bin" >> "$GITHUB_PATH"
+          echo "OUT=$out" >> "$GITHUB_ENV"
+          cat >"$out/common" <<'FLAGS'
+          flags=(--remote_cache= --remote_executor= --bes_backend= --disk_cache= --jobs=4 --lockfile_mode=off --module_mirrors=https://bcr.cloudflaremirrors.com "--distdir=$OUT/dist" --noshow_progress)
+          FLAGS
+      - name: Run the ordinary Linux boot test with the declared LLVM toolchain
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          source "$OUT/common"
+          bazel test "${flags[@]}" --strategy=TestRunner=local --nocache_test_results --test_output=errors --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_filter='^TestRun$' //runsc/boot:boot_test 2>&1 | tee "$OUT/boot-bazel.log"
+          cp bazel-testlogs/runsc/boot/boot_test/test.{xml,log} "$OUT/"
+          grep -F -- '--- PASS: TestRun' "$OUT/test.log"
+      - name: Build and read the default release archive
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          source "$OUT/common"
+          archive=//debian:gvisor-release-tar-zstd
+          bazel build "${flags[@]}" "$archive" 2>&1 | tee "$OUT/release-build.log"
+          path=$(bazel cquery "${flags[@]}" "$archive" --output=files)
+          test -f "$path"
+          sha256sum "$path" | tee "$OUT/release-sha256"
+          tar --zstd -tf "$path" | tee "$OUT/release-members"
+          mkdir "$OUT/installed"
+          tar --zstd -xf "$path" -C "$OUT/installed" runsc gvisor-bin/gvisor_sentry gvisor-bin/gvisor-sentry-prewarmer
+          for file in "$OUT/installed/runsc" "$OUT"/installed/gvisor-bin/*; do
+            readelf -h "$file" | grep -F 'Advanced Micro Devices X86-64'
+            sha256sum "$file" >> "$OUT/release-binaries"
+          done
+          "$OUT/installed/runsc" --version | tee "$OUT/runsc-version"
+      - name: Cross-compile the ARM64 release sidecar and systrap signal stub
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          source "$OUT/common"
+          targets=(//runsc/prewarmer:prewarmer_binary //pkg/sentry/platform/systrap/sysmsg:sighandler_object)
+          bazel build "${flags[@]}" --config=aarch64 "${targets[@]}" 2>&1 | tee "$OUT/cross-build.log"
+          for target in "${targets[@]}"; do
+            path=$(bazel cquery "${flags[@]}" --config=aarch64 --output=files "$target")
+            readelf -h "$path" | grep -F AArch64 | tee -a "$OUT/cross-elf"
+            sha256sum "$path" >> "$OUT/cross-elf"
+          done
+      - name: Verify caller-selected GCC and run the freestanding sidecar test
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          source "$OUT/common"
+          mod=(--lockfile_mode=off --module_mirrors=https://bcr.cloudflaremirrors.com "--distdir=$OUT/dist")
+          cc=$(bazel mod dump_repo_mapping "${mod[@]}" '' | jq -er '.rules_cc')
+          native=$(bazel mod dump_repo_mapping "${mod[@]}" "$cc" | jq -er '.local_config_cc_toolchains')
+          gcc=(--repo_env=CC=/usr/bin/gcc "--extra_toolchains=@@${native}//:all")
+          bazel cquery "${flags[@]}" 'labels(target, //runsc:runsc-race)' --output=label | tee "$OUT/race-default"
+          grep -F '//runsc:runsc-race_musl' "$OUT/race-default"
+          bazel cquery "${flags[@]}" "${gcc[@]}" 'labels(target, //runsc:runsc-race)' --output=label | tee "$OUT/race-explicit-gcc"
+          grep -F '//runsc:runsc-race_impl' "$OUT/race-explicit-gcc"
+          bazel test "${flags[@]}" "${gcc[@]}" --nocache_test_results --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 //runsc/prewarmer:prewarmer_single_page_test 2>&1 | tee "$OUT/gcc-bazel.log"
+          cp bazel-testlogs/runsc/prewarmer/prewarmer_single_page_test/test.xml "$OUT/gcc.xml"
+          cp bazel-testlogs/runsc/prewarmer/prewarmer_single_page_test/test.log "$OUT/gcc.log"
+          grep -F -- '--- PASS: TestPrewarmerFitsInOnePage' "$OUT/gcc.log"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: current-released-compiler-results
+          path: |
+            ${{ runner.temp }}/compiler-result/*.log
+            ${{ runner.temp }}/compiler-result/*.xml
+            ${{ runner.temp }}/compiler-result/*-version
+            ${{ runner.temp }}/compiler-result/source
+            ${{ runner.temp }}/compiler-result/release-*
+            ${{ runner.temp }}/compiler-result/cross-elf
+            ${{ runner.temp }}/compiler-result/race-*
+          if-no-files-found: error
+          retention-days: 14
