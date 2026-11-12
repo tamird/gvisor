@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T20:04:13+00:00",
+    "updatedAt": "2026-11-12T20:07:22+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108215,11 +108215,11 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T20:04:13+00:00",
-      "summary": "On native AMD64 Linux, clock_gettime(CLOCK_MONOTONIC_COARSE) returned 584.206975730 s immediately after 584.206975815 s. The same shard passed on retry.",
+      "updatedAt": "2026-11-12T20:07:22+00:00",
+      "summary": "On native AMD64 Linux, CLOCK_MONOTONIC_COARSE returned 584.206975730 s immediately after 584.206975815 s. The worker’s Ubuntu kernel contains the code Linux fixed for backward coarse readings. The failing run recorded no timekeeping trace to confirm the cause of this 85 ns step.",
       "findings": [
         {
-          "text": "The failing target was clock_gettime_test_native. The test compares adjacent libc clock_gettime readings and uses a separate clock to bound the loop. The log omits CPU IDs, the kernel clocksource and the libc call path.",
+          "text": "Build 54723 ran clock_gettime_test_native on an AMD64 e2-standard-8 worker with Ubuntu 22.04.5 and HOST_KERNEL=6.8.0-1070-gcp. The test compares adjacent libc clock_gettime readings. The same shard passed on retry.",
           "evidence": [
             {
               "label": "Backward clock read in the original native shard",
@@ -108232,11 +108232,36 @@
             {
               "label": "Comparison of adjacent clock_gettime readings",
               "url": "https://github.com/google/gvisor/blob/d4fac8b91/test/syscalls/linux/clock_gettime.cc#L112-L125"
+            },
+            {
+              "label": "AMD64 e2-standard-8 worker and Ubuntu release",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54723/data/jobs"
+            }
+          ]
+        },
+        {
+          "text": "In Ubuntu’s exact 6.8.0-1070.78~22.04.1 source, the coarse clock reads tkr_mono.xtime_nsec directly. Timekeeping can subtract from that field when adjusting the clock rate. Upstream commit b71f9804f gives the coarse clock its own field so consecutive reads cannot observe this adjustment. Ubuntu’s source lacks that change.",
+          "evidence": [
+            {
+              "label": "Ubuntu 6.8.0-1070.78~22.04.1 source manifest",
+              "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/linux-gcp-6.8/linux-gcp-6.8_6.8.0-1070.78~22.04.1.dsc"
+            },
+            {
+              "label": "Timekeeping subtracts the adjustment",
+              "url": "https://github.com/torvalds/linux/blob/e8f897f4a/kernel/time/timekeeping.c#L1995"
+            },
+            {
+              "label": "Coarse timestamp reads the adjusted field",
+              "url": "https://github.com/torvalds/linux/blob/e8f897f4a/kernel/time/vsyscall.c#L96-L101"
+            },
+            {
+              "label": "Linux change that prevents backward coarse readings",
+              "url": "https://github.com/torvalds/linux/commit/b71f9804f"
             }
           ]
         }
       ],
-      "nextStep": "On the affected worker, record the kernel clocksource and CPU for both reads. Compare the libc and raw syscall paths to see where the backward step first appears.",
+      "nextStep": "Keep the monotonicity assertion. When a worker kernel with b71f9804f is available, run the same native shard on both kernels and compare backward reads.",
       "evidence": [
         {
           "label": "Backward clock read in the original native shard",
@@ -108249,6 +108274,18 @@
         {
           "label": "Comparison of adjacent clock_gettime readings",
           "url": "https://github.com/google/gvisor/blob/d4fac8b91/test/syscalls/linux/clock_gettime.cc#L112-L125"
+        },
+        {
+          "label": "AMD64 e2-standard-8 worker and Ubuntu release",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54723/data/jobs"
+        },
+        {
+          "label": "Ubuntu 6.8.0-1070.78~22.04.1 source manifest",
+          "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/linux-gcp-6.8/linux-gcp-6.8_6.8.0-1070.78~22.04.1.dsc"
+        },
+        {
+          "label": "Linux change that prevents backward coarse readings",
+          "url": "https://github.com/torvalds/linux/commit/b71f9804f"
         }
       ]
     }
