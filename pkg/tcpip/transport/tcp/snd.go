@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
@@ -549,7 +550,52 @@ func (s *sender) resendSegment() {
 
 		// Run SetPipe() as per RFC 6675 section 5 Step 4.4
 		s.SetPipe()
+		s.reportRetainedTail("resent")
 	}
+}
+
+// reportRetainedTail records sender state for the qualification's 40-packet
+// initial flight. Each bit corresponds to one MSS starting at SndUna.
+//
+// +checklocks:s.ep.mu
+func (s *sender) reportRetainedTail(phase string) {
+	const mss = 536
+	const count = 40
+	if s.MaxPayloadSize != mss || s.SndUna.Size(s.SndNxt) != count*mss {
+		return
+	}
+	var received, visited, timed, scoreboard, charged uint64
+	originals := 0
+	separate := true
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+		offset := s.SndUna.Size(seg.sequenceNumber)
+		if offset != seqnum.Size(originals*mss) || seg.payloadSize() != mss || originals >= count {
+			separate = false
+			break
+		}
+		bit := uint64(1) << originals
+		originals++
+		if seg.acked {
+			visited |= bit
+		}
+		if seg.lost {
+			timed |= bit
+		}
+		if s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
+			received |= bit
+			continue
+		}
+		if s.ep.scoreboard.IsRangeLost(seg.sackBlock()) {
+			scoreboard |= bit
+		} else {
+			charged |= bit
+		}
+	}
+	log.Warningf("RACKTAIL phase=%s port=%d base=%d mss=%d originals=%d separate=%t received=%010x visited=%010x timed=%010x scoreboard=%010x charged=%010x credit=%d reordered=%t reo_ns=%d rack_rtt_ns=%d cwnd=%d pipe=%d high_rxt=%d",
+		phase, s.ep.TransportEndpointInfo.ID.LocalPort, s.SndUna, s.MaxPayloadSize,
+		originals, separate, received, visited, timed, scoreboard, charged, s.SackedOut,
+		s.rc.Reord, s.rc.ReoWnd.Nanoseconds(), s.rc.RTT.Nanoseconds(), s.SndCwnd,
+		s.Outstanding, s.SndUna.Size(s.FastRecovery.HighRxt))
 }
 
 // retransmitTimerExpired is called when the retransmit timer expires, and
@@ -1807,6 +1853,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// if the time elapsed after the segments are sent is greater than the
 		// reorder window.
 		numLost := s.rc.detectLoss(rcvdSeg.rcvdTime)
+		if numLost > 0 && !s.FastRecovery.Active && len(rcvdSeg.parsedOptions.SACKBlocks) == 2 {
+			s.reportRetainedTail("detected")
+		}
 		if numLost > 0 && s.enterRACKRecovery() {
 			fastRetransmit = true
 		}
