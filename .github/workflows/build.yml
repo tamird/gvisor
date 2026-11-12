@@ -1,7 +1,7 @@
-name: Compare staged Linux toolchains and their bootstrap links
+name: Compare the LLVM Support compile and its actual toolchain module map
 on:
   push:
-    branches: [qualification/llvm-runtime-stage-link-libraries]
+    branches: [qualification/llvm-runtime-stage-module-map]
 permissions:
   contents: read
 jobs:
@@ -12,15 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
-      - name: Check out the reviewed Linux link rule and its real e2e test
+      - name: Check out the combined source including the original stage-sharing commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/hermetic-llvm
-          ref: 7b1a340bfc71c507113354cb363bfb5b19539ca5
-          fetch-depth: 3
+          ref: b253312fd2f6b047d8a70781c7623f6e2c1d4064
+          fetch-depth: 4
           path: llvm
           persist-credentials: false
-      - name: Compare the freestanding link and verify hosted and bootstrap defaults
+      - name: Compile one LLVM Support object and inspect its header map
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -34,10 +34,10 @@ jobs:
           } > "$RUNNER_TEMP/sidecar.bazelrc"
           unset BUILDBUDDY_API_KEY
           cd llvm
-          python3 ../test/rbe/native_sidecars/run.py
+          python3 ../test/rbe/native_sidecars/compare_module_map.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: linux-runtime-stage-links
+          name: llvm-support-module-map
           path: ${{ runner.temp }}/sidecar-evidence
           if-no-files-found: error
