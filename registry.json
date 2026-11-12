@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T19:22:51+00:00",
+    "updatedAt": "2026-11-12T19:40:14+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25503,14 +25503,14 @@
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/4b21538bf",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-06T16:17:23.939Z",
-      "summary": "The stock checker verified all 224 entries after adding rules_rs 0.1.3. Removing its entry failed verification; Fetch recovered the pinned archive and Apache-2.0 license without changing another row. The Rust image still waits for the declared compiler and the Protobuf producer lockfiles in #16254.\n\nTwo source links in the local rules_rs patch use the verified nine-character revision. The patch hunks, catalog and prior approval are unchanged.\n\nThe notice export merged in hermeticbuild/rules_rs#333, one commit after the latest BCR release, 0.2.1. The approved image still pins 0.1.3 with the local patch. Drop the patch when a BCR release contains ef65be177.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nApproved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
+      "updatedAt": "2026-11-12T19:38:25+00:00",
+      "summary": "The stock checker verified all 224 entries after adding rules_rs 0.1.3. Removing its entry failed verification; Fetch recovered the pinned archive and Apache-2.0 license without changing another row. The Rust image still waits for the declared compiler and the Protobuf producer lockfiles in #16254.\n\nTwo source links in the local rules_rs patch use the verified nine-character revision. The patch hunks, catalog and prior approval are unchanged.\n\nBCR rules_rs 0.2.2 was the first release to include the upstream notice export ef65be177. The latest release, 0.2.4, also includes it. The approved image still pins 0.1.3. Test it with the packaged public notice and remove the local patch. The declared compiler and Protobuf producer lockfiles remain prerequisites.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nApproved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
       "followup": {
         "owner": "root",
         "sourceHead": "4b21538bf21567c09e57a36c9749ff25b7332669",
-        "observedAt": "2026-11-06T16:17:23.939Z",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Wait for the declared compiler and #16254. Replace the local notice patch once a BCR release contains the public library_notice target.",
+        "observedAt": "2026-11-12T19:38:25+00:00",
+        "disposition": "BCR release includes the public Rust notice",
+        "nextAction": "Test the Rust image with rules_rs 0.2.4 and its public notice, then remove the local patch. The compiler and #16254 remain prerequisites for submitting the image.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42249934608/artifacts/13521150238",
           "https://github.com/hermeticbuild/rules_rs/pull/333",
@@ -25519,10 +25519,25 @@
           "https://app.buildbuddy.io/invocation/0d808aae-c2c6-436c-b08d-6385ef7c66ce",
           "https://app.buildbuddy.io/invocation/ca822a49-8ce3-4c78-93b8-6ee032b7fa87",
           "https://github.com/tamird/gvisor/commit/c82e52cb7",
-          "https://github.com/hermeticbuild/rules_rs/issues/312"
+          "https://github.com/hermeticbuild/rules_rs/issues/312",
+          "https://github.com/hermeticbuild/rules_rs/commit/ef65be177",
+          "https://registry.bazel.build/modules/rules_rs/0.2.4",
+          "https://github.com/hermeticbuild/rules_rs/compare/ef65be177...v0.2.4"
         ]
       },
       "evidence": [
+        {
+          "label": "Upstream Rust notice export",
+          "url": "https://github.com/hermeticbuild/rules_rs/commit/ef65be177"
+        },
+        {
+          "label": "BCR rules_rs 0.2.4",
+          "url": "https://registry.bazel.build/modules/rules_rs/0.2.4"
+        },
+        {
+          "label": "Upstream export through v0.2.4",
+          "url": "https://github.com/hermeticbuild/rules_rs/compare/ef65be177...v0.2.4"
+        },
         {
           "label": "Stock checker on current master and #16254; removed-entry, Fetch and Verify controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42249934608/artifacts/13521150238"
@@ -30616,27 +30631,26 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "research/nvidia-parser-catalog-source",
-      "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+      "head": "950784a363e1e9f70c4b0d507aca1d55c27cff61",
       "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T19:16:56+00:00",
-      "summary": "The proposed rebase moves the NVIDIA driver parser to the LLVM 23.1.2 archive supplied by the released llvm 0.8.26 module. Its two backports link to the upstream Linux header and backend changes. Compared with current two-backend master, the parser configures 210 additional C++ compilations on each architecture (184 LLVM, 26 zlib).\n\nTestParser ran uncached on native AMD64 and ARM64 and the audit verified all 224 license entries on 06177ff66. The sole change in the final ecdca71e5 is exporting the new patch file alongside the existing one. A direct Bazel query found both source labels on that revision.",
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-12T19:16:56+00:00",
-        "disposition": "The released BCR module and linked backports are ready for contributor review.",
-        "nextAction": "After approval, update the existing #17114 branch and replace the obsolete backend comparison in its description.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/ecdca71e5",
-          "https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13970389261",
-          "https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13971747081",
-          "https://github.com/google/gvisor/pull/17114"
-        ]
-      },
+      "updatedAt": "2026-11-12T19:38:25+00:00",
+      "summary": "The published rebase moves the NVIDIA driver parser to the LLVM 23.1.2 archive supplied by llvm 0.8.26. Its headers now link to the merged Linux-header and development-backend changes. Both landed after v0.8.26. The patch payloads are byte-identical to ecdca71e5.\n\nUncached TestParser runs passed on native AMD64 and ARM64, and the audit verified 224 license entries on 06177ff66. Bazel resolved both public patch labels on ecdca71e5. Against two-backend master, each architecture configures 210 additional C++ compilations (184 LLVM and 26 zlib).",
       "evidence": [
+        {
+          "label": "Header citation revision",
+          "url": "https://github.com/tamird/gvisor/commit/950784a36"
+        },
+        {
+          "label": "Landed Linux header default",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9"
+        },
+        {
+          "label": "Landed development-only backend selection",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008"
+        },
         {
           "label": "Load both patches through their public Bazel labels",
           "url": "https://github.com/tamird/gvisor/commit/ecdca71e5"
@@ -30752,10 +30766,6 @@
         {
           "label": "Original catalog qualification with archive-pin mismatch",
           "url": "https://app.buildbuddy.io/invocation/e4a15677-7002-4234-b992-d8e740917831"
-        },
-        {
-          "label": "Upstream merge of hermetic-llvm #892",
-          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008"
         },
         {
           "label": "The two migration trees differ only in the independent go-digest policy and catalog record",
@@ -30875,7 +30885,7 @@
           "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63"
         },
         "after": {
-          "head": "ecdca71e522093e7c0fa29315c824de5265e3edf"
+          "head": "950784a363e1e9f70c4b0d507aca1d55c27cff61"
         }
       },
       "settledReviews": [
@@ -30910,20 +30920,24 @@
           "at": "2026-11-12T18:11:37+00:00",
           "outcome": "declined",
           "note": "Tamir approved carrying the necessary backports against the released BCR module, with links to the upstream changes in the patch headers. The proposed release request was never sent."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "baseHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+          "head": "950784a363e1e9f70c4b0d507aca1d55c27cff61",
+          "url": "https://github.com/tamird/gvisor/commit/950784a36",
+          "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
+          "summary": "Publish this rebase and update #17114’s description? Since your last review, only the two patch-header links changed. Each now opens the upstream commit, where GitHub lists the release tags that contain it.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 ecdca71e5^! 950784a36^!",
+          "requestedAt": "2026-11-12T19:37:23+00:00",
+          "body": "The NVIDIA driver compatibility parser builds Clang from a separate LLVM archive that needs a local Bazel 9 patch and its own zlib rule. Use the LLVM 23.1.2 archive from the released llvm 0.8.26 module instead.\n\nKeep the Linux 6.18 header default and the AArch64 and X86 backends selected by #15940. The released module combines backend requests, so backport the upstream change that makes the other seven development dependencies. With both backends held constant, the parser configures 210 more C++ compilations on each architecture, 184 in LLVM and 26 in zlib [1].\n\nRecord the licenses of the linked components against the archive checksum. LLVM's root notice includes Apache-2.0 with the LLVM exception and the legacy NCSA terms. LLVM Support's regex code also carries BSD-3-Clause and Spencer-94 notices. Select the CC0-1.0 option offered by BLAKE3.\n\nTestParser passed uncached on native AMD64 and ARM64, and the audit verified all 224 license entries [2]. Bazel resolved both public patch labels after the new patch was exported. The final revision changes only the two links in the patch headers.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13971747081\n[2]: https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13970389261\n\nPrepared by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-12T19:38:25+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17114",
+          "note": "Published the reviewed single commit and updated the PR description with the native parser results and the comparison against a two-backend build."
         }
       ],
-      "number": 17114,
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "head": "ecdca71e522093e7c0fa29315c824de5265e3edf",
-        "url": "https://github.com/tamird/gvisor/commit/ecdca71e5",
-        "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
-        "summary": "Publish the single-commit rebase and update #17114’s description? Both native parsers and all 224 license records passed before the final one-line patch export. Bazel found both public labels on the proposed commit.\n\nCompared with the last revision you reviewed:\ngit -C ~/code/gvisor range-diff --creation-factor=999 b61e5fd37^! ecdca71e5^!",
-        "requestedAt": "2026-11-12T19:16:56+00:00",
-        "body": "The NVIDIA driver compatibility parser builds Clang from a separate LLVM archive that needs a local Bazel 9 patch and its own zlib rule. Use the LLVM 23.1.2 archive from the released llvm 0.8.26 module instead.\n\nKeep the Linux 6.18 header default and the AArch64 and X86 backends selected by #15940. The released module combines backend requests, so backport the upstream change that makes the other seven development dependencies. With both backends held constant, the parser configures 210 more C++ compilations on each architecture, 184 in LLVM and 26 in zlib [1].\n\nRecord the licenses of the linked components against the archive checksum. LLVM's root notice includes Apache-2.0 with the LLVM exception and the legacy NCSA terms. LLVM Support's regex code also carries BSD-3-Clause and Spencer-94 notices. Select the CC0-1.0 option offered by BLAKE3.\n\nTestParser passed uncached on native AMD64 and ARM64, and the audit verified all 224 license entries [2]. The only subsequent change exports the new patch alongside the existing one. Bazel resolves both labels on the final commit.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13971747081\n[2]: https://github.com/tamird/gvisor/actions/runs/43277743571/artifacts/13970389261\n\nPrepared by Codex on behalf of @tamird."
-      }
+      "number": 17114
     },
     {
       "id": "branch:licensecheck-go-digest-notices",
@@ -40082,12 +40096,20 @@
       "repo": "google/gvisor",
       "number": 16663,
       "ref": "review/buildifier-native-diff",
-      "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
+      "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
       "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "The formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
+      "summary": "The published patch header links to Buildifier’s upstream toolchain export, 9cefc248d. Its 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.\n\nThe formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
       "evidence": [
+        {
+          "label": "Patch-header amendment",
+          "url": "https://github.com/tamird/gvisor/commit/54a734f17"
+        },
+        {
+          "label": "Landed Buildifier toolchain field",
+          "url": "https://github.com/keith/buildifier-prebuilt/commit/9cefc248d"
+        },
         {
           "label": "Six-line explanation in the Buildifier patch",
           "url": "https://github.com/tamird/gvisor/blob/4cd0185fe/tools/lint/buildifier_native.patch"
@@ -40266,25 +40288,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-11T17:14:06+00:00",
-      "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
-        "observedAt": "2026-11-11T17:14:06+00:00",
-        "disposition": "The approved toolchain and launcher amendment is published on the open, mergeable PR.",
-        "nextAction": "Follow maintainer review and CI on the published revision.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16663",
-          "https://github.com/tamird/gvisor/commit/4f7c34244"
-        ]
-      },
+      "updatedAt": "2026-11-12T19:40:14+00:00",
       "refinement": {
         "before": {
-          "head": "4cd0185fe40766a4875459239c214253612a1962"
+          "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb"
         },
         "after": {
-          "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
-          "base": "2552c678794e048487e1d18e9c81729b67fc119a"
+          "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b"
         }
       },
       "settledReviews": [
@@ -40333,6 +40343,21 @@
           "at": "2026-11-11T17:14:06+00:00",
           "note": "The reviewed amendment is published as the single commit on the existing, mergeable PR.",
           "postedURL": "https://github.com/google/gvisor/pull/16663"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "baseHead": "4f7c34244afac0baa9c86e3f6efb85069cea7beb",
+          "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
+          "url": "https://github.com/tamird/gvisor/commit/54a734f17",
+          "title": "Run Buildifier and cpplint as Bazel actions",
+          "requestedAt": "2026-11-12T19:38:40+00:00",
+          "summary": "Publish the patch-header amendment on #16663? The header now links to the upstream commit adding the execution-platform binary. The latest release predates it. The 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.",
+          "body": "Source lint discovers files in the checkout and installs its tools in\nthe builder. Give each checker one Bazel action with the first-party\nfiles and configuration it needs. A new C++ or BUILD file then joins\nthe check without a test declaration in its package.\n\nExpose both checks through //tools/lint:check. Keep the tools and file\ninventory as development dependencies so importing gVisor does not add\nits lint tools to the consuming module.\n\nRun //tools/lint:format in the writable checkout so Buildifier can fix\nthe same files from any working directory. Include the repair command\nin the formatting diagnostic.\n\nOn Linux, the clean actions matched all 629 Starlark and 486 C/C++ inputs.\nThe formatter fixed a misformatted file and a new check passed. A separate\nmissing module docstring still failed lint [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962",
+          "outcome": "approved",
+          "at": "2026-11-12T19:40:14+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16663",
+          "note": "Published the reviewed patch-header amendment as the PR’s single commit. The patch still applies to release 8.5.1.4."
         }
       ]
     },
@@ -101046,7 +101071,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-12T17:56:14+00:00",
+      "updatedAt": "2026-11-12T19:38:25+00:00",
       "lastReviewedAt": "2026-11-12T17:46:22.845465+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -101468,6 +101493,60 @@
         {
           "text": "The 00:06 UTC incremental check covered six entries since the 593-item audit. The builder, poll, overlay, cleanup and FUSE proposals retained their reviewed source revisions and decision states. The iperf entry remained agent work. No additional contributor decisions were found in the six.",
           "evidence": []
+        },
+        {
+          "text": "For a local backport of a landed upstream fix, cite the upstream commit in the patch header. Its commit page shows which release tags contain the change. When a published dependency includes it, check whether the local patch can be removed.",
+          "evidence": [
+            {
+              "label": "Header citation revision",
+              "url": "https://github.com/tamird/gvisor/commit/950784a36"
+            },
+            {
+              "label": "Landed Linux header default",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9"
+            },
+            {
+              "label": "Landed development-only backend selection",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008"
+            }
+          ]
+        },
+        {
+          "text": "The November 12 audit covered 364 active gVisor work-map revisions and 72 distinct patch files by content. #17114 now cites both landed hermetic-llvm commits. #16663 now cites the landed Buildifier commit. For the Rust image, BCR already includes the upstream notice export; test dropping that patch. wrk2’s upstream change is still open. The Node SNI patch that cites a merged PR appears only in two older integration branches.",
+          "evidence": [
+            {
+              "label": "NVIDIA parser amendment",
+              "url": "https://github.com/tamird/gvisor/commit/950784a36"
+            },
+            {
+              "label": "Landed Buildifier change",
+              "url": "https://github.com/keith/buildifier-prebuilt/commit/9cefc248d"
+            },
+            {
+              "label": "Published Buildifier patch header",
+              "url": "https://github.com/tamird/gvisor/commit/54a734f17"
+            },
+            {
+              "label": "Upstream Rust notice export",
+              "url": "https://github.com/hermeticbuild/rules_rs/commit/ef65be177"
+            },
+            {
+              "label": "BCR rules_rs 0.2.4",
+              "url": "https://registry.bazel.build/modules/rules_rs/0.2.4"
+            },
+            {
+              "label": "Upstream export through v0.2.4",
+              "url": "https://github.com/hermeticbuild/rules_rs/compare/ef65be177...v0.2.4"
+            },
+            {
+              "label": "Open wrk2 change",
+              "url": "https://github.com/giltene/wrk2/pull/110"
+            },
+            {
+              "label": "Landed Node SNI change",
+              "url": "https://github.com/nodejs/node/commit/727e0cac7"
+            }
+          ]
         }
       ],
       "nextStep": "Check the current upstream head and merge state immediately before pushing. For Lucas’s cleanup requests, use a separate follow-up only if the original merged without the change. Honor existing explicit holds and review decisions; check the queue daily.",
