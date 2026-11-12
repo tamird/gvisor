@@ -1,35 +1,88 @@
-name: CI
-
-"on":
+name: Qualify both source coordinator commands
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-coordinator-client-integration]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  bootstrap:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 5}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with: {go-version: '1.27.3', cache: false}
+      - name: Bind source trees and prewarm the public clients
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/buildkite-source-hooks"
+          mkdir -p "$w/results" "$w/reference" "$w/legacy-log"
+          printf -- "--- FAIL: TestOfflineHookLog (0.01s)\n" > "$w/legacy-log/test.log"
+          source=cd5b2a5a2270cc6934b4447c7b6c0040ec003acc
+          original=efaf79761adcb3e5ac2b6e5fc96249ac85d435b1
+          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse HEAD^^^^)" = "$original"
+          test "$(git rev-parse "$source^{tree}")" = afc0eb07e203177fee522af9e7181da23c7a2ce9
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/source_hooks' ':!.github/workflows/build.yml'
+          git diff --exit-code "$original" "$source" -- .bazelrc test/rbe/source-presubmit.targets
+          git diff --exit-code "$source^" "$source" -- . ':!.buildkite/hooks'
+          git show "$original:.buildkite/pipeline.yaml" >"$w/original-pipeline.yaml"
+          python3 - "$w/original-pipeline.yaml" <<'PYCODE'
+          from pathlib import Path
+          import sys
+          def source_step(path):
+              lines = Path(path).read_text().splitlines()
+              start = lines.index("    key: rbe-source")
+              end = lines.index("    agents:", start)
+              return lines[start:end]
+          assert source_step(sys.argv[1]) == source_step(".buildkite/pipeline.yaml")
+          PYCODE
+          cp .github/qualification/source_hooks/{client.py,isolate.sh,dispatch.py} "$w/"
+          cp .github/qualification/source_hooks/reap.py "$w/driver.py"
+          printf '%s\n' "$source" >"$w/source"
+          curl -fLsS --retry 2 --max-time 120 https://github.com/buildkite/agent/releases/download/v4.10.1/buildkite-agent-linux-amd64-4.10.1.tar.gz -o "$w/agent.tar.gz"
+          curl -fLsS --retry 2 --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.30.0/bazelisk-linux-amd64 -o "$w/bazelisk"
+          for v in 9.3.1 8.5.0; do
+            curl -fLsS --retry 2 --max-time 160 "https://releases.bazel.build/$v/release/bazel-$v-linux-x86_64" -o "$w/bazel-$v"
+          done
+          (
+            cd "$w"
+            sha256sum --check <<'SUMS'
+          f7ecf75a3be41a786f25e9cdbff332dc49b7f18ef63a1fd73bf77056fd4d7fe0  agent.tar.gz
+          a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8  bazelisk
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel-9.3.1
+          18255229d933b8da10151bdef223a302744296b09af8af1988c93faa1ea3c71f  bazel-8.5.0
+          SUMS
+            python3 -IB - <<'PY'
+          import pathlib, tarfile
+          with tarfile.open("agent.tar.gz") as t:
+              member, = [i for i in t if i.isfile() and pathlib.PurePosixPath(i.name).name == "buildkite-agent"]
+              pathlib.Path("agent").write_bytes(t.extractfile(member).read())
+          PY
+          )
+          chmod 755 "$w"/{agent,bazelisk,bazel-9.3.1,bazel-8.5.0,dispatch.py}
+          test "$(go env GOVERSION)" = go1.27.3
+          command -v go >"$w/go-path"
+          printf '%s/cache/download\n' "$(go env GOMODCACHE)" >"$w/go-proxy"
+          CGO_ENABLED=0 GOTOOLCHAIN=local GOBIN="$w/reference" go install github.com/bazelbuild/bazelisk@v1.30.0
+          unset USE_BAZEL_VERSION USE_BAZEL_FALLBACK_VERSION
+          export BAZELISK_HOME="$HOME/.cache/bazelisk"
+          for v in 8.5.0 9.3.1; do
+            test "$(USE_BAZEL_VERSION="$v" "$w/bazelisk" --version)" = "bazel $v"
+          done
+          "$w/bazelisk" info server_pid
+          "$w/bazelisk" shutdown
+      - name: Check native launchers and both coordinator exit codes
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/buildkite-source-hooks"
+          git checkout --quiet --detach cd5b2a5a2270cc6934b4447c7b6c0040ec003acc
+          sudo unshare --mount --net --pid --fork --kill-child=KILL --mount-proc /bin/bash "$w/isolate.sh" "$w" "$(id -u)" "$(id -g)" fixed
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: source-coordinator-client-and-status
+          path: ${{ runner.temp }}/buildkite-source-hooks/results/*.json
+          if-no-files-found: warn
+          retention-days: 14
