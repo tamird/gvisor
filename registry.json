@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T02:48:00+00:00",
+    "updatedAt": "2026-11-12T03:03:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47561,7 +47561,7 @@
       "group": "bazel",
       "status": "open",
       "summary": "The supplier PR is open. All 46 checks passed on 89c57ee69. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries.",
-      "updatedAt": "2026-11-11T19:43:51+00:00",
+      "updatedAt": "2026-11-12T03:03:09+00:00",
       "refinement": {
         "before": {
           "head": "3db00c1cf3d2b880429f5571311006e123d3e7d6"
@@ -47594,6 +47594,18 @@
         {
           "label": "Supplier checks on the current change",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909/checks"
+        },
+        {
+          "label": "Combined-tree bootstrap repair b253312fd",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/b253312fd"
+        },
+        {
+          "label": "Repaired GNU and musl bootstrap checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43144910858/artifacts/13910618815"
+        },
+        {
+          "label": "Stage-sharing integration investigation",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Ahermetic-llvm-bootstrap-stages"
         }
       ],
       "settledReviews": [
@@ -101695,12 +101707,12 @@
     },
     {
       "id": "investigation:ci-flake-lisafs-bootstrap",
-      "title": "Sentry waits a minute for the fourth lisafs channel during startup",
+      "title": "Sentry waits a minute in lisafs during startup",
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-09T19:46:07+00:00",
-      "summary": "All four UDP loopback cases passed on master, but the runner failed the shard after seeing the startup watchdog warning. The single uncached shard passed on retry in 0.5 seconds.",
+      "updatedAt": "2026-11-12T03:03:09+00:00",
+      "summary": "Six syscall shards across four builds finished their guest tests, then failed on a watchdog warning emitted during startup. Their Sentry stacks show waits at three points in lisafs. The earlier UDP loopback failure waited for the fourth channel reply.",
       "findings": [
         {
           "text": "Three channel requests completed within 1.5 ms. The fourth waited 60.001 seconds. At the 30-second watchdog threshold, the Sentry was still waiting in lisafs.Client.StartChannels. The boot log shows the client stack and the reply time.",
@@ -101723,9 +101735,51 @@
               "url": "https://storage.googleapis.com/gvisor-buildkite/01a1c182-8849-41a3-bef7-2ab5c89d9651/01a1c182-c82e-4d75-b893-bbc277703950/home/agent-110926-175801/.cache/bazel/_bazel_agent-110926-175801/52a8e4f6ad486bf61a8b5b225fcafac8/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/socket_ip_udp_loopback_test_runsc_systrap_shared/shard_8_of_8/test.outputs/main.test/runsc1544842315/logs/runsc.log.20261109-182625.322057.gofer.txt"
             }
           ]
+        },
+        {
+          "text": "In four shards the Sentry received all four Channel responses before the watchdog fired. Two client workers were still in flipcall.Endpoint.Connect. A fifth shard waited 60.002 seconds for its fourth response. The first retries of both #54561 jobs passed.",
+          "evidence": [
+            {
+              "label": "Sentry stack, build 54561",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54561/jobs/01a1cd21-d981-4400-85d1-f480b3b1ba73/artifacts/01a1cd38-b065-46fc-9e4f-f14070120fe9"
+            },
+            {
+              "label": "Sentry stack, build 54561",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54561/jobs/01a1cd21-d981-45ee-a7e7-a31863e4de58/artifacts/01a1cd3b-3403-43c7-8393-444205468352"
+            },
+            {
+              "label": "Sentry stack, build 54567",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54567/jobs/01a1cd2b-8fa0-46cb-9899-cbda7a2d13f2/artifacts/01a1cd40-a53a-486e-9124-ef6437c5183e"
+            },
+            {
+              "label": "Sentry stack, build 54571",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54571/jobs/01a1cd2c-d745-43ed-9cc9-3e62f65908a4/artifacts/01a1cd3b-884c-4a57-8049-2439e49bfede"
+            },
+            {
+              "label": "Sentry stack, build 54578",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54578/jobs/01a1cd4a-4f25-4510-b386-080de710af0c/artifacts/01a1cd54-0cfd-4eea-bcc0-e339ef5e4491"
+            },
+            {
+              "label": "Passing TCP retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54561#01a1cd3c-0737-4d29-ab78-20973784cd54"
+            }
+          ]
+        },
+        {
+          "text": "The sixth shard had already connected its channels when the warning fired. Its WalkMultiple request on a connected channel received a successful reply after 60.002 seconds. The first retry passed. The logs do not show a gofer stack during this wait.",
+          "evidence": [
+            {
+              "label": "Sentry stack, build 54571",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54571/jobs/01a1cd2c-d745-4296-b32a-bd4e629ec27c/artifacts/01a1cd3b-4e05-4c84-ab1e-27d5c35d636e"
+            },
+            {
+              "label": "Passing pivot_root retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54571#01a1cd3d-170b-458c-b6c8-fa7785b58bdc"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture the gofer stack during a delayed startup. Check where Connection.Run is handling the socket request and where the other channel is waiting in RecvFirst.",
+      "nextStep": "Capture the gofer stack and thread scheduling during the minute-long delay. Correlate it with the Sentry’s outstanding channel request, flipcall connection or Walk request.",
       "evidence": [
         {
           "label": "Master commit 9832d5d69",
@@ -104746,6 +104800,101 @@
           "outcome": "approved",
           "at": "2026-11-12T02:12:07+00:00",
           "postedURL": "https://github.com/nodejs/node/pull/67426"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-checkpoint-tsc-sample",
+      "title": "Checkpoint TSC test counts a sample across the restore boundary",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T03:03:09+00:00",
+      "summary": "On KVM, TestCheckpointRestoreAdjustedTSC treated a sample written after restore as a new measurement. The guest had already read its monotonic clock before checkpoint. The next sample showed the expected TSC increase.",
+      "findings": [
+        {
+          "text": "The guest read 257104084 ns at 00:47:31.008178, the first restore computed a 10,000,001,370-cycle offset at .129396, and the guest wrote that same reading at .223472. Its next reading advanced by 10,599,419,459 cycles. The test compared the earlier reading against the injected offset. The same-head retry passed.",
+          "evidence": [
+            {
+              "label": "Original clock syscalls, restore offsets and output writes",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54574/jobs/01a1cd33-cec7-42d6-8656-408406593c90/artifacts/01a1cd3b-9208-422a-82d0-6221dbfb7bbd"
+            },
+            {
+              "label": "Original KVM test output",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54574/jobs/01a1cd33-cec7-42d6-8656-408406593c90/artifacts/01a1cd3b-5ec8-40d3-8916-a5af1e1ef000"
+            },
+            {
+              "label": "Passing retry at 2f5253abf",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54574#01a1cd3d-3c88-42c9-b09c-4389aed3202d"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Synchronize a complete guest sampling iteration with each host restore. Exercise a pre-checkpoint measurement written after restore, and keep the monotonicity and offset checks for measurements taken after restore.",
+      "evidence": [
+        {
+          "label": "Guest measurement and write",
+          "url": "https://github.com/google/gvisor/blob/2f5253abf/test/cmd/test_app/vdso_clock_unsafe.go#L88-L133"
+        },
+        {
+          "label": "Host selection of the first post-restore sample",
+          "url": "https://github.com/google/gvisor/blob/2f5253abf/runsc/container/container_save_restore_test.go#L2573-L2589"
+        }
+      ]
+    },
+    {
+      "id": "investigation:hermetic-llvm-bootstrap-stages",
+      "title": "Check the shared LLVM bootstrap stage with #909 and #938",
+      "group": "bazel",
+      "status": "active",
+      "owner": "Compiler toolchain integration",
+      "updatedAt": "2026-11-12T03:03:09+00:00",
+      "summary": "Each supplier PR preserved the GNU and musl bootstrap link arguments on its own. Together they made Bazel reject the bootstrap C++ toolchain during analysis because it lacked static_link_cpp_runtimes. The five gVisor compiler prerequisites remain unchanged.",
+      "findings": [
+        {
+          "text": "Selecting system libraries when declaring the bootstrap stage restored both original ELFs byte for byte. GNU hosted and freestanding tests passed.",
+          "evidence": [
+            {
+              "label": "Original separate and combined toolchain controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43144267695/artifacts/13911485334"
+            },
+            {
+              "label": "Repaired GNU and musl bootstrap checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43144910858/artifacts/13910618815"
+            },
+            {
+              "label": "Combined-tree bootstrap repair b253312fd",
+              "url": "https://github.com/tamird/hermetic-llvm/commit/b253312fd"
+            }
+          ]
+        },
+        {
+          "text": "In independent CI, #938 alone also failed the #880 regression test for unmapped C++ actions. Its base passed. Twelve C++ compilation errors reported missing modules for standard headers.",
+          "evidence": [
+            {
+              "label": "Passing base invocation",
+              "url": "https://app.buildbuddy.io/invocation/8f54d4e8-9917-4f85-928e-09d4b9915f86"
+            },
+            {
+              "label": "Failing #938 invocation",
+              "url": "https://app.buildbuddy.io/invocation/ecf4d6ba-da8e-4a20-ba9b-a7dce16e079f"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check the stage-sharing fix against the unmapped C++ actions case before treating the combined supplier changes as compatible.",
+      "evidence": [
+        {
+          "label": "Runtime link libraries #909",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909"
+        },
+        {
+          "label": "Shared stages #938",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938"
+        },
+        {
+          "label": "Combined-tree bootstrap repair b253312fd",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/b253312fd"
         }
       ]
     }
