@@ -48,20 +48,27 @@ steps:
       queue: "release"
   - <<: *common
     label: ":ship: Release"
+    env:
+      DOCKER_BUILD: "false"
     if: build.branch == "master" || (build.tag != null && build.tag =~ /-staging/)
     commands:
       # Stamps the binaries below with release-<name>.
       - ./.buildkite/scripts/release/tag.sh stage
-      - make BAZEL_OPTIONS=--compilation_mode=opt artifacts-all
-      - make artifacts-python
-      - make release RELEASE_NIGHTLY=$$RELEASE_NIGHTLY
+      - |
+        python_version=
+        if [[ "$${RELEASE_NIGHTLY:-false}" != true ]] && git describe --exact-match --tags --match 'release-*' --exclude 'release-*-staging' HEAD >/dev/null 2>&1; then
+          python_version="$$(tools/make_python_release.sh version "$${RELEASE_NAME:-}")"
+        fi
+        bazel build $${BAZEL_REMOTE_CACHE:-} -c opt --remote_download_outputs=toplevel \
+          --//sandboxexec/sandbox/python:dist_version="$$python_version" //debian:release-inputs
+      - NIGHTLY="$${RELEASE_NIGHTLY:-false}" tools/make_release.sh repo.key repo bazel-bin/debian/release-inputs
       - (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)
       # Pushes release-<name> to GitHub.
       - ./.buildkite/scripts/release/tag.sh publish
       # Pushes the wheel from Artifact Registry to PyPI. Only runs if the rest
       # of the release succeeded. This step does nothing if no wheel was built,
       # as is the case for nightly builds.
-      - ./tools/make_python_release.sh publish-manifest repo/release
+      - ./tools/make_python_release.sh publish-manifest bazel-bin/debian/release-inputs/python
     agents:
       queue: "release"
   - <<: *common
