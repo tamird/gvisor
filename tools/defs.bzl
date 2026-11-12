@@ -6,7 +6,7 @@ change for Google-internal and bazel-compatible rules.
 """
 
 load("//tools:arch.bzl", "arch_genrule", "arch_transition_impl")
-load("//tools/bazeldefs:cc.bzl", _cc_binary = "cc_binary", _cc_flags_supplier = "cc_flags_supplier", _cc_grpc_library = "cc_grpc_library", _cc_library = "cc_library", _cc_objcopy = "cc_objcopy", _cc_objdump = "cc_objdump", _cc_proto_library = "cc_proto_library", _cc_test = "cc_test", _cc_toolchain = "cc_toolchain", _gbenchmark = "gbenchmark", _gbenchmark_internal = "gbenchmark_internal", _grpcpp = "grpcpp", _gtest = "gtest", _select_gtest = "select_gtest")
+load("//tools/bazeldefs:cc.bzl", _cc_binary = "cc_binary", _cc_flags_supplier = "cc_flags_supplier", _cc_grpc_library = "cc_grpc_library", _cc_library = "cc_library", _cc_objcopy = "cc_objcopy", _cc_objdump = "cc_objdump", _cc_proto_library = "cc_proto_library", _cc_test = "cc_test", _cc_toolchain = "cc_toolchain", _freestanding_executable = "freestanding_executable", _gbenchmark = "gbenchmark", _gbenchmark_internal = "gbenchmark_internal", _grpcpp = "grpcpp", _gtest = "gtest", _linux_headers = "linux_headers", _select_gtest = "select_gtest")
 load("//tools/bazeldefs:defs.bzl", _BuildSettingInfo = "BuildSettingInfo", _COPY_FILE_TOOLCHAINS = "COPY_FILE_TOOLCHAINS", _bool_flag = "bool_flag", _bpf_program = "bpf_program", _build_test = "build_test", _bzl_library = "bzl_library", _copy_file_action = "copy_file_action", _coreutil = "coreutil", _default_net_util = "default_net_util", _expand_template = "expand_template", _more_shards = "more_shards", _most_shards = "most_shards", _proto_library = "proto_library", _select_arch = "select_arch", _select_system = "select_system", _short_path = "short_path", _string_flag = "string_flag", _target_emulator = "target_emulator", _version = "version")
 load("//tools/bazeldefs:go.bzl", _cov_available = "cov_available", _gazelle = "gazelle", _go_binary = "go_binary", _go_binary_nogo_dep = "go_binary_nogo_dep", _go_cov = "go_cov", _go_grpc_and_proto_libraries = "go_grpc_and_proto_libraries", _go_imports = "go_imports", _go_library = "go_library", _go_path = "go_path", _go_proto_library = "go_proto_library", _go_reset_target = "go_reset_target", _go_test = "go_test", _gotsan_flag_values = "gotsan_flag_values", _gotsan_values = "gotsan_values", _select_goarch = "select_goarch", _select_goos = "select_goos")
 load("//tools/bazeldefs:pkg.bzl", _pkg_deb = "pkg_deb", _pkg_tar = "pkg_tar", _tar = "tar")
@@ -45,10 +45,12 @@ cc_objcopy = _cc_objcopy
 cc_objdump = _cc_objdump
 cc_test = _cc_test
 cc_toolchain = _cc_toolchain
+freestanding_executable = _freestanding_executable
 gbenchmark = _gbenchmark
 gbenchmark_internal = _gbenchmark_internal
 gtest = _gtest
 grpcpp = _grpcpp
+linux_headers = _linux_headers
 select_gtest = _select_gtest
 
 # Go rules.
@@ -81,20 +83,55 @@ save_restore_platforms = _save_restore_platforms
 # Tags.
 local_test_tags = _local_test_tags
 
-def go_binary(name, nogo = True, pure = False, static = False, x_defs = None, **kwargs):
+def freestanding_cc_binary(name, out, features = [], libc_headers = False, visibility = None, **kwargs):
+    """Links a C binary without the caller's allocator or sanitizer runtime.
+
+    Args:
+      name: Public target for the linked binary.
+      out: Filename required by the consumer.
+      features: Additional compiler or linker feature settings.
+      libc_headers: Whether the source includes target libc headers.
+      visibility: Visibility of the public target.
+      **kwargs: Other cc_binary arguments, including sources and link options.
+    """
+    freestanding_executable(
+        name = name,
+        out = out,
+        # Freestanding binaries supply their own entry point and runtime.
+        # Do not add either toolchain's hosted libraries or startup code.
+        features = [
+            "-coverage",
+            "-default_link_flags",
+            "-default_linker_libraries",
+            "-heap_partitioning",
+            "-pie",
+            "-static_link_cpp_runtimes",
+            "-static_linking_mode",
+            "-use_header_modules",
+            "-use_pthread",
+        ] + features,
+        libc_headers = libc_headers,
+        linkstatic = True,
+        stamp = 0,
+        visibility = visibility,
+        **kwargs
+    )
+
+def go_binary(name, nogo = True, pure = None, static = False, x_defs = None, **kwargs):
     """Wraps the standard go_binary.
 
     Args:
       name: the rule name.
       nogo: enable nogo analysis.
-      pure: build a pure Go (no CGo) binary.
+      pure: disable cgo if True, require cgo if False, or use the default.
       static: build a static binary.
       x_defs: additional linker definitions.
       **kwargs: standard go_binary arguments.
     """
+    if pure != None:
+        kwargs["pure"] = pure
     _go_binary(
         name = name,
-        pure = pure,
         static = static,
         x_defs = x_defs,
         **kwargs
