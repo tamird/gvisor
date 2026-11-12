@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T09:42:29+00:00",
+    "updatedAt": "2026-11-12T09:54:04+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59823,9 +59823,13 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T22:10:20+00:00",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.",
+      "updatedAt": "2026-11-12T09:54:04+00:00",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.",
       "evidence": [
+        {
+          "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
+          "url": "https://github.com/google/gvisor/commit/6340d3672"
+        },
         {
           "label": "GNU ARM64 -O1 versus -O2 cross-build",
           "url": "https://app.buildbuddy.io/invocation/3dcbca23-1ea2-4140-9172-96ff2caa0f11"
@@ -106368,6 +106372,51 @@
         }
       ],
       "nextStep": "At the next failure, capture the lifetime of the short-lived container process and creation and removal of the destination namespace mountpoint to identify which side vanished.",
+      "repo": "google/gvisor"
+    },
+    {
+      "id": "investigation:ci-flake-sentry-start-netns",
+      "title": "runsc start cannot open the Sentry network namespace during Java container startup",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T09:54:04+00:00",
+      "group": "ci-flakes",
+      "summary": "On master f6291629e, shard 3 of 8 in Java 21 partition 15 of 40 failed before the JVM started under AMD64 goferfs and systrap. Creation succeeded with Sentry host PID 23115. During start, runsc reported ENOENT opening /proc/23115/ns/net. Each of the seven sibling containers opened its Sentry namespace and started successfully.",
+      "findings": [
+        {
+          "text": "The Sentry logged its self-reexec at 08:09:20.728627. The host logged the namespace lookup 1.519 ms later and reported ENOENT at .832349. Sentry boot output continued through .804900, and cleanup followed the error at .895248. These logs identify the missing path and event order. They do not give the system call’s exact return time or establish that reexec caused the failure.",
+          "evidence": [
+            {
+              "label": "Goferfs test.log, including successful create and failed start for the Java partition",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54648/jobs/01a1cec3-1b8d-49d8-b14b-e92bb8834175/artifacts/01a1ced1-2ee1-4ad6-9e14-eec9e0b91bd6"
+            },
+            {
+              "label": "Full runsc boot, start and cleanup logs for the eight containers",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54648/jobs/01a1cec3-1b8d-49d8-b14b-e92bb8834175/artifacts/01a1ced1-73c3-465f-a54c-cd7f7be3a84e"
+            }
+          ]
+        },
+        {
+          "text": "The same Java partition executed under default directfs and passed in 334.9 seconds. The goferfs retry reported a cached pass and executed zero targets.",
+          "evidence": [
+            {
+              "label": "Matching directfs partition, executed 1/1",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54648#01a1cec3-1b80-4d26-96ce-a0d876a273c9"
+            },
+            {
+              "label": "Goferfs retry, executed 0/1",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54648#01a1ced2-12ab-4efa-96dc-3c15712ec108"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Sandbox creation records the Sentry host PID returned by exec.Cmd",
+          "url": "https://github.com/google/gvisor/blob/f6291629e/runsc/sandbox/sandbox.go#L1664-L1668"
+        }
+      ],
+      "nextStep": "On recurrence, record the namespace-open return time, Sentry host PID identity and liveness, and the namespace inode observed before reexec. These distinguish a transient lookup failure from the process exiting before start.",
       "repo": "google/gvisor"
     }
   ],
