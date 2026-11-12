@@ -287,8 +287,9 @@ steps:
     <<: *source_test
     label: ":ship: Release tests"
     commands:
-      - make artifacts-all
-      - make release
+      - make build BAZEL_OPTIONS=--compilation_mode=opt TARGETS=//debian:release-inputs
+      - make DOCKER_BUILD=false repo.key
+      - tools/make_release.sh repo.key repo bazel-bin/debian/release-inputs
     agents:
       arch: "amd64"
       queue: "default"
