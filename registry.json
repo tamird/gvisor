@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T07:53:21+00:00",
+    "updatedAt": "2026-11-12T08:11:59+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -75956,6 +75956,90 @@
         "summary": "Post the tested fix on #17083 for @sam10ridh?",
         "body": "@sam10ridh, the C++ lint job on #17531 reported 11 missing-include warnings in `accept_bind.cc`. Its first retry reported the same 11. [Failed import job](https://buildkite.com/gvisor/pipeline/builds/54633#01a1ce7b-d869-4b4c-a69b-426ce9a86215)\n\n[This five-line fix](https://github.com/tamird/gvisor/commit/07039a3aa) adds the four headers that declare the names used by the test and the Bazel dependency for `test/util/logging.h`. The project’s clang-tidy reproduced all 11 warnings on 65afc4e12 and reported none on the amended file. [Passing check](https://github.com/tamird/gvisor/actions/runs/43174587259/job/131035638662)\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:check-nic-info-stack-lock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/check-nic-info-stack-lock",
+      "head": "8ceb51f216ffb44c7edc62ed4fa42a3a3508e976",
+      "title": "Check the stack read lock when collecting NIC information",
+      "url": "https://github.com/tamird/gvisor/commit/8ceb51f21",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-12T08:08:14+00:00",
+      "summary": "The two NIC information queries hold the stack read lock while copying the NIC name and coordinator. The proposal makes that documented requirement checkable. On Linux AMD64 and ARM64, the stock analyzer accepted an unlocked call. With the annotation, it rejected only that call and accepted shared and exclusive lock holders. The unmodified production callers passed on both architectures.",
+      "evidence": [
+        {
+          "label": "Single-commit read-lock annotation",
+          "url": "https://github.com/tamird/gvisor/commit/8ceb51f21"
+        },
+        {
+          "label": "Original analyzer logs for the candidate, call controls and field guards",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43178302507/artifacts/13925558518"
+        },
+        {
+          "label": "NIC information helper and both callers",
+          "url": "https://github.com/google/gvisor/blob/f5828756d/pkg/tcpip/stack/stack.go#L1427-L1495"
+        },
+        {
+          "label": "NIC multicast change that touched the helper",
+          "url": "https://github.com/google/gvisor/pull/16059"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "8ceb51f216ffb44c7edc62ed4fa42a3a3508e976",
+        "baseHead": "f5828756d24ee60ebce2cb407dbb06dd853ad7ca",
+        "url": "https://github.com/tamird/gvisor/commit/8ceb51f21",
+        "title": "Check the stack read lock when collecting NIC information",
+        "body": "SetNICName and SetNICCoordinator update the NIC’s name and coordinator under the stack mutex. Both NIC information queries hold its read lock while nicInfo copies those fields. Replace the helper’s prose precondition with +checklocksread:s.mu so Nogo checks future callers.\n\nThe stack Nogo target passed on AMD64 and ARM64. Before the change, it accepted all three control calls. With the annotation it accepted shared and exclusive holders and rejected the unlocked call on both architectures.\n\nA separate field-guard experiment produced 12 findings per architecture. Nogo could not equate the stack whose mutex the caller held with the stack reached through the NIC pointer. The proposed change checks the helper’s entry contract.\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Review the single commit for submission to gVisor.",
+        "requestedAt": "2026-11-12T08:08:14+00:00"
+      }
+    },
+    {
+      "id": "branch:http-benchmark-readiness-errors",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "tests",
+      "ref": "proposal/http-benchmark-readiness-errors",
+      "head": "f574a3be17a7628d7b04a690158e8816e022a7fb",
+      "url": "https://github.com/tamird/gvisor/commit/f574a3be1",
+      "title": "Stop HTTP benchmarks when the server probe fails",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-12T08:11:59+00:00",
+      "summary": "When the benchmarks/util image was missing, stock started Hey for both servers. Nginx passed and Node failed to parse a NaN latency. The fix reported the missing image on port 80 for Nginx and 8080 for Node, before either run started Hey. After restoring the image, both benchmarks passed. The six original Docker event logs record which containers started. Four aggregate flags compared an explicit :latest tag with names Docker emitted without the tag.",
+      "evidence": [
+        {
+          "label": "Single-commit change to the static-server and Node benchmark callers",
+          "url": "https://github.com/tamird/gvisor/commit/f574a3be1"
+        },
+        {
+          "label": "Six original Docker event lists and benchmark logs, including the restored-image controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43078427299/artifacts/13884238177"
+        },
+        {
+          "label": "Stock static-server readiness call before the timer",
+          "url": "https://github.com/google/gvisor/blob/f5828756d/test/benchmarks/network/network.go#L63"
+        },
+        {
+          "label": "Stock Node readiness call before Hey",
+          "url": "https://github.com/google/gvisor/blob/f5828756d/test/benchmarks/network/node_test.go#L108"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "f574a3be17a7628d7b04a690158e8816e022a7fb",
+        "baseHead": "2552c678794e048487e1d18e9c81729b67fc119a",
+        "url": "https://github.com/tamird/gvisor/commit/f574a3be1",
+        "title": "Stop HTTP benchmarks when the server probe fails",
+        "body": "The Nginx, Apache and Node benchmarks discard errors from the server readiness probe. If the probe cannot start, they still launch the timed HTTP client.\n\nReport the probe error with the server and port before starting Hey. In a controlled run with the probe image missing, stock Nginx passed and stock Node reported a NaN latency. With the fix, both reported the missing image and neither started Hey. Both passed when the probe image was restored.\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Review the single commit for submission to gVisor.",
+        "requestedAt": "2026-11-12T08:11:59+00:00"
+      }
     }
   ],
   "edges": [
@@ -97572,7 +97656,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "updatedAt": "2026-11-12T08:08:14+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -97902,6 +97986,19 @@
             {
               "label": "Native cursor and semaphore controls, plus both Linux analyzer outputs",
               "url": "https://github.com/tamird/gvisor/actions/runs/43145041295/artifacts/13910989588"
+            }
+          ]
+        },
+        {
+          "text": "Nogo accepted an unlocked call to the NIC information helper on stock. Its new read-lock annotation caught that call on AMD64 and ARM64 while accepting shared and exclusive holders. Checking the fields through the NIC’s stack pointer still produced diagnostics in methods that held the stack mutex.",
+          "evidence": [
+            {
+              "label": "Review the NIC information read-lock proposal",
+              "url": "https://tamird.github.io/gvisor/?view=table&reason=review-changes#branch%3Acheck-nic-info-stack-lock"
+            },
+            {
+              "label": "Four original Nogo results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43178302507/artifacts/13925558518"
             }
           ]
         }
@@ -105949,5 +106046,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-12T07:53:21+00:00"
+  "updatedAt": "2026-11-12T08:11:59+00:00"
 }
