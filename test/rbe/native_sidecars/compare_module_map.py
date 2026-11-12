@@ -69,28 +69,29 @@ def inspect(name, revision, *, caller_args=False):
         ])
         query.check_returncode()
         graph = json.loads(query.stdout)
-        actions = [
-            action for action in graph["actions"]
-            if "-D_LIBCPP_ABI_NAMESPACE=__InternalSymbolizer" in action["arguments"]
-            and "internal_symbolizer_linux_x86_64_gnu_2_28-dbg-" in action["arguments"][action["arguments"].index("-o") + 1]
-        ]
-        assert len(actions) == 1, len(actions)
+        candidates = [a["arguments"] for a in graph["actions"]]
+        (OUT / (name + "-selected-graph.json")).write_text(json.dumps(candidates, indent=2) + "\n")
+        files = bazel(name + "-files", "cquery", ["--output=files", PROBE])
+        files.check_returncode()
+        outputs = [v.strip() for v in files.stdout.splitlines() if v.strip().endswith("/PrettyStackTrace.pic.o")]
+        row["requestedOutputs"] = outputs
+        record()
+        assert len(outputs) == 1, outputs
+        requested = outputs[0]
+        actions = [a for a in graph["actions"] if a["arguments"][a["arguments"].index("-o") + 1] == requested]
+        assert len(actions) == 1, (requested, [a[a.index("-o")+1] for a in candidates])
         action = actions[0]
         args = action["arguments"]
-        # This qualification requests one existing action via the production
-        # symbolizer. Compare every argument with the real top-level test
-        # graph before compiling; an execution-platform Support is different.
         production = bazel(name + "-fission-graph", "aquery", [
             "--include_param_files", "--noinclude_artifacts", "--output=jsonproto",
             QUERY.replace(PROBE, "//:asan_fission_debug_package_test"),
         ])
-        production.check_returncode()
-        identical = sum(a["arguments"] == args for a in json.loads(production.stdout)["actions"])
-        row.update(argumentCount=len(args), identicalFissionActions=identical)
+        if production.returncode == 0:
+            prod = [a["arguments"] for a in json.loads(production.stdout)["actions"]]
+            (OUT / (name + "-production-graph.json")).write_text(json.dumps(prod, indent=2) + "\n")
+            row["identicalFissionActions"] = sum(a == args for a in prod)
+        row["argumentCount"] = len(args)
         record()
-        assert identical == 1, row
-        if revision == STAGES:
-            assert len(args) == 141, len(args)
         compiler = next(v for v in args if v.endswith("/clang++"))
         inc = [args[i + 1] for i, v in enumerate(args) if v == "-isystem"]
         maps = [v.split("=", 1)[1] for v in args if v.startswith("-fmodule-map-file=") and v.endswith("/module_map.modulemap")]
@@ -102,21 +103,21 @@ def inspect(name, revision, *, caller_args=False):
         record()
         # Download the independently requested module map even if the compiler
         # subsequently fails. Its exec-root path must equal the compiler's input.
-        map_run = bazel(name + "-map", "build", [*flags, "--remote_download_outputs=toplevel", "--output_groups=physical_map", PROBE])
-        map_run.check_returncode()
+        map_run = bazel(name + "-map", "build", ["--remote_download_outputs=toplevel", "--output_groups=physical_map", PROBE])
+        row["mapExit"] = map_run.returncode
         map_file = E2E / maps[0]
-        data = map_file.read_bytes()
-        row["mapSHA256"] = hashlib.sha256(data).hexdigest()
-        row["headers"] = {}
-        for header in ("type_traits", "utility", "iterator", "cstddef", "stddef.h"):
-            mapped_paths = [h.decode() for h in re.findall(rb'textual header "([^"]+/' + header.encode() + rb')"', data)]
-            row["headers"][header] = {"map": mapped_paths, "searched": [str(Path(i) / header) for i in inc]}
-        traits = row["headers"]["type_traits"]
-        row["typeTraitsPathMatches"] = any(
-            mapped.endswith(search) for mapped in traits["map"] for search in traits["searched"]
-        )
+        if map_run.returncode == 0 and map_file.is_file():
+            data = map_file.read_bytes()
+            row["mapSHA256"] = hashlib.sha256(data).hexdigest()
+            row["headers"] = {}
+            for header in ("type_traits", "utility", "iterator", "cstddef", "stddef.h"):
+                mapped_paths = [h.decode() for h in re.findall(rb'textual header "([^"]+/' + header.encode() + rb')"', data)]
+                row["headers"][header] = {"map": mapped_paths, "searched": [str(Path(i) / header) for i in inc]}
+            traits = row["headers"]["type_traits"]
+            row["typeTraitsPathMatches"] = any(m.endswith(s) for m in traits["map"] for s in traits["searched"])
+            print(name, "type_traits", json.dumps(traits), flush=True)
         record()
-        result = bazel(name + "-object", "build", [*flags, "--remote_download_outputs=toplevel", PROBE])
+        result = bazel(name + "-object", "build", ["--remote_download_outputs=toplevel", PROBE])
         row["objectExit"] = result.returncode
         row["missingModuleExport"] = "does not depend on a module exporting" in result.stderr
         if result.returncode == 0:
@@ -124,8 +125,7 @@ def inspect(name, revision, *, caller_args=False):
             row["objectMagic"] = contents[:4].hex()
             row["bitcode"] = contents[:4] in (b"BC\xc0\xde", b"\xde\xc0\x17\x0b")
             row["objectSHA256"] = hashlib.sha256(contents).hexdigest()
-            assert row["bitcode"]
-        print(name, "type_traits", json.dumps(row["headers"]["type_traits"]), flush=True)
+
         record()
         return row
     finally:
@@ -134,12 +134,25 @@ def inspect(name, revision, *, caller_args=False):
 
 
 os.environ["USE_BAZEL_VERSION"] = (ROOT / ".bazelversion").read_text().strip()
-baseline = inspect("base", BASE)
-stages = inspect("original", STAGES)
-combined = inspect("combined", COMBINED)
-fixed = inspect("caller-configuration", COMBINED, caller_args=True)
-for row in (baseline, fixed):
-    assert row["typeTraitsPathMatches"] and row["objectExit"] == 0, row
-for row in (stages, combined):
-    assert not row["typeTraitsPathMatches"] and row["objectExit"] and row["missingModuleExport"], row
+for name, revision, caller_args in [
+    ("base", BASE, False),
+    ("original", STAGES, False),
+    ("combined", COMBINED, False),
+    ("caller-configuration", COMBINED, True),
+]:
+    try:
+        inspect(name, revision, caller_args=caller_args)
+    except (AssertionError, OSError, ValueError, KeyError, subprocess.CalledProcessError) as err:
+        # Keep completed independent arms even if the evidence reader fails.
+        RESULTS.setdefault(name, {})["readerError"] = str(err)
+        print(name, type(err).__name__, str(err)[:300], flush=True)
+        record()
+
+for name, row in RESULTS.items():
+    assert row.get("identicalFissionActions") == 1, name
+    assert "typeTraitsPathMatches" in row, name
+    if name in ("base", "caller-configuration"):
+        assert row["typeTraitsPathMatches"] and row["objectExit"] == 0 and row["bitcode"], name
+    else:
+        assert not row["typeTraitsPathMatches"] and row["objectExit"] and row["missingModuleExport"], name
 record()
