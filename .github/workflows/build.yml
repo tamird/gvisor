@@ -1,35 +1,63 @@
-name: CI
-
+name: Check the staged release caller and direct archives
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/release-staging-promotion-gate]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packages:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    env:
+      PRODUCT: 112ad308372a24cc1ba718cba6b92d49fa35d748
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Set up the released Bazel client and native and cross GNU compilers
+        id: setup
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/release-identity"
+          mkdir -p "$w"/{bin,src,public}
+          cd "$w/src"
+          git init -q
+          git -c gc.auto=0 fetch -q --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$PRODUCT"
+          test "$(git diff --name-only "$PRODUCT" "$GITHUB_SHA")" = "$(printf '%s\n' .github/qualification/release_stamp_caller.py .github/workflows/build.yml)"
+          git show "$GITHUB_SHA:.github/qualification/release_stamp_caller.py" > "$w/check.py"
+          git fetch -q --depth=1 https://github.com/tamird/gvisor.git f6766df6979bfb38abc1ef3a63b1be09bce4fd20
+          git show f6766df6979bfb38abc1ef3a63b1be09bce4fd20:.buildkite/release.yaml > "$w/previous.yaml"
+          git checkout -q --detach "$PRODUCT"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(dpkg --print-architecture)" = amd64
+          sudo apt-get -q -o Acquire::Retries=2 update
+          sudo apt-get -q -o Acquire::Retries=2 install -y build-essential crossbuild-essential-arm64 libnuma-dev zstd
+          curl -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bin/bazel"
+          echo '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel' | (cd "$w/bin" && sha256sum -c)
+          chmod 0755 "$w/bin/bazel"
+          echo "$w/bin" >> "$GITHUB_PATH"
+          { git rev-parse HEAD; "$w/bin/bazel" --version; gcc --version | head -1; aarch64-linux-gnu-gcc --version | head -1; df -h .; } > "$w/public/environment.txt"
+      - name: Compare release promotion with a reused distribution directory and recording commands
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/release-identity"
+          cd "$w/src"
+          python3 -IB "$w/check.py" promotion > "$w/public/promotion.log" 2>&1 || { tail -100 "$w/public/promotion.log"; exit 1; }
+      - name: Run the actual production caller and its version-selection controls
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/release-identity"
+          cd "$w/src"
+          python3 -IB "$w/check.py" selection > "$w/public/production.log" 2>&1 || { tail -100 "$w/public/production.log"; exit 1; }
+      - name: Compare both direct architecture builds and all staged products
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/release-identity"
+          cd "$w/src"
+          python3 -IB "$w/check.py" stage > "$w/public/stage.log" 2>&1 || { tail -100 "$w/public/stage.log"; exit 1; }
+      - name: Retain actual command, archive, checksum and version results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-native-and-staged
+          path: ${{ runner.temp }}/release-identity/public/
+          if-no-files-found: error
+          retention-days: 14
