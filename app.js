@@ -266,6 +266,7 @@ const DECISION_REASONS = [
 ];
 const ATTENTION_REASONS = [
   { id: "agent-review-outreach", owner: "agent", title: "Find or contact a reviewer" },
+  { id: "agent-review-reply", owner: "agent", title: "Follow up on a review we gave" },
   { id: "agent-requested-review", owner: "agent", title: "Incoming PR review requests" },
   { id: "agent-feedback-sweep", owner: "agent", title: "Audit earlier work against contributor guidance" },
   { id: "agent-import-comparison", owner: "agent", title: "Compare source with merged export" },
@@ -613,6 +614,8 @@ function attentionReasons(node, owner) {
       else reasons.push({ ...ATTENTION_REASONS.find(item => item.id === dispositionId), detail: triage });
     } else if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
   };
+  if (node.reviewFollowups?.length) add("agent-review-reply", node.reviewFollowups.map(item =>
+    `${item.owner || "Agent"} · @${item.author}: ${item.action || "Read the reply and follow up on the current revision."}`).join(" "));
   if (node.incomingReviewRequests?.length) {
     const people = [...new Set(node.incomingReviewRequests.map(item => item.author && `@${item.author}`).filter(Boolean))];
     add("agent-requested-review", people.length ? `${people.join(", ")} requested a review.` : "GitHub lists an open review request.");
@@ -1989,6 +1992,13 @@ function drawDetails() {
     }
     details.append(section);
   }
+  if (node.reviewFollowups?.length) {
+    const section = element("section", "detail-section");
+    section.append(element("h3", "", "Follow up on our review"));
+    for (const row of node.reviewFollowups)
+      section.append(link(`@${row.author} · ${date(row.updatedAt)} ↗`, row.url));
+    details.append(section);
+  }
   const showedComparison = appendContributorDecisions(details, node, visibleDecisions(node));
   appendSettledPublications(details, node);
   appendHumanAction(details, node);
@@ -2223,6 +2233,23 @@ function stateRecords(snapshot, node) {
   }
   return records;
 }
+function attachReviewFollowups(snapshot, nodes, ids) {
+  const watches = new Map((snapshot.reviewPRs || []).map(pr => [prIdentity(pr), pr]));
+  for (const row of snapshot.reviewWatchHandoff || []) {
+    const id = prIdentity(row);
+    let node = ids.get(id);
+    const pr = node?.github || watches.get(id);
+    if (!pr || !["open", "draft"].includes(pr.status) || pr.revisionChanged || pr.head !== row.head
+        || (pr.branchHead && pr.branchHead !== pr.head) || !pr.authorLogin || pr.authorLogin === registry.meta.owner) continue;
+    if (!node) {
+      node = { id, type: "pr", number: pr.number, repo: pr.repo, title: pr.title || `Review of ${pr.repo}#${pr.number}`,
+        url: pr.url, head: pr.head, status: pr.status, updatedAt: row.updatedAt, group: "new" };
+      nodes.push(node);
+      ids.set(id, node);
+    }
+    (node.reviewFollowups ||= []).push(row);
+  }
+}
 function attachReviewRequests(requests, nodes, ids) {
   for (const request of requests) {
     if (request.repo !== registry.meta.repo) continue;
@@ -2273,6 +2300,7 @@ function applyLive(snapshot, nextRegistry = registry) {
     }
     if (existing) Object.assign(existing, node); else { nodes.push(node); ids.set(id, node); }
   }
+  attachReviewFollowups(snapshot, nodes, ids);
   attachReviewRequests(snapshot.incomingReviewRequests || [], nodes, ids);
   for (const node of nodes) if (snapshot.issues?.[node.id]) Object.assign(node, snapshot.issues[node.id]);
   const edges = registry.edges.map((edge) => ({ ...edge, from: aliases.get(edge.from) || edge.from, to: aliases.get(edge.to) || edge.to }))

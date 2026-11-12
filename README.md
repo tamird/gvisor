@@ -161,6 +161,13 @@ review's own commit when GitHub provides one. Assign a top-level item with the
 existing `followup.actionableComment`. The reviewer owns that follow-up;
 the PR author still owns their changes.
 
+The supervisor reads these directed replies in `reviewFollowups` alongside
+feedback on our own gVisor PRs and registered supplier PRs. A current-head
+follow-up that cites the exact reply after its latest edit supplies the
+assigned action. It stays visible with its owner while the work runs.
+A later message or edit prompts inspection again. New review invitations
+have their own scope and queue.
+
 For a registered external PR, a settled review also starts this handoff when
 GitHub confirms the linked inline comment or review was posted by our reviewer.
 The snapshot keeps that receipt even if it later falls outside the feedback
@@ -452,12 +459,13 @@ answers a request to interpret a result, or provides a verified fix. Honor
 the contributor’s decision on the exact draft before considering it again.
 
 The active gVisor supervisor runs
-`python3 update-status.py --incoming-review-handoff` from this checkout at
-startup, on resumption and before selecting the next batch of engineering
+`python3 -B update-status.py --incoming-review-handoff` from the current
+`gh-pages` revision at startup, on resumption and before selecting the next batch of engineering
 work. This read-only check is independent of the GitHub Actions timer and
-does not post or reschedule approval reminders. The command selects the oldest unclaimed author-side obligation before an
-incoming request to review someone else’s PR. It lists each open thread once,
-including its source, link and owner. A thread is overdue if a second complete
+does not post or reschedule approval reminders. The command selects unclaimed
+author feedback first, then unclaimed replies to reviews we gave, then new
+invitations. It lists each outstanding message with its source, link and
+owner. An author-side thread is overdue if a second complete
 refresh sees it still unclaimed. A claim requires the current source head and
 the exact thread URL, observed after the reviewer's latest edit. On each
 continuation read `nextWork` before selecting routine work. On a scheduled

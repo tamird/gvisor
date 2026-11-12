@@ -518,18 +518,30 @@ def review_watch_handoff(prs: list[dict], previous: dict) -> list[dict]:
                    for ack in watch.get("inspected", [])):
                 continue
             assigned = matches_feedback_assignment(pr, item, followup.get("actionableComment", {}))
+            current_action = (followup.get("sourceHead") == pr["head"] and item["url"] in followup.get("evidence", [])
+                              and followup.get("observedAt") and datetime.fromisoformat(followup["observedAt"])
+                              >= datetime.fromisoformat(item["updatedAt"]))
+            action = followup.get("nextAction") if current_action else None
             records.append({"repo": key[0], "number": key[1], "head": pr["head"],
+                            "action": action or "Read the reply on this review and follow up on the current revision.",
+                            "claimed": bool(action and followup.get("owner")),
                             "firstObservedHead": first_head, "reviewHead": review_head,
                             "kind": item["kind"], "id": item["id"], "url": item["url"],
                             "author": author["login"], "updatedAt": item["updatedAt"],
                             "threadId": item.get("threadId"), "rootURL": root["url"] if root else old.get("rootURL"),
                             "rootId": root["id"] if root else old.get("rootId"),
-                            "owner": followup["owner"] if assigned else watch["owner"], "assigned": assigned,
+                            "owner": followup["owner"] if assigned or action and followup.get("owner") else watch["owner"], "assigned": assigned,
                             "feedbackComplete": complete})
         if not complete:
             visible = {item["id"] for item in items}
-            records.extend({**entry, "head": pr["head"], "feedbackComplete": False}
-                           for identity, entry in prior.items() if identity not in visible)
+            for identity, entry in prior.items():
+                if identity in visible:
+                    continue
+                retained = {**entry, "head": pr["head"], "feedbackComplete": False}
+                if entry["head"] != pr["head"]:
+                    retained.update(claimed=False, owner=watch["owner"],
+                                    action="Recheck the earlier reply against the new revision.")
+                records.append(retained)
     return sorted(records, key=lambda entry: (entry["updatedAt"], entry["url"]))
 
 
@@ -1579,7 +1591,7 @@ def main(*, outreach_mode: str = "unknown") -> None:
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
     worker = worker_handoff(snapshot, snapshot["incomingReviewRequests"])
-    print(json.dumps({"workerHandoff": {k: v for k, v in worker.items() if k != "authorFeedback"}}))
+    print(json.dumps({"workerHandoff": {k: v for k, v in worker.items() if k not in {"authorFeedback", "reviewFollowups"}}}))
     for record in snapshot["incomingReviewRequests"]:
         print(json.dumps({"incomingReviewRequest": record}))
     for record in snapshot["reviewerHandoff"]:
@@ -1687,14 +1699,17 @@ def approved_branches_after_merge(registry: dict, prs: list[dict]) -> list[dict]
 
 
 def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
-    """Select an unclaimed author-side obligation before other work."""
-    by_number = {pr["number"]: pr for pr in snapshot.get("prs", [])
-                 if pr.get("repo", REPO) == REPO and pr.get("authorLogin") == OWNER
-                 and pr.get("status") in {"open", "draft"}}
+    """Select feedback from our project work before new review requests or maintenance."""
+    registered = {(node.get("repo"), node.get("number")) for node in REGISTRY["nodes"] if node.get("type") == "pr"}
+    open_prs = {(pr.get("repo", REPO), pr["number"]): pr
+                for collection in ("prs", "reviewPRs") for pr in snapshot.get(collection, [])
+                if pr.get("status") in {"open", "draft"}}
+    owned = {key: pr for key, pr in open_prs.items() if pr.get("authorLogin") == OWNER
+             and (key[0] == REPO or key in registered)}
     pending = []
     for row in snapshot.get("reviewerHandoff", []):
-        source = by_number.get(row.get("sourceNumber", row["number"]))
-        if row["repo"] != REPO or not (row["awaitingAuthor"] or row.get("needsTriage")) or not source:
+        source = owned.get((row["repo"], row.get("sourceNumber", row["number"])))
+        if not (row["awaitingAuthor"] or row.get("needsTriage")) or not source:
             continue
         # Ignore a stale assignment after either the source or the import closes.
         imports = import_lineage(source) if row.get("needsTriage") else source.get("imports", [])
@@ -1706,16 +1721,28 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
                                   row.get("updatedAt") or "", row["url"]))
     unclaimed = [row for row in pending if not row.get("claimed")]
     cleanup = snapshot.get("branchCleanup")
-    next_work = unclaimed[0] if unclaimed else next(iter(incoming), None)
+    # This is addressed feedback after an explicit watch or a verified posted
+    # review. It is independent of invitations to start a new review.
+    watched = review_watches()
+    reviewer_replies = []
+    for row in snapshot.get("reviewWatchHandoff", []):
+        key = row["repo"], row["number"]
+        pr = open_prs.get(key)
+        if (pr and pr.get("authorLogin") and pr["authorLogin"] != OWNER and row["head"] == pr.get("head")
+                and (watched.get(key, {}).get("since") or pr.get("postedReview"))):
+            reviewer_replies.append(row)
+    unclaimed_replies = [row for row in reviewer_replies if not row.get("claimed")]
+    next_work = next(iter(unclaimed), None) or next(iter(unclaimed_replies), None) or next(iter(incoming), None)
     if next_work is None:
-        next_work = next((row for pr in by_number.values() if (row := pr.get("terminalImportHandoff"))
+        next_work = next((row for (repo, _), pr in owned.items() if repo == REPO and (row := pr.get("terminalImportHandoff"))
                           and row["sourceHead"] == pr["head"] and row["imports"] == older_merged_imports(pr)), None)
     if next_work is None and cleanup and cleanup["due"]:
         next_work = cleanup
     ready = approved_branches_after_merge(REGISTRY, snapshot.get("prs", []))
     if next_work is None and ready:
         next_work = ready[0]
-    return {"nextWork": next_work, "authorFeedback": pending, "unclaimed": len(unclaimed),
+    return {"nextWork": next_work, "authorFeedback": pending, "reviewFollowups": reviewer_replies,
+            "unclaimed": len(unclaimed), "unclaimedReviewFollowups": len(unclaimed_replies),
             "overdue": sum(bool(row.get("overdue")) for row in unclaimed),
             "branchCleanup": cleanup, "approvedBranchesAfterMerge": ready}
 

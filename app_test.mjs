@@ -1096,6 +1096,29 @@ test('contributor decisions bind the registered branch repository and exact prop
   }
 });
 
+test('addressed review replies appear as agent work for the exact open reviewed revision', () => {
+  const c = client(), run = source => vm.runInContext(source, c);
+  const repo = 'google/gvisor', url = 'https://github.com/google/gvisor/pull/7';
+  const pr = { repo, url, number: 7, authorLogin: 'contributor', status: 'open', head: 'a'.repeat(40) };
+  const row = { repo, number: 7, head: pr.head, author: 'contributor', action: 'Run both checkpoint modes.',
+    owner: 'Agent', claimed: true, url: url + '#discussion_r99' };
+  c.snapshotInput.reviewPRs = [pr];
+  c.snapshotInput.reviewWatchHandoff = [row];
+  const reasons = () => run(`(() => {
+    const cards = [], ids = new Map();
+    attachReviewFollowups(snapshotInput, cards, ids);
+    return cards.length ? attentionReasons(cards[0], 'tamird') : [];
+  })()`);
+  assert.deepEqual([...reasons()].map(x => [x.id, x.owner]), [['agent-review-reply', 'agent']]);
+  assert.match(reasons()[0].detail, /Run both checkpoint modes/);
+  pr.head = 'b'.repeat(40);
+  assert.equal(reasons().length, 0);
+  pr.head = row.head; pr.status = 'closed';
+  assert.equal(reasons().length, 0);
+  pr.status = 'open'; pr.authorLogin = 'tamird';
+  assert.equal(reasons().length, 0);
+});
+
 test('incoming requests on a PR share one agent card and link to the original messages', () => {
   const context = client();
   const prURL = 'https://github.com/google/gvisor/pull/17082';

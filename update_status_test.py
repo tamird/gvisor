@@ -953,6 +953,33 @@ class CollectorHistoryTest(unittest.TestCase):
             again, = updater.review_watch_handoff([partial], {"reviewWatchHandoff": [record]})
             self.assertEqual(again["id"], "response")
             self.assertFalse(again["feedbackComplete"])
+            invitation = {"number": 77}
+            def work():
+                retained = updater.review_watch_handoff([pr], {})
+                return updater.worker_handoff({"reviewPRs": [pr], "reviewWatchHandoff": retained}, [invitation])
+
+            self.assertEqual(work()["nextWork"]["id"], incoming["id"])
+            node["followup"] = {"sourceHead": pr["head"], "observedAt": OLD, "owner": "Test owner",
+                                "nextAction": "Run both modes.", "evidence": [incoming["url"]]}
+            self.assertFalse(work()["nextWork"]["claimed"])  # Old waiting note.
+            node["followup"]["observedAt"] = LATER
+            claimed = work()
+            self.assertEqual(claimed["nextWork"], invitation)
+            self.assertEqual([(r["action"], r["owner"]) for r in claimed["reviewFollowups"]],
+                             [("Run both modes.", "Test owner")])
+            another = {**incoming, "id": "another", "url": pr["url"] + "#issuecomment-13"}
+            pr["feedback"]["items"].append(another)
+            self.assertEqual(work()["nextWork"]["url"], another["url"])
+            pr["feedback"]["items"].pop()
+            incoming["updatedAt"] = "2000-01-03T01:00:00Z"
+            self.assertEqual(work()["nextWork"]["id"], incoming["id"])
+            moved = {**pr, "head": "d" * 40}
+            stale = updater.worker_handoff({"prs": [moved], "reviewWatchHandoff": [record]}, [invitation])
+            self.assertEqual(stale["reviewFollowups"], [])
+            self.assertEqual(stale["nextWork"], invitation)
+            pr["status"] = "closed"
+            self.assertEqual(work()["reviewFollowups"], [])
+            pr["status"] = "open"
             self.assertIsNone(updater.posted_review(partial, {}, pr))  # Registration removed.
 
     def test_investigation_tracks_external_review_without_a_delivery_row(self) -> None:
@@ -1312,6 +1339,29 @@ class CollectorHistoryTest(unittest.TestCase):
             self.assertEqual(updater.worker_handoff(snap, incoming)["unclaimed"], 1)
             pr["authorLogin"] = "another-author"
             self.assertEqual(updater.worker_handoff(snap, incoming)["authorFeedback"], [])
+
+    def test_registered_supplier_feedback_reaches_worker_without_other_personal_prs(self) -> None:
+        source = retained(raw_pr(5))
+        supplier = "example/compiler"
+        pr = {**source, "repo": supplier, "url": f"https://github.com/{supplier}/pull/5"}
+        item = {"id": "question", "kind": "inline", "threadId": "thread", "isResolved": False,
+                "isOutdated": False, "body": "How is this input used?", "createdAt": OLD, "updatedAt": OLD,
+                "url": pr["url"] + "#discussion_r1", "author": {"login": "reviewer", "__typename": "User"}}
+        pr["feedback"] = {"complete": True, "items": [item]}
+        node = {"id": f"pr:{supplier}:5", "type": "pr", "number": 5, "repo": supplier}
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            snap = {"prs": [source, pr], "reviewerHandoff": updater.reviewer_handoff([pr], {})}
+            self.assertIsNone(updater.worker_handoff(snap, [])["nextWork"])
+            self.registry["nodes"].append(node)
+            work = updater.worker_handoff(snap, [])
+            self.assertEqual((work["nextWork"]["repo"], work["unclaimed"]), (supplier, 1))
+            pr["head"] = "f" * 40
+            self.assertIsNone(updater.worker_handoff(snap, [])["nextWork"])
+            pr["head"] = source["head"]
+            pr["feedback"]["items"].append({**item, "id": "answer", "createdAt": LATER, "updatedAt": LATER,
+                                            "author": {"login": "tamird", "__typename": "User"}})
+            snap["reviewerHandoff"] = updater.reviewer_handoff([pr], snap)
+            self.assertIsNone(updater.worker_handoff(snap, [])["nextWork"])
 
     def test_top_level_lint_report_reaches_the_worker_without_assigning_a_reply(self) -> None:
         pr = retained(raw_pr(15106))
