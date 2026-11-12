@@ -4,6 +4,11 @@ name: Refresh work map
   schedule:
     - cron: '7,17,27,37,47,57 * * * *'
   workflow_dispatch:
+    inputs:
+      check_outreach_only:
+        description: Read the fork outreach policy with the delivery credential
+        type: boolean
+        default: false
 
 concurrency:
   group: work-map-publication
@@ -19,6 +24,9 @@ jobs:
     permissions:
       contents: write
       pages: write
+    env:
+      WORK_MAP_POSTING_PAUSED: ${{ vars.WORK_MAP_POSTING_PAUSED }}
+      WORK_MAP_REVIEW_ROTATIONS_ENABLED: ${{ vars.WORK_MAP_REVIEW_ROTATIONS_ENABLED }}
     steps:
       - name: Check out the published site
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -27,6 +35,7 @@ jobs:
           fetch-depth: 1
       - name: Collect, validate and publish the snapshot
         id: snapshot
+        if: ${{ !inputs.check_outreach_only }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -70,28 +79,41 @@ jobs:
         id: outreach
         env:
           COMMENT_TOKEN_CONFIGURED: ${{ secrets.WORK_MAP_COMMENT_TOKEN != '' }}
-          COMMENT_POSTING_PAUSED: ${{ vars.WORK_MAP_POSTING_PAUSED }}
+          GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
+          CHECK_ONLY: ${{ inputs.check_outreach_only || false }}
         run: |
-          if [[ "$COMMENT_POSTING_PAUSED" == 'true' ]]; then
-            echo 'Automatic comments paused; snapshot collection remains enabled.' >> "$GITHUB_STEP_SUMMARY"
-            mode=plan
-          elif [[ "$COMMENT_TOKEN_CONFIGURED" == 'true' ]]; then
-            mode=post
+          reviews=plan
+          reminders=plan
+          if [[ "$COMMENT_TOKEN_CONFIGURED" == true ]]; then
+            if policy=$(python3 -c 'from outreach_delivery import live_posting_mode; print(live_posting_mode())'); then
+              echo "Verified fork outreach policy: $policy" >> "$GITHUB_STEP_SUMMARY"
+              echo "Verified fork outreach policy: $policy"
+              case "$policy" in
+                all) reviews=post; reminders=post ;;
+                rotations) reviews=post ;;
+                unknown) [[ "$CHECK_ONLY" != true ]] || exit 1 ;;
+              esac
+            else
+              echo 'Cannot verify the fork outreach policy. All delivery is held.' >> "$GITHUB_STEP_SUMMARY"
+              [[ "$CHECK_ONLY" != true ]] || exit 1
+            fi
           else
-            echo 'Automatic comments disabled: WORK_MAP_COMMENT_TOKEN is not configured.' >> "$GITHUB_STEP_SUMMARY"
-            mode=plan
+            echo 'No outreach credential is configured. All delivery is held.' >> "$GITHUB_STEP_SUMMARY"
+            [[ "$CHECK_ONLY" != true ]] || exit 1
           fi
-          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "reviews=$reviews" >> "$GITHUB_OUTPUT"
+          echo "reminders=$reminders" >> "$GITHUB_OUTPUT"
       - name: Remind approvers of amended source
+        if: ${{ !inputs.check_outreach_only }}
         env:
           GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
-          MODE: ${{ steps.outreach.outputs.mode }}
+          MODE: ${{ steps.outreach.outputs.reminders }}
         run: python3 update-status.py --reapproval-reminders "$MODE"
       - name: Follow up on outstanding source reviews
         timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 360 || 15 }}
-        if: ${{ !cancelled() && steps.outreach.outcome == 'success' }}
+        if: ${{ !inputs.check_outreach_only && !cancelled() && steps.outreach.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
           WORK_MAP_SCHEDULED_REVIEW_OUTREACH: ${{ github.event_name == 'schedule' }}
-          MODE: ${{ steps.outreach.outputs.mode }}
+          MODE: ${{ steps.outreach.outputs.reviews }}
         run: python3 update-status.py --review-outreach "$MODE"
