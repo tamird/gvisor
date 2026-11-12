@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T20:07:22+00:00",
+    "updatedAt": "2026-11-12T20:27:59+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -8312,18 +8312,20 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-10T20:31:58+00:00",
-      "summary": "Published 2772112da as one mergeable commit after review. It keeps nftables’ explicit output interface when the route is absent or belongs to a different interface. All 83 cases and subtests passed across the five affected native AMD64 test targets.",
+      "updatedAt": "2026-11-12T20:27:59+00:00",
+      "summary": "The published head conflicts with master. Its TCP benchmark proxy now receives a parsed address and port. The rebase uses those values directly and updates the new interface, bridge and loopback tests to use netip prefixes.",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor",
         "sourceHead": "2772112da4a3490a200f320486b96a8e7a608364",
-        "observedAt": "2026-11-10T20:31:58+00:00",
-        "disposition": "Published 2772112da as one mergeable commit after review. It keeps nftables’ explicit output interface when the route is absent or belongs to a different interface. All 83 cases and subtests passed across the five affected native AMD64 test targets.",
-        "nextAction": "Follow checks, maintainer review of the new head, and the Copybara import.",
+        "observedAt": "2026-11-12T20:27:59+00:00",
+        "disposition": "The published head conflicts with master. Its TCP benchmark proxy now receives a parsed address and port. The rebase uses those values directly and updates the new interface, bridge and loopback tests to use netip prefixes.",
+        "nextAction": "Review the rebase before publishing it to #15730. Both earlier Copybara exports are closed.",
         "evidence": [
-          "https://github.com/google/gvisor/commit/2772112da",
           "https://github.com/google/gvisor/pull/15730",
-          "https://github.com/tamird/gvisor/actions/runs/42893197349/artifacts/13800506818"
+          "https://github.com/tamird/gvisor/commit/3aaa8098b",
+          "https://github.com/tamird/gvisor/actions/runs/43298649347/artifacts/13981800401",
+          "https://github.com/tamird/gvisor/actions/runs/43299873539",
+          "https://github.com/tamird/gvisor/actions/runs/43299873539/job/131467855388"
         ]
       },
       "evidence": [
@@ -8560,18 +8562,34 @@
           "url": "https://app.buildbuddy.io/invocation/74229d97-78f1-40ec-a8fc-1143da60e636"
         },
         {
-          "label": "Matching open Copybara export with conflicts",
+          "label": "Closed Copybara export #16995",
           "url": "https://github.com/google/gvisor/pull/16995"
+        },
+        {
+          "label": "Netip rebase for master’s proxy and interface changes",
+          "url": "https://github.com/tamird/gvisor/commit/3aaa8098b"
+        },
+        {
+          "label": "106 passing Linux test records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43298649347/artifacts/13981800401"
+        },
+        {
+          "label": "TCP proxy inputs and connection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43299873539"
+        },
+        {
+          "label": "Native Linux TCP proxy errors and bidirectional forwarding",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43299873539/job/131467855388"
         }
       ],
       "number": 15730,
       "refinement": {
         "before": {
-          "head": "1baff64ef0620dadfddd9161c10f0fdb239feb05"
+          "head": "2772112da4a3490a200f320486b96a8e7a608364"
         },
         "after": {
-          "head": "2772112da4a3490a200f320486b96a8e7a608364",
-          "base": "dd49ce763bea6f5b38eff62f2ca586b6a22c4a9f"
+          "head": "3aaa8098b633dab610b06e4c6d92122c24037451",
+          "base": "2a653cea7b2054a2dc9c6419337d3de8031275d6"
         }
       },
       "settledReviews": [
@@ -8624,6 +8642,17 @@
         "diffSha256": "0e5356af82de29c416e28faf37578cb2d2f7914e351f0e387f9878e235b98080",
         "summary": "Adapt the approved netip patch to nftables’ new output-interface argument and optional route. Both masquerade expressions retain master’s no-route behavior.",
         "evidence": "https://github.com/tamird/gvisor/actions/runs/42893197349/artifacts/13800506818"
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "3aaa8098b633dab610b06e4c6d92122c24037451",
+        "baseHead": "2772112da4a3490a200f320486b96a8e7a608364",
+        "url": "https://github.com/tamird/gvisor/commit/3aaa8098b",
+        "title": "Use netip types throughout the network stack",
+        "requestedAt": "2026-11-12T20:27:59+00:00",
+        "summary": "Publish the rebase on #15730? The proxy now accepts a parsed address and port. Master also added interface and loopback tests that exercise the new address types.",
+        "body": "All 106 records passed across seven native Linux targets. The built proxy rejected four invalid target and port inputs and forwarded ordinary traffic in both directions. Both earlier Copybara exports are closed.\n\ngit -C ~/code/gvisor range-diff 2772112da^! 3aaa8098b^!"
       }
     },
     {
@@ -30659,7 +30688,7 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T19:38:25+00:00",
+      "updatedAt": "2026-11-12T20:27:59+00:00",
       "summary": "The published rebase moves the NVIDIA driver parser to the LLVM 23.1.2 archive supplied by llvm 0.8.26. Its headers now link to the merged Linux-header and development-backend changes. Both landed after v0.8.26. The patch payloads are byte-identical to ecdca71e5.\n\nUncached TestParser runs passed on native AMD64 and ARM64, and the audit verified 224 license entries on 06177ff66. Bazel resolved both public patch labels on ecdca71e5. Against two-backend master, each architecture configures 210 additional C++ compilations (184 LLVM and 26 zlib).",
       "evidence": [
         {
@@ -30901,6 +30930,10 @@
         {
           "label": "8a3f5bd77 artifact with matching backend and CppCompile counts",
           "url": "https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13967768714"
+        },
+        {
+          "label": "Ayush’s advisory approval",
+          "url": "https://github.com/google/gvisor/pull/17114#pullrequestreview-5880893637"
         }
       ],
       "refinement": {
@@ -30960,7 +30993,18 @@
           "note": "Published the reviewed single commit and updated the PR description with the native parser results and the comparison against a two-backend build."
         }
       ],
-      "number": 17114
+      "number": 17114,
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "950784a363e1e9f70c4b0d507aca1d55c27cff61",
+        "observedAt": "2026-11-12T20:27:59+00:00",
+        "disposition": "Ayush approved 950784a36. His review is advisory. The PR has no import label.",
+        "nextAction": "Await maintainer approval and the ready to pull label.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17114",
+          "https://github.com/google/gvisor/pull/17114#pullrequestreview-5880893637"
+        ]
+      }
     },
     {
       "id": "branch:licensecheck-go-digest-notices",
@@ -40311,7 +40355,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-12T19:40:14+00:00",
+      "updatedAt": "2026-11-12T20:27:59+00:00",
       "refinement": {
         "before": {
           "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb"
@@ -40382,7 +40426,18 @@
           "postedURL": "https://github.com/google/gvisor/pull/16663",
           "note": "Published the reviewed patch-header amendment as the PR’s single commit. The patch still applies to release 8.5.1.4."
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
+        "observedAt": "2026-11-12T20:27:59+00:00",
+        "disposition": "Milan’s formatting diagnostic request has a reply linking the fix. A failed check prints both repair commands.",
+        "nextAction": "Await maintainer review of the published Buildifier change.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16663",
+          "https://github.com/google/gvisor/pull/16663#discussion_r4537464299"
+        ]
+      }
     },
     {
       "id": "pr:16664",
@@ -42957,12 +43012,12 @@
       "number": 16710,
       "group": "bazel",
       "ref": "review/stateify-output-path",
-      "head": "c91c69121540117e88bc023ba5f58fec6766b8de",
+      "head": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
       "title": "Generate checkpoint methods without a host shell",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "The mergeable rebase c91c69121 preserves the complete change approved on 7ef8ae5df and produced byte-identical generated BPF output compared with master. All 16 focused native macOS ARM64 hook cases passed. The full native suite recorded 11,572 cases, with 85 skips and zero failures. The prior Copybara error has no public diagnostic.",
-      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "summary": "The published rebase contains one mergeable commit. Master added _go_importpath to the same Starlark load. Both generators produced exactly the files that master generated. On macOS, 11,487 state test records passed and 85 skipped. All 204 host-layout records passed.",
+      "updatedAt": "2026-11-12T20:27:59+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -43087,6 +43142,10 @@
         {
           "label": "Published stateify rebase",
           "url": "https://github.com/tamird/gvisor/commit/c91c69121"
+        },
+        {
+          "label": "Published stateify rebase on current master",
+          "url": "https://github.com/tamird/gvisor/commit/b5a8cd681"
         }
       ],
       "settledReviews": [
@@ -43137,35 +43196,32 @@
       ],
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "c91c69121540117e88bc023ba5f58fec6766b8de",
-        "observedAt": "2026-11-11T21:14:56+00:00",
-        "disposition": "Patch-preserving rebase published",
-        "nextAction": "Follow the checks and import on the new source. Revisit the prior private Copybara error if the importer publishes a diagnostic.",
+        "sourceHead": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
+        "observedAt": "2026-11-12T20:27:59+00:00",
+        "disposition": "The published rebase contains one mergeable commit. Master added _go_importpath to the same Starlark load. Both generators produced exactly the files that master generated. On macOS, 11,487 state test records passed and 85 skipped. All 204 host-layout records passed.",
+        "nextAction": "Follow the new head through upstream checks and import. The earlier Copybara error still has no public diagnostic.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df",
           "https://github.com/google/gvisor/pull/16710",
-          "https://github.com/google/gvisor/pull/16710#issuecomment-6698081583",
-          "https://github.com/tamird/gvisor/compare/7ef8ae5df...c91c69121",
-          "https://github.com/tamird/gvisor/commit/c91c69121"
+          "https://github.com/tamird/gvisor/commit/b5a8cd681"
         ],
         "mergeable": "MERGEABLE"
       },
       "reapproval": {
         "kind": "patch-preserving-rebase",
         "method": "reviewed-source-diff",
-        "head": "c91c69121540117e88bc023ba5f58fec6766b8de",
+        "head": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
         "approvedHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
-        "diffSha256": "7a8992eccd7819a2639934ef4ccf7101b2895cbf47217bade94617f67202be37",
-        "summary": "The ordered additions, removals, affected files and modes match the previously approved source. The generated BPF output matches master.",
-        "evidence": "https://github.com/tamird/gvisor/compare/7ef8ae5df...c91c69121"
+        "diffSha256": "05dea6d341a7bed43532fcf244cd27288d66312b5635de2279c4d3ef197392f4",
+        "summary": "The signed rebase preserves the source changes. Master added _go_importpath to the same load line. Both generated outputs match master.",
+        "evidence": "https://github.com/tamird/gvisor/commit/b5a8cd681"
       },
       "refinement": {
         "before": {
-          "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e"
+          "head": "c91c69121540117e88bc023ba5f58fec6766b8de"
         },
         "after": {
-          "head": "c91c69121540117e88bc023ba5f58fec6766b8de",
-          "base": "3238f32db235efb5f8fe03d0490a07e2c53f1bf6"
+          "head": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
+          "base": "2a653cea7b2054a2dc9c6419337d3de8031275d6"
         }
       }
     },
@@ -69521,7 +69577,7 @@
       "url": "https://github.com/google/gvisor/pull/17237",
       "status": "open",
       "group": "bazel",
-      "updatedAt": "2026-11-08T17:13:19Z",
+      "updatedAt": "2026-11-12T20:27:59+00:00",
       "summary": "All seven generated Go tests passed on native AMD64 and under ARM64 QEMU. On each architecture the Go comparator matched GNU diff on nine cases. Changing an inline annotation failed the real simple_test. The saved log showed both changed words and factored out their common suffix. The qualifier expected contiguous strings and stopped before copying the negative XML. The earlier GNU diff remains the approved fallback if native Go proves unsuitable.",
       "evidence": [
         {
@@ -69539,6 +69595,10 @@
         {
           "label": "Published single-commit PR #17237",
           "url": "https://github.com/google/gvisor/pull/17237"
+        },
+        {
+          "label": "Approval on the published commit",
+          "url": "https://github.com/google/gvisor/pull/17237#pullrequestreview-5881283565"
         }
       ],
       "settledReviews": [
@@ -69557,14 +69617,14 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Maintainer",
         "sourceHead": "957b1bd2d6fdb4b244cab3a649ab5d8566cb6a67",
-        "observedAt": "2026-11-08T17:13:19Z",
-        "disposition": "The approved change was published as #17237.",
-        "nextAction": "Follow upstream review on #17237.",
+        "observedAt": "2026-11-12T20:27:59+00:00",
+        "disposition": "@aaltinaydev approved 957b1bd2d. The ready to pull label is present.",
+        "nextAction": "Follow the Copybara import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17237",
-          "https://github.com/tamird/gvisor/commit/957b1bd2d"
+          "https://github.com/google/gvisor/pull/17237#pullrequestreview-5881283565"
         ]
       }
     },
@@ -72054,7 +72114,7 @@
       "url": "https://github.com/google/gvisor/pull/17286",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T17:16:09+00:00",
+      "updatedAt": "2026-11-12T20:27:59+00:00",
       "summary": "The timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
       "evidence": [
         {
@@ -72072,17 +72132,26 @@
         {
           "label": "Native Linux, stock gVisor and corrected gVisor: original logs, XML and packet captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42518101675/artifacts/13633097991"
+        },
+        {
+          "label": "Patch-preserving TCP timer rebase",
+          "url": "https://github.com/tamird/gvisor/commit/97e5ddeb6"
+        },
+        {
+          "label": "Linux TCP timer and keepalive checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43299873539"
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Agent",
         "sourceHead": "59a8c8cc138ea704a5e635b794a9e76197faa744",
-        "observedAt": "2026-11-09T17:16:09+00:00",
-        "disposition": "Published the approved timer wakeup fix as #17286.",
-        "nextAction": "Follow #17286 for maintainer review and import.",
+        "observedAt": "2026-11-12T20:27:59+00:00",
+        "disposition": "Master conflicts with the published timer change. The rebase preserves all 298 ordered file, addition and removal lines. All 61 TCP package records passed on macOS.",
+        "nextAction": "Read the native Linux TCP, Eifel and keepalive results, then publish the patch-preserving rebase.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17286",
-          "https://github.com/tamird/gvisor/commit/59a8c8cc1"
+          "https://github.com/tamird/gvisor/commit/97e5ddeb6",
+          "https://github.com/tamird/gvisor/actions/runs/43299873539"
         ]
       },
       "settledReviews": [
@@ -74642,18 +74711,17 @@
       "url": "https://github.com/google/gvisor/pull/17445",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-12T04:48:53+00:00",
+      "updatedAt": "2026-11-12T20:27:59+00:00",
       "summary": "The published revision returns completed Docker stdout and stderr alongside read and inspect errors. Its native Linux controls retained output on both cancellation and timeout.",
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Maintainer",
         "sourceHead": "4cd80a062199ce7ddab3e8e73e6e05900a09f530",
-        "observedAt": "2026-11-12T04:48:53+00:00",
-        "disposition": "Published 4cd80a062 and answered the review. The follow-up review confirmed that a deadline preserves partial output and reported no findings.",
-        "nextAction": "Follow upstream checks and review.",
+        "observedAt": "2026-11-12T20:27:59+00:00",
+        "disposition": "@aaltinaydev approved 4cd80a062. The ready to pull label is present.",
+        "nextAction": "Follow the Copybara import.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17445#discussion_r4536989728",
           "https://github.com/google/gvisor/pull/17445",
-          "https://github.com/google/gvisor/pull/17445#pullrequestreview-5866657813"
+          "https://github.com/google/gvisor/pull/17445#pullrequestreview-5881337735"
         ]
       },
       "evidence": [
@@ -74708,6 +74776,10 @@
         {
           "label": "Native ARM64 bridge, exec and cancellation results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42912601233/artifacts/13808193511"
+        },
+        {
+          "label": "Approval on the published commit",
+          "url": "https://github.com/google/gvisor/pull/17445#pullrequestreview-5881337735"
         }
       ],
       "settledReviews": [
