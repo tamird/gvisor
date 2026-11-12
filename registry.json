@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T21:17:44+00:00",
+    "updatedAt": "2026-11-12T21:24:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43052,7 +43052,7 @@
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
       "summary": "The published rebase contains one mergeable commit. Master added _go_importpath to the same Starlark load. Both generators produced exactly the files that master generated. On macOS, 11,487 state test records passed and 85 skipped. All 204 host-layout records passed.",
-      "updatedAt": "2026-11-12T20:27:59+00:00",
+      "updatedAt": "2026-11-12T21:24:10+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -43240,14 +43240,15 @@
       "followup": {
         "owner": "Maintainer",
         "sourceHead": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
-        "observedAt": "2026-11-12T20:27:59+00:00",
-        "disposition": "The published rebase is mergeable and passed upstream generation. An experimental review reports that Copybara’s internal replacement for the goimports target matched no BUILD or .bzl files after the last reference was removed.",
-        "nextAction": "Follow maintainer review and import. The reported remedy is to remove the stale mapping from the internal Copybara configuration.",
+        "observedAt": "2026-11-12T21:24:10+00:00",
+        "disposition": "Lucas approved b5a8cd681 and added the ready-to-pull label. Copybara reported another migration error on that commit at 21:17 UTC. Its public status links no log. An earlier review identified the private Replace transform for the removed goimports target.",
+        "nextAction": "The importer owner can remove or update the stale goimports transform and retry the migration of b5a8cd681.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16710",
           "https://github.com/tamird/gvisor/commit/b5a8cd681",
           "https://github.com/google/gvisor/actions/runs/43298788867/job/131464076957",
-          "https://github.com/google/gvisor/pull/16710#pullrequestreview-5881426976"
+          "https://github.com/google/gvisor/pull/16710#pullrequestreview-5881426976",
+          "https://api.github.com/repos/google/gvisor/commits/b5a8cd681/status"
         ],
         "mergeable": "MERGEABLE"
       },
@@ -76224,10 +76225,14 @@
       "title": "Expose the Go repository map to Bazel actions",
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514",
       "group": "bazel",
-      "status": "open",
-      "summary": "Ordinary Gazelle and a sandboxed BUILD-file check can pass the same public input to -repo_config. On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
-      "updatedAt": "2026-11-12T16:43:40+00:00",
+      "status": "Closed; Gazelle requested an issue",
+      "summary": "Jay declined to expose Gazelle’s private repository map. He asked for a separate issue explaining how gVisor would declare the files needed by a sandboxed Gazelle check.",
+      "updatedAt": "2026-11-12T21:24:10+00:00",
       "evidence": [
+        {
+          "label": "Jay declined the public map and requested a separate issue",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#issuecomment-6834594978"
+        },
         {
           "label": "Single supplier commit for a public repository-map input",
           "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766"
@@ -76254,15 +76259,26 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Contributor review",
         "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "observedAt": "2026-11-12T16:43:40+00:00",
-        "disposition": "Fabian asked how gVisor consumes the file before making it public API. Tamir’s same-thread answer explains that the presubmit passes it to Gazelle and proposes a sandboxable diff rule that keeps the file private.",
-        "nextAction": "Await Fabian’s response on the proposed Gazelle rule.",
+        "observedAt": "2026-11-12T21:24:10+00:00",
+        "disposition": "Fabian received the gVisor use case. Jay closed the PR and asked for an issue about declaring the inputs.",
+        "nextAction": "Review the proposed Gazelle issue on checking declared inputs.",
         "evidence": [
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4547568345",
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4553360799"
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4553360799",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#issuecomment-6834594978"
         ]
+      },
+      "contributorReview": {
+        "kind": "issue",
+        "status": "pending",
+        "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+        "requestedAt": "2026-11-12T21:24:10+00:00",
+        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
+        "title": "Run Gazelle’s diff check on declared inputs",
+        "summary": "File the proposed issue describing gVisor’s declared package inputs and asking Gazelle to supply its repository configuration inside the check.",
+        "body": "Could Gazelle provide a rule that runs `gazelle update -mode=diff` on caller-declared inputs and supplies its own Bzlmod repository configuration? We want Bazel to cache the check and run it on a remote worker.\n\ngVisor checks 218 named package directories with `-r=false -index=none`. Our [prototype](https://github.com/tamird/gvisor/blob/49d0bc55a/tools/lint_sources.bzl#L19-L55) gives Bazel the files beneath those directories, including `go:embed` data, plus ancestor BUILD files and root configuration. It preserves their relative paths. Adding a new Go file to a listed package or changing a parent’s `gazelle:resolve` directive produced the [same diff as running Gazelle in the checkout](https://github.com/tamird/gvisor/actions/runs/41211321121/artifacts/13046890088). A new package is checked once we add its directory to the list.\n\nThe missing piece is dependency resolution. When the root module renames Gazelle to `my_gazelle`, the ordinary launcher emits `@my_gazelle//v2/config`. Running the binary without the repository map drops that dependency. The [check action](https://github.com/tamird/gvisor/blob/49d0bc55a/tools/lint/BUILD#L61-L82) only passes the map through to Gazelle. Keeping that step in a Gazelle-owned rule would let the format change as planned in #2413. We can try that interface in gVisor. Follow-up to #2514.\n\nPrepared by Codex on behalf of @tamird."
       }
     },
     {
@@ -108426,6 +108442,58 @@
         {
           "label": "Linux change that prevents backward coarse readings",
           "url": "https://github.com/torvalds/linux/commit/b71f9804f"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-hostinet-loopback-unreachable",
+      "title": "Hostinet TCP connects to 127.0.0.1 returned ENETUNREACH",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T21:24:10+00:00",
+      "summary": "In build #54736, localhost TCP connects returned ENETUNREACH in two hostinet cases. The cgroupv2 shard passed when retried on the same commit.",
+      "findings": [
+        {
+          "text": "Under systrap, the restored guest had already opened a new outbound connection. The test process then got ENETUNREACH connecting to the guest listener at 127.0.0.1:43857. Under KVM, the original guest got ENETUNREACH connecting to the host echo server at 127.0.0.1:41467 during setup, before taking a checkpoint.",
+          "evidence": [
+            {
+              "label": "Failed cgroupv2 hostinet test and boot log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e5-46de-ac76-1760ef618538/artifacts/01a1d19d-5e45-4a7c-b4c7-76e2a2387a57"
+            },
+            {
+              "label": "Passing retry of the same shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54736#01a1d19e-5b00-49ce-a0b9-fe9c3ce23404"
+            }
+          ]
+        },
+        {
+          "text": "An earlier test logged EPERM while restoring a network namespace about two seconds before the failed systrap connect. The sibling cgroupv1 shard logged four such errors and both of its hostinet cases passed. The logs do not identify the namespaces used by the sockets.",
+          "evidence": [
+            {
+              "label": "Failed cgroupv2 hostinet test and boot log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e5-46de-ac76-1760ef618538/artifacts/01a1d19d-5e45-4a7c-b4c7-76e2a2387a57"
+            },
+            {
+              "label": "Both hostinet cases passed in the sibling shard",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e4-4f86-8802-9c6c11dabf1c/artifacts/01a1d1a0-3cd6-42de-b5dd-6e99e957a662"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Record the caller and process-leader network namespace inodes when restoring a namespace. At each connect, capture the socket namespace cookie, loopback link state and local routing table to establish which namespace lost its route.",
+      "evidence": [
+        {
+          "label": "Failed cgroupv2 hostinet test and boot log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e5-46de-ac76-1760ef618538/artifacts/01a1d19d-5e45-4a7c-b4c7-76e2a2387a57"
+        },
+        {
+          "label": "Passing retry of the same shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54736#01a1d19e-5b00-49ce-a0b9-fe9c3ce23404"
+        },
+        {
+          "label": "Both hostinet cases passed in the sibling shard",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e4-4f86-8802-9c6c11dabf1c/artifacts/01a1d1a0-3cd6-42de-b5dd-6e99e957a662"
         }
       ]
     }
