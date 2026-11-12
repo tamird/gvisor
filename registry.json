@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T03:27:32+00:00",
+    "updatedAt": "2026-11-12T03:53:57+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44,8 +44,8 @@
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
-      "lastCompletedAt": "2026-11-11T22:41:24+00:00",
-      "lastResult": "Removed 33 local branches and 159 fork branches. The local count fell from 2,772 to 2,739. The fork went from 4,394 to 4,236, including one newly published branch. All 233 open upstream PR heads kept their names and commits. Local archive d654f29d0 records the 192 retired refs, all 33 local reflogs and 218 distinct commits. For 147 retired fork branches, a surviving public branch still contains the exact tip. The other 12 were completed CI runs whose unpublished changes touched only uncited validation files. The audit preserved two local branches with unpublished history."
+      "lastCompletedAt": "2026-11-12T03:32:43+00:00",
+      "lastResult": "Removed 70 local branches and 698 fork branches. The local count fell from 2,743 to 2,673. The fork went from 4,269 to 3,572, including one newly published branch. All 230 open upstream PR heads kept their names and commits. The local recovery ref refs/branch-cleanup/archive at 521530cd1 preserves 745 distinct tips and all 70 original local reflogs. Its four manifests are 214bb34e7, 29ced1e15, 3a0b6cde7 and 521530cd1. A surviving public fork branch contains each of the 728 distinct tips retired by ancestry. The other 17 tips had an exact completed CI run. The archive preserves all 17. One also remains on a surviving fork branch."
     }
   },
   "groups": [
@@ -104881,7 +104881,7 @@
       "group": "bazel",
       "status": "active",
       "owner": "Compiler toolchain integration",
-      "updatedAt": "2026-11-12T03:03:09+00:00",
+      "updatedAt": "2026-11-12T03:53:57+00:00",
       "summary": "Each supplier PR preserved the GNU and musl bootstrap link arguments on its own. Together they made Bazel reject the bootstrap C++ toolchain during analysis because it lacked static_link_cpp_runtimes. The five gVisor compiler prerequisites remain unchanged.",
       "findings": [
         {
@@ -104913,9 +104913,35 @@
               "url": "https://app.buildbuddy.io/invocation/ecf4d6ba-da8e-4a20-ba9b-a7dce16e079f"
             }
           ]
+        },
+        {
+          "text": "A native Linux control built the LLVM Support object PrettyStackTrace.pic.o on the supplier base, #938 and the repaired combined tree. All five mapped and unmapped controls produced the same ELF. On the unmapped action, the module map declared the type_traits path searched by -isystem. The supplier failure logged two more compiler arguments than this control and elided their values.",
+          "evidence": [
+            {
+              "label": "Five object hashes, module map and compiler search paths",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43147979621/artifacts/13911659887"
+            },
+            {
+              "label": "Original failing supplier job",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/43119656954/job/130856569425"
+            }
+          ]
+        },
+        {
+          "text": "On native Linux, all four PrettyStackTrace compile commands matched the 141 arguments of the static ASan symbolizer action. The supplier base and a control preserving the caller’s configuration both compiled identical LLVM bitcode. With #938 alone and with #909 plus #938, the libc++ module map named a different configuration directory from the compiler’s header search path. Clang rejected type_traits and iterator in both arms. The map and search roots matched in both passing arms.",
+          "evidence": [
+            {
+              "label": "Four exact compiler argvs, header maps, and bitcode results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43150750190/artifacts/13913029818"
+            },
+            {
+              "label": "Original supplier C++ path-mapping check",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/43119656954/job/130856569425"
+            }
+          ]
         }
       ],
-      "nextStep": "Check the stage-sharing fix against the unmapped C++ actions case before treating the combined supplier changes as compatible.",
+      "nextStep": "Keep libc++ headers and their module map in the caller’s configuration, then validate the supplier’s full ASan fission test and its mapped and unmapped C++ jobs. The bootstrap link-library adjustment remains separately necessary when #909 and #938 are combined.",
       "evidence": [
         {
           "label": "Runtime link libraries #909",
