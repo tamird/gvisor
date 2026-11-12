@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T00:48:14+00:00",
+    "updatedAt": "2026-11-12T01:01:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31939,19 +31939,19 @@
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T11:48:58+00:00",
-      "summary": "The rebased Apache source 31a34e576 is open as one mergeable commit. GitHub lists @zkoopmans and @carzh as requested reviewers. The previous export #16879 closed.\n\nThe Linux check built eight image contexts across AMD64 and ARM64 and exercised seven Make operations. All 35 unrelated benchmark entries retained their contents and modes. Two additions and three intentional removals account for the archive changing from 178 entries to 177.\n\nCarzh’s approval covered c1511cf4b. The Apache fixtures retain their image pins, configuration and Make names.",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "summary": "The Apache image change conflicts with master's new Redis mapping. The previous Apache export #16879 closed. The prior qualification covered eight image contexts on AMD64 and ARM64, seven Make operations, and the contents and modes of 35 unrelated benchmark entries.",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "CI image maintenance",
         "sourceHead": "31a34e5765616b99908dd4bcb29e596bdf1a2858",
-        "observedAt": "2026-11-11T11:48:58+00:00",
-        "disposition": "The published Apache source is mergeable. GitHub lists @zkoopmans and @carzh as requested reviewers. The previous export #16879 closed.",
-        "nextAction": "Await review of the mergeable Apache source.",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "Source rebase in progress on the adjacent Apache and Redis image records.",
+        "nextAction": "Preserve the Redis mapping and the approved Apache change, then verify the catalog and publish the equivalent rebase.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16466",
           "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612"
         ],
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       },
       "evidence": [
         {
@@ -55276,13 +55276,13 @@
       "repo": "google/gvisor",
       "number": 16828,
       "ref": "proposal/network-pcap-setup",
-      "head": "ea507108f2f2232c88eb3a55128adc986a360d4a",
+      "head": "6be2cebcbfba1bb1275ae5b798ac2ee1b27136dc",
       "title": "Share packet capture across runsc network interfaces",
       "url": "https://github.com/google/gvisor/pull/16828",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-11T22:04:22+00:00",
-      "summary": "Published at ea507108f. On the exact PR head, one uncached Bazel run passed both systrap cases. The one-veth PCAP contained one header and five records (404 bytes). The two-veth PCAP contained one header and eleven records (872 bytes). Each veth carried an echo request and reply. Guest and host MTU and multicast matched on every interface, including loopback. XDP was source-reviewed. The earlier reporting errors were fixed in the qualification harness.",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "summary": "The published rebase preserves master’s proxy-only externally routed loopback and keeps outbound packet capture configured on each link. Systrap captures contained one RAW header per file and 5 or 10 records across the one- and two-veth controls, with a matching ping and reply on every tested interface. Both master loopback-option tests passed. Hardware XDP behavior was source-reviewed.",
       "evidence": [
         {
           "label": "Uncached successful Bazel run, original XML, PCAPs and interface assertions",
@@ -55335,6 +55335,10 @@
         {
           "label": "Native systrap veth captures, RAW header counts and both loopback controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/43106955044/artifacts/13894992181"
+        },
+        {
+          "label": "Published single-commit amendment",
+          "url": "https://github.com/google/gvisor/pull/16828"
         }
       ],
       "settledReviews": [
@@ -55357,23 +55361,37 @@
           "at": "2026-11-10T16:16:37+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16828",
           "note": "Published one commit at ea507108f. Master changed the loopback MTU wrapper and added a per-interface multicast flag. The amended shared setup preserves both. One- and two-interface systrap runs each wrote a single PCAP header and captured requests and replies on every veth. Guest ioctls matched the host MTU and multicast flags for lo (65536, off), vg0 (1500, on) and vg1 (1400, off). XDP was source-reviewed. The two cases passed again with fresh echo IDs. The second run retained both XML results and captures. Bazel reported a missing test log after execution and the collector rejected a duplicate TestResult."
+        },
+        {
+          "kind": "amendment",
+          "head": "6be2cebcbfba1bb1275ae5b798ac2ee1b27136dc",
+          "baseHead": "ea507108f2f2232c88eb3a55128adc986a360d4a",
+          "url": "https://github.com/tamird/gvisor/commit/6be2cebcb",
+          "title": "Preserve proxy-only loopback routing in the packet capture rebase",
+          "requestedAt": "2026-11-11T22:04:22+00:00",
+          "summary": "Publish the revised single commit on #16828? The existing PR title and description still apply.",
+          "body": "Master added a proxy-only external loopback option. The proposed rebase preserves that option for FD-based endpoints and the existing defaults for XDP. In systrap, independent parsing found one RAW header in each capture, five records with one veth and ten with two. Each physical veth carried a matching echo request and reply. Both upstream loopback-option controls passed. Hardware XDP received source review only.\n\ngit -C ~/code/gvisor range-diff ea507108f^! 6be2cebcb^!",
+          "outcome": "approved",
+          "at": "2026-11-12T01:01:41+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16828"
         }
       ],
       "refinement": {
         "before": {
-          "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe"
-        },
-        "after": {
           "head": "ea507108f2f2232c88eb3a55128adc986a360d4a",
           "base": "deb6b3ea1355ea9798c043cf33bc02804e86ed53"
+        },
+        "after": {
+          "head": "6be2cebcbfba1bb1275ae5b798ac2ee1b27136dc",
+          "base": "3238f32db235efb5f8fe03d0490a07e2c53f1bf6"
         }
       },
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "ea507108f2f2232c88eb3a55128adc986a360d4a",
-        "observedAt": "2026-11-11T22:04:22+00:00",
-        "disposition": "The published source conflicts with the new proxy-only loopback setting. The revised source is qualified.",
-        "nextAction": "Review the revised source and decide whether to publish it on #16828.",
+        "owner": "Maintainer",
+        "sourceHead": "6be2cebcbfba1bb1275ae5b798ac2ee1b27136dc",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "The contributor approved the amendment and it is published at 6be2cebcb.",
+        "nextAction": "Await maintainer review of the revised source.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42853172872/artifacts/13780519983",
           "https://github.com/tamird/gvisor/actions/runs/42849969524/artifacts/13781021188",
@@ -55382,17 +55400,6 @@
           "https://github.com/tamird/gvisor/commit/6be2cebcb",
           "https://github.com/tamird/gvisor/actions/runs/43106955044/artifacts/13894992181"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "6be2cebcbfba1bb1275ae5b798ac2ee1b27136dc",
-        "baseHead": "ea507108f2f2232c88eb3a55128adc986a360d4a",
-        "url": "https://github.com/tamird/gvisor/commit/6be2cebcb",
-        "title": "Preserve proxy-only loopback routing in the packet capture rebase",
-        "requestedAt": "2026-11-11T22:04:22+00:00",
-        "summary": "Publish the revised single commit on #16828? The existing PR title and description still apply.",
-        "body": "Master added a proxy-only external loopback option. The proposed rebase preserves that option for FD-based endpoints and the existing defaults for XDP. In systrap, independent parsing found one RAW header in each capture, five records with one veth and ten with two. Each physical veth carried a matching echo request and reply. Both upstream loopback-option controls passed. Hardware XDP received source review only.\n\ngit -C ~/code/gvisor range-diff ea507108f^! 6be2cebcb^!"
       }
     },
     {
@@ -56987,7 +56994,7 @@
       "repo": "google/gvisor",
       "number": 16957,
       "ref": "proposal/veth-port-mtu",
-      "head": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
+      "head": "c2fa04be29f7bef74e8d2bad6ffa8d2a12438926",
       "title": "Keep the MTU on each veth endpoint",
       "url": "https://github.com/google/gvisor/pull/16957",
       "group": "runtime",
@@ -57016,16 +57023,24 @@
         {
           "label": "Native Linux VethAdd, uncached, 14 ms and zero skips",
           "url": "https://github.com/tamird/gvisor/actions/runs/43128668664/artifacts/13904502692"
+        },
+        {
+          "label": "Published netlink test reply",
+          "url": "https://github.com/google/gvisor/pull/16957#discussion_r4544966854"
+        },
+        {
+          "label": "Published netlink test reply",
+          "url": "https://github.com/google/gvisor/pull/16957#discussion_r4544967033"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-12T00:48:14+00:00",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
-        "observedAt": "2026-11-12T00:48:14+00:00",
-        "disposition": "All three runtime modes passed on the proposed c2fa04be2. The initial native attempt skipped for missing CAP_NET_ADMIN. The native-only rerun ran NetlinkRouteTest.VethAdd with no skips.",
-        "nextAction": "Review the amendment and its two inline replies.",
+        "owner": "Maintainer",
+        "sourceHead": "c2fa04be29f7bef74e8d2bad6ffa8d2a12438926",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "The contributor approved the amendment and it is published at c2fa04be2.",
+        "nextAction": "Await maintainer review of the revised source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
           "https://github.com/tamird/gvisor/commit/fea7e15b6",
@@ -57034,7 +57049,9 @@
           "https://github.com/tamird/gvisor/commit/c2fa04be2",
           "https://github.com/tamird/gvisor/actions/runs/43127680146",
           "https://github.com/tamird/gvisor/actions/runs/43127680146/artifacts/13903029313",
-          "https://github.com/tamird/gvisor/actions/runs/43128668664/artifacts/13904502692"
+          "https://github.com/tamird/gvisor/actions/runs/43128668664/artifacts/13904502692",
+          "https://github.com/google/gvisor/pull/16957#discussion_r4544966854",
+          "https://github.com/google/gvisor/pull/16957#discussion_r4544967033"
         ]
       },
       "refinement": {
@@ -57060,20 +57077,42 @@
           "outcome": "approved",
           "at": "2026-11-07T12:02:13+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16957"
+        },
+        {
+          "kind": "amendment",
+          "head": "c2fa04be29f7bef74e8d2bad6ffa8d2a12438926",
+          "baseHead": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
+          "url": "https://github.com/tamird/gvisor/commit/c2fa04be2",
+          "requestedAt": "2026-11-12T00:48:14+00:00",
+          "title": "Keep the MTU on each veth endpoint",
+          "summary": "Publish the veth test amendment on #16957 and reply to Lucas in both threads?\n\ngit -C ~/code/gvisor range-diff fea7e15b6^! c2fa04be2^!",
+          "body": "Linux leaves the peer at 1500 after setting one veth to 3000. gVisor\nstores one MTU for the pair, so the same write also changes the MTU\nreported for the peer.\n\nMove the MTU under the endpoint lock with the other per-port state.",
+          "replyBody": "https://github.com/google/gvisor/pull/16957#discussion_r4544574909\nThe test now dumps both ends through the existing netlink fd, once before the writes and once after each write. It passed under systrap with save/restore enabled.\n\nPrepared by Codex on behalf of @tamird.\n\nhttps://github.com/google/gvisor/pull/16957#discussion_r4544574912\nRebased onto master and changed the assertion to require 3000 and 1460 exactly. Both values passed on Linux and gVisor.\n\nPrepared by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-12T01:01:41+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16957"
+        },
+        {
+          "kind": "reply",
+          "head": "c2fa04be29f7bef74e8d2bad6ffa8d2a12438926",
+          "url": "https://github.com/google/gvisor/pull/16957#discussion_r4544574909",
+          "title": "Reply to Lucas about the revised netlink test",
+          "body": "The test now dumps both ends through the existing netlink fd, once before the writes and once after each write. It passed under systrap with save/restore enabled.\n\nPrepared by Codex on behalf of @tamird.",
+          "outcome": "posted",
+          "at": "2026-11-12T00:59:56Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16957#discussion_r4544966854"
+        },
+        {
+          "kind": "reply",
+          "head": "c2fa04be29f7bef74e8d2bad6ffa8d2a12438926",
+          "url": "https://github.com/google/gvisor/pull/16957#discussion_r4544574912",
+          "title": "Reply to Lucas about the revised netlink test",
+          "body": "Rebased onto master and changed the assertion to require 3000 and 1460 exactly. Both values passed on Linux and gVisor.\n\nPrepared by Codex on behalf of @tamird.",
+          "outcome": "posted",
+          "at": "2026-11-12T00:59:58Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16957#discussion_r4544967033"
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "c2fa04be29f7bef74e8d2bad6ffa8d2a12438926",
-        "baseHead": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
-        "url": "https://github.com/tamird/gvisor/commit/c2fa04be2",
-        "requestedAt": "2026-11-12T00:48:14+00:00",
-        "title": "Keep the MTU on each veth endpoint",
-        "summary": "Publish the veth test amendment on #16957 and reply to Lucas in both threads?\n\ngit -C ~/code/gvisor range-diff fea7e15b6^! c2fa04be2^!",
-        "body": "Linux leaves the peer at 1500 after setting one veth to 3000. gVisor\nstores one MTU for the pair, so the same write also changes the MTU\nreported for the peer.\n\nMove the MTU under the endpoint lock with the other per-port state.",
-        "replyBody": "https://github.com/google/gvisor/pull/16957#discussion_r4544574909\nThe test now dumps both ends through the existing netlink fd, once before the writes and once after each write. It passed under systrap with save/restore enabled.\n\nPrepared by Codex on behalf of @tamird.\n\nhttps://github.com/google/gvisor/pull/16957#discussion_r4544574912\nRebased onto master and changed the assertion to require 3000 and 1460 exactly. Both values passed on Linux and gVisor.\n\nPrepared by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:veth-port-mtu",
@@ -65516,8 +65555,8 @@
       "title": "Select the c-ares platform header without a shell",
       "url": "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311",
       "group": "bazel",
-      "status": "Delivered",
-      "updatedAt": "2026-11-08T00:09:24+00:00",
+      "status": "Merged upstream",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
       "summary": "gVisor’s PacketImpact POSIX server uses gRPC 1.84.0. This MODULE.bazel change raises its selected c-ares version from 1.34.5.bcr.2 to the already-released 1.34.9.bcr.1. The previous package staged two headers with CopyFile actions. On Linux AMD64 and ARM64, the updated package uses one symlink for ares_config.h and reads ares_build.h directly from source.\n\nOn native Linux AMD64 the C++ server handled Socket and Close RPCs sent to an IP literal, and the canonical license data matched byte for byte. That run’s original header query missed the actions. The corrected query and materialized headers are in the second receipt. The tests cover the IP-literal RPC and header staging. DNS lookup and a full server build on an empty worker remain unverified. The reviewed commit and the tested ca5436ed33 have the same tree.\n\nThe approved source a5f2d3278 was published in #17210 as d7750b39e with the same parent and file tree. The revised description explains why the BCR overlay selects a platform header while preserving header bytes. The builder’s GNU tools, Bash and coreutils have other consumers, and it has no c-ares-specific package to remove.",
       "evidence": [
         {
@@ -65543,6 +65582,10 @@
         {
           "label": "Published single commit with the approved source tree",
           "url": "https://github.com/google/gvisor/commit/d7750b39e89bbf7958005da12526cb4dbea9fe1a"
+        },
+        {
+          "label": "Merged c-ares platform-header change",
+          "url": "https://github.com/google/gvisor/commit/2f5253abf"
         }
       ],
       "settledReviews": [
@@ -65560,14 +65603,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Compiler dependencies",
         "sourceHead": "a5f2d32782f26b40f60fc91bb67f236b1c51a311",
-        "observedAt": "2026-11-08T00:09:24+00:00",
-        "disposition": "The approved source a5f2d3278 was published in #17210 as d7750b39e with the same parent and file tree. The revised description explains why the BCR overlay selects a platform header while preserving header bytes. The builder’s GNU tools, Bash and coreutils have other consumers, and it has no c-ares-specific package to remove.",
-        "nextAction": "Follow #17210 for maintainer review and import.",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "The c-ares platform-header selection landed as 2f5253abf on master.",
+        "nextAction": "Complete. The released c-ares overlay supplies the selected platform header.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17210",
-          "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311"
+          "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311",
+          "https://github.com/google/gvisor/commit/2f5253abf"
         ]
       },
       "inactive": true
@@ -66283,8 +66327,8 @@
       "title": "Select the c-ares platform header without a shell",
       "url": "https://github.com/google/gvisor/pull/17210",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-08T00:09:24+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
       "summary": "gVisor’s PacketImpact POSIX server uses gRPC 1.84.0. This MODULE.bazel change raises its selected c-ares version from 1.34.5.bcr.2 to the already-released 1.34.9.bcr.1. The previous package staged two headers with CopyFile actions. On Linux AMD64 and ARM64, the updated package uses one symlink for ares_config.h and reads ares_build.h directly from source.\n\nOn native Linux AMD64 the C++ server handled Socket and Close RPCs sent to an IP literal, and the canonical license data matched byte for byte. That run’s original header query missed the actions. The corrected query and materialized headers are in the second receipt. The tests cover the IP-literal RPC and header staging. DNS lookup and a full server build on an empty worker remain unverified. The reviewed commit and the tested ca5436ed33 have the same tree.\n\nThe approved source a5f2d3278 was published in #17210 as d7750b39e with the same parent and file tree. The revised description explains why the BCR overlay selects a platform header while preserving header bytes. The builder’s GNU tools, Bash and coreutils have other consumers, and it has no c-ares-specific package to remove.",
       "evidence": [
         {
@@ -66310,6 +66354,10 @@
         {
           "label": "Published single commit with the approved source tree",
           "url": "https://github.com/google/gvisor/commit/d7750b39e89bbf7958005da12526cb4dbea9fe1a"
+        },
+        {
+          "label": "Merged c-ares platform-header change",
+          "url": "https://github.com/google/gvisor/commit/2f5253abf"
         }
       ],
       "settledReviews": [
@@ -66327,14 +66375,15 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Compiler dependencies",
         "sourceHead": "d7750b39e89bbf7958005da12526cb4dbea9fe1a",
-        "observedAt": "2026-11-08T00:09:24+00:00",
-        "disposition": "The approved source a5f2d3278 was published in #17210 as d7750b39e with the same parent and file tree. The revised description explains why the BCR overlay selects a platform header while preserving header bytes. The builder’s GNU tools, Bash and coreutils have other consumers, and it has no c-ares-specific package to remove.",
-        "nextAction": "Follow #17210 for maintainer review and import.",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "The c-ares platform-header selection landed as 2f5253abf on master.",
+        "nextAction": "Complete. The released c-ares overlay supplies the selected platform header.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17210",
-          "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311"
+          "https://github.com/tamird/gvisor/commit/a5f2d32782f26b40f60fc91bb67f236b1c51a311",
+          "https://github.com/google/gvisor/commit/2f5253abf"
         ]
       }
     },
@@ -75285,8 +75334,8 @@
       "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
       "title": "Expose the Go repository map to Bazel actions",
       "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-11T19:23:26+00:00",
+      "status": "Published upstream",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
       "summary": "Ordinary Gazelle and a sandboxed BUILD-file check can pass the same public input to -repo_config. On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
       "evidence": [
         {
@@ -75300,29 +75349,127 @@
         {
           "label": "Separate change to defer loading the Go environment",
           "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        },
+        {
+          "label": "Published upstream as bazel-contrib/bazel-gazelle#2514",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Upstream review",
         "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "observedAt": "2026-11-11T19:23:26+00:00",
-        "disposition": "On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
-        "nextAction": "Submit this single commit to bazel-contrib/bazel-gazelle?",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "Published the approved single commit as bazel-contrib/bazel-gazelle#2514.",
+        "nextAction": "Follow upstream review of the public Gazelle repository configuration label.",
         "evidence": [
           "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
-          "https://github.com/bazel-contrib/bazel-gazelle/issues/2413"
+          "https://github.com/bazel-contrib/bazel-gazelle/issues/2413",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "baseHead": "cdbba80c45c02a79c6581e61bc6590c90daccfd0",
-        "title": "Expose the Go repository map to Bazel actions",
-        "body": "gVisor checks BUILD files by running Gazelle in a sandboxed Bazel action. The gazelle rule passes the binary a table of Go imports and their Bazel repositories. A separate action needs the same input. Importing the generated repository directly works until bazel mod tidy removes it.\n\nExpose the input as @gazelle//:go_repository_config and use that label in the gazelle rule. Callers pass the file to -repo_config. The label can still point to a different file if Gazelle adopts the format proposed in [1].\n\nWith Bazel 9.3.1, a test action that imported github.com/bazel-contrib/bazel-gazelle/v2/config kept the dependency @gazelle//v2/config. Renaming the module to my_gazelle produced @my_gazelle//v2/config. Omitting the input dropped the dependency and failed the BUILD file check in both cases.\n\n[1]: https://github.com/bazel-contrib/bazel-gazelle/issues/2413\n\nPrepared by Codex on behalf of @tamird.",
-        "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
-        "summary": "Submit this single commit to bazel-contrib/bazel-gazelle?",
-        "requestedAt": "2026-11-11T19:23:26+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+          "baseHead": "cdbba80c45c02a79c6581e61bc6590c90daccfd0",
+          "title": "Expose the Go repository map to Bazel actions",
+          "body": "gVisor checks BUILD files by running Gazelle in a sandboxed Bazel action. The gazelle rule passes the binary a table of Go imports and their Bazel repositories. A separate action needs the same input. Importing the generated repository directly works until bazel mod tidy removes it.\n\nExpose the input as @gazelle//:go_repository_config and use that label in the gazelle rule. Callers pass the file to -repo_config. The label can still point to a different file if Gazelle adopts the format proposed in [1].\n\nWith Bazel 9.3.1, a test action that imported github.com/bazel-contrib/bazel-gazelle/v2/config kept the dependency @gazelle//v2/config. Renaming the module to my_gazelle produced @my_gazelle//v2/config. Omitting the input dropped the dependency and failed the BUILD file check in both cases.\n\n[1]: https://github.com/bazel-contrib/bazel-gazelle/issues/2413\n\nPrepared by Codex on behalf of @tamird.",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
+          "summary": "Submit this single commit to bazel-contrib/bazel-gazelle?",
+          "requestedAt": "2026-11-11T19:23:26+00:00",
+          "outcome": "approved",
+          "at": "2026-11-12T01:01:41+00:00",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514"
+        }
+      ],
+      "inactive": true
+    },
+    {
+      "id": "pr:bazel-contrib/bazel-gazelle:2514",
+      "type": "pr",
+      "repo": "bazel-contrib/bazel-gazelle",
+      "number": 2514,
+      "ref": "proposal/public-go-repository-config",
+      "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+      "title": "Expose the Go repository map to Bazel actions",
+      "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514",
+      "group": "bazel",
+      "status": "open",
+      "summary": "Ordinary Gazelle and a sandboxed BUILD-file check can pass the same public input to -repo_config. On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "evidence": [
+        {
+          "label": "Single supplier commit for a public repository-map input",
+          "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766"
+        },
+        {
+          "label": "Upstream repository-map format discussion",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/2413"
+        },
+        {
+          "label": "Separate change to defer loading the Go environment",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        },
+        {
+          "label": "Published upstream as bazel-contrib/bazel-gazelle#2514",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "The approved single commit is published.",
+        "nextAction": "Follow upstream review and checks.",
+        "evidence": [
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2514"
+        ]
+      }
+    },
+    {
+      "id": "pr:17511",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17511,
+      "ref": "proposal/nvproxy-580-196-07",
+      "head": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
+      "title": "nvproxy: Support NVIDIA driver 580.196.07",
+      "url": "https://github.com/google/gvisor/pull/17511",
+      "group": "runtime",
+      "status": "open",
+      "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "evidence": [
+        {
+          "label": "Container-Optimized OS driver check, build #54517",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54517#01a1cca5-1418-49e2-8d35-b49f0a21b458"
+        },
+        {
+          "label": "NVIDIA 580.196.07 source release",
+          "url": "https://github.com/NVIDIA/open-gpu-kernel-modules/releases/tag/580.196.07"
+        },
+        {
+          "label": "Single-file driver registration",
+          "url": "https://github.com/tamird/gvisor/commit/3dfdf32f7"
+        },
+        {
+          "label": "COS stock and corrected test results, ABI diff and installer checksums",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43117337335/artifacts/13901706883"
+        },
+        {
+          "label": "Published upstream as google/gvisor#17511",
+          "url": "https://github.com/google/gvisor/pull/17511"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
+        "observedAt": "2026-11-12T01:01:41+00:00",
+        "disposition": "The approved single commit is published.",
+        "nextAction": "Follow upstream review and checks.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17511"
+        ]
       }
     }
   ],
@@ -103619,7 +103766,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T21:31:39.172011+00:00",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
       "summary": "On Buildkite #54502 for #17495, Node 22.2.0 reported read ECONNRESET in internet/test-tls-autoselectfamily-servername.js. The same-source retry passed.",
       "findings": [
         {
@@ -103666,7 +103813,7 @@
           ]
         }
       ],
-      "nextStep": "Review the local TLS test and supply your personal DCO sign-off before submitting it to Node. A separate backport is needed for the version pinned by gVisor.",
+      "nextStep": "The contributor approved 5bf936f9c. Ready for Tamir to add his personal DCO sign-off to the commit and submit the prefilled Node pull request. The release pinned by gVisor will still need the test backport.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -103711,17 +103858,20 @@
       ],
       "repo": "nodejs/node",
       "head": "5bf936f9c9cfbf1c059847b3c681fb71dd15a250",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "5bf936f9c9cfbf1c059847b3c681fb71dd15a250",
-        "baseHead": "50ce73fe07b95b3e08160c7f2a592f87b62212cc",
-        "url": "https://github.com/tamird/node/commit/5bf936f9c",
-        "requestedAt": "2026-11-11T21:27:44+00:00",
-        "title": "test: check the TLS server name on address-family fallback locally",
-        "summary": "Review the single Node test commit, add your personal DCO sign-off and submit it through the prefilled form? Node 19.6.0 failed the historical server-name assertion. Node 22.2.0 passed on macOS, native Linux and gVisor systrap with a local TLS server. The cause of the external reset in Buildkite is still open.",
-        "body": "The TLS address-selection test connects to nodejs.org twice. A reset\ncan fail the test before the handshake completes, and the addresses\nreturned by DNS determine whether the client ever tries a second one.\n\nRun a TLS server on IPv4 loopback. With address-family selection\nenabled, return IPv6 loopback first so the client has to switch TCP\nhandles. Check which server name reaches the server and keep certificate\nverification enabled on the client.\n\nRefs: https://github.com/nodejs/node/issues/46679\nAssisted-by: Codex"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5bf936f9c9cfbf1c059847b3c681fb71dd15a250",
+          "baseHead": "50ce73fe07b95b3e08160c7f2a592f87b62212cc",
+          "url": "https://github.com/tamird/node/commit/5bf936f9c",
+          "requestedAt": "2026-11-11T21:27:44+00:00",
+          "title": "test: check the TLS server name on address-family fallback locally",
+          "summary": "Review the single Node test commit, add your personal DCO sign-off and submit it through the prefilled form? Node 19.6.0 failed the historical server-name assertion. Node 22.2.0 passed on macOS, native Linux and gVisor systrap with a local TLS server. The cause of the external reset in Buildkite is still open.",
+          "body": "The TLS address-selection test connects to nodejs.org twice. A reset\ncan fail the test before the handshake completes, and the addresses\nreturned by DNS determine whether the client ever tries a second one.\n\nRun a TLS server on IPv4 loopback. With address-family selection\nenabled, return IPv6 loopback first so the client has to switch TCP\nhandles. Check which server name reaches the server and keep certificate\nverification enabled on the client.\n\nRefs: https://github.com/nodejs/node/issues/46679\nAssisted-by: Codex",
+          "outcome": "approved",
+          "at": "2026-11-12T01:01:41+00:00"
+        }
+      ]
     },
     {
       "id": "investigation:ci-benchmark-fuse-device",
@@ -103781,7 +103931,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T00:06:31+00:00",
+      "updatedAt": "2026-11-12T01:01:41+00:00",
       "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
       "findings": [
         {
@@ -103816,7 +103966,7 @@
           ]
         }
       ],
-      "nextStep": "Open the registration as a gVisor PR after contributor review.",
+      "nextStep": "Follow #17511 through review and import, then check the master COS driver job with 580.196.07 in its image list.",
       "evidence": [
         {
           "label": "Container-Optimized OS driver check, build #54517",
@@ -103833,21 +103983,146 @@
         {
           "label": "COS stock and corrected test results, ABI diff and installer checksums",
           "url": "https://github.com/tamird/gvisor/actions/runs/43117337335/artifacts/13901706883"
+        },
+        {
+          "label": "Published upstream as google/gvisor#17511",
+          "url": "https://github.com/google/gvisor/pull/17511"
         }
       ],
       "repo": "google/gvisor",
       "head": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
-        "baseHead": "088adcd04f24c6230879074a3fab38535b62ebec",
-        "url": "https://github.com/tamird/gvisor/commit/3dfdf32f7",
-        "requestedAt": "2026-11-12T00:06:31+00:00",
-        "title": "nvproxy: Support NVIDIA driver 580.196.07",
-        "summary": "Open the tested single-file registration on gVisor? All 21 COS images and the version, checksum and ABI checks passed on a CPU-only worker.",
-        "body": "Container-Optimized OS now selects 580.196.07 as the default driver\non some images. On these hosts runsc reports \"unsupported Nvidia\ndriver version\" when it registers GPU devices.\n\nRegister the x86-64 and ARM64 installers with the 580.178.04 ABI.\nThis keeps the same supported controls and their capability checks."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
+          "baseHead": "088adcd04f24c6230879074a3fab38535b62ebec",
+          "url": "https://github.com/tamird/gvisor/commit/3dfdf32f7",
+          "requestedAt": "2026-11-12T00:06:31+00:00",
+          "title": "nvproxy: Support NVIDIA driver 580.196.07",
+          "summary": "Open the tested single-file registration on gVisor? All 21 COS images and the version, checksum and ABI checks passed on a CPU-only worker.",
+          "body": "Container-Optimized OS now selects 580.196.07 as the default driver\non some images. On these hosts runsc reports \"unsupported Nvidia\ndriver version\" when it registers GPU devices.\n\nRegister the x86-64 and ARM64 installers with the 580.178.04 ABI.\nThis keeps the same supported controls and their capability checks.",
+          "outcome": "approved",
+          "at": "2026-11-12T01:01:41+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17511"
+        }
+      ]
+    },
+    {
+      "id": "investigation:docker-restore-benchmark-netns",
+      "title": "Docker tries to mount /proc/0/ns/net in the restore benchmarks",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI benchmark investigation",
+      "updatedAt": "2026-11-12T00:57:49+00:00",
+      "summary": "On master builds 54540 and 54548, BenchmarkRestoreEmpty and BenchmarkRestoreNginx failed before recording restore samples on both KVM and systrap. Docker tried to bind-mount /proc/0/ns/net into its network namespace directory and got ENOENT.",
+      "findings": [
+        {
+          "text": "The two benchmarks report the daemon error at startup_test.go lines 232 and 339. Both restore targets use private networking. Build 49169 recorded the same failure immediately after #15137 switched the benchmarks away from host networking; that change documented the separate Docker 28 restore problem.",
+          "evidence": [
+            {
+              "label": "Master build 54540, KVM and systrap benchmark log",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54540#01a1cced-cc3c-4382-a0c5-35b5c62ace9f"
+            },
+            {
+              "label": "Master build 54548, KVM and systrap benchmark log",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54548#01a1cd07-d855-4e56-9bd0-2975fb098259"
+            },
+            {
+              "label": "Earlier master build 49169 with the same failed netns mount",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/49169#01a0f91f-8947-47e9-9f4e-cb5baef994ca"
+            },
+            {
+              "label": "Private networking for the checkpoint benchmarks, #15137",
+              "url": "https://github.com/google/gvisor/pull/15137"
+            }
+          ]
+        },
+        {
+          "text": "Moby reports the same lookup with private networking on Docker 28 and later. Its investigation observed Tasks.Create return PID zero on restore before Start. A separate runsc test succeeded on Docker 27.5.1. The two recent Buildkite logs do not establish their daemon version or the PID returned by the shim.",
+          "evidence": [
+            {
+              "label": "Moby issue 50750, checkpoint restore on Docker 28 and later",
+              "url": "https://github.com/moby/moby/issues/50750"
+            },
+            {
+              "label": "Moby observed Tasks.Create returning PID zero on restore",
+              "url": "https://github.com/moby/moby/issues/50750#issuecomment-3282134609"
+            },
+            {
+              "label": "Docker 27.5.1 succeeded in a separate runsc restore test",
+              "url": "https://github.com/moby/moby/issues/50750#issuecomment-3267631419"
+            },
+            {
+              "label": "Moby investigation of the restored network namespace",
+              "url": "https://github.com/moby/moby/issues/50750#issuecomment-3589073993"
+            }
+          ]
+        },
+        {
+          "text": "The gVisor e2e and GPU restore tests use IsRestoreSupported. It reads the Docker server version and accepts major versions through 27. Neither startup restore benchmark calls it. The two checkpoint-only benchmarks can still be measured independently.",
+          "evidence": [
+            {
+              "label": "Existing restore capability guard for Docker servers newer than 27",
+              "url": "https://github.com/google/gvisor/pull/12218"
+            },
+            {
+              "label": "IsRestoreSupported reads the Docker server version",
+              "url": "https://github.com/google/gvisor/blob/2f5253abf/pkg/test/dockerutil/dockerutil.go#L139-L142"
+            },
+            {
+              "label": "Empty and Nginx restore benchmarks on master",
+              "url": "https://github.com/google/gvisor/blob/2f5253abf/test/benchmarks/base/startup_test.go#L201-L357"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Record the actual Docker server version on an affected worker and compare the daemon’s namespace lookup with the shim’s Create, State and Start PID values. Run the same private-network restore against Docker 27 with the same runsc and images. Use that control to decide how to retain restore samples on a supported server.",
+      "evidence": [
+        {
+          "label": "Master build 54540, KVM and systrap benchmark log",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54540#01a1cced-cc3c-4382-a0c5-35b5c62ace9f"
+        },
+        {
+          "label": "Master build 54548, KVM and systrap benchmark log",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54548#01a1cd07-d855-4e56-9bd0-2975fb098259"
+        },
+        {
+          "label": "Earlier master build 49169 with the same failed netns mount",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/49169#01a0f91f-8947-47e9-9f4e-cb5baef994ca"
+        },
+        {
+          "label": "Private networking for the checkpoint benchmarks, #15137",
+          "url": "https://github.com/google/gvisor/pull/15137"
+        },
+        {
+          "label": "Moby issue 50750, checkpoint restore on Docker 28 and later",
+          "url": "https://github.com/moby/moby/issues/50750"
+        },
+        {
+          "label": "Moby observed Tasks.Create returning PID zero on restore",
+          "url": "https://github.com/moby/moby/issues/50750#issuecomment-3282134609"
+        },
+        {
+          "label": "Docker 27.5.1 succeeded in a separate runsc restore test",
+          "url": "https://github.com/moby/moby/issues/50750#issuecomment-3267631419"
+        },
+        {
+          "label": "Moby investigation of the restored network namespace",
+          "url": "https://github.com/moby/moby/issues/50750#issuecomment-3589073993"
+        },
+        {
+          "label": "Existing restore capability guard for Docker servers newer than 27",
+          "url": "https://github.com/google/gvisor/pull/12218"
+        },
+        {
+          "label": "IsRestoreSupported reads the Docker server version",
+          "url": "https://github.com/google/gvisor/blob/2f5253abf/pkg/test/dockerutil/dockerutil.go#L139-L142"
+        },
+        {
+          "label": "Empty and Nginx restore benchmarks on master",
+          "url": "https://github.com/google/gvisor/blob/2f5253abf/test/benchmarks/base/startup_test.go#L201-L357"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-11T18:03:07+00:00"
