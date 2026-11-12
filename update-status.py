@@ -1586,7 +1586,8 @@ def approved_branches_after_merge(registry: dict, prs: list[dict]) -> list[dict]
                          if review["kind"] == "proposal"), {})
         # The original approval also covers a single-commit squash whose tree
         # and base were verified against the reviewed series.
-        if decision.get("outcome") == "approved" and node["head"] in (decision["head"], decision.get("squashedHead")):
+        if (decision.get("outcome") == "approved" and decision.get("head")
+                and node["head"] in (decision["head"], decision.get("squashedHead"))):
             # A rebase can be published under a new ref and commit. A matching
             # title is a reason to compare the PR before acting on the old plan.
             matches = [pr["url"] for pr in prs if pr.get("headRepo") == node.get("repo") and pr.get("url")

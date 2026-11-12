@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T00:09:42+00:00",
+    "updatedAt": "2026-11-12T00:28:53+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4199,9 +4199,9 @@
       "summary": "The requested post-#16046 rebase is published at 57834789e0f3 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at ad6ccc6be236 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe reviewer-assignment workflow failed after selecting reviewers: GitHub POST requested_reviewers returned HTTP 500 at 16:55:30 UTC. The log contains no source diagnosis; no rerun, manual reviewer request or public reply has been made.\n\nThe contributor approved exact 46ad8cc5b22b84e9116e68567532cab9e8b664c7, and ready PR #15449 is now open against master. Root verified the single commit, head, reviewed body and thread metadata. The standing sweep owns CI, import and review follow-up.\n\nThe contributor-requested Read/cursor amendment is public and tracked at 46ad8cc5b22b84e9116e68567532cab9e8b664c7. Its complete owning obligations now have passing composed evidence. The original https://app.buildbuddy.io/invocation/c574883b-21c5-47d9-bb6f-e475aa2faa80 remains FAILED before runtime because the mapped-write qualification context left an unused io import; its actual tun_nogo passed both CPU analyses. The one-line qualified-only correction dfe4d9af5a95de70c3532d639ba93fc4a0441b1d passes https://app.buildbuddy.io/invocation/1b2c3b0a-6185-40f4-99a0-42a8b4bab724 in 211.698 seconds. Both complete shared/directfs TUN suites execute 44 named entries: 42 passes and the two existing WriteToDownDevice skips. Tundev Nogo passes both CPU analyses; the already-passed tun_nogo is reused.\n\nIndependent cumulative peer 40a95d085143 verifies both saved archives, 398 indexed files, four raw compact traces and all original uncached 300-second Action/Command/stdout/XML joins, with no local spawns. Source composition preserves the separate mapped writer/MTU context while applying the exact reviewed Read/Device.Write functions; this is not an exact standalone whole-file run. Existing suites do not directly exercise truncated-read or partial-EFAULT contracts. That renewed review request is resolved by the approved publication above.\n\nPrior proposal and source-specific evidence:\n\nThe independent TUN proposal is refreshed, public and tracked at fb54693011eb96d5d75e1af74a0944e86ab95061 on upstream e1bc. Both production blobs exactly match the reviewed original 900d proposal. It keeps segmented Buffer ownership through Device and file-description I/O, copying only fixed-size input headers and preserving the existing write-size guard and Go heap allocation. The future sentry-managed storage consumer remains separate. Complete source/lifetime and historical evidence peer 770a7bccd844 is closed. The contributor answered with questions and requested changes to the segmented TUN proposal. Root owns the source/design response; that earlier revision was superseded by the approved 46ad publication above. Prior evidence below remains source-specific historical proof.\n\nPrimary metadata recovered from parent cd518896 confirms COMPLETE/OK in 232.963 seconds at tested composition d59821c91, with both full shared/DirectFS syscall owners and both production Nogo owners PASSED. All five changed I/O functions and the complete tundev source match that tested composition; its Device also contains separate errno/MTU setup changes, so this is source-specific composed evidence.\n\nThe prior closed record reports 22 XML cases per syscall owner (21 passes plus the existing WriteToDownDevice skip), and AMD64/ARM64 analysis for both Nogo owners. Five requested old CAS output/summary objects are unavailable; those detailed case and architecture observations remain historical, not freshly replayed. No new standalone run, ARM runtime, mapped-storage/restore or performance claim is made.",
       "updatedAt": "2026-11-12T00:09:42+00:00",
       "followup": {
-        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
+        "disposition": "The short-read syscall test passed on native Linux and systrap. Package tests distinguish owned and shared buffer headroom. During review, we found the new syscall test separated RawPacketSocket from its original comment.",
         "owner": "TUN I/O",
-        "nextAction": "Check buffer ownership across TUN reads and writes. Address headroom reuse and cover truncated reads and segmented buffers.",
+        "nextAction": "Restore the RawPacketSocket comment to its test and check whether the blocking read needs a bounded wait before contributor review.",
         "sourceHead": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
         "evidence": [
           "https://github.com/google/gvisor/pull/15449",
@@ -4210,12 +4210,15 @@
           "https://github.com/tamird/gvisor/commit/57834789e0f3343fc67a6bf2eb12544ea867a632",
           "https://github.com/google/gvisor/pull/15449#discussion_r4544574527",
           "https://github.com/google/gvisor/pull/15449#discussion_r4544574534",
-          "https://github.com/google/gvisor/pull/15449#discussion_r4544574539"
+          "https://github.com/google/gvisor/pull/15449#discussion_r4544574539",
+          "https://github.com/tamird/gvisor/commit/b332e9477",
+          "https://github.com/tamird/gvisor/actions/runs/43126721673",
+          "https://github.com/tamird/gvisor/actions/runs/43126721673/artifacts/13902419255"
         ],
         "reviewedAt": "2026-10-09T19:16:38.099061+00:00",
         "reviewDecision": null,
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-11-12T00:09:42+00:00"
+        "observedAt": "2026-11-12T00:22:28+00:00"
       },
       "head": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
       "number": 15449,
@@ -29633,12 +29636,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fix/tcp-unread-fin-window",
-      "head": "894bc9006ef39928d75f77d1075bc92c0472cd89",
+      "head": "a4edcc73eed1eea4cfb7b88fdf2f1deb89952415",
       "title": "tcp: ACK window overruns while FIN is unread",
       "url": "https://github.com/google/gvisor/pull/16770",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-12T00:09:42+00:00",
+      "updatedAt": "2026-11-12T00:28:53+00:00",
       "summary": "With a FIN or its last data byte unread, Linux and netstack ACK a probe at the receive-window edge; both stop after the application drains the queue. All 56 netstack cases and 54 of 56 on Linux 7.0 passed. Two unchanged established-state cases expected silence and received an ACK.",
       "evidence": [
         {
@@ -29684,14 +29687,28 @@
         {
           "label": "Linux FIN-only end-sequence exception",
           "url": "https://github.com/torvalds/linux/commit/1e3bb184e"
+        },
+        {
+          "label": "Linux restored the FIN exception",
+          "url": "https://github.com/torvalds/linux/commit/1e3bb184e"
+        },
+        {
+          "label": "Linux retained it for an unread queue",
+          "url": "https://github.com/torvalds/linux/commit/91934d444"
+        },
+        {
+          "label": "Proposed source citation",
+          "url": "https://github.com/tamird/gvisor/commit/a4edcc73e"
         }
       ],
       "refinement": {
         "before": {
-          "head": "7ae55f4cc07eb541c8d63442a343a3c2564dfd6f"
+          "base": "89a7d2beb0d553c3ffaff8b79478ffef09e09abc",
+          "head": "894bc9006ef39928d75f77d1075bc92c0472cd89"
         },
         "after": {
-          "head": "894bc9006ef39928d75f77d1075bc92c0472cd89"
+          "base": "89a7d2beb0d553c3ffaff8b79478ffef09e09abc",
+          "head": "a4edcc73eed1eea4cfb7b88fdf2f1deb89952415"
         }
       },
       "number": 16770,
@@ -29701,17 +29718,34 @@
           "head": "7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
           "outcome": "approved",
           "at": "2026-10-30T23:29:29.400226+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "a4edcc73eed1eea4cfb7b88fdf2f1deb89952415",
+          "baseHead": "894bc9006ef39928d75f77d1075bc92c0472cd89",
+          "url": "https://github.com/tamird/gvisor/commit/a4edcc73e",
+          "requestedAt": "2026-11-12T00:22:28+00:00",
+          "title": "Document why a FIN can extend one byte beyond the window",
+          "summary": "Publish the source citation and answer Lucas’s two threads? Linux 6.18 counted FIN at this boundary. Current Linux explicitly excludes the FIN byte when the payload fits.",
+          "body": "Linux commits 1e3bb184e and 91934d444 explain why tcp_sequence() lets the closing-state handler process that FIN. Both changes support the PR’s existing payload-length check. The earlier packet tests established CLOSE_WAIT with a FIN, then probed with data. They did not measure a FIN-bearing probe.\n\ngit -C ~/code/gvisor range-diff 894bc9006^! a4edcc73e^!",
+          "outcome": "approved",
+          "at": "2026-11-12T00:28:53+00:00"
         }
       ],
       "followup": {
-        "owner": "TCP receive",
-        "sourceHead": "894bc9006ef39928d75f77d1075bc92c0472cd89",
-        "observedAt": "2026-11-12T00:09:42+00:00",
-        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
-        "nextAction": "Account for FIN’s sequence byte in the closed receiver’s window-edge comparison, and check the behavior with and without unread data against Linux.",
+        "owner": "Upstream review",
+        "sourceHead": "a4edcc73eed1eea4cfb7b88fdf2f1deb89952415",
+        "observedAt": "2026-11-12T00:28:53+00:00",
+        "disposition": "Published the reviewed source citation and answered both of Lucas’s original threads. Current Linux accepts a FIN byte beyond the window when the payload fits. The existing wire tests use a data probe.",
+        "nextAction": "Follow Lucas’s review of the current commit.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16770#discussion_r4544575279",
-          "https://github.com/google/gvisor/pull/16770#discussion_r4544575285"
+          "https://github.com/google/gvisor/pull/16770#discussion_r4544575285",
+          "https://github.com/torvalds/linux/commit/1e3bb184e",
+          "https://github.com/torvalds/linux/commit/91934d444",
+          "https://github.com/tamird/gvisor/commit/a4edcc73e",
+          "https://github.com/google/gvisor/pull/16770#discussion_r4544763355",
+          "https://github.com/google/gvisor/pull/16770#discussion_r4544763569"
         ]
       }
     },
@@ -30188,13 +30222,15 @@
       "followup": {
         "owner": "TCP recovery",
         "sourceHead": "8427512c2e8f6c0f1ece278d57df65202da6f0e8",
-        "observedAt": "2026-11-12T00:09:42+00:00",
-        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
-        "nextAction": "Rebase the ssthresh change onto the zero-window guard that already landed in #16595. Preserve the congestion-window assertions and correct the PR text.",
+        "observedAt": "2026-11-12T00:22:28+00:00",
+        "disposition": "The rebase removes the second persist guard introduced by merging #16595. One guard remains before the congestion-threshold update. The fork is running the Linux and netstack packet and package checks.",
+        "nextAction": "Read the underlying test results, then present the single-commit amendment and reply to Lucas.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
-          "https://github.com/google/gvisor/pull/16419#discussion_r4544573717"
+          "https://github.com/google/gvisor/pull/16419#discussion_r4544573717",
+          "https://github.com/tamird/gvisor/commit/52ed6dad4",
+          "https://github.com/tamird/gvisor/actions/runs/43125532274"
         ]
       },
       "evidence": [
@@ -56862,14 +56898,16 @@
       "followup": {
         "owner": "Networking",
         "sourceHead": "fea7e15b6953bd487be94e0f7bff8b20cc4ea7a8",
-        "observedAt": "2026-11-12T00:09:42+00:00",
-        "disposition": "Lucas reviewed the current head. The requested changes are under investigation.",
-        "nextAction": "Use the test’s existing netlink socket while checking both veth MTUs, account for checkpoint boundaries, and assert the exact MTU now that #16984 has landed.",
+        "observedAt": "2026-11-12T00:28:53+00:00",
+        "disposition": "The contributor authorized the test revision. The signed fork commit reads both MTUs using the original netlink socket and checks the exact requested values.",
+        "nextAction": "Verify the Linux, systrap, and systrap save/restore tests in the running fork job.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
           "https://github.com/tamird/gvisor/commit/fea7e15b6",
           "https://github.com/google/gvisor/pull/16957#discussion_r4544574909",
-          "https://github.com/google/gvisor/pull/16957#discussion_r4544574912"
+          "https://github.com/google/gvisor/pull/16957#discussion_r4544574912",
+          "https://github.com/tamird/gvisor/commit/c2fa04be2",
+          "https://github.com/tamird/gvisor/actions/runs/43127680146"
         ]
       },
       "refinement": {
@@ -101137,7 +101175,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T16:50:58+00:00",
+      "updatedAt": "2026-11-12T00:28:53+00:00",
       "summary": "Three Java 21 CI jobs timed out in com/sun/jdi/ThreadMemoryLeakTest.java after the debugger's thread-event processing fell behind the target. The debugger reported a Java heap error in each job. All three same-head retries passed.",
       "findings": [
         {
@@ -101226,6 +101264,10 @@
         {
           "label": "54333 passing retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54333#01a1c7f2-18f8-481c-9f0f-1ca8bd97668d"
+        },
+        {
+          "label": "Build #54547, Java thread-memory timeout and same-head retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54547#01a1cd1c-535e-40c4-b0ac-54e3995ec2e9"
         }
       ],
       "nextStep": "Compare target and debugger scheduling under the original eight-CPU, approximately 31 GiB shard configuration. At a failing milestone, collect the worker's actual CPU and memory pressure alongside JDI progress."
@@ -102183,7 +102225,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T12:17:56+00:00",
+      "updatedAt": "2026-11-12T00:28:53+00:00",
       "summary": "Seven of nine recent ARM64 Docker job failures with exit code 2 timed out in a nested bridge-network command. Two were building an image and five were running a privileged container. Both storage drivers were affected.",
       "findings": [
         {
@@ -102239,6 +102281,10 @@
         {
           "label": "gVisor #17445, preserving the exec deadline and output",
           "url": "https://github.com/google/gvisor/pull/17445"
+        },
+        {
+          "label": "Build #54549, nested Docker bridge timeout before #17445",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54549#01a1cd09-68e2-4c9b-9a33-d0fee1db1fa4"
         }
       ]
     },
@@ -102727,7 +102773,7 @@
       "status": "concluded",
       "group": "ci-flakes",
       "owner": "Upstream review",
-      "updatedAt": "2026-11-11T15:24:12+00:00",
+      "updatedAt": "2026-11-12T00:28:53+00:00",
       "summary": "After #17165 added a TODO referring to #15559, the nightly issue reviver treated that open PR as an inactive issue. GitHub rejected its PATCH with HTTP 403.",
       "findings": [
         {
@@ -102794,6 +102840,10 @@
         {
           "label": "#15559 · open pull request",
           "url": "https://github.com/google/gvisor/pull/15559"
+        },
+        {
+          "label": "Nightly recurrence while the reference fix awaits review",
+          "url": "https://github.com/google/gvisor/actions/runs/43125502799/job/130876416113"
         }
       ]
     },
@@ -103519,7 +103569,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T22:04:22+00:00",
+      "updatedAt": "2026-11-12T00:28:53+00:00",
       "summary": "The native runc Ruby benchmark failed while creating its FUSE server on 3238f32db. The helper could see both tmpfs mounts but could not see the host FUSE device.",
       "findings": [
         {
@@ -103558,6 +103608,10 @@
         {
           "label": "Native Ruby test log, XML, host device and container path checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/43105062304/artifacts/13893973900"
+        },
+        {
+          "label": "Build #54548, native ABSL FUSE benchmark",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54548#01a1cd07-d84d-4305-bd64-adfa4e895bef"
         }
       ]
     },
