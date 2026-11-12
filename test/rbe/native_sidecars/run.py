@@ -15,6 +15,7 @@ TMP = Path(os.environ["RUNNER_TEMP"])
 OUTPUT = TMP / "sidecar-evidence"
 OUTPUT.mkdir(exist_ok=True)
 BASE = "89c57ee6988962eca89daeb32e07813981729fe2"
+STAGES = "baa2066bd9f6830d078228a9047649f8334f712e"
 COMBINED = "7e7e7a794c4c735386362671939bfd4cf27c0a2d"
 FIXED = "7b1a340bfc71c507113354cb363bfb5b19539ca5"
 TESTS = ["//:freestanding_link_test", "//:cxx_shared_library_test"]
@@ -36,13 +37,18 @@ def run_bazel(tag, command, flags):
     for line in stderr.read_text(errors="replace").splitlines():
         if any(x in line.lower() for x in ("error:", "unable to find library", "invocation id", "failed to build", "executed ", "processes:", "build completed")) and not any(x in line.lower() for x in ("header=", "api-key", "credential")):
             messages.append(line[-900:])
+    if proc.returncode:
+        lines = stderr.read_text(errors="replace").splitlines()
+        start = next((i for i, line in enumerate(lines) if "ERROR:" in line), max(0, len(lines) - 60))
+        saved = [line for line in lines[start:start + 100] if not any(token in line.lower() for token in ("header=", "api-key", "credential", "authorization:", "bearer "))]
+        (OUTPUT / f"{tag}.stderr.txt").write_text("\n".join(saved) + "\n")
     result = {"exit": proc.returncode, "diagnostics": messages[-18:]}
     print(tag, json.dumps(result), flush=True)
     return stdout, result
 
 
-def action_flags(tag, flags):
-    expression = 'mnemonic("CppLink", deps(set(' + " ".join([*TESTS, UNWIND]) + ')))'
+def action_flags(tag, flags, targets=None):
+    expression = 'mnemonic("CppLink", deps(set(' + " ".join(targets or [*TESTS, UNWIND]) + ')))'
     stdout, result = run_bazel(tag, "aquery", [*flags, "--include_param_files", "--noinclude_artifacts", "--output=jsonproto", expression])
     actions = []
     if result["exit"] == 0:
@@ -50,11 +56,11 @@ def action_flags(tag, flags):
         labels = {t["id"]: t["label"] for t in graph["targets"]}
         (OUTPUT / f"{tag}.actions.json").write_text(json.dumps([
             {"label": labels[a["targetId"]], "arguments": a.get("arguments", []), "paramFiles": a.get("paramFiles", [])}
-            for a in graph.get("actions", []) if labels[a["targetId"]].rsplit(":", 1)[-1] in ("libunwind.shared", "cxx_shared_library_test", "freestanding_link_test")
+            for a in graph.get("actions", []) if labels[a["targetId"]].rsplit(":", 1)[-1].rsplit("/", 1)[-1] in ("libunwind.shared", "cxx_shared_library_test", "freestanding_link_test")
         ], indent=2) + "\n")
         for action in graph.get("actions", []):
             label = labels[action["targetId"]]
-            name = label.rsplit(":", 1)[-1]
+            name = label.rsplit(":", 1)[-1].rsplit("/", 1)[-1]
             if name not in ("libunwind.shared", "cxx_shared_library_test", "freestanding_link_test"):
                 continue
             args = action.get("arguments", []) + [v for p in action.get("paramFiles", []) for v in p.get("arguments", [])]
@@ -80,7 +86,7 @@ def build_and_test(tag, flags, is_gnu):
     tests = {}
     groups = {}
     outputs = []
-    for line in bep.read_text().splitlines():
+    for line in bep.read_text().splitlines() if bep.exists() else []:
         event = json.loads(line)
         ids = event.get("id", {})
         if "namedSet" in ids:
@@ -144,9 +150,23 @@ def qualify(name, revision):
 
 os.environ["USE_BAZEL_VERSION"] = (ROOT / ".bazelversion").read_text().strip()
 subprocess.run(["git", "fetch", "--no-tags", "--depth=1", "https://github.com/hermeticbuild/hermetic-llvm.git", BASE], check=True)
-baseline = qualify("baseline", BASE)
-combined = qualify("combined", COMBINED)
-if not baseline:
-    raise SystemExit("The baseline controls did not all pass. See the report before interpreting the combined arm.")
-if not combined and not qualify("fixed", FIXED):
+# The first job already built the baseline and attempted the combined builds.
+# Its report contains their ELF digests and original test XML.
+REPORT["first_run"] = "https://github.com/tamird/gvisor/actions/runs/43144267695/artifacts/13911485334"
+for arm, revision in (("baseline", BASE), ("stages_only", STAGES), ("combined", COMBINED)):
+    subprocess.run(["git", "switch", "--quiet", "--detach", revision], check=True)
+    data = REPORT[arm] = {"revision": revision}
+    # The freestanding fixture is introduced by #909. Keep the upstream #938
+    # tree pristine and analyze its original hosted and unwind targets.
+    targets = [TESTS[1], UNWIND] if arm == "stages_only" else [*TESTS, UNWIND]
+    data["targets"] = targets
+    for libc, platform in (("gnu", "linux_x86_64"), ("musl", "linux_x86_64_musl")):
+        row = data[libc] = {"args": action_flags(f"{arm}-{libc}-link", [f"--platforms=@llvm//platforms:{platform}"], targets)}
+        record()
+fixed_pass = qualify("fixed", FIXED)
+for arm in ("baseline", "stages_only"):
+    for libc in ("gnu", "musl"):
+        row = REPORT[arm][libc]
+        assert row["args"]["exit"] == 0 and matches(row, "libunwind.shared", True), (arm, libc, row)
+if not fixed_pass:
     raise SystemExit("The stage-specific correction did not restore every result.")
