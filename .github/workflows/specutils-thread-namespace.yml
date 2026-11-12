@@ -1,0 +1,44 @@
+name: Check the thread selected for namespace restoration
+on:
+  push:
+    branches: [qualification/specutils-thread-namespace]
+permissions:
+  contents: read
+jobs:
+  specutils:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the unchanged specutils suite on the candidate
+        run: |
+          mkdir -p "$RUNNER_TEMP/ns-results"
+          git rev-parse HEAD^ HEAD^^ > "$RUNNER_TEMP/ns-results/revisions"
+          bazel test --lockfile_mode=off --test_output=errors //runsc/specutils:specutils_test
+          cp bazel-testlogs/runsc/specutils/specutils_test/test.xml "$RUNNER_TEMP/ns-results/suite.xml"
+      - name: Check which task each revision selects on a nonleader thread
+        run: |
+          target=//runsc/specutils:specutils_test
+          file=runsc/specutils/namespace.go
+          results="$RUNNER_TEMP/ns-results"
+          cp .github/workflows/specutils-thread-namespace-test.go.txt runsc/specutils/ns_path_probe_test.go
+          sed -i '/"gofer_conf_test.go",/a\        "ns_path_probe_test.go",' runsc/specutils/BUILD
+          git show "HEAD^^:$file" > "$file"
+          if bazel test --lockfile_mode=off --test_output=errors --test_filter=TestCallingThreadNamespacePath "$target"; then
+            echo "The parent unexpectedly selected the calling thread."
+            exit 1
+          fi
+          cp bazel-testlogs/runsc/specutils/specutils_test/test.log "$results/parent.log"
+          grep -F 'selected the leader instead of the calling thread: true' "$results/parent.log"
+          git show "HEAD^:$file" > "$file"
+          bazel test --lockfile_mode=off --test_output=all --test_filter=TestCallingThreadNamespacePath --test_arg=-test.v "$target"
+          cp bazel-testlogs/runsc/specutils/specutils_test/test.log "$results/candidate.log"
+          grep -F 'namespace path /proc/thread-self/ns/net selected task' "$results/candidate.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: specutils-thread-namespace
+          path: ${{ runner.temp }}/ns-results
