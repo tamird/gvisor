@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T18:01:54+00:00",
+    "updatedAt": "2026-11-12T18:11:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5718,7 +5718,7 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.",
+      "summary": "The declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.\n\nThe same three-line external MODULE, with compiler integration a066005a6, built a separate ARM64 release using --@gvisor//tools/bazeldefs:page_size=64k. The cache-only invocation missed. Rebuild f4ab221b-7490-4538-8c1f-42a4cfbf81a8 produced all nine ARM64 ELF files, six with different digests from the 4 KiB release. Uncached remote Bazel test 453b258d-06bc-4b6f-9abb-9e9072894d54 took 13.422 seconds. It booted an emulated AArch64 Ubuntu 6.8.0-138-generic-64k guest; runsc selected Sentry 2f8cca6b6, and guest PID 1 read 65,536 bytes from both AT_PAGESZ and sysconf and exited zero.",
       "updatedAt": "2026-11-12T16:19:21+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
@@ -6513,6 +6513,14 @@
         {
           "label": "External consumer ARM64 64 KiB flavor qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/43273371399"
+        },
+        {
+          "label": "64 KiB ARM64 release files and digests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43273371399/artifacts/13969834179"
+        },
+        {
+          "label": "Uncached 64 KiB guest execution and per-process page-size checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43273371399/artifacts/13970957293"
         }
       ],
       "refinement": {
@@ -30632,14 +30640,14 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-12T18:01:54+00:00",
-      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The map watches later releases for a chance to drop the local header backport while preserving the two parser backends in #15940. The current source remains available for review. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. After #15940 landed, both master and the LLVM 23.1.2 parser select only X86 and AArch64. Configured C++ compile actions increase from 2,725 to 2,935 on AMD64 and from 2,722 to 2,932 on ARM64. Of the 210 additional actions on each, 184 compile LLVM and 26 compile zlib. Supplier revisions 17f6a3008 and 8a3f5bd77 yield the same graph. The published PR description still quotes a reduction of 141 from the earlier 20-versus-nine-backend comparison. Neither graph measures elapsed build time. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe contributor requested a hermetic-llvm dependency update in place of the local patches. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.\n\nThe published 7fca7c54f conflicts in MODULE.bazel against ccf8c9479. The patch-free fork revision ea1d3141c, which pins supplier 17f6a3008, merges cleanly there. Patch-free product 647f8a21e builds on ccf8c9479 with supplier 8a3f5bd77. TestParser ran uncached on native Linux x86_64 and AArch64. The ELF machine IDs were 62 and 183 respectively. The audit covered all 224 licenses. Downstream consumers also need the root-module policy in #16804.",
+      "updatedAt": "2026-11-12T18:11:37+00:00",
+      "summary": "Tamir approved using the released BCR module with necessary backports. The agent is preparing one rebased, tested amendment to #17114; each retained patch must link its upstream change in the header.\n\n#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.\n\nBCR llvm 0.8.26 predates the upstream kernel-header defaults (#883) and development-only extra LLVM backends (#892). The amendment will use released BCR llvm 0.8.26 and carry only the necessary backports. Each patch header will link the corresponding upstream change. Fork revision b61e5fd37 carries the two MODULE hunks from hermetic-llvm #892 into gVisor’s root module until a supplier release includes them. The tested tree matches c2204517c. After #15940 landed, both master and the LLVM 23.1.2 parser select only X86 and AArch64. Configured C++ compile actions increase from 2,725 to 2,935 on AMD64 and from 2,722 to 2,932 on ARM64. Of the 210 additional actions on each, 184 compile LLVM and 26 compile zlib. Supplier revisions 17f6a3008 and 8a3f5bd77 yield the same graph. The published PR description still quotes a reduction of 141 from the earlier 20-versus-nine-backend comparison. Neither graph measures elapsed build time. The native AMD64 and ARM64 workers each executed TestParser uncached and passed. The test ELFs matched their respective machines and the license audit verified all 224 dependencies.\n\nThe four original compiler-integration failures share the parser. LLVM failed to compile RDFCopy.cpp and HexagonRDFOpt.cpp for Hexagon, and RDFGraph.cpp in the common CodeGen library. All three first reported an error in libc++ make_transparent.h while instantiating an llvm::rdf::RegisterRef comparator. With #15940 and the original LLVM source, a Bazel action query of the parser selects the common RDFGraph object and omits both Hexagon objects. The declared Clang driver attempted that exact object on a Linux AMD64 worker and exited 1 at RDFGraph.cpp:1601 when libc++ rejected std::less<llvm::rdf::RegisterRef> in make_transparent.h:48. The two-backend change alone leaves a verified source-presubmit failure. The nine-file release target already builds independently of the parser.\n\nThe earlier patch-free qualification compared upstream hermetic-llvm revisions. The earlier b61e5fd37 test results remain the comparison for the replacement. A fork-only revision ea1d3141c removes both local LLVM patches and pins upstream 17f6a3008, four commits after BCR v0.8.26. The generated repository selected Linux 6.18 headers and the AArch64 and X86 backends. Against the current two-backend baseline each architecture kept the previously measured 210 additional compiler actions. Both uncached native TestParser cases passed with zero skips, their ELF digests matched the two-patch candidate, and all 224 license records passed audit.\n\nThe published 7fca7c54f conflicts in MODULE.bazel against ccf8c9479. The patch-free fork revision ea1d3141c, which pins supplier 17f6a3008, merges cleanly there. Patch-free product 647f8a21e builds on ccf8c9479 with supplier 8a3f5bd77. TestParser ran uncached on native Linux x86_64 and AArch64. The ELF machine IDs were 62 and 183 respectively. The audit covered all 224 licenses. Downstream consumers also need the root-module policy in #16804.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-12T18:01:54+00:00",
-        "disposition": "Fork revision ea1d3141c merges cleanly against ccf8c9479. The published head conflicts in MODULE.bazel. BCR llvm remains at 0.8.26. Patch-free product 647f8a21e builds on ccf8c9479 with supplier 8a3f5bd77. TestParser ran uncached on native Linux x86_64 and AArch64. The ELF machine IDs were 62 and 183 respectively. The audit covered all 224 licenses.",
-        "nextAction": "Watch for a BCR release containing #883 and #892, qualified at supplier 8a3f5bd77. Once published, replace the temporary source pin with the released module and recheck the parser and downstream root policy from #16804.",
+        "observedAt": "2026-11-12T18:11:37+00:00",
+        "disposition": "Tamir declined the supplier release request. The preparatory archive-pin tests remain historical evidence. The public PR requires a rebase.",
+        "nextAction": "Rebase #17114 onto current master using released BCR llvm 0.8.26. Keep only necessary backports with links to the upstream changes in their patch headers, verify both native parsers and the license audit, and present one tested amendment for contributor review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17114",
           "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
@@ -30924,26 +30932,21 @@
           "outcome": "changes-requested",
           "at": "2026-11-12T15:48:26+00:00",
           "note": "The contributor requested updating the hermetic-llvm dependency instead of carrying local patches. The tested backport is retained as comparison evidence."
+        },
+        {
+          "kind": "issue",
+          "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+          "requestedAt": "2026-11-12T18:01:54+00:00",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/issues/new",
+          "title": "Publish an llvm module release with the kernel headers and backend defaults",
+          "summary": "Decide whether to file this supplier release request.",
+          "body": "Could you publish a new BCR version of `llvm` that includes #883 and #892? gVisor uses the first to select Linux 6.18 headers and the second to build its NVIDIA driver parser for X86 and AArch64. The latest BCR version (0.8.26) predates both.\n\nWith 8a3f5bd77, google/gvisor#17114 can drop both local LLVM patches. The parser test passed on native AMD64 and ARM64 [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13969368929\n\nPrepared by Codex on behalf of @tamird.",
+          "at": "2026-11-12T18:11:37+00:00",
+          "outcome": "declined",
+          "note": "Tamir approved carrying the necessary backports against the released BCR module, with links to the upstream changes in the patch headers. The proposed release request was never sent."
         }
       ],
-      "number": 17114,
-      "releaseWait": {
-        "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "confirmedAt": "2026-11-12T16:06:26+00:00",
-        "module": "llvm",
-        "checkedVersion": "0.8.26",
-        "nextAction": "When a BCR llvm release includes #883 and #892 (through 17f6a3008), replace the tested source pin with its ordinary bazel_dep and recheck the generated repository, native parser tests and license audit."
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "issue",
-        "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "requestedAt": "2026-11-12T18:01:54+00:00",
-        "url": "https://github.com/hermeticbuild/hermetic-llvm/issues/new",
-        "title": "Publish an llvm module release with the kernel headers and backend defaults",
-        "summary": "Decide whether to file this supplier release request.",
-        "body": "Could you publish a new BCR version of `llvm` that includes #883 and #892? gVisor uses the first to select Linux 6.18 headers and the second to build its NVIDIA driver parser for X86 and AArch64. The latest BCR version (0.8.26) predates both.\n\nWith 8a3f5bd77, google/gvisor#17114 can drop both local LLVM patches. The parser test passed on native AMD64 and ARM64 [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43272221335/artifacts/13969368929\n\nPrepared by Codex on behalf of @tamird."
-      }
+      "number": 17114
     },
     {
       "id": "branch:licensecheck-go-digest-notices",
@@ -102638,9 +102641,18 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T04:15:45+00:00",
+      "updatedAt": "2026-11-12T18:11:37+00:00",
       "summary": "Three Buildkite runs stopped at the first wire dump with “error printing state: unreachable”. A native AMD64 workload reproduced the error on two of eight valid guest checkpoints. Stock mistook saved page data for a stream header. #17208 dumped all eight and the guests restored.",
       "findings": [
+        {
+          "text": "The chained cross-engine checkpoint dump at hop 0 in build 54697 printed “error printing state: overflow”. Earlier incidents printed “unreachable”. This build did not include #17208. The original log artifact is 01a1d0e9-f9a2-4a6d-94e0-2b02ed74b004.",
+          "evidence": [
+            {
+              "label": "Chained checkpoint overflow in build 54697",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54697"
+            }
+          ]
+        },
         {
           "text": "On master 2552c6787, the chained wire → graph → wire restore failed at the first statefile dump with “error printing state: unreachable” under both KVM and systrap. The same shard passed on retry. Both test messages reported retaining the checkpoint image, but the 69 public job artifacts include no .img or .zip. Build 54379 also reproduced the KVM failure.",
           "evidence": [
@@ -102799,6 +102811,10 @@
         {
           "label": "Fork comparison using checkpoints from the existing restore test",
           "url": "https://github.com/tamird/gvisor/actions/runs/42676362803"
+        },
+        {
+          "label": "Chained checkpoint overflow in build 54697",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54697"
         }
       ]
     },
@@ -104427,9 +104443,22 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-11T14:01:21+00:00",
+      "updatedAt": "2026-11-12T18:11:37+00:00",
       "summary": "The Node 22.2.0 test tick-processor/test-tick-processor-preprocess-flag timed out on #17425 (040ae629f) and #17428 (aa0152a6a). The Node target passed on each same-head retry.",
       "findings": [
+        {
+          "text": "On build 54694 the distinct test-tick-processor-unknown case timed out after 2,029 “Dropping unknown tick frame” messages. It uses the same tick-processor fixture. The same-head retry ran the affected shard and passed in 111.9 seconds; the other seven shards were cached.",
+          "evidence": [
+            {
+              "label": "Unknown tick frame timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54694#01a1d0d9-7bd9-48c5-b0af-be948ed143d6"
+            },
+            {
+              "label": "Same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54694#01a1d0eb-eab8-4dff-87ca-083da363cd5e"
+            }
+          ]
+        },
         {
           "text": "The original logs identify the same test and record TIMEOUT. On retry, the sharded Node target passed in 181.7 seconds on #17425 and 160.7 seconds on #17428. The retries report target-level timings.",
           "evidence": [
@@ -104540,6 +104569,14 @@
         {
           "label": "Node policy for opening AI-assisted PRs",
           "url": "https://github.com/nodejs/node/blob/ab11f834f/doc/contributing/ai-guidelines.md#L13-L38"
+        },
+        {
+          "label": "Unknown tick frame timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54694#01a1d0d9-7bd9-48c5-b0af-be948ed143d6"
+        },
+        {
+          "label": "Same-head retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54694#01a1d0eb-eab8-4dff-87ca-083da363cd5e"
         }
       ],
       "repo": "nodejs/node",
@@ -107551,9 +107588,26 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T17:42:39+00:00",
-      "summary": "On de7d65b3b, the native TCFLSHWakesReplicaPolloutAfterMasterInputFlush test observed POLLOUT before flushing the master input. The same shard ran again and passed.",
+      "updatedAt": "2026-11-12T18:09:55+00:00",
+      "summary": "The native PTY flush test saw the replica become writable between two immediate polls, before the master flushed its input. A test-only change registers the replica with epoll before filling it and checks that flushing wakes the registered writer.",
       "findings": [
+        {
+          "text": "On 5b2473e29, all 16 uncached native and 16 systrap runs passed. Removing only the replica-writable notification from gVisor made epoll_wait time out after 20 seconds. The stock native test passed 24 times in this comparison. The original failure remains the observed occurrence.",
+          "evidence": [
+            {
+              "label": "Original failure on de7d65b3b",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0c2-5068-4825-bd4b-98e4e38d48ba"
+            },
+            {
+              "label": "Same-head fresh retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0d1-6e5c-4a41-92af-7520c5d0c291"
+            },
+            {
+              "label": "Qualification and negative control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43275075683/artifacts/13971026227"
+            }
+          ]
+        },
         {
           "text": "The zero-time poll at pty.cc:697 observed no writable event. The second zero-time poll at line 2829 returned one ready descriptor before the test issued the flush. The retry reran the failing shard and reused only the other three shards.",
           "evidence": [
@@ -107580,9 +107634,177 @@
         {
           "label": "Fresh failing shard passed on retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0d1-6e5c-4a41-92af-7520c5d0c291"
+        },
+        {
+          "label": "Test-only candidate",
+          "url": "https://github.com/tamird/gvisor/commit/5b2473e2997954bba953f5fb9cd7b7777f0e72b6"
+        },
+        {
+          "label": "Uncached native and systrap runs and missing-notification control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43275075683/artifacts/13971026227"
         }
       ],
-      "nextStep": "Determine what made the replica writable between the two polls. Track this native pre-flush observation independently of #17484."
+      "nextStep": "Review the single test commit for submission to google/gvisor.",
+      "repo": "google/gvisor",
+      "head": "5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
+        "baseHead": "ccf8c9479bad5a0210c33e6e6c93f7829fbb2026",
+        "url": "https://github.com/tamird/gvisor/commit/5b2473e2997954bba953f5fb9cd7b7777f0e72b6",
+        "requestedAt": "2026-11-12T18:09:55+00:00",
+        "title": "Register the PTY writer before flushing its input",
+        "summary": "Decide whether to submit this test-only change to google/gvisor.",
+        "body": "The native PTY flush test observed a writable replica after its first poll had found the writer blocked [1]. The failure occurred before the master flushed its input. The waiter also signaled that it had started before entering poll, so the test slept for a second before issuing the flush.\n\nRegister the replica with epoll before filling it. If writable readiness is already pending after a write returns EAGAIN, consume the event and refill the queue. Flush the master's input, wait for the registered EPOLLOUT event, and write one byte to confirm the replica can use the newly available space.\n\nThe candidate passed 16 uncached native Linux runs and 16 systrap runs. Removing gVisor's replica-writable notification made epoll_wait time out after 20 seconds. The original Buildkite shard passed on retry [2], and the stock test passed 24 native runs in the separate comparison [3].\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0c2-5068-4825-bd4b-98e4e38d48ba\n[2]: https://buildkite.com/gvisor/pipeline/builds/54686#01a1d0d1-6e5c-4a41-92af-7520c5d0c291\n[3]: https://github.com/tamird/gvisor/actions/runs/43275075683/artifacts/13971026227"
+      }
+    },
+    {
+      "id": "investigation:ci-flake-node-net-hex-write-timeout",
+      "title": "Node asynchronous hex-string write timed out on loopback",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T18:09:55+00:00",
+      "summary": "Build 54692 on 875cb4439 timed out running parallel/test-net-write-fully-async-hex-string after 49 other tests passed.",
+      "findings": [
+        {
+          "text": "Node 22.2 reported a runner timeout without a JavaScript assertion or socket error. The loopback writer waits for drain, but the log does not establish which callback stalled. The same-head retry completed the target in 70.9 seconds with seven of eight shards cached.",
+          "evidence": [
+            {
+              "label": "Original Node shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54692#01a1d0d2-99bd-4a76-b5ff-21c56fb72dc1"
+            },
+            {
+              "label": "Original test.log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54692/jobs/01a1d0d2-99bd-4a76-b5ff-21c56fb72dc1/artifacts/01a1d0e1-c22f-422b-865d-1123ab2c9061"
+            },
+            {
+              "label": "Same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54692#01a1d0e2-7d7f-4491-9627-a01256d5fb5a"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Original Node shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54692#01a1d0d2-99bd-4a76-b5ff-21c56fb72dc1"
+        },
+        {
+          "label": "Original test.log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54692/jobs/01a1d0d2-99bd-4a76-b5ff-21c56fb72dc1/artifacts/01a1d0e1-c22f-422b-865d-1123ab2c9061"
+        },
+        {
+          "label": "Same-head retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54692#01a1d0e2-7d7f-4491-9627-a01256d5fb5a"
+        }
+      ],
+      "nextStep": "Identify the last completed operation if the loopback timeout recurs."
+    },
+    {
+      "id": "investigation:ci-flake-iptables-docker-create-timeout",
+      "title": "IPv6 iptables test hit a deadline during Docker container creation",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T18:09:55+00:00",
+      "summary": "The IPv6 subcase of TestFilterInputDropDifferentUDPPort timed out before installing any iptables rule or sending a packet.",
+      "findings": [
+        {
+          "text": "On 5291b9c72, the first POST /containers/create returned context deadline exceeded at 10.01 seconds. The same-head retry ran the iptables target successfully.",
+          "evidence": [
+            {
+              "label": "Original Docker-create failure",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54696#01a1d0dd-2e71-413a-a79e-8cb2bbc0410d"
+            },
+            {
+              "label": "Same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54696#01a1d0e4-bb64-4015-a3aa-54d3568af899"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Original Docker-create failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54696#01a1d0dd-2e71-413a-a79e-8cb2bbc0410d"
+        },
+        {
+          "label": "Same-head retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54696#01a1d0e4-bb64-4015-a3aa-54d3568af899"
+        }
+      ],
+      "nextStep": "Check container creation and daemon timing if the deadline recurs."
+    },
+    {
+      "id": "investigation:ci-flake-java-datagram-adaptor-echo",
+      "title": "Java DatagramChannel echo timed out after a server send failed",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-12T18:11:37+00:00",
+      "summary": "On 302d0f545, AdaptorBasic completed four UDP echoes before the fifth exchange stopped. The server logged Network is unreachable while the client waited in receive0.",
+      "findings": [
+        {
+          "text": "The test sources are OpenJDK jdk-21.0.3-ga (05f18b106), while the runtime is Ubuntu’s OpenJDK 21.0.2+13. The server bound to 172.17.0.4:16606 and the client logged [::]:49501. A later OpenJDK change bound the AdaptorBasic server to loopback, removing non-loopback routing from the test. The cause of the fifth send’s ENETUNREACH remains open. The OpenJDK review concerned a macOS port collision. This run used distinct ports and did not log the fifth reply’s destination.",
+          "evidence": [
+            {
+              "label": "OpenJDK changed AdaptorBasic’s endpoint to loopback",
+              "url": "https://github.com/openjdk/jdk/commit/8ec378a6c"
+            },
+            {
+              "label": "Upstream rationale for the loopback binding",
+              "url": "https://github.com/openjdk/jdk/pull/19922"
+            }
+          ]
+        },
+        {
+          "text": "The fifth exchange reached the pre-operation marker. The client was in its untimed receive at AdaptorBasic.java:71. jtreg terminated the case after 600.648 seconds. The original log does not identify why the server lost reachability.",
+          "evidence": [
+            {
+              "label": "Original Java runtime shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54693#01a1d0d3-7176-4f4c-a18f-201e8d724220"
+            },
+            {
+              "label": "Original test.log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54693/jobs/01a1d0d3-7176-4f4c-a18f-201e8d724220/artifacts/01a1d0ed-7f6d-4f31-94d8-a329129beb99"
+            },
+            {
+              "label": "Same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54693#01a1d0ee-4134-44c8-9eab-ee193cb645a8"
+            }
+          ]
+        },
+        {
+          "text": "Shard 2 of 8 ran again on the same head and passed. The other seven shards were cached. The sandbox archive lists eth0 at 172.17.0.4/16 with a subnet route and a default route; it has no trace of the failed send.",
+          "evidence": [
+            {
+              "label": "Same-head retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54693#01a1d0ee-4134-44c8-9eab-ee193cb645a8"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Original Java runtime shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54693#01a1d0d3-7176-4f4c-a18f-201e8d724220"
+        },
+        {
+          "label": "Original test.log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54693/jobs/01a1d0d3-7176-4f4c-a18f-201e8d724220/artifacts/01a1d0ed-7f6d-4f31-94d8-a329129beb99"
+        },
+        {
+          "label": "Same-head retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54693#01a1d0ee-4134-44c8-9eab-ee193cb645a8"
+        },
+        {
+          "label": "OpenJDK changed AdaptorBasic’s endpoint to loopback",
+          "url": "https://github.com/openjdk/jdk/commit/8ec378a6c"
+        }
+      ],
+      "nextStep": "Capture both the address received by the echo server and its send destination if ENETUNREACH recurs."
     }
   ],
   "updatedAt": "2026-11-12T08:42:54+00:00"
