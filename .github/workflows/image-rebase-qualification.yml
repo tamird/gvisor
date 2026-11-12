@@ -1,0 +1,25 @@
+name: Qualify the MariaDB and Go helper image rebases
+on:
+  push:
+    branches: ["qualification/redis-context-mariadb-and-helpers"]
+permissions:
+  contents: read
+jobs:
+  images:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Prepare the two exact candidate revisions
+        run: |
+          set -euo pipefail
+          test "$(bazel --version)" = "bazel 9.3.1"
+          git fetch --depth=1 --no-tags https://github.com/tamird/gvisor.git 8dc316391447193c51882d606da918974087f372
+          cp -R .github/image-rebase-check "$RUNNER_TEMP/"
+      - name: Verify MariaDB and Redis on AMD64 and ARM64
+        run: python3 "$RUNNER_TEMP/image-rebase-check/check.py" mariadb
+      - name: Verify the three Go helpers on AMD64 and ARM64
+        run: python3 "$RUNNER_TEMP/image-rebase-check/check.py" helpers

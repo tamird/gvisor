@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "digest": "sha256:57c69e064d6c79e7cbe8c77a3342327d13455947616e7e7908bda2fbad348e34",
+    "size": 8772
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:0926a8eb0e608a5c6888d1cd5594184bdf3ed3aa311dba5b42a547caefdc6f2e",
+      "size": 29752807
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:71fc539b309a9c3d0b15568b629b2a136ade389e762e2ff49d445b5467377e21",
+      "size": 1342
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:0823aa11c04c65f4f6abca8c0f1a5ca74ff1b72294cbb5acf1575e028751caf0",
+      "size": 5245569
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:ef4e113f30b95423af6e26440597d0ce807096cf928cd83fda864b6e6cee1baf",
+      "size": 116
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:0b9fa11a3618f89861117845321307a05f3b58b2558c61086743d0cd5c5bde12",
+      "size": 330
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:4373608fb269941bc8fcd70ca7db9938e0dea6ce3ba93fc65d3aa6fdda7aba41",
+      "size": 70287019
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:f4b83b8f70d27eda0c82c9d6add520f345e029bda1da89f47a0b9eecfd11725a",
+      "size": 4034
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:6d1c2cce3f0a7a12a78d7ad100b75d3d40c2f94aa415a3e46e8a73bf16687cb0",
+      "size": 8492
+    }
+  ],
+  "annotations": {
+    "com.docker.official-images.bashbrew.arch": "amd64",
+    "org.opencontainers.image.base.digest": "sha256:1e0a86e57d247923571b75e0aaf48a1449cf8c543d51fb3e07a4a7d7bfa79316",
+    "org.opencontainers.image.base.name": "ubuntu:noble",
+    "org.opencontainers.image.created": "2026-08-18T19:23:53Z",
+    "org.opencontainers.image.revision": "af9b72baa083d6c40b2e0741ec65fd74adacde68",
+    "org.opencontainers.image.source": "https://github.com/MariaDB/mariadb-docker.git#af9b72baa083d6c40b2e0741ec65fd74adacde68:12.3",
+    "org.opencontainers.image.url": "https://hub.docker.com/_/mariadb",
+    "org.opencontainers.image.version": "12.3.2-noble"
+  }
+}
