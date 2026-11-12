@@ -1,0 +1,10 @@
+diff --git a/go/config/BUILD.bazel b/go/config/BUILD.bazel
+--- a/go/config/BUILD.bazel
++++ b/go/config/BUILD.bazel
+@@ -17,5 +17,6 @@
+ bool_flag(
+     name = "race",
+     build_setting_default = False,
++    scope = "target",
+     visibility = ["//visibility:public"],
+ )
