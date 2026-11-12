@@ -42,8 +42,9 @@
 ##
 ##   To opt out of these wrappers, set DOCKER_BUILD=false.
 DOCKER_BUILD := true
+host_only_goals := help testlogs release-prebuilt
 ifneq ($(MAKECMDGOALS),)
-ifeq ($(filter-out help testlogs,$(MAKECMDGOALS)),)
+ifeq ($(filter-out $(host_only_goals),$(MAKECMDGOALS)),)
 DOCKER_BUILD := false
 endif
 endif

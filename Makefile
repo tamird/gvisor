@@ -968,7 +968,9 @@ syzkaller-smoke-test: $(SYZKALLER_TARBALL)
 ##
 RELEASE_ROOT      := repo
 RELEASE_KEY       := repo.key
-RELEASE_ARTIFACTS := artifacts
+RELEASE_ARTIFACTS ?= artifacts
+release_native_files := $(foreach arch,x86_64 aarch64, \
+    $(addprefix $(arch)/,runsc.deb gvisor.tar.bz2 gvisor.tar.zstd))
 RELEASE_NIGHTLY   := false
 RELEASE_COMMIT    :=
 RELEASE_NAME      :=
@@ -994,12 +996,10 @@ release-artifacts: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
 release-artifacts: ## Build the release archives for both architectures with RELEASE_VERSION.
 	@case "$$GVISOR_RELEASE_LABEL" in ''|0.0.0|VERSION_MISSING|*[!A-Za-z0-9._+-]*) echo "invalid RELEASE_VERSION" >&2; exit 1;; esac; \
 	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac; \
-	for arch in x86_64 aarch64; do \
-		$(MAKE) BAZEL_OPTIONS="$(BAZEL_OPTIONS) --config=$$arch --config=release_version --embed_label=$$GVISOR_RELEASE_LABEL" "$(RELEASE_ARTIFACTS)/$$arch" || exit $$?; \
-	done
-.PHONY: release-artifacts force-release-artifacts
+	$(MAKE) BAZEL_OPTIONS="$(BAZEL_OPTIONS) --config=release_version --embed_label=$$GVISOR_RELEASE_LABEL" artifacts-all
+.PHONY: release-artifacts
 
-$(RELEASE_ARTIFACTS)/%: $(if $(GVISOR_RELEASE_LABEL),force-release-artifacts)
+$(RELEASE_ARTIFACTS)/%:
 	@mkdir -p $@
 	@$(call copy,//debian:release-packages,$@)
 
@@ -1016,10 +1016,12 @@ artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions
 	$(call build_paths,--//sandboxexec/sandbox/python:dist_version="$$python_release_version" //sandboxexec/sandbox/python:dist,tools/make_python_release.sh stage "$$0" "$(PYTHON_RELEASE_DEST)")
 .PHONY: artifacts-python
 
-release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
-	@mkdir -p $(RELEASE_ROOT)
-	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh $(RELEASE_KEY) $(RELEASE_ROOT) $$(find $(RELEASE_ARTIFACTS) -type f)
-.PHONY: release
+release: artifacts-all
+release-prebuilt: ## Sign and stage packages already in RELEASE_ARTIFACTS.
+release release-prebuilt: $(RELEASE_KEY)
+	@NIGHTLY="$(RELEASE_NIGHTLY)" tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" \
+		"$(RELEASE_ARTIFACTS)" "$(PYTHON_RELEASE_DEST)" $(release_native_files)
+.PHONY: release release-prebuilt
 
 release-tarball: DESTINATION ?= .
 release-tarball: ## Builds optimized release tarballs (gvisor.tar.bz2, gvisor.tar.zstd) and copies them to $(DESTINATION). E.g. make release-tarball DESTINATION=bin/
