@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T06:54:35+00:00",
+    "updatedAt": "2026-11-12T07:15:37+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -80025,9 +80025,18 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-12T06:54:35+00:00",
+      "updatedAt": "2026-11-12T07:15:37+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "The first packet comparison stopped before it could send either experimental SACK. During warm-up Linux reached windows of 8 and 15 packets at 536 bytes per segment. gVisor reached 4 on both sockets at 500 bytes per segment. Both passed the existing RACK/SACK control. These runs leave open how Linux handles the 290 repeated ACKs observed on #16495.",
+          "evidence": [
+            {
+              "label": "Both packet captures and four precondition failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43169213472/artifacts/13923251460"
+            }
+          ]
+        },
         {
           "text": "At #16495, one sender paused new data for 32.85 s. For 290 consecutive ACKs before the first timeout, it counted 131 packets in flight against a window of 132. Repairing the oldest hole used its last slot. The receiver had missed 131 packets near the end of the flight and SACKed one later packet. Two runs without the ACK observer showed the same pattern on the wire. Linux has not been measured with this loss pattern.",
           "evidence": [
@@ -82177,7 +82186,7 @@
           ]
         }
       ],
-      "nextStep": "Read the pending Linux and #16495 packet traces. Compare the flight estimate and the packets each sender emitted on the same ACK when one or three segments beyond the final hole had been SACKed.",
+      "nextStep": "Match the segment size and grow the congestion window on both senders without eliciting a warm-up retransmission. Then compare the packets sent after one or three segments beyond the last hole are selectively acknowledged.",
       "evidence": [
         {
           "label": "Eight alternating pairs with receiver, packet and queue records",
@@ -97969,9 +97978,26 @@
       "status": "active",
       "group": "tests",
       "owner": "Source PR owners",
-      "updatedAt": "2026-11-07T13:07:28+00:00",
-      "summary": "Reviewed 654 source PRs, including 922 reviews, 195 inline threads and 752 top-level comments. The findings trace substantive requests to the source, public reply and landing status. An approving review can contain a request without opening an inline thread.",
+      "updatedAt": "2026-11-12T07:15:37+00:00",
+      "summary": "All 20 inline threads on the 43 contributor PRs merged November 7–12 have replies. Seven PRs had inline feedback. Each merged the reviewed head, including the fixes requested in approving reviews. The earlier audit covers 654 source PRs.",
       "findings": [
+        {
+          "text": "The November 7–12 sweep covered 43 merges, 89 reviews, 20 inline threads and 29 top-level comments. Four threads on #17191 and four on #16473 still appear unresolved in GitHub. All eight have replies, and both PRs merged the revisions containing the fixes. The four previously approved TCP comment separators are still queued for the next cleanup. The 43 merges introduced no further instances of prose immediately touching a checklocks annotation.",
+          "evidence": [
+            {
+              "label": "Archive-rule review and merged revision",
+              "url": "https://github.com/google/gvisor/pull/17191"
+            },
+            {
+              "label": "Procfs directory review and merged revision",
+              "url": "https://github.com/google/gvisor/pull/16473"
+            },
+            {
+              "label": "Four approved comment separators",
+              "url": "https://github.com/tamird/gvisor/commit/3171566a5"
+            }
+          ]
+        },
         {
           "text": "Ryan’s timestamp comment is in the current #16851 head (74952bf99), and his original thread has a reply. The prior approval and import refer to 47e4c458f.",
           "evidence": [
@@ -105853,5 +105879,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-12T06:54:35+00:00"
+  "updatedAt": "2026-11-12T07:15:37+00:00"
 }
