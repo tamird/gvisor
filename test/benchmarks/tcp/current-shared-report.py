@@ -7,6 +7,7 @@ from statistics import median
 from pathlib import Path
 import subprocess
 from flight_capture import capture
+from timeout_repair import measure
 from datetime import datetime, timezone
 
 def read_json(p):
@@ -148,9 +149,18 @@ for arm,cc in expected:
         if src.is_file():
             (public/fn).write_bytes(src.read_bytes())
     try:
+        events = []
+        pattern = re.compile(r"WANRTO ns=(\d+) port=(\d+) una=(\d+) nxt=(\d+)")
+        for line in (folder/"results/primary/stderr.txt").read_text().splitlines():
+            if "WANRTO " in line:
+                match = pattern.search(line)
+                assert match, line
+                events.append(dict(zip(("ns", "port", "una", "nxt"), map(int, match.groups()))))
+        (public/"retransmission-timeouts.json").write_text(json.dumps(events) + "\n")
         wire=capture(folder/"results",public,"plain-"+experiment)
         d=trial(root/arm,"plain",experiment)
         d["wire"]=wire
+        d["repairs"] = measure(public, events, wire["netstack"]["client_port"])
         assert d["wire"]["linux"]["client_port"] in d["native_config_ports"]
         d["start"]=(folder/"start").read_text().strip()
         d["end"]=(folder/"finish").read_text().strip()
@@ -163,7 +173,7 @@ for arm,cc in expected:
         d["first_data_gap_s"] = first_data[1] - first_data[0]
         want = "netstack" if arm.startswith("primary") else "linux"
         d["order_verified"] = ordered[0] == want and first_data[0] < first_data[1]
-        layout = "split"
+        layout = "combined"
         qdisc = {}
         devices = ("wan.0","prop.0","prop.1","wan.1")
         # wan.0 -> prop.0 forwards payload; prop.1 -> wan.1 returns ACKs.
@@ -202,7 +212,7 @@ for arm,cc in expected:
     except (AssertionError,KeyError,StopIteration,ValueError,IndexError,OSError,subprocess.SubprocessError) as exc:
         verdict["failures"][name]={"reason":repr(exc),"diagnostics":diagnostics(folder)}
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
-verdict["scope"] = "The current #16495 head and its parent compete with the same Linux sender. The bottleneck queues 100 packets before the independent 50 ms propagation delay. gVisor starts first in every trial."
+verdict["scope"] = "The current #16495 head and its parent compete with the same Linux sender. The 100-packet queue carries the 50 ms one-way propagation delay. Both versions log actual retransmission timeouts. gVisor starts first in every trial."
 schedule = [f"primary{pair}-{arm} cubic primary" for pair in range(1, 9)
             for arm in (("stock", "fixed") if pair % 2 else ("fixed", "stock"))]
 verdict["schedule"] = (destination / "schedule.txt").read_text().splitlines() if (destination / "schedule.txt").is_file() else []

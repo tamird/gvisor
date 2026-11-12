@@ -1,7 +1,7 @@
-name: Compare the published TCP recovery fix on a split CUBIC bottleneck
+name: Compare the published TCP recovery fix on the shared CUBIC queue with sender timeout traces
 on:
   push:
-    branches: [qualification/tcp-16495-split-queue-pairs]
+    branches: [qualification/tcp-16495-cubic-gap-repairs]
 permissions:
   contents: read
 jobs:
@@ -16,7 +16,7 @@ jobs:
           persist-credentials: false
       - name: Build both senders and run eight alternating pairs
         run: |
-          cp test/benchmarks/tcp/{current-shared-report,flight_capture}.py "$RUNNER_TEMP/"
+          cp test/benchmarks/tcp/{current-shared-report,flight_capture,timeout_repair}.py "$RUNNER_TEMP/"
           cp test/benchmarks/tcp/current-shared-driver.sh "$RUNNER_TEMP/driver.sh"
           bash "$RUNNER_TEMP/driver.sh"
       - name: Reconcile receiver bytes, settings and packet observations
@@ -40,6 +40,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-16495-split-queue-pairs
+          name: tcp-16495-cubic-gap-repairs
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error

@@ -13,10 +13,11 @@ trap finish EXIT
 [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
 stock=99058130824e4d3166bf0e376f9b15b6ad50146c
 fixed=ffac28a03554b62419747c41f389bdc9bfe303d9
-[[ "$(git rev-parse HEAD^)" == "$fixed" && "$(git rev-parse "$fixed^")" == "$stock" ]]
+[[ "$(git rev-parse HEAD~2)" == "$fixed" && "$(git rev-parse "$fixed^")" == "$stock" ]]
 git diff --exit-code "$fixed" HEAD -- . ':(exclude)test/benchmarks/tcp' ':(exclude).github/workflows/build.yml'
-sudo -n apt-get update -qq
-sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod jq iputils-ping
+public="$RUNNER_TEMP/tcp-public"
+mkdir -p "$public"
+python3 -B test/benchmarks/tcp/qualification_packages.py "$out/packages" "$public/package-inputs.json" tshark tcpdump iproute2 iperf3 ethtool bc kmod jq iputils-ping
 sudo -n modprobe sch_netem
 uname -a > "$out/worker.txt"
 phase=build
@@ -28,6 +29,8 @@ for variant in stock fixed; do
   ref=${!variant}
   git restore --source="$ref" -- "${changed[@]}"
   git diff --exit-code "$ref" -- . ':(exclude)test/benchmarks/tcp' ':(exclude).github/workflows/build.yml'
+  git apply test/benchmarks/tcp/rto-observer.patch
+  git diff --no-ext-diff "$ref" -- pkg/tcpip/transport/tcp/snd.go > "$public/$variant-observer.patch"
   helpers="$RUNNER_TEMP/tcp-benchmark-helpers/$variant"
   mkdir -p "$helpers"
   bazel build --jobs=5 //test/benchmarks/tcp:{tcp_proxy,nsjoin}
@@ -36,6 +39,8 @@ for variant in stock fixed; do
     test -x "$path"
     cp "$path" "$helpers/$tool"
   done
+  grep -a -q "WANRTO ns=" "$helpers/tcp_proxy"
+  git apply --reverse test/benchmarks/tcp/rto-observer.patch
   cp "$RUNNER_TEMP/tcp-benchmark-helpers/stock/tcp_proxy" "$helpers/tcp_native_proxy"
   sha256sum "$helpers"/{tcp_proxy,tcp_native_proxy,nsjoin} >> "$public/helpers.sha256"
   printf '%s %s %s\n' "$variant" "$ref" "$(git rev-parse "$ref:pkg/tcpip/transport/tcp")" >> "$public/sender-trees"
@@ -66,7 +71,7 @@ for pair in {1..8}; do
     printf 'primary%d-%s cubic primary\n' "$pair" "$variant"
   done
 done > "$public/schedule.txt"
-layout=split
+layout=combined
 while read -r arm cc first; do
   variant=${arm#*-}
   helpers="$base_helpers/$variant"

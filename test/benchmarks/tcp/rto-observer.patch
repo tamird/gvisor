@@ -1,0 +1,21 @@
+--- a/pkg/tcpip/transport/tcp/snd.go
++++ b/pkg/tcpip/transport/tcp/snd.go
+@@ -17,6 +17,7 @@
+ import (
+ 	"fmt"
+ 	"math"
++	"os"
+ 	"sort"
+ 	"time"
+ 
+@@ -581,6 +582,10 @@
+ 
+ 	s.ep.stack.Stats().TCP.Timeouts.Increment()
+ 	s.ep.stats.SendErrors.Timeouts.Increment()
++
++	if id := s.ep.TransportEndpointInfo.ID; id.RemotePort == 44000 {
++		fmt.Fprintf(os.Stderr, "WANRTO ns=%d port=%d una=%d nxt=%d\n", time.Now().UnixNano(), id.LocalPort, uint32(s.SndUna), uint32(s.SndNxt))
++	}
+ 
+ 	// Set TLPRxtOut to false according to
+ 	// https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.6.1.
