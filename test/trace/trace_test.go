@@ -60,6 +60,8 @@ func TestAll(t *testing.T) {
 		Name: "remote",
 		Config: map[string]any{
 			"endpoint": server.Endpoint,
+			// Event coverage requires the receiver to see each configured point.
+			"retries": 10,
 		},
 	})
 
