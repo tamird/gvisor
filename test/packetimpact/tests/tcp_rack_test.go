@@ -16,7 +16,7 @@ package tcp_rack_test
 
 import (
 	"flag"
-	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -458,12 +458,23 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 	}
 }
 
-// TestRACKRetainedTail compares two placements of four genuinely received
-// segments in a full flight. The receiver then delivers all retransmissions
-// and fresh data and ACKs them once per simulated RTT.
-func TestRACKRetainedTail(t *testing.T) {
-	for _, terminal := range []int{1, 3} {
-		t.Run(fmt.Sprintf("terminal_%d", terminal), func(t *testing.T) {
+// TestRACKFeedbackBudget varies the second ACK during CUBIC recovery. Every
+// connection starts recovery by reporting the same four received segments.
+func TestRACKFeedbackBudget(t *testing.T) {
+	for _, feedback := range []struct {
+		name     string
+		received []int
+		sendACK  bool
+	}{
+		{name: "no_feedback"},
+		{name: "repeat", sendACK: true},
+		{name: "ack_one", received: []int{0}, sendACK: true},
+		{name: "ack_two", received: []int{0, 1}, sendACK: true},
+		{name: "sack_two", received: []int{2, 3}, sendACK: true},
+		{name: "ack_four", received: []int{0, 1, 2, 3}, sendACK: true},
+	} {
+		t.Run(feedback.name, func(t *testing.T) {
+			const terminal = 1
 			const wireMSS = 536
 			peerMSS := uint32(wireMSS)
 			if !testbench.Native {
@@ -550,6 +561,8 @@ func TestRACKRetainedTail(t *testing.T) {
 					t.Fatalf("warm-up of %d MSS produced cwnd %d state %d RTT %dus", count, info.SndCwnd, info.CaState, info.RTT)
 				}
 			}
+			dut.SetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_SNDBUF, 256<<10)
+			t.Logf("SO_SNDBUF=%d", dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_SNDBUF))
 			const flight, queued = 40, 4
 			const tail, prefix = 30, 6
 			for i := 0; i < flight; i++ {
@@ -615,19 +628,26 @@ func TestRACKRetainedTail(t *testing.T) {
 				return segments
 			}
 			t.Logf("GEOMETRY base=%d sport=%d dport=%d flight=%d mss=%d window=%d queued=%d lower=%d upper=%d middle=%d terminal=%d", base, sport, dport, flight, mss, window, queued, prefix, tail, 4-terminal, terminal)
-			cumulative := ackReceived()
-			for round := 1; round <= 5; round++ {
-				segments := readInterval()
-				for _, s := range segments {
-					deliver(s)
-				}
-				info := dut.GetSockOptTCPInfo(t, fd)
-				t.Logf("ROUND n=%d acked_before=%d sent=%v ca=%d cwnd=%d ssthresh=%d rto_us=%d rtos=%d backoff=%d unacked=%d sacked=%d lost=%d retrans=%d notsent=%d", round, cumulative, segments, info.CaState, info.SndCwnd, info.SndSsthresh, info.RTO, info.Retransmits, info.Backoff, info.Unacked, info.Sacked, info.Lost, info.Retrans, info.NotSentBytes)
-				if len(segments) != 0 {
-					cumulative = ackReceived()
-				}
+			if cumulative := ackReceived(); cumulative != 0 {
+				t.Fatalf("first cumulative ACK covered %d measured segments", cumulative)
 			}
-			t.Logf("FINAL cumulative=%d measured_segments=%d", cumulative, len(received))
+			first := readInterval()
+			if len(first) < 4 || !slices.Equal(first[:4], []int{0, 1, 2, 3}) {
+				t.Fatalf("peer needs the first four repairs, got %v", first)
+			}
+			logState := func(phase string, cumulative int, segments []int) {
+				info := dut.GetSockOptTCPInfo(t, fd)
+				t.Logf("BUDGET case=%s phase=%s cumulative=%d sent=%v ca=%d cwnd=%d ssthresh=%d rtos=%d backoff=%d unacked=%d sacked=%d lost=%d retrans=%d notsent=%d", feedback.name, phase, cumulative, segments, info.CaState, info.SndCwnd, info.SndSsthresh, info.Retransmits, info.Backoff, info.Unacked, info.Sacked, info.Lost, info.Retrans, info.NotSentBytes)
+			}
+			logState("first", 0, first)
+			for _, index := range feedback.received {
+				deliver(index)
+			}
+			cumulative := 0
+			if feedback.sendACK {
+				cumulative = ackReceived()
+			}
+			logState("second", cumulative, readInterval())
 		})
 	}
 }
