@@ -696,6 +696,8 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// If the timeout interrupts SACK recovery, RFC 6675 section 5.1
 	// prohibits another recovery until this flight is acknowledged.
 	// A later timeout must not move that boundary to cover newer data.
+	alreadyReduced := s.FastRecovery.Active
+	priorThreshold := s.Ssthresh
 	if !s.sackRecoveryInterrupted {
 		s.FastRecovery.Last = s.SndNxt - 1
 		s.sackRecoveryInterrupted = s.FastRecovery.Active && s.ep.SACKPermitted
@@ -712,8 +714,14 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// https://datatracker.ietf.org/doc/html/rfc3522#section-3.2 Step 2
 	s.recordRetransmitTS()
 
+	s.reportRTOControl("rto-before-cc")
 	s.state = tcpip.RTORecovery
 	s.cc.HandleRTOExpired()
+	// Isolate the interrupted-fast-recovery threshold rule from #16419.
+	if experimentKeepRecoveryThreshold && alreadyReduced {
+		s.Ssthresh = priorThreshold
+	}
+	s.reportRTOControl("rto-after-cc")
 
 	// Mark the next segment to be sent as the first unacknowledged one and
 	// start sending again. Set the number of outstanding packets to 0 so
@@ -1196,6 +1204,8 @@ func (s *sender) postXmit(dataSent bool, shouldScheduleProbe bool) {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) sendData() {
+	s.reportRTOControl("send-before")
+	defer s.reportRTOControl("send-after")
 	limit := s.MaxPayloadSize
 	if s.gso {
 		limit = int(s.ep.gso.MaxSize - header.TCPTotalHeaderMaximumSize - 1)
@@ -1293,6 +1303,28 @@ func (s *sender) leaveRecovery() {
 	s.cc.PostRecovery()
 }
 
+// The native qualification builds the four combinations of these independent
+// choices and uses the same unmodified manual-clock test in every case.
+const experimentAllowance = true
+const experimentCopies = true
+const experimentKeepRecoveryThreshold = false
+
+// +checklocks:s.ep.mu
+func (s *sender) reportRTOControl(phase string) {
+	if s.MaxPayloadSize != 500 {
+		return
+	}
+	next := "none"
+	if seg := s.writeNext; seg != nil {
+		next = fmt.Sprintf("%d/%d:%d", seg.sequenceNumber, seg.payloadSize(), seg.xmitCount)
+	}
+	var segments []string
+	for seg := s.writeList.Front(); seg != nil; seg = seg.Next() {
+		segments = append(segments, fmt.Sprintf("%d/%d:%d,%d,%t,%t", seg.sequenceNumber, seg.payloadSize(), seg.xmitCount, seg.rackInFlight, seg.acked, seg.lost))
+	}
+	log.Infof("RTOCONTROL phase=%s allowance=%t copies=%t cc=%T state=%d active=%t interrupted=%t una=%d nxt=%d cwnd=%d ssthresh=%d out=%d score=%d prr=%+v writeNext=%s queue=%v", phase, experimentAllowance, experimentCopies, s.cc, s.state, s.FastRecovery.Active, s.sackRecoveryInterrupted, s.SndUna, s.SndNxt, s.SndCwnd, s.Ssthresh, s.Outstanding, s.ep.scoreboard.Sacked(), s.prr, next, segments)
+}
+
 // +stateify savable
 type prrState struct {
 	recoverFS, delivered, sent, remaining, pipe int64
@@ -1305,6 +1337,9 @@ type prrState struct {
 //
 // +checklocks:s.ep.mu
 func (s *sender) updatePRR(delivered int64, safe, enter bool) {
+	if !experimentAllowance {
+		return
+	}
 	p := &s.prr
 	mss := int64(s.MaxPayloadSize)
 	if enter {
@@ -1379,7 +1414,7 @@ func (s *sender) SetPipe() {
 			if !s1.sequenceNumber.LessThan(s.SndNxt) {
 				break
 			}
-			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+			if experimentCopies && s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
 				unsacked := sb.Start.Size(sb.End) - s.ep.scoreboard.sackedIn(sb)
 				if unsacked != 0 {
 					pipe += int(s1.rackInFlight)
@@ -1399,6 +1434,7 @@ func (s *sender) SetPipe() {
 			// and test every byte in our write buffer as we maintain our
 			// pipe in terms of outstanding packets and not bytes.
 			//
+			before := pipe
 			if !s1.lost && !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
@@ -1407,6 +1443,7 @@ func (s *sender) SetPipe() {
 			if s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt) {
 				pipe++
 			}
+			s.prr.pipe += int64(pipe-before) * int64(sb.Start.Size(sb.End))
 		}
 	}
 	s.Outstanding = pipe
@@ -1696,6 +1733,8 @@ func (s *sender) inRecovery() bool {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
+	s.reportRTOControl("ack-before")
+	defer s.reportRTOControl("ack-after")
 	priorUna := s.SndUna
 	priorSACK := s.ep.scoreboard.Sacked()
 	bestRTT := unknownRTT
