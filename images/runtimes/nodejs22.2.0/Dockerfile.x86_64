@@ -13,7 +13,7 @@ RUN curl -o node-${VERSION}.tar.gz https://nodejs.org/dist/${VERSION}/node-${VER
  && tar -zxf node-${VERSION}.tar.gz \
  && rm -f node-${VERSION}.tar.gz
 
-# Allow slower platforms more time and test HTTP socket reuse without deadlines.
+# Patch in a timeout increase to reduce test flakiness on gVisor
 WORKDIR /root/node-${VERSION}
 COPY timeouts.patch /tmp/timeouts.patch
 RUN patch -p1 --no-backup-if-mismatch < /tmp/timeouts.patch \
@@ -25,6 +25,12 @@ RUN make -j $(nproc) test-build
 # Use node --check on the files we patched
 RUN out/Release/node --check test/common/index.js \
   && out/Release/node --check test/parallel/test-http-outgoing-end-cork.js
+
+# Backport the HTTP/1.0 close test from https://github.com/nodejs/node/pull/55959.
+COPY http10-close.patch /tmp/http10-close.patch
+RUN patch -p1 --no-backup-if-mismatch < /tmp/http10-close.patch \
+  && out/Release/node --check test/parallel/test-http-remove-connection-header-persists-connection.js \
+  && rm -f /tmp/http10-close.patch
 
 # Including dumb-init emulates the Linux "init" process, preventing the failure
 # of tests involving worker processes.

@@ -5,6 +5,7 @@ py_test(
     srcs = ["image_test.py"],
     args = ["$(location //test/docker:nodejs_source_amd64)"],
     data = [
+        "node22-original.js",
         "probe.js",
         "//test/docker:nodejs_source_amd64",
     ],

@@ -1,11 +1,11 @@
-name: Verify the packaged Node HTTP double-end test
+name: Verify the packaged Node HTTP/1.0 close test
 on:
   push:
-    branches: [qualification/node-http-double-end-image]
+    branches: [qualification/node-http10-close-image]
 permissions: {}
 jobs:
   linux:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.before == 'feee8db8c8d1dc6c19ed9ae0d8d1b60fc22d2141' && !github.event.deleted && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.before == '7b6f94017cd42918fead36194d92ed50dec82449' && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     steps:
@@ -13,24 +13,24 @@ jobs:
         shell: bash
         run: |
           set -eu -o pipefail
-          w="$RUNNER_TEMP/node-double-end-image"
+          w="$RUNNER_TEMP/node-http10-close-image"
           mkdir -p "$w/receipt"
           git init -q .
           git fetch -q --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
           git checkout -q --detach "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = 375eb2bf4d0a7bb990aa6cae2ba822d59afa1674
-          git fetch -q --depth=1 --no-tags https://github.com/tamird/gvisor.git 2821a89fdf87563ca9ad79c9c35c8239546dd215
+          test "$(git rev-parse HEAD^)" = 7b6f94017cd42918fead36194d92ed50dec82449
+          git fetch -q --depth=1 --no-tags https://github.com/tamird/gvisor.git b274be2668600266ed80b01c67ffd3f5c597c516
           context=images/runtimes/nodejs22.2.0
-          test "$(git rev-parse HEAD:$context)" = "$(git rev-parse 2821a89fdf87563ca9ad79c9c35c8239546dd215:$context)"
+          test "$(git rev-parse HEAD:$context)" = "$(git rev-parse b274be2668600266ed80b01c67ffd3f5c597c516:$context)"
           git ls-tree HEAD:$context > "$w/receipt/context.txt"
           test "$(bazelisk --version)" = 'bazel 8.8.1'
           curl -fsSL --retry 2 https://github.com/google/gvisor/releases/download/release-20261109.0/gvisor-x86_64.tar.zstd -o "$w/runtime.tar.zstd"
           echo "84c29e8f92ba306b1a8c8cb1793fc32fe7388ca894da0427a22f3d8f6448af12  $w/runtime.tar.zstd" | sha256sum --check
-          sudo mkdir -p /opt/gvisor-node-cork
-          sudo tar --zstd -xf "$w/runtime.tar.zstd" -C /opt/gvisor-node-cork
-          sudo /opt/gvisor-node-cork/runsc install --runtime=runsc-systrap -- --platform=systrap
+          sudo mkdir -p /opt/gvisor-node-http10
+          sudo tar --zstd -xf "$w/runtime.tar.zstd" -C /opt/gvisor-node-http10
+          sudo /opt/gvisor-node-http10/runsc install --runtime=runsc-systrap -- --platform=systrap
           sudo systemctl restart docker
-          /opt/gvisor-node-cork/runsc --version > "$w/receipt/runsc.txt"
+          /opt/gvisor-node-http10/runsc --version > "$w/receipt/runsc.txt"
       - name: Build the packaged Node image and test its baked-in regression
         shell: bash
         env:
@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
-          w="$RUNNER_TEMP/node-double-end-image"
+          w="$RUNNER_TEMP/node-http10-close-image"
           rc="$w/client.rc"
           trap 'rm -f "$rc"' EXIT
           cat > "$rc" <<'RC'
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && !cancelled()
         with:
-          name: node-http-double-end-image
-          path: ${{ runner.temp }}/node-double-end-image/receipt/
+          name: node-http10-close-image
+          path: ${{ runner.temp }}/node-http10-close-image/receipt/
           if-no-files-found: error
           retention-days: 14
