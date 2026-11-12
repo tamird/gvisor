@@ -16,6 +16,9 @@ package tcp_rack_test
 
 import (
 	"flag"
+	"fmt"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -42,6 +45,11 @@ const (
 
 func createSACKConnection(t *testing.T) (testbench.DUT, testbench.TCPIPv4, int32, int) {
 	t.Helper()
+	return createSACKConnectionWithMSS(t, 0)
+}
+
+func createSACKConnectionWithMSS(t *testing.T, mss uint32) (testbench.DUT, testbench.TCPIPv4, int32, int) {
+	t.Helper()
 	dut := testbench.NewDUT(t)
 	listenFd, remotePort := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
 	t.Cleanup(func() { dut.Close(t, listenFd) })
@@ -51,11 +59,25 @@ func createSACKConnection(t *testing.T) (testbench.DUT, testbench.TCPIPv4, int32
 	// Enable SACK.
 	opts := make([]byte, 40)
 	optsOff := 0
+	if mss != 0 {
+		optsOff += header.EncodeMSSOption(mss, opts)
+	}
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeSACKPermittedOption(opts[optsOff:])
 
-	conn.ConnectWithOptions(t, opts[:optsOff])
+	if mss == 0 {
+		conn.ConnectWithOptions(t, opts[:optsOff])
+	} else {
+		// Seed RACK's RTT before holding the first flight. A local handshake
+		// otherwise gives a shorter probe timer than the testbench RPCs.
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: opts[:optsOff]})
+		if _, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second); err != nil {
+			t.Fatalf("SYN-ACK: %v", err)
+		}
+		time.Sleep(200 * time.Millisecond)
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), WindowSize: testbench.Uint16(65535)})
+	}
 	acceptFd, _ := dut.Accept(t, listenFd)
 	t.Cleanup(func() { dut.Close(t, acceptFd) })
 
@@ -433,5 +455,179 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 	info := dut.GetSockOptTCPInfo(t, acceptFd)
 	if info.CaState != linux.TCP_CA_Recovery {
 		t.Fatalf("expected connection to be in fast recovery, want: %v got: %v", linux.TCP_CA_Recovery, info.CaState)
+	}
+}
+
+// TestRACKRetainedTail compares two placements of four genuinely received
+// segments in a full flight. The receiver then delivers all retransmissions
+// and fresh data and ACKs them once per simulated RTT.
+func TestRACKRetainedTail(t *testing.T) {
+	for _, terminal := range []int{1, 3} {
+		t.Run(fmt.Sprintf("terminal_%d", terminal), func(t *testing.T) {
+			const wireMSS = 536
+			peerMSS := uint32(wireMSS)
+			if !testbench.Native {
+				// Netstack reserves 36 bytes for the optional four SACK blocks.
+				peerMSS += 36
+			}
+			dut, conn, fd, mss := createSACKConnectionWithMSS(t, peerMSS)
+			initial := dut.GetSockOptTCPInfo(t, fd)
+			if mss != wireMSS || initial.RTT < 190000 || initial.SndCwnd != 10 {
+				t.Fatalf("unmatched startup MSS=%d RTT=%dus cwnd=%d", mss, initial.RTT, initial.SndCwnd)
+			}
+			sport := uint16(dut.GetSockName(t, fd).(*unix.SockaddrInet4).Port)
+			dport := uint16(conn.LocalAddr(t).Port)
+			t.Logf("SETUP sport=%d dport=%d peer_mss=%d data_mss=%d cwnd=%d rtt_us=%d rto_us=%d", sport, dport, peerMSS, mss, initial.SndCwnd, initial.RTT, initial.RTO)
+			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("cubic"))
+			if cc := strings.TrimRight(string(dut.GetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, 16)), "\x00"); cc != "cubic" {
+				t.Fatalf("congestion control = %q, want cubic", cc)
+			}
+			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+			const window = 65535
+			sendACK := func(ack uint32, blocks []header.SACKBlock) {
+				options := make([]byte, 40)
+				n := header.EncodeSACKBlocks(blocks, options)
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(ack), WindowSize: testbench.Uint16(window), Options: options[:n]})
+			}
+			type segment struct {
+				seq    uint32
+				length int
+			}
+			readWire := func() (data []segment) {
+				frames, _ := conn.ListenForFrame(t, testbench.Layers{nil, nil, &testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagRst)}}, simulatedRTT)
+				for _, frame := range frames {
+					var tcp *testbench.TCP
+					for _, layer := range frame {
+						switch l := layer.(type) {
+						case *testbench.TCP:
+							if *l.SrcPort == sport && *l.DstPort == dport {
+								tcp = l
+								if *l.Flags&(header.TCPFlagFin|header.TCPFlagRst) != 0 {
+									t.Fatal("sender closed the measured connection")
+								}
+							}
+						case *testbench.Payload:
+							if tcp != nil && len(l.Bytes) > 0 {
+								data = append(data, segment{*tcp.SeqNum, len(l.Bytes)})
+							}
+						}
+					}
+				}
+				return data
+			}
+			base := uint32(*conn.RemoteSeqNum(t))
+			send := func(bytes int) {
+				if n := dut.Send(t, fd, make([]byte, bytes), 0); n != int32(bytes) {
+					t.Fatalf("socket write %d bytes, want %d", n, bytes)
+				}
+			}
+			checkFlight := func(count int, measured bool) {
+				next := base
+				data := readWire()
+				for _, seg := range data {
+					if seg.seq != next || seg.length%wireMSS != 0 || measured && seg.length != wireMSS {
+						t.Fatalf("unexpected wire segment seq=%d size=%d; next=%d measured=%t", seg.seq, seg.length, next, measured)
+					}
+					next += uint32(seg.length)
+				}
+				if next-base != uint32(count*wireMSS) {
+					t.Fatalf("wire covered %d bytes; want %d (segments %v)", next-base, count*wireMSS, data)
+				}
+				t.Logf("FLIGHT base=%d mss=%d original_bytes=%d wire_frames=%d measured=%t", base, wireMSS, next-base, len(data), measured)
+			}
+			for _, count := range []int{10, 20} {
+				send(count * wireMSS)
+				checkFlight(count, false)
+				base += uint32(count * wireMSS)
+				sendACK(base, nil)
+				until := time.Now().Add(50 * time.Millisecond)
+				info := dut.GetSockOptTCPInfo(t, fd)
+				for info.SndCwnd != uint32(count*2) && time.Now().Before(until) {
+					time.Sleep(time.Millisecond)
+					info = dut.GetSockOptTCPInfo(t, fd)
+				}
+				if info.SndCwnd != uint32(count*2) || info.CaState != linux.TCP_CA_Open {
+					t.Fatalf("warm-up of %d MSS produced cwnd %d state %d RTT %dus", count, info.SndCwnd, info.CaState, info.RTT)
+				}
+			}
+			const flight, queued = 40, 4
+			const tail, prefix = 30, 6
+			for i := 0; i < flight; i++ {
+				send(wireMSS)
+			}
+			send(queued * wireMSS)
+			checkFlight(flight, true)
+			// Each entry is the arrival order of the MSS. Zero means missing.
+			received := make([]int, flight+queued)
+			order := 0
+			deliver := func(i int) {
+				order++
+				received[i] = order
+			}
+			for i := prefix; i < prefix+4-terminal; i++ {
+				deliver(i)
+			}
+			for i := flight - terminal; i < flight; i++ {
+				deliver(i)
+			}
+			ackReceived := func() int {
+				start := 0
+				for start < len(received) && received[start] != 0 {
+					start++
+				}
+				type block struct {
+					header.SACKBlock
+					last int
+				}
+				var ranges []block
+				seq := func(i int) seqnum.Value { return seqnum.Value(base + uint32(i*mss)) }
+				for i := start; i < len(received); {
+					if received[i] == 0 {
+						i++
+						continue
+					}
+					first, last := i, received[i]
+					for i < len(received) && received[i] != 0 {
+						last = max(last, received[i])
+						i++
+					}
+					ranges = append(ranges, block{header.SACKBlock{Start: seq(first), End: seq(i)}, last})
+				}
+				sort.Slice(ranges, func(i, j int) bool { return ranges[i].last > ranges[j].last })
+				var blocks []header.SACKBlock
+				for _, r := range ranges[:min(4, len(ranges))] {
+					blocks = append(blocks, r.SACKBlock)
+				}
+				sendACK(uint32(seq(start)), blocks)
+				return start
+			}
+			readInterval := func() (segments []int) {
+				for _, seg := range readWire() {
+					offset := seg.seq - base
+					end := uint64(offset) + uint64(seg.length)
+					if end > uint64(len(received)*mss) || offset%uint32(mss) != 0 || seg.length%mss != 0 {
+						t.Fatalf("unexpected data offset=%d length=%d", offset, seg.length)
+					}
+					for i := int(offset) / mss; i < int(end)/mss; i++ {
+						segments = append(segments, i)
+					}
+				}
+				return segments
+			}
+			t.Logf("GEOMETRY base=%d sport=%d dport=%d flight=%d mss=%d window=%d queued=%d lower=%d upper=%d middle=%d terminal=%d", base, sport, dport, flight, mss, window, queued, prefix, tail, 4-terminal, terminal)
+			cumulative := ackReceived()
+			for round := 1; round <= 5; round++ {
+				segments := readInterval()
+				for _, s := range segments {
+					deliver(s)
+				}
+				info := dut.GetSockOptTCPInfo(t, fd)
+				t.Logf("ROUND n=%d acked_before=%d sent=%v ca=%d cwnd=%d ssthresh=%d rto_us=%d rtos=%d backoff=%d unacked=%d sacked=%d lost=%d retrans=%d notsent=%d", round, cumulative, segments, info.CaState, info.SndCwnd, info.SndSsthresh, info.RTO, info.Retransmits, info.Backoff, info.Unacked, info.Sacked, info.Lost, info.Retrans, info.NotSentBytes)
+				if len(segments) != 0 {
+					cumulative = ackReceived()
+				}
+			}
+			t.Logf("FINAL cumulative=%d measured_segments=%d", cumulative, len(received))
+		})
 	}
 }
