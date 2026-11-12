@@ -968,7 +968,7 @@ syzkaller-smoke-test: $(SYZKALLER_TARBALL)
 ##
 RELEASE_ROOT      := repo
 RELEASE_KEY       := repo.key
-RELEASE_ARTIFACTS := artifacts
+RELEASE_ARTIFACTS ?= artifacts
 RELEASE_NIGHTLY   := false
 RELEASE_COMMIT    :=
 RELEASE_NAME      :=
@@ -990,16 +990,15 @@ $(RELEASE_KEY):
 	rc=$$?; rm -f $$T $$C; exit $$rc
 
 # Use one caller-supplied identity for both sets of release binaries and packages.
-release-artifacts: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
+release-artifacts release: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
+validate_release_version = case "$$GVISOR_RELEASE_LABEL" in ''|0.0.0|VERSION_MISSING|*[!A-Za-z0-9._+-]*) echo "invalid RELEASE_VERSION" >&2; exit 1;; esac; \
+	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac
 release-artifacts: ## Build the release archives for both architectures with RELEASE_VERSION.
-	@case "$$GVISOR_RELEASE_LABEL" in ''|0.0.0|VERSION_MISSING|*[!A-Za-z0-9._+-]*) echo "invalid RELEASE_VERSION" >&2; exit 1;; esac; \
-	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac; \
-	for arch in x86_64 aarch64; do \
-		$(MAKE) BAZEL_OPTIONS="$(BAZEL_OPTIONS) --config=$$arch --config=release_version --embed_label=$$GVISOR_RELEASE_LABEL" "$(RELEASE_ARTIFACTS)/$$arch" || exit $$?; \
-	done
-.PHONY: release-artifacts force-release-artifacts
+	@$(validate_release_version); \
+	$(MAKE) BAZEL_OPTIONS="$(BAZEL_OPTIONS) --config=release_version --embed_label=$$GVISOR_RELEASE_LABEL" artifacts-all
+.PHONY: release-artifacts
 
-$(RELEASE_ARTIFACTS)/%: $(if $(GVISOR_RELEASE_LABEL),force-release-artifacts)
+$(RELEASE_ARTIFACTS)/%:
 	@mkdir -p $@
 	@$(call copy,//debian:release-packages,$@)
 
@@ -1008,7 +1007,7 @@ artifacts-all: ## Builds release packages for x86_64 and aarch64.
 	@$(call copy,//debian:release-archives,$(RELEASE_ARTIFACTS))
 .PHONY: artifacts-all
 
-PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
+artifacts-python: PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
 artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions into $(PYTHON_RELEASE_DEST).
 	@mkdir -p "$(PYTHON_RELEASE_DEST)"
 	@set -e; \
@@ -1016,9 +1015,25 @@ artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions
 	$(call build_paths,--//sandboxexec/sandbox/python:dist_version="$$python_release_version" //sandboxexec/sandbox/python:dist,tools/make_python_release.sh stage "$$0" "$(PYTHON_RELEASE_DEST)")
 .PHONY: artifacts-python
 
-release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
-	@mkdir -p $(RELEASE_ROOT)
-	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh $(RELEASE_KEY) $(RELEASE_ROOT) $$(find $(RELEASE_ARTIFACTS) -type f)
+# The host signs the directories and checkfiles produced by the same Bazel
+# action graph on the builder. The inputs manifest identifies its output root.
+release: $(RELEASE_KEY) ensure-bazel-server
+	@set -eu; \
+	stamp=(); dist=; \
+	if [[ -n "$$GVISOR_RELEASE_LABEL" ]]; then \
+		$(validate_release_version); \
+		stamp=(--config=release_version "--embed_label=$$GVISOR_RELEASE_LABEL"); \
+	fi; \
+	if [[ -n "$(PYTHON_RELEASE_DEST)" ]]; then \
+		dist=$$($(call wrapper,tools/make_python_release.sh version "$(RELEASE_NAME)")); \
+	fi; \
+	stage=$$( $(call build_paths,"$${stamp[@]}" --//sandboxexec/sandbox/python:dist_version="$$dist" //debian:release-inputs,if test "$$1" = inputs; then dirname "$$0"; fi) ); \
+	test -n "$$stage" && test -s "$$stage/inputs" || { echo "Missing release inputs" >&2; exit 1; }; \
+	if [[ -n "$(PYTHON_RELEASE_DEST)" ]]; then \
+		mkdir -p "$(PYTHON_RELEASE_DEST)"; \
+		tools/make_python_release.sh stage "$$stage/python" "$(PYTHON_RELEASE_DEST)"; \
+	fi; \
+	NIGHTLY="$(RELEASE_NIGHTLY)" tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" "$$stage"
 .PHONY: release
 
 release-tarball: DESTINATION ?= .

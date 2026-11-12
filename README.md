@@ -89,7 +89,8 @@ its checkpoints and the Debian package version.
 make release-artifacts RELEASE_VERSION=release-20261029.0
 ```
 
-For a direct Bazel build, pass `--stamp --embed_label=release-20261029.0`.
+For a direct Bazel release build, pass
+`--config=release_version --embed_label=release-20261029.0`.
 If you previously supplied `STABLE_VERSION` from a custom workspace status
 command, pass that version as the embed label. A release can restore a
 checkpoint written with the same label, including one written before this
@@ -118,6 +119,12 @@ After setting up dependencies, using Bazel is similar to the Makefile:
 ```sh
 bazel build -c opt //debian:gvisor-release-tar-bz2
 ```
+
+Build `//debian:release-inputs` to stage the unsigned release for both
+architectures under `bazel-bin/debian/release-inputs/{x86_64,aarch64}`.
+Each directory contains the Debian package, both download archives and their
+SHA512 checkfiles. Set `--//sandboxexec/sandbox/python:dist_version=<version>`
+to stage the wheel and source distribution under `python/` in the same build.
 
 ### Testing
 

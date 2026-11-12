@@ -376,10 +376,11 @@ target_query = "$$(query='set()'; \
 # https://github.com/bazelbuild/bazel/blob/61aa5a57c/src/main/java/com/google/devtools/build/lib/runtime/commands/CqueryCommand.java#L90-L94
 # Host filtering also permits builds whose Docker cache volume is not mounted
 # on the host; callers that consume printed paths still require local outputs.
+# Send build diagnostics to stderr so callers can capture the callback's output.
 # Optional $(3) supplies cquery arguments separately from build arguments $(1).
 build_paths = \
   (set -euo pipefail; \
-  $(call wrapper,$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel $(1)) && \
+  $(call wrapper,$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel $(1)) >&2 && \
   $(call wrapper,$(BAZEL) cquery $(BASE_OPTIONS) $(BAZEL_OPTIONS) --output=starlark --starlark:file=tools/show_paths.bzl $(if $(3),$(3),$(1))) \
   | $(call wrapper,xargs -r -n 2 bash -c 'set -euo pipefail; test -e "$$0" || exit 0; output_path="$$($(REALPATH_M) "$$0")"; printf "%s %s\n" "$$output_path" "$$1"') \
   | sed 's~^$(HOME)/\.cache/bazel/~$(patsubst %/,%,$(BAZEL_CACHE))/~' \
