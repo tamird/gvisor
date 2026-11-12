@@ -10,7 +10,7 @@ def fields(line):
     return dict(re.findall(r"(\w+)=([^\s]+)", line))
 
 
-def check_arm(variant, geometry, rounds, trace):
+def check_arm(geometry, rounds, trace):
     base = geometry["base"]
     port = geometry["sport"]
     terminal = int(geometry["terminal"])
@@ -24,7 +24,7 @@ def check_arm(variant, geometry, rounds, trace):
     middle = range(6, 6 + 4 - terminal)
     tail = range(40 - terminal, 40)
     received = sum(1 << i for i in (*middle, *tail))
-    expected_visited = received if variant == "ascending" else sum(1 << i for i in tail)
+    expected_visited = received
     for row in rows:
         assert row["originals"] == "40" and row["separate"] == "true", row
         assert int(row["received"], 16) == received
@@ -37,20 +37,24 @@ def check_arm(variant, geometry, rounds, trace):
     rack_lost = int(resent["timed"], 16)
     assert (received | score_lost | charged) == (1 << 40) - 1
     assert not (charged & (received | score_lost) or received & score_lost)
-    flight = charged.bit_count() + 1
-    assert int(resent["pipe"]) == flight == (31 if terminal == 1 else 1)
+    scoreboard_flight = charged.bit_count() + 1
+    assert scoreboard_flight == (31 if terminal == 1 else 1)
+    observed_flight = int(resent["pipe"])
+    assert observed_flight == scoreboard_flight - (charged & rack_lost).bit_count()
     assert resent["cwnd"] == "31"
     first = rounds[0]
     assert all(fields(row)["rtos"] == "0" and fields(row)["backoff"] == "0" for row in rounds)
     emitted = list(map(int, re.search(r"sent=\[([^\]]*)\]", first).group(1).split()))
-    if variant == "stock":
-        assert emitted == ([0] if terminal == 1 else [*range(6), *range(7, 32)]), emitted
+    assert all(0 <= i < 44 for i in emitted), emitted
+    repairs = [i for i in emitted if i < 40]
+    fresh = [i for i in emitted if i >= 40]
     return {
-        "variant": variant, "terminal": terminal, "socket_port": port, "base": base,
+        "variant": "combined", "terminal": terminal, "socket_port": port, "base": base,
         "observations": rows, "first_wire_segments": emitted,
-        "stock_pipe_after_first_resend": flight,
-        "pipe_excluding_time_marked_after_first_resend": flight - (charged & rack_lost).bit_count(),
-        "time_marked_still_charged": [i for i in range(40) if charged & rack_lost & (1 << i)],
+        "actual_pipe_after_first_resend": observed_flight,
+        "scoreboard_only_pipe_after_first_resend": scoreboard_flight,
+        "first_wire_repair_bytes": 536 * len(repairs), "first_wire_fresh_bytes": 536 * len(fresh),
+        "time_marked_excluded_from_flight": [i for i in range(40) if charged & rack_lost & (1 << i)],
     }
 
 
@@ -67,7 +71,7 @@ def main():
         geometry = fields("base=" + case.splitlines()[0])
         rounds = [line for line in case.splitlines() if "ROUND n=" in line]
         assert len(rounds) == 5
-        output.append(check_arm(root.name, geometry, rounds, trace))
+        output.append(check_arm(geometry, rounds, trace))
     assert [row["terminal"] for row in output] == [1, 3]
     print(json.dumps(output, indent=2))
 

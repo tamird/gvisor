@@ -1314,7 +1314,11 @@ func (s *sender) SetPipe() {
 			// NOTE: here we mark the whole segment as lost. We do not try
 			// and test every byte in our write buffer as we maintain our
 			// pipe in terms of outstanding packets and not bytes.
-			if !s.ep.scoreboard.IsRangeLost(sb) {
+			//
+			// A segment RACK marked lost is not in flight either, as in
+			// Linux's tcp_packets_in_flight. IsLost alone needs SACKed data
+			// above the segment, which a tail loss never produces.
+			if !s1.lost && !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
 			// SetPipe():
@@ -1456,7 +1460,7 @@ func (s *sender) walkSACK(rcvdSeg *segment) bool {
 	sackBlocks := make([]header.SACKBlock, n)
 	copy(sackBlocks, rcvdSeg.parsedOptions.SACKBlocks[idx:])
 	sort.Slice(sackBlocks, func(i, j int) bool {
-		return sackBlocks[j].Start.LessThan(sackBlocks[i].Start)
+		return sackBlocks[i].Start.LessThan(sackBlocks[j].Start)
 	})
 
 	seg := s.writeList.Front()
