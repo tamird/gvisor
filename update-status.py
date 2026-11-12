@@ -3,6 +3,7 @@
 
 import argparse
 from collections import Counter, defaultdict
+from collections.abc import Container
 import http.client
 import json
 import os
@@ -286,6 +287,11 @@ def top_level_triage(item: dict, prior: dict, newly_observed: bool) -> bool:
     return not re.fullmatch(r"\[🤖[^\]]*\] Review agent has no findings\.", body.partition("\n---\n")[0].strip())
 
 
+def closed_supplier_pr(pr: dict, registered: Container[tuple[str, int]]) -> bool:
+    repo = pr.get("repo", REPO)
+    return pr["status"] == "closed" and repo != REPO and (repo, pr["number"]) in registered
+
+
 def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     """Put human feedback before routine checks, without treating replies as resolution."""
     nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]}
@@ -294,12 +300,12 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     pending = {(item["repo"], item["number"], item["id"]): item
                for item in previous.get("reviewerHandoff", [])}
     records = []
-    discussions = [(source, pr) for source in prs
-                   if source["status"] in {"open", "draft"} and source.get("authorLogin") == OWNER
-                   for pr in (source, *source.get("imports", []))]
+    discussions = [(source, pr) for source in prs if source.get("authorLogin") == OWNER
+                   for pr in (source, *source.get("imports", []))
+                   if (source["status"] in {"open", "draft"} and pr["status"] in {"open", "draft"})
+                   or (source is pr and closed_supplier_pr(source, nodes))]
     for source, pr in discussions:
-        if pr["status"] not in {"open", "draft"}:
-            continue
+        closed = pr["status"] == "closed"
         key = pr.get("repo", REPO), pr["number"]
         current_discussion = pr is source or pr in import_lineage(source)
         node = nodes.get((source.get("repo", REPO), source["number"]), {})
@@ -324,6 +330,11 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
                            for record in followup.get("attentionDispositions", [])))
         rebase = current_rebase_request(pr, OWNER) if pr is source else None
         for item in items:
+            # A maintainer can close a supplier PR and request a different fix
+            # in its closing comment. Triage that message without reopening
+            # the old PR’s inline code review.
+            if closed and item["kind"] not in {"comment", "review"}:
+                continue
             author = item.get("author") or {}
             if author.get("__typename") != "User" or author.get("login") == OWNER or not item.get("body", "").strip():
                 continue
@@ -377,6 +388,8 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
                                    and reply.get("at")
                                    and datetime.fromisoformat(reply["at"]) >= datetime.fromisoformat(item["updatedAt"])
                                    for reply in node.get("settledReviews", [])))
+            if closed and not inspect:
+                continue
             claim = {}
             if awaiting_author:
                 claim = {"claimed": claimed, "overdue": bool(not claimed and prior_record
@@ -396,7 +409,8 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
                             **({"needsTriage": False} if record.get("needsTriage") and not current_discussion else {}),
                             **({"owner": "Agent", "claimed": False, "overdue": False}
                                if record.get("awaitingAuthor") and record["head"] != pr["head"] else {})}
-                           for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible)
+                           for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible
+                           and (not closed or record.get("needsTriage")))
     return sorted(records, key=lambda item: (not item["awaitingAuthor"], item.get("updatedAt") or "", item["url"]))
 
 
@@ -1808,17 +1822,21 @@ def approved_branches_after_merge(registry: dict, prs: list[dict]) -> list[dict]
 def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     """Select feedback from our project work before new review requests or maintenance."""
     registered = {(node.get("repo"), node.get("number")) for node in REGISTRY["nodes"] if node.get("type") == "pr"}
-    open_prs = {(pr.get("repo", REPO), pr["number"]): pr
-                for collection in ("prs", "reviewPRs") for pr in snapshot.get(collection, [])
-                if pr.get("status") in {"open", "draft"}}
-    owned = {key: pr for key, pr in open_prs.items() if pr.get("authorLogin") == OWNER
+    prs = {(pr.get("repo", REPO), pr["number"]): pr
+           for collection in ("prs", "reviewPRs") for pr in snapshot.get(collection, [])
+           if pr.get("status") in {"open", "draft"} or closed_supplier_pr(pr, registered)}
+    owned = {key: pr for key, pr in prs.items() if pr.get("authorLogin") == OWNER
              and (key[0] == REPO or key in registered)}
     pending = []
     for row in snapshot.get("reviewerHandoff", []):
         source = owned.get((row["repo"], row.get("sourceNumber", row["number"])))
         if not (row["awaitingAuthor"] or row.get("needsTriage")) or not source:
             continue
-        # Ignore a stale assignment after either the source or the import closes.
+        # Only a new or untriaged closing message survives a supplier PR closure.
+        if source["status"] == "closed":
+            if row.get("needsTriage") and row["number"] == source["number"] and row["head"] == source["head"]:
+                pending.append(row)
+            continue
         imports = import_lineage(source) if row.get("needsTriage") else source.get("imports", [])
         if not any(pr["number"] == row["number"] and pr["head"] == row["head"]
                    and pr.get("status") in {"open", "draft"} for pr in (source, *imports)):
@@ -1834,8 +1852,8 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     reviewer_replies = []
     for row in snapshot.get("reviewWatchHandoff", []):
         key = row["repo"], row["number"]
-        pr = open_prs.get(key)
-        if (pr and pr.get("authorLogin") and pr["authorLogin"] != OWNER and row["head"] == pr.get("head")
+        pr = prs.get(key)
+        if (pr and pr["status"] in {"open", "draft"} and pr.get("authorLogin") and pr["authorLogin"] != OWNER and row["head"] == pr.get("head")
                 and (watched.get(key, {}).get("since") or pr.get("postedReview"))):
             reviewer_replies.append(row)
     unclaimed_replies = [row for row in reviewer_replies if not row.get("claimed")]

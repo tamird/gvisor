@@ -1452,6 +1452,29 @@ class CollectorHistoryTest(unittest.TestCase):
             snap["reviewerHandoff"] = updater.reviewer_handoff([pr], snap)
             self.assertIsNone(updater.worker_handoff(snap, [])["nextWork"])
 
+    def test_closing_supplier_comment_stays_in_triage_until_read(self) -> None:
+        repo = "example/compiler"
+        pr = {**retained(raw_pr(5)), "repo": repo, "status": "closed"}
+        comment = {"id": "closing-comment", "kind": "comment", "body": "Please open an issue for this use case.",
+                   "createdAt": LATER, "updatedAt": LATER, "url": f"https://github.com/{repo}/pull/5#issuecomment-1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        node = {"id": f"pr:{repo}:5", "type": "pr", "number": 5, "repo": repo}
+        before = {"prs": [{**copy.deepcopy(pr), "status": "open"}], "checkedAt": OLD}
+        pr["feedback"]["items"] = [comment]
+
+        def refresh(previous: dict) -> dict:
+            return {"prs": [copy.deepcopy(pr)], "reviewerHandoff": updater.reviewer_handoff([pr], previous)}
+
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
+            for prior in (before, refresh(before)):
+                work = updater.worker_handoff(refresh(prior), [])
+                self.assertEqual((work["nextWork"]["id"], work["unclaimed"]), (comment["id"], 1))
+            node["followup"] = {"owner": "Agent", "sourceHead": pr["head"], "observedAt": LATER,
+                                "evidence": [comment["url"]]}
+            self.assertIsNone(updater.worker_handoff(refresh(before), [])["nextWork"])
+        with mock.patch.object(updater, "REGISTRY", {"nodes": []}):
+            self.assertIsNone(updater.worker_handoff(refresh(before), [])["nextWork"])
+
     def test_top_level_lint_report_reaches_the_worker_without_assigning_a_reply(self) -> None:
         pr = retained(raw_pr(15106))
         old = {"prs": [copy.deepcopy(pr)], "checkedAt": OLD}

@@ -480,7 +480,9 @@ work. This read-only check is independent of the GitHub Actions timer and
 does not post or reschedule approval reminders. The command selects unclaimed
 author feedback first, then unclaimed replies to reviews we gave, then new
 invitations. It lists each outstanding message with its source, link and
-owner. An author-side thread is overdue if a second complete
+owner. When a registered supplier PR closes without merging, unread closing
+comments stay in triage until the corresponding message is claimed.
+An author-side thread is overdue if a second complete
 refresh sees it still unclaimed. A claim requires the current source head and
 the exact thread URL, observed after the reviewer's latest edit. On each
 continuation read `nextWork` before selecting routine work. On a scheduled
