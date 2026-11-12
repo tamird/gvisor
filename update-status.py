@@ -11,6 +11,7 @@ import sys
 import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from functools import partial
 from pathlib import Path
 
 from ci_actions import collect as collect_ci_actions
@@ -29,6 +30,7 @@ REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
 PR_BATCH_SIZE = 8
 MERGEABILITY_BATCH_SIZE = 64
+MASTER_RECHECK_REQUESTS = 3
 
 
 def registered_repositories(registry: dict) -> set[str]:
@@ -126,11 +128,12 @@ class GitHubTransportError(RuntimeError):
 
 
 def graphql(query: str, variables: dict[str, object] | None = None, *,
-            missing_issue_aliases: set[str] | None = None) -> dict:
+            missing_issue_aliases: set[str] | None = None, request_limit: int | None = None) -> dict:
     global requests, query_cost, rate_remaining
+    limit = REQUEST_LIMIT if request_limit is None else request_limit
     query = query.rstrip().removesuffix("}") + " rateLimit { cost remaining } }"
     for attempt in range(2):
-        if requests >= REQUEST_LIMIT:
+        if requests >= limit:
             raise RuntimeError("Snapshot request limit reached; previous file is unchanged")
         requests += 1
         try:
@@ -140,7 +143,7 @@ def graphql(query: str, variables: dict[str, object] | None = None, *,
                 text=True, capture_output=True, check=False, timeout=60,
             )
         except subprocess.TimeoutExpired:
-            if attempt == 0 and requests < REQUEST_LIMIT:
+            if attempt == 0 and requests < limit:
                 print("GitHub query timed out; retrying once within the request cap", file=sys.stderr)
                 continue
             raise GitHubTransportError("GitHub query timed out") from None
@@ -155,7 +158,7 @@ def graphql(query: str, variables: dict[str, object] | None = None, *,
                 "net/http: TLS handshake timeout", "unexpected EOF", "gh: HTTP 499",
                 "i/o timeout", "connection reset by peer", "gh: HTTP 502", "gh: HTTP 504",
             ))
-            if attempt == 0 and requests < REQUEST_LIMIT and interrupted:
+            if attempt == 0 and requests < limit and interrupted:
                 print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)
                 continue
             if interrupted:
@@ -799,7 +802,7 @@ def needs_refresh(number: int, previous: dict[int, dict], open_numbers: dict[int
     return number in open_numbers or previous.get(number, {}).get("status") not in {"closed", "merged"}
 
 
-def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str, object]:
+def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO, *, request_limit: int | None = None) -> dict[str, object]:
     """Give GitHub's asynchronous calculation one bounded, head-checked read."""
     unknown = {pr["number"]: pr for pr in prs
                if pr["state"] == "OPEN" and pr["mergeable"] == "UNKNOWN"}
@@ -809,8 +812,10 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
     # Report the original candidate inventory; per-PR observations record which
     # batches actually completed if transport or the request budget stops us.
     numbers = sorted(unknown)
+    limit = REQUEST_LIMIT if request_limit is None else request_limit
+    read = graphql if request_limit is None else partial(graphql, request_limit=limit)
     for start in range(0, len(numbers), MERGEABILITY_BATCH_SIZE):
-        if requests >= REQUEST_LIMIT:
+        if requests >= limit:
             return {"status": "budget-exhausted", "numbers": numbers}
         batch = numbers[start:start + MERGEABILITY_BATCH_SIZE]
         # mergeStateStatus includes branch protection and checks. Asking for it
@@ -818,7 +823,7 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
         fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid headRef{{name target{{oid}}}} baseRef{{name target{{oid}}}} state mergeable}}"
                           for number in batch)
         try:
-            response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
+            response = read(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
         except GitHubTransportError as error:
             # Preserve successful batches; the unavailable batch keeps its
             # primary UNKNOWN observations and their original timestamps.
@@ -844,8 +849,9 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
     return {"status": "completed", "numbers": numbers}
 
 
-def recheck_snapshot_mergeability(raw_prs: list[dict], rows: list[dict], repo: str) -> dict[str, object]:
-    result = recheck_unknown_mergeability(raw_prs, repo)
+def recheck_snapshot_mergeability(raw_prs: list[dict], rows: list[dict], repo: str, *,
+                                request_limit: int | None = None) -> dict[str, object]:
+    result = recheck_unknown_mergeability(raw_prs, repo, request_limit=request_limit)
     observed = {pr["number"]: pr for pr in raw_prs if "_mergeabilityRetrievedAt" in pr}
     for row in rows:
         if (pr := observed.get(row["number"])) is None:
@@ -856,6 +862,50 @@ def recheck_snapshot_mergeability(raw_prs: list[dict], rows: list[dict], repo: s
         if row["mergeable"] != "UNKNOWN":
             row["mergeabilityObservation"] = remember_mergeability(row, {}, row["checkedAt"])
     return result
+
+
+def recheck_changed_master(previous: dict, inventories: dict, prs: list[dict], refreshed: dict) -> dict | None:
+    """Recheck current open sources and matching exports once after master advances."""
+    repo = "google/gvisor"
+    if repo not in inventories:
+        return None
+    raw = {number: row for (owner, number), row in refreshed.items() if owner == repo}
+    heads = {base["target"]["oid"] for row in raw.values()
+             if row["state"] == "OPEN" and (base := row.get("baseRef")) and base["name"] == "master"}
+    if len(heads) != 1:
+        return None
+    master = heads.pop()
+    inventory = inventories[repo]
+    inventory["masterHead"] = master
+    old = previous.get("limits", {}).get("repositories", {}).get(repo, {}).get("masterHead")
+    if not old:
+        # Snapshots written before masterHead recorded the tip with the default-branch checks.
+        watches = {item["id"] for item in REGISTRY.get("investigations", [])
+                   if item.get("defaultBranchCheck") and item.get("repo", REPO) == repo}
+        prior = {row["head"] for identity, row in previous.get("defaultBranchChecks", {}).items()
+                 if identity in watches and row["branch"] == "master"}
+        old = prior.pop() if len(prior) == 1 else None
+    if not old or old == master or inventory["mergeabilityRecheck"]["status"] != "budget-exhausted":
+        return None
+
+    sources = [pr for pr in prs if pr.get("repo", REPO) == repo]
+    numbers = set()
+    for source in sources:
+        if source["status"] != "open" or source.get("branchHead") != source["head"]:
+            continue
+        for row in [source, *(pr for pr in source["imports"] if pr["matchesSourceHead"])]:
+            if (row["status"] == "open" and row["mergeable"] == "UNKNOWN" and row["base"] == master
+                    and row["branchHead"] == row["head"] and row["number"] in raw
+                    and raw[row["number"]].get("baseRef") == {"name": "master", "target": {"oid": master}}
+                    and "_mergeabilityRetrievedAt" not in raw[row["number"]]):
+                numbers.add(row["number"])
+    if not numbers:
+        return None
+    rows = [row for source in sources for row in [source, *source["imports"]] if row["number"] in numbers]
+    start, cost = requests, query_cost
+    result = recheck_snapshot_mergeability([raw[n] for n in numbers], rows, repo,
+                                          request_limit=REQUEST_LIMIT + MASTER_RECHECK_REQUESTS)
+    return {**result, "previousMaster": old, "master": master, "requests": requests - start, "graphqlCost": query_cost - cost}
 
 
 def collect_repository(repo: str, policy: str, previous: dict,
@@ -1392,6 +1442,7 @@ def main() -> None:
         raw_prs = [pr for (owner, _), pr in refreshed.items() if owner == repo]
         rows = [pr for source in prs if source.get("repo", REPO) == repo for pr in (source, *source["imports"])]
         inventory["mergeabilityRecheck"] = recheck_snapshot_mergeability(raw_prs, rows, repo)
+    overflow = recheck_changed_master(previous, inventories, prs, refreshed)
     for record in issue_discussions(issues, previous):
         print(json.dumps({"issueDiscussion": record}), flush=True)
     checked_at = datetime.now(timezone.utc).isoformat()
@@ -1428,6 +1479,9 @@ def main() -> None:
                            "nestedPageSize": 100, "requestLimit": REQUEST_LIMIT, "repositories": inventories,
                            **{key: sum(item[key] for item in inventories.values() if item[key] is not None)
                               for key in ("openInventoryTotal", "retainedSources", "retainedImports")}}}
+    if overflow:
+        snapshot["limits"].update(standardRequestLimit=REQUEST_LIMIT, requestLimit=REQUEST_LIMIT + MASTER_RECHECK_REQUESTS,
+                                  changedMasterRecheck=overflow)
     snapshot["reviewerSpecialties"] = {path: sorted(logins) for path, logins in specialties.items()}
     if default_branch_checks:
         snapshot["defaultBranchChecks"] = default_branch_checks

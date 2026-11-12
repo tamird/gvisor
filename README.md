@@ -373,8 +373,12 @@ Posting also requires fresh `MERGEABLE` status. Conflicts defer to source work;
 unknown mergeability gets one bounded, head-checked reread per PR, using the
 existing request ceiling. Each query checks up to 64 PRs for conflicts. If
 the destination changes between reads, the reminder waits for a new snapshot.
-Snapshot rereads use only the budget left after collecting every repository and
-registered issue. When it runs out, unqueried PRs retain their initial UNKNOWN.
+Snapshot rereads first use the budget left after repository, issue, review and CI
+collection. When gVisor master advances and this budget runs out, up to three
+extra requests check open source heads and their current open exports targeting
+that master. Each request covers up to 64 heads. Transport retries count toward
+the three-request cap. The snapshot records the two master tips, requests and GraphQL cost.
+Remaining rows retain their initial UNKNOWN.
 Every normal sweep reports the full
 current conflict/unknown inventory and its changed or resolved observations,
 including source/import heads and assigned follow-up. No reminder asks a

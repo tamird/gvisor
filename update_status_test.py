@@ -541,6 +541,104 @@ class IssueInventoryTest(unittest.TestCase):
                 run.assert_called_once()
 
 
+class ChangedMasterMergeabilityTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.repo = "google/gvisor"
+        self.master = "e" * 40
+        self.previous = {"limits": {"repositories": {self.repo: {"masterHead": "a" * 40}}}}
+        self.inventory = {self.repo: {"mergeabilityRecheck": {"status": "budget-exhausted"}}}
+        self.refreshed = {}
+        self.sources = []
+        self.batches = []
+        self.enterContext(mock.patch.object(updater, "requests", updater.REQUEST_LIMIT))
+        self.enterContext(mock.patch.object(updater, "query_cost", 400))
+        self.enterContext(mock.patch.object(updater, "rate_remaining", 4000))
+        self.enterContext(mock.patch.object(updater.subprocess, "run", side_effect=self.response))
+
+    def add(self, number: int, *, source: dict | None = None, state: str = "OPEN",
+            repo: str = "google/gvisor", branch: str = "master", matches: bool = True) -> dict:
+        raw = raw_pr(number, state)
+        raw.update(mergeable="UNKNOWN", headRef={"name": raw["headRefName"], "target": {"oid": raw["headRefOid"]}})
+        raw["baseRef"]["name"] = branch
+        self.refreshed[repo, number] = raw
+        row = retained(raw)
+        row["repo"] = repo
+        if source is None:
+            self.sources.append(row)
+        else:
+            row.update(matchesSourceHead=matches, sourceHead=source["head"])
+            source["imports"].append(row)
+        return row
+
+    def response(self, argv: list, **kwargs) -> subprocess.CompletedProcess:
+        query = json.loads(kwargs["input"])["query"]
+        batch = [int(n) for n in re.findall(r"p(\d+):pullRequest", query)]
+        self.batches.append(batch)
+        records = {f"p{n}": {**self.refreshed[self.repo, n], "mergeable": "CONFLICTING"} for n in batch}
+        return subprocess.CompletedProcess(argv, 0, json.dumps({"data": {
+            "repository": records, "rateLimit": {"cost": 1, "remaining": 3999}}}), "")
+
+    def recheck(self) -> dict | None:
+        return updater.recheck_changed_master(self.previous, self.inventory, self.sources, self.refreshed)
+
+    def test_two_source_conflicts_and_current_export_after_master_moves(self) -> None:
+        self.add(16871)
+        source = self.add(17092)
+        self.add(17124, source=source)
+        self.add(17118, source=source, matches=False)
+        self.add(16466, state="CLOSED")
+        closed = self.add(17210, state="MERGED")
+        self.add(17508, source=closed)
+        self.add(12, repo="other/project")
+        self.add(17201, branch="release")
+        self.add(17202)["branchHead"] = "b" * 40
+        self.add(17203)["mergeable"] = "MERGEABLE"
+        self.add(17204)
+        self.refreshed[self.repo, 17204]["_mergeabilityRetrievedAt"] = OLD
+        result = self.recheck()
+        self.assertEqual(self.batches, [[16871, 17092, 17124]])
+        self.assertEqual((result["requests"], result["graphqlCost"]), (1, 1))
+        self.assertEqual((result["status"], result["master"]), ("completed", self.master))
+        self.assertEqual([source["mergeable"], source["imports"][0]["mergeable"]], ["CONFLICTING"] * 2)
+        self.assertEqual(source["imports"][1]["mergeable"], "UNKNOWN")
+
+    def test_limit_and_no_reserve_for_other_consumers(self) -> None:
+        for number in range(1, 197):
+            self.add(number)
+        result = self.recheck()
+        self.assertEqual([len(batch) for batch in self.batches], [64, 64, 64])
+        self.assertEqual(result["status"], "budget-exhausted")
+        self.assertEqual((result["requests"], result["graphqlCost"]), (3, 3))
+        self.assertEqual([r["number"] for r in self.sources if r["mergeable"] == "UNKNOWN"], list(range(193, 197)))
+        with self.assertRaisesRegex(RuntimeError, "request limit"):
+            updater.graphql("query { viewer { login } }")
+        self.assertEqual(len(self.batches), 3)
+
+    def test_legacy_master_clock_requires_a_gvisor_watch(self) -> None:
+        self.add(16871)
+        watches = [{"id": repo, "repo": repo, "defaultBranchCheck": {"context": "test"}}
+                   for repo in [self.repo, "another/repo"]]
+        with mock.patch.object(updater, "REGISTRY", {"investigations": watches}):
+            prior = {"branch": "master", "head": "a" * 40}
+            self.previous = {"defaultBranchChecks": {"another/repo": prior}}
+            self.assertIsNone(self.recheck())
+            self.previous["defaultBranchChecks"][self.repo] = prior
+            self.assertEqual(self.recheck()["numbers"], [16871])
+
+    def test_no_new_master_or_no_unresolved_current_row(self) -> None:
+        row = self.add(16871)
+        self.previous["limits"]["repositories"][self.repo]["masterHead"] = self.master
+        self.assertIsNone(self.recheck())
+        self.previous["limits"]["repositories"][self.repo]["masterHead"] = "a" * 40
+        row["mergeable"] = "MERGEABLE"
+        self.assertIsNone(self.recheck())
+        row["mergeable"] = "UNKNOWN"
+        self.inventory[self.repo]["mergeabilityRecheck"]["status"] = "completed"
+        self.assertIsNone(self.recheck())
+        self.assertEqual(self.batches, [])
+        self.assertEqual(self.inventory[self.repo]["masterHead"], self.master)
+
+
 class MergeabilityBatchTest(unittest.TestCase):
     def setUp(self) -> None:
         self.enterContext(mock.patch.object(updater, "MERGEABILITY_BATCH_SIZE", 8))
