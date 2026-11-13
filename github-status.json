@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-13T02:32:03.797626+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-13T03:18:19.146599+00:00",
+  "registryDate": "2026-11-13T03:29:25.014380+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -468995,82 +468995,9 @@
     "due": false
   },
   "projectFeedbackReview": {
-    "lastReviewed": "2026-11-12T17:46:22.845465+00:00",
-    "dailyReviewDue": true,
-    "changedWork": {
-      "https://github.com/google/gvisor/pull/16345": {
-        "head": "e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
-        "status": "Merged in #16345"
-      },
-      "https://github.com/google/gvisor/pull/16485": {
-        "head": "7fb83c5740b7f0d71e8cef46aba429f97d5f5a8f",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17568": {
-        "head": "63ff9616fe4c004db00310ea45b6e06a521f803c",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16663": {
-        "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17114": {
-        "head": "950784a363e1e9f70c4b0d507aca1d55c27cff61",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17155": {
-        "head": "7dcbb6614568884fd0e7bbd68aefe7acde7db3ec",
-        "status": "merged"
-      },
-      "https://github.com/tamird/gvisor/commit/4b21538bf": {
-        "head": "4b21538bf21567c09e57a36c9749ff25b7332669",
-        "status": "Contributor approved; waiting for prerequisites"
-      },
-      "https://github.com/tamird/gvisor/commit/795ae79af": {
-        "head": "795ae79af8e45ae42f964148e4e5e1fc5b4bb1e2",
-        "status": "Contributor review requested"
-      },
-      "https://github.com/google/gvisor/pull/16710": {
-        "head": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17286": {
-        "head": "97e5ddeb668d4730d7fa898ee1ba373a3729aa1f",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/8178e3fe5": {
-        "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
-        "status": "Approved; waiting for four remaining compiler prerequisites"
-      },
-      "https://github.com/google/gvisor/pull/15730": {
-        "head": "6eb3e7f3e5469c441b523c2da93feb5189cc827f",
-        "status": "open"
-      },
-      "https://github.com/bazel-contrib/bazel-gazelle/pull/2514": {
-        "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "status": "closed"
-      },
-      "https://github.com/google/gvisor/pull/16867": {
-        "head": "43820f1c39bbed4d99d7a12630e95e74e0f4b8b4",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17554": {
-        "head": "fdf95a111903ab4ba7d37dfd2f8083d8ff228b75",
-        "status": "merged"
-      },
-      "https://github.com/tamird/gvisor/commit/73a5b30ce": {
-        "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
-        "status": "Contributor review requested"
-      },
-      "https://github.com/google/gvisor/pull/16856": {
-        "head": "5a25e47ce2003fb203a9cfa90e0451cfbe054b43",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17613": {
-        "head": "7b0e57daf4c7857a8343e072f69eb1b70151a8e1",
-        "status": "open"
-      }
-    }
+    "lastReviewed": "2026-11-13T03:29:25.014380+00:00",
+    "dailyReviewDue": false,
+    "changedWork": {}
   },
   "ciFlakes": {
     "checkedAt": "2026-11-13T02:32:03.797626+00:00",

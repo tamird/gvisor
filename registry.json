@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T03:18:19.146599+00:00",
+    "updatedAt": "2026-11-13T03:29:25.014380+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -101345,8 +101345,8 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-12T19:53:38+00:00",
-      "lastReviewedAt": "2026-11-12T17:46:22.845465+00:00",
+      "updatedAt": "2026-11-13T03:29:25.014380+00:00",
+      "lastReviewedAt": "2026-11-13T03:29:25.014380+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
         {
@@ -101823,6 +101823,23 @@
             {
               "label": "Rust image using the released notice",
               "url": "https://github.com/tamird/gvisor/commit/795ae79af"
+            }
+          ]
+        },
+        {
+          "text": "Checked the 18 entries changed since the previous review and the 27 Tamir-authored gVisor PRs updated in that interval. Each of the 22 still open has one commit. The changed review threads had an author or contributor reply, or were resolved. Carzh confirmed the #16766 re-import is pending internally. #15730 publishes the benchstat table. The tracker retains the approved compiler change and the separate Rust and NVIDIA revisions awaiting contributor review. The Gazelle issue draft explains how the sandbox can include a new unlisted file and identifies new package directories as the remaining manual step.",
+          "evidence": [
+            {
+              "label": "Python archive import follow-up",
+              "url": "https://github.com/google/gvisor/pull/16766#issuecomment-6840823106"
+            },
+            {
+              "label": "netip change and benchstat output",
+              "url": "https://github.com/google/gvisor/pull/15730"
+            },
+            {
+              "label": "Gazelle maintainer feedback and sandbox input requirements",
+              "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#issuecomment-6834594978"
             }
           ]
         }
@@ -108921,5 +108938,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-13T03:00:30.815941+00:00"
+  "updatedAt": "2026-11-13T03:29:25.014380+00:00"
 }
