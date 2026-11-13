@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T17:09:10.801249+00:00",
+    "updatedAt": "2026-11-13T17:12:07.110740+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54310,8 +54310,8 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-13T17:09:10.801249+00:00",
-      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18. A local Bazel 9.3.1 consumer of #17641 (5b433add4, llvm 0.8.27) still failed to read the header map: “Only the root module may configure the default Linux headers version”. With only this PR’s MODULE.bazel change applied, the same query passed. With no consumer selection the generated default was None; with the consumer selecting 6.12 the map resolved it to 6.12.91.",
+      "updatedAt": "2026-11-13T17:12:07.110740+00:00",
+      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18. A local Bazel 9.3.1 consumer of #17641 (5b433add4, llvm 0.8.27) still failed to read the header map: “Only the root module may configure the default Linux headers version”. With only this PR’s MODULE.bazel change applied, the same query passed. With no consumer selection the generated default was None; with the consumer selecting 6.12 the map resolved it to 6.12.91. The external AF_XDP build also needed gVisor’s Go overrides scoped to the root (#17555). With both changes, released Gazelle 0.51.3 loaded the target and Clang compiled it using the consumer’s Linux 6.12.91 headers.",
       "evidence": [
         {
           "label": "Downstream C controls isolate the vDSO and ARM platform package imports",
@@ -54364,6 +54364,10 @@
         {
           "label": "Upgrade leaves the tag on the shared extension",
           "url": "https://github.com/tamird/gvisor/blob/5b433add4/MODULE.bazel#L89-L91"
+        },
+        {
+          "label": "Original failure, successful 28-action build, Clang arguments and 952-byte AF_XDP ELF. The workflow ended red after saving the object because an extra checksum looked for Gazelle in the wrong Bazel directory.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43469807366/artifacts/14059444849"
         }
       ],
       "settledReviews": [
@@ -70407,8 +70411,8 @@
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2510",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-10T23:26:20+00:00",
-      "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides.",
+      "updatedAt": "2026-11-13T17:12:07.110740+00:00",
+      "summary": "Loading def.bzl evaluated the generated Go environment before a WORKSPACE query could return //:gazelle. The query succeeds when the runner resolves the Go environment during analysis. The Bzlmod and WORKSPACE runner scripts stayed byte-identical, including target-specific environment overrides. For gVisor’s external AF_XDP target, scoping gVisor’s own Go overrides in #17555 also lets the released Gazelle 0.51.3 load the rule. This comparison covers that target on LLVM 0.8.27 with #16804.",
       "evidence": [
         {
           "label": "Jay’s request for the original failure",
@@ -70473,6 +70477,10 @@
         {
           "label": "Downstream AF_XDP build on b01b6c0c7: the stock Gazelle override check stopped rule loading. With c534b7cb8, Clang 23 and the consumer’s 4.19.325 headers produced a 952-byte BPF ELF with xdp_prog, sock_map and .relxdp.",
           "url": "https://github.com/tamird/gvisor/actions/runs/43022620738/artifacts/13855921447"
+        },
+        {
+          "label": "Original failure, successful 28-action build, Clang arguments and 952-byte AF_XDP ELF. The workflow ended red after saving the object because an extra checksum looked for Gazelle in the wrong Bazel directory.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43469807366/artifacts/14059444849"
         }
       ],
       "settledReviews": [
@@ -77345,8 +77353,8 @@
       "url": "https://github.com/google/gvisor/pull/17555",
       "group": "bazel",
       "status": "open",
-      "summary": "A downstream Bazel module depending only on gVisor failed to evaluate seqnum and waiter because Gazelle rejected gVisor’s non-root overrides. With the standalone MODULE change, the same consumer built both libraries on Linux AMD64 with Bazel 9.3.1. Ordinary gVisor root builds kept the same nine proto generation directives and byte-identical patched protobuf source. Both downstream builds and a gVisor build using --ignore_dev_dependency select upstream protobuf, which reads its executable during initialization. A consumer can adopt the patch explicitly. The approved revision adds a source citation beside that policy in MODULE.bazel and is open as #17555.",
-      "updatedAt": "2026-11-13T16:55:10.232441+00:00",
+      "summary": "A downstream Bazel module depending only on gVisor failed to evaluate seqnum and waiter because Gazelle rejected gVisor’s non-root overrides. With the standalone MODULE change, the same consumer built both libraries on Linux AMD64 with Bazel 9.3.1. Ordinary gVisor root builds kept the same nine proto generation directives and byte-identical patched protobuf source. Both downstream builds and a gVisor build using --ignore_dev_dependency select upstream protobuf, which reads its executable during initialization. A consumer can adopt the patch explicitly. The approved revision adds a source citation beside that policy in MODULE.bazel and is open as #17555. On LLVM 0.8.27 with #16804, released Gazelle 0.51.3 rejected gVisor’s non-root override while loading the external AF_XDP target. Adding only this PR let Clang build it against the consumer’s Linux 6.12.91 headers.",
+      "updatedAt": "2026-11-13T17:12:07.110740+00:00",
       "head": "0fbac52c988483dbe2ab97492abdd5e3f523a2f6",
       "evidence": [
         {
@@ -77368,6 +77376,10 @@
         {
           "label": "Upstream lint on the rebased module with the formatter correction",
           "url": "https://github.com/google/gvisor/actions/runs/43464921297/job/132021376018"
+        },
+        {
+          "label": "Original failure, successful 28-action build, Clang arguments and 952-byte AF_XDP ELF. The workflow ended red after saving the object because an extra checksum looked for Gazelle in the wrong Bazel directory.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43469807366/artifacts/14059444849"
         }
       ],
       "number": 17555,
@@ -110477,5 +110489,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T17:09:10.801249+00:00"
+  "updatedAt": "2026-11-13T17:12:07.110740+00:00"
 }
