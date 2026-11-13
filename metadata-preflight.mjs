@@ -13,7 +13,16 @@ vm.runInContext(source.slice(0, -'start();\n'.length), context, { filename: 'app
 context.candidateRegistry = JSON.parse(bytes['registry.json']);
 context.candidateSnapshot = JSON.parse(bytes['github-status.json']);
 vm.runInContext('validateRegistry(candidateRegistry); validateSnapshot(candidateSnapshot, candidateRegistry);', context);
-for (const node of vm.runInContext("registryNodes(candidateRegistry)", context)) {
+const nodes = vm.runInContext("registryNodes(candidateRegistry)", context);
+const prURLs = new Set(nodes.filter(node => node.type === 'pr').map(node => node.url));
+for (const node of nodes) {
+  if (node.type === 'branch') {
+    const publication = /^(?:Published|Delivered) as ([\w.-]+\/[\w.-]+)#(\d+)$/.exec(node.status);
+    if (publication) {
+      const url = `https://github.com/${publication[1]}/pull/${publication[2]}`;
+      if (!prURLs.has(url)) throw new Error(`Register the published PR for ${node.id}: ${url}`);
+    }
+  }
   context.node = node;
   if (vm.runInContext("trackerMaintenance(node)", context) &&
       [node.contributorReview, ...(node.additionalReviews || [])].some(item => item?.status === "pending")) {
