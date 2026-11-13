@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T17:12:07.110740+00:00",
+    "updatedAt": "2026-11-13T17:19:21.884387+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -67273,7 +67273,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-09T21:55:41+00:00",
+      "updatedAt": "2026-11-13T17:19:21.884387+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire → graph → wire restore verified the guest’s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -67335,6 +67335,26 @@
         {
           "label": "Proposed whole-page and subpage encodings for split checkpoints",
           "url": "https://github.com/google/gvisor/pull/17236"
+        },
+        {
+          "label": "Open disk-backed subpage proposal #17491",
+          "url": "https://github.com/google/gvisor/pull/17491"
+        },
+        {
+          "label": "#17208 stops the split dump after the Kernel frame",
+          "url": "https://github.com/tamird/gvisor/blob/912702589/runsc/cmd/sentry/forwardcmd/statefile.go#L490-L509"
+        },
+        {
+          "label": "#17208 shared decoder accepts v1",
+          "url": "https://github.com/tamird/gvisor/blob/912702589/pkg/sentry/pgalloc/metadata/metadata.go#L43-L53"
+        },
+        {
+          "label": "#17491 restore accepts v1 and v2",
+          "url": "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore.go#L122-L126"
+        },
+        {
+          "label": "#17491 saves subpage data, restores it and compares the bytes",
+          "url": "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore_test.go#L274-L333"
         }
       ],
       "settledReviews": [
@@ -67379,14 +67399,20 @@
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "912702589414e631909e449f5926b66fa6d5a2c1",
-        "observedAt": "2026-11-08T17:19:18+00:00",
+        "observedAt": "2026-11-13T17:19:21.884387+00:00",
         "disposition": "The approved amendment is live as one commit and the answer was posted on Ayush’s original thread.",
-        "nextAction": "Follow upstream review and public checks on the updated head. After #17236 lands, compare statefile text and HTML on split checkpoints with v1 whole-page and v2 subpage metadata.",
+        "nextAction": "Await maintainer review of the published #17208. When reconciling #17208 with #17491, keep v2 support for split restore and the v1 inline reader. Run TestAsyncSaveToSubpages to check restored bytes and TestStatefileDumpMemoryFiles for the inline dump. The subpage test sets the block size to one quarter of the host page size, so it also exercises v2 on 4 KiB hosts.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
           "https://github.com/google/gvisor/pull/17208#discussion_r4507076013",
-          "https://github.com/tamird/gvisor/actions/runs/42502900602/artifacts/13626871767"
+          "https://github.com/tamird/gvisor/actions/runs/42502900602/artifacts/13626871767",
+          "https://github.com/google/gvisor/pull/17236",
+          "https://github.com/google/gvisor/pull/17491",
+          "https://github.com/tamird/gvisor/blob/912702589/runsc/cmd/sentry/forwardcmd/statefile.go#L490-L509",
+          "https://github.com/tamird/gvisor/blob/912702589/pkg/sentry/pgalloc/metadata/metadata.go#L43-L53",
+          "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore.go#L122-L126",
+          "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore_test.go#L274-L333"
         ]
       },
       "refinement": {
@@ -103358,7 +103384,7 @@
       "title": "Printing inline checkpoint memory",
       "status": "concluded",
       "owner": "Agent",
-      "updatedAt": "2026-11-12T04:36:35+00:00",
+      "updatedAt": "2026-11-13T17:19:21.884387+00:00",
       "summary": "At the current #17208 head, 912702589, runsc statefile FILE and runsc statefile -html FILE recognize Sentry checkpoints by their CPUID and Kernel roots. No -checkpoint option is needed. Other roots still use the generic printer. With the ordinary commands, the ARM64 autosave control found all 63 wire and 62 graph regions. The older opt-in experiment used different images and found 64 and 62 regions.",
       "findings": [
         {
@@ -103472,9 +103498,38 @@
               "url": "https://github.com/tamird/gvisor/blob/912702589/pkg/sentry/pgalloc/metadata/metadata.go#L44-L53"
             }
           ]
+        },
+        {
+          "text": "The author closed #17236 unmerged. The current disk-backed sparse-page proposal, #17491, writes v2 metadata for split checkpoints. Combining its head (73f8612f2) with #17208 (912702589) produces one merge conflict in MemoryFile.importMetadataProto. #17208 moved version validation into metadata.Decode, which accepts v1. #17491 accepts v1 and v2 during restore. Both text and HTML dumps stop after the Kernel frame in a split state file, before the separate MemoryFile metadata is read.",
+          "evidence": [
+            {
+              "label": "Closed, unmerged sparse-page proposal #17236",
+              "url": "https://github.com/google/gvisor/pull/17236"
+            },
+            {
+              "label": "Open disk-backed subpage proposal #17491",
+              "url": "https://github.com/google/gvisor/pull/17491"
+            },
+            {
+              "label": "#17208 stops the split dump after the Kernel frame",
+              "url": "https://github.com/tamird/gvisor/blob/912702589/runsc/cmd/sentry/forwardcmd/statefile.go#L490-L509"
+            },
+            {
+              "label": "#17208 shared decoder accepts v1",
+              "url": "https://github.com/tamird/gvisor/blob/912702589/pkg/sentry/pgalloc/metadata/metadata.go#L43-L53"
+            },
+            {
+              "label": "#17491 restore accepts v1 and v2",
+              "url": "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore.go#L122-L126"
+            },
+            {
+              "label": "#17491 saves subpage data, restores it and compares the bytes",
+              "url": "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore_test.go#L274-L333"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the published default reader on #17208. If #17236 lands, preserve its separate split-restore version checks when reconciling pgalloc.LoadFrom.",
+      "nextStep": "When reconciling #17208 with #17491, keep v2 support for split restore and the v1 inline reader. Run TestAsyncSaveToSubpages to check restored bytes and TestStatefileDumpMemoryFiles for the inline dump. The subpage test sets the block size to one quarter of the host page size, so it also exercises v2 on 4 KiB hosts.",
       "evidence": [
         {
           "label": "Current single-commit automatic reader on #17208",
@@ -103547,6 +103602,30 @@
         {
           "label": "Native test suites and four regression controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/42396550227/artifacts/13583881407"
+        },
+        {
+          "label": "Closed, unmerged sparse-page proposal #17236",
+          "url": "https://github.com/google/gvisor/pull/17236"
+        },
+        {
+          "label": "Open disk-backed subpage proposal #17491",
+          "url": "https://github.com/google/gvisor/pull/17491"
+        },
+        {
+          "label": "#17208 stops the split dump after the Kernel frame",
+          "url": "https://github.com/tamird/gvisor/blob/912702589/runsc/cmd/sentry/forwardcmd/statefile.go#L490-L509"
+        },
+        {
+          "label": "#17208 shared decoder accepts v1",
+          "url": "https://github.com/tamird/gvisor/blob/912702589/pkg/sentry/pgalloc/metadata/metadata.go#L43-L53"
+        },
+        {
+          "label": "#17491 restore accepts v1 and v2",
+          "url": "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore.go#L122-L126"
+        },
+        {
+          "label": "#17491 saves subpage data, restores it and compares the bytes",
+          "url": "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore_test.go#L274-L333"
         }
       ]
     },
@@ -110489,5 +110568,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T17:12:07.110740+00:00"
+  "updatedAt": "2026-11-13T17:19:21.884387+00:00"
 }
