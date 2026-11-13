@@ -1,35 +1,93 @@
-name: CI
-
-"on":
+name: Verify native test wrappers and Nogo on Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/pr15370-native-nogo]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - name: Run the wrapped tests and check both TestRunner platforms
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = ee850aaa0cce0743511138df40527c3cc9d7a941
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git checkout -q --detach HEAD^
+          test "$(git rev-parse HEAD^)" = ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d
+          q="$RUNNER_TEMP/native-nogo"
+          mkdir -p "$q/records"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$q/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $q/bazel" | sha256sum -c -
+          chmod +x "$q/bazel"
+          git rev-parse HEAD > "$q/records/source"
+          uname -m | tee "$q/records/host_cpu"
+          grep -qx x86_64 "$q/records/host_cpu"
+          git diff --exit-code HEAD
+          # The public Nogo target checks the ordinary test. Attach the same
+          # rule to its two with_cfg wrappers to require exported Go facts.
+          sed -i '1i load("//tools/nogo:defs.bzl", "nogo_test")' pkg/atomicbitops/BUILD
+          for arch in amd64 arm64; do
+            cat >> pkg/atomicbitops/BUILD <<EOF
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+          nogo_test(
+              name = "verify_${arch}_exports",
+              config = "//:nogo_config",
+              deps = [":atomicbitops_test_${arch}"],
+          )
+          EOF
+          done
+          git diff HEAD -- pkg/atomicbitops/BUILD > "$q/records/analyzer-fixture.diff"
+          bazel=("$q/bazel" --nosystem_rc --nohome_rc)
+          g=//pkg/atomicbitops
+          c=//test/util
+          common=(--config=x86_64 --jobs=4 --spawn_strategy=sandboxed --remote_executor= --remote_cache= --bes_backend= --lockfile_mode=off)
+          # Use the compiler installed on the hosted AMD64 worker. The ARM64
+          # TestRunner is inspected in the action graph and never runs here.
+          common+=(--extra_toolchains=@@rules_cc++cc_configure_extension+local_config_cc_toolchains//:all)
+          common+=(--extra_execution_platforms=//tools/bazeldefs:linux_amd64,//tools/bazeldefs:linux_arm64)
+          for arch in amd64 arm64; do
+            expected=//tools/bazeldefs:linux_${arch}
+            for test in "$g:atomicbitops_test_$arch" "$c:posix_error_test_$arch"; do
+              "${bazel[@]}" aquery "${common[@]}" --output=text "mnemonic('TestRunner', $test)" > "$q/records/${test##*:}.actions"
+              grep -F "Execution platform: $expected" "$q/records/${test##*:}.actions"
+            done
+          done
+          targets=("$g:atomicbitops_test_amd64" "$c:posix_error_test_amd64" "$g:atomicbitops_test_nogo" "$g:verify_amd64_exports" "$g:verify_arm64_exports")
+          status=0
+          "${bazel[@]}" test "${common[@]}" --keep_going --nocache_test_results --flaky_test_attempts=1 --test_output=errors --test_env=GO_TEST_WRAP=1 --test_env=GO_TEST_WRAP_TESTV=1 "${targets[@]}" 2>&1 | tee "$q/records/tests.log" || status=$?
+          for test in "${targets[@]}"; do
+            name=${test#//}
+            dir=bazel-testlogs/${name/:/\/}
+            for ext in xml log; do
+              if [[ -f "$dir/test.$ext" ]]; then cp "$dir/test.$ext" "$q/records/${name##*:}.$ext"; fi
+            done
+          done
+          [[ $status == 0 ]] || exit "$status"
+          for test in "${targets[@]:2}"; do
+            grep -qx PASS "$q/records/${test##*:}.log"
+            "${bazel[@]}" cquery "${common[@]}" --output=files --output_groups=nogo_findings "$test" > "$q/records/${test##*:}.reports"
+            for arch in amd64 arm64; do grep -F ".${arch}.findings" "$q/records/${test##*:}.reports"; done
+          done
+          python3 - "$q/records" <<'PY'
+          import sys, xml.etree.ElementTree as xml
+          from pathlib import Path
+          records = Path(sys.argv[1])
+          for name, expected in [('atomicbitops_test_amd64', 'TestOrUint32'), ('posix_error_test_amd64', 'PosixError')]:
+              cases = list(xml.parse(records / (name + '.xml')).iter('testcase'))
+              assert any(expected in case.get('name', '') for case in cases), name
+              assert all(case.find('failure') is None and case.find('error') is None and case.find('skipped') is None for case in cases), name
+              print(name, len(cases), 'passed cases')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pr15370-native-nogo
+          path: ${{ runner.temp }}/native-nogo/records/
+          if-no-files-found: error
+          retention-days: 14
