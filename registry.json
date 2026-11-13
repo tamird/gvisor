@@ -44,8 +44,8 @@
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
-      "lastCompletedAt": "2026-11-12T03:32:43+00:00",
-      "lastResult": "Removed 70 local branches and 698 fork branches. The local count fell from 2,743 to 2,673. The fork went from 4,269 to 3,572, including one newly published branch. All 230 open upstream PR heads kept their names and commits. The local recovery ref refs/branch-cleanup/archive at 521530cd1 preserves 745 distinct tips and all 70 original local reflogs. Its four manifests are 214bb34e7, 29ced1e15, 3a0b6cde7 and 521530cd1. A surviving public fork branch contains each of the 728 distinct tips retired by ancestry. The other 17 tips had an exact completed CI run. The archive preserves all 17. One also remains on a surviving fork branch."
+      "lastCompletedAt": "2026-11-13T03:43:50+00:00",
+      "lastResult": "Removed 148 local branches and 67 fork branches. Local branches went from 2,704 to 2,556 and fork branches from 3,676 to 3,609. The 227 open upstream PR heads and 1 open fork PR head all matched their published branches. refs/branch-cleanup/archive at 3f221e657 preserves 177 distinct tips and all 148 original local reflogs."
     }
   },
   "groups": [
@@ -7641,8 +7641,8 @@
       "group": "bazel",
       "status": "open",
       "head": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-      "updatedAt": "2026-11-12T09:05:38+00:00",
-      "summary": "The published single-commit rebase b3cf8596d is mergeable. It preserves the tar.bzl entry and adds with_cfg.bzl. The license verifier checked all 225 dependencies. Go and C++ TestRunner actions selected the intended native AMD64 or ARM64 worker. All 10,933 Go cases passed on each architecture, and all three C++ cases passed on each. The final uncached ARM64 Go run recorded zero failures, errors or skips. The native Linux AMD64 //:release build completed in 4,392 actions.",
+      "updatedAt": "2026-11-13T03:43:50+00:00",
+      "summary": "The published PR conflicts with master. With the rebase, Bazel selected the intended native workers for all four Go and C++ TestRunner actions. Three C++ cases passed. Nogo failed to produce raw_findings for either wrapped Go test.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -7765,6 +7765,10 @@
         {
           "label": "Final uncached ARM64 Go job on the published #15370 source",
           "url": "https://github.com/tamird/gvisor/actions/runs/43113944714/job/130836940093"
+        },
+        {
+          "label": "Native worker selection, passing C++ tests and missing Go Nogo outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43357603160/artifacts/14007455660"
         }
       ],
       "refinement": {
@@ -7812,10 +7816,10 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "observedAt": "2026-11-11T22:50:51+00:00",
-        "disposition": "Native AMD64 and ARM64 qualification passed on the published rebase.",
-        "nextAction": "Follow upstream review and import. All 10,933 ARM64 Go cases passed on a physical ARM64 executor with zero failures, errors or skips. The earlier run passed the AMD64 Go suite, the three C++ cases on both CPUs and all 225 catalog checks.",
-        "mergeable": "MERGEABLE",
+        "observedAt": "2026-11-13T03:43:50+00:00",
+        "disposition": "The candidate needs a Nogo change before the rebase is ready.",
+        "nextAction": "Bazel 9 changes the rule name when the architecture wrapper inherits go_test and exposes srcs directly. With the two-file correction, local Bazel analysis produced the same facts and raw_findings as the ordinary test on each architecture. Fork validation of that correction is waiting on authorization.",
+        "mergeable": "CONFLICTING",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
           "https://github.com/tamird/gvisor/actions/runs/43095873400",
@@ -7823,7 +7827,8 @@
           "https://github.com/tamird/gvisor/actions/runs/43104647743",
           "https://github.com/tamird/gvisor/actions/runs/43104647743/artifacts/13896029325",
           "https://app.buildbuddy.io/invocation/5e3089fa-6572-430a-8319-6ec6025ec652",
-          "https://github.com/tamird/gvisor/actions/runs/43113944714/artifacts/13897134374"
+          "https://github.com/tamird/gvisor/actions/runs/43113944714/artifacts/13897134374",
+          "https://github.com/tamird/gvisor/actions/runs/43357603160/artifacts/14007455660"
         ]
       }
     },
@@ -95288,9 +95293,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-13T02:57:50.464249+00:00",
+      "updatedAt": "2026-11-13T03:43:50+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
+        {
+          "text": "With hermetic-llvm 0.8.26 on a81045f73, the generated seccheck protobuf and C++ example server built for the default GNU AMD64 target. When targeting musl on AMD64 or ARM64, Clang rejected the generated stdin(), stdout() and stderr() accessors in both compilation units. This build-only check leaves the default compiler import clear. Supporting musl for the example would require preserving existing clients’ accessors. Protobuf #9265 discusses that compatibility constraint and closed after inactivity.",
+          "evidence": [
+            {
+              "label": "GNU AMD64 builds and both musl targets’ compilation errors",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43358583533/artifacts/14008170971"
+            },
+            {
+              "label": "Protobuf discussion of existing generated accessor names",
+              "url": "https://github.com/protocolbuffers/protobuf/issues/9265"
+            }
+          ]
+        },
         {
           "text": "On compiler proposal 4bee07965, the default AMD64 C++ build compiled and linked the unchanged seccheck server with declared Clang 23.1.2 targeting x86_64-linux-gnu. The compiler read glibc 2.28 stdio.h, and the resulting ELF used /lib64/ld-linux-x86-64.so.2. The original TestExample passed uncached on hosted Linux. A second connection to that exact server decoded the three ExecveInfo paths (stdin, stdout and stderr) and ExitNotifyParentInfo with exit_status 123. The previously observed generated-accessor collision remains specific to the separately selected C++ musl configuration.",
           "evidence": [

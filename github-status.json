@@ -468989,9 +468989,9 @@
     "id": "local-fork-branch-cleanup",
     "owner": "Agent",
     "command": "set -o pipefail && git cat-file blob 135e95ea394a9f66c56d24a81d84ea7b85a1e546 | python3 -B -",
-    "lastCompletedAt": "2026-11-12T03:32:43+00:00",
-    "lastResult": "Removed 70 local branches and 698 fork branches. The local count fell from 2,743 to 2,673. The fork went from 4,269 to 3,572, including one newly published branch. All 230 open upstream PR heads kept their names and commits. The local recovery ref refs/branch-cleanup/archive at 521530cd1 preserves 745 distinct tips and all 70 original local reflogs. Its four manifests are 214bb34e7, 29ced1e15, 3a0b6cde7 and 521530cd1. A surviving public fork branch contains each of the 728 distinct tips retired by ancestry. The other 17 tips had an exact completed CI run. The archive preserves all 17. One also remains on a surviving fork branch.",
-    "nextDueAt": "2026-11-13T03:32:43+00:00",
+    "lastCompletedAt": "2026-11-13T03:43:50+00:00",
+    "lastResult": "Removed 148 local branches and 67 fork branches. Local branches went from 2,704 to 2,556 and fork branches from 3,676 to 3,609. The 227 open upstream PR heads and 1 open fork PR head all matched their published branches. refs/branch-cleanup/archive at 3f221e657 preserves 177 distinct tips and all 148 original local reflogs.",
+    "nextDueAt": "2026-11-14T03:43:50+00:00",
     "due": false
   },
   "projectFeedbackReview": {
