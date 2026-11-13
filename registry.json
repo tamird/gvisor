@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T03:57:48+00:00",
+    "updatedAt": "2026-11-13T04:09:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39738,56 +39738,42 @@
       "id": "branch:package-clang-format",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/clang-format-bazel9",
+      "ref": "review/clang-format-current-buildifier",
       "title": "Use the declared LLVM formatter for C and C++ lint",
-      "url": "https://github.com/tamird/gvisor/commit/c5d0232e4",
-      "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
+      "url": "https://github.com/tamird/gvisor/commit/ad1733f2d",
+      "head": "ad1733f2db32e45107eff7390c13df112d248f4b",
       "group": "analysis",
-      "updatedAt": "2026-11-11T19:07:18+00:00",
-      "status": "Contributor approved; awaiting prerequisites",
-      "summary": "Bazel 9.3.1 ran clang-format on all 485 tracked C and C++ files. On the same server, adding a malformed file produced its exact diagnostic, deleting the directory restored the 485-file inventory, and recreating it with a differently named malformed file produced the new diagnostic. The fix target formatted that file and the next check passed.",
+      "updatedAt": "2026-11-13T04:09:52+00:00",
+      "status": "Awaiting contributor review; submit after #16663 lands",
+      "summary": "The shell-free Linux worker checked all 486 C and C++ files. It rejected a malformed file in a new directory, then rejected it again after the directory was deleted and recreated. The client repair applied the directory's style, and the worker accepted all 487 files. The macOS client also applied the fix from a subdirectory with a Linux build target selected.",
       "evidence": [
+        {
+          "label": "All six clang-format controls on the shell-free worker and writable client",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43362610809/artifacts/14008489594"
+        },
+        {
+          "label": "All 486 original sources passed on the scratch worker",
+          "url": "https://app.buildbuddy.io/invocation/3d52dab3-7e35-401c-924a-52ccf58a14c5"
+        },
+        {
+          "label": "The malformed source failed after directory recreation",
+          "url": "https://app.buildbuddy.io/invocation/1ad72d15-41ce-48fc-8013-9f47ff7ddd7f"
+        },
+        {
+          "label": "The scratch worker accepted the repaired file and its 486 siblings",
+          "url": "https://app.buildbuddy.io/invocation/202b1edd-049c-461b-9cd9-5acc461ba346"
+        },
         {
           "label": "All six controls on the Bazel 9.3.1 formatter revision",
           "url": "https://github.com/tamird/gvisor/actions/runs/41391715864/artifacts/13117209551"
-        },
-        {
-          "label": "85 new or modified files compared directly; prior parity covers 400 unchanged files",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40838384247"
-        },
-        {
-          "label": "All 23 owners executed remotely",
-          "url": "https://app.buildbuddy.io/invocation/5120a5db-5ed1-4076-adc1-37eedd886b93"
-        },
-        {
-          "label": "All 23 unchanged owners reused cached results",
-          "url": "https://app.buildbuddy.io/invocation/888a607b-79fb-46e3-b091-db9194822ffe"
-        },
-        {
-          "label": "One damaged file reran and failed only its owner",
-          "url": "https://app.buildbuddy.io/invocation/29c50833-f061-4f70-888e-542ad04f2a00"
-        },
-        {
-          "label": "Nine controls passed; directory deletion fails on both Bazel 8 releases",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950"
-        },
-        {
-          "label": "Bazel invalidation bug and upstream fix",
-          "url": "https://github.com/bazelbuild/bazel/issues/30883"
-        },
-        {
-          "label": "Two uncached native formatter actions before directory deletion",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41252578192/artifacts/13060869831"
         }
       ],
       "refinement": {
         "before": {
-          "head": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
-          "base": "1d96ea04c417f23fd7d90abb453e93163aa83c1a"
+          "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd"
         },
         "after": {
-          "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
-          "base": "045a3f7a506c109eab8beb396e5b3af37776a2df"
+          "head": "ad1733f2db32e45107eff7390c13df112d248f4b"
         }
       },
       "settledReviews": [
@@ -39805,14 +39791,26 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
-        "observedAt": "2026-11-11T19:07:18+00:00",
-        "disposition": "Approved for publication after the shared source inventory in #16663 lands.",
-        "nextAction": "Open this reviewed change after the shared source inventory in #16663 lands.",
+        "sourceHead": "ad1733f2db32e45107eff7390c13df112d248f4b",
+        "observedAt": "2026-11-13T04:09:52+00:00",
+        "disposition": "The revised proposal uses the source inventory already in #16663. Its Buildifier command stays in place and clang-format runs directly on the client. The earlier approval covers c5d0232e4.",
+        "nextAction": "Review the two direct Bazel fix commands now that #16663 provides a single repository-wide cpplint check. After approval, open the clang-format PR when #16663 lands.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/c5d0232e4",
+          "https://github.com/tamird/gvisor/commit/ad1733f2d",
+          "https://github.com/tamird/gvisor/actions/runs/43362610809/artifacts/14008489594",
           "https://github.com/google/gvisor/pull/16663"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "ad1733f2db32e45107eff7390c13df112d248f4b",
+        "baseHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
+        "url": "https://github.com/tamird/gvisor/commit/ad1733f2d",
+        "title": "Check C and C++ formatting with the declared LLVM tool",
+        "body": "The lint script downloads a clang-format wheel and unpacks it in a host cache. Run LLVM's declared formatter on the same sources as cpplint so the Bazel check can run on a worker without a shell. Preserve each source's path and its local style and ignore files.\n\nUse bazel run //tools/lint:format_clang to apply the fixes in the checkout. The existing //tools/lint:format command still runs Buildifier. make lint-fix applies both.\n\nThe Linux worker checked 486 sources, flagged a malformed file in a new directory, and passed after the client applied that directory's style. The combined check and the lint script's tests also passed [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43362610809/artifacts/14008489594",
+        "summary": "Review the two direct Bazel fix commands now that #16663 provides a single repository-wide cpplint check. After approval, open the clang-format PR when #16663 lands.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 c5d0232e4^! ad1733f2d^!",
+        "requestedAt": "2026-11-13T04:09:52+00:00"
       }
     },
     {
@@ -80019,9 +80017,10 @@
       "type": "depends_on",
       "from": "pr:16663",
       "to": "branch:package-clang-format",
-      "reason": "Uses the shared Bazel 9.3.1 source inventory from the #16663 amendment.",
+      "reason": "The clang-format action uses the repository-wide C and C++ source inventory introduced by Buildifier and cpplint in #16663.",
       "evidence": [
-        "https://github.com/tamird/gvisor/compare/045a3f7a5...c5d0232e4"
+        "https://github.com/google/gvisor/pull/16663",
+        "https://github.com/tamird/gvisor/commit/ad1733f2d"
       ]
     },
     {
@@ -109109,5 +109108,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T03:57:48+00:00"
+  "updatedAt": "2026-11-13T04:09:52+00:00"
 }
