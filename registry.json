@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:05:07.206232+00:00",
+    "updatedAt": "2026-11-13T16:09:34.116848+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -109748,8 +109748,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T16:00:36.999120+00:00",
-      "summary": "The server thread can close CPython’s test socket while the client is checking its source port. The proposed image patch leaves the close to the client thread. The runtime suite keeps running testSourceAddress.",
+      "updatedAt": "2026-11-13T16:09:34.116848+00:00",
+      "summary": "The server thread can close CPython’s test socket while the client is checking its source port. The image patch in #17643 leaves the close to the client thread. The runtime suite keeps running testSourceAddress.",
       "findings": [
         {
           "text": "The client registers a socket close on the server thread’s unittest cleanup stack. If the server finishes first, that cleanup can close the client socket before getsockname(). The client already closes its socket in clientTearDown().",
@@ -109812,8 +109812,12 @@
           ]
         }
       ],
-      "nextStep": "Review the image patch for submission to gVisor. When a future image pin includes CPython’s fix, remove the local patch.",
+      "nextStep": "Follow #17643 through review and import. Remove the image patch when the Python version it builds includes the upstream fix.",
       "evidence": [
+        {
+          "label": "Published gVisor fix",
+          "url": "https://github.com/google/gvisor/pull/17643"
+        },
         {
           "label": "Failing Python shard test.log",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54845/jobs/01a1d2e8-d5e7-4478-a004-a24028d52b75/artifacts/01a1d2f7-d50a-4463-8e02-393633fe0410"
@@ -109856,18 +109860,24 @@
         }
       ],
       "repo": "google/gvisor",
-      "head": "51d285840f99692fdb9a6268e5b6dbc1f1a4627c",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "51d285840f99692fdb9a6268e5b6dbc1f1a4627c",
-        "baseHead": "23012ba129bbb7aefbe255e315431d1a73de1079",
-        "url": "https://github.com/tamird/gvisor/commit/51d285840",
-        "title": "Keep Python’s test socket open for its client",
-        "body": "The Python runtime suite intermittently fails testSourceAddress with\nEBADF. The server thread can run its unittest cleanups while the client\nthread is still calling getsockname() on the same socket.\n\nApply Nikita Mikhailov's proposed CPython fix [1] to the test sources\nin our Python 3.12.3 image. Leave the socket close in clientTearDown(),\nwhich runs on the client thread. Python 3.12.16 still registers the\nredundant close on the server thread.\n\n[1]: https://github.com/python/cpython/pull/160218",
-        "summary": "With server cleanup forced before getsockname(), stock failed all eight runs on native Linux AMD64 and all eight on the archived gVisor runtime from the failing shard. The patched fixture passed all eight on each. All six tests in the class also passed ten times on each runtime using the image’s debug CPython 3.12.3.",
-        "requestedAt": "2026-11-13T16:00:36.999120+00:00"
-      }
+      "head": "ca7ba9f41af7723e6b8a56b212714da3343dc3e7",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "51d285840f99692fdb9a6268e5b6dbc1f1a4627c",
+          "baseHead": "23012ba129bbb7aefbe255e315431d1a73de1079",
+          "url": "https://github.com/tamird/gvisor/commit/51d285840",
+          "title": "Keep Python’s test socket open for its client",
+          "body": "The Python runtime suite intermittently fails testSourceAddress with\nEBADF. The server thread can run its unittest cleanups while the client\nthread is still calling getsockname() on the same socket.\n\nApply Nikita Mikhailov's proposed CPython fix [1] to the test sources\nin our Python 3.12.3 image. Leave the socket close in clientTearDown(),\nwhich runs on the client thread. Python 3.12.16 still registers the\nredundant close on the server thread.\n\n[1]: https://github.com/python/cpython/pull/160218",
+          "summary": "With server cleanup forced before getsockname(), stock failed all eight runs on native Linux AMD64 and all eight on the archived gVisor runtime from the failing shard. The patched fixture passed all eight on each. All six tests in the class also passed ten times on each runtime using the image’s debug CPython 3.12.3.",
+          "requestedAt": "2026-11-13T16:00:36.999120+00:00",
+          "outcome": "approved",
+          "at": "2026-11-13T16:09:34.116848+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17643",
+          "note": "Approved with the open CPython PR as the source citation. Published the one-line header correction in ca7ba9f41."
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-java-jmx-broken-connection",
@@ -110047,5 +110057,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:05:07.206232+00:00"
+  "updatedAt": "2026-11-13T16:09:34.116848+00:00"
 }
