@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Collect the first-party inputs which the two native lint actions declare."""
+"""Collect the first-party inputs for native source lint."""
 
 def _lint_sources(ctx):
     root = ctx.path(ctx.attr.root).dirname
     pending = [(root, "")]
-    groups = {"buildifier": [], "buildifier_config": [], "cpplint": [], "cpplint_config": []}
+    groups = {"buildifier": [], "buildifier_config": [], "cc": [], "clang_format_config": [], "cpplint_config": []}
 
     # A native glob stops at each subpackage; it also cannot discover a source
     # not named by any target. Visit one level per pass (Starlark has no while
@@ -42,10 +42,12 @@ def _lint_sources(ctx):
                     groups["buildifier"].append(path)
                 elif path == ".buildifier.json":
                     groups["buildifier_config"].append(path)
+                elif name in (".clang-format", "_clang-format", ".clang-format-ignore"):
+                    groups["clang_format_config"].append(path)
                 elif name == "CPPLINT.cfg":
                     groups["cpplint_config"].append(path)
                 elif name.endswith((".c", ".cc", ".h")):
-                    groups["cpplint"].append(path)
+                    groups["cc"].append(path)
     if pending:
         fail("lint input tree exceeds 4096 directory levels")
 
@@ -54,7 +56,7 @@ def _lint_sources(ctx):
     # external repository name or its execroot layout.
     ctx.file(".bazelignore", "ROOT.d\n")
     ctx.file("ROOT", "")
-    build = ['exports_files(["ROOT"])']
+    build = ['exports_files(["ROOT", "ROOT.d/.clang-format"])']
     groups = {name: sorted(paths) for name, paths in groups.items()}
     for name, paths in groups.items():
         files = []
