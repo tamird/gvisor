@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T04:16:47+00:00",
+    "updatedAt": "2026-11-13T04:20:44+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -107036,7 +107036,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T08:32:13+00:00",
+      "updatedAt": "2026-11-13T04:20:44+00:00",
       "summary": "The native runc Ruby benchmark failed while creating its FUSE server on 3238f32db. The helper could see both tmpfs mounts but could not see the host FUSE device.",
       "findings": [
         {
@@ -107085,9 +107085,38 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce79-117b-4cce-bb69-3907e917cf04"
             }
           ]
+        },
+        {
+          "text": "The Ruby and ABSL benchmarks start their FUSE helper with privileged exec in an ordinary container. The helper opens /dev/fuse and calls mount(2) directly. Docker 28.0.4 gives that exec additional capabilities but retains the container’s AppArmor profile. Its default profile denies mounts. The replay stopped at the missing device, before it reached mount(2) or recorded the active profile.",
+          "evidence": [
+            {
+              "label": "Benchmark container settings",
+              "url": "https://github.com/google/gvisor/blob/3238f32db/test/benchmarks/fs/fsbench/fsbench.go#L130-L143"
+            },
+            {
+              "label": "FUSE helper exec settings",
+              "url": "https://github.com/google/gvisor/blob/3238f32db/test/benchmarks/fs/fsbench/fsbench.go#L208-L216"
+            },
+            {
+              "label": "Strict direct mount in the helper",
+              "url": "https://github.com/google/gvisor/blob/3238f32db/test/runner/fuse/fuse.go#L60-L73"
+            },
+            {
+              "label": "go-fuse device open and mount call",
+              "url": "https://github.com/hanwen/go-fuse/blob/d537a5a8d/fuse/mount_linux.go#L32-L75"
+            },
+            {
+              "label": "Docker 28.0.4 privileged exec and AppArmor selection",
+              "url": "https://github.com/moby/moby/blob/6430e49a5/daemon/exec_linux.go#L61-L92"
+            },
+            {
+              "label": "Docker 28.0.4 default AppArmor mount rule",
+              "url": "https://github.com/moby/moby/blob/6430e49a5/profiles/apparmor/template.go#L45"
+            }
+          ]
         }
       ],
-      "nextStep": "Check whether passing the FUSE device to the native benchmark container is sufficient for the existing helper to mount, run the benchmark and clean up.",
+      "nextStep": "Read the FUSE helper’s active AppArmor profile inside the native container before mounting. With /dev/fuse present and the existing confinement in place, record whether mount(2) succeeds or which errno it returns. If the mount succeeds, check the Ruby and ABSL measurements and teardown.",
       "evidence": [
         {
           "label": "#54492 Ruby benchmark failure",
@@ -107124,6 +107153,30 @@
         {
           "label": "Master #54629, Ruby benchmark retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54629#01a1ce79-117b-4cce-bb69-3907e917cf04"
+        },
+        {
+          "label": "Benchmark container settings",
+          "url": "https://github.com/google/gvisor/blob/3238f32db/test/benchmarks/fs/fsbench/fsbench.go#L130-L143"
+        },
+        {
+          "label": "FUSE helper exec settings",
+          "url": "https://github.com/google/gvisor/blob/3238f32db/test/benchmarks/fs/fsbench/fsbench.go#L208-L216"
+        },
+        {
+          "label": "Strict direct mount in the helper",
+          "url": "https://github.com/google/gvisor/blob/3238f32db/test/runner/fuse/fuse.go#L60-L73"
+        },
+        {
+          "label": "go-fuse device open and mount call",
+          "url": "https://github.com/hanwen/go-fuse/blob/d537a5a8d/fuse/mount_linux.go#L32-L75"
+        },
+        {
+          "label": "Docker 28.0.4 privileged exec and AppArmor selection",
+          "url": "https://github.com/moby/moby/blob/6430e49a5/daemon/exec_linux.go#L61-L92"
+        },
+        {
+          "label": "Docker 28.0.4 default AppArmor mount rule",
+          "url": "https://github.com/moby/moby/blob/6430e49a5/profiles/apparmor/template.go#L45"
         }
       ]
     },
