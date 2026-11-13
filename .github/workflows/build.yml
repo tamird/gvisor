@@ -1,35 +1,197 @@
-name: CI
-
-"on":
+name: Cross-build the release with llvm 0.8.26 and boot the ARM64 Sentry
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/compiler-llvm-0826-current-guest]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  pair:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 155
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the candidate, the unchanged guest harness and both stock clients
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = a81045f739c45596265f889dff2a4cbc283a9144
+          test "$(git rev-parse HEAD^^)" = 77fdf618a9495a178825391cadbb76f60316ee61
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/downstream_guest.py' ':!.github/qualification/python_test_logs.py'
+          test "$(cat .bazelversion)" = 9.3.1
+          w="$RUNNER_TEMP/paired-stub-guest"
+          mkdir -m 700 "$w" "$w/dist"
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git ec4ced798422d27e533369b02d41b06f21b798c1
+          test "$(git rev-parse FETCH_HEAD)" = ec4ced798422d27e533369b02d41b06f21b798c1
+          musl=8d8327953fd0b9b267c14bdb87a1352219749d38
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git "$musl"
+          test "$(git rev-parse FETCH_HEAD)" = "$musl"
+          git show ec4ced798422d27e533369b02d41b06f21b798c1:MODULE.bazel > "$w/harness-MODULE.bazel"
+          git show ec4ced798422d27e533369b02d41b06f21b798c1:MODULE.bazel.lock > "$w/harness-MODULE.bazel.lock"
+          test "$(git hash-object "$w/harness-MODULE.bazel.lock")" = 32e3c5291e42bd48a5c283f43c5836abbdcd8896
+          for filename in guest_debs.py paired_stub_guest.py; do
+            git show "$musl:.github/qualification/$filename" > "$w/$filename"
+          done
+          for filename in harness.BUILD guest.sh; do
+            git show "$musl:test/rbe/paired_stub_guest/$filename" > "$w/$filename"
+          done
+          cp .github/qualification/{downstream_guest,python_test_logs}.py "$w/"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 -H 'Accept: application/octet-stream' https://api.github.com/repos/cerisier/glibc-headers/releases/assets/253918436 -o "$w/dist/x86_64-linux-gnu.2.28.tar.zst"
+          cd "$w"
+          for v in 9.3.1 8.8.1; do
+            curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 "https://releases.bazel.build/$v/release/bazel-$v-linux-x86_64" -o "bazel${v%%.*}"
+          done
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel9
+          5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  bazel8
+          8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3  dist/x86_64-linux-gnu.2.28.tar.zst
+          SUMS
+          chmod 700 bazel8 bazel9
+      - name: Build the ARM64 release and link the AMD64 sidecars with a custom allocator
+        id: release
+        timeout-minutes: 58
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?existing BuildBuddy key is required}"
+          w="$RUNNER_TEMP/paired-stub-guest"
+          rc="$w/compiler.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io
+          build --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io
+          build --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote
+          build --noremote_local_fallback
+          build --remote_download_outputs=toplevel
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=Arch=amd64
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/downstream_guest.py" release
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/downstream_guest.py" probe
+          "$w/bazel9" --nosystem_rc --nohome_rc shutdown
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: llvm-0826-arm64-release
+          path: |
+            ${{ runner.temp }}/paired-stub-guest/arm64-gvisor.tar.bz2
+            ${{ runner.temp }}/paired-stub-guest/release-manifest.sha256
+          if-no-files-found: warn
+          compression-level: 0
+          retention-days: 14
+      - name: Obtain all 202 checksum-pinned Ubuntu archives
+        timeout-minutes: 15
+        run: |
+          w="$RUNNER_TEMP/paired-stub-guest"
+          python3 -IB "$w/guest_debs.py" distfiles "$w"
+      - name: Stage the verified ARM64 archive and musl probe in the guest
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/paired-stub-guest"
+          git checkout -q --detach ec4ced798422d27e533369b02d41b06f21b798c1
+          test "$(git rev-parse HEAD)" = ec4ced798422d27e533369b02d41b06f21b798c1
+          test "$(cat .bazelversion)" = 8.8.1
+          test "$(git hash-object MODULE.bazel.lock)" = 32e3c5291e42bd48a5c283f43c5836abbdcd8896
+          dst=test/rbe/paired_stub_guest
+          mkdir "$dst"
+          cp "$w/harness.BUILD" "$dst/BUILD"
+          cp "$w/guest.sh" "$dst/guest.sh"
+          chmod 755 "$dst/guest.sh"
+          mv "$w/inputs" "$dst/inputs"
+          git diff --exit-code
+      - name: Run the declared 4 KiB and 64 KiB TCG guests through the original fork executor
+        id: guests
+        timeout-minutes: 60
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?existing BuildBuddy key is required}"
+          w="$RUNNER_TEMP/paired-stub-guest"
+          rc="$w/executor.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          bazel=(env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 "$w/bazel8" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx5g --bazelrc=test/rbe/qualification.bazelrc --bazelrc="$rc")
+          common=(--config=rbe --config=x86_64 --jobs=40 --lockfile_mode=error "--distdir=$w/dist" --keep_going --remote_download_outputs=minimal)
+          targets=(//test/rbe/paired_stub_guest:page4k //test/rbe/paired_stub_guest:page64k)
+          inputs_rc=0
+          "${bazel[@]}" build "${common[@]}" --output_groups=guest_inputs --build_event_json_file="$w/guest-inputs.bep" "${targets[@]}" > "$w/guest-inputs.log" 2>&1 || inputs_rc=$?
+          python3 -IB "$w/downstream_guest.py" check
+          test "$inputs_rc" = 0
+          outcome=0
+          "${bazel[@]}" test "${common[@]}" --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 --test_sharding_strategy=disabled \
+            --modify_execution_info='^TestRunner$=+no-remote-cache' '--remote_download_regex=.*[/]test[.](log|xml)$' --test_timeout=300 \
+            --build_event_json_file="$w/guests.bep" --build_event_publish_all_actions "${targets[@]}" > "$w/remote.log" 2>&1 || outcome=$?
+          printf '%s\n' "$outcome" > "$w/remote.exit"
+          exit "$outcome"
+      - name: Verify the uncached guest TestResults and the workload
+        if: always() && !cancelled() && steps.guests.outcome != 'skipped'
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/paired-stub-guest"
+          test ! -e "$w/executor.rc"
+          test -f "$w/remote.exit" || exit 0
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/downstream_guest.py" collect
+      - name: Capture both Python test logs from the previous compiler integration
+        if: always() && !cancelled()
+        timeout-minutes: 25
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?existing BuildBuddy key is required}"
+          w="$RUNNER_TEMP/paired-stub-guest"
+          rc="$w/diagnostics.rc"
+          trap 'rm -f "$rc"' EXIT
+          source=48f457b4e040312422b8e28b97081998d1d81297
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git "$source"
+          git switch --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          cat > "$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io
+          build --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io
+          build --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote
+          build --noremote_local_fallback
+          build --remote_download_outputs=toplevel
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=Arch=amd64
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$w/python_test_logs.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: llvm-0826-arm64-guest
+          path: |
+            ${{ runner.temp }}/paired-stub-guest/release.json
+            ${{ runner.temp }}/paired-stub-guest/ubuntu-distfiles.json
+            ${{ runner.temp }}/paired-stub-guest/python-*-tests.json
+            ${{ runner.temp }}/paired-stub-guest/guest-inputs.json
+            ${{ runner.temp }}/paired-stub-guest/guests.json
+            ${{ runner.temp }}/paired-stub-guest/page*-test.*
+          if-no-files-found: error
+          retention-days: 14
