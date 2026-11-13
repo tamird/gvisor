@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:07:52+00:00",
+    "updatedAt": "2026-11-13T15:11:10.238238+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7656,9 +7656,9 @@
       "url": "https://github.com/google/gvisor/pull/15370",
       "group": "bazel",
       "status": "open",
-      "head": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-      "updatedAt": "2026-11-13T14:58:39+00:00",
-      "summary": "Bazel 9 can expose the sources of an architecture-specific Go test directly. The rebase lets Nogo read those sources as well as tests provided through a wrapper. The original run passed 10,933 Go cases and three C++ cases on each native architecture. Both Nogo tests passed.",
+      "head": "d41dcb1744e773fe6d7f58b1ad1ee0c1e0771d55",
+      "updatedAt": "2026-11-13T15:11:10.238238+00:00",
+      "summary": "The PR runs the Go and C++ tests on native AMD64 and ARM64 workers. Nogo now analyzes the architecture-specific Go test sources. The original run passed 10,933 Go cases and three C++ cases on each native architecture and both Nogo targets.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -7851,14 +7851,27 @@
           "at": "2026-11-07T00:10:56.960Z",
           "postedURL": "https://github.com/google/gvisor/pull/15370",
           "note": "Published. Upstream lint passed on the approved one-commit head."
+        },
+        {
+          "kind": "amendment",
+          "head": "d41dcb1744e773fe6d7f58b1ad1ee0c1e0771d55",
+          "baseHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
+          "requestedAt": "2026-11-13T14:58:39+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/d41dcb174",
+          "title": "Run Go and C++ tests on native architectures",
+          "summary": "Review the Nogo fix and rebase for publication on #15370. The original test logs identified the AMD64 and ARM64 workers. Both analysis actions included atomicbitops_test.go for their target CPU.",
+          "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.\n\nNogo dispatches on the Bazel rule kind. with_cfg can either extend\ngo_test or wrap it. Analyze inherited tests using their own sources\nand follow the exported test when with_cfg uses a wrapper.",
+          "outcome": "approved",
+          "at": "2026-11-13T15:11:10.238238+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/15370/commits/d41dcb174"
         }
       ],
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "observedAt": "2026-11-13T14:58:39+00:00",
-        "disposition": "The original test logs and XML confirm all six targets passed.",
-        "nextAction": "Review d41dcb174 against the published b3cf8596d before updating #15370.",
+        "owner": "Agent",
+        "sourceHead": "d41dcb1744e773fe6d7f58b1ad1ee0c1e0771d55",
+        "observedAt": "2026-11-13T15:11:10.238238+00:00",
+        "disposition": "Published the approved amendment as the PR’s single commit. GitHub reports it merges cleanly with master.",
+        "nextAction": "Diagnose the upstream lint failure on the published commit and verify the correction.",
         "mergeable": "CONFLICTING",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
@@ -7876,17 +7889,6 @@
           "https://github.com/tamird/gvisor/actions/runs/43445509908/artifacts/14049275038",
           "https://github.com/tamird/gvisor/actions/runs/43447545779/artifacts/14049705237"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "d41dcb1744e773fe6d7f58b1ad1ee0c1e0771d55",
-        "baseHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "requestedAt": "2026-11-13T14:58:39+00:00",
-        "url": "https://github.com/tamird/gvisor/commit/d41dcb174",
-        "title": "Run Go and C++ tests on native architectures",
-        "summary": "Review the Nogo fix and rebase for publication on #15370. The original test logs identified the AMD64 and ARM64 workers. Both analysis actions included atomicbitops_test.go for their target CPU.",
-        "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.\n\nNogo dispatches on the Bazel rule kind. with_cfg can either extend\ngo_test or wrap it. Analyze inherited tests using their own sources\nand follow the exported test when with_cfg uses a wrapper."
       }
     },
     {
@@ -109661,5 +109663,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:07:52+00:00"
+  "updatedAt": "2026-11-13T15:11:10.238238+00:00"
 }
