@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T14:58:39+00:00",
+    "updatedAt": "2026-11-13T14:59:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -76313,8 +76313,8 @@
       "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
       "title": "Expose the Go repository map to Bazel actions",
       "url": "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
-      "status": "Published upstream",
-      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "status": "Published upstream; PR closed",
+      "updatedAt": "2026-11-13T14:59:55+00:00",
       "summary": "Ordinary Gazelle and a sandboxed BUILD-file check can pass the same public input to -repo_config. On native macOS ARM64 with Bazel 9.3.1, a sandboxed action kept @gazelle//v2/config and the renamed @my_gazelle//v2/config. Both checks failed when the repository map was omitted. After bazel mod tidy removed the direct generated-repository import, the public input still worked.",
       "evidence": [
         {
@@ -76335,11 +76335,11 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "On hold",
         "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "observedAt": "2026-11-12T01:01:41+00:00",
-        "disposition": "Published the approved single commit as bazel-contrib/bazel-gazelle#2514.",
-        "nextAction": "Follow upstream review of the public Gazelle repository configuration label.",
+        "observedAt": "2026-11-13T14:59:55+00:00",
+        "disposition": "Gazelle closed #2514. The follow-up issue is on hold.",
+        "nextAction": "Revisit the issue if gVisor adopts the repository rule or demonstrates the same need without it.",
         "evidence": [
           "https://github.com/tamird/bazel-gazelle/commit/dfd56d766",
           "https://github.com/bazel-contrib/bazel-gazelle/issues/2413",
@@ -76373,9 +76373,9 @@
       "title": "Expose the Go repository map to Bazel actions",
       "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/2514",
       "group": "bazel",
-      "status": "Closed; Gazelle requested an issue",
-      "summary": "Jay declined to expose Gazelle’s private repository map. He asked for a separate issue explaining how gVisor would declare the files needed by a sandboxed Gazelle check.",
-      "updatedAt": "2026-11-12T21:24:10+00:00",
+      "status": "Closed; proposed Gazelle issue on hold",
+      "summary": "Gazelle closed #2514. The proposed follow-up issue is on hold. The draft assumes gVisor will adopt the proposed repository rule that enumerates Gazelle’s inputs. That rule is still under review.",
+      "updatedAt": "2026-11-13T14:59:55+00:00",
       "evidence": [
         {
           "label": "Jay declined the public map and requested a separate issue",
@@ -76407,27 +76407,31 @@
         }
       ],
       "followup": {
-        "owner": "Contributor review",
+        "owner": "On hold",
         "sourceHead": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "observedAt": "2026-11-12T21:24:10+00:00",
-        "disposition": "Fabian received the gVisor use case. Jay closed the PR and asked for an issue about declaring the inputs.",
-        "nextAction": "Review the proposed issue about the configured Gazelle executable.",
+        "observedAt": "2026-11-13T14:59:55+00:00",
+        "disposition": "The draft assumes gVisor will adopt the proposed repository rule that enumerates Gazelle’s inputs. That rule is still under review.",
+        "nextAction": "Revisit the issue if gVisor adopts the repository rule or demonstrates the same need without it.",
         "evidence": [
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4547568345",
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#discussion_r4553360799",
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2514#issuecomment-6834594978"
         ]
       },
-      "contributorReview": {
-        "kind": "issue",
-        "status": "pending",
-        "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
-        "requestedAt": "2026-11-12T21:42:17+00:00",
-        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
-        "title": "Use the configured Gazelle executable in a Bazel action",
-        "summary": "Ask Gazelle to expose its configured executable to Bazel actions. gVisor can supply the source tree and package list.",
-        "body": "Jay raised a problem with sandboxing `gazelle_test` in #2514: how do you declare every file Gazelle might read? Using `go_library.srcs` would miss exactly the case we want CI to catch: a new `.go` file nobody has added to the BUILD file yet.\n\ngVisor already lists the 218 directories it checks with `-r=false -index=none`. Our [repository rule](https://github.com/tamird/gvisor/blob/49d0bc55a/tools/lint_sources.bzl#L19-L81) walks the checkout, watches directory entries and writes a BUILD file with one filegroup for Gazelle. It includes files under the listed directories (including `go:embed` data), ancestor BUILD files and root configuration. Adding an unlisted `.go` file took the sandbox from 1,269 inputs to 1,270 and produced the same missing-source diff as the checkout. A new package still needs an entry in our directory list. [Test results](https://github.com/tamird/gvisor/actions/runs/41211321121/artifacts/13046890088)\n\nCould Gazelle provide a shell-free executable for Bazel actions that applies the same Bzlmod configuration as `bazel run //:gazelle`? We can supply the input tree and `-repo_root`. The raw executable loses the `@my_gazelle//v2/config` dependency when we rename the module to `my_gazelle`; the configured launcher gets it right but requires Bash. Gazelle would retain ownership of the repository map and could change its format in #2413.\n\nPrepared by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "issue",
+          "head": "dfd56d7662f98258e81b82615ba29546c744b3d8",
+          "requestedAt": "2026-11-12T21:42:17+00:00",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
+          "title": "Use the configured Gazelle executable in a Bazel action",
+          "summary": "Ask Gazelle to expose its configured executable to Bazel actions. gVisor can supply the source tree and package list.",
+          "body": "Jay raised a problem with sandboxing `gazelle_test` in #2514: how do you declare every file Gazelle might read? Using `go_library.srcs` would miss exactly the case we want CI to catch: a new `.go` file nobody has added to the BUILD file yet.\n\ngVisor already lists the 218 directories it checks with `-r=false -index=none`. Our [repository rule](https://github.com/tamird/gvisor/blob/49d0bc55a/tools/lint_sources.bzl#L19-L81) walks the checkout, watches directory entries and writes a BUILD file with one filegroup for Gazelle. It includes files under the listed directories (including `go:embed` data), ancestor BUILD files and root configuration. Adding an unlisted `.go` file took the sandbox from 1,269 inputs to 1,270 and produced the same missing-source diff as the checkout. A new package still needs an entry in our directory list. [Test results](https://github.com/tamird/gvisor/actions/runs/41211321121/artifacts/13046890088)\n\nCould Gazelle provide a shell-free executable for Bazel actions that applies the same Bzlmod configuration as `bazel run //:gazelle`? We can supply the input tree and `-repo_root`. The raw executable loses the `@my_gazelle//v2/config` dependency when we rename the module to `my_gazelle`; the configured launcher gets it right but requires Bash. Gazelle would retain ownership of the repository map and could change its format in #2413.\n\nPrepared by Codex on behalf of @tamird.",
+          "outcome": "held",
+          "at": "2026-11-13T14:59:55+00:00",
+          "reason": "The draft assumes gVisor will adopt the proposed repository rule that enumerates Gazelle’s inputs. That rule is still under review."
+        }
+      ]
     },
     {
       "id": "pr:17511",
@@ -109635,5 +109639,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T14:58:39+00:00"
+  "updatedAt": "2026-11-13T14:59:55+00:00"
 }
