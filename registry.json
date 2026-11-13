@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:29:28.570953+00:00",
+    "updatedAt": "2026-11-13T16:38:43.496680+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -110138,7 +110138,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T16:26:29.428548+00:00",
+      "updatedAt": "2026-11-13T16:38:43.496680+00:00",
       "summary": "On #54914, TestMysql exceeded its startup deadline after the MySQL 8.0.19 container initialized its database. The SQL workload never started.",
       "findings": [
         {
@@ -110155,6 +110155,23 @@
             {
               "label": "Test waits for port 3306 before sending SQL",
               "url": "https://github.com/google/gvisor/blob/73e36937be2ecbd264d34ac7ef37550b9f2e71d0/test/image/image_test.go#L214-L253"
+            }
+          ]
+        },
+        {
+          "text": "The server started at 16:16:13.785 UTC. The bootstrap daemon reported its Unix socket ready at 16:16:38.857. The image’s own health check exited 1 at 16:16:50.471. Cleanup killed the server at 16:17:15.968. That check requires the /mysql-init-complete marker and a successful mysqladmin ping over the socket. Its exit does not identify which condition failed or whether TCP became available before cleanup.",
+          "evidence": [
+            {
+              "label": "Original runsc process and signal logs",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54914/jobs/01a1d5a5-b785-46ed-94e9-c1f8a7ed998d/artifacts/01a1d5b3-99cf-40f0-80a7-5358f39f9181"
+            },
+            {
+              "label": "Health check and initialization marker",
+              "url": "https://github.com/mysql/mysql-docker/blob/abe70cbbd8b6b4275ee6d82dd6adb0c8cd7cde94/8.0/healthcheck.sh#L17-L24"
+            },
+            {
+              "label": "Marker written after bootstrap stops",
+              "url": "https://github.com/mysql/mysql-docker/blob/abe70cbbd8b6b4275ee6d82dd6adb0c8cd7cde94/8.0/docker-entrypoint.sh#L159-L205"
             }
           ]
         },
@@ -110176,7 +110193,7 @@
           ]
         }
       ],
-      "nextStep": "Record elapsed time for the timezone import, temporary server shutdown, and final TCP readiness on another cold start of the same image. Compare the passing and failing startup phases before changing the deadline.",
+      "nextStep": "On one cold systrap container, compare the existing log assertion with the first successful TCP SELECT 1 and the image’s initialization milestones. Keep the one-minute assertion and SQL workload.",
       "evidence": [
         {
           "label": "MySQL first-attempt test output",
@@ -110205,5 +110222,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:29:28.570953+00:00"
+  "updatedAt": "2026-11-13T16:38:43.496680+00:00"
 }
