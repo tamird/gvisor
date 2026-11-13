@@ -1,147 +1,119 @@
-name: Verify native test wrappers and Nogo on Linux
+name: Recover six native-test receipts
 on:
   push:
-    branches: [qualification/pr15370-native-go-analysis]
+    branches: [qualification/pr15370-read-original-native-results]
 permissions: {}
 jobs:
-  native:
+  readback:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 12
     steps:
-      - name: Run the wrapped tests and check both TestRunner platforms
-        run: |
-          set -euo pipefail
-          git init -q .
-          git fetch -q --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
-          git checkout -q --detach "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = d41dcb1744e773fe6d7f58b1ad1ee0c1e0771d55
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
-          git checkout -q --detach HEAD^
-          test "$(git rev-parse HEAD^)" = f98c31b5b7d292061d990c97e5ef9d1601d72d8d
-          q="$RUNNER_TEMP/native-nogo"
-          mkdir -p "$q/records"
-          test "$(cat .bazelversion)" = 9.3.1
-          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$q/bazel"
-          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $q/bazel" | sha256sum -c -
-          chmod +x "$q/bazel"
-          git rev-parse HEAD > "$q/records/source"
-          uname -m | tee "$q/records/host_cpu"
-          grep -qx x86_64 "$q/records/host_cpu"
-          git diff --exit-code HEAD
-          # The public Nogo target checks the ordinary test. Attach the same
-          # rule to its two with_cfg wrappers to require exported Go facts.
-          sed -i '1i load("//tools/nogo:defs.bzl", "nogo_test")' pkg/atomicbitops/BUILD
-          cat >> pkg/atomicbitops/BUILD <<'EOF'
-
-          alias(
-              name = "native_go_test",
-              actual = select({
-                  "//tools/bazeldefs:amd64": ":atomicbitops_test_amd64",
-                  "//tools/bazeldefs:arm64": ":atomicbitops_test_arm64",
-              }),
-          )
-
-          nogo_test(
-              name = "verify_native_tests",
-              config = "//:nogo_config",
-              deps = [":native_go_test"],
-          )
-          EOF
-          git diff HEAD -- pkg/atomicbitops/BUILD > "$q/records/analyzer-fixture.diff"
-          mkdir "$q/worker"
-          printf '%s\n' 'module(name="rebased_workers")' >"$q/worker/MODULE.bazel"
-          cat > "$q/worker/BUILD" <<'BUILD'
-          package(default_visibility = ["//visibility:public"])
-          platform(
-              name = "gnu_amd64",
-              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-              exec_properties = {
-                  "Arch": "amd64",
-                  "OSFamily": "linux",
-                  "workload-isolation-type": "firecracker",
-                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
-              },
-          )
-          platform(
-              name = "native_arm64",
-              constraint_values = ["@platforms//cpu:aarch64", "@platforms//os:linux"],
-              exec_properties = {
-                  "Arch": "arm64",
-                  "OSFamily": "linux",
-                  "workload-isolation-type": "oci",
-                  "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
-              },
-          )
-          BUILD
-      - name: Run both native suites and analyze the tests themselves
+      - name: Verify the recorded test actions and XML
+        shell: python
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
-          set -euo pipefail
-          umask 077
-          q="$RUNNER_TEMP/native-nogo"
-          rc="$q/client.rc"
-          trap 'rm -f "$rc"' EXIT
-          cat >"$rc" <<'RC'
-          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
-          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
-          build --spawn_strategy=remote --noremote_local_fallback --jobs=64 --remote_timeout=10m
-          build --host_platform=@rebased_workers//:gnu_amd64
-          build --extra_execution_platforms=@rebased_workers//:gnu_amd64,@rebased_workers//:native_arm64
-          RC
-          printf 'build --inject_repository=rebased_workers=%s/worker\n' "$q" >> "$rc"
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "${BUILDBUDDY_API_KEY:?}" "$BUILDBUDDY_API_KEY" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          sed -e 's/ --cxxopt=-Wno-error=maybe-uninitialized//' -e 's/ --host_cxxopt=-Wno-error=maybe-uninitialized//' .bazelrc >"$q/llvm.rc"
-          bazel=("$q/bazel" --nosystem_rc --nohome_rc --noworkspace_rc --bazelrc="$q/llvm.rc" --bazelrc="$rc")
-          common=(--config=x86_64 -c opt --extra_toolchains=@llvm//toolchain:all --lockfile_mode=off)
-          g=//pkg/atomicbitops
-          targets=("$g:atomicbitops_test_all_architectures" //test/util:posix_error_test_all_architectures "$g:verify_native_tests")
-          "${bazel[@]}" cquery "${common[@]}" --output=files --output_groups=nogo_findings "$g:verify_native_tests" > "$q/records/reports"
-          for cpu in amd64 arm64; do grep -F "verify_native_tests.$cpu.findings" "$q/records/reports"; done
-          "${bazel[@]}" aquery "${common[@]}" --include_aspects --include_param_files "outputs('.*atomicbitops_test_(amd64|arm64)\.facts',deps($g:verify_native_tests))" > "$q/native-aspects"
-          python3 - "$q/native-aspects" "$q/records/aspects" <<'VERIFY'
+          import base64
+          import hashlib
+          import json
+          import os
           from pathlib import Path
-          import sys
-          actions = Path(sys.argv[1]).read_text().split("\naction ")
-          records = []
-          for cpu in ("amd64", "arm64"):
-              matches = [a for a in actions if "Target: //pkg/atomicbitops:atomicbitops_test_" + cpu + "\n" in a]
-              if not matches or not all("-GOARCH=" + cpu in a and "pkg/atomicbitops/atomicbitops_test.go" in a for a in matches):
-                  raise ValueError(f"missing test source or CPU in {cpu} Nogo action: {len(matches)} actions")
-              records.append(f"atomicbitops_test_{cpu}: -GOARCH={cpu} pkg/atomicbitops/atomicbitops_test.go")
-          Path(sys.argv[2]).write_text("\n".join(records) + "\n")
-          VERIFY
-          "${bazel[@]}" test "${common[@]}" --keep_going --remote_download_outputs=toplevel --nocache_test_results --flaky_test_attempts=1 --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP=1 --test_env=GO_TEST_WRAP_TESTV=1 --strategy=TestRunner=remote --test_output=errors --run_under="/bin/sh -c 'echo NATIVE_TEST_WORKER=\$(uname -m); exec \"\$@\"' probe" "${targets[@]}"
-          for arch in amd64 arm64; do
-            worker=x86_64
-            [[ $arch = amd64 ]] || worker=aarch64
-            for label in "$g:atomicbitops_test_$arch" "//test/util:posix_error_test_$arch"; do
-              name=${label#//}
-              dir=bazel-testlogs/${name/:/\/}
-              grep -Fx "NATIVE_TEST_WORKER=$worker" "$dir/test.log" > "$q/records/${label##*:}.worker"
-              cp "$dir/test.xml" "$q/records/${label##*:}.xml"
-            done
-          done
-          grep -Fx PASS "bazel-testlogs/pkg/atomicbitops/verify_native_tests/test.log" > "$q/records/nogo"
-          python3 - "$q/records" <<'PYTEST'
-          from pathlib import Path
-          import sys
+          import re
+          from urllib.parse import urlencode
+          from urllib.request import Request, HTTPRedirectHandler, build_opener
           import xml.etree.ElementTree as ET
-          for path in sorted(Path(sys.argv[1]).glob('*.xml')):
-              cases = list(ET.parse(path).iter('testcase'))
-              expected = 'TestOrUint32' if path.name.startswith('atomicbitops') else 'PosixError'
-              if not any(expected in case.get('name', '') for case in cases):
-                  raise ValueError(f'{path.name}: no {expected} records')
-              if any(case.find(tag) is not None for case in cases for tag in ('error', 'failure', 'skipped')):
-                  raise ValueError(f'{path.name}: unsuccessful record')
-              print(path.stem, len(cases))
-          PYTEST
+
+          INVOCATION = "9f7f4c12-44cd-4135-9d7d-5b80f8ac1b1b"
+          HOST = "https://app.buildbuddy.io"
+          OUT = Path(os.environ["RUNNER_TEMP"]) / "receipts"
+          OUT.mkdir(exist_ok=True)
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+
+
+          class NoRedirect(HTTPRedirectHandler):
+              def redirect_request(self, *args):
+                  return None
+
+
+          opener = build_opener(NoRedirect)
+          def fetch(path, payload=None):
+              headers = {"x-buildbuddy-api-key": key}
+              body = None
+              if payload is not None:
+                  headers["Content-Type"] = "application/json"
+                  body = json.dumps(payload).encode()
+              request = Request(HOST + path, data=body, headers=headers)
+              with opener.open(request, timeout=90) as response:
+                  return response.read()
+
+
+          def field(obj, snake, camel):
+              return obj.get(snake, obj.get(camel, []))
+
+
+          def artifacts(label):
+              data = json.loads(fetch("/rpc/BuildBuddyService/GetTarget", {
+                  "invocation_id": INVOCATION, "target_label": label,
+              }))
+              for group in field(data, "target_groups", "targetGroups"):
+                  for target in group.get("targets", []):
+                      if target.get("metadata", {}).get("label") != label:
+                          continue
+                      for event in field(target, "test_result_events", "testResultEvents"):
+                          result = field(event, "test_result", "testResult")
+                          if not isinstance(result, dict):
+                              continue
+                          if result.get("status") not in ("PASSED", 1):
+                              raise ValueError(f"{label}: unexpected test status {result.get('status')}")
+                          return {f["name"]: f for f in field(result, "test_action_output", "testActionOutput")}
+              raise ValueError(f"{label}: no matching test result in GetTarget")
+
+
+          def read_file(item):
+              if item.get("contents"):
+                  return base64.b64decode(item["contents"])
+              uri = item["uri"]
+              query = urlencode({"bytestream_url": uri, "invocation_id": INVOCATION})
+              body = fetch("/file/download?" + query)
+              digest, size = uri.rsplit("/", 2)[1:]
+              if hashlib.sha256(body).hexdigest() != digest or len(body) != int(size):
+                  raise ValueError("Original CAS digest or size differs")
+              return body
+
+
+          def recover(label, machine=None):
+              files = artifacts(label)
+              receipt = {"label": label, "invocation": INVOCATION, "status": "PASSED"}
+              if machine:
+                  log = read_file(files["test.log"])
+                  # Match the explicit run_under marker, independently of the test label.
+                  workers = set(re.findall(rb"^NATIVE_TEST_WORKER=(\S+)\s*$", log, re.M))
+                  if workers != {machine.encode()}:
+                      raise ValueError(f"{label}: expected {machine}, observed {workers}")
+                  xml = read_file(files["test.xml"])
+                  cases = list(ET.fromstring(xml).iter("testcase"))
+                  focus = "TestOrUint32" if "atomicbitops" in label else "PosixError"
+                  if not any(c.get("name") == focus for c in cases):
+                      raise ValueError(f"{label}: missing {focus}")
+                  if any(c.find(tag) is not None for c in cases for tag in ("failure", "error", "skipped")):
+                      raise ValueError(f"{label}: unsuccessful case")
+                  receipt.update(machine=machine, cases=len(cases), tested=focus,
+                                 log_sha256=hashlib.sha256(log).hexdigest(),
+                                 xml_sha256=hashlib.sha256(xml).hexdigest())
+              print(json.dumps(receipt), flush=True)
+              (OUT / (label.split(":")[-1] + ".json")).write_text(json.dumps(receipt, indent=2) + "\n")
+
+
+          for cpu, machine in [("arm64", "aarch64"), ("amd64", "x86_64")]:
+              recover("//pkg/atomicbitops:atomicbitops_test_" + cpu, machine)
+              recover("//test/util:posix_error_test_" + cpu, machine)
+          for name in ("verify_native_tests", "atomicbitops_test_nogo"):
+              recover("//pkg/atomicbitops:" + name)
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: pr15370-native-go-analysis
-          path: ${{ runner.temp }}/native-nogo/records/
-          if-no-files-found: error
+          name: original-native-test-receipts
+          path: ${{ runner.temp }}/receipts/
+          if-no-files-found: warn
           retention-days: 14
