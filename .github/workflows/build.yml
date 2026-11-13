@@ -1,35 +1,98 @@
-name: CI
-
-"on":
+name: Observe directfs teardown in the original UDP shard
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/lisafs-sentry-teardown-54892]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  shard:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Build the original and traced Sentry and retain the syscall runner logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          base=e0cc9dabd04d937b55e358afcf0d490b27d3ee01
+          test "$(git rev-parse HEAD^)" = "$base"
+          out="$RUNNER_TEMP/lisafs-shard"
+          mkdir -p "$out/evidence"
+          printf '%s\n' "$GITHUB_SHA" "$base" > "$out/evidence/sources"
+          uname -a > "$out/evidence/host.txt"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$out/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $out/bazel" | sha256sum -c -
+          chmod +x "$out/bazel"
+          sudo -n apt-get -qq -o Acquire::Retries=3 update
+          sudo -n apt-get -qq -y --no-install-recommends install g++-aarch64-linux-gnu libnuma-dev
+          /usr/bin/unshare --user --map-root-user --net -- test -e /sys/class/net/lo
+          target=socket_ip_udp_loopback_test_runsc_systrap_directfs
+          label="//test/syscalls:$target"
+          flags=(--config=x86_64 --jobs=4 --local_test_jobs=1 --spawn_strategy=sandboxed,local --remote_executor= --remote_cache= --bes_backend= --lockfile_mode=off)
+          flags+=(--test_strategy=local --test_sharding_strategy=disabled "--run_under=/usr/bin/env TEST_SHARD_INDEX=2 TEST_TOTAL_SHARDS=8")
+          flags+=(--test_env=PARTITION=15 --test_env=TOTAL_PARTITIONS=20 --nocache_test_results --test_timeout=320 --test_output=errors --runs_per_test=8 --keep_going --nozip_undeclared_test_outputs)
+          for mode in stock traced; do
+            if [[ "$mode" == stock ]]; then
+              git restore --source="$base" -- pkg/lisafs/client.go
+            else
+              git restore --source=HEAD -- pkg/lisafs/client.go
+            fi
+            dst="$out/evidence/$mode"
+            mkdir -p "$dst"
+            git diff "$base" -- pkg/lisafs/client.go test/runner/main.go > "$dst/measurement.diff"
+            set +e
+            "$out/bazel" --nosystem_rc --nohome_rc test "${flags[@]}" "$label" > "$dst/bazel.log" 2>&1
+            rc=$?
+            set -e
+            tail -20 "$dst/bazel.log"
+            echo "$rc" > "$dst/bazel.exit"
+            testdir="bazel-testlogs/test/syscalls/$target"
+            if [[ -d "$testdir" ]]; then
+              cp -RL "$testdir" "$dst/logs"
+            fi
+            if [[ -x "bazel-bin/test/syscalls/$target.runfiles/_main/release/gvisor-bin/gvisor-sentry" ]]; then
+              sha256sum "bazel-bin/test/syscalls/$target.runfiles/_main/release/gvisor-bin/gvisor-sentry" > "$dst/sentry.sha256"
+            fi
+          done
+      - name: Report the actual guest records separately from runner exits
+        if: always()
+        shell: bash
+        run: |
+          python3 - "$RUNNER_TEMP/lisafs-shard/evidence" <<'PY'
+          import json, re, sys
+          from pathlib import Path
+          d = Path(sys.argv[1])
+          expected = [
+              "AllUDPSockets/AllSocketPairTest.SetSocketRecvBufForceAboveMax/0",
+              "AllUDPSockets/AllSocketPairTest.RecvTimeoutWaitAll/4",
+              "AllUDPSockets/UDPSocketPairTest.SetEmptyIPAddMembership/2",
+          ]
+          report = {}
+          for mode in ("stock", "traced"):
+              logroot = d/mode/"logs"
+              cases = []
+              for f in sorted(logroot.glob("run_*_of_8/test.log")):
+                  text = f.read_text(errors="replace")
+                  paths = sorted(f.parent.glob("test.outputs/**/*.boot.txt"))
+                  boots = [p.read_text(errors="replace") for p in paths]
+                  ids, phases = set(), []
+                  for s in boots:
+                      for c, g, p in re.findall(r"TEARDOWN client=(0x\w+) group=(0x\w+) phase=([\w-]+)", s):
+                          ids.add((c,g)); phases.append(p)
+                  names = re.findall(r"^\[ RUN\s+\] (\S+)$",text,re.M)
+                  passes = re.findall(r"^\[\s+OK\s+\] (\S+) \(",text,re.M)
+                  cases.append(dict(run=f.parent.name, matched_cases=names == expected, three_passed=sorted(passes)==sorted(expected), boot_logs=[str(x.relative_to(d)) for x in paths], client_groups=sorted(ids),phases=phases, exit_group=any("exit_group(0x0)" in s for s in boots), gofer_disconnect=any("Gofer socket disconnected" in s for s in boots), runner_pass=bool(re.search(r"^PASS$",text,re.M))))
+              report[mode]={"bazel_exit":(d/mode/"bazel.exit").read_text().strip() if (d/mode/"bazel.exit").exists() else None,"runs":cases}
+          d.mkdir(parents=True,exist_ok=True)
+          (d/"results.json").write_text(json.dumps(report,indent=2)+"\n")
+          print(json.dumps({m:{"bazel_exit":v["bazel_exit"],"runs":len(v["runs"]),"matched":sum(r["matched_cases"] for r in v["runs"]),"three_passed":sum(r["three_passed"] for r in v["runs"]),"boots":sum(len(r["boot_logs"]) for r in v["runs"])} for m,v in report.items()},indent=2))
+          PY
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: original-systrap-directfs-udp-shard
+          path: ${{ runner.temp }}/lisafs-shard/evidence
+          if-no-files-found: warn

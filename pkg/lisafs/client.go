@@ -91,6 +91,7 @@ func NewClient(sock *unet.Socket) (*Client, Inode, int, error) {
 	// Start a goroutine to check socket health. This goroutine is also
 	// responsible for client cleanup.
 	c.watchdogWg.Add(1)
+	log.Infof("TEARDOWN client=%p group=%p phase=added", c, &c.watchdogWg)
 	go c.watchdog()
 
 	// Mount the server first. Assume Mount is supported so that we can make the
@@ -166,7 +167,12 @@ func (c *Client) StartChannels() error {
 }
 
 func (c *Client) watchdog() {
-	defer c.watchdogWg.Done()
+	defer func() {
+		log.Infof("TEARDOWN client=%p group=%p phase=before-done", c, &c.watchdogWg)
+		c.watchdogWg.Done()
+		log.Infof("TEARDOWN client=%p group=%p phase=after-done", c, &c.watchdogWg)
+	}()
+	log.Infof("TEARDOWN client=%p group=%p phase=poll-enter", c, &c.watchdogWg)
 
 	events := []unix.PollFd{
 		{
@@ -190,6 +196,7 @@ func (c *Client) watchdog() {
 	}
 
 	// Shutdown all active channels and wait for them to complete.
+	log.Infof("TEARDOWN client=%p group=%p phase=poll-exit", c, &c.watchdogWg)
 	c.shutdownActiveChans()
 	c.activeWg.Wait()
 
@@ -232,8 +239,11 @@ func (c *Client) shutdownActiveChans() {
 func (c *Client) Close() {
 	// This shutdown has no effect if the watchdog has already fired and closed
 	// the main socket.
+	log.Infof("TEARDOWN client=%p group=%p phase=shutdown", c, &c.watchdogWg)
 	c.sockComm.shutdown()
+	log.Infof("TEARDOWN client=%p group=%p phase=wait", c, &c.watchdogWg)
 	c.watchdogWg.Wait()
+	log.Infof("TEARDOWN client=%p group=%p phase=wait-return", c, &c.watchdogWg)
 }
 
 // +checklocksexclude:c.channelsMu
