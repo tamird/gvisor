@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T11:31:55+00:00",
+    "updatedAt": "2026-11-13T11:40:50+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -109483,7 +109483,63 @@
           "note": "Tamir approved opening #17632. The PR contains the reviewed commit."
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-lisafs-teardown",
+      "title": "Sentry hangs closing a lisafs client after the guest exits",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T11:40:50+00:00",
+      "summary": "All three UDP cases passed in 5 ms on #17572. The guest exited successfully, then the Sentry spent more than three minutes waiting for the lisafs watchdog during mount teardown. The shard passed on retry.",
+      "findings": [
+        {
+          "text": "On AMD64 with systrap and directfs, task 1 called exit_group(0). The Sentry received the final Close reply at 10:52:36.223554 UTC. The gofer saw EOF 27 µs later and exited with status 0. The Sentry watchdog eventually panicked with task 1 still in Client.Close.",
+          "evidence": [
+            {
+              "label": "Three passing guest cases and the failing runner",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54892/jobs/01a1d47b-a9b6-4e62-a98e-edcf33791651/artifacts/01a1d48d-3d18-4410-af27-fb9a355fcd7c"
+            },
+            {
+              "label": "Sentry syscall trace and teardown stacks",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54892/jobs/01a1d47b-a9b6-4e62-a98e-edcf33791651/artifacts/01a1d48d-4224-4afa-9513-6ba3bdd4f50c"
+            },
+            {
+              "label": "Gofer shutdown log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54892/jobs/01a1d47b-a9b6-4e62-a98e-edcf33791651/artifacts/01a1d48d-3fcd-4f1f-b7a4-fda0992e6dbe"
+            }
+          ]
+        },
+        {
+          "text": "Client.Close had shut down its socket and was waiting for its watchdog. NewClient counts one goroutine, and that goroutine defers Done on entry. Its stack is absent from the dump. This run disabled save and restore. The reason the wait persisted remains open.",
+          "evidence": [
+            {
+              "label": "Watchdog startup",
+              "url": "https://github.com/google/gvisor/blob/e0cc9dabd/pkg/lisafs/client.go#L84-L95"
+            },
+            {
+              "label": "Watchdog completion",
+              "url": "https://github.com/google/gvisor/blob/e0cc9dabd/pkg/lisafs/client.go#L168-L180"
+            },
+            {
+              "label": "Client.Close",
+              "url": "https://github.com/google/gvisor/blob/e0cc9dabd/pkg/lisafs/client.go#L228-L236"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Use the lisafs connection test fixture to overlap normal client close and server disconnect. Record each client’s identity at watchdog start, completion, and wait so a hung run shows which operation did not finish.",
+      "evidence": [
+        {
+          "label": "Same-shard retry passed",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54892#01a1d48d-f4a1-413b-85fe-dc4f26841446"
+        },
+        {
+          "label": "Existing connection test fixture",
+          "url": "https://github.com/google/gvisor/blob/e0cc9dabd/pkg/lisafs/connection_test.go#L90-L118"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-13T11:31:55+00:00"
+  "updatedAt": "2026-11-13T11:40:50+00:00"
 }
