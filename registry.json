@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T11:22:53+00:00",
+    "updatedAt": "2026-11-13T11:31:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -77148,13 +77148,13 @@
       "repo": "grpc/grpc",
       "number": 43825,
       "ref": "proposal/bazel-plugin-symlink",
-      "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478",
+      "head": "56eefe3f1b5bd2c2988950b4bd6ccc4b78834c41",
       "title": "[bazel] Replace the protoc plugin `cp` with a symlink",
       "url": "https://github.com/grpc/grpc/pull/43825",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-13T10:54:15+00:00",
-      "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
+      "updatedAt": "2026-11-13T11:31:55+00:00",
+      "summary": "The published PR uses a custom rule to give protoc plugins their public filenames. The local revision uses the existing Skylib copy_file rule with allow_symlink and is_executable enabled.",
       "evidence": [
         {
           "label": "Both installed universal macOS plugins after Bazel cleanup",
@@ -77203,23 +77203,21 @@
       ],
       "refinement": {
         "before": {
-          "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
-          "base": "db13f8422846404ffa2e81e5d76d19488df30586"
+          "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478"
         },
         "after": {
-          "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478",
-          "base": "db13f8422846404ffa2e81e5d76d19488df30586"
+          "head": "56eefe3f1b5bd2c2988950b4bd6ccc4b78834c41"
         }
       },
       "humanAction": {
         "status": "pending",
         "kind": "submission",
-        "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478",
-        "title": "Push the approved formatter correction to gRPC #43825",
-        "summary": "Tamir approved ba211b480. gRPC requires the contributor to push it. The published PR head is b056f0930.",
+        "head": "56eefe3f1b5bd2c2988950b4bd6ccc4b78834c41",
+        "title": "Review and push the local Skylib revision",
+        "summary": "The formatter correction is live at ba211b480. In ~/code/grpc, proposal/skylib-protoc-plugin-revision (56eefe3f1) replaces the custom plugin rule with Skylib’s copy_file.",
         "url": "https://github.com/grpc/grpc/pull/43825",
         "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy",
-        "body": "The amendment is reviewed and ready to push from the local gRPC checkout.\n\n```sh\ngit -C ~/code/grpc push fork \\\n  --force-with-lease=refs/heads/proposal/bazel-plugin-symlink:b056f09306c64c8166339d94b61ac6c1b3b2ba51 \\\n  ba211b480:refs/heads/proposal/bazel-plugin-symlink\n```\n\nThe lease checks the current PR head. gRPC’s contribution policy requires a human to publish to GitHub."
+        "body": "The formatter correction is already on #43825 at `ba211b480`. The next revision is local in `~/code/grpc`, on `proposal/skylib-protoc-plugin-revision`.\n\nSkylib’s `copy_file(allow_symlink = True, is_executable = True)` gives each plugin its public executable name. The Linux action graph contains a symlink action. The macOS release recipe packaged the C++ and Objective-C plugins as regular executables. After extraction, those plugins generated all four expected files. Both build generators produced byte-identical output compared with the published revision: the Python manifest (`43fc5ed07…`) and the complete 168 MiB C++ model (`d2f216d45…`).\n\nReview the two commits locally:\n\n```sh\ngit -C ~/code/grpc range-diff --creation-factor=999 ba211b480^! 56eefe3f1^!\n```\n\nIf the revision looks right, update the existing PR branch:\n\n```sh\ngit -C ~/code/grpc push --force-with-lease=refs/heads/proposal/bazel-plugin-symlink:ba211b480312875b62d1e6fee80ea1b2c9ab5478 origin 56eefe3f1:refs/heads/proposal/bazel-plugin-symlink\n```"
       }
     },
     {
@@ -109487,5 +109485,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T11:22:53+00:00"
+  "updatedAt": "2026-11-13T11:31:55+00:00"
 }
