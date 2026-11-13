@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:52:12.917441+00:00",
+    "updatedAt": "2026-11-13T16:55:10.232441+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -77265,7 +77265,7 @@
       "group": "bazel",
       "status": "open",
       "summary": "A downstream Bazel module depending only on gVisor failed to evaluate seqnum and waiter because Gazelle rejected gVisor’s non-root overrides. With the standalone MODULE change, the same consumer built both libraries on Linux AMD64 with Bazel 9.3.1. Ordinary gVisor root builds kept the same nine proto generation directives and byte-identical patched protobuf source. Both downstream builds and a gVisor build using --ignore_dev_dependency select upstream protobuf, which reads its executable during initialization. A consumer can adopt the patch explicitly. The approved revision adds a source citation beside that policy in MODULE.bazel and is open as #17555.",
-      "updatedAt": "2026-11-13T16:42:43.864980+00:00",
+      "updatedAt": "2026-11-13T16:55:10.232441+00:00",
       "head": "0fbac52c988483dbe2ab97492abdd5e3f523a2f6",
       "evidence": [
         {
@@ -77310,12 +77310,14 @@
       "followup": {
         "owner": "Maintainer review",
         "sourceHead": "0fbac52c988483dbe2ab97492abdd5e3f523a2f6",
-        "observedAt": "2026-11-13T16:42:43.864980+00:00",
-        "disposition": "Buildifier inserted one blank line before the Gazelle comment. The same check passed on the rebased PR.",
+        "observedAt": "2026-11-13T16:55:10.232441+00:00",
+        "disposition": "Buildifier inserted one blank line before the Gazelle comment. Upstream lint, Gazelle, and Go branch generation all passed on the rebased PR.",
         "nextAction": "Review the change that lets downstream Bazel modules build gVisor Go packages.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/43255602501/job/131312847172",
-          "https://github.com/google/gvisor/actions/runs/43464921297/job/132021376018"
+          "https://github.com/google/gvisor/actions/runs/43464921297/job/132021376018",
+          "https://github.com/google/gvisor/actions/runs/43464921177/job/132021375968",
+          "https://github.com/google/gvisor/actions/runs/43464921468/job/132021376428"
         ]
       }
     },
@@ -102556,7 +102558,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-13T16:45:25.578221+00:00",
+      "updatedAt": "2026-11-13T16:55:10.232441+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -102911,6 +102913,10 @@
       ],
       "nextStep": "Wait for the first golang.org/x/tools tag that contains CL 858482, then verify the full lint build on an empty worker. The v0.52.0 tag predates the merged goimports change.",
       "evidence": [
+        {
+          "label": "Ryan explains the first-pass cache policy",
+          "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858919995"
+        },
         {
           "label": "Asked Ryan what the Make C++ lint path needs to preserve",
           "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858458989"
@@ -110297,5 +110303,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:52:12.917441+00:00"
+  "updatedAt": "2026-11-13T16:55:10.232441+00:00"
 }

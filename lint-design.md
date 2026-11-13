@@ -6,12 +6,14 @@ one opt-in writing command, `bazel run //tools/lint:format`. These are
 proposed interfaces. A temporary `make lint` alias can call Bazel but
 should own no policy.
 
-The [proposed amendment to #16663](https://github.com/tamird/gvisor/commit/1d96ea04c)
-runs Buildifier and cpplint as separate actions on a shared list of source
-files. [Both scratch worker architectures](https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680)
-checked all 485 C++ files with the registered Python. The [formatter check](https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547)
-added malformed BUILD and .bzl files in a new package, confirmed the
-check rejected them, fixed them from a subdirectory, and reran the check.
+There are two kinds of lint input. Buildifier and cpplint need a list of
+source files and their configuration. They can run together under
+`//tools/lint:check`. Clang-tidy needs the compiler flags and generated
+headers for each C++ target. The proposed Bazel aspect runs it once per
+configured compilation. Developers can still generate
+`compile_commands.json` for their editors.
+[Source lint PR](https://github.com/google/gvisor/pull/16663) ·
+[Clang-tidy aspect](https://github.com/tamird/gvisor/commit/89a85fa8f)
 
 | Check | Where it belongs |
 | --- | --- |
@@ -34,28 +36,27 @@ sandboxing and caching. The [buildifier-prebuilt test runner](https://github.com
 invokes Bash and find. In [our comparison](https://app.buildbuddy.io/invocation/959cb581-ace8-4cfb-b95e-b88a2d1527f4)
 it passed a malformed file that [Buildifier itself rejected](https://app.buildbuddy.io/invocation/3fde1b55-45f5-465b-9c65-90712fb2e9f7).
 
-Use [bazel_lib’s native run_binary](https://github.com/bazel-contrib/bazel-lib/blob/904332fd1/lib/private/run_binary.bzl#L39-L72)
-to call Buildifier directly. On an empty AMD64 worker it [accepted clean
-source](https://app.buildbuddy.io/invocation/90cfd7a5-d611-4dd5-9fd8-9554e0f03e09)
-and [rejected the malformed file](https://app.buildbuddy.io/invocation/f5b006bf-2c5b-4fef-b3b9-f120a2f7d204),
-with no shell. gVisor already uses bazel_lib in its production build;
-taking 3.7.2 is a shared upgrade from 3.2.2. For goimports, capturing
-stdout alone is insufficient: it lists bad files but exits zero, so
-the check must reject a nonempty list.
+The Buildifier check uses Bazel’s selected native tool and declares the
+files it reads. The cpplint action runs the declared Python interpreter.
+For goimports, a list of misformatted files on stdout must fail the
+check even when the tool exits zero.
+[Lint targets](https://github.com/tamird/gvisor/blob/54a734f17/tools/lint/BUILD)
 
 ## Run the supplier’s native formatter
 
-Keep the released Buildifier. The BCR module
-[buildifier_prebuilt](https://bcr.bazel.build/modules/buildifier_prebuilt/8.5.1.4/source.json)
-already selects the native binary for the execution platform, but its
-[public executable](https://github.com/keith/buildifier-prebuilt/blob/2d23069a6/buildifier/buildifier_binary.bzl#L8-L29)
-runs a Bash or Batch wrapper. The only public raw binaries have
-platform-specific repository names. A [nine-line supplier change](https://github.com/tamird/gvisor/blob/ea7ed498a/tools/lint/buildifier_native.patch)
-exposes the selected executable as `@buildifier_prebuilt//buildifier:native`.
-The released tool checked 617 files and rejected a new malformed file
-on shell-free [Linux AMD64](https://github.com/tamird/gvisor/actions/runs/40917863627)
-and [Linux ARM64](https://github.com/tamird/gvisor/actions/runs/40919147278)
-workers. The interactive CLI keeps its working-directory behavior.
+The Buildifier check needs a binary for the remote worker.
+`bazel run //tools/lint:format` needs one for the developer’s machine.
+The same checkout can use both, for example when a macOS client sends
+checks to Linux. Each rule selects the toolchain for the machine that
+will execute the binary.
+[Check and formatter rules](https://github.com/tamird/gvisor/blob/54a734f17/tools/lint/defs.bzl)
+
+The upstream toolchain exposes the executable as `tool`. gVisor’s
+pinned 8.5.1.4 release predates that field, so #16663 backports the
+one-line declaration. Drop the patch when the pinned release contains
+the upstream commit.
+[Backport](https://github.com/tamird/gvisor/blob/54a734f17/tools/lint/buildifier_native.patch) ·
+[Upstream commit](https://github.com/keith/buildifier-prebuilt/commit/9cefc248d)
 
 Building Buildifier from Go source would add a second bootstrap: the
 [Go toolchain requires Bash](https://app.buildbuddy.io/invocation/596d4698-e775-4376-9bff-fe246139cb86).
@@ -121,16 +122,21 @@ Gazelle restriction. Changing that policy is separate from source lint.
 
 ## Migration order
 
-1. [#16663](https://github.com/google/gvisor/pull/16663) can use the
-   shared file list and the supplier's native executable. The switch
-   still needs a released native target or the small supplier patch
-   above. The [integrated license check](https://github.com/tamird/gvisor/actions/runs/40931472870)
-   verified 222 records.
+1. Move Buildifier and cpplint under `//tools/lint:check`. While Make
+   starts lint, pass its Bazel options through to every call, including
+   `info` and `cquery`. The amendment uses the helper in Ryan’s PR.
+   [#16663](https://github.com/google/gvisor/pull/16663) ·
+   [Amendment after #17612](https://github.com/tamird/gvisor/commit/8fd9f92fc)
 2. Migrate clang-format, goimports and codespell to the same interface.
    Preserve useful controls: [485 C/C++ files on scratch](https://app.buildbuddy.io/invocation/a98b6745-cb67-4e80-942a-1b9d286a60d3),
    a [new-package violation](https://app.buildbuddy.io/invocation/5b88fc8b-dd38-400a-a493-4ede1ba9c0d7),
    [3,283 spelling inputs](https://app.buildbuddy.io/invocation/234918c9-c55a-475f-bb3c-a4ef43fb4ca4)
    and a [config-only change](https://app.buildbuddy.io/invocation/92e3db8a-8ee3-4809-b065-fd863587e429).
-3. Switch CI and developer callers and delete [the script](https://github.com/google/gvisor/blob/0fa6803f2/tools/lint.sh)
-   once check and fix coverage match. Keep Bazelisk bootstrap separate:
-   it selects Bazel; it does not decide what to lint.
+3. Before switching Buildkite from Make to Bazel, compare the effective
+   cache settings on a first-pass agent and a regular agent. First-pass
+   must read its configured cache with uploads disabled. The regular job
+   must keep its agent’s existing settings. Check the actual commands,
+   including the ARM64 build in the source presubmit.
+   [Ryan’s requirement](https://github.com/google/gvisor/pull/17612#issuecomment-6858919995)
+4. Delete `tools/lint.sh` when the direct check and format targets cover
+   the existing callers. Bazelisk selects the Bazel version.
