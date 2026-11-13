@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:45:28+00:00",
+    "updatedAt": "2026-11-13T15:49:07.668634+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -77402,17 +77402,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/llvm-0827-remove-backports",
-      "title": "Drop the LLVM module backports",
-      "url": "https://github.com/tamird/gvisor/commit/38dbbe464",
-      "head": "38dbbe4644ed10d504d61fba247707b21d8ae34e",
+      "title": "Update hermetic-llvm to 0.8.27",
+      "url": "https://github.com/tamird/gvisor/commit/5b433add4",
+      "head": "5b433add43739d73d320b1dc029a5e5e26405ad7",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-13T15:42:42.838756+00:00",
+      "status": "Published as #17641",
+      "updatedAt": "2026-11-13T15:49:07.668634+00:00",
       "summary": "LLVM 0.8.27 removes the need for both local backports. The native NVIDIA parser passed on AMD64 and ARM64, the Linux header default is 6.18, and all 224 catalog entries passed.",
       "evidence": [
         {
-          "label": "Single-commit upgrade",
-          "url": "https://github.com/tamird/gvisor/commit/38dbbe464"
+          "label": "Upstream PR #17641",
+          "url": "https://github.com/google/gvisor/pull/17641"
+        },
+        {
+          "label": "Published commit",
+          "url": "https://github.com/tamird/gvisor/commit/5b433add4"
         },
         {
           "label": "Published BCR module and integrity digest",
@@ -77440,26 +77444,75 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "38dbbe4644ed10d504d61fba247707b21d8ae34e",
-        "observedAt": "2026-11-13T15:42:42.838756+00:00",
-        "disposition": "LLVM 0.8.27 removes the need for both local backports. The native NVIDIA parser passed on AMD64 and ARM64, the Linux header default is 6.18, and all 224 catalog entries passed.",
-        "nextAction": "Review the single commit before opening the upstream PR.",
+        "owner": "Upstream review",
+        "sourceHead": "5b433add43739d73d320b1dc029a5e5e26405ad7",
+        "observedAt": "2026-11-13T15:49:07.668634+00:00",
+        "disposition": "Published as one commit in #17641. The shorter commit message preserves the tested source tree.",
+        "nextAction": "Follow the upstream checks and maintainer review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098",
-          "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14051827378"
+          "https://github.com/google/gvisor/pull/17641",
+          "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "requestedAt": "2026-11-13T15:42:42.838756+00:00",
-        "head": "38dbbe4644ed10d504d61fba247707b21d8ae34e",
-        "baseHead": "23012ba129bbb7aefbe255e315431d1a73de1079",
-        "url": "https://github.com/tamird/gvisor/commit/38dbbe464",
-        "title": "Drop the LLVM module backports",
-        "body": "gVisor carries two patches to hermetic-llvm 0.8.26. One lets gVisor\nselect Linux 6.18 headers. The other limits the NVIDIA driver parser to\nthe AArch64 and X86 backends instead of building the backends used by\nhermetic-llvm's own tests.\n\nUpdate to 0.8.27, which includes both changes [1, 2]. The parser still\nuses the same LLVM 23.1.2 source archive.\n\n[1]: https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9\n[2]: https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008",
-        "summary": "LLVM 0.8.27 removes the need for both local backports. The native NVIDIA parser passed on AMD64 and ARM64, the Linux header default is 6.18, and all 224 catalog entries passed."
+      "inactive": true
+    },
+    {
+      "id": "pr:17641",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17641,
+      "title": "Update hermetic-llvm to 0.8.27",
+      "ref": "research/llvm-0827-remove-backports",
+      "url": "https://github.com/google/gvisor/pull/17641",
+      "head": "5b433add43739d73d320b1dc029a5e5e26405ad7",
+      "group": "bazel",
+      "status": "open",
+      "summary": "LLVM 0.8.27 removes the need for both local backports. The native NVIDIA parser passed on AMD64 and ARM64, the Linux header default is 6.18, and all 224 catalog entries passed.",
+      "updatedAt": "2026-11-13T15:49:07.668634+00:00",
+      "evidence": [
+        {
+          "label": "Upstream PR #17641",
+          "url": "https://github.com/google/gvisor/pull/17641"
+        },
+        {
+          "label": "Published commit",
+          "url": "https://github.com/tamird/gvisor/commit/5b433add4"
+        },
+        {
+          "label": "Published BCR module and integrity digest",
+          "url": "https://bcr.bazel.build/modules/llvm/0.8.27/source.json"
+        },
+        {
+          "label": "Linux header default",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9"
+        },
+        {
+          "label": "Downstream backend selection",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008"
+        },
+        {
+          "label": "Both parser architectures, Linux headers and license verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43452602601"
+        },
+        {
+          "label": "Native parser tests and license catalog",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098"
+        },
+        {
+          "label": "Configured parser backends and Linux header selection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14051827378"
+        }
+      ],
+      "followup": {
+        "owner": "Upstream review",
+        "sourceHead": "5b433add43739d73d320b1dc029a5e5e26405ad7",
+        "observedAt": "2026-11-13T15:49:07.668634+00:00",
+        "disposition": "Published as one commit in #17641. The shorter commit message preserves the tested source tree.",
+        "nextAction": "Follow the upstream checks and maintainer review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17641",
+          "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098"
+        ]
       }
     }
   ],
@@ -81466,7 +81519,7 @@
     },
     {
       "from": "pr:17114",
-      "to": "branch:llvm-0827-remove-backports",
+      "to": "pr:17641",
       "type": "depends_on",
       "reason": "The new release contains the two backports introduced for the NVIDIA parser and Linux headers.",
       "evidence": "https://github.com/google/gvisor/pull/17114"
@@ -109811,5 +109864,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:45:28+00:00"
+  "updatedAt": "2026-11-13T15:49:07.668634+00:00"
 }
