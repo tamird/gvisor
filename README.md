@@ -583,7 +583,10 @@ unknown mergeability and PR/fork-head mismatches on every completed refresh,
 even when `changedMergeability` is empty. It also includes current-source
 imports; older imports remain in the ordinary diagnostic report. Route each
 blocker to its recorded owner, or assign one if absent, and keep the concrete
-next action in the active handoff. Do not repeatedly notify an owner already
+next action in the active handoff. The agent prepares rebases on our gVisor PRs.
+If a specific owner is handling or holding a rebase, record its `sourceHead`,
+`owner` and `nextAction` in the PR node’s `sourceConflict`. That assignment
+covers conflicts on that head as master advances. Do not repeatedly notify an owner already
 working on the same evidence. A free-text "waiting for synchronization"
 disposition is not resolution: verify the actual PR head, fork head and current
 base, and distinguish a source conflict from stale provider metadata. Preserve

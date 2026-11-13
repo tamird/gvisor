@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:26:29.428548+00:00",
+    "updatedAt": "2026-11-13T16:29:28.570953+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -149,7 +149,7 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-11T11:49:23+00:00",
+      "updatedAt": "2026-11-13T16:29:28.570953+00:00",
       "summary": "Tamir reports that the maintainer hold concerns adding google/licensecheck. The existing checker already verifies the compiler migration with the current catalog and policy. The hold remains on this classifier PR. Its fork revision now includes the go-digest catalog entry and policy exception.\n\nThe fork rebase repairs three stale GPL constants introduced by 61088c907 and makes the mock HTTP notice state an actual GPL-v2-only grant. All 41 owning tests pass on 0ea1ef528. Fresh catalog verification still reports 20 QEMU mismatches, one LTP mismatch and one go-digest mismatch. In particular, QEMU’s license appendix contains an example grant. The project’s LICENSE identifies the terms for the emulator. The upstream October hold remains.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne’s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.\n\nThe current head conflicts with 2552c6787 in governance/licensing.yaml. The existing maintainer hold remains in force.\n\nThe plain rebase 5c080a5cf failed to compile three gpl2 references. The fork revision 23b8ddf0a restores the earlier GPL fixture changes. The package test target passed and the verifier checked all 224 entries in the existing catalog. Earlier source-notice discovery differences remain open.",
       "followup": {
         "disposition": "The published head still conflicts. The fork repair 23b8ddf0a passed the package target and verified the existing 224-entry catalog. No individual testcase records were emitted.",
@@ -301,6 +301,11 @@
       "reviewOutreachHold": {
         "reason": "Maintainer requested a hold for the internal license exception.",
         "evidence": "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
+      },
+      "sourceConflict": {
+        "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+        "owner": "root",
+        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold."
       }
     },
     {
@@ -654,7 +659,7 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-11T11:32:25+00:00",
+      "updatedAt": "2026-11-13T16:29:28.570953+00:00",
       "summary": "The requested post-#16046 rebase is published at 636cec92b308 on master 077ee528716d, which contains 82aa7f55a. The rebase incorporates the existing pkg/zip proxy into the wheel audit and removes the duplicate standard-library import. Remote checker and analyzer validation passed: 37 positive cases, no failures or skips, both analyzer architectures and formatting. The existing maintainer exception hold remains.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 7856cf4d0b68 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe requested follow-up on the October 3 internal exception hold is posted and verified. The maintainer’s response is pending.\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:24:40 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.\n\nThe current head conflicts with 2552c6787 in tools/licensecheck/licensecheck.go. The existing maintainer hold remains in force.",
       "followup": {
         "owner": "root",
@@ -702,6 +707,11 @@
       "reviewOutreachHold": {
         "reason": "Maintainer requested a hold for the internal license exception.",
         "evidence": "https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222"
+      },
+      "sourceConflict": {
+        "sourceHead": "e9289d0a24c17e33d9dccf880ddef2f7e7bf886c",
+        "owner": "root",
+        "nextAction": "Await confirmation of the existing maintainer hold before revising the conflicting checker implementation."
       }
     },
     {
@@ -7682,7 +7692,7 @@
       "group": "bazel",
       "status": "open",
       "head": "70c6454fef55f460afb8d0bcbe977cacbaeff07b",
-      "updatedAt": "2026-11-13T15:16:07.381884+00:00",
+      "updatedAt": "2026-11-13T16:29:28.570953+00:00",
       "summary": "The PR runs the Go and C++ tests on native AMD64 and ARM64 workers. Nogo now analyzes the architecture-specific Go test sources. The original run passed 10,933 Go test records and three C++ cases on each native architecture and both Nogo targets.",
       "number": 15370,
       "reviewDecision": null,
@@ -7897,7 +7907,6 @@
         "observedAt": "2026-11-13T15:16:07.381884+00:00",
         "disposition": "The pinned Buildifier inserted one blank line into the approved amendment. The complete tree passed the formatter before publication.",
         "nextAction": "Review the native Go and C++ test rules and the Nogo analysis for architecture-specific Go tests.",
-        "mergeable": "CONFLICTING",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
           "https://github.com/tamird/gvisor/actions/runs/43095873400",
@@ -110196,5 +110205,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:26:29.428548+00:00"
+  "updatedAt": "2026-11-13T16:29:28.570953+00:00"
 }

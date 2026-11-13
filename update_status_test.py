@@ -1932,9 +1932,16 @@ class CheckReportTest(unittest.TestCase):
             self.assertEqual((ours["owner"], export["owner"]), ("Agent", "Maintainer"))
             self.assertIn("prepare the rebase", ours["action"])
             self.assertEqual(ours["recordedFollowup"], followup)
-            followup.update(owner="image-owner", mergeable="CONFLICTING", nextAction="Repair the MySQL image.")
-            self.assertEqual((rows()[0]["owner"], rows()[0]["action"]), ("image-owner", followup["nextAction"]))
-            followup["sourceHead"] = "b" * 40
+            # Master can conflict again while the same head is still waiting for review.
+            followup["mergeable"] = "CONFLICTING"
+            self.assertEqual(rows()[0]["owner"], "Agent")
+            node["sourceConflict"] = {"owner": "image-owner", "sourceHead": source["head"],
+                                      "nextAction": "Hold the image rebase for its maintainer."}
+            source["base"] = "c" * 40
+            ours, export = rows()
+            self.assertEqual((ours["owner"], ours["action"]), ("image-owner", node["sourceConflict"]["nextAction"]))
+            self.assertEqual(export["owner"], "Maintainer")
+            node["sourceConflict"]["sourceHead"] = "b" * 40
             self.assertEqual(rows()[0]["owner"], "Agent")
             source.update(authorLogin="upstream", headOwner="upstream")
             self.assertNotIn("prepare the rebase", rows()[0]["action"])

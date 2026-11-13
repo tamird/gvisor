@@ -1114,15 +1114,13 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 elif (repo == REPO and is_source and source["status"] == "open" and not delivered
                         and source.get("authorLogin") == OWNER and source.get("headOwner") == OWNER
                         and pr["mergeable"] == "CONFLICTING" and not observation["sourceBranchMismatch"]):
-                    # A review assignment on this same head can predate a change to master.
-                    # Retain a named handler only when the recorded task covers the conflict.
-                    assigned = (followup.get("sourceHead") == source["head"]
-                                and followup.get("mergeable") == "CONFLICTING" and followup.get("owner")
-                                and followup.get("nextAction"))
-                    issue["owner"] = followup["owner"] if assigned else "Agent"
-                    issue["action"] = (followup["nextAction"] if assigned else
-                                       "Check the source conflict against current master and prepare the rebase. "
-                                       "Preserve any recorded maintainer hold before publication.")
+                    conflict = node.get("sourceConflict", {})
+                    if (conflict.get("sourceHead") == source["head"] and conflict.get("owner")
+                            and conflict.get("nextAction")):
+                        issue.update(owner=conflict["owner"], action=conflict["nextAction"])
+                    else:
+                        issue.update(owner="Agent", action="Check the source conflict against current master and prepare "
+                                     "the rebase. Preserve any recorded maintainer hold before publication.")
                 mergeability.append(issue)
             if (unresolved or old.get("mergeable") in {"CONFLICTING", "UNKNOWN"}
                     or old.get("branchHead") and old["branchHead"] != old.get("head")) and (source_status_changed or any(
