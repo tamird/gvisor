@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-13T16:36:57.500081+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-13T16:51:09.693962+00:00",
+  "registryDate": "2026-11-13T16:52:12.917441+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -153492,6 +153492,9 @@
           "state": "unknown"
         },
         "description": "No matching public export was found in the complete lookup."
+      },
+      "inspectedReviewHeads": {
+        "PRRC_kwDOB9IlXs8AAAABC7ZdxQ": "a6a26052fcf59e25cb748093fb5017932c088c80"
       }
     },
     {
@@ -337932,6 +337935,10 @@
           "state": "unknown"
         },
         "description": "No matching public export was found in the complete lookup."
+      },
+      "inspectedReviewHeads": {
+        "PRRC_kwDOB9IlXs8AAAABCtcqfA": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+        "PRRC_kwDOB9IlXs8AAAABCtcrRQ": "fb98ff4ca16818deea71b420bef46b956c4b258f"
       }
     },
     {
@@ -459261,68 +459268,7 @@
       "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
     }
   ],
-  "reviewWatchHandoff": [
-    {
-      "repo": "google/gvisor",
-      "number": 16952,
-      "head": "bce7246e29577b596d3861096e3f9d88b7eaba4d",
-      "action": "No response or code change is outstanding from this review.",
-      "claimed": true,
-      "firstObservedHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
-      "reviewHead": null,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABCtcqfA",
-      "url": "https://github.com/google/gvisor/pull/16952#discussion_r4476840572",
-      "author": "adios-404",
-      "updatedAt": "2026-11-05T05:12:24Z",
-      "threadId": "PRRT_kwDOB9IlXs6zpGqO",
-      "rootURL": "https://github.com/google/gvisor/pull/16952#discussion_r4468916089",
-      "rootId": "PRRC_kwDOB9IlXs8AAAABCl4_eQ",
-      "owner": "Agent",
-      "assigned": false,
-      "feedbackComplete": true
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16952,
-      "head": "bce7246e29577b596d3861096e3f9d88b7eaba4d",
-      "action": "No response or code change is outstanding from this review.",
-      "claimed": true,
-      "firstObservedHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
-      "reviewHead": null,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABCtcrRQ",
-      "url": "https://github.com/google/gvisor/pull/16952#discussion_r4476840773",
-      "author": "adios-404",
-      "updatedAt": "2026-11-05T05:12:26Z",
-      "threadId": "PRRT_kwDOB9IlXs6zpGqY",
-      "rootURL": "https://github.com/google/gvisor/pull/16952#discussion_r4468916105",
-      "rootId": "PRRC_kwDOB9IlXs8AAAABCl4_iQ",
-      "owner": "Agent",
-      "assigned": false,
-      "feedbackComplete": true
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 15972,
-      "head": "1f277200f591d460fd51232a799a7fc5e1f8511c",
-      "action": "Parth has the native review request. Flozano also notified Lucas.",
-      "claimed": true,
-      "firstObservedHead": "a6a26052fcf59e25cb748093fb5017932c088c80",
-      "reviewHead": null,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABC7ZdxQ",
-      "url": "https://github.com/google/gvisor/pull/15972#discussion_r4491468229",
-      "author": "flozano",
-      "updatedAt": "2026-11-06T10:31:14Z",
-      "threadId": "PRRT_kwDOB9IlXs6zTRtg",
-      "rootURL": "https://github.com/google/gvisor/pull/15972#discussion_r4459603569",
-      "rootId": "PRRC_kwDOB9IlXs8AAAABCdAmcQ",
-      "owner": "gVisor maintainer",
-      "assigned": false,
-      "feedbackComplete": true
-    }
-  ],
+  "reviewWatchHandoff": [],
   "mergeabilityHandoff": [
     {
       "repo": "google/gvisor",

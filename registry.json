@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:51:09.693962+00:00",
+    "updatedAt": "2026-11-13T16:52:12.917441+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46811,7 +46811,7 @@
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-13T11:03:39+00:00",
+      "updatedAt": "2026-11-13T16:52:12.917441+00:00",
       "summary": "Flozano rebased on master. The production changes and regression assertions match the independently tested rebase. Three test comments now include the extra 2 ms in the probe delay for multiple outstanding segments. Flozano reports that all five probe cases and the minimum-duration case passed 30 consecutive runs.",
       "evidence": [
         {
@@ -46918,9 +46918,9 @@
       "followup": {
         "owner": "gVisor maintainer",
         "sourceHead": "1f277200f591d460fd51232a799a7fc5e1f8511c",
-        "observedAt": "2026-11-13T11:03:39+00:00",
+        "observedAt": "2026-11-13T16:52:12.917441+00:00",
         "disposition": "Flozano completed the requested rebase and reported the repeated tests",
-        "nextAction": "Parth has the native review request. Flozano also notified Lucas.",
+        "nextAction": "Parth has the native review request. Flozano rebased for Lucas and confirmed the first-pass check passed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15972#issuecomment-6850617919",
           "https://github.com/google/gvisor/blob/1f277200f/pkg/tcpip/transport/tcp/rack_test.go#L465-L475",
@@ -58590,6 +58590,24 @@
           "https://github.com/golang/go/commit/16d46baf6",
           "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634",
           "https://github.com/google/gvisor/pull/16952#issuecomment-6662368836"
+        ]
+      },
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABCtcqfA",
+            "url": "https://github.com/google/gvisor/pull/16952#discussion_r4476840572",
+            "head": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+            "updatedAt": "2026-11-05T05:12:24Z",
+            "evidence": "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABCtcrRQ",
+            "url": "https://github.com/google/gvisor/pull/16952#discussion_r4476840773",
+            "head": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+            "updatedAt": "2026-11-05T05:12:26Z",
+            "evidence": "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634"
+          }
         ]
       }
     },
@@ -101939,6 +101957,13 @@
             "updatedAt": "2026-11-09T18:06:06Z",
             "head": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
             "evidence": "https://github.com/google/gvisor/blob/0aa0a1abf/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go#L4363"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABC7ZdxQ",
+            "url": "https://github.com/google/gvisor/pull/15972#discussion_r4491468229",
+            "head": "a6a26052fcf59e25cb748093fb5017932c088c80",
+            "updatedAt": "2026-11-06T10:31:14Z",
+            "evidence": "https://github.com/google/gvisor/pull/15972#issuecomment-6850617919"
           }
         ]
       },
@@ -110272,5 +110297,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:51:09.693962+00:00"
+  "updatedAt": "2026-11-13T16:52:12.917441+00:00"
 }
