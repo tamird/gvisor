@@ -654,6 +654,10 @@ it omitted. Once the edit is published, reply on the original thread.
 The [cleanup investigation](https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup)
 keeps the audit and links from merged changes to their follow-ups.
 
+In a dependency patch header, link the open upstream PR while the fix is
+under review. Once it lands, link the commit on the upstream branch so
+readers can see which release tags contain it.
+
 For an optional BCR upgrade on an open PR, set `releaseWait.blocking` to
 `false`. A newer non-yanked registry entry prompts the agent to check the
 published source for the expected changes. The PR keeps its review and import
