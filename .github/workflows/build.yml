@@ -1,35 +1,125 @@
-name: CI
-
-"on":
+name: Check vDSO layouts using the declared reader
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/vdso-unwind-declared-reader-controls]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  vdso:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Check both vDSOs and the two new assertions on Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 97ba23f011488a624c651f8472e8ab1a7a1b59f7
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git checkout -q --detach HEAD^
+          test "$(git rev-parse HEAD^)" = e0a1289d2266319859b208d35147cde9cab287c8
+          out="$RUNNER_TEMP/vdso"
+          mkdir -p "$out/no-binutils"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$out/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $out/bazel" | sha256sum -c -
+          chmod +x "$out/bazel"
+          printf '%s\n' '#!/bin/sh' 'echo "unexpected host readelf" >&2' 'exit 93' > "$out/no-binutils/readelf"
+          chmod +x "$out/no-binutils/readelf"
+          common=(--jobs=4 --spawn_strategy=sandboxed --remote_executor= --remote_cache= --bes_backend= --lockfile_mode=off)
+          bin=("$out/bazel" --nosystem_rc --nohome_rc)
+          test_vdso() {
+            "${bin[@]}" test --config=x86_64 "${common[@]}" --nocache_test_results --test_output=all --test_env=PATH="$out/no-binutils:$PATH" //vdso:vdso_test
+          }
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends g++-aarch64-linux-gnu
+          aarch64-linux-gnu-gcc --version
+          for arch in x86_64 aarch64; do
+            "${bin[@]}" build --config="$arch" "${common[@]}" //vdso:vdso
+            cp -L bazel-bin/vdso/vdso.so "$out/$arch.so"
+            file "$out/$arch.so"
+          done
+          file "$out/x86_64.so" | grep 'x86-64'
+          file "$out/aarch64.so" | grep 'ARM aarch64'
+          source=$(git rev-parse HEAD)
+          test_vdso 2>&1 | tee "$out/$source.log"
+          cp bazel-testlogs/vdso/vdso_test/test.xml "$out/$source.xml"
+          install -m 0644 "$out/aarch64.so" vdso/arm-readelf-fixture.so
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("vdso/BUILD")
+          before, after = path.read_text().split("py_test(", 1)
+          assert after.count(":vdso") == 2
+          path.write_text(before + "py_test(" + after.replace(":vdso", ":arm-readelf-fixture.so"))
+          PY
+          test_vdso 2>&1 | tee "$out/arm-elf.log"
+          git restore -- vdso/BUILD
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("vdso/vdso_amd64.lds")
+          text = path.read_text()
+          anchor = "  .rodata        : { *(.rodata*) }          :text"
+          assert text.count(anchor) == 1
+          path.write_text(text.replace(anchor, anchor + "\n  .data : { BYTE(42) } :text"))
+          PY
+          status=0
+          test_vdso > "$out/negative.log" 2>&1 || status=$?
+          test "$status" = 3
+          grep 'VDSO contains non-empty .data section' "$out/negative.log"
+          git restore -- vdso/vdso_amd64.lds
+          python3 - <<'PYTHON'
+          import struct
+          from pathlib import Path
+          import os
+          root = Path(os.environ["RUNNER_TEMP"]) / "vdso"
+          # Read only program headers and the dynamic table from the built fixture.
+          original = (root / "x86_64.so").read_bytes()
+          assert original[:6] == b"\x7fELF\x02\x01"
+          phoff, = struct.unpack_from("<Q", original, 32)
+          phsize, phnum = struct.unpack_from("<HH", original, 54)
+          assert phsize == 56
+          controls = {}
+          for index in range(phnum):
+              off = phoff + index * phsize
+              kind, _, fileoff, _, _, length, _, _ = struct.unpack_from("<IIQQQQQQ", original, off)
+              if kind == 0x6474e550:  # PT_GNU_EH_FRAME
+                  damaged = bytearray(original)
+                  struct.pack_into("<I", damaged, off, 0)  # PT_NULL
+                  controls["no-unwind"] = damaged
+              if kind == 2:  # PT_DYNAMIC
+                  for entry in range(fileoff, fileoff + length, 16):
+                      tag, _ = struct.unpack_from("<QQ", original, entry)
+                      if tag:
+                          damaged = bytearray(original)
+                          struct.pack_into("<QQ", damaged, entry, 1, 0)  # DT_NEEDED, empty name
+                          controls["dependency"] = damaged
+                          break
+          assert set(controls) == {"no-unwind", "dependency"}
+          for name, data in controls.items():
+              (root / (name + ".so")).write_bytes(data)
+          PYTHON
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          p = Path("vdso/BUILD")
+          before, rule = p.read_text().split("py_test(", 1)
+          assert rule.count(":vdso") == 2
+          p.write_text(before + "py_test(" + rule.replace(":vdso", ":arm-readelf-fixture.so"))
+          PYTHON
+          for kind in no-unwind dependency; do
+            install -m 0644 "$out/$kind.so" vdso/arm-readelf-fixture.so
+            rc=0
+            test_vdso >"$out/$kind.log" 2>&1 || rc=$?
+            test "$rc" = 3
+          done
+          grep -F 'No PT_GNU_EH_FRAME segment in VDSO' "$out/no-unwind.log"
+          grep -F 'VDSO contains DT_NEEDED dependency' "$out/dependency.log"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: vdso-reader-integration
+          path: |
+            ${{ runner.temp }}/vdso/*.log
+            ${{ runner.temp }}/vdso/*.xml
+          if-no-files-found: warn
