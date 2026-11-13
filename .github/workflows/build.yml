@@ -1,35 +1,66 @@
-name: CI
-
-"on":
+name: Check graph restore hook ordering on the current reader
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/graph-restore-hook-77fdf618a]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  graph:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Run the seven published map-hook cases on the current graph reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 77fdf618a9495a178825391cadbb76f60316ee61
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git switch --detach HEAD^
+          fixture=d7b1012300396fa2fc231060839ca6268b0adff1
+          git fetch -q --no-tags --depth=1 https://github.com/tamird/gvisor.git "$fixture"
+          git restore --source=FETCH_HEAD -- pkg/state/tests/map.go pkg/state/tests/map_test.go
+          work="$RUNNER_TEMP/graph"
+          mkdir -m 700 "$work"
+          curl -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$work/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $work/bazel" | sha256sum -c -
+          chmod +x "$work/bazel"
+          log="$work/full.log"
+          rc=0
+          "$work/bazel" --nosystem_rc --nohome_rc test --config=x86_64 --jobs=3 --nocache_test_results --test_sharding_strategy=disabled --test_filter='^TestMapLoadHookReceivers$' --test_env=GO_TEST_WRAP_TESTV=1 --test_output=errors --flaky_test_attempts=1 //pkg/state/tests:tests_test >"$log" 2>&1 || rc=$?
+          tail -70 "$log"
+          printf '%d\n' "$rc" > "$work/status"
+          mkdir -m 700 "$work/results"
+          cp bazel-testlogs/pkg/state/tests/tests_test/test.{log,xml} "$work/results/"
+          WORK="$work" python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from xml.etree import ElementTree
+          work = Path(os.environ["WORK"])
+          root = "TestMapLoadHookReceivers"
+          leaves = ("struct_keys", "struct_values", "array_keys", "array_values", "interface_keys", "interface_values", "map_passed_to_LoadValue")
+          expected = {root + "/" + x for x in leaves}
+          cases = list(ElementTree.parse(work / "results/test.xml").iter("testcase"))
+          names = {c.attrib["name"] for c in cases}
+          assert expected <= names <= (expected | {root}), names
+          assert all(c.find("skipped") is None and c.get("status") != "notrun" for c in cases)
+          failures = {c.attrib["name"] for c in cases if c.find("failure") is not None or c.find("error") is not None}
+          failed = failures - {root}
+          rc = int((work / "status").read_text())
+          details = [l for l in (work / "results/test.log").read_text().splitlines() if "loaded map = " in l]
+          if failed:
+              assert rc == 3 and failed == {root + "/" + leaves[-1]} and len(details) == 1, (rc, failures, details)
+              got, sep, want = details[0].partition(", want ")
+              assert sep and "inline:tests.mapLoadHook{value:0}" in got and "inline:tests.mapLoadHook{value:2}" in want, details
+              print("Six controls passed. The enclosing hook copied zero instead of two.")
+          else:
+              assert rc == 0 and not failures, (rc, failures)
+              print("All seven comparisons passed.")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: graph-hook-cases
+          path: ${{ runner.temp }}/graph/results/
+          if-no-files-found: warn
