@@ -1,35 +1,90 @@
-name: CI
-
-"on":
+name: Measure graph restore after reusing the target table
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-waiter-after-queue-reuse]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Test master and the current single-waiter PR
+        run: |
+          set -euo pipefail
+          results="$RUNNER_TEMP/results"
+          mkdir -p "$results"
+          master=ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d
+          patch=4570ff5c1f9cad2c2ac4b0142ceb94d6fb88c2b9
+          stats=f948a2221d2329e8e0897eb8b562c859da77468a
+          git init -q .
+          git fetch -q --depth=2 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$patch" "$stats"
+          git checkout -q --detach "$master"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$master"
+          test "$(git rev-parse "$patch^")" = 088adcd04f24c6230879074a3fab38535b62ebec
+          test "$(cat .bazelversion)" = 9.3.1
+          bazel="$RUNNER_TEMP/bazel"
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $bazel" | sha256sum -c -
+          chmod 755 "$bazel"
+          for arm in master waiter; do
+            if test "$arm" = waiter; then
+              git diff "$patch^" "$patch" | git apply --3way --index -
+              test "$(git write-tree)" = 011bbd570ead3ceb775d504bdb10c182aa7e8e5c
+            fi
+            git write-tree > "$results/$arm.tree"
+            for mode in normal race; do
+              opts=()
+              if test "$mode" = race; then opts+=(--config=race); fi
+              "$bazel" test "${opts[@]}" --jobs=3 --nocache_test_results --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --test_output=errors //pkg/state:state_test //pkg/state/tests:tests_test 2>&1 | tee "$results/$arm-$mode.log"
+              for target in pkg/state/state_test pkg/state/tests/tests_test; do
+                cp "bazel-testlogs/$target/test.xml" "$results/$arm-$mode-${target##*/}.xml"
+              done
+            done
+            "$bazel" build --jobs=3 //pkg/state/tests:tests_test
+            binary=$("$bazel" cquery --output=files //pkg/state/tests:tests_test | tail -1)
+            install -m755 "$binary" "$RUNNER_TEMP/$arm"
+          done
+          python3 - "$results" <<'PYTHON'
+          from pathlib import Path
+          import sys
+          import xml.etree.ElementTree as ET
+          for arm in ("master", "waiter"):
+              for mode in ("normal", "race"):
+                  for label, names in (("state_test", {"TestGraphDependencyCycle", "TestGraphCallbackOrder"}), ("tests_test", {"TestRandomGraphs", "TestWaitOrdering"})):
+                      path = Path(sys.argv[1]) / f"{arm}-{mode}-{label}.xml"
+                      cases = list(ET.parse(path).iter("testcase"))
+                      executed = {c.get("name", "").split("/")[0] for c in cases if all(c.find(tag) is None for tag in ("skipped", "error", "failure"))}
+                      assert names <= executed, (arm, mode, label, names - executed)
+          PYTHON
+          git show "$stats:.github/qualification/state_working_set/benchstat.module" > "$RUNNER_TEMP/benchstat.module"
+          echo "373bba0a70f04c2a39a30a45b4acd23f3bfa884e05a5e27cce1ce7010c406cd5  $RUNNER_TEMP/benchstat.module" | sha256sum -c -
+          cat "$RUNNER_TEMP/benchstat.module" >> MODULE.bazel
+          "$bazel" build --jobs=3 @org_golang_x_perf//cmd/benchstat:benchstat
+          statsbin=$("$bazel" cquery --output=files @org_golang_x_perf//cmd/benchstat:benchstat | tail -1)
+          install -m755 "$statsbin" "$RUNNER_TEMP/benchstat"
+      - name: Compare the same seeded 20000-node graph
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/results"
+          cpu=$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')
+          for ((pair=0; pair<=14; pair++)); do
+            arms=(master waiter)
+            if ((pair % 2)); then arms=(waiter master); fi
+            for arm in "${arms[@]}"; do
+              log="$arm-$pair.out"
+              GO_TEST_WRAP=0 GOMAXPROCS=1 taskset -c "$cpu" "$RUNNER_TEMP/$arm" -test.run='^$' -test.cpu=1 -test.bench='^BenchmarkGraphLoad$' -test.benchtime=1x -test.benchmem > "$log"
+              grep -qx PASS "$log"
+              if ((pair)); then grep -E '^BenchmarkGraphLoad(-1)?[[:space:]]+1[[:space:]].*ns/op.*B/op.*allocs/op' "$log" >> "$arm.bench"; fi
+            done
+          done
+          test "$(wc -l < master.bench)" -eq 14
+          test "$(wc -l < waiter.bench)" -eq 14
+          "$RUNNER_TEMP/benchstat" master.bench waiter.bench | tee benchstat.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: graph-waiter-after-queue-reuse
+          path: ${{ runner.temp }}/results/
+          if-no-files-found: error
+          retention-days: 14
