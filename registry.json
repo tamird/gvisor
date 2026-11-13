@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T14:38:55+00:00",
+    "updatedAt": "2026-11-13T14:39:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -77235,7 +77235,7 @@
       "url": "https://github.com/bazel-contrib/rules_go/pull/4774",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-13T03:57:48+00:00",
+      "updatedAt": "2026-11-13T14:39:52+00:00",
       "summary": "With the same 5,931 declared SDK files, the unsandboxed builders emitted eight more archive packages and fourteen more list entries than the sandboxed builders. Copying only declared sources made both inventories match. The repo’s own package-list test reproduces the difference.",
       "evidence": [
         {
@@ -77257,6 +77257,10 @@
         {
           "label": "Published upstream pull request",
           "url": "https://github.com/bazel-contrib/rules_go/pull/4774"
+        },
+        {
+          "label": "Linux 3.16 syscall-number header comparison on the exact PR",
+          "url": "https://github.com/tamird/rules_go/actions/runs/43444342690/artifacts/14046817590"
         }
       ],
       "settledReviews": [
@@ -77271,6 +77275,56 @@
           "postedURL": "https://github.com/bazel-contrib/rules_go/issues/4773"
         }
       ]
+    },
+    {
+      "id": "issue:bazel-contrib/rules_go:4773",
+      "type": "issue",
+      "repo": "bazel-contrib/rules_go",
+      "number": 4773,
+      "title": "Unsandboxed GoStdlib actions include packages excluded from GoSDK.srcs",
+      "url": "https://github.com/bazel-contrib/rules_go/issues/4773",
+      "group": "rbe",
+      "status": "open",
+      "updatedAt": "2026-11-13T14:39:52+00:00",
+      "summary": "The local standard-library builders compiled a test-only package excluded in #4311. With the Linux 3.16 x86-64 syscall-number header, both failed on missing syscall constants. The parent passed in the sandbox. With #4774, both execution modes passed and matched the sandboxed parent’s package inventories.",
+      "evidence": [
+        {
+          "label": "Granatam connects the local build failure to #4310",
+          "url": "https://github.com/bazel-contrib/rules_go/issues/4773#issuecomment-6849717643"
+        },
+        {
+          "label": "Excluded package in the SDK glob",
+          "url": "https://github.com/bazel-contrib/rules_go/commit/a7bae092863235befdc10b84c17ca8a9c6fe83dc"
+        },
+        {
+          "label": "Parent compile diagnostics and sandbox inventories",
+          "url": "https://github.com/tamird/rules_go/actions/runs/43418900461/artifacts/14032973304"
+        },
+        {
+          "label": "Both #4774 builds and package inventories",
+          "url": "https://github.com/tamird/rules_go/actions/runs/43444342690/artifacts/14046817590"
+        },
+        {
+          "label": "Open fix for both stdlib actions",
+          "url": "https://github.com/bazel-contrib/rules_go/pull/4774"
+        }
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "requestedAt": "2026-11-13T14:39:52+00:00",
+        "url": "https://github.com/bazel-contrib/rules_go/issues/4773#issuecomment-6849717643",
+        "title": "Confirm the Linux 3.16 header case on #4774",
+        "summary": "Reply to granatam with the old-header compile failure and the result on the open PR.",
+        "body": "Yes, I reproduced #4310 with Go 1.26.7 and the [Linux 3.16 x86-64 syscall-number header](https://github.com/tamird/rules_go/actions/runs/43418900461/artifacts/14032973304). With local execution, both the stdlib build and the package lister picked up the excluded package and failed on `SYS_getrandom` and `SYS_seccomp`. The sandboxed build passed.\n\nWith #4774, [both execution modes passed](https://github.com/tamird/rules_go/actions/runs/43444342690/artifacts/14046817590). Each produced the same 350 archive names and the same 350 package-list entries as the sandboxed parent. The SDK still contains the package on disk. Passing the declared sources to the builders makes them honor the exclusion added in #4311.\n\nPosted by Codex on behalf of @tamird.",
+        "addresses": [
+          {
+            "id": "IC_kwDOAzdJo88AAAABmEZliw",
+            "url": "https://github.com/bazel-contrib/rules_go/issues/4773#issuecomment-6849717643",
+            "updatedAt": "2026-11-13T09:57:26Z"
+          }
+        ]
+      }
     }
   ],
   "edges": [
@@ -109553,5 +109607,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T14:38:55+00:00"
+  "updatedAt": "2026-11-13T14:39:52+00:00"
 }
