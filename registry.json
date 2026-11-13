@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:30:38+00:00",
+    "updatedAt": "2026-11-13T15:33:01.762170+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63244,7 +63244,7 @@
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-13T11:16:41+00:00",
+      "updatedAt": "2026-11-13T15:33:01.762170+00:00",
       "summary": "With #17627 applied, the declared LLVM reader accepted both AMD64 and ARM64 vDSOs. The combined checker rejected non-empty .data, a missing PT_GNU_EH_FRAME segment, and a DT_NEEDED dependency.",
       "evidence": [
         {
@@ -63320,14 +63320,16 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "9328b5d2a294fd706a70a5446ff8382c52d32134",
-        "observedAt": "2026-11-13T11:16:41+00:00",
-        "disposition": "#17627 remains open. Its tested head e0a1289d2 and current head 4d4f31a77 have identical source trees. All five checks completed with the declared LLVM reader.",
-        "nextAction": "Rebase #17122 onto the landed vDSO checker when #17627 merges.",
+        "observedAt": "2026-11-13T15:33:01.762170+00:00",
+        "disposition": "Both upstream exports contain byte-identical vdso/BUILD and vdso/check_vdso.py files to the version that passed all five declared-readelf checks. #17640 also joins a thread in the epoll test.",
+        "nextAction": "Rebase #17122 when the vDSO checker from #17627 or #17640 lands. Check the landed versions of both vDSO files against the qualified ones.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/43414236340/artifacts/14030702508",
           "https://github.com/google/gvisor/pull/17627",
           "https://github.com/tamird/gvisor/commit/9328b5d2a",
-          "https://github.com/tamird/gvisor/actions/runs/43355492128/artifacts/14006111161"
+          "https://github.com/tamird/gvisor/actions/runs/43355492128/artifacts/14006111161",
+          "https://github.com/google/gvisor/pull/17640",
+          "https://github.com/google/gvisor/commit/f1e8b6956"
         ],
         "mergeable": "MERGEABLE"
       },
@@ -109753,5 +109755,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:30:38+00:00"
+  "updatedAt": "2026-11-13T15:33:01.762170+00:00"
 }
