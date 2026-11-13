@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T04:09:52+00:00",
+    "updatedAt": "2026-11-13T04:16:47+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49523,7 +49523,7 @@
       "url": "https://github.com/tamird/grpc/commit/b056f0930",
       "group": "rbe",
       "status": "Published as grpc/grpc#43825",
-      "updatedAt": "2026-11-13T03:57:48+00:00",
+      "updatedAt": "2026-11-13T04:16:47+00:00",
       "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
       "evidence": [
         {
@@ -49557,18 +49557,12 @@
         {
           "label": "Published upstream pull request",
           "url": "https://github.com/grpc/grpc/pull/43825"
+        },
+        {
+          "label": "Previous PR revision",
+          "url": "https://github.com/tamird/grpc/compare/64745d242...b056f0930"
         }
       ],
-      "refinement": {
-        "before": {
-          "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
-          "base": "db13f8422846404ffa2e81e5d76d19488df30586"
-        },
-        "after": {
-          "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
-          "base": "db13f8422846404ffa2e81e5d76d19488df30586"
-        }
-      },
       "inactive": true
     },
     {
@@ -71119,7 +71113,7 @@
       "url": "https://github.com/google/gvisor/pull/17502",
       "title": "Store a single graph waiter without a callback record",
       "status": "open",
-      "updatedAt": "2026-11-11T23:26:49+00:00",
+      "updatedAt": "2026-11-13T04:16:47+00:00",
       "summary": "On a 50,000-file checkpoint, the first guest command took 200.2 ms versus 243.2 ms on #16860. Decoding allocated 99.27 MiB versus 121.84 MiB per checkpoint. Both comparisons have 16 pairs. Separate cold and pooled callback, pointer-chain, and map benchmarks detected no timing change. Package and race checks passed.",
       "evidence": [
         {
@@ -71137,6 +71131,10 @@
         {
           "label": "Native state, wire and integration XML",
           "url": "https://github.com/tamird/gvisor/actions/runs/43118808013/artifacts/13899642773"
+        },
+        {
+          "label": "20,000-node graph restore, both state suites, and race results after #16867",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43362467812/artifacts/14009770178"
         }
       ],
       "settledReviews": [
@@ -77089,12 +77087,12 @@
       "repo": "grpc/grpc",
       "number": 43825,
       "ref": "proposal/bazel-plugin-symlink",
-      "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
+      "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478",
       "title": "[bazel] Replace the protoc plugin `cp` with a symlink",
       "url": "https://github.com/grpc/grpc/pull/43825",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-13T03:57:48+00:00",
+      "updatedAt": "2026-11-13T04:16:47+00:00",
       "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
       "evidence": [
         {
@@ -77128,17 +77126,39 @@
         {
           "label": "Published upstream pull request",
           "url": "https://github.com/grpc/grpc/pull/43825"
+        },
+        {
+          "label": "Formatter amendment",
+          "url": "https://github.com/tamird/grpc/commit/ba211b480"
+        },
+        {
+          "label": "Kokoro sanity log with exact formatter diff",
+          "url": "https://storage.googleapis.com/grpc-testing-kokoro-resultstore-logs/resultstore/prod/grpc/core/pull_request/linux/grpc_sanity/b0745169-1f39-49af-8f79-af1e532b20f0/build.log"
+        },
+        {
+          "label": "Kokoro macOS fork test, run 7 of 16",
+          "url": "https://storage.googleapis.com/grpc-testing-kokoro-resultstore-logs/resultstore/prod/grpc/core/pull_request/macos/grpc_python_bazel_test/907ab47c-f4d2-492a-a915-1f2ffc7377e1/build.log"
         }
       ],
       "refinement": {
         "before": {
-          "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
+          "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
           "base": "db13f8422846404ffa2e81e5d76d19488df30586"
         },
         "after": {
-          "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
+          "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478",
           "base": "db13f8422846404ffa2e81e5d76d19488df30586"
         }
+      },
+      "humanAction": {
+        "status": "pending",
+        "kind": "submission",
+        "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478",
+        "title": "Apply the formatter correction to gRPC #43825",
+        "summary": "gRPC’s clang-format 19 moves the plugin condition to the next line. The candidate matches the formatter output in Kokoro, and both code generators reproduced their tracked outputs.",
+        "url": "https://github.com/grpc/grpc/pull/43825",
+        "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy",
+        "body": "Review the one-line wrap, then update the existing PR from the local gRPC checkout.\n\ngit -C ~/code/grpc range-diff b056f0930^! ba211b480^!\ngit -C ~/code/grpc push --force-with-lease=refs/heads/proposal/bazel-plugin-symlink:b056f09306c64c8166339d94b61ac6c1b3b2ba51 https://github.com/tamird/grpc.git ba211b480312875b62d1e6fee80ea1b2c9ab5478:refs/heads/proposal/bazel-plugin-symlink\n\nBoth trace and experiment checks failed on the same formatter diff. Clang-format 19.1.7 reproduced the exact corrected file. The five formatted experiment sources and all three trace outputs matched the checked-in files. gRPC requires human submission. EasyCLA already passed on the published PR.\n\nThe separate macOS Python fork test failed once in 16 runs when the transport closed. Neither the PR parent nor current master has that exact job on its commit. Both neighboring master changes passed the corresponding presubmit. The logs do not establish whether this change affected the fork test."
       }
     },
     {
@@ -84730,7 +84750,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-11T23:26:49+00:00",
+      "updatedAt": "2026-11-13T04:16:47+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -88006,10 +88026,35 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535"
             }
           ]
+        },
+        {
+          "text": "After #16867 merged, the decoder with #17502 applied passed both state suites normally and under the race detector. The seeded 20,000-node graph benchmark showed no significant change in time, bytes or allocations across 14 alternating pairs. The earlier 50,000-file guest restore used a different workload and an earlier base.\n\n```text\n          │ master.bench │          waiter.bench          │\n          │    sec/op    │    sec/op     vs base          │\nGraphLoad    190.8m ± 8%   180.6m ± 17%  ~ (p=0.104 n=14)\n\n          │ master.bench │          waiter.bench          │\n          │     B/op     │     B/op      vs base          │\nGraphLoad   120.7Mi ± 0%   120.7Mi ± 0%  ~ (p=0.608 n=14)\n\n          │ master.bench │         waiter.bench          │\n          │  allocs/op   │  allocs/op   vs base          │\nGraphLoad    444.6k ± 0%   444.6k ± 0%  ~ (p=0.895 n=14)\n```",
+          "evidence": [
+            {
+              "label": "20,000-node graph restore, both state suites, and race results after #16867",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43362467812/artifacts/14009770178"
+            },
+            {
+              "label": "Landed callback queue change",
+              "url": "https://github.com/google/gvisor/pull/16867"
+            },
+            {
+              "label": "Single-waiter change and original 50,000-file restore results",
+              "url": "https://github.com/google/gvisor/pull/17502"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow #16867 and #17502 through review. #16860 landed. The standalone generated reservation API remains on hold.",
+      "nextStep": "Read the 50,000-file guest comparison (fork run 43364206576) on the base containing #16867 before attributing the earlier speedup to #17502 on current master. Follow #17502 through review. The generated reservation API remains on hold.",
       "evidence": [
+        {
+          "label": "20,000-node graph restore, both state suites, and race results after #16867",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43362467812/artifacts/14009770178"
+        },
+        {
+          "label": "50,000-file guest restore comparison after queue reuse",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43364206576"
+        },
         {
           "label": "Standalone and combined graph decoder changes on native systrap",
           "url": "https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555"
@@ -108747,7 +108792,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T02:20:39+00:00",
+      "updatedAt": "2026-11-13T04:16:47+00:00",
       "summary": "In build #54736, localhost TCP connects returned ENETUNREACH in two hostinet cases. The cgroupv2 shard passed when retried on the same commit.",
       "findings": [
         {
@@ -108788,10 +108833,27 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43311052343/artifacts/13986391854"
             }
           ]
+        },
+        {
+          "text": "Etienne approved #17613 at 7b0e57daf. Copybara opened #17622 for that exact revision. The original ENETUNREACH still needs a trace showing which network namespace lost its route.",
+          "evidence": [
+            {
+              "label": "Approval on the submitted revision",
+              "url": "https://github.com/google/gvisor/pull/17613#pullrequestreview-5885705745"
+            },
+            {
+              "label": "Copybara export of the approved head",
+              "url": "https://github.com/google/gvisor/pull/17622"
+            }
+          ]
         }
       ],
       "nextStep": "Record the caller and process-leader network namespace inodes when restoring a namespace. At each connect, capture the socket namespace cookie, loopback link state and local routing table to establish which namespace lost its route.",
       "evidence": [
+        {
+          "label": "Etienne approved the calling-thread namespace fix at 7b0e57daf",
+          "url": "https://github.com/google/gvisor/pull/17613#pullrequestreview-5885705745"
+        },
         {
           "label": "Calling-thread namespace fix in #17613",
           "url": "https://github.com/google/gvisor/pull/17613"
@@ -109108,5 +109170,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T04:09:52+00:00"
+  "updatedAt": "2026-11-13T04:16:47+00:00"
 }
