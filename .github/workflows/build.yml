@@ -1,35 +1,81 @@
-name: CI
-
-"on":
+name: Check lisafs watchdog shutdown order
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/lisafs-watchdog-teardown-54892]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  shutdown:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Exercise normal close and overlapping peer disconnect on Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --no-tags --depth=2 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          base=e0cc9dabd04d937b55e358afcf0d490b27d3ee01
+          test "$(git rev-parse HEAD^)" = "$base"
+          out="$RUNNER_TEMP/lisafs"
+          mkdir -p "$out"
+          uname -a > "$out/host.txt"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$out/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $out/bazel" | sha256sum -c -
+          chmod +x "$out/bazel"
+          for mode in plain traced; do
+            if [[ "$mode" == plain ]]; then
+              git restore --source="$base" -- pkg/lisafs/client.go
+            else
+              git restore --source=HEAD -- pkg/lisafs/client.go
+            fi
+            git diff "$base" -- pkg/lisafs > "$out/$mode.diff"
+            "$out/bazel" --nosystem_rc --nohome_rc test --config=x86_64 --jobs=4 --spawn_strategy=sandboxed --remote_executor= --remote_cache= --bes_backend= --lockfile_mode=off --nocache_test_results --test_output=errors --test_timeout=180 --test_arg=-test.v --test_arg=-test.timeout=130s --test_filter='^TestQualificationTeardownOrder$' //pkg/lisafs:connection_test 2>&1 | tee "$out/$mode-bazel.log"
+            cp bazel-testlogs/pkg/lisafs/connection_test/test.xml "$out/$mode.xml"
+            cp bazel-testlogs/pkg/lisafs/connection_test/test.log "$out/$mode.log"
+          done
+          python3 - "$out" <<'PY'
+          from pathlib import Path
+          import re, sys
+          d = Path(sys.argv[1])
+          for mode in ("plain", "traced"):
+              lines = (d / (mode + ".log")).read_text().splitlines()
+              cases = {}
+              for line in lines:
+                  if m := re.search(r"=== RUN\s+TestQualificationTeardownOrder/(client|server|together)/(\d+)$", line):
+                      case = (m[1], int(m[2]))
+                      assert case not in cases, case
+                      record = cases[case] = {"phases": [], "client": None, "group": None, "pass": False}
+                  if "TEST_CLIENT " in line:
+                      record["client"] = line.split("TEST_CLIENT ")[1].strip()
+                  if m := re.search(r"TEARDOWN client=(0x\w+) group=(0x\w+) phase=([\w-]+)", line):
+                      if record["group"] is None:
+                          record["group"] = m[2]
+                      assert record["group"] == m[2], (case, line)
+                      record["phases"].append((m[1], m[3]))
+                  if m := re.search(r"--- PASS: TestQualificationTeardownOrder/(client|server|together)/(\d+) ", line):
+                      cases[(m[1], int(m[2]))]["pass"] = True
+              expected = {(o, i) for o in ("client", "server", "together") for i in range(48)}
+              assert set(cases) == expected
+              for k, r in cases.items():
+                  assert r["pass"] and r["client"], (k, r)
+                  if mode == "traced":
+                      phases = [p for c, p in r["phases"] if c == r["client"]]
+                      assert sorted(phases) == sorted(("added", "poll-enter", "poll-exit", "returning", "wait", "wait-finished")), (k, r)
+                      assert phases.index("returning") < phases.index("wait-finished"), (k, r)
+                  else:
+                      assert not r["phases"]
+              print(mode, len(cases), "validated")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: lisafs-shutdown-order
+          path: |
+            ${{ runner.temp }}/lisafs/*.log
+            ${{ runner.temp }}/lisafs/*.xml
+            ${{ runner.temp }}/lisafs/*.diff
+            ${{ runner.temp }}/lisafs/host.txt
+          if-no-files-found: warn
