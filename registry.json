@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:00:36.999120+00:00",
+    "updatedAt": "2026-11-13T16:03:11.726011+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36017,9 +36017,13 @@
       "url": "https://github.com/google/gvisor/pull/16586",
       "group": "bazel",
       "status": "merged",
-      "updatedAt": "2026-11-13T15:50:43.748380+00:00",
-      "summary": "After #16586 landed, #17576 reverted it and #17583 restored the C++ build with ThinLTO disabled. Two open exports share parent 23012ba12. #17639 restores the earlier genrule. It names the CL to revert and gives no reason. #17640 keeps the C++ build, emits unwind tables and joins the epoll test’s canceled thread. Etienne reports a crash during ARM64 cancellation in certain toolchain configurations. On #17640, native ARM64 partition 7/10 passed epoll under ptrace and systrap with directfs and shared filesystems. Its release came from the PR. UnblockWithSignal is case 7 in the epoll binary and the runner selects it in that partition. The public log reports target results only.",
+      "updatedAt": "2026-11-13T16:03:11.726011+00:00",
+      "summary": "After #16586 landed, #17576 reverted it and #17583 restored the C++ build with ThinLTO disabled. #17639 proposes a second rollback to the earlier genrule and gives no public reason. #17627 keeps the C++ build and checks that the vDSO has unwind tables. Etienne closed the related #17640 without merging it. Its ARM64 partition passed with the extra epoll thread join, which #17627 does not include.",
       "evidence": [
+        {
+          "label": "Open unwind-table repair",
+          "url": "https://github.com/google/gvisor/pull/17627"
+        },
         {
           "label": "Published upstream PR #16586",
           "url": "https://github.com/google/gvisor/pull/16586"
@@ -36076,10 +36080,11 @@
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
-        "observedAt": "2026-11-13T15:50:43.748380+00:00",
-        "disposition": "The original PR merged. The second rollback and the unwind-table repair are open on the same base.",
-        "nextAction": "Watch the upstream choice. If the rollback lands, verify which build rule is present before relying on native vDSO compilation. If the repair lands, compare the checker and build rule with the ones already tested for #17122.",
+        "observedAt": "2026-11-13T16:03:11.726011+00:00",
+        "disposition": "The native build is on master. Both the rollback and the standalone vDSO repair remain open. Etienne closed the combined repair without merging it.",
+        "nextAction": "Check master when #17627 or #17639 lands. If the rollback restores the genrule, requalify the compiler with the build rule that actually landed.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17627",
           "https://github.com/google/gvisor/pull/16586",
           "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
           "https://app.buildbuddy.io/invocation/f3ce256d-20de-4ff3-bbce-65ec04180ea1",
@@ -40420,8 +40425,24 @@
       "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "The published patch header links to Buildifier’s upstream toolchain export, 9cefc248d. Its 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.\n\nThe formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
+      "summary": "Ryan’s #17612 passes Make’s Bazel command and cache options through tools/lint.sh. Combining its export #17638 with #16663 left all three new Bazel invocations using bare bazel. In the merged test fixture the three goimports calls received the caller’s options, but buildifier check, buildifier fix and cpplint dropped them. Using run_bazel for those three calls passed all six lint tests and built //tools/lint:check on Linux.\n\nThe published patch header links to Buildifier’s upstream toolchain export, 9cefc248d. Its 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.\n\nThe formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
       "evidence": [
+        {
+          "label": "Original failing and corrected option traces",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43458301974/artifacts/14054892169"
+        },
+        {
+          "label": "Qualified single commit on the proposed cache change",
+          "url": "https://github.com/tamird/gvisor/commit/8fd9f92fc"
+        },
+        {
+          "label": "Make passes Bazel cache configuration to lint",
+          "url": "https://github.com/google/gvisor/pull/17612"
+        },
+        {
+          "label": "Copybara export of Make cache change",
+          "url": "https://github.com/google/gvisor/pull/17638"
+        },
         {
           "label": "Patch-header amendment",
           "url": "https://github.com/tamird/gvisor/commit/54a734f17"
@@ -40608,7 +40629,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-12T20:27:59+00:00",
+      "updatedAt": "2026-11-13T16:03:11.726011+00:00",
       "refinement": {
         "before": {
           "head": "4f7c34244afac0baa9c86e3f6efb85069cea7beb"
@@ -40683,10 +40704,14 @@
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
-        "observedAt": "2026-11-12T20:27:59+00:00",
-        "disposition": "Milan’s formatting diagnostic request has a reply linking the fix. A failed check prints both repair commands.",
-        "nextAction": "Await maintainer review of the published Buildifier change.",
+        "observedAt": "2026-11-13T16:03:11.726011+00:00",
+        "disposition": "The current master and #16663 do not yet contain Ryan’s cache wrapper. The tested combined source preserves option forwarding.",
+        "nextAction": "When #17612 lands, rebase #16663 using the tested three run_bazel calls and the combined lint fixture. If #16663 lands first, recheck #17612 for those calls.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43458301974/artifacts/14054892169",
+          "https://github.com/tamird/gvisor/commit/8fd9f92fc",
+          "https://github.com/google/gvisor/pull/17612",
+          "https://github.com/google/gvisor/pull/17638",
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/google/gvisor/pull/16663#discussion_r4537464299"
         ]
@@ -63325,7 +63350,7 @@
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-13T15:50:43.748380+00:00",
+      "updatedAt": "2026-11-13T16:03:11.726011+00:00",
       "summary": "With #17627 applied, the declared LLVM reader accepted both AMD64 and ARM64 vDSOs. The combined checker rejected non-empty .data, a missing PT_GNU_EH_FRAME segment, and a DT_NEEDED dependency.",
       "evidence": [
         {
@@ -63413,9 +63438,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "9328b5d2a294fd706a70a5446ff8382c52d32134",
-        "observedAt": "2026-11-13T15:50:43.748380+00:00",
-        "disposition": "Both proposed repairs contain the same vdso/BUILD and check_vdso.py as the five-check qualification. The competing rollback restores the old genrule and supplies no checker changes.",
-        "nextAction": "Rebase on the landed checker if #17627 or #17640 merges. If #17639 lands first, inspect the restored genrule and recheck the declared reader against that tree. The ARM64 epoll job exercised #17640’s separate runtime fix.",
+        "observedAt": "2026-11-13T16:03:11.726011+00:00",
+        "disposition": "The two vDSO blobs in #17627 match the five-check qualification. #17640 had those blobs and an additional epoll test change, but closed without merging.",
+        "nextAction": "Rebase on the landed checker if #17627 merges. If #17639 lands first, inspect the restored genrule and recheck the declared ELF reader.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/43414236340/artifacts/14030702508",
           "https://github.com/google/gvisor/pull/17627",
@@ -81167,10 +81192,11 @@
       "from": "pr:16586",
       "to": "branch:hermetic-compiler-review",
       "type": "includes",
-      "reason": "Merged through #16983. The compiler uses the same vdso/BUILD blob as the landed target toolchain change.",
+      "reason": "The native C++ vDSO rule is present on master through #17583. #17639 proposes reverting it, while #17627 preserves it and checks unwind metadata. Recheck the effective rule if either lands.",
       "evidence": [
-        "https://github.com/google/gvisor/commit/f855fc7c1",
-        "https://github.com/google/gvisor/pull/16983"
+        "https://github.com/google/gvisor/commit/2db682b3f",
+        "https://github.com/google/gvisor/pull/17639",
+        "https://github.com/google/gvisor/pull/17627"
       ]
     },
     {
@@ -110008,5 +110034,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:00:36.999120+00:00"
+  "updatedAt": "2026-11-13T16:03:11.726011+00:00"
 }
