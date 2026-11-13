@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-13T15:38:02.860045+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-13T15:53:37.543532+00:00",
+  "registryDate": "2026-11-13T16:00:36.999120+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -465962,6 +465962,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-13T15:33:01.762170+00:00"
+      }
+    },
+    "investigation:ci-flake-python-socket-source-address": {
+      "contributor-review": {
+        "scope": "51d285840f99692fdb9a6268e5b6dbc1f1a4627c",
+        "since": "2026-11-13T16:00:36.999120+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-13T16:00:36.999120+00:00"
       }
     }
   },
