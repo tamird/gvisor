@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T03:00:30.815941+00:00",
+    "updatedAt": "2026-11-13T03:18:19.146599+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54027,13 +54027,13 @@
       "repo": "google/gvisor",
       "number": 16804,
       "ref": "proposal/kernel-header-root-policy-standalone",
-      "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+      "head": "df7f8f67ad7688435492a84df323d1690053bf86",
       "title": "Keep the Linux header default in the root module",
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T17:35:43Z",
-      "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers. With only gVisor declared downstream, this change removes the unsupported header-tag diagnostic. The header query and ARM64 vDSO build still fail because Gazelle rejects gVisor’s non-root go_deps.gazelle_override tags. No compiler action ran. The same restriction was reproduced before the compiler migration.",
+      "updatedAt": "2026-11-13T03:18:19.146599+00:00",
+      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18.",
       "evidence": [
         {
           "label": "Downstream C controls isolate the vDSO and ARM platform package imports",
@@ -54074,6 +54074,10 @@
         {
           "label": "Downstream AF_XDP build on b01b6c0c7: the stock Gazelle override check stopped rule loading. With c534b7cb8, Clang 23 and the consumer’s 4.19.325 headers produced a 952-byte BPF ELF with xdp_prog, sock_map and .relxdp.",
           "url": "https://github.com/tamird/gvisor/actions/runs/43022620738/artifacts/13855921447"
+        },
+        {
+          "label": "Bazel 9.3.1 verified the 6.18 default for gVisor and the unpatched LLVM 0.8.26 header map for the external root.",
+          "url": "https://github.com/tamird/gvisor/commit/df7f8f67a"
         }
       ],
       "settledReviews": [
@@ -54102,23 +54106,35 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
-        "observedAt": "2026-11-08T17:35:43Z",
-        "disposition": "The standalone Gazelle bug fix was approved and opened as bazel-contrib/bazel-gazelle#2510.",
-        "nextAction": "Follow bazel-contrib/bazel-gazelle#2510. The separate Bazel 7 maintainer hold on #2499 remains in place.",
+        "owner": "Maintainer",
+        "sourceHead": "df7f8f67ad7688435492a84df323d1690053bf86",
+        "observedAt": "2026-11-13T03:18:19.146599+00:00",
+        "disposition": "The rebased source is mergeable. Ryan approved the same nine added and removed lines at b01b6c0c7. Copybara’s open #17420 still exports that older commit and conflicts with master.",
+        "nextAction": "Watch for reapproval of df7f8f67a and an import that includes it.",
         "evidence": [
-          "https://github.com/bazel-contrib/bazel-gazelle/blob/8b89ee9f6/.github/PULL_REQUEST_TEMPLATE.md",
-          "https://github.com/tamird/bazel-gazelle/commit/82ccd8794",
-          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
-        ]
+          "https://github.com/tamird/gvisor/commit/df7f8f67a",
+          "https://github.com/google/gvisor/pull/16804",
+          "https://github.com/google/gvisor/pull/17420"
+        ],
+        "mergeable": "MERGEABLE"
       },
       "links": [
         {
           "label": "Gazelle proposal for deferred environment loading",
           "url": "https://github.com/tamird/bazel-gazelle/commit/82ccd8794"
         }
-      ]
+      ],
+      "approvedPatch": {
+        "head": "df7f8f67ad7688435492a84df323d1690053bf86",
+        "approvedHead": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABXKfiCQ",
+        "reviewer": "relkochta",
+        "submittedAt": "2026-11-10T21:10:13Z",
+        "verifiedAt": "2026-11-13T03:18:19.146599+00:00",
+        "method": "reviewed-context-only",
+        "oldPatchId": "2bcf5bf09ab6e86fb00d2197ff963c16b1091bc6",
+        "newPatchId": "e10e10402d00c2d7367dac0d1830533be969e792"
+      }
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11518",
