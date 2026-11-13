@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:45:25.578221+00:00",
+    "updatedAt": "2026-11-13T16:50:11.557307+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -110171,7 +110171,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T16:38:43.496680+00:00",
+      "updatedAt": "2026-11-13T16:50:11.557307+00:00",
       "summary": "On #54914, TestMysql exceeded its startup deadline after the MySQL 8.0.19 container initialized its database. The SQL workload never started.",
       "findings": [
         {
@@ -110224,9 +110224,22 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5b4-2dcc-480a-96b0-7d1e11bcd345"
             }
           ]
+        },
+        {
+          "text": "On a fresh cgroupv2 worker running the original #54914 systrap binaries and the MySQL 8.0.19 image specified by the Dockerfile, the bootstrap socket was ready at 5.36 s and the temporary server had shut down at 9.59 s. The existing log assertion passed at 10.675 s. A separate container completed an authenticated TCP SELECT 1 at 10.842 s. The ordinary SQL workload passed, and TestMysql finished in 11.48 s before Docker sampled health. This successful run also logged the two timezone warnings from the original failure.",
+          "evidence": [
+            {
+              "label": "Cold systrap run, original test log, XML and image digest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43465098870/artifacts/14058762227"
+            },
+            {
+              "label": "MySQL image used by the reported build",
+              "url": "https://github.com/google/gvisor/blob/73e36937be2ecbd264d34ac7ef37550b9f2e71d0/images/basic/mysql/Dockerfile"
+            }
+          ]
         }
       ],
-      "nextStep": "On one cold systrap container, compare the existing log assertion with the first successful TCP SELECT 1 and the image’s initialization milestones. Keep the one-minute assertion and SQL workload.",
+      "nextStep": "On the next slow cgroupv1 worker, capture the bootstrap and shutdown timestamps and an authenticated TCP probe through the original deadline. The passing cold run on cgroupv2 does not explain the delay on #54914. Keep the existing one-minute assertion.",
       "evidence": [
         {
           "label": "MySQL first-attempt test output",
@@ -110255,5 +110268,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:45:25.578221+00:00"
+  "updatedAt": "2026-11-13T16:50:11.557307+00:00"
 }
