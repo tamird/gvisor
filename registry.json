@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T10:44:04+00:00",
+    "updatedAt": "2026-11-13T10:51:07+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71113,7 +71113,7 @@
       "url": "https://github.com/google/gvisor/pull/17502",
       "title": "Store a single graph waiter without a callback record",
       "status": "open",
-      "updatedAt": "2026-11-13T10:40:24+00:00",
+      "updatedAt": "2026-11-13T10:51:07+00:00",
       "summary": "Keep a single waiting object ID in the decoder queue. The 50,000-file guest comparison now includes #16867 on both sides. All 34 restores verified every file. See the original benchstat output for guest latency, decode time and allocations.",
       "evidence": [
         {
@@ -71154,30 +71154,32 @@
           "outcome": "approved",
           "at": "2026-11-09T17:16:09+00:00",
           "note": "Approved for publication after #16860 lands."
+        },
+        {
+          "kind": "reply",
+          "head": "4570ff5c1f9cad2c2ac4b0142ceb94d6fb88c2b9",
+          "url": "https://github.com/google/gvisor/pull/17502",
+          "title": "Update the benchmark in #17502’s description after #16867",
+          "body": "A graph decoder wait with no callback only needs the ID of the object to\nwake. The decoder appends a 72-byte callback record for each such wait.\nA checkpoint with 50,000 tmpfs files contained 50,364 objects with\nexactly one plain waiter. [1]\n\nKeep that ID in the incoming queue. If another waiter arrives, append\nthe first waiter to the callback list before adding the second. The\nobject's own callbacks run before it wakes its waiter.\n\nMeasured on Linux AMD64 after #16867 landed. All 34 restores verified\nevery file in a 50,000-file tmpfs tree. Guest/new-to-guest includes\ncontainer creation, restore and the first successful /bin/true. Each\ndecoder also read the same saved checkpoint in a fresh process. [2]\n\n```text\n                               │    master     │                  #17502                 │\n                               │     sec/op    │     sec/op     vs base                  │\nGuest/restore                     238.1m ± 3%    177.5m ± 1%  -25.45% (p=0.000 n=16)\nGuest/new-to-guest                250.3m ± 2%    187.9m ± 1%  -24.92% (p=0.000 n=16)\nCheckpointFile/DecodeStatefile    142.4m ± 9%    127.3m ± 9%  -10.60% (p=0.000 n=16)\n\n                               │    master     │                  #17502                 │\n                               │       B/op    │       B/op     vs base                  │\nCheckpointFile/DecodeStatefile   119.80Mi ± 0%   97.23Mi ± 0%  -18.84% (p=0.000 n=16)\n```\n\nA separate 20,000-node graph benchmark showed no significant change\nin time, bytes or allocations across 14 pairs. [4] Earlier cold and\npooled callback, pointer-chain and map benchmarks also showed no\nsignificant change across 16 pairs. [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535\n[2]: https://github.com/tamird/gvisor/actions/runs/43364206576/artifacts/14010068130\n[3]: https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643640390\n[4]: https://github.com/tamird/gvisor/actions/runs/43362467812/artifacts/14009770178\n\nAssisted-by: OpenAI Codex, acting on behalf of Tamir Duberstein.",
+          "summary": "Replace the earlier measurements with the 50,000-file comparison on the newer decoder. The synthetic workload provides a control.",
+          "requestedAt": "2026-11-13T10:40:24+00:00",
+          "outcome": "approved",
+          "at": "2026-11-13T10:50:48Z",
+          "note": "Published the approved PR description in place. Read it back from GitHub and verified all 2,079 characters against this draft."
         }
       ],
       "followup": {
         "owner": "Upstream review",
         "sourceHead": "4570ff5c1f9cad2c2ac4b0142ceb94d6fb88c2b9",
-        "observedAt": "2026-11-11T23:26:49+00:00",
-        "disposition": "Opened #17502 after #16860 merged. Both decoder files match the reviewed revision.",
+        "observedAt": "2026-11-13T10:50:48Z",
+        "disposition": "The approved benchmark update after #16867 is in the PR description.",
         "nextAction": "Follow the upstream review of #17502.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17502",
           "https://github.com/tamird/gvisor/actions/runs/43118808013/artifacts/13899642773"
         ]
       },
-      "number": 17502,
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "4570ff5c1f9cad2c2ac4b0142ceb94d6fb88c2b9",
-        "url": "https://github.com/google/gvisor/pull/17502",
-        "title": "Update the benchmark in #17502’s description after #16867",
-        "body": "A graph decoder wait with no callback only needs the ID of the object to\nwake. The decoder appends a 72-byte callback record for each such wait.\nA checkpoint with 50,000 tmpfs files contained 50,364 objects with\nexactly one plain waiter. [1]\n\nKeep that ID in the incoming queue. If another waiter arrives, append\nthe first waiter to the callback list before adding the second. The\nobject's own callbacks run before it wakes its waiter.\n\nMeasured on Linux AMD64 after #16867 landed. All 34 restores verified\nevery file in a 50,000-file tmpfs tree. Guest/new-to-guest includes\ncontainer creation, restore and the first successful /bin/true. Each\ndecoder also read the same saved checkpoint in a fresh process. [2]\n\n```text\n                               │    master     │                  #17502                 │\n                               │     sec/op    │     sec/op     vs base                  │\nGuest/restore                     238.1m ± 3%    177.5m ± 1%  -25.45% (p=0.000 n=16)\nGuest/new-to-guest                250.3m ± 2%    187.9m ± 1%  -24.92% (p=0.000 n=16)\nCheckpointFile/DecodeStatefile    142.4m ± 9%    127.3m ± 9%  -10.60% (p=0.000 n=16)\n\n                               │    master     │                  #17502                 │\n                               │       B/op    │       B/op     vs base                  │\nCheckpointFile/DecodeStatefile   119.80Mi ± 0%   97.23Mi ± 0%  -18.84% (p=0.000 n=16)\n```\n\nA separate 20,000-node graph benchmark showed no significant change\nin time, bytes or allocations across 14 pairs. [4] Earlier cold and\npooled callback, pointer-chain and map benchmarks also showed no\nsignificant change across 16 pairs. [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535\n[2]: https://github.com/tamird/gvisor/actions/runs/43364206576/artifacts/14010068130\n[3]: https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643640390\n[4]: https://github.com/tamird/gvisor/actions/runs/43362467812/artifacts/14009770178\n\nAssisted-by: OpenAI Codex, acting on behalf of Tamir Duberstein.",
-        "summary": "Replace the earlier measurements with the 50,000-file comparison on the newer decoder. The synthetic workload provides a control.",
-        "requestedAt": "2026-11-13T10:40:24+00:00"
-      }
+      "number": 17502
     },
     {
       "id": "branch:tcp-segment-experiment-ipv6",
@@ -109391,5 +109393,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T10:44:04+00:00"
+  "updatedAt": "2026-11-13T10:51:07+00:00"
 }
