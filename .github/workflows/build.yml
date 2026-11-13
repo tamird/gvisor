@@ -1,35 +1,45 @@
-name: CI
+name: Check the combined lint cache settings
 
-"on":
+on:
   push:
-    branches:
-      - "*"
+    branches: [qualification/lint-cache-options-integration]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  lint:
+    runs-on: ubuntu-24.04
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 8fd9f92fc93317266162ce83b78a67480dbd749d
+          persist-credentials: false
+      - name: Check the three calls without option forwarding
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i -E 's/(run_)bazel (build|run) (\/\/tools\/lint:(buildifier|cpplint|format))/bazel \2 \3/' tools/lint.sh
+          test "$(git hash-object tools/lint.sh)" = 00f420b17209dc786ad67d1f8585c2c2688b42bf
+          if bazel test --test_output=errors //tools:lint_test > "$RUNNER_TEMP/control.log" 2>&1; then
+            exit 1
+          fi
+          cp bazel-testlogs/tools/lint_test/test.xml "$RUNNER_TEMP/control.xml"
+          grep -F 'test_bazel_options' "$RUNNER_TEMP/control.xml"
+          grep -F 'AssertionError' "$RUNNER_TEMP/control.xml"
+          git restore -- tools/lint.sh
+      - name: Check option forwarding and run both declared lint actions
+        shell: bash
+        run: |
+          set -euo pipefail
+          bazel test --test_output=errors //tools:lint_test
+          cp bazel-testlogs/tools/lint_test/test.xml "$RUNNER_TEMP/corrected.xml"
+          bazel build //tools/lint:check
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: lint-cache-options
+          path: |
+            ${{ runner.temp }}/control.xml
+            ${{ runner.temp }}/corrected.xml
+            ${{ runner.temp }}/control.log
