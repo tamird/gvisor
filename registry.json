@@ -103857,8 +103857,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T16:36:30+00:00",
-      "summary": "Eight syscall shards across six builds finished their guest tests and failed on a watchdog warning emitted during startup. Six Sentry stacks waited for a channel connection after the lisafs replies. The other two waited for a fourth channel reply or a pathname walk.",
+      "updatedAt": "2026-11-13T02:46:13.034272+00:00",
+      "summary": "Syscall shards pass their guest tests and then fail because that same sandbox logged “Watchdog.Start() not called within 30s” while mounting the root filesystem. In builds #54810 and #54821, the Sentry got four channel replies and then waited a minute for the lisafs handshake. Earlier stacks also caught outstanding channel replies and pathname walks.",
       "findings": [
         {
           "text": "Three channel requests completed within 1.5 ms. The fourth waited 60.001 seconds. At the 30-second watchdog threshold, the Sentry was still waiting in lisafs.Client.StartChannels. The boot log shows the client stack and the reply time.",
@@ -103983,9 +103983,51 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54670#01a1d015-52f1-4be2-bd1d-ba55caabe46e"
             }
           ]
+        },
+        {
+          "text": "Build #54810 received four ChannelResp messages before the warning. Its Sentry main goroutine waited in lisafs.Client.StartChannels and two client workers waited on futexes inside flipcall.Endpoint.Connect. The root filesystem mounted after 60 seconds. The same Sentry then started the watchdog, ran the workload and exited zero. The shared-systrap socket shard passed all nine tests. Its retry reused seven of eight shards and passed the previously failing one in 0.4 s.",
+          "evidence": [
+            {
+              "label": "#54810 Sentry boot log and watchdog stacks",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54810/jobs/01a1d298-6768-4463-9193-c9b7826c0f7f/artifacts/01a1d2a0-7fa3-40bd-bd60-e0ba04ab8571"
+            },
+            {
+              "label": "#54810 companion gofer log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54810/jobs/01a1d298-6768-4463-9193-c9b7826c0f7f/artifacts/01a1d2a0-7e1a-48fd-a8a4-7c5a79f19e8a"
+            },
+            {
+              "label": "Original #54810 shared-systrap shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6768-4463-9193-c9b7826c0f7f"
+            },
+            {
+              "label": "Passing #54810 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d2a1-9346-44d8-aad6-487900a2fb4f"
+            }
+          ]
+        },
+        {
+          "text": "Build #54821 received four ChannelResp messages before the warning. Its Sentry main goroutine waited in lisafs.Client.StartChannels and two client workers waited on futexes inside flipcall.Endpoint.Connect. The root filesystem mounted after 60 seconds. The same Sentry then started the watchdog, ran the workload and exited zero. The KVM cgroup2 shard passed its selected case. Its retry reused three of four shards and passed the previously failing one in 0.9 s.",
+          "evidence": [
+            {
+              "label": "#54821 Sentry boot log and watchdog stacks",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54821/jobs/01a1d29b-8fec-4f13-87c2-189b26d86254/artifacts/01a1d2b8-c1af-4a48-85f7-8fde44b75697"
+            },
+            {
+              "label": "#54821 companion gofer log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54821/jobs/01a1d29b-8fec-4f13-87c2-189b26d86254/artifacts/01a1d2b8-bf4b-4506-9f54-5fdad3e00e24"
+            },
+            {
+              "label": "Original #54821 KVM shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d29b-8fec-4f13-87c2-189b26d86254"
+            },
+            {
+              "label": "Passing #54821 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d2b9-a1fe-42e9-a978-cdeb79e1c5fd"
+            }
+          ]
         }
       ],
-      "nextStep": "Capture the same two execution traces during a slow lisafs startup. Align the Sentry wait with the gofer’s scheduling and blocked operations to determine what held up the reply or connection.",
+      "nextStep": "Capture paired Sentry and gofer execution traces on a slow startup. The two new gofer logs show serving the root and then closing the connection. Neither records when the channel-serving goroutines ran or completed their side of the handshake.",
       "evidence": [
         {
           "label": "Master commit 9832d5d69",
@@ -104010,6 +104052,22 @@
         {
           "label": "#54610 same-head raw-socket retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54610#01a1ce18-4b5b-4911-b990-346a0f054b4e"
+        },
+        {
+          "label": "#54810 Sentry boot log and watchdog stacks",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54810/jobs/01a1d298-6768-4463-9193-c9b7826c0f7f/artifacts/01a1d2a0-7fa3-40bd-bd60-e0ba04ab8571"
+        },
+        {
+          "label": "#54810 companion gofer log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54810/jobs/01a1d298-6768-4463-9193-c9b7826c0f7f/artifacts/01a1d2a0-7e1a-48fd-a8a4-7c5a79f19e8a"
+        },
+        {
+          "label": "#54821 Sentry boot log and watchdog stacks",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54821/jobs/01a1d29b-8fec-4f13-87c2-189b26d86254/artifacts/01a1d2b8-c1af-4a48-85f7-8fde44b75697"
+        },
+        {
+          "label": "#54821 companion gofer log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54821/jobs/01a1d29b-8fec-4f13-87c2-189b26d86254/artifacts/01a1d2b8-bf4b-4506-9f54-5fdad3e00e24"
         }
       ]
     },
@@ -108830,62 +108888,6 @@
         "requestedAt": "2026-11-13T02:28:35.504415+00:00",
         "summary": "Open the diagnostic change for #11877. Both architecture analyzers and the cgroup suite passed. The original failing worker did not report the underlying D-Bus error."
       }
-    },
-    {
-      "id": "investigation:ci-flake-watchdog-start",
-      "title": "Watchdog startup warning fails passing syscall tests",
-      "group": "ci-flakes",
-      "status": "active",
-      "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T02:40:38.503230+00:00",
-      "summary": "Two AMD64 syscall shards completed every selected guest case. The runner then failed each shard because a Sentry had logged “Watchdog.Start() not called within 30s”. Both retries passed on the same source. The logs identify neither the emitting Sentry nor what delayed its startup.",
-      "findings": [
-        {
-          "text": "On #54810, shard 11/20 reported all nine socket_abstract_test_runsc_systrap_shared tests passed. The runner reported the warning at 60.28 seconds.",
-          "evidence": [
-            {
-              "label": "Original #54810 shared-systrap shard",
-              "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6768-4463-9193-c9b7826c0f7f"
-            },
-            {
-              "label": "Passing #54810 retry",
-              "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d2a1-9346-44d8-aad6-487900a2fb4f"
-            }
-          ]
-        },
-        {
-          "text": "On #54821, shard 9/20 reported its single cgroup2_test_runsc_kvm case passed. The runner reported the warning at 60.26 seconds.",
-          "evidence": [
-            {
-              "label": "Original #54821 KVM shard",
-              "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d29b-8fec-4f13-87c2-189b26d86254"
-            },
-            {
-              "label": "Passing #54821 retry",
-              "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d2b9-a1fe-42e9-a978-cdeb79e1c5fd"
-            }
-          ]
-        }
-      ],
-      "nextStep": "Identify the Sentry that logged the warning. Compare its creation, Watchdog.Start and exit timestamps with the syscall test timeline on the next failure.",
-      "evidence": [
-        {
-          "label": "Original #54810 shared-systrap shard",
-          "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6768-4463-9193-c9b7826c0f7f"
-        },
-        {
-          "label": "Passing #54810 retry",
-          "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d2a1-9346-44d8-aad6-487900a2fb4f"
-        },
-        {
-          "label": "Original #54821 KVM shard",
-          "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d29b-8fec-4f13-87c2-189b26d86254"
-        },
-        {
-          "label": "Passing #54821 retry",
-          "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d2b9-a1fe-42e9-a978-cdeb79e1c5fd"
-        }
-      ]
     }
   ],
   "updatedAt": "2026-11-13T02:24:56.989082+00:00"
