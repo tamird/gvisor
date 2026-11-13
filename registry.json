@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:22:52.972126+00:00",
+    "updatedAt": "2026-11-13T16:26:29.428548+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -110129,7 +110129,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T16:22:52.972126+00:00",
+      "updatedAt": "2026-11-13T16:26:29.428548+00:00",
       "summary": "On #54914, TestMysql exceeded its startup deadline after the MySQL 8.0.19 container initialized its database. The SQL workload never started.",
       "findings": [
         {
@@ -110150,7 +110150,7 @@
           ]
         },
         {
-          "text": "On the same commit, the cgroupv2 image target passed in 35.9 s. The adjacent cgroupv1 image target passed in 78.6 s.",
+          "text": "The same cgroupv1 shard passed on retry. It executed the image target in 67.8 s. The same-head cgroupv2 image target ran in 35.9 s, and the preceding build’s cgroupv1 image target ran in 78.6 s.",
           "evidence": [
             {
               "label": "Same-head cgroupv2 image target passed in 35.9 s",
@@ -110161,7 +110161,7 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54913#01a1d59d-e028-4035-b0e0-5fe5448cbc92"
             },
             {
-              "label": "Same-head cgroupv1 retry status",
+              "label": "Same-head cgroupv1 retry passed",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5b4-2dcc-480a-96b0-7d1e11bcd345"
             }
           ]
@@ -110190,11 +110190,11 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/54913#01a1d59d-e028-4035-b0e0-5fe5448cbc92"
         },
         {
-          "label": "Same-head cgroupv1 retry status",
+          "label": "Same-head cgroupv1 retry passed",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5b4-2dcc-480a-96b0-7d1e11bcd345"
         }
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:22:52.972126+00:00"
+  "updatedAt": "2026-11-13T16:26:29.428548+00:00"
 }
