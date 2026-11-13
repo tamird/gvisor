@@ -764,6 +764,19 @@ class MergeabilityBatchTest(unittest.TestCase):
         self.assertEqual(self.batches, [list(range(1, 9))])
         self.assertEqual([row["mergeable"] for row in self.rows], ["MERGEABLE"] * 8 + ["UNKNOWN"] * 9)
 
+    def test_pending_recalculation_preserves_only_the_verified_head_and_base(self) -> None:
+        row = retained(self.rows[0])
+        row.update(status="open", mergeable="UNKNOWN", checkedAt=LATER, mergeabilityCheckedAt=LATER,
+                   branchHead=row["head"], base="b" * 40)
+        for state in ("MERGEABLE", "CONFLICTING"):
+            row["mergeabilityObservation"] = {"state": state, "head": row["head"], "base": row["base"], "checkedAt": OLD}
+            for change in ({}, {"head": "d" * 40}, {"branchHead": None}, {"base": "c" * 40}):
+                with self.subTest(state=state, change=change):
+                    sample = {**row, **change}
+                    updater.recheck_snapshot_mergeability([], [sample], "google/gvisor")
+                    self.assertEqual(sample["mergeable"], "UNKNOWN" if change else state)
+                    self.assertEqual(sample["mergeabilityCheckedAt"], LATER if change else OLD)
+
     def test_recheck_rejects_changed_export_and_preserves_all_copies(self) -> None:
         first = retained(self.rows[12])
         second = copy.deepcopy(first)

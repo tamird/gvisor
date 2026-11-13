@@ -257564,8 +257564,8 @@
       "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
       "branchHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
       "mergeable": "CONFLICTING",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-11-13T02:32:01.948816+00:00",
+      "mergeState": "DIRTY",
+      "mergeabilityCheckedAt": "2026-11-13T03:15:21.794010+00:00",
       "headCommittedAt": "2026-10-28T19:58:18Z",
       "headHistoryComplete": true,
       "headRebasedFrom": null,
@@ -258038,12 +258038,12 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
       "approvedAt": "2026-11-10T18:37:42Z",
-      "checkedAt": "2026-11-13T02:32:01.948816+00:00",
+      "checkedAt": "2026-11-13T03:15:21.794010+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "f292312cc3bb1516813e54b9438c839481c6e9f7",
         "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
-        "checkedAt": "2026-11-13T02:32:01.948816+00:00"
+        "checkedAt": "2026-11-13T03:15:21.794010+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -258692,9 +258692,9 @@
           "head": "c63685959655e5604b3755c33ad4bdcb099536ce",
           "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
           "branchHead": "c63685959655e5604b3755c33ad4bdcb099536ce",
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-11-13T02:31:20.814040+00:00",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
+          "mergeabilityCheckedAt": "2026-11-13T03:15:21.794010+00:00",
           "headCommittedAt": "2026-11-12T21:58:08Z",
           "headHistoryComplete": true,
           "headRebasedFrom": "8be0f94e5607e03f12a2828029919dc0e8af4832",
@@ -258969,12 +258969,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-11-13T02:31:25.873170+00:00",
+          "checkedAt": "2026-11-13T03:15:21.794010+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "c63685959655e5604b3755c33ad4bdcb099536ce",
-            "base": "77fdf618a9495a178825391cadbb76f60316ee61",
-            "checkedAt": "2026-11-13T02:07:47.315855+00:00"
+            "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
+            "checkedAt": "2026-11-13T03:15:21.794010+00:00"
           },
           "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
           "matchesSourceHead": true,
@@ -259058,7 +259058,7 @@
               "head": "c63685959655e5604b3755c33ad4bdcb099536ce",
               "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
               "status": "open",
-              "mergeable": "UNKNOWN",
+              "mergeable": "MERGEABLE",
               "conflicting": false
             }
           ],
@@ -259071,7 +259071,12 @@
           "label": "ready to pull",
           "state": "present"
         },
-        "description": "Waiting for the public export; its checks remain separate."
+        "description": "Copybara export #17533 integrates the approved source on the current base.",
+        "mergeableExport": {
+          "number": 17533,
+          "head": "c63685959655e5604b3755c33ad4bdcb099536ce",
+          "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d"
+        }
       }
     },
     {
@@ -453639,54 +453644,6 @@
     },
     {
       "repo": "google/gvisor",
-      "source": 16621,
-      "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-      "number": 16621,
-      "url": "https://github.com/google/gvisor/pull/16621",
-      "scope": "source",
-      "head": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-      "branchHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-      "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
-      "mergeable": "CONFLICTING",
-      "checkedAt": "2026-11-13T02:32:01.948816+00:00",
-      "mergeabilityCheckedAt": "2026-11-13T02:32:01.948816+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-        "disposition": "Published as #16621",
-        "nextAction": "Follow checks and maintainer review on #16621."
-      },
-      "conflictObservedSince": "2026-11-12T05:17:03.538351+00:00"
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16621,
-      "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-      "number": 17533,
-      "url": "https://github.com/google/gvisor/pull/17533",
-      "scope": "current-source-import",
-      "head": "c63685959655e5604b3755c33ad4bdcb099536ce",
-      "branchHead": "c63685959655e5604b3755c33ad4bdcb099536ce",
-      "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-11-13T02:31:25.873170+00:00",
-      "mergeabilityCheckedAt": "2026-11-13T02:31:20.814040+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-        "disposition": "Published as #16621",
-        "nextAction": "Follow checks and maintainer review on #16621."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
       "source": 16677,
       "sourceHead": "a97d208dfc275838f04f18c7367b5b88b7f67260",
       "number": 17588,
@@ -456752,13 +456709,13 @@
       "url": "https://github.com/google/gvisor/pull/16621",
       "head": "f292312cc3bb1516813e54b9438c839481c6e9f7",
       "status": "open",
-      "checkedAt": "2026-11-13T02:32:01.948816+00:00",
+      "checkedAt": "2026-11-13T03:15:21.794010+00:00",
       "branchHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
       "sourceBranchMismatch": false,
       "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
       "mergeable": "CONFLICTING",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-11-13T02:32:01.948816+00:00",
+      "mergeState": "DIRTY",
+      "mergeabilityCheckedAt": "2026-11-13T03:15:21.794010+00:00",
       "scope": "source",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -456776,10 +456733,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "Import maintainer",
         "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-        "disposition": "Published as #16621",
-        "nextAction": "Follow checks and maintainer review on #16621."
+        "disposition": "Copybara export #17533 integrates the approved source against master.",
+        "nextAction": "Follow the existing export. The original PR conflicts with master. The export already incorporates the lock-signature change and merges cleanly. The public Buildkite pipeline passed. The internal Buildkite check failed and its cause is not public."
       }
     },
     {
@@ -456791,13 +456748,13 @@
       "url": "https://github.com/google/gvisor/pull/17533",
       "head": "c63685959655e5604b3755c33ad4bdcb099536ce",
       "status": "open",
-      "checkedAt": "2026-11-13T02:31:25.873170+00:00",
+      "checkedAt": "2026-11-13T03:15:21.794010+00:00",
       "branchHead": "c63685959655e5604b3755c33ad4bdcb099536ce",
       "sourceBranchMismatch": false,
       "base": "ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-11-13T02:31:20.814040+00:00",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-11-13T03:15:21.794010+00:00",
       "scope": "current-source-import",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -456815,10 +456772,10 @@
       ],
       "importedSourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "Import maintainer",
         "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-        "disposition": "Published as #16621",
-        "nextAction": "Follow checks and maintainer review on #16621."
+        "disposition": "Copybara export #17533 integrates the approved source against master.",
+        "nextAction": "Follow the existing export. The original PR conflicts with master. The export already incorporates the lock-signature change and merges cleanly. The public Buildkite pipeline passed. The internal Buildkite check failed and its cause is not public."
       }
     },
     {
@@ -461981,21 +461938,21 @@
         "since": "2026-11-12T22:36:43.312669+00:00",
         "basis": "observed",
         "qualifier": "Import #17533 failing",
-        "observedAt": "2026-11-13T02:32:01.948816+00:00"
+        "observedAt": "2026-11-13T03:15:21.794010+00:00"
       },
       "conflicts": {
         "scope": "f292312cc3bb1516813e54b9438c839481c6e9f7",
         "since": "2026-11-12T05:17:03.538351+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-13T02:32:01.948816+00:00"
+        "observedAt": "2026-11-13T03:15:21.794010+00:00"
       },
       "importing": {
         "scope": "17533:c63685959655e5604b3755c33ad4bdcb099536ce",
         "since": "2026-11-12T22:36:43.312669+00:00",
         "basis": "observed",
-        "qualifier": "#17533: open, checks failing, mergeability unknown",
-        "observedAt": "2026-11-13T02:32:01.948816+00:00"
+        "qualifier": "#17533: open, checks failing, no reported conflict",
+        "observedAt": "2026-11-13T03:15:21.794010+00:00"
       }
     },
     "pr:16624": {

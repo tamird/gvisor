@@ -38410,17 +38410,17 @@
         }
       },
       "followup": {
-        "owner": "root",
+        "owner": "Import maintainer",
         "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-        "observedAt": "2026-10-28T21:05:27Z",
-        "disposition": "Published as #16621",
-        "nextAction": "Follow checks and maintainer review on #16621.",
+        "observedAt": "2026-11-13T03:15:21.794010+00:00",
+        "disposition": "Copybara export #17533 integrates the approved source against master.",
+        "nextAction": "Follow the existing export. The original PR conflicts with master. The export already incorporates the lock-signature change and merges cleanly. The public Buildkite pipeline passed. The internal Buildkite check failed and its cause is not public.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16621",
-          "https://app.buildbuddy.io/invocation/25648b36-10d5-44ec-a4de-542b63fd23e8",
-          "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7",
-          "https://app.buildbuddy.io/invocation/88612f53-dd20-4695-bfcd-43525dd22ab0",
-          "https://app.buildbuddy.io/invocation/41786c4e-1368-4717-922b-c6f019facc6b"
+          "https://github.com/google/gvisor/pull/17533",
+          "https://github.com/google/gvisor/commit/c63685959655e5604b3755c33ad4bdcb099536ce",
+          "https://github.com/google/gvisor/commit/ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d",
+          "https://buildkite.com/gvisor/pipeline/builds/54742",
+          "https://buildkite.com/gvisor/internal/builds/36625"
         ]
       },
       "number": 16621

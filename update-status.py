@@ -895,13 +895,18 @@ def recheck_snapshot_mergeability(raw_prs: list[dict], rows: list[dict], repo: s
     result = recheck_unknown_mergeability(raw_prs, repo, request_limit=request_limit)
     observed = {pr["number"]: pr for pr in raw_prs if "_mergeabilityRetrievedAt" in pr}
     for row in rows:
-        if (pr := observed.get(row["number"])) is None:
-            continue
-        if row["head"] != pr["headRefOid"]:
-            raise RuntimeError(f"PR #{row['number']} changed during mergeability recheck; previous snapshot is unchanged")
-        row.update(mergeability_fields(pr), checkedAt=pr["_mergeabilityRetrievedAt"])
-        if row["mergeable"] != "UNKNOWN":
-            row["mergeabilityObservation"] = remember_mergeability(row, {}, row["checkedAt"])
+        if pr := observed.get(row["number"]):
+            if row["head"] != pr["headRefOid"]:
+                raise RuntimeError(f"PR #{row['number']} changed during mergeability recheck; previous snapshot is unchanged")
+            row.update(mergeability_fields(pr), checkedAt=pr["_mergeabilityRetrievedAt"])
+            if row["mergeable"] != "UNKNOWN":
+                row["mergeabilityObservation"] = remember_mergeability(row, {}, row["checkedAt"])
+        # GitHub can return UNKNOWN again for an unchanged pair of commits.
+        prior = row.get("mergeabilityObservation")
+        if (row.get("status") == "open" and row.get("mergeable") == "UNKNOWN" and prior
+                and row.get("branchHead") == row["head"] == prior["head"]
+                and row.get("base") and row["base"] == prior["base"]):
+            row.update(mergeable=prior["state"], mergeabilityCheckedAt=prior["checkedAt"])
     return result
 
 
