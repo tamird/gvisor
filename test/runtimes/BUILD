@@ -1,3 +1,4 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/runtimes:defs.bzl", "runtime_test")
 load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
 
@@ -46,4 +47,16 @@ bzl_library(
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
     deps = ["//tools:defs_bzl"],
+)
+
+sh_test(
+    name = "qualify_jmx",
+    size = "enormous",
+    srcs = ["qualify_jmx.py"],
+    data = [
+        "exclude/java21.csv",
+        "//test/runtimes/proctor:proctor_bin",
+        "//test/runtimes/runner:runner",
+    ],
+    tags = ["manual"],
 )
