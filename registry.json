@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T17:02:10.410444+00:00",
+    "updatedAt": "2026-11-13T17:04:18.636367+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2296,18 +2296,20 @@
       "url": "https://github.com/google/gvisor/pull/16236",
       "group": "bazel",
       "status": "merged",
-      "summary": "hermetic-llvm merged kernel_headers.configure after the llvm 0.8.26 release. The PR cites the merged change and still carries the backport.",
+      "summary": "This PR selected Linux 6.18 headers using a backport. BCR llvm 0.8.27 includes the upstream API. #17641 upgrades gVisor and removes both local LLVM patches.",
       "head": "b8420d7dcbd3e30af337bc8b544fd62fc6e24dae",
-      "updatedAt": "2026-11-06T23:37:40.578Z",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "Complete",
         "sourceHead": "b8420d7dcbd3e30af337bc8b544fd62fc6e24dae",
-        "observedAt": "2026-10-27T16:52:09+00:00",
-        "disposition": "Waiting for an upstream release",
-        "nextAction": "Check the BCR release for upstream commit 3dd710dd9; once included, update the dependency, remove the backport and verify header selection on both architectures.",
+        "observedAt": "2026-11-13T17:04:18.636367+00:00",
+        "disposition": "Released in BCR llvm 0.8.27. The gVisor upgrade is open as #17641.",
+        "nextAction": "Follow the upgrade on #17641.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/883",
-          "https://github.com/google/gvisor/pull/16236#issuecomment-6383595195"
+          "https://github.com/google/gvisor/pull/16236#issuecomment-6383595195",
+          "https://registry.bazel.build/modules/llvm/0.8.27",
+          "https://github.com/google/gvisor/pull/17641"
         ]
       },
       "number": 16236,
@@ -2321,25 +2323,26 @@
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc"
         },
         {
-          "label": "Latest BCR version checked",
+          "label": "Original gVisor pin",
           "url": "https://registry.bazel.build/modules/llvm/0.8.26"
         },
         {
-          "label": "Release comparison excludes the new API",
+          "label": "The original 0.8.26 pin predates the header API",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/compare/v0.8.26...3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc"
         },
         {
           "label": "Backport with upstream commit citation",
           "url": "https://github.com/tamird/gvisor/commit/b8420d7dcbd3e30af337bc8b544fd62fc6e24dae"
+        },
+        {
+          "label": "BCR release containing the header and backend changes",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
+        },
+        {
+          "label": "gVisor upgrade and backport removal",
+          "url": "https://github.com/google/gvisor/pull/17641"
         }
-      ],
-      "releaseWait": {
-        "head": "b8420d7dcbd3e30af337bc8b544fd62fc6e24dae",
-        "confirmedAt": "2026-10-27T16:52:09+00:00",
-        "checkedVersion": "0.8.26",
-        "module": "llvm",
-        "nextAction": "Check the BCR release for upstream commit 3dd710dd9; once included, update the dependency, remove the backport and verify header selection on both architectures."
-      }
+      ]
     },
     {
       "id": "branch:builder-without-cross-compilers",
@@ -27957,17 +27960,19 @@
       "url": "https://github.com/tamird/hermetic-llvm/commit/912eeefaced4f0800d5be8d88e6f012cae526071",
       "group": "bazel",
       "status": "Merged upstream",
-      "summary": "The supplier proposal is merged through hermetic-llvm #883 as 3dd710dd9. This published branch is historical and has no remaining contributor decision. The downstream #16236 record owns waiting for an actual release and BCR version containing the API; the latest BCR 0.8.26 does not include it.\n\nPreserved earlier source-specific record:\n\nExact approved supplier 912eeef is published as hermetic-llvm #883; the authorized gVisor #16236 reply is posted. Upstream review and release, then registration of the released llvm version in BCR, remain necessary before the downstream pin update and removal of the temporary patch. The existing llvm 0.8.25 release lacks this API; no unreleased BCR version or entry is claimed. The tested supplier tree, provider assertions, compile-only checks and native error contexts remain source-bound.",
-      "updatedAt": "2026-10-26T16:09:24.625274+00:00",
+      "summary": "The root-module Linux header setting shipped in BCR llvm 0.8.27. #17641 removes the backport that #16236 used to select Linux 6.18. The supplier qualification included provider assertions, C compilation and native error checks.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "Complete",
         "sourceHead": "912eeefaced4f0800d5be8d88e6f012cae526071",
-        "observedAt": "2026-10-26T16:09:24.625274+00:00",
-        "disposition": "Supplier merged; branch delivery complete",
-        "nextAction": "No remaining branch action. Continue the released-version cleanup on gVisor #16236.",
+        "observedAt": "2026-11-13T17:04:18.636367+00:00",
+        "disposition": "Released in BCR llvm 0.8.27. The gVisor upgrade is open as #17641.",
+        "nextAction": "Follow the upgrade on #17641.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/883",
-          "https://github.com/google/gvisor/pull/16236#issuecomment-6383595195"
+          "https://github.com/google/gvisor/pull/16236#issuecomment-6383595195",
+          "https://registry.bazel.build/modules/llvm/0.8.27",
+          "https://github.com/google/gvisor/pull/17641"
         ]
       },
       "evidence": [
@@ -27982,6 +27987,14 @@
         {
           "label": "Supplier merged upstream",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc"
+        },
+        {
+          "label": "BCR release containing the header and backend changes",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
+        },
+        {
+          "label": "gVisor upgrade and backport removal",
+          "url": "https://github.com/google/gvisor/pull/17641"
         }
       ],
       "inactive": true
@@ -28326,17 +28339,19 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/883",
       "group": "bazel",
       "status": "merged",
-      "updatedAt": "2026-10-26T16:09:24.625274+00:00",
-      "summary": "Merged as 3dd710dd9 on 2026-10-26. Upstream review is complete. The latest registered llvm version, 0.8.26, does not contain this API; gVisor #16236 owns the remaining released-version/BCR pin cleanup. The merge does not make an unreleased BCR version available.\n\nPreserved earlier source-specific record:\n\nPublished at the contributor-approved head. The qualified root-module selection API, real provider assertions, compile-only C checks and four native error contexts passed. Upstream merge and release are separate from downstream BCR registration and the gVisor pin change.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+      "summary": "The root-module Linux header setting landed in 3dd710dd9 and shipped in BCR llvm 0.8.27. #17641 removes the downstream backport. The supplier qualification included provider assertions, C compilation and native error checks.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "Complete",
         "sourceHead": "cb0cf1d6592648f293bb4376aee48c05b8d13691",
-        "observedAt": "2026-10-26T16:09:24.625274+00:00",
-        "disposition": "Merged; downstream release follow-up belongs to #16236",
-        "nextAction": "No remaining action on this merged PR. Track the release and BCR pin cleanup on gVisor #16236.",
+        "observedAt": "2026-11-13T17:04:18.636367+00:00",
+        "disposition": "Released in BCR llvm 0.8.27. The gVisor upgrade is open as #17641.",
+        "nextAction": "Follow the upgrade on #17641.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/883",
-          "https://github.com/google/gvisor/pull/16236#issuecomment-6383595195"
+          "https://github.com/google/gvisor/pull/16236#issuecomment-6383595195",
+          "https://registry.bazel.build/modules/llvm/0.8.27",
+          "https://github.com/google/gvisor/pull/17641"
         ]
       },
       "evidence": [
@@ -28345,8 +28360,16 @@
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc"
         },
         {
-          "label": "Latest registered version lacks the merged API",
+          "label": "The original 0.8.26 pin predates the header API",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/compare/v0.8.26...3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc"
+        },
+        {
+          "label": "BCR release containing the header and backend changes",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
+        },
+        {
+          "label": "gVisor upgrade and backport removal",
+          "url": "https://github.com/google/gvisor/pull/17641"
         }
       ]
     },
@@ -31293,8 +31316,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
       "status": "Published",
-      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
-      "summary": "Merged in https://github.com/hermeticbuild/hermetic-llvm/pull/892. Release availability is tracked on the LLVM source migration.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+      "summary": "The backend configuration from #892 shipped in llvm 0.8.27. #17641 removes gVisor’s local copy.",
       "evidence": [
         {
           "label": "43 passing upstream checks",
@@ -31399,6 +31422,14 @@
         {
           "label": "Target-selection suite",
           "url": "https://app.buildbuddy.io/invocation/3b67af27-49f4-4aaa-acb8-951364f00c4d"
+        },
+        {
+          "label": "BCR release containing the header and backend changes",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
+        },
+        {
+          "label": "gVisor upgrade and backport removal",
+          "url": "https://github.com/google/gvisor/pull/17641"
         }
       ],
       "refinement": {
@@ -39234,8 +39265,8 @@
       "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-11-02T04:38:00+00:00",
-      "summary": "Merged upstream in hermeticbuild/hermetic-llvm#899. BCR llvm 0.8.26 predates the fix.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+      "summary": "#899 forced musl for the Linux module-map generator. #927 removed that override so the execution platform selects the libc. BCR llvm 0.8.27 includes the revert.",
       "evidence": [
         {
           "label": "Upstream merge",
@@ -39256,6 +39287,14 @@
         {
           "label": "Published PR",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        },
+        {
+          "label": "Revert included in 0.8.27",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/8c66cda18"
+        },
+        {
+          "label": "BCR release",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
         }
       ],
       "settledReviews": [
@@ -42775,8 +42814,8 @@
       "group": "bazel",
       "status": "merged",
       "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
-      "updatedAt": "2026-10-29T20:59:01Z",
-      "summary": "The Linux module map generator links with musl so a worker can run it without a host glibc loader.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+      "summary": "#899 forced musl for the Linux module-map generator. #927 removed that override so the execution platform selects the libc. BCR llvm 0.8.27 includes the revert.",
       "evidence": [
         {
           "label": "Upstream merge",
@@ -42797,6 +42836,14 @@
         {
           "label": "Published PR",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        },
+        {
+          "label": "Revert included in 0.8.27",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/8c66cda18"
+        },
+        {
+          "label": "BCR release",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
         }
       ],
       "settledReviews": [
@@ -54263,8 +54310,8 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-13T03:18:19.146599+00:00",
-      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18. In llvm 0.8.27 the extension recognizes the configure tag but rejects it from any non-root module. #17641 still passes that tag from gVisor. This PR limits it to builds with gVisor as the root.",
       "evidence": [
         {
           "label": "Downstream C controls isolate the vDSO and ARM platform package imports",
@@ -54309,6 +54356,14 @@
         {
           "label": "Bazel 9.3.1 verified the 6.18 default for gVisor and the unpatched LLVM 0.8.26 header map for the external root.",
           "url": "https://github.com/tamird/gvisor/commit/df7f8f67a"
+        },
+        {
+          "label": "Root-only check in released llvm 0.8.27",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/blob/c44867b99/kernel/extension/kernel_headers.bzl#L90-L97"
+        },
+        {
+          "label": "Upgrade leaves the tag on the shared extension",
+          "url": "https://github.com/tamird/gvisor/blob/5b433add4/MODULE.bazel#L89-L91"
         }
       ],
       "settledReviews": [
@@ -68854,8 +68909,8 @@
       "url": "https://github.com/tamird/hermetic-llvm/commit/bb990fc8f",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-11-08T16:27:35+00:00",
-      "summary": "The proposed revert removes #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. LLVM 0.8.26 predates #899.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+      "summary": "#927 removed #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. BCR llvm 0.8.27 includes 8c66cda18.",
       "evidence": [
         {
           "label": "Opened upstream PR at the approved commit",
@@ -68880,6 +68935,10 @@
         {
           "label": "Upstream merge at 8c66cda18",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/8c66cda18"
+        },
+        {
+          "label": "BCR release",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
         }
       ],
       "settledReviews": [
@@ -68920,8 +68979,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/927",
       "group": "bazel",
       "status": "merged",
-      "updatedAt": "2026-11-08T16:27:35+00:00",
-      "summary": "The proposed revert removes #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. LLVM 0.8.26 predates #899. Upstream merged bb990fc8f as 8c66cda18 on November 8. The current gVisor compiler integration still pins BCR 0.8.24.",
+      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+      "summary": "#927 removed #899’s forced musl build from the public module map generator. The AMD64 GNU execution configuration dropped from 1,352 musl compile actions and four musl archive actions to zero for this generator. With the same GNU target, the GNU and explicitly musl workers produced byte-identical 923,587-byte maps covering 3,397 header sizes. A Linux worker without the glibc loader must declare @llvm//constraints/libc:musl. BCR llvm 0.8.27 includes 8c66cda18.",
       "evidence": [
         {
           "label": "Restore the generator’s original executable label and implementation",
@@ -68942,6 +69001,10 @@
         {
           "label": "Upstream merge at 8c66cda18",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/8c66cda18"
+        },
+        {
+          "label": "BCR release",
+          "url": "https://registry.bazel.build/modules/llvm/0.8.27"
         }
       ]
     },
@@ -80065,11 +80128,11 @@
       "from": "pr:hermeticbuild/hermetic-llvm:883",
       "to": "pr:16236",
       "type": "includes",
-      "reason": "Satisfied API implementation: #883 merged as 3dd710dd9. The remaining release/BCR availability gate is tracked on #16236; latest BCR 0.8.26 does not contain the API.",
+      "reason": "#16236 used a backport of the header API that shipped in llvm 0.8.27. #17641 removes it.",
       "evidence": [
-        "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
-        "https://registry.bazel.build/modules/llvm/0.8.26",
-        "https://github.com/hermeticbuild/hermetic-llvm/compare/v0.8.26...3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc"
+        "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9",
+        "https://registry.bazel.build/modules/llvm/0.8.27",
+        "https://github.com/google/gvisor/pull/17641"
       ]
     },
     {
@@ -110359,5 +110422,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T17:02:10.410444+00:00"
+  "updatedAt": "2026-11-13T17:04:18.636367+00:00"
 }
