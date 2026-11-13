@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:50:11.557307+00:00",
+    "updatedAt": "2026-11-13T16:51:09.693962+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -110167,15 +110167,15 @@
     },
     {
       "id": "investigation:ci-flake-mysql-startup",
-      "title": "MySQL image timed out before opening its TCP listener",
+      "title": "MySQL startup check reached its deadline reading Docker logs",
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T16:50:11.557307+00:00",
-      "summary": "On #54914, TestMysql exceeded its startup deadline after the MySQL 8.0.19 container initialized its database. The SQL workload never started.",
+      "updatedAt": "2026-11-13T16:51:09.693962+00:00",
+      "summary": "On #54914, TestMysql reached its one-minute startup deadline while reading Docker logs. Its SQL workload never started.",
       "findings": [
         {
-          "text": "The bootstrap server reported ready on its Unix socket with port 0. Its last output included two warnings from the timezone import. The image intentionally starts this server with --skip-networking. The test failed at the one-minute wait for the final server on port 3306, before it ran the SQL client. The log does not show whether the import stalled or finished after the deadline.",
+          "text": "The bootstrap server reported ready on its Unix socket with port 0. The final Docker log read returned partial output ending in two timezone warnings and the error “context deadline exceeded.” The wait helper returned that error before searching the partial buffer for the port-3306 message. The log gives neither the time of the last successful poll nor a TCP measurement at the deadline.",
           "evidence": [
             {
               "label": "MySQL first-attempt test output",
@@ -110188,6 +110188,10 @@
             {
               "label": "Test waits for port 3306 before sending SQL",
               "url": "https://github.com/google/gvisor/blob/73e36937be2ecbd264d34ac7ef37550b9f2e71d0/test/image/image_test.go#L214-L253"
+            },
+            {
+              "label": "Wait helper returns the log-read error before matching the buffer",
+              "url": "https://github.com/google/gvisor/blob/73e36937be2ecbd264d34ac7ef37550b9f2e71d0/pkg/test/dockerutil/container.go#L710-L725"
             }
           ]
         },
@@ -110268,5 +110272,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:50:11.557307+00:00"
+  "updatedAt": "2026-11-13T16:51:09.693962+00:00"
 }
