@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:44:41+00:00",
+    "updatedAt": "2026-11-13T15:45:28+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108707,7 +108707,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T15:44:41+00:00",
+      "updatedAt": "2026-11-13T15:45:28+00:00",
       "summary": "An Ubuntu release worker spent 59 minutes updating package indexes and attempting to install the same packages. The dpkg frontend lock stayed with unattended-upgrades. The job timed out before its CUDA test started and the automatic retry passed.",
       "findings": [
         {
@@ -108733,7 +108733,7 @@
           ]
         },
         {
-          "text": "Six jobs in #54906 and four in #54907 exited 100 when package setup could not acquire an APT or dpkg lock. Nine failed in the repository pre-command hook and one in the Podman job’s package installation. All ten jobs passed on retry.",
+          "text": "In ten recovered jobs, package setup exited 100 on an APT or dpkg lock: six in #54906 and four in #54907. Nine failed in the repository pre-command hook, one in the Podman job. A separate #54906 AMD64 syscall shard exhausted both retries on APT locks. Its tests never started and the build stayed red.",
           "evidence": [
             {
               "label": "#54906 Java package setup",
@@ -108742,6 +108742,10 @@
             {
               "label": "#54907 Podman package setup",
               "url": "https://buildkite.com/gvisor/pipeline/builds/54907#01a1d550-d7b9-4411-991f-2220000530b8"
+            },
+            {
+              "label": "Separate syscall shard, final failed retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54906#01a1d542-454b-4341-ae65-1a665c7620b0"
             }
           ]
         }
@@ -109807,5 +109811,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:44:41+00:00"
+  "updatedAt": "2026-11-13T15:45:28+00:00"
 }
