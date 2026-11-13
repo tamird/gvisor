@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T14:42:18+00:00",
+    "updatedAt": "2026-11-13T14:46:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7657,8 +7657,8 @@
       "group": "bazel",
       "status": "open",
       "head": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-      "updatedAt": "2026-11-13T03:43:50+00:00",
-      "summary": "The published PR conflicts with master. With the rebase, Bazel selected the intended native workers for all four Go and C++ TestRunner actions. Three C++ cases passed. Nogo failed to produce raw_findings for either wrapped Go test.",
+      "updatedAt": "2026-11-13T14:46:09+00:00",
+      "summary": "The rebase makes Nogo analyze the Go test selected for each architecture. Bazel 9.3.1 action queries on d41dcb174 selected both test sources and the expected GoStaticAnalysis action on AMD64 and ARM64. Native execution is in progress.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -7785,6 +7785,18 @@
         {
           "label": "Native worker selection, passing C++ tests and missing Go Nogo outputs",
           "url": "https://github.com/tamird/gvisor/actions/runs/43357603160/artifacts/14007455660"
+        },
+        {
+          "label": "Rebase on current master",
+          "url": "https://github.com/tamird/gvisor/commit/d41dcb174"
+        },
+        {
+          "label": "First run selected the same Go target twice",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43444337726/artifacts/14046792777"
+        },
+        {
+          "label": "Native Go, C++, and Nogo qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43445509908"
         }
       ],
       "refinement": {
@@ -7832,9 +7844,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "observedAt": "2026-11-13T03:43:50+00:00",
-        "disposition": "The candidate needs a Nogo change before the rebase is ready.",
-        "nextAction": "Bazel 9 changes the rule name when the architecture wrapper inherits go_test and exposes srcs directly. With the two-file correction, local Bazel analysis produced the same facts and raw_findings as the ordinary test on each architecture. Fork validation of that correction is waiting on authorization.",
+        "observedAt": "2026-11-13T14:46:09+00:00",
+        "disposition": "The fork is testing the rebase on master f98c31b5b.",
+        "nextAction": "Check the AMD64 and ARM64 worker identities, Go and C++ test results, and Nogo outputs from the corrected run. In the first run, the fixture selected the same fixed Go target twice. The corrected fixture selects a test per architecture.",
         "mergeable": "CONFLICTING",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
@@ -7844,7 +7856,10 @@
           "https://github.com/tamird/gvisor/actions/runs/43104647743/artifacts/13896029325",
           "https://app.buildbuddy.io/invocation/5e3089fa-6572-430a-8319-6ec6025ec652",
           "https://github.com/tamird/gvisor/actions/runs/43113944714/artifacts/13897134374",
-          "https://github.com/tamird/gvisor/actions/runs/43357603160/artifacts/14007455660"
+          "https://github.com/tamird/gvisor/actions/runs/43357603160/artifacts/14007455660",
+          "https://github.com/tamird/gvisor/commit/d41dcb174",
+          "https://github.com/tamird/gvisor/actions/runs/43444337726/artifacts/14046792777",
+          "https://github.com/tamird/gvisor/actions/runs/43445509908"
         ]
       }
     },
@@ -109586,5 +109601,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T14:42:18+00:00"
+  "updatedAt": "2026-11-13T14:46:09+00:00"
 }
