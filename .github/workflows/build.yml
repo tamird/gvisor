@@ -1,35 +1,55 @@
-name: CI
-
-"on":
+name: Qualify the rebased runsc and Sentry coverage binaries
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/pr16507-coverage-rebase]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  coverage:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    timeout-minutes: 90
+    runs-on: ubuntu-24.04
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Build and run the four coverage targets on the proposed source
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git checkout -q --detach HEAD^
+          test "$(git rev-parse --short=9 HEAD^)" = ae0f8d590
+          q="$RUNNER_TEMP/pr16507-coverage"
+          mkdir "$q"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$q/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $q/bazel" | sha256sum -c -
+          chmod +x "$q/bazel"
+          targets=(//runsc:runsc_coverage //runsc:runsc_race_coverage //runsc/cmd/sentry:gvisor_sentry_coverage //runsc/cmd/sentry:gvisor_sentry_race_coverage)
+          flags=(--config=x86_64 --jobs=4 --spawn_strategy=sandboxed,local --remote_executor= --remote_cache= --bes_backend= --module_mirrors=https://bcr.cloudflaremirrors.com --lockfile_mode=off)
+          "$q/bazel" --nosystem_rc --nohome_rc build "${flags[@]}" "${targets[@]}" 2>&1 | tee "$q/build.log"
+          for label in "${targets[@]}"; do
+            name=${label##*:}
+            "$q/bazel" --nosystem_rc --nohome_rc cquery "${flags[@]}" --output=files "$label" > "$q/path"
+            test "$(wc -l < "$q/path")" -eq 1
+            binary=$(cat "$q/path")
+            test -x "$binary"
+            readelf -h "$binary" | grep 'Machine:.*X86-64'
+            "$binary" --version > "$q/$name.log" 2>&1
+            grep '^runsc version' "$q/$name.log"
+            if [[ "$name" == gvisor_sentry* ]]; then
+              "$binary" symbolize -all > "$q/symbols"
+              awk '/pkg\/sentry\/kernel\// {kernel++} END {print "kernel source positions:", kernel; exit !kernel}' "$q/symbols" | tee -a "$q/$name.log"
+              if grep -Eq '/pkg/(coverage/|ring0/|sleep/|sync/|syncevent/|bpf/|sentry/platform/)' "$q/symbols"; then
+                echo "Unexpected coverage for an excluded package" >&2
+                exit 1
+              fi
+            fi
+          done
+      - name: Save validation logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr16507-coverage
+          path: ${{ runner.temp }}/pr16507-coverage/*.log
+          retention-days: 14
