@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:21:02.875851+00:00",
+    "updatedAt": "2026-11-13T15:27:25.356246+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -77388,6 +77388,51 @@
           "at": "2026-11-13T14:46:21Z"
         }
       ]
+    },
+    {
+      "id": "branch:llvm-0827-remove-backports",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/llvm-0827-remove-backports",
+      "title": "Drop the LLVM module backports",
+      "url": "https://github.com/tamird/gvisor/commit/38dbbe464",
+      "head": "38dbbe4644ed10d504d61fba247707b21d8ae34e",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-11-13T15:27:25.356246+00:00",
+      "summary": "LLVM 0.8.27 includes gVisor’s Linux header default and the restriction to the AArch64 and X86 parser backends. The fork change removes both patches, updates the module license entry and retains the same LLVM 23.1.2 source archive. The release archive matched the BCR checksum.",
+      "evidence": [
+        {
+          "label": "Single-commit upgrade",
+          "url": "https://github.com/tamird/gvisor/commit/38dbbe464"
+        },
+        {
+          "label": "Published BCR module and integrity digest",
+          "url": "https://bcr.bazel.build/modules/llvm/0.8.27/source.json"
+        },
+        {
+          "label": "Linux header default",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/3dd710dd9"
+        },
+        {
+          "label": "Downstream backend selection",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008"
+        },
+        {
+          "label": "Both parser architectures, Linux headers and license verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43452602601"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "38dbbe4644ed10d504d61fba247707b21d8ae34e",
+        "observedAt": "2026-11-13T15:27:25.356246+00:00",
+        "disposition": "BCR published LLVM 0.8.27. The fork upgrade removes the two module patches.",
+        "nextAction": "Verify the resolved header and backend settings, the native parser on both architectures, and the license catalog before requesting review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43452602601"
+        ]
+      }
     }
   ],
   "edges": [
@@ -81390,6 +81435,13 @@
         "https://github.com/tamird/gvisor/commit/8b4856bbd",
         "https://github.com/tamird/gvisor/commit/6cbcb14d9"
       ]
+    },
+    {
+      "from": "pr:17114",
+      "to": "branch:llvm-0827-remove-backports",
+      "type": "depends_on",
+      "reason": "The new release contains the two backports introduced for the NVIDIA parser and Linux headers.",
+      "evidence": "https://github.com/google/gvisor/pull/17114"
     }
   ],
   "investigations": [
@@ -109692,5 +109744,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:21:02.875851+00:00"
+  "updatedAt": "2026-11-13T15:27:25.356246+00:00"
 }
