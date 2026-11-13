@@ -778,7 +778,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		}
 		// If the test passed, then we erase the log directory. This speeds up
 		// uploading logs in continuous integration & saves on disk space.
-		os.RemoveAll(testLogDir)
+		log.Debugf("Retaining syscall qualification logs in %s", testLogDir)
 	}
 
 	return err
