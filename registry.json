@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T14:59:55+00:00",
+    "updatedAt": "2026-11-13T15:07:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -109588,7 +109588,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T11:40:50+00:00",
+      "updatedAt": "2026-11-13T15:07:52+00:00",
       "summary": "All three UDP cases passed in 5 ms on #17572. The guest exited successfully, then the Sentry spent more than three minutes waiting for the lisafs watchdog during mount teardown. The shard passed on retry.",
       "findings": [
         {
@@ -109624,9 +109624,31 @@
               "url": "https://github.com/google/gvisor/blob/e0cc9dabd/pkg/lisafs/client.go#L228-L236"
             }
           ]
+        },
+        {
+          "text": "The failed directfs mount exchanged only Mount and Close on the lisafs socket. Directfs skips StartChannels, so this client had no flipcall channel to drain. The loader observed the socket hangup 30 µs after the last Close response. Its gofer monitor was waiting in Kernel.Pause for the exiting guest task. The full Sentry dump shows no lisafs watchdog goroutine.",
+          "evidence": [
+            {
+              "label": "Original Sentry RPC log and goroutine dump",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54892/jobs/01a1d47b-a9b6-4e62-a98e-edcf33791651/artifacts/01a1d48d-4224-4afa-9513-6ba3bdd4f50c"
+            },
+            {
+              "label": "Directfs skips channel creation",
+              "url": "https://github.com/google/gvisor/blob/e0cc9dabd/pkg/sentry/fsimpl/gofer/gofer.go#L733-L765"
+            }
+          ]
+        },
+        {
+          "text": "On native Linux AMD64, 48 mounts per order completed when the client closed first, the server shut down first, or both started shutdown together. Each mount closed its root FD with a socket RPC before teardown. All 144 completed with the original client, and all 144 completed with watchdog tracing. The traced client reached the point before Wait before its watchdog returned in 115 cases and after in 29. The fixture exercised the lisafs client and server in one process. The original Sentry hang remains unexplained.",
+          "evidence": [
+            {
+              "label": "Original and traced testcase logs, XML, fixture diffs and worker kernel",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43448278191/artifacts/14050095031"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the lisafs connection test fixture to overlap normal client close and server disconnect. Record each client’s identity at watchdog start, completion, and wait so a hung run shows which operation did not finish.",
+      "nextStep": "Run the original systrap/directfs UDP shard with the socket-only client instrumented in the Sentry. Correlate the client and WaitGroup addresses at watchdog startup, poll completion, Done and Wait with the gofer’s disconnect time. The native connection fixture already completed with both orders of Wait and watchdog return.",
       "evidence": [
         {
           "label": "Same-shard retry passed",
@@ -109639,5 +109661,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T14:59:55+00:00"
+  "updatedAt": "2026-11-13T15:07:52+00:00"
 }
