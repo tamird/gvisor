@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:42:42.838756+00:00",
+    "updatedAt": "2026-11-13T15:43:34+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -103479,7 +103479,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T18:11:37+00:00",
+      "updatedAt": "2026-11-13T15:43:34+00:00",
       "summary": "Three Buildkite runs stopped at the first wire dump with “error printing state: unreachable”. A native AMD64 workload reproduced the error on two of eight valid guest checkpoints. Stock mistook saved page data for a stream header. #17208 dumped all eight and the guests restored.",
       "findings": [
         {
@@ -103608,6 +103608,19 @@
             {
               "label": "Buildkite post-command artifact selection",
               "url": "https://github.com/google/gvisor/blob/4acb74842/.buildkite/hooks/post-command#L17-L37"
+            }
+          ]
+        },
+        {
+          "text": "On #17537, the first KVM wire checkpoint in the chained restore test again failed to print: hop 0 exited 128 with “error printing state: unreachable”. The retry executed the failing shard and reused the other seven. This build still called the generic pretty printer directly; #17208 changes that call.",
+          "evidence": [
+            {
+              "label": "Original container test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54906/jobs/01a1d53d-a90d-4154-96d3-ae888e707daf/artifacts/01a1d547-b39c-45a9-b819-4410fc222720"
+            },
+            {
+              "label": "Same-head cgroupv1 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54906#01a1d548-96b6-49a2-ba1c-3b4412482138"
             }
           ]
         }
@@ -108694,7 +108707,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T15:50:34+00:00",
+      "updatedAt": "2026-11-13T15:43:34+00:00",
       "summary": "An Ubuntu release worker spent 59 minutes updating package indexes and attempting to install the same packages. The dpkg frontend lock stayed with unattended-upgrades. The job timed out before its CUDA test started and the automatic retry passed.",
       "findings": [
         {
@@ -108716,6 +108729,19 @@
             {
               "label": "Ubuntu 22.04 · real APT/dpkg lock, header and missing-package controls",
               "url": "https://github.com/tamird/gvisor/actions/runs/43241995732/artifacts/13956211034"
+            }
+          ]
+        },
+        {
+          "text": "Six first attempts in #54906 and six more in #54907 exited 100 in package setup. The repository pre-command hook could not take an APT lock. Each job passed on retry.",
+          "evidence": [
+            {
+              "label": "#54906 Java package setup",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54906#01a1d53d-a957-4378-b41d-8b1db42fd525"
+            },
+            {
+              "label": "#54907 Podman package setup",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54907#01a1d550-d7b9-4411-991f-2220000530b8"
             }
           ]
         }
@@ -109781,5 +109807,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:42:42.838756+00:00"
+  "updatedAt": "2026-11-13T15:43:34+00:00"
 }
