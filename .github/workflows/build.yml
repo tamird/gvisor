@@ -1,35 +1,38 @@
-name: CI
-
-"on":
+name: Qualify the systemd version fix with Nogo
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/systemd-version-nogo]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  analyzer:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Analyze the proposed cgroup implementation
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --depth=2 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 4c4cb19bbd24920b31ecaa8f4a021cc73cc9ad7c
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          q="$RUNNER_TEMP/systemd-nogo"
+          mkdir "$q"
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$q/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $q/bazel" | sha256sum -c -
+          chmod +x "$q/bazel"
+          "$q/bazel" --nosystem_rc --nohome_rc test --config=x86_64 --build_tag_filters=nogo --test_tag_filters=nogo --jobs=3 --remote_executor= --remote_cache= --bes_backend= --module_mirrors=https://bcr.cloudflaremirrors.com --lockfile_mode=off --nocache_test_results --flaky_test_attempts=1 --test_output=all //runsc/cgroup:cgroup_nogo 2>&1 | tee "$q/command.log"
+          results=bazel-testlogs/runsc/cgroup/cgroup_nogo
+          cp "$results/test.xml" "$results/test.log" "$q/"
+          grep -F 'amd64...' "$q/test.log"
+          grep -F 'arm64...' "$q/test.log"
+      - name: Archive the original results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: systemd-nogo
+          path: |
+            ${{ runner.temp }}/systemd-nogo/*.log
+            ${{ runner.temp }}/systemd-nogo/*.xml
+          retention-days: 14
