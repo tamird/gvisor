@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T03:29:25.014380+00:00",
+    "updatedAt": "2026-11-13T03:51:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108954,7 +108954,79 @@
         "requestedAt": "2026-11-13T02:28:35.504415+00:00",
         "summary": "Open the diagnostic change for #11877. Both architecture analyzers and the cgroup suite passed. The original failing worker did not report the underlying D-Bus error."
       }
+    },
+    {
+      "id": "investigation:ci-flake-python-socket-source-address",
+      "title": "CPython closes the test client before it checks the source port",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T03:51:35+00:00",
+      "summary": "On #17574, CPython 3.12.3’s testSourceAddress got EBADF from getsockname() on its own client socket. The same shard ran again and passed. CPython has an open fix for the same failure.",
+      "findings": [
+        {
+          "text": "The client registers a socket close on the server thread’s unittest cleanup stack. If the server finishes first, that cleanup can close the client socket before getsockname(). The client already closes its socket in clientTearDown().",
+          "evidence": [
+            {
+              "label": "Failing Python shard test.log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54845/jobs/01a1d2e8-d5e7-4478-a004-a24028d52b75/artifacts/01a1d2f7-d50a-4463-8e02-393633fe0410"
+            },
+            {
+              "label": "Passing same-commit Python shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54845#01a1d2f8-8bc6-4015-bfbe-0af7b06390a6"
+            },
+            {
+              "label": "CPython’s original report and controlled loopback test",
+              "url": "https://github.com/python/cpython/issues/160217"
+            }
+          ]
+        },
+        {
+          "text": "With the source and support files from the image’s v3.12.3 tag, the upstream patch applied unchanged. On native ARM64 macOS with CPython 3.12.13, a controlled loopback test waited for server cleanup before checking the source port. All eight stock runs got EBADF with an already-closed descriptor. All eight patched runs observed the open descriptor and passed.",
+          "evidence": [
+            {
+              "label": "CPython tag built by the gVisor image",
+              "url": "https://github.com/google/gvisor/blob/81d8bc5f6/images/runtimes/python3.12.3/Dockerfile.x86_64#L14-L21"
+            },
+            {
+              "label": "CPython’s original report and controlled loopback test",
+              "url": "https://github.com/python/cpython/issues/160217"
+            },
+            {
+              "label": "Nikita Mikhailov’s upstream fixture fix",
+              "url": "https://github.com/python/cpython/pull/160218"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Keep the source-port test enabled. The image builds v3.12.3 from source. The open upstream PR targets main, and the 3.12 branch still registers the redundant close. To take the fix now, apply its test-only patch when building this image. Once upstream merges it, check which release tag includes it before changing the pin.",
+      "evidence": [
+        {
+          "label": "Failing Python shard test.log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54845/jobs/01a1d2e8-d5e7-4478-a004-a24028d52b75/artifacts/01a1d2f7-d50a-4463-8e02-393633fe0410"
+        },
+        {
+          "label": "Passing same-commit Python shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54845#01a1d2f8-8bc6-4015-bfbe-0af7b06390a6"
+        },
+        {
+          "label": "CPython’s original report and controlled loopback test",
+          "url": "https://github.com/python/cpython/issues/160217"
+        },
+        {
+          "label": "Nikita Mikhailov’s upstream fixture fix",
+          "url": "https://github.com/python/cpython/pull/160218"
+        },
+        {
+          "label": "CPython tag built by the gVisor image",
+          "url": "https://github.com/google/gvisor/blob/81d8bc5f6/images/runtimes/python3.12.3/Dockerfile.x86_64#L14-L21"
+        },
+        {
+          "label": "gVisor re-enabled the test in 2025",
+          "url": "https://github.com/google/gvisor/pull/11676"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-13T03:29:25.014380+00:00"
+  "updatedAt": "2026-11-13T03:51:35+00:00"
 }
