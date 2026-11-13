@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T11:03:39+00:00",
+    "updatedAt": "2026-11-13T11:16:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63164,16 +63164,16 @@
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-13T11:03:39+00:00",
-      "summary": "The rebased vDSO layout test uses Bazel’s LLVM readelf. On a Linux AMD64 worker with a failing readelf on PATH, the test accepted the AMD64 and ARM64 vDSOs and rejected a one-byte .data section. The separate Go replacement remains optional.",
+      "updatedAt": "2026-11-13T11:16:41+00:00",
+      "summary": "With #17627 applied, the declared LLVM reader accepted both AMD64 and ARM64 vDSOs. The combined checker rejected non-empty .data, a missing PT_GNU_EH_FRAME segment, and a DT_NEEDED dependency.",
       "evidence": [
+        {
+          "label": "AMD64 and ARM64 vDSOs and three malformed ELF controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43414236340/artifacts/14030702508"
+        },
         {
           "label": "Incoming vDSO layout and dynamic dependency checks",
           "url": "https://github.com/google/gvisor/pull/17627"
-        },
-        {
-          "label": "Fork run combining both checks with the declared reader",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43413747432"
         },
         {
           "label": "Unchanged downstream Make rule and Python entry point with host Go; source-only copy control",
@@ -63240,10 +63240,12 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "9328b5d2a294fd706a70a5446ff8382c52d32134",
-        "observedAt": "2026-11-13T11:03:39+00:00",
-        "disposition": "The incoming #17627 adds two checker calls that invoke readelf from PATH.",
-        "nextAction": "Test the combined checker with the declared reader on AMD64 and ARM64 ELF inputs. Rebase the live PR when #17627 lands.",
+        "observedAt": "2026-11-13T11:16:41+00:00",
+        "disposition": "#17627 remains open. Its tested head e0a1289d2 and current head 4d4f31a77 have identical source trees. All five checks completed with the declared LLVM reader.",
+        "nextAction": "Rebase #17122 onto the landed vDSO checker when #17627 merges.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43414236340/artifacts/14030702508",
+          "https://github.com/google/gvisor/pull/17627",
           "https://github.com/tamird/gvisor/commit/9328b5d2a",
           "https://github.com/tamird/gvisor/actions/runs/43355492128/artifacts/14006111161"
         ],
@@ -109396,8 +109398,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T11:03:39+00:00",
-      "summary": "The master Java goferfs job failed in BrokenConnectionTest case 4. OpenJDK tracks the same exception and excludes this test on Linux in the JDK release gVisor runs.",
+      "updatedAt": "2026-11-13T11:16:41+00:00",
+      "summary": "OpenJDK excludes BrokenConnectionTest on Linux in the test sources used by gVisor’s Java 21 image. The master Java goferfs job failed with the same exception during listener removal.",
       "findings": [
         {
           "text": "The connection-failed notification arrived before the second removeNotificationListener. The JDK threw ListenerNotFoundException where its test expected IOException. Cases 1–3 passed. Buildkite’s successful retry reused a cached result.",
@@ -109415,17 +109417,30 @@
               "url": "https://bugs.openjdk.org/browse/JDK-8262312"
             },
             {
-              "label": "Linux exclusion in gVisor’s JDK release",
+              "label": "Linux exclusion in the test sources used by the Java 21 image",
               "url": "https://github.com/openjdk/jdk21u/blob/jdk-21.0.3-ga/test/jdk/ProblemList.txt#L526"
+            }
+          ]
+        },
+        {
+          "text": "On the archived Sentry and JDK 21.0.2, the affected shard ran 22 cases before the exclusion and 21 after it. Only BrokenConnectionTest dropped out, and all 21 remaining cases passed. The other 21 cases from the original Buildkite shard and three neighboring JMX connection tests also passed in separate runs. The stock replay passed on this worker.",
+          "evidence": [
+            {
+              "label": "Passing shard, original Buildkite controls and neighboring JMX tests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43413118513/artifacts/14031231869"
             }
           ]
         }
       ],
-      "nextStep": "Check that the Linux exclusion removes only BrokenConnectionTest and that neighboring JMX tests still execute in the same image.",
+      "nextStep": "Review the proposed Linux Java 21 exclusion before opening the gVisor PR.",
       "evidence": [
         {
-          "label": "Same-worker JMX qualification with the original partition and neighboring tests",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43413118513"
+          "label": "Proposed one-test exclusion",
+          "url": "https://github.com/tamird/gvisor/commit/15ed51fc4"
+        },
+        {
+          "label": "Passing shard, original Buildkite controls and neighboring JMX tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43413118513/artifacts/14031231869"
         },
         {
           "label": "Master JMX failure in Buildkite #54874",
@@ -109440,11 +109455,24 @@
           "url": "https://bugs.openjdk.org/browse/JDK-8262312"
         },
         {
-          "label": "Linux exclusion in gVisor’s JDK release",
+          "label": "Linux exclusion in the test sources used by the Java 21 image",
           "url": "https://github.com/openjdk/jdk21u/blob/jdk-21.0.3-ga/test/jdk/ProblemList.txt#L526"
         }
-      ]
+      ],
+      "repo": "google/gvisor",
+      "head": "15ed51fc4f9e492bd7ef7f7a74f17614acea92c6",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "15ed51fc4f9e492bd7ef7f7a74f17614acea92c6",
+        "baseHead": "f98c31b5b7d292061d990c97e5ef9d1601d72d8d",
+        "url": "https://github.com/tamird/gvisor/commit/15ed51fc4",
+        "title": "Exclude OpenJDK's flaky broken-connection test",
+        "body": "After it breaks an RMI connection, BrokenConnectionTest expects a\nsecond attempt to remove a listener to throw IOException. In the Java\nruntime suite the client received a failure notification first and\nthrew ListenerNotFoundException instead [1].\n\nOpenJDK reports the same exception [2] and excludes this test on\nLinux in the test sources used by our Java 21 image [3]. Add it to the\nJava 21 exclusion list.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/54874#01a1d3ce-6394-49bd-8cd1-01050e335fe8\n[2]: https://bugs.openjdk.org/browse/JDK-8262312\n[3]: https://github.com/openjdk/jdk21u/blob/05f18b106/test/jdk/ProblemList.txt#L526",
+        "summary": "Open the one-test exclusion that OpenJDK applies on Linux. All 21 remaining shard cases and three neighboring JMX tests passed.",
+        "requestedAt": "2026-11-13T11:16:41+00:00"
+      }
     }
   ],
-  "updatedAt": "2026-11-13T11:03:39+00:00"
+  "updatedAt": "2026-11-13T11:16:41+00:00"
 }

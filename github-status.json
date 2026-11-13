@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-13T11:08:43.099758+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-13T11:03:39+00:00",
+  "registryDate": "2026-11-13T11:16:41+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -464944,6 +464944,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-13T11:03:39+00:00"
+      }
+    },
+    "investigation:ci-flake-java-jmx-broken-connection": {
+      "contributor-review": {
+        "scope": "15ed51fc4f9e492bd7ef7f7a74f17614acea92c6",
+        "since": "2026-11-13T11:16:41+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-13T11:16:41+00:00"
       }
     }
   },
