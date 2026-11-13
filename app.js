@@ -1932,9 +1932,10 @@ function currentOutreach(node) {
   if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open" || pr.mergeable === "CONFLICTING" || activeReviewHold(node, pr)) return null;
   const row = liveSnapshot?.reviewOutreach?.[pr.number];
   if (row?.head !== pr.head || row?.kind === "import-status" && !currentHeadApproval(pr) && !reviewedExport(node)) return null;
-  if (row && outreachPauseNotice(liveSnapshot)
-      && !(liveSnapshot.outreachPostingMode === "rotations" && row.sourceRotation === true && row.kind !== "import-status" && (row.channel === "request" || row.status === "native-request-denied"))) return { ...row, status: "paused" };
-  return row;
+  if (!row || !outreachPauseNotice(liveSnapshot)) return row;
+  if (liveSnapshot.outreachPostingMode === "rotations" && row.sourceRotation === true && row.kind !== "import-status"
+      && (row.channel === "request" || row.status === "needs-reviewer" || row.status === "native-request-denied")) return row;
+  return { ...row, status: "paused" };
 }
 function appendOutreach(parent, node) {
   const row = currentOutreach(node);

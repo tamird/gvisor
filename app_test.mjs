@@ -178,6 +178,21 @@ test('tracker maintenance never requests a contributor decision on a cached regi
   assert.equal(vm.runInContext('pendingDecisions(row).length', c), 1);
 });
 
+test('rotations keep reviewer selection visible after a previous request', () => {
+  const c = client();
+  c.pr = { type: 'pr', repo: 'google/gvisor', github: { status: 'open', number: 16051, head: 'a'.repeat(40) } };
+  const row = { head: c.pr.github.head, status: 'needs-reviewer' };
+  c.snapshotInput.reviewOutreach = { 16051: row };
+  c.snapshotInput.outreachPostingMode = 'rotations';
+  vm.runInContext('liveSnapshot = snapshotInput', c);
+  const status = () => vm.runInContext('currentOutreach(pr).status', c);
+  assert.equal(status(), 'paused');
+  row.sourceRotation = true;
+  assert.equal(status(), 'needs-reviewer');
+  c.snapshotInput.outreachPostingMode = 'paused';
+  assert.equal(status(), 'paused');
+});
+
 test('review outreach follows only the observed open gVisor source', () => {
   const c = client();
   c.pr = { type: 'pr', repo: 'google/gvisor', github: { status: 'open', number: 16516, head: 'a'.repeat(40) } };
