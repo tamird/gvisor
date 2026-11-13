@@ -485,3 +485,29 @@ func filterProperties(got []systemdDbus.Property, want []systemdDbus.Property) [
 	}
 	return filtered
 }
+
+func TestSystemdVersionDiagnosticQualification(t *testing.T) {
+	cgroup := &cgroupV2{Path: "system.slice:runsc:version-test"}
+	cg, err := newCgroupV2Systemd(cgroup)
+	if err != nil {
+		t.Fatalf("host systemd: %v", err)
+	}
+	cg.dbusConn.Close()
+
+	t.Setenv("DBUS_SYSTEM_BUS_ADDRESS", os.Getenv("QUALIFICATION_BUS"))
+	_, err = newCgroupV2Systemd(cgroup)
+	t.Logf("cgroup constructor: %v", err)
+	if os.Getenv("QUALIFICATION_ARM") == "parent" {
+		if err == nil || err.Error() != "error parsing systemd version: unable to get systemd version" {
+			t.Fatalf("expected the original diagnostic, got %v", err)
+		}
+		return
+	}
+	var cause dbus.Error
+	if !errors.As(err, &cause) || cause.Name != "org.freedesktop.DBus.Error.ServiceUnknown" {
+		t.Fatalf("want a wrapped D-Bus ServiceUnknown, got %v", err)
+	}
+	if got, want := err.Error(), "reading systemd version: "+cause.Error(); got != want {
+		t.Errorf("constructor error = %q, want %q", got, want)
+	}
+}

@@ -1,35 +1,69 @@
-name: CI
-
-"on":
+name: Compare systemd cgroup version diagnostics
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/systemd-manager-version-error]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  cgroup:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Prepare the original and proposed sources and an isolated bus
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch -q --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse --short=9 HEAD^)" = 4c4cb19bb
+          test "$(git rev-parse --short=9 HEAD^^)" = 77fdf618a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!runsc/cgroup/systemd_test.go'
+          q="$RUNNER_TEMP/systemd-version"
+          mkdir "$q"
+          echo "QUALIFICATION_DIR=$q" >> "$GITHUB_ENV"
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$q/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $q/bazel" | sha256sum -c -
+          chmod +x "$q/bazel"
+          cat > "$q/bus.conf" <<'EOF'
+          <busconfig>
+            <type>session</type>
+            <listen>unix:tmpdir=/tmp</listen>
+            <policy context="default">
+              <allow send_destination="*"/>
+              <allow receive_sender="*"/>
+              <allow own="*"/>
+            </policy>
+          </busconfig>
+          EOF
+          bus=$(dbus-daemon --config-file="$q/bus.conf" --fork --print-address=1)
+          echo "QUALIFICATION_BUS=$bus" >> "$GITHUB_ENV"
+          test -d /run/systemd/system
+          busctl --system get-property org.freedesktop.systemd1 /org/freedesktop/systemd1 org.freedesktop.systemd1.Manager Version
+          printf '%s\n' '#!/bin/bash' 'set -eu' 'exec "$QUALIFICATION_DIR/bazel" --nosystem_rc --nohome_rc "$1" --config=x86_64 --jobs=3 --remote_executor= --remote_cache= --bes_backend= --module_mirrors=https://bcr.cloudflaremirrors.com --lockfile_mode=off "${@:2}"' > "$q/b"
+          chmod +x "$q/b"
+      - name: Compare the cgroup constructor before and after the fix
+        run: |
+          set -euo pipefail
+          for arm in parent fix; do
+            if [ "$arm" = parent ]; then
+              git show HEAD^^:runsc/cgroup/systemd.go > runsc/cgroup/systemd.go
+            else
+              git show HEAD^:runsc/cgroup/systemd.go > runsc/cgroup/systemd.go
+            fi
+            export QUALIFICATION_ARM="$arm"
+            "$QUALIFICATION_DIR/b" test //runsc/cgroup:cgroup_test --strategy=TestRunner=local --test_env=QUALIFICATION_ARM --test_env=QUALIFICATION_BUS --test_env=DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket --test_filter='^TestSystemdVersionDiagnosticQualification$' --test_arg=-test.v --test_output=all --nocache_test_results --flaky_test_attempts=1 2>&1 | tee "$QUALIFICATION_DIR/$arm.log"
+          done
+      - name: Run owning suite and static analyzer
+        run: |
+          set -euo pipefail
+          git show HEAD^:runsc/cgroup/systemd_test.go > runsc/cgroup/systemd_test.go
+          git diff --exit-code HEAD^ -- runsc/cgroup/
+          "$QUALIFICATION_DIR/b" test //runsc/cgroup:cgroup_test --test_output=errors 2>&1 | tee "$QUALIFICATION_DIR/owner.log"
+          "$QUALIFICATION_DIR/b" build //runsc/cgroup:cgroup_nogo 2>&1 | tee "$QUALIFICATION_DIR/analyzer.log"
+      - name: Archive validation output
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cgroup-systemd-version
+          path: ${{ runner.temp }}/systemd-version/*.log
+          retention-days: 14
