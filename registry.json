@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T14:39:52+00:00",
+    "updatedAt": "2026-11-13T14:42:18+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49545,12 +49545,12 @@
       "type": "branch",
       "repo": "tamird/grpc",
       "ref": "proposal/bazel-plugin-symlink",
-      "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
+      "head": "bbdda5b82173f102ecc83d4690f53b3c8e125969",
       "title": "[bazel] Replace the protoc plugin copy with a symlink",
-      "url": "https://github.com/tamird/grpc/commit/b056f0930",
+      "url": "https://github.com/tamird/grpc/commit/bbdda5b82",
       "group": "rbe",
       "status": "Published as grpc/grpc#43825",
-      "updatedAt": "2026-11-13T04:16:47+00:00",
+      "updatedAt": "2026-11-13T14:40:14Z",
       "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
       "evidence": [
         {
@@ -68745,12 +68745,12 @@
       "repo": "google/gvisor",
       "number": 17224,
       "url": "https://github.com/google/gvisor/pull/17224",
-      "status": "open",
+      "status": "merged",
       "ref": "research/yamltest-native-validator",
       "head": "e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
       "title": "Run YAML checks with the declared validator",
       "group": "bazel",
-      "updatedAt": "2026-11-08T13:46:27Z",
+      "updatedAt": "2026-11-13T14:03:30Z",
       "summary": "The macro now declares args, data and toolchains as keyword-only parameters and forwards the remaining test attributes unchanged. A configured caller passed all three through the macro. The revised source removes custom escaping and passes each option separately. Bazel expands the configured schema and source filegroup after select() resolves. Five existing checks validated the same 22 files, and the fixed controls covered a filename and schema containing spaces, an apostrophe and a literal dollar expression. The empty group now fails during analysis, before running the validator. Bazel sorts and deduplicates the input paths; the previous validator reported results from a map keyed by unique file. Extra Bazel --test_arg values reach the validator as additional filenames; none of the five existing owners supplies any. Bazel’s outer setup ran on ordinary Ubuntu before hiding /bin and /usr/bin from the process.",
       "evidence": [
         {
@@ -68780,6 +68780,10 @@
         {
           "label": "Approved change published as #17224",
           "url": "https://github.com/google/gvisor/pull/17224"
+        },
+        {
+          "label": "Merged through Copybara #17551",
+          "url": "https://github.com/google/gvisor/pull/17551"
         }
       ],
       "settledReviews": [
@@ -68820,18 +68824,7 @@
           "outcome": "approved",
           "postedURL": "https://github.com/google/gvisor/pull/17224"
         }
-      ],
-      "followup": {
-        "owner": "Upstream review",
-        "sourceHead": "e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf",
-        "observedAt": "2026-11-08T13:46:27Z",
-        "disposition": "Published the approved change as #17224.",
-        "nextAction": "Follow #17224 for maintainer review and import.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/17224",
-          "https://github.com/tamird/gvisor/commit/e89aa6319a4dca2dcafeeca7a09bfb2cbfd633cf"
-        ]
-      }
+      ]
     },
     {
       "id": "pr:17225",
@@ -77152,13 +77145,13 @@
       "repo": "grpc/grpc",
       "number": 43825,
       "ref": "proposal/bazel-plugin-symlink",
-      "head": "56eefe3f1b5bd2c2988950b4bd6ccc4b78834c41",
+      "head": "bbdda5b82173f102ecc83d4690f53b3c8e125969",
       "title": "[bazel] Replace the protoc plugin `cp` with a symlink",
       "url": "https://github.com/grpc/grpc/pull/43825",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-13T11:31:55+00:00",
-      "summary": "The published PR uses a custom rule to give protoc plugins their public filenames. The local revision uses the existing Skylib copy_file rule with allow_symlink and is_executable enabled.",
+      "updatedAt": "2026-11-13T14:40:14Z",
+      "summary": "The PR now uses Skylib’s copy_file rule to give each protoc plugin its public filename. Tamir pushed the revision and documented why the rule requests a symlink. The build and CLA checks passed. The PR is awaiting upstream review.",
       "evidence": [
         {
           "label": "Both installed universal macOS plugins after Bazel cleanup",
@@ -77203,26 +77196,12 @@
         {
           "label": "Kokoro macOS fork test, run 7 of 16",
           "url": "https://storage.googleapis.com/grpc-testing-kokoro-resultstore-logs/resultstore/prod/grpc/core/pull_request/macos/grpc_python_bazel_test/907ab47c-f4d2-492a-a915-1f2ffc7377e1/build.log"
-        }
-      ],
-      "refinement": {
-        "before": {
-          "head": "ba211b480312875b62d1e6fee80ea1b2c9ab5478"
         },
-        "after": {
-          "head": "56eefe3f1b5bd2c2988950b4bd6ccc4b78834c41"
+        {
+          "label": "Submitted Skylib revision",
+          "url": "https://github.com/grpc/grpc/commit/bbdda5b82"
         }
-      },
-      "humanAction": {
-        "status": "pending",
-        "kind": "submission",
-        "head": "56eefe3f1b5bd2c2988950b4bd6ccc4b78834c41",
-        "title": "Review and push the local Skylib revision",
-        "summary": "The formatter correction is live at ba211b480. In ~/code/grpc, proposal/skylib-protoc-plugin-revision (56eefe3f1) replaces the custom plugin rule with Skylib’s copy_file.",
-        "url": "https://github.com/grpc/grpc/pull/43825",
-        "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy",
-        "body": "The formatter correction is already on #43825 at `ba211b480`. The next revision is local in `~/code/grpc`, on `proposal/skylib-protoc-plugin-revision`.\n\nSkylib’s `copy_file(allow_symlink = True, is_executable = True)` gives each plugin its public executable name. The Linux action graph contains a symlink action. The macOS release recipe packaged the C++ and Objective-C plugins as regular executables. After extraction, those plugins generated all four expected files. Both build generators produced byte-identical output compared with the published revision: the Python manifest (`43fc5ed07…`) and the complete 168 MiB C++ model (`d2f216d45…`).\n\nReview the two commits locally:\n\n```sh\ngit -C ~/code/grpc range-diff --creation-factor=999 ba211b480^! 56eefe3f1^!\n```\n\nIf the revision looks right, update the existing PR branch:\n\n```sh\ngit -C ~/code/grpc push --force-with-lease=refs/heads/proposal/bazel-plugin-symlink:ba211b480312875b62d1e6fee80ea1b2c9ab5478 origin 56eefe3f1:refs/heads/proposal/bazel-plugin-symlink\n```"
-      }
+      ]
     },
     {
       "id": "pr:bazel-contrib/rules_go:4774",
@@ -109607,5 +109586,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T14:39:52+00:00"
+  "updatedAt": "2026-11-13T14:42:18+00:00"
 }
