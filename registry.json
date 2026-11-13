@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T02:54:20.944705+00:00",
+    "updatedAt": "2026-11-13T03:00:30.815941+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63140,13 +63140,13 @@
       "repo": "google/gvisor",
       "number": 17122,
       "ref": "proposal/vdso-declared-readelf",
-      "head": "b723711788b3cd7ff74a586541d27150d89ef4dd",
+      "head": "9328b5d2a294fd706a70a5446ff8382c52d32134",
       "title": "Declare readelf for the vDSO layout test",
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-11T21:27:44+00:00",
-      "summary": "The published rebase b72371178 declares LLVM readelf for the existing vDSO check. On native macOS ARM64 the checker accepted freshly built Linux AMD64 and ARM64 vDSOs and rejected a control with one byte in .data. The configured Linux AMD64 TestRunner resolves the declared Linux LLVM readelf. The separate Go replacement experiment remains optional.",
+      "updatedAt": "2026-11-13T03:00:30.815941+00:00",
+      "summary": "The rebased vDSO layout test uses Bazel’s LLVM readelf. On a Linux AMD64 worker with a failing readelf on PATH, the test accepted the AMD64 and ARM64 vDSOs and rejected a one-byte .data section. The separate Go replacement remains optional.",
       "evidence": [
         {
           "label": "Unchanged downstream Make rule and Python entry point with host Go; source-only copy control",
@@ -63187,6 +63187,14 @@
         {
           "label": "Comparison with the prior source",
           "url": "https://github.com/tamird/gvisor/compare/466dbf7a9...b72371178"
+        },
+        {
+          "label": "Published rebase on ae0f8d590",
+          "url": "https://github.com/tamird/gvisor/commit/9328b5d2a"
+        },
+        {
+          "label": "Declared readelf checked both Linux vDSOs and rejected the malformed ELF",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43355492128/artifacts/14006111161"
         }
       ],
       "settledReviews": [
@@ -63204,14 +63212,13 @@
       ],
       "followup": {
         "owner": "Maintainer",
-        "sourceHead": "b723711788b3cd7ff74a586541d27150d89ef4dd",
-        "observedAt": "2026-11-11T21:27:44+00:00",
-        "disposition": "Context-only rebase published and verified mergeable",
-        "nextAction": "Follow the review and import of the declared LLVM readelf on #17122.",
+        "sourceHead": "9328b5d2a294fd706a70a5446ff8382c52d32134",
+        "observedAt": "2026-11-13T03:00:30.815941+00:00",
+        "disposition": "Rebase published. GitHub reports mergeable.",
+        "nextAction": "Await maintainer review and monitor checks on the published head.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17122",
-          "https://github.com/tamird/gvisor/commit/14f43c8fc",
-          "https://github.com/tamird/gvisor/actions/runs/42295738426/artifacts/13541257890"
+          "https://github.com/tamird/gvisor/commit/9328b5d2a",
+          "https://github.com/tamird/gvisor/actions/runs/43355492128/artifacts/14006111161"
         ],
         "mergeable": "MERGEABLE"
       },
@@ -95265,7 +95272,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-11T16:01:07+00:00",
+      "updatedAt": "2026-11-13T02:57:50.464249+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -98202,7 +98209,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the rules_go SDK bootstrap supplier work through current-wrapper validation and a rules_shell release. Continue the separately tracked scratch-worker integrations.",
+      "nextStep": "Test rules_go 2b0358c4e with the first rules_shell release containing #64, then submit the rules_go change. gVisor can adopt both modules once the rules_go change is released. Continue the other scratch-worker integrations in parallel.",
       "evidence": [
         {
           "label": "Both optimized release layouts from tool-free AMD64 workers",
@@ -98771,6 +98778,10 @@
         {
           "label": "Dedicated rules_go SDK bootstrap supplier work",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Arules-go-sdk-bootstrap-shell"
+        },
+        {
+          "label": "Current rules_go wrapper passed with ordinary and symlinked SDK paths",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43065323600/artifacts/13876390564"
         }
       ],
       "group": "rbe"
@@ -106348,7 +106359,7 @@
       "status": "active",
       "group": "bazel",
       "owner": "root",
-      "updatedAt": "2026-11-11T17:14:06+00:00",
+      "updatedAt": "2026-11-13T02:57:50.464249+00:00",
       "summary": "On empty AMD64 and ARM64 Linux workers, rules_go 0.65 could not start its SDK builder wrapper. Supplying the interpreter as an execution-platform tool produced builder, pack and covdata on both workers. The supplier change depends on rules_shell #64 and a release containing its API.",
       "findings": [
         {
@@ -106433,7 +106444,7 @@
           ]
         }
       ],
-      "nextStep": "When rules_shell releases the file-backed interpreter from #64, prepare the rules_go change against that released API and follow up in the existing supplier discussion.",
+      "nextStep": "Test 2b0358c4e against the first published rules_shell module containing #64, then submit the change to rules_go. Once rules_go releases it, update gVisor to the published modules.",
       "evidence": [
         {
           "label": "rules_go 0.65 integration with the execution-platform interpreter",
@@ -108894,5 +108905,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-13T02:54:20.944705+00:00"
+  "updatedAt": "2026-11-13T03:00:30.815941+00:00"
 }
