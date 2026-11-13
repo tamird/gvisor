@@ -25,8 +25,8 @@ def _deps_check_impl(target, ctx):
             if DepsInfo in dep:
                 nodes.update(dep[DepsInfo].nodes)
 
-    if hasattr(ctx.rule.attr, "actual_binary"):
-        dep = ctx.rule.attr.actual_binary
+    if ctx.rule.kind == "go_cross_binary" or hasattr(ctx.rule.attr, "actual_binary"):
+        dep = ctx.rule.attr.target if ctx.rule.kind == "go_cross_binary" else ctx.rule.attr.actual_binary
         if dep and DepsInfo in dep:
             nodes.update(dep[DepsInfo].nodes)
 
@@ -38,7 +38,7 @@ def _deps_check_impl(target, ctx):
 
 _deps_check = aspect(
     implementation = _deps_check_impl,
-    attr_aspects = ["deps", "actual_binary"],
+    attr_aspects = ["deps", "actual_binary", "target"],
 )
 
 def _workspace_of(label):
