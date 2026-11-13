@@ -46,7 +46,7 @@ def Fatal(*args, **kwargs):
   exit(1)
 
 
-def CheckSegments(vdso_path):
+def CheckSegments(output):
   """Verifies layout of PT_LOAD segments.
 
   PT_LOAD segments must be laid out such that the ELF is directly mmappable.
@@ -65,12 +65,11 @@ def CheckSegments(vdso_path):
   0x000e68 R E 0x1000
 
   Args:
-    vdso_path: Path to VDSO binary.
+    output: The program headers reported by readelf -lW.
 
   Returns:
     A list of dicts describing each PT_LOAD segment.
   """
-  output = subprocess.check_output(["readelf", "-lW", vdso_path]).decode()
   lines = output.split("\n")
 
   segments = []
@@ -117,7 +116,7 @@ def CheckSegments(vdso_path):
   return segments
 
 
-def CheckEhFrame(vdso_path, load_segments):
+def CheckEhFrame(output, load_segments):
   """Verifies PT_GNU_EH_FRAME is non-empty and mapped within a PT_LOAD segment.
 
   If compilation omits .eh_frame (e.g. -fno-asynchronous-unwind-tables), the
@@ -125,10 +124,9 @@ def CheckEhFrame(vdso_path, load_segments):
   unwinder to dereference an unmapped address when unwinding across the VDSO.
 
   Args:
-    vdso_path: Path to VDSO binary.
+    output: The program headers reported by readelf -lW.
     load_segments: List of PT_LOAD segment dicts returned by CheckSegments.
   """
-  output = subprocess.check_output(["readelf", "-lW", vdso_path]).decode()
   eh_frames = []
   for line in output.split("\n"):
     if not line.startswith("  GNU_EH_FRAME"):
@@ -160,13 +158,12 @@ def CheckEhFrame(vdso_path, load_segments):
       )
 
 
-def CheckDynamic(vdso_path):
+def CheckDynamic(output):
   """Verifies the VDSO declares no DT_NEEDED shared library dependencies.
 
   Args:
-    vdso_path: Path to VDSO binary.
+    output: The dynamic entries reported by readelf -dW.
   """
-  output = subprocess.check_output(["readelf", "-dW", vdso_path]).decode()
   for line in output.split("\n"):
     if "(NEEDED)" in line:
       Fatal("VDSO contains DT_NEEDED dependency:\n%s", output)
@@ -181,7 +178,7 @@ _SECTION_NAME_RE = re.compile(r"""^\s+\[\ ?\d+\]\s+
                               (?P<size>[0-9a-f]+)""", re.VERBOSE)
 
 
-def CheckData(vdso_path):
+def CheckData(output):
   """Verifies the VDSO contains no .data or .bss sections.
 
   The readelf line format looks like:
@@ -203,9 +200,8 @@ def CheckData(vdso_path):
     l (large), p (processor specific)
 
   Args:
-    vdso_path: Path to VDSO binary.
+    output: The section headers reported by readelf -SW.
   """
-  output = subprocess.check_output(["readelf", "-SW", vdso_path]).decode()
   lines = output.split("\n")
 
   found_text = False
@@ -235,13 +231,12 @@ def CheckData(vdso_path):
     Fatal("VDSO contains no/empty .text section? Bad parsing?:\n%s" % output)
 
 
-def CheckRelocs(vdso_path):
+def CheckRelocs(output):
   """Verifies that the VDSO includes no relocations.
 
   Args:
-    vdso_path: Path to VDSO binary.
+    output: The relocations reported by readelf -r.
   """
-  output = subprocess.check_output(["readelf", "-r", vdso_path]).decode()
   if output.strip() != "There are no relocations in this file.":
     Fatal("VDSO contains relocations: %s", output)
 
@@ -258,17 +253,22 @@ def main():
       action="store_true",
       help="Check that PT_GNU_EH_FRAME is non-empty and mapped",
   )
+  parser.add_argument("--readelf", default="readelf", help="Path to readelf")
   args = parser.parse_args()
 
-  load_segments = CheckSegments(args.vdso)
-  CheckRelocs(args.vdso)
-  CheckDynamic(args.vdso)
+  def readelf(option):
+    return subprocess.check_output([args.readelf, option, args.vdso]).decode()
+
+  program_headers = readelf("-lW")
+  load_segments = CheckSegments(program_headers)
+  CheckRelocs(readelf("-r"))
+  CheckDynamic(readelf("-dW"))
 
   if args.check_data:
-    CheckData(args.vdso)
+    CheckData(readelf("-SW"))
 
   if args.check_eh_frame:
-    CheckEhFrame(args.vdso, load_segments)
+    CheckEhFrame(program_headers, load_segments)
 
 
 if __name__ == "__main__":

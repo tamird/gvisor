@@ -5,7 +5,7 @@
 
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_binary")
+load("//tools:defs.bzl", "cc_binary", "cc_readelf")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -88,8 +88,12 @@ py_test(
     args = [
         "--check-data",
         "--check-eh-frame",
+        "--readelf=$(rootpath {})".format(cc_readelf),
         "--vdso=$(rootpath :vdso)",
     ],
-    data = [":vdso"],
+    data = [
+        ":vdso",
+        cc_readelf,
+    ],
     main = "check_vdso.py",
 )
