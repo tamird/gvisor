@@ -5724,10 +5724,22 @@
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
       "status": "Approved; waiting for four remaining compiler prerequisites",
-      "summary": "On the current-master integration (a81045f73), the release booted in a 4 KiB ARM64 guest. The same 4 KiB build failed before the workload in a 64 KiB guest. The Python sandbox test could not write cgroup.subtree_control on either architecture.\n\nOn native AMD64 and ARM64 workers, all 66 tests that previously failed to build reached execution with LLVM 0.8.26. Of those, 61 passed on AMD64 and 60 passed on ARM64. Across the full selection, AMD64 built 3,257 of 3,261 targets and passed 369 of 376 test shards. ARM64 built 3,255 of 3,259 targets and passed 368 of 376 shards, with two other selectors skipped for the platform.\n\nThe four build failures on each architecture were runsc and gvisor_sentry with coverage, each with and without race instrumentation. Both architectures reported failures in the GitHub workflow check, docprocessor, nvproxy driver parity, runsc sandbox, the Python sandbox test, the Go sandbox test and the vDSO test. ARM64 also reported a trace test failure. The workflow check includes the fork’s qualification workflow. On the exact product tree the workflow and ARM64 trace tests passed. All four coverage builds stopped at build_cover.sh:47 because curl was absent. The NVIDIA test could not run git and the vDSO test could not run readelf. Docprocessor and the Go sandbox test could not write cgroup.subtree_control. The runsc sandbox test received EPERM creating a network namespace.\n\nAn AMD64 Linux worker cross-built the ARM64 release with LLVM 0.8.26 at 48f457b4e and linked all three AMD64 sidecars with the caller’s allocator. The nine ARM64 ELF files matched the release manifest. An uncached QEMU test booted a 4 KiB ARM64 guest, started the archived Sentry (SHA-256 prefix 566231c75) under systrap, and ran a static musl program as PID 1. Both AT_PAGESZ and sysconf returned 4,096. The program exited successfully.\n\nThe declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.\n\nThe same three-line external MODULE, with compiler integration a066005a6, built a separate ARM64 release using --@gvisor//tools/bazeldefs:page_size=64k. The cache-only invocation missed. Rebuild f4ab221b-7490-4538-8c1f-42a4cfbf81a8 produced all nine ARM64 ELF files, six with different digests from the 4 KiB release. Uncached remote Bazel test 453b258d-06bc-4b6f-9abb-9e9072894d54 took 13.422 seconds. It booted an emulated AArch64 Ubuntu 6.8.0-138-generic-64k guest; runsc selected Sentry 2f8cca6b6, and guest PID 1 read 65,536 bytes from both AT_PAGESZ and sysconf and exited zero.",
-      "updatedAt": "2026-11-13T02:24:56.989082+00:00",
+      "summary": "The LLVM 0.8.26 integration (a81045f73) cross-built two releases on Linux AMD64. Each ran its AArch64 workload as PID 1 under systrap in an emulated guest. With the default 4 KiB release, Linux 7.3.0-rc3 reported 4,096 bytes through both AT_PAGESZ and sysconf. With --//tools/bazeldefs:page_size=64k, Linux 6.8.0-138-generic-64k reported 65,536 through both. Both uncached guest tests exited zero. The earlier 64 KiB guest run used the default 4 KiB release and exited before the workload. The separate Python sandbox test could not write cgroup.subtree_control on either architecture.\n\nOn native AMD64 and ARM64 workers, all 66 tests that previously failed to build reached execution with LLVM 0.8.26. Of those, 61 passed on AMD64 and 60 passed on ARM64. Across the full selection, AMD64 built 3,257 of 3,261 targets and passed 369 of 376 test shards. ARM64 built 3,255 of 3,259 targets and passed 368 of 376 shards, with two other selectors skipped for the platform.\n\nThe four build failures on each architecture were runsc and gvisor_sentry with coverage, each with and without race instrumentation. Both architectures reported failures in the GitHub workflow check, docprocessor, nvproxy driver parity, runsc sandbox, the Python sandbox test, the Go sandbox test and the vDSO test. ARM64 also reported a trace test failure. The workflow check includes the fork’s qualification workflow. On the exact product tree the workflow and ARM64 trace tests passed. All four coverage builds stopped at build_cover.sh:47 because curl was absent. The NVIDIA test could not run git and the vDSO test could not run readelf. Docprocessor and the Go sandbox test could not write cgroup.subtree_control. The runsc sandbox test received EPERM creating a network namespace.\n\nAn AMD64 Linux worker cross-built the ARM64 release with LLVM 0.8.26 at 48f457b4e and linked all three AMD64 sidecars with the caller’s allocator. The nine ARM64 ELF files matched the release manifest. An uncached QEMU test booted a 4 KiB ARM64 guest, started the archived Sentry (SHA-256 prefix 566231c75) under systrap, and ran a static musl program as PID 1. Both AT_PAGESZ and sysconf returned 4,096. The program exited successfully.\n\nThe declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.\n\nThe same three-line external MODULE, with compiler integration a066005a6, built a separate ARM64 release using --@gvisor//tools/bazeldefs:page_size=64k. The cache-only invocation missed. Rebuild f4ab221b-7490-4538-8c1f-42a4cfbf81a8 produced all nine ARM64 ELF files, six with different digests from the 4 KiB release. Uncached remote Bazel test 453b258d-06bc-4b6f-9abb-9e9072894d54 took 13.422 seconds. It booted an emulated AArch64 Ubuntu 6.8.0-138-generic-64k guest; runsc selected Sentry 2f8cca6b6, and guest PID 1 read 65,536 bytes from both AT_PAGESZ and sysconf and exited zero.",
+      "updatedAt": "2026-11-13T02:39:50.510617+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
+        {
+          "label": "64 KiB ARM64 systrap guest and test output",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43352267502/artifacts/14005146401"
+        },
+        {
+          "label": "64 KiB release and all nine AArch64 binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43352267502/artifacts/14004646890"
+        },
+        {
+          "label": "4 KiB ARM64 systrap guest and test output",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43350759188/artifacts/14003857609"
+        },
         {
           "label": "Current-master cross-build and 4 KiB and 64 KiB ARM64 guest tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/43350759188"
@@ -6599,10 +6611,12 @@
       "followup": {
         "owner": "Compiler migration",
         "sourceHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
-        "disposition": "The parser prerequisite landed at e4b80af9e. The separate 0.8.26 integration cross-built and booted the ARM64 release and linked all three AMD64 allocator sidecars. Its broad unit run reached all 66 previously unbuilt tests on both architectures.",
+        "disposition": "The parser prerequisite landed at e4b80af9e. The LLVM 0.8.26 integration built and ran both page-size-matched ARM64 releases on Linux AMD64 and linked all three AMD64 allocator sidecars. Its broad unit run reached all 66 previously unbuilt tests on both architectures.",
         "observedAt": "2026-11-13T02:04:52+00:00",
-        "nextAction": "Build with the 64 KiB setting and run that release on a 64 KiB ARM64 kernel. Submit the approved compiler change after #16522, #16516, #17067 and #17444 merge.",
+        "nextAction": "Submit the approved compiler change after #16522, #16516, #17067 and #17444 merge.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43352267502/artifacts/14005146401",
+          "https://github.com/tamird/gvisor/actions/runs/43352267502/artifacts/14004646890",
           "https://github.com/tamird/gvisor/actions/runs/43350759188/artifacts/14003857609",
           "https://github.com/tamird/gvisor/actions/runs/43350759188",
           "https://github.com/tamird/gvisor/actions/runs/43349504730/artifacts/14003417348",
@@ -108816,6 +108830,62 @@
         "requestedAt": "2026-11-13T02:28:35.504415+00:00",
         "summary": "Open the diagnostic change for #11877. Both architecture analyzers and the cgroup suite passed. The original failing worker did not report the underlying D-Bus error."
       }
+    },
+    {
+      "id": "investigation:ci-flake-watchdog-start",
+      "title": "Watchdog startup warning fails passing syscall tests",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T02:40:38.503230+00:00",
+      "summary": "Two AMD64 syscall shards completed every selected guest case. The runner then failed each shard because a Sentry had logged “Watchdog.Start() not called within 30s”. Both retries passed on the same source. The logs identify neither the emitting Sentry nor what delayed its startup.",
+      "findings": [
+        {
+          "text": "On #54810, shard 11/20 reported all nine socket_abstract_test_runsc_systrap_shared tests passed. The runner reported the warning at 60.28 seconds.",
+          "evidence": [
+            {
+              "label": "Original #54810 shared-systrap shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6768-4463-9193-c9b7826c0f7f"
+            },
+            {
+              "label": "Passing #54810 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d2a1-9346-44d8-aad6-487900a2fb4f"
+            }
+          ]
+        },
+        {
+          "text": "On #54821, shard 9/20 reported its single cgroup2_test_runsc_kvm case passed. The runner reported the warning at 60.26 seconds.",
+          "evidence": [
+            {
+              "label": "Original #54821 KVM shard",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d29b-8fec-4f13-87c2-189b26d86254"
+            },
+            {
+              "label": "Passing #54821 retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d2b9-a1fe-42e9-a978-cdeb79e1c5fd"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Identify the Sentry that logged the warning. Compare its creation, Watchdog.Start and exit timestamps with the syscall test timeline on the next failure.",
+      "evidence": [
+        {
+          "label": "Original #54810 shared-systrap shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6768-4463-9193-c9b7826c0f7f"
+        },
+        {
+          "label": "Passing #54810 retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d2a1-9346-44d8-aad6-487900a2fb4f"
+        },
+        {
+          "label": "Original #54821 KVM shard",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d29b-8fec-4f13-87c2-189b26d86254"
+        },
+        {
+          "label": "Passing #54821 retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54821#01a1d2b9-a1fe-42e9-a978-cdeb79e1c5fd"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-13T02:24:56.989082+00:00"
