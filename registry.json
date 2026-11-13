@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:22:06+00:00",
+    "updatedAt": "2026-11-13T16:22:52.972126+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -109097,12 +109097,12 @@
     },
     {
       "id": "investigation:ci-flake-node-net-hex-write-timeout",
-      "title": "Node asynchronous hex-string write timed out on loopback",
+      "title": "Node asynchronous socket writes time out on loopback",
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T18:09:55+00:00",
-      "summary": "Build 54692 on 875cb4439 timed out running parallel/test-net-write-fully-async-hex-string after 49 other tests passed.",
+      "updatedAt": "2026-11-13T16:22:52.972126+00:00",
+      "summary": "Node 22.2.0 timed out in two variants of the same loopback write test, with hex strings on #54692 and Buffers on #54913. Both shards passed on retry.",
       "findings": [
         {
           "text": "Node 22.2 reported a runner timeout without a JavaScript assertion or socket error. The loopback writer waits for drain, but the log does not establish which callback stalled. The same-head retry completed the target in 70.9 seconds with seven of eight shards cached.",
@@ -109120,6 +109120,23 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54692#01a1d0e2-7d7f-4491-9627-a01256d5fb5a"
             }
           ]
+        },
+        {
+          "text": "On #54913, 50 sibling cases passed and the Buffer variant reached the Node test runner’s timeout. The retry ran this shard in 45.0 s with seven cached. The Buffer variant repeats the write/drain cycle 200 times and the hex-string variant 20 times. Neither original log identifies the last completed callback.",
+          "evidence": [
+            {
+              "label": "Buffer-write timeout on #54913",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54913/jobs/01a1d59d-e05f-44de-b4b9-120030d27f90/artifacts/01a1d5a5-9b34-42e6-9005-6726dd535cb2"
+            },
+            {
+              "label": "Node v22.2.0 explicitly identifies its buffer variant",
+              "url": "https://github.com/nodejs/node/blob/v22.2.0/test/parallel/test-net-write-fully-async-buffer.js#L4-L31"
+            },
+            {
+              "label": "Same-head Node retry ran the failed shard and passed",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54913#01a1d5a6-4476-4482-a3ba-aaed0e11aeaf"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -109134,6 +109151,18 @@
         {
           "label": "Same-head retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54692#01a1d0e2-7d7f-4491-9627-a01256d5fb5a"
+        },
+        {
+          "label": "Buffer-write timeout on #54913",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54913/jobs/01a1d59d-e05f-44de-b4b9-120030d27f90/artifacts/01a1d5a5-9b34-42e6-9005-6726dd535cb2"
+        },
+        {
+          "label": "Node v22.2.0 explicitly identifies its buffer variant",
+          "url": "https://github.com/nodejs/node/blob/v22.2.0/test/parallel/test-net-write-fully-async-buffer.js#L4-L31"
+        },
+        {
+          "label": "Same-head Node retry ran the failed shard and passed",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54913#01a1d5a6-4476-4482-a3ba-aaed0e11aeaf"
         }
       ],
       "nextStep": "Identify the last completed operation if the loopback timeout recurs."
@@ -110093,7 +110122,79 @@
           "url": "https://github.com/google/gvisor/blob/e0cc9dabd/pkg/lisafs/connection_test.go#L90-L118"
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-mysql-startup",
+      "title": "MySQL image timed out before opening its TCP listener",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T16:22:52.972126+00:00",
+      "summary": "On #54914, TestMysql exceeded its startup deadline after the MySQL 8.0.19 container initialized its database. The SQL workload never started.",
+      "findings": [
+        {
+          "text": "The bootstrap server reported ready on its Unix socket with port 0. Its last output included two warnings from the timezone import. The image intentionally starts this server with --skip-networking. The test failed at the one-minute wait for the final server on port 3306, before it ran the SQL client. The log does not show whether the import stalled or finished after the deadline.",
+          "evidence": [
+            {
+              "label": "MySQL first-attempt test output",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54914/jobs/01a1d5a5-b785-46ed-94e9-c1f8a7ed998d/artifacts/01a1d5b3-75c4-4508-91c2-cb2f4ea13498"
+            },
+            {
+              "label": "MySQL 8.0.19-1.1.15 bootstrap and timezone import",
+              "url": "https://github.com/mysql/mysql-docker/blob/abe70cbbd8b6b4275ee6d82dd6adb0c8cd7cde94/8.0/docker-entrypoint.sh#L79-L104"
+            },
+            {
+              "label": "Test waits for port 3306 before sending SQL",
+              "url": "https://github.com/google/gvisor/blob/73e36937be2ecbd264d34ac7ef37550b9f2e71d0/test/image/image_test.go#L214-L253"
+            }
+          ]
+        },
+        {
+          "text": "On the same commit, the cgroupv2 image target passed in 35.9 s. The adjacent cgroupv1 image target passed in 78.6 s.",
+          "evidence": [
+            {
+              "label": "Same-head cgroupv2 image target passed in 35.9 s",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5a5-b788-407e-9e1b-f78fa1314642"
+            },
+            {
+              "label": "Adjacent cgroupv1 image target passed in 78.6 s",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54913#01a1d59d-e028-4035-b0e0-5fe5448cbc92"
+            },
+            {
+              "label": "Same-head cgroupv1 retry status",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5b4-2dcc-480a-96b0-7d1e11bcd345"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Record elapsed time for the timezone import, temporary server shutdown, and final TCP readiness on another cold start of the same image. Compare the passing and failing startup phases before changing the deadline.",
+      "evidence": [
+        {
+          "label": "MySQL first-attempt test output",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54914/jobs/01a1d5a5-b785-46ed-94e9-c1f8a7ed998d/artifacts/01a1d5b3-75c4-4508-91c2-cb2f4ea13498"
+        },
+        {
+          "label": "MySQL 8.0.19-1.1.15 bootstrap and timezone import",
+          "url": "https://github.com/mysql/mysql-docker/blob/abe70cbbd8b6b4275ee6d82dd6adb0c8cd7cde94/8.0/docker-entrypoint.sh#L79-L104"
+        },
+        {
+          "label": "Test waits for port 3306 before sending SQL",
+          "url": "https://github.com/google/gvisor/blob/73e36937be2ecbd264d34ac7ef37550b9f2e71d0/test/image/image_test.go#L214-L253"
+        },
+        {
+          "label": "Same-head cgroupv2 image target passed in 35.9 s",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5a5-b788-407e-9e1b-f78fa1314642"
+        },
+        {
+          "label": "Adjacent cgroupv1 image target passed in 78.6 s",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54913#01a1d59d-e028-4035-b0e0-5fe5448cbc92"
+        },
+        {
+          "label": "Same-head cgroupv1 retry status",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5b4-2dcc-480a-96b0-7d1e11bcd345"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-13T16:22:06+00:00"
+  "updatedAt": "2026-11-13T16:22:52.972126+00:00"
 }
