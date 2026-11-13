@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-13T16:36:57.500081+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-13T16:42:43.864980+00:00",
+  "registryDate": "2026-11-13T16:45:25.578221+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -457057,6 +457057,9 @@
             }
           }
         ]
+      },
+      "inspectedReviewHeads": {
+        "IC_kwDOB9IlXs8AAAABmNLQOw": "0bf24c0a73fa1349c21c672605a276f6765950ab"
       }
     }
   ],
@@ -459316,26 +459319,6 @@
       "rootURL": "https://github.com/google/gvisor/pull/15972#discussion_r4459603569",
       "rootId": "PRRC_kwDOB9IlXs8AAAABCdAmcQ",
       "owner": "gVisor maintainer",
-      "assigned": false,
-      "feedbackComplete": true
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 17612,
-      "head": "0bf24c0a73fa1349c21c672605a276f6765950ab",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
-      "firstObservedHead": "0bf24c0a73fa1349c21c672605a276f6765950ab",
-      "reviewHead": null,
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABmNLQOw",
-      "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858919995",
-      "author": "relkochta",
-      "updatedAt": "2026-11-13T16:33:59Z",
-      "threadId": null,
-      "rootURL": null,
-      "rootId": null,
-      "owner": "Repository lint",
       "assigned": false,
       "feedbackComplete": true
     }

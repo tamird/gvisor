@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:42:43.864980+00:00",
+    "updatedAt": "2026-11-13T16:45:25.578221+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -102531,7 +102531,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T16:19:21+00:00",
+      "updatedAt": "2026-11-13T16:45:25.578221+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -102956,7 +102956,16 @@
         "reviewers": [
           "tamird"
         ],
-        "since": "2026-11-13T16:13:35Z"
+        "since": "2026-11-13T16:13:35Z",
+        "inspected": [
+          {
+            "id": "IC_kwDOB9IlXs8AAAABmNLQOw",
+            "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858919995",
+            "updatedAt": "2026-11-13T16:33:59Z",
+            "head": "0bf24c0a73fa1349c21c672605a276f6765950ab",
+            "evidence": "https://github.com/google/gvisor/pull/17612#issuecomment-6859110288"
+          }
+        ]
       }
     },
     {
@@ -110246,5 +110255,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:42:43.864980+00:00"
+  "updatedAt": "2026-11-13T16:45:25.578221+00:00"
 }
