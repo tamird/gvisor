@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:49:44+00:00",
+    "updatedAt": "2026-11-13T15:50:43.748380+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35920,8 +35920,8 @@
       "url": "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
       "group": "bazel",
       "status": "Merged through #16586",
-      "updatedAt": "2026-11-11T19:43:51+00:00",
-      "summary": "Published at immutable 1d73cd4965 as #16586 after contributor approval. Use the C++ toolchain for the Sentry vDSO. Both target ELFs kept their public symbols, versions and offsets, and both were embedded in the matching Go archive. Native AMD64 passed the layout and two Systrap clock tests; a separate QEMU user-mode probe exercised the ARM64 entry point. The outer verifier failed on a wrapper-argv assumption; the original test logs verify the actual runner and sandbox arguments.",
+      "updatedAt": "2026-11-13T15:50:43.748380+00:00",
+      "summary": "After #16586 landed, #17576 reverted it and #17583 restored the C++ build with ThinLTO disabled. Two open exports share parent 23012ba12. #17639 restores the earlier genrule. It names the CL to revert and gives no reason. #17640 keeps the C++ build, emits unwind tables and joins the epoll test’s canceled thread. Etienne reports a crash during ARM64 cancellation in certain toolchain configurations. On #17640, native ARM64 partition 7/10 passed epoll under ptrace and systrap with directfs and shared filesystems. Its release came from the PR. UnblockWithSignal is case 7 in the epoll binary and the runner selects it in that partition. The public log reports target results only.",
       "evidence": [
         {
           "label": "Published upstream PR #16586",
@@ -35950,14 +35950,38 @@
         {
           "label": "Merged vDSO change from #16983",
           "url": "https://github.com/google/gvisor/commit/f855fc7c1"
+        },
+        {
+          "label": "First rollback, merged",
+          "url": "https://github.com/google/gvisor/pull/17576"
+        },
+        {
+          "label": "Reland with ThinLTO disabled",
+          "url": "https://github.com/google/gvisor/pull/17583"
+        },
+        {
+          "label": "Proposed rollback to the genrule",
+          "url": "https://github.com/google/gvisor/pull/17639"
+        },
+        {
+          "label": "Unwind-table and epoll thread repair",
+          "url": "https://github.com/google/gvisor/pull/17640"
+        },
+        {
+          "label": "Native ARM64 epoll target results, partition 7/10",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54911#01a1d588-0523-436d-b726-2b971edacb47"
+        },
+        {
+          "label": "Thread cancellation and join in the tested source",
+          "url": "https://github.com/google/gvisor/blob/f1e8b6956/test/syscalls/linux/epoll.cc#L264-L290"
         }
       ],
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
-        "observedAt": "2026-11-11T19:43:51+00:00",
-        "disposition": "The source and its Copybara import merged as f855fc7c1.",
-        "nextAction": "Complete. The native vDSO compiler prerequisite landed.",
+        "observedAt": "2026-11-13T15:50:43.748380+00:00",
+        "disposition": "The original PR merged. The second rollback and the unwind-table repair are open on the same base.",
+        "nextAction": "Watch the upstream choice. If the rollback lands, verify which build rule is present before relying on native vDSO compilation. If the repair lands, compare the checker and build rule with the ones already tested for #17122.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16586",
           "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
@@ -35966,7 +35990,13 @@
           "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae",
           "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a",
           "https://github.com/google/gvisor/pull/16983",
-          "https://github.com/google/gvisor/commit/f855fc7c1"
+          "https://github.com/google/gvisor/commit/f855fc7c1",
+          "https://github.com/google/gvisor/pull/17576",
+          "https://github.com/google/gvisor/pull/17583",
+          "https://github.com/google/gvisor/pull/17639",
+          "https://github.com/google/gvisor/pull/17640",
+          "https://buildkite.com/gvisor/pipeline/builds/54911#01a1d588-0523-436d-b726-2b971edacb47",
+          "https://github.com/google/gvisor/blob/f1e8b6956/test/syscalls/linux/epoll.cc#L264-L290"
         ]
       },
       "inactive": true
@@ -35982,8 +36012,8 @@
       "url": "https://github.com/google/gvisor/pull/16586",
       "group": "bazel",
       "status": "merged",
-      "updatedAt": "2026-11-11T19:43:51+00:00",
-      "summary": "The native vDSO change from 1d73cd496 landed through #16983 in f855fc7c1.",
+      "updatedAt": "2026-11-13T15:50:43.748380+00:00",
+      "summary": "After #16586 landed, #17576 reverted it and #17583 restored the C++ build with ThinLTO disabled. Two open exports share parent 23012ba12. #17639 restores the earlier genrule. It names the CL to revert and gives no reason. #17640 keeps the C++ build, emits unwind tables and joins the epoll test’s canceled thread. Etienne reports a crash during ARM64 cancellation in certain toolchain configurations. On #17640, native ARM64 partition 7/10 passed epoll under ptrace and systrap with directfs and shared filesystems. Its release came from the PR. UnblockWithSignal is case 7 in the epoll binary and the runner selects it in that partition. The public log reports target results only.",
       "evidence": [
         {
           "label": "Published upstream PR #16586",
@@ -36012,14 +36042,38 @@
         {
           "label": "Merged vDSO change from #16983",
           "url": "https://github.com/google/gvisor/commit/f855fc7c1"
+        },
+        {
+          "label": "First rollback, merged",
+          "url": "https://github.com/google/gvisor/pull/17576"
+        },
+        {
+          "label": "Reland with ThinLTO disabled",
+          "url": "https://github.com/google/gvisor/pull/17583"
+        },
+        {
+          "label": "Proposed rollback to the genrule",
+          "url": "https://github.com/google/gvisor/pull/17639"
+        },
+        {
+          "label": "Unwind-table and epoll thread repair",
+          "url": "https://github.com/google/gvisor/pull/17640"
+        },
+        {
+          "label": "Native ARM64 epoll target results, partition 7/10",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54911#01a1d588-0523-436d-b726-2b971edacb47"
+        },
+        {
+          "label": "Thread cancellation and join in the tested source",
+          "url": "https://github.com/google/gvisor/blob/f1e8b6956/test/syscalls/linux/epoll.cc#L264-L290"
         }
       ],
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
-        "observedAt": "2026-11-11T19:43:51+00:00",
-        "disposition": "The source and its Copybara import merged as f855fc7c1.",
-        "nextAction": "Complete. The native vDSO compiler prerequisite landed.",
+        "observedAt": "2026-11-13T15:50:43.748380+00:00",
+        "disposition": "The original PR merged. The second rollback and the unwind-table repair are open on the same base.",
+        "nextAction": "Watch the upstream choice. If the rollback lands, verify which build rule is present before relying on native vDSO compilation. If the repair lands, compare the checker and build rule with the ones already tested for #17122.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16586",
           "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
@@ -36028,7 +36082,13 @@
           "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae",
           "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a",
           "https://github.com/google/gvisor/pull/16983",
-          "https://github.com/google/gvisor/commit/f855fc7c1"
+          "https://github.com/google/gvisor/commit/f855fc7c1",
+          "https://github.com/google/gvisor/pull/17576",
+          "https://github.com/google/gvisor/pull/17583",
+          "https://github.com/google/gvisor/pull/17639",
+          "https://github.com/google/gvisor/pull/17640",
+          "https://buildkite.com/gvisor/pipeline/builds/54911#01a1d588-0523-436d-b726-2b971edacb47",
+          "https://github.com/google/gvisor/blob/f1e8b6956/test/syscalls/linux/epoll.cc#L264-L290"
         ]
       }
     },
@@ -63260,7 +63320,7 @@
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-13T15:33:01.762170+00:00",
+      "updatedAt": "2026-11-13T15:50:43.748380+00:00",
       "summary": "With #17627 applied, the declared LLVM reader accepted both AMD64 and ARM64 vDSOs. The combined checker rejected non-empty .data, a missing PT_GNU_EH_FRAME segment, and a DT_NEEDED dependency.",
       "evidence": [
         {
@@ -63318,6 +63378,18 @@
         {
           "label": "Declared readelf checked both Linux vDSOs and rejected the malformed ELF",
           "url": "https://github.com/tamird/gvisor/actions/runs/43355492128/artifacts/14006111161"
+        },
+        {
+          "label": "Competing rollback of the C++ build",
+          "url": "https://github.com/google/gvisor/pull/17639"
+        },
+        {
+          "label": "Repair including the thread join",
+          "url": "https://github.com/google/gvisor/pull/17640"
+        },
+        {
+          "label": "Native ARM64 epoll job on #17640",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54911#01a1d588-0523-436d-b726-2b971edacb47"
         }
       ],
       "settledReviews": [
@@ -63336,16 +63408,18 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "9328b5d2a294fd706a70a5446ff8382c52d32134",
-        "observedAt": "2026-11-13T15:33:01.762170+00:00",
-        "disposition": "Both upstream exports contain byte-identical vdso/BUILD and vdso/check_vdso.py files to the version that passed all five declared-readelf checks. #17640 also joins a thread in the epoll test.",
-        "nextAction": "Rebase #17122 when the vDSO checker from #17627 or #17640 lands. Check the landed versions of both vDSO files against the qualified ones.",
+        "observedAt": "2026-11-13T15:50:43.748380+00:00",
+        "disposition": "Both proposed repairs contain the same vdso/BUILD and check_vdso.py as the five-check qualification. The competing rollback restores the old genrule and supplies no checker changes.",
+        "nextAction": "Rebase on the landed checker if #17627 or #17640 merges. If #17639 lands first, inspect the restored genrule and recheck the declared reader against that tree. The ARM64 epoll job exercised #17640’s separate runtime fix.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/43414236340/artifacts/14030702508",
           "https://github.com/google/gvisor/pull/17627",
           "https://github.com/tamird/gvisor/commit/9328b5d2a",
           "https://github.com/tamird/gvisor/actions/runs/43355492128/artifacts/14006111161",
           "https://github.com/google/gvisor/pull/17640",
-          "https://github.com/google/gvisor/commit/f1e8b6956"
+          "https://github.com/google/gvisor/commit/f1e8b6956",
+          "https://github.com/google/gvisor/pull/17639",
+          "https://buildkite.com/gvisor/pipeline/builds/54911#01a1d588-0523-436d-b726-2b971edacb47"
         ],
         "mergeable": "MERGEABLE"
       },
@@ -109874,5 +109948,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:49:44+00:00"
+  "updatedAt": "2026-11-13T15:50:43.748380+00:00"
 }
