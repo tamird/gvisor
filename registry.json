@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:43:34+00:00",
+    "updatedAt": "2026-11-13T15:44:41+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108707,7 +108707,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T15:43:34+00:00",
+      "updatedAt": "2026-11-13T15:44:41+00:00",
       "summary": "An Ubuntu release worker spent 59 minutes updating package indexes and attempting to install the same packages. The dpkg frontend lock stayed with unattended-upgrades. The job timed out before its CUDA test started and the automatic retry passed.",
       "findings": [
         {
@@ -108733,7 +108733,7 @@
           ]
         },
         {
-          "text": "Six first attempts in #54906 and six more in #54907 exited 100 in package setup. The repository pre-command hook could not take an APT lock. Each job passed on retry.",
+          "text": "Six jobs in #54906 and four in #54907 exited 100 when package setup could not acquire an APT or dpkg lock. Nine failed in the repository pre-command hook and one in the Podman job’s package installation. All ten jobs passed on retry.",
           "evidence": [
             {
               "label": "#54906 Java package setup",
@@ -109807,5 +109807,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:43:34+00:00"
+  "updatedAt": "2026-11-13T15:44:41+00:00"
 }
