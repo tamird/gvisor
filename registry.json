@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T17:04:18.636367+00:00",
+    "updatedAt": "2026-11-13T17:09:10.801249+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54310,8 +54310,8 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-13T17:04:18.636367+00:00",
-      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18. In llvm 0.8.27 the extension recognizes the configure tag but rejects it from any non-root module. #17641 still passes that tag from gVisor. This PR limits it to builds with gVisor as the root.",
+      "updatedAt": "2026-11-13T17:09:10.801249+00:00",
+      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18. A local Bazel 9.3.1 consumer of #17641 (5b433add4, llvm 0.8.27) still failed to read the header map: “Only the root module may configure the default Linux headers version”. With only this PR’s MODULE.bazel change applied, the same query passed. With no consumer selection the generated default was None; with the consumer selecting 6.12 the map resolved it to 6.12.91.",
       "evidence": [
         {
           "label": "Downstream C controls isolate the vDSO and ARM platform package imports",
@@ -56328,7 +56328,7 @@
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T23:30:58.981Z",
+      "updatedAt": "2026-11-13T17:09:10.801249+00:00",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
       "evidence": [
         {
@@ -56379,15 +56379,16 @@
         }
       },
       "followup": {
-        "owner": "Agent",
+        "owner": "Maintainer",
         "sourceHead": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
-        "observedAt": "2026-11-06T23:11:36.682Z",
-        "disposition": "The approved single-commit source is published. The two complete checkouts passed the pinned formatter.",
-        "nextAction": "Check upstream lint on the published revision, then follow review.",
+        "observedAt": "2026-11-13T17:09:10.801249+00:00",
+        "disposition": "Upstream lint passed on the published formatting amendment.",
+        "nextAction": "Await maintainer review on the published head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16830",
           "https://github.com/tamird/gvisor/commit/6b8479b9f",
-          "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
+          "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613",
+          "https://github.com/google/gvisor/actions/runs/42310119111/job/128209178785"
         ]
       }
     },
@@ -62424,7 +62425,7 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-13T16:42:43.864980+00:00",
+      "updatedAt": "2026-11-13T17:09:10.801249+00:00",
       "summary": "On cd5b2a5a2, all ten offline Buildkite agent controls passed for the two-command source coordinator. Installed Bazelisk, matching plain Bazel, Go alone, and a mismatched Bazel with Go each selected Bazel 9.3.1. The native license job selected it too. Each shut down its own server and preserved the caller’s files. A mismatched Bazel without Go stopped in setup. Four controlled exit pairs exercised the rendered mixed-test and ARM64-build commands. Each ran both commands, reported both exit codes and failed the job if either command failed. The release install hooks, Bazel profiles and ARM64 target manifest were preserved.\n\nThe source coordinator built all 3,246 ARM64 roots on efaf79761 across six configurations. No root was missing, failed, or unexpected. The four runsc and Sentry coverage executables and the metric archive’s object member were AArch64. BuildBuddy executed 321 actions remotely and served 48,239 remote cache hits. This was a build of default outputs and ran zero tests.\n\nTamir approved 4eb27c408, which runs the statefile permission tests as UID 65534. Its BUILD rule selects //test/rbe:source_presubmit, introduced by its parent d78fe07a0. The test change ships with that configuration.\n\nOne mixed Bazel invocation built the 2,887 top-level build-only labels in their selected configurations and all 728 test targets. It executed 374 uncached test shards on native AMD64 workers and 374 on native ARM64 workers. Of the 748 shards, 747 passed. The ARM64 runsc/cmd shard failed its five Sentry posture comparisons. The five corresponding gofer comparisons passed. All five Sentry diffs report a thread with a different Seccomp_filters count from the process. The gofer cases check its environment. A separate hosted ARM64 6.8 run observed an extra pidfd on the fourth default Sentry repeat. A retained-helper control reproduced that observation on stock. Waiting through the proc umounter’s Go handle fixed it, and all ten original comparisons passed on the uninstrumented corrected runtime. The Linux 5.10 per-thread reporting failure remains open. In a two-thread control, the ARM64 Linux 5.10.0 worker enforced the filter on both threads but increased the procfs count only on the thread that installed it. The AMD64 Linux 6.18.57 worker increased both counts. Linux fixed that reporting bug and backported the fix to 5.10.60. In isolated QEMU guests, the public 5.10.0 image and BuildBuddy #11090’s proposed 6.1.0 image both enforced the filter on both threads. Only the 6.1.0 image reported the increase on both threads.\n\nThe separate native ARM64 wildcard selects //runsc:runsc_race_coverage, //runsc/cmd/sentry:gvisor_sentry_race_coverage and //pkg/metric:metric_cc_proto. Across all 11 mixed cquery partitions, encompassing 16,709 distinct pkg/runsc rows, those three targets and their generated output paths appeared only in AMD64 configurations. Both inventories used the same source tree, 4305e961c. The mixed selection on 4305e961c omitted those ARM64 defaults. The local Go standard-library analyzer could not run with processwrapper-sandbox, so the comparison produced no new binaries. The separate native wildcard projection also omitted some selected rows.\n\nA targeted build on x86_64 produced the three ARM64 defaults for //pkg/metric:metric_cc_proto: the generated C++ source, header and libmetric_proto.a. The archive contained an AArch64 ELF object. A separate analysis of coordinator change efaf79761 selected all 3,246 original ARM64 root labels (2,882 build-only labels and 364 existing test labels), with zero missing or extra. It checked 321 roots outside pkg and runsc, including four aliases. Eight shell controls checked propagation of build and test failures. The 747 passing shards out of 748 belong to the earlier mixed test execution.\n\nThe frozen local qualifier (7b920f2cd) checks which labels belong to each of the six Bazel configuration groups across all 3,246 roots. It compares CPU, platform, mnemonic and tool-configuration flag, then inspects the metric archive and four runsc and Sentry ELF binaries. In the earlier mixed analysis and physical run, all 728 test labels kept their original group membership while every raw configuration checksum changed. The separate PacketImpact family analysis on 61a9e54af selected all 164 mixed tests. Dependency build failures prevented any of them from running. The pristine baseline was a separate qualification step.\n\nOnce the common RBE source presubmit runs the native AMD64 netfilter syscall test upstream, it can replace the “Nftables native syscall tests” Buildkite step and its nftables-syscall-runc-tests Make target. On fork 1b8d903a7, AMD64 Linux 6.18.57 matched all 267 named Buildkite results (262 passed, five skipped). ARM64 Linux 5.10.0 passed six and skipped 261. The test’s kernel-version guard accounted for all 256 additional skips. The separate “Nftables docker tests” step still uses the image.\n\nOn fork 1bda86e0c, the two ARM64 guest syscall suites expanded to the same 915 test labels as Buildkite #53930: 907 syscall and eight rtnetlink owners, comprising 257 ptrace and 658 systrap variants. Their shard counts yield 1,671 runs. The query found 87 ordinary performance variants and zero ARM64 companions for them. Buildkite also selected 2,837 build-only roots. This query measured test membership and attributes; whole-lane execution and build-only coverage remain open. Buildkite’s Make target supplied --cxxopt=-Werror, which the mixed profile at 1bda86e0c did not set.\n\nOf those 2,837 additional labels in the earlier configured-root census, 2,525 are generated test launchers and 312 are other build roots. Following the ARM/Linux srcs, data and deps from the 257 selected fixtures in the source reaches 305 of the 312. Five remaining binaries cover the other seven labels: memfd_test, sigaltstack_test and the three socket_bind_to_device test binaries, including their sigaltstack_check and socket_bind_to_device_util dependencies. Earlier builds linked all five ARM64 binaries and sigaltstack_check, then verified the same outputs by digest. The mixed selector at 1bda86e0c omitted those five build roots.\n\nFive owners on 1bda86e0c ran uncached on native ARM64 Ubuntu Firecracker workers. Ptrace uname and systrap uname with directfs each passed all four named cases, with zero skips. Three rtnetlink owners failed before their guest scripts started: systrap bridge, ptrace bridge and systrap setlink. All three logged a connection reset in containerManager.SetNetworkArgs during default-loopback setup, produced empty XML, and reached zero fixture assertions. On the original systrap bridge run, its filesystem gofer exited after the read-only bind remount of the root filesystem returned EBUSY. Runsc then reported the SetNetworkArgs reset. The log does not identify what kept the mount busy. The ptrace bridge and systrap setlink TestRunners used the same verified AArch64 runsc (SHA-256 552148f89…) and Sentry (132e77dfd…). The initial uname test binary was linked on an AMD64 distroless worker.\n\nAll five original TestRunners received 1,000 millicpu. The effective memory estimates were 300 MB for each uname owner and 220 MB for each rtnetlink owner. Repeating systrap setlink with its original timeout, Linux 5.10.0 and CPUs 0–3 raised the VM’s measured MemTotal from 186,960 KiB to 508,760 KiB with a 512 MB request. Both runs failed in SetNetworkArgs before the guest script started, and the VM’s oom_kill counter stayed at zero in both.\n\nUsing test scratch for overlay backing in 0a851bf99 let all three rtnetlink tests start on Ubuntu. Each guest then failed because ip was missing. With the same source and the existing pinned Istio networking image, both bridge variants each delivered two distinct TCP messages, and systrap setlink verified the MTU, rename, MAC address and three cleanup checks. Across the six uncached ARM64 Firecracker tests, / and /tmp had mount ID 25 and TEST_TMPDIR had mount ID 38. Both images used the same runsc and Sentry binaries, and each action received 1 CPU and 220 MB. The standalone gVisor proposal changes only the overlay backing path. The networking image remains a separate fork integration.\n\nOn research/mixed-arm64-syscalls at 6ed4ed427, Bazel ran //test/rtnetlink:arm64_syscalls through its checked-in worker settings. All eight bridge, route, setlink and veth owners passed across ptrace and systrap on uncached native ARM64 Firecracker TestRunners using the pinned Istio networking image. Each bridge delivered two TCP messages. Both route tests observed two, one and then zero routes to 10.0.0.0/24 after successive deletions and recovered the original routing table. Both veth tests checked the restricted move and exited successfully. Bazel exited zero. All 3,777 recorded compile and link actions were AMD64 scratch-worker cache hits. Together with the two earlier uname owners, 10 distinct owners have passed out of the 915 selected for the ARM64 syscall lane. The full 1,671-shard guest run remains open.\n\nThe mixed ARM64 selector at fbeacd531 adds the five standalone syscall binaries. Both single-architecture profiles select zero of those five through the new group. Aquery showed -Werror last on the native, guest and standalone C++ fixtures and their checked dependencies. The unrelated AMD64 control kept -Wno-error. In the first build on 9ae8c6df6, Clang rejected two delete signatures missing noexcept. No test ran. The fork then integrated #15368 at 403195966.\n\nOn the corrected source, AMD64 scratch workers cross-linked all five AArch64 standalone binaries and the native RSEQ test binary. All six links were fresh. The three socket links consumed the same socket_bind_to_device_util object. The separate sigaltstack_check and freestanding RSEQ helper outputs matched their cached ARM64 links. One uncached native ARM64 Firecracker TestRunner passed all 13 RSEQ cases with no skips. The five standalone binaries were build-only. The allocator contract test did not run. Guest coverage remains 10 of 915 owners across the earlier runs.\n\nA historical ARM64 archive contains 1,671 XML reports matching all 915 selected owner names. For 46 owners, every recorded case was skipped or suppressed (392 skipped, 22 suppressed). Seven UDP external-networking owners accounted for 176 setup skips because the fixture found loopback but no addressed non-loopback interface.\n\nThe mixed fork at 6daca2aa7 selects 1,171 existing AMD64 syscall owners, comprising the same 257 ptrace and 658 systrap names as ARM64, plus 256 native Linux owners. Adding the 257 KVM owners and the separate tcp_serv_nogo analyzer reproduces all 1,429 Buildkite #53930 names. The three AMD64 smoke tests ran uncached on Firecracker. Native and ptrace uname each passed all four cases with no skips. The systrap bridge on the networking image delivered both TCP payloads and removed its bridge and namespaces. Its shell transcript records the results. The XML is empty. The October Actions/Docker qualification ran 1,172 owners on an earlier source and host route. Of those, 1,164 passed and eight native owners failed.\n\nBuildkite selected 3,753 AMD64 labels, comprising 1,429 tests and 2,324 build-only labels. Bazel loading identified 2,012 allsave wrappers and 312 other producers. The ordinary AMD64 suite reaches all 224 distinct fixture labels used by those wrappers. Five standalone fixture roots, their signal-stack helper and their shared socket utility were missing from the AMD64 closure. Two older RSEQ rules have since been replaced by the native rseq binary.\n\nOn mixed fork a023961f0, building //test/syscalls:standalone_fixtures produced six AMD64 ELF executables in fresh LLVM link actions on scratch workers. The outputs were memfd_test, sigaltstack_test, sigaltstack_check and three socket_bind_to_device binaries. All three socket links consumed the same verified utility object. The ARM64 configured query returned the same five default output paths as the previous ARM64 build. This invocation built the AMD64 fixture group only and ran no tests. This comparison did not build the 2,012 wrapper outputs or the full wildcard.\n\nOn ARM64, all 176 UDP cases in the seven original guest owners also skipped on fbeacd531 for lack of an addressed non-loopback interface. Adding a dummy interface failed with EOPNOTSUPP before GTest in all nine guest and native owners. On the separate fork at ff35512db, a bridge with no ports let all 176 guest cases pass. IPv4 native and IPv4 host-network systrap had passing TestResults. The other six guest wrappers failed because runsc warned that Linux had rejected the raw socket receive and send buffer requests on eth0 (4,194,304 bytes requested, 425,984 available). Native IPv6 passed six of eight cases. Both multicast join/leave cases sent 200 bytes but timed out receiving them. Their sender bound ::1 without selecting loopback as the multicast output interface. The receiver had joined on loopback.\n\nThe corrected fork at cf2339899 passed all eight uncached Firecracker TestRunners. Seven ARM64 owners passed 146 cases, and the original AMD64 native IPv6 owner passed all eight cases. None skipped. Both native IPv6 multicast joins selected loopback on the sender and received the payload. Each of the six Netstack logs retained the two eth0 socket-buffer warnings and the usable 425,984-byte buffer size. The earlier IPv4 ARM64 native and host-network controls each passed 38 cases on ff35512db. On the separate standalone patch e1a7eb4e5, one AMD64 systrap case passed and completed 11 restores. Bazel exited 0. The reporting script failed to recognize the BEP finish identifier.\n\nOn a023961f0, two uncached native AMD64 TestRunners used Linux 6.18.57. All six selected read-only ip6tables socket-option cases passed. The other 16 cases did not run. Both cgroup2 transfer cases failed with EPERM on their first cgroup2 mount, before either could exercise the transfer to v1. The earlier October failures occurred later, when mounting v1.",
       "evidence": [
         {
@@ -63130,6 +63131,22 @@
         {
           "label": "Ryan explains the first-pass cache policy that direct Bazel invocations must preserve",
           "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858919995"
+        },
+        {
+          "label": "Agent-level cache configuration",
+          "url": "https://github.com/google/gvisor/commit/8dbabb771"
+        },
+        {
+          "label": "Bazel 9.3.1 reads BAZELRC after the workspace rc",
+          "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/cpp/option_processor.cc#L411-L419"
+        },
+        {
+          "label": "Bazel rejects an HTTP cache with a gRPC executor",
+          "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/java/com/google/devtools/build/lib/remote/RemoteModule.java#L534-L538"
+        },
+        {
+          "label": "Mixed test and ARM64 build commands",
+          "url": "https://github.com/tamird/gvisor/blob/cd5b2a5a2/.buildkite/pipeline.yaml#L360-L371"
         }
       ],
       "settledReviews": [
@@ -63161,9 +63178,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-12T09:05:38+00:00",
+        "observedAt": "2026-11-13T17:09:10.801249+00:00",
         "disposition": "The fork coordinator selects the checkout’s Bazel and reports both command results. All 3,246 ARM64 default outputs passed in the earlier build. The mixed test run still has one failed ARM64 runsc/cmd shard.",
-        "nextAction": "Run the unchanged Sentry and gofer posture comparisons on a native ARM64 Firecracker worker whose kernel includes the Linux 5.10.60 per-thread Seccomp_filters reporting fix. Verify the full mixed test run on that worker. The upstream coordinator still needs its Buildkite hook, the shared native Bazel setup from #16904, both source profiles and their target manifest. The UID 65534 test change depends on d78fe07a0. Track netfilter and the rejected cgroup2 mounts separately. Before switching Buildkite to direct Bazel commands, verify each agent's cache settings reach every invocation. Check first-pass cache reads with uploads disabled and compare the regular agent against its existing Make invocation.",
+        "nextAction": "Run the unchanged Sentry and gofer posture comparisons on a native ARM64 Firecracker worker whose kernel includes the Linux 5.10.60 per-thread Seccomp_filters reporting fix. Verify the full mixed test run on that worker. The upstream coordinator still needs its Buildkite hook, the shared native Bazel setup from #16904, both source profiles and their target manifest. The UID 65534 test change depends on d78fe07a0. Track netfilter and the rejected cgroup2 mounts separately. For the direct jobs, verify an agent-provided BAZELRC on the real queues. The local control preserved the regular and first-pass cache policies on both build and test; the production RBE endpoint and server-side write permissions still need confirmation.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/43187657704/artifacts/13929386881",
           "https://github.com/tamird/gvisor/commit/cd5b2a5a2",
@@ -64362,18 +64379,19 @@
         }
       },
       "followup": {
-        "owner": "Agent",
+        "owner": "Maintainer",
         "sourceHead": "0a70689c3640ab660307b0548f76087316803748",
-        "observedAt": "2026-11-06T23:11:36.682Z",
-        "disposition": "The approved single-commit source is published. The two complete checkouts passed the pinned formatter.",
-        "nextAction": "Check upstream lint on the published revision, then follow review.",
+        "observedAt": "2026-11-13T17:09:10.801249+00:00",
+        "disposition": "Upstream lint passed on the published formatting amendment.",
+        "nextAction": "Await maintainer review on the published head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16875",
           "https://github.com/tamird/gvisor/commit/0a70689c3",
-          "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
+          "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613",
+          "https://github.com/google/gvisor/actions/runs/42310119467/job/128209179856"
         ]
       },
-      "updatedAt": "2026-11-06T23:30:58.981Z"
+      "updatedAt": "2026-11-13T17:09:10.801249+00:00"
     },
     {
       "ref": "proposal/declare-x-text-direct",
@@ -102621,10 +102639,31 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-13T16:55:10.232441+00:00",
+      "updatedAt": "2026-11-13T17:09:10.801249+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
+        {
+          "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
+          "evidence": [
+            {
+              "label": "Agent-level cache configuration",
+              "url": "https://github.com/google/gvisor/commit/8dbabb771"
+            },
+            {
+              "label": "Bazel 9.3.1 reads BAZELRC after the workspace rc",
+              "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/cpp/option_processor.cc#L411-L419"
+            },
+            {
+              "label": "Bazel rejects an HTTP cache with a gRPC executor",
+              "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/java/com/google/devtools/build/lib/remote/RemoteModule.java#L534-L538"
+            },
+            {
+              "label": "Mixed test and ARM64 build commands",
+              "url": "https://github.com/tamird/gvisor/blob/cd5b2a5a2/.buildkite/pipeline.yaml#L360-L371"
+            }
+          ]
+        },
         {
           "text": "With the consuming project explicitly selecting LLVM 0.8.24, both source-built protoc binaries reported 35.1. Two gVisor taskserver Go generation actions used the recovered exec binary. The containerd shim started and its API compiled the shipped Go bindings. The original Bazel client ran out of Java heap after completing all three targets. Two recovery jobs verified the original outputs 24 min 43 s after the job ended, without repeating compilation. The descriptor action succeeded; its compiler identity was not verified.",
           "evidence": [
@@ -103039,6 +103078,22 @@
         {
           "label": "Minimal ARM64 consuming root · cgroup2 source selection and subsequent Nogo failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/43242407780/artifacts/13955967390"
+        },
+        {
+          "label": "Agent-level cache configuration",
+          "url": "https://github.com/google/gvisor/commit/8dbabb771"
+        },
+        {
+          "label": "Bazel 9.3.1 reads BAZELRC after the workspace rc",
+          "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/cpp/option_processor.cc#L411-L419"
+        },
+        {
+          "label": "Bazel rejects an HTTP cache with a gRPC executor",
+          "url": "https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/java/com/google/devtools/build/lib/remote/RemoteModule.java#L534-L538"
+        },
+        {
+          "label": "Mixed test and ARM64 build commands",
+          "url": "https://github.com/tamird/gvisor/blob/cd5b2a5a2/.buildkite/pipeline.yaml#L360-L371"
         }
       ],
       "reviewWatch": {
@@ -110422,5 +110477,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T17:04:18.636367+00:00"
+  "updatedAt": "2026-11-13T17:09:10.801249+00:00"
 }

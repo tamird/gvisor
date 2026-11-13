@@ -138,5 +138,19 @@ Gazelle restriction. Changing that policy is separate from source lint.
    must keep its agent’s existing settings. Check the actual commands,
    including the ARM64 build in the source presubmit.
    [Ryan’s requirement](https://github.com/google/gvisor/pull/17612#issuecomment-6858919995)
+
+   The agent’s post-checkout hook supplies `BAZEL_REMOTE_CACHE` to Make.
+   For direct Bazel commands the same hook can export an agent-owned rc
+   file through `BAZELRC`. A local Bazel 9.3.1 test populated an HTTP cache
+   with regular builds. With first-pass uploads disabled, both `build`
+   and `test` read cached results and executed cold misses with zero PUTs.
+   Later command-line options can override the rc settings.
+   [Agent hook](https://github.com/google/gvisor/commit/8dbabb771) ·
+   [Bazel’s rc loading order](https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/cpp/option_processor.cc#L411-L429)
+
+   For remote execution, verify the endpoint and write policy with the
+   agent owner. Bazel rejects combining an HTTP cache with a gRPC
+   executor. The first-pass client flag controls uploads of locally
+   executed results. [Protocol check](https://github.com/bazelbuild/bazel/blob/fee2bf2d1/src/main/java/com/google/devtools/build/lib/remote/RemoteModule.java#L534-L538)
 4. Delete `tools/lint.sh` when the direct check and format targets cover
    the existing callers. Bazelisk selects the Bazel version.
