@@ -15,6 +15,7 @@
 package connection_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -510,4 +511,74 @@ func BenchmarkSendRecv(b *testing.B) {
 			}
 		}
 	})
+}
+
+func TestQualificationTeardownOrder(t *testing.T) {
+	for _, order := range []string{"client", "server", "together"} {
+		t.Run(order, func(t *testing.T) {
+			for i := 0; i < 48; i++ {
+				t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
+					serverSocket, clientSocket, err := unet.SocketPair(false)
+					if err != nil {
+						t.Fatal(err)
+					}
+					ts := lisafs.NewServer()
+					closeHandled := make(chan struct{}, 1)
+					handlers := make([]lisafs.RPCHandler, lisafs.Close+1)
+					handlers[lisafs.Error] = lisafs.ErrorHandler
+					handlers[lisafs.Mount] = lisafs.MountHandler
+					handlers[lisafs.Close] = func(c *lisafs.Connection, comm lisafs.Communicator, size uint32) (uint32, error) {
+						n, err := lisafs.CloseHandler(c, comm, size)
+						if err == nil {
+							closeHandled <- struct{}{}
+						}
+						return n, err
+					}
+					ts.SetHandlers(handlers)
+					conn, err := ts.CreateConnection(serverSocket, "/", lisafs.ConnectionOpts{}, &walkTestConnImpl{})
+					if err != nil {
+						t.Fatal(err)
+					}
+					ts.StartConnection(conn)
+					c, root, _, err := lisafs.NewClient(clientSocket)
+					if err != nil {
+						t.Fatal(err)
+					}
+					c.CloseFD(context.Background(), root.ControlFD, true)
+					select {
+					case <-closeHandled:
+					default:
+						t.Fatal("server did not handle root Close")
+					}
+					t.Logf("TEST_CLIENT %p", c)
+					switch order {
+					case "client":
+						c.Close()
+					case "server":
+						if err := serverSocket.Shutdown(); err != nil {
+							t.Fatal(err)
+						}
+						c.Close()
+					case "together":
+						ready := make(chan struct{})
+						start := make(chan struct{})
+						finished := make(chan error, 1)
+						go func() {
+							close(ready)
+							<-start
+							finished <- serverSocket.Shutdown()
+						}()
+						<-ready
+						close(start)
+						c.Close()
+						if err := <-finished; err != nil && err != unix.EBADF {
+							t.Fatal(err)
+						}
+					}
+					ts.Wait()
+					ts.Destroy()
+				})
+			}
+		})
+	}
 }
