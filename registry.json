@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T04:20:44+00:00",
+    "updatedAt": "2026-11-13T10:40:24+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -71113,9 +71113,13 @@
       "url": "https://github.com/google/gvisor/pull/17502",
       "title": "Store a single graph waiter without a callback record",
       "status": "open",
-      "updatedAt": "2026-11-13T04:16:47+00:00",
-      "summary": "On a 50,000-file checkpoint, the first guest command took 200.2 ms versus 243.2 ms on #16860. Decoding allocated 99.27 MiB versus 121.84 MiB per checkpoint. Both comparisons have 16 pairs. Separate cold and pooled callback, pointer-chain, and map benchmarks detected no timing change. Package and race checks passed.",
+      "updatedAt": "2026-11-13T10:40:24+00:00",
+      "summary": "Keep a single waiting object ID in the decoder queue. The 50,000-file guest comparison now includes #16867 on both sides. All 34 restores verified every file. See the original benchstat output for guest latency, decode time and allocations.",
       "evidence": [
+        {
+          "label": "50,000-file guest restores and fresh-process decodes after #16867",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43364206576/artifacts/14010068130"
+        },
         {
           "label": "First guest command and bytes allocated on the 50,000-file checkpoint",
           "url": "https://github.com/tamird/gvisor/actions/runs/42537752922/artifacts/13640319931"
@@ -71163,7 +71167,17 @@
           "https://github.com/tamird/gvisor/actions/runs/43118808013/artifacts/13899642773"
         ]
       },
-      "number": 17502
+      "number": 17502,
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "4570ff5c1f9cad2c2ac4b0142ceb94d6fb88c2b9",
+        "url": "https://github.com/google/gvisor/pull/17502",
+        "title": "Update the benchmark in #17502’s description after #16867",
+        "body": "A graph decoder wait with no callback only needs the ID of the object to\nwake. The decoder appends a 72-byte callback record for each such wait.\nA checkpoint with 50,000 tmpfs files contained 50,364 objects with\nexactly one plain waiter. [1]\n\nKeep that ID in the incoming queue. If another waiter arrives, append\nthe first waiter to the callback list before adding the second. The\nobject's own callbacks run before it wakes its waiter.\n\nMeasured on Linux AMD64 after #16867 landed. All 34 restores verified\nevery file in a 50,000-file tmpfs tree. Guest/new-to-guest includes\ncontainer creation, restore and the first successful /bin/true. Each\ndecoder also read the same saved checkpoint in a fresh process. [2]\n\n```text\n                               │    master     │                  #17502                 │\n                               │     sec/op    │     sec/op     vs base                  │\nGuest/restore                     238.1m ± 3%    177.5m ± 1%  -25.45% (p=0.000 n=16)\nGuest/new-to-guest                250.3m ± 2%    187.9m ± 1%  -24.92% (p=0.000 n=16)\nCheckpointFile/DecodeStatefile    142.4m ± 9%    127.3m ± 9%  -10.60% (p=0.000 n=16)\n\n                               │    master     │                  #17502                 │\n                               │       B/op    │       B/op     vs base                  │\nCheckpointFile/DecodeStatefile   119.80Mi ± 0%   97.23Mi ± 0%  -18.84% (p=0.000 n=16)\n```\n\nA separate 20,000-node graph benchmark showed no significant change\nin time, bytes or allocations across 14 pairs. [4] Earlier cold and\npooled callback, pointer-chain and map benchmarks also showed no\nsignificant change across 16 pairs. [3]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42530264849/artifacts/13637437535\n[2]: https://github.com/tamird/gvisor/actions/runs/43364206576/artifacts/14010068130\n[3]: https://github.com/tamird/gvisor/actions/runs/42544593510/artifacts/13643640390\n[4]: https://github.com/tamird/gvisor/actions/runs/43362467812/artifacts/14009770178\n\nAssisted-by: OpenAI Codex, acting on behalf of Tamir Duberstein.",
+        "summary": "Replace the earlier measurements with the 50,000-file comparison on the newer decoder. The synthetic workload provides a control.",
+        "requestedAt": "2026-11-13T10:40:24+00:00"
+      }
     },
     {
       "id": "branch:tcp-segment-experiment-ipv6",
@@ -76347,10 +76361,18 @@
       "title": "nvproxy: Support NVIDIA driver 580.196.07",
       "url": "https://github.com/google/gvisor/pull/17511",
       "group": "runtime",
-      "status": "open",
-      "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
-      "updatedAt": "2026-11-12T16:36:30+00:00",
+      "status": "closed",
+      "summary": "#17540 landed the same three lines registering 580.196.07 and its two installer digests. Milan closed #17511 as a duplicate.",
+      "updatedAt": "2026-11-13T10:40:24+00:00",
       "evidence": [
+        {
+          "label": "Milan closed the duplicate registration",
+          "url": "https://github.com/google/gvisor/pull/17511#issuecomment-6848227473"
+        },
+        {
+          "label": "Merged driver registration and installer digests",
+          "url": "https://github.com/google/gvisor/pull/17540"
+        },
         {
           "label": "Container-Optimized OS driver check, build #54517",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54517#01a1cca5-1418-49e2-8d35-b49f0a21b458"
@@ -76373,17 +76395,16 @@
         }
       ],
       "followup": {
-        "owner": "Upstream import",
+        "owner": "external_sweeps",
         "sourceHead": "3dfdf32f7647e60105038e04d0757160cc6c5d68",
-        "observedAt": "2026-11-12T16:36:30+00:00",
-        "disposition": "Etienne approved 3dfdf32f7 and labeled #17511 ready to pull. Copybara closed #17527 unmerged after opening #17550 for the same source. Both exports have the identical version.go patch. The replacement passed public Buildkite, internal Buildkite and Go tests. Tamir asked Etienne about the closure on #17527.",
-        "nextAction": "Await import of #17550 or a maintainer response to Tamir’s existing question. After the registration lands, check the master COS driver job for 580.196.07.",
+        "observedAt": "2026-11-13T08:42:10Z",
+        "disposition": "#17540 landed the same three lines registering 580.196.07 and its two installer digests. Milan closed #17511 as a duplicate.",
+        "nextAction": "The registration landed in #17540. The COS checks passed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17511",
-          "https://github.com/google/gvisor/pull/17511#pullrequestreview-5869656224",
-          "https://github.com/google/gvisor/pull/17527#issuecomment-6829535543",
-          "https://github.com/google/gvisor/pull/17550",
-          "https://buildkite.com/gvisor/pipeline/builds/54668"
+          "https://github.com/google/gvisor/pull/17511#issuecomment-6848227473",
+          "https://github.com/google/gvisor/pull/17540",
+          "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6739-4866-9eb7-527d1ef0ed60",
+          "https://buildkite.com/gvisor/pipeline/builds/54874#01a1d3ce-630e-4641-a352-2f34bb61e887"
         ]
       }
     },
@@ -84750,7 +84771,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-13T04:16:47+00:00",
+      "updatedAt": "2026-11-13T10:40:24+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -88043,17 +88064,30 @@
               "url": "https://github.com/google/gvisor/pull/17502"
             }
           ]
+        },
+        {
+          "text": "With #16867 on both sides, all 34 guest restores verified every file in a 50,000-file tmpfs tree. There were 16 measured pairs after warmup. Each decoder also read the same saved image in a fresh process.\n\n```text\n                               │    master     │                  #17502                 │\n                               │     sec/op    │     sec/op     vs base                  │\nGuest/restore                     238.1m ± 3%    177.5m ± 1%  -25.45% (p=0.000 n=16)\nGuest/new-to-guest                250.3m ± 2%    187.9m ± 1%  -24.92% (p=0.000 n=16)\nCheckpointFile/DecodeStatefile    142.4m ± 9%    127.3m ± 9%  -10.60% (p=0.000 n=16)\n\n                               │    master     │                  #17502                 │\n                               │       B/op    │       B/op     vs base                  │\nCheckpointFile/DecodeStatefile   119.80Mi ± 0%   97.23Mi ± 0%  -18.84% (p=0.000 n=16)\n```",
+          "evidence": [
+            {
+              "label": "50,000-file guest restores and fresh-process decodes after #16867",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43364206576/artifacts/14010068130"
+            },
+            {
+              "label": "Landed decoder queue reuse",
+              "url": "https://github.com/google/gvisor/pull/16867"
+            }
+          ]
         }
       ],
-      "nextStep": "Read the 50,000-file guest comparison (fork run 43364206576) on the base containing #16867 before attributing the earlier speedup to #17502 on current master. Follow #17502 through review. The generated reservation API remains on hold.",
+      "nextStep": "Follow review of #17502. The 50,000-file guest and the synthetic 20,000-node graph results are both recorded. The generated reservation API remains on hold.",
       "evidence": [
+        {
+          "label": "50,000-file guest restores and fresh-process decodes after #16867",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43364206576/artifacts/14010068130"
+        },
         {
           "label": "20,000-node graph restore, both state suites, and race results after #16867",
           "url": "https://github.com/tamird/gvisor/actions/runs/43362467812/artifacts/14009770178"
-        },
-        {
-          "label": "50,000-file guest restore comparison after queue reuse",
-          "url": "https://github.com/tamird/gvisor/actions/runs/43364206576"
         },
         {
           "label": "Standalone and combined graph decoder changes on native systrap",
@@ -107183,11 +107217,11 @@
     {
       "id": "investigation:cos-driver-580-196-07",
       "title": "COS driver check rejects NVIDIA 580.196.07",
-      "status": "active",
+      "status": "concluded",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T16:36:30+00:00",
-      "summary": "The Container-Optimized OS driver check failed on three attempts on master. All 348 unsupported-driver messages on the final attempt name NVIDIA 580.196.07.",
+      "updatedAt": "2026-11-13T10:40:24+00:00",
+      "summary": "Master supports NVIDIA 580.196.07 through #17540. The COS compatibility test passed on the merge and on subsequent master.",
       "findings": [
         {
           "text": "NVIDIA published the kernel-module source for 580.196.07, allowing a direct comparison with 580.178.04.",
@@ -107244,10 +107278,47 @@
               "url": "https://github.com/google/gvisor/pull/17540"
             }
           ]
+        },
+        {
+          "text": "Each run passed all 21 image cases. DEFAULT and LATEST both reported 580.196.07 as supported.",
+          "evidence": [
+            {
+              "label": "Milan closed the duplicate registration",
+              "url": "https://github.com/google/gvisor/pull/17511#issuecomment-6848227473"
+            },
+            {
+              "label": "Merged driver registration and installer digests",
+              "url": "https://github.com/google/gvisor/pull/17540"
+            },
+            {
+              "label": "COS compatibility test on the merge",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6739-4866-9eb7-527d1ef0ed60"
+            },
+            {
+              "label": "COS compatibility test on current master",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54874#01a1d3ce-630e-4641-a352-2f34bb61e887"
+            }
+          ]
         }
       ],
-      "nextStep": "Await import of #17550 or a maintainer response to Tamir’s existing question. After the registration lands, check the master COS driver job for 580.196.07.",
+      "nextStep": "The COS test verified the driver registration on master.",
       "evidence": [
+        {
+          "label": "Milan closed the duplicate registration",
+          "url": "https://github.com/google/gvisor/pull/17511#issuecomment-6848227473"
+        },
+        {
+          "label": "Merged driver registration and installer digests",
+          "url": "https://github.com/google/gvisor/pull/17540"
+        },
+        {
+          "label": "COS compatibility test on the merge",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54810#01a1d298-6739-4866-9eb7-527d1ef0ed60"
+        },
+        {
+          "label": "COS compatibility test on current master",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54874#01a1d3ce-630e-4641-a352-2f34bb61e887"
+        },
         {
           "label": "Container-Optimized OS driver check, build #54517",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54517#01a1cca5-1418-49e2-8d35-b49f0a21b458"
@@ -109221,7 +109292,58 @@
           "url": "https://github.com/google/gvisor/pull/11676"
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-java-jmx-broken-connection",
+      "title": "OpenJDK JMX broken-connection test fails during listener removal",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T10:40:24+00:00",
+      "summary": "The master Java goferfs job failed in BrokenConnectionTest case 4. OpenJDK tracks the same exception and excludes this test on Linux in the JDK release gVisor runs.",
+      "findings": [
+        {
+          "text": "The connection-failed notification arrived before the second removeNotificationListener. The JDK threw ListenerNotFoundException where its test expected IOException. Cases 1–3 passed. Buildkite’s successful retry reused a cached result.",
+          "evidence": [
+            {
+              "label": "Master JMX failure in Buildkite #54874",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54874/jobs/01a1d3ce-6394-49bd-8cd1-01050e335fe8/artifacts/01a1d3d6-e92b-49b6-b4d9-baa9f38481ec"
+            },
+            {
+              "label": "Cached retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54874#01a1d3d7-a174-4d03-869c-c084ec66b4f4"
+            },
+            {
+              "label": "Matching OpenJDK report",
+              "url": "https://bugs.openjdk.org/browse/JDK-8262312"
+            },
+            {
+              "label": "Linux exclusion in gVisor’s JDK release",
+              "url": "https://github.com/openjdk/jdk21u/blob/jdk-21.0.3-ga/test/jdk/ProblemList.txt#L526"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check that the Linux exclusion removes only BrokenConnectionTest and that neighboring JMX tests still execute in the same image.",
+      "evidence": [
+        {
+          "label": "Master JMX failure in Buildkite #54874",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54874/jobs/01a1d3ce-6394-49bd-8cd1-01050e335fe8/artifacts/01a1d3d6-e92b-49b6-b4d9-baa9f38481ec"
+        },
+        {
+          "label": "Cached retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54874#01a1d3d7-a174-4d03-869c-c084ec66b4f4"
+        },
+        {
+          "label": "Matching OpenJDK report",
+          "url": "https://bugs.openjdk.org/browse/JDK-8262312"
+        },
+        {
+          "label": "Linux exclusion in gVisor’s JDK release",
+          "url": "https://github.com/openjdk/jdk21u/blob/jdk-21.0.3-ga/test/jdk/ProblemList.txt#L526"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-13T04:16:47+00:00"
+  "updatedAt": "2026-11-13T10:40:24+00:00"
 }
