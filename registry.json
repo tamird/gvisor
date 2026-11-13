@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T14:47:20+00:00",
+    "updatedAt": "2026-11-13T14:54:23+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7657,8 +7657,8 @@
       "group": "bazel",
       "status": "open",
       "head": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-      "updatedAt": "2026-11-13T14:46:09+00:00",
-      "summary": "The rebase makes Nogo analyze the Go test selected for each architecture. Bazel 9.3.1 action queries on d41dcb174 selected both test sources and the expected GoStaticAnalysis action on AMD64 and ARM64. Native execution is in progress.",
+      "updatedAt": "2026-11-13T14:54:23+00:00",
+      "summary": "On d41dcb174, Bazel passed all six targets: Go and C++ tests for AMD64 and ARM64, plus two Nogo tests. The action query confirmed that Nogo analyzed the Go test source for each CPU. The artifact contains AMD64 worker identities and test XML. The collector stopped before recording the ARM64 worker identities and XML.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -7797,6 +7797,14 @@
         {
           "label": "Native Go, C++, and Nogo qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/43445509908"
+        },
+        {
+          "label": "Six passing Bazel targets and the result-collection error",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43445509908/job/131953787869"
+        },
+        {
+          "label": "AMD64 test XML, worker identities and both Go analysis actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43445509908/artifacts/14049275038"
         }
       ],
       "refinement": {
@@ -7844,9 +7852,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "b3cf8596d76414ded469a8a0e4638423fe47032f",
-        "observedAt": "2026-11-13T14:46:09+00:00",
-        "disposition": "The fork is testing the rebase on master f98c31b5b.",
-        "nextAction": "Check the AMD64 and ARM64 worker identities, Go and C++ test results, and Nogo outputs from the corrected run. In the first run, the fixture selected the same fixed Go target twice. The corrected fixture selects a test per architecture.",
+        "observedAt": "2026-11-13T14:54:23+00:00",
+        "disposition": "All six Bazel targets passed. The result collector then looked for the ARM64 logs under the AMD64 output directory.",
+        "nextAction": "Read the ARM64 logs from their configured output paths and verify the actual worker identities and individual test results.",
         "mergeable": "CONFLICTING",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
@@ -7859,7 +7867,9 @@
           "https://github.com/tamird/gvisor/actions/runs/43357603160/artifacts/14007455660",
           "https://github.com/tamird/gvisor/commit/d41dcb174",
           "https://github.com/tamird/gvisor/actions/runs/43444337726/artifacts/14046792777",
-          "https://github.com/tamird/gvisor/actions/runs/43445509908"
+          "https://github.com/tamird/gvisor/actions/runs/43445509908",
+          "https://github.com/tamird/gvisor/actions/runs/43445509908/job/131953787869",
+          "https://github.com/tamird/gvisor/actions/runs/43445509908/artifacts/14049275038"
         ]
       }
     },
@@ -109609,5 +109619,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T14:47:20+00:00"
+  "updatedAt": "2026-11-13T14:54:23+00:00"
 }
