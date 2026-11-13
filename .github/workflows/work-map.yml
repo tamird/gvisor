@@ -114,6 +114,7 @@ jobs:
         if: ${{ !inputs.check_outreach_only && !cancelled() && steps.outreach.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
+          WORK_MAP_RECEIPT_TOKEN: ${{ github.token }}
           WORK_MAP_SCHEDULED_REVIEW_OUTREACH: ${{ github.event_name == 'schedule' }}
           MODE: ${{ steps.outreach.outputs.reviews }}
         run: python3 update-status.py --review-outreach "$MODE"
