@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-12T22:33:32+00:00",
+    "updatedAt": "2026-11-13T02:04:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2690,7 +2690,7 @@
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/google/gvisor/pull/16766",
       "status": "open",
-      "updatedAt": "2026-11-11T21:14:56+00:00",
+      "updatedAt": "2026-11-13T02:20:39+00:00",
       "summary": "Published the approved amendment: successive Python releases replace older gVisor archives while preserving unrelated packages and files from a previous successful build. Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed. GitHub binds Carzh’s November 4 approval to the current one-commit submission. Its base and tree match the prior submission. Copybara opened #17222 for this exact revision.",
       "evidence": [
         {
@@ -2787,13 +2787,14 @@
       ],
       "number": 16766,
       "followup": {
-        "owner": "Agent",
+        "owner": "Maintainer",
         "sourceHead": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
         "providerHead": "04df6c244952232769db6b4123555354f9873e9b",
-        "observedAt": "2026-11-08T13:23:31Z",
-        "disposition": "Upstream approval retained on the published one-commit revision",
-        "nextAction": "Follow #17222 for import checks and landing.",
+        "observedAt": "2026-11-13T02:20:39+00:00",
+        "disposition": "Carol explained that the internal change was mistakenly removed and is handling the re-import. No author action was requested.",
+        "nextAction": "Await the re-import and internal approval.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16766#issuecomment-6840823106",
           "https://github.com/google/gvisor/pull/16766",
           "https://github.com/tamird/gvisor/commit/04df6c244952232769db6b4123555354f9873e9b",
           "https://github.com/google/gvisor/pull/16766#discussion_r4470803575",
@@ -2809,6 +2810,10 @@
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "summary": "The published submission has the identical base and tree. GitHub retained Carzh’s approval and the ready-to-pull label.",
         "evidence": "https://github.com/tamird/gvisor/compare/04df6c244...f4b8a6bd2"
+      },
+      "reviewOutreachHold": {
+        "evidence": "https://github.com/google/gvisor/pull/16766#issuecomment-6840823106",
+        "reason": "The maintainer is handling the re-import and explicitly said no author action is needed."
       }
     },
     {
@@ -5717,11 +5722,27 @@
       "title": "Build C and C++ with the declared LLVM toolchains",
       "url": "https://github.com/tamird/gvisor/commit/8178e3fe5",
       "group": "bazel",
-      "status": "Approved; waiting for the five compiler prerequisites",
-      "summary": "An AMD64 Linux worker cross-built the ARM64 release with LLVM 0.8.26 at 48f457b4e and linked all three AMD64 sidecars with the caller’s allocator. The nine ARM64 ELF files matched the release manifest. An uncached QEMU test booted a 4 KiB ARM64 guest, started the archived Sentry (SHA-256 prefix 566231c75) under systrap, and ran a static musl program as PID 1. Both AT_PAGESZ and sysconf returned 4,096. The program exited successfully.\n\nThe declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.\n\nThe same three-line external MODULE, with compiler integration a066005a6, built a separate ARM64 release using --@gvisor//tools/bazeldefs:page_size=64k. The cache-only invocation missed. Rebuild f4ab221b-7490-4538-8c1f-42a4cfbf81a8 produced all nine ARM64 ELF files, six with different digests from the 4 KiB release. Uncached remote Bazel test 453b258d-06bc-4b6f-9abb-9e9072894d54 took 13.422 seconds. It booted an emulated AArch64 Ubuntu 6.8.0-138-generic-64k guest; runsc selected Sentry 2f8cca6b6, and guest PID 1 read 65,536 bytes from both AT_PAGESZ and sysconf and exited zero.",
-      "updatedAt": "2026-11-12T21:17:44+00:00",
+      "status": "Approved; waiting for four remaining compiler prerequisites",
+      "summary": "On native AMD64 and ARM64 workers, all 66 tests that previously failed to build reached execution with LLVM 0.8.26. Of those, 61 passed on AMD64 and 60 passed on ARM64. Across the full selection, AMD64 built 3,257 of 3,261 targets and passed 369 of 376 test shards. ARM64 built 3,255 of 3,259 targets and passed 368 of 376 shards, with two other selectors skipped for the platform.\n\nThe four build failures on each architecture were runsc and gvisor_sentry with coverage, each with and without race instrumentation. Both architectures reported failures in the GitHub workflow check, docprocessor, nvproxy driver parity, runsc sandbox, the Python sandbox test, the Go sandbox test and the vDSO test. ARM64 also reported a trace test failure. The workflow check includes the fork’s qualification workflow. On the exact product tree the workflow and ARM64 trace tests passed. All four coverage builds stopped at build_cover.sh:47 because curl was absent. The NVIDIA test could not run git and the vDSO test could not run readelf. Docprocessor and the Go sandbox test could not write cgroup.subtree_control. The runsc sandbox test received EPERM creating a network namespace. The Python sandbox test failed on both architectures; its setup error still needs verification.\n\nAn AMD64 Linux worker cross-built the ARM64 release with LLVM 0.8.26 at 48f457b4e and linked all three AMD64 sidecars with the caller’s allocator. The nine ARM64 ELF files matched the release manifest. An uncached QEMU test booted a 4 KiB ARM64 guest, started the archived Sentry (SHA-256 prefix 566231c75) under systrap, and ran a static musl program as PID 1. Both AT_PAGESZ and sysconf returned 4,096. The program exited successfully.\n\nThe declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.\n\nThe same three-line external MODULE, with compiler integration a066005a6, built a separate ARM64 release using --@gvisor//tools/bazeldefs:page_size=64k. The cache-only invocation missed. Rebuild f4ab221b-7490-4538-8c1f-42a4cfbf81a8 produced all nine ARM64 ELF files, six with different digests from the 4 KiB release. Uncached remote Bazel test 453b258d-06bc-4b6f-9abb-9e9072894d54 took 13.422 seconds. It booted an emulated AArch64 Ubuntu 6.8.0-138-generic-64k guest; runsc selected Sentry 2f8cca6b6, and guest PID 1 read 65,536 bytes from both AT_PAGESZ and sysconf and exited zero.",
+      "updatedAt": "2026-11-13T02:04:52+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
+        {
+          "label": "Current-master cross-build and 4 KiB and 64 KiB ARM64 guest tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43350759188"
+        },
+        {
+          "label": "Logs from focused replay on product source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43349504730/artifacts/14003417348"
+        },
+        {
+          "label": "LLVM 0.8.26 native AMD64 and ARM64 RBE build and test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43321444901/artifacts/13998832638"
+        },
+        {
+          "label": "Exact-product-tree replay of four coverage builds and eight distinct tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43349504730"
+        },
         {
           "label": "LLVM 0.8.26 compiler integration tested on Linux",
           "url": "https://github.com/tamird/gvisor/commit/48f457b4e"
@@ -6577,10 +6598,15 @@
       "followup": {
         "owner": "Compiler migration",
         "sourceHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
-        "disposition": "The contributor approved 8178e3fe5 for submission once all five prerequisite PRs merge. Linux validation of the LLVM 0.8.26 integration at 48f457b4e passed the ARM64 cross-build, 4 KiB guest test and all three AMD64 allocator links.",
-        "observedAt": "2026-11-12T21:17:44+00:00",
-        "nextAction": "Open the approved compiler migration after #16522, #16516, #17067, #17114 and #17444 merge.",
+        "disposition": "The parser prerequisite landed at e4b80af9e. The separate 0.8.26 integration cross-built and booted the ARM64 release and linked all three AMD64 allocator sidecars. Its broad unit run reached all 66 previously unbuilt tests on both architectures.",
+        "observedAt": "2026-11-13T02:04:52+00:00",
+        "nextAction": "Verify the Python sandbox failure and both guest configurations on the current-master compiler integration. Submit the approved compiler change after #16522, #16516, #17067 and #17444 merge.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43350759188",
+          "https://github.com/tamird/gvisor/actions/runs/43349504730/artifacts/14003417348",
+          "https://github.com/tamird/gvisor/actions/runs/43321444901/artifacts/13998832638",
+          "https://github.com/tamird/gvisor/actions/runs/43349504730",
+          "https://github.com/google/gvisor/commit/e4b80af9e",
           "https://github.com/tamird/gvisor/actions/runs/43307051916/artifacts/13983274680",
           "https://github.com/tamird/gvisor/actions/runs/43307051916/artifacts/13983654886",
           "https://github.com/tamird/gvisor/commit/48f457b4e",
@@ -13322,14 +13348,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/73a5b30ce",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-11T02:24:40+00:00",
+      "updatedAt": "2026-11-13T02:04:52+00:00",
       "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. Without CA roots, all 34 online checksum cases failed TLS verification. On native AMD64 and ARM64 workers, all 34 passed with the declared roots. On each architecture, 25 public ABI comparisons passed and nine versions had no public source tag. The proposal's nvproxy and downloader directories match those runs byte for byte. Renaming the archive overlay to upstream/BUILD preserved all 17,893 file labels in the 25 driver archives and all 14 targets under //tools/nvidia_driver_differ/... in Bazel 9.3.1.",
       "followup": {
         "owner": "Contributor",
         "sourceHead": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
-        "observedAt": "2026-11-11T02:24:40+00:00",
+        "observedAt": "2026-11-13T02:04:52+00:00",
         "disposition": "Single-commit proposal prepared.",
-        "nextAction": "Review the offline ABI comparison, the CA bundle for online checksum verification, and the driver header BUILD file. Publication follows #17112, #17114 and #17151.",
+        "nextAction": "Review the offline ABI comparison, the CA bundle for online checksum verification, and the driver header BUILD file. Publication still depends on #17112. #17114 and #17151 have merged.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/73a5b30ce",
           "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
@@ -30722,10 +30748,14 @@
       "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-12T20:27:59+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-13T02:04:52+00:00",
       "summary": "The published rebase moves the NVIDIA driver parser to the LLVM 23.1.2 archive supplied by llvm 0.8.26. Its headers now link to the merged Linux-header and development-backend changes. Both landed after v0.8.26. The patch payloads are byte-identical to ecdca71e5.\n\nUncached TestParser runs passed on native AMD64 and ARM64, and the audit verified 224 license entries on 06177ff66. Bazel resolved both public patch labels on ecdca71e5. Against two-backend master, each architecture configures 210 additional C++ compilations (184 LLVM and 26 zlib).",
       "evidence": [
+        {
+          "label": "Merged parser change",
+          "url": "https://github.com/google/gvisor/commit/e4b80af9e"
+        },
         {
           "label": "Header citation revision",
           "url": "https://github.com/tamird/gvisor/commit/950784a36"
@@ -31030,14 +31060,15 @@
       ],
       "number": 17114,
       "followup": {
-        "owner": "Upstream review",
+        "owner": "Complete",
         "sourceHead": "950784a363e1e9f70c4b0d507aca1d55c27cff61",
-        "observedAt": "2026-11-12T20:27:59+00:00",
-        "disposition": "Ayush approved 950784a36. His review is advisory. The PR has no import label.",
-        "nextAction": "Await maintainer approval and the ready to pull label.",
+        "observedAt": "2026-11-13T02:04:52+00:00",
+        "disposition": "The NVIDIA driver parser change landed through Copybara #17575 at e4b80af9e.",
+        "nextAction": "Complete. The LLVM 23.1.2 parser is on master.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17114",
-          "https://github.com/google/gvisor/pull/17114#pullrequestreview-5880893637"
+          "https://github.com/google/gvisor/pull/17575",
+          "https://github.com/google/gvisor/commit/e4b80af9e"
         ]
       }
     },
@@ -43326,6 +43357,10 @@
       ],
       "evidence": [
         {
+          "label": "Six passing controls and the remaining enclosing-hook failure on master",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43350911692/artifacts/14003753061"
+        },
+        {
           "label": "100,000-file synchronous restore: 26 successful runs, 12 measured per arm",
           "url": "https://github.com/tamird/gvisor/actions/runs/42128377924/artifacts/13463002821"
         },
@@ -43369,10 +43404,11 @@
       "followup": {
         "owner": "Existing upstream review",
         "sourceHead": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da",
-        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "observedAt": "2026-11-13T02:20:39+00:00",
         "disposition": "Approved amendment published on #16713",
-        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
+        "nextAction": "Await maintainer review of #16713. On current master after #16867, the enclosing hook still copies 0 in place of 2. Six controls passed.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43350911692/artifacts/14003753061",
           "https://github.com/google/gvisor/pull/16713"
         ]
       }
@@ -80720,8 +80756,9 @@
       "from": "pr:17114",
       "to": "branch:nvproxy-declared-sources",
       "type": "depends_on",
-      "reason": "Builds the NVIDIA parser with the compiler dependency used in this source.",
+      "reason": "Satisfied by the parser change merged at e4b80af9e. Builds the NVIDIA parser with the compiler dependency used in this source.",
       "evidence": [
+        "https://github.com/google/gvisor/commit/e4b80af9e",
         "https://github.com/tamird/gvisor/commit/be4b12bea",
         "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193"
       ]
@@ -80771,8 +80808,9 @@
       "from": "pr:17114",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "The released libc++ rejects the old NVIDIA parser source’s RegisterRef comparator. The declared LLVM source builds the four affected targets and passes TestParser.",
+      "reason": "Satisfied by the parser change merged at e4b80af9e. The released libc++ rejects the old NVIDIA parser source’s RegisterRef comparator. The declared LLVM source builds the four affected targets and passes TestParser.",
       "evidence": [
+        "https://github.com/google/gvisor/commit/e4b80af9e",
         "https://github.com/tamird/gvisor/actions/runs/42273255642/artifacts/13532960461",
         "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
         "https://github.com/tamird/gvisor/actions/runs/41368654125/artifacts/13108397749"
@@ -108489,7 +108527,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T21:42:17+00:00",
+      "updatedAt": "2026-11-13T02:20:39+00:00",
       "summary": "In build #54736, localhost TCP connects returned ENETUNREACH in two hostinet cases. The cgroupv2 shard passed when retried on the same commit.",
       "findings": [
         {
@@ -108535,6 +108573,10 @@
       "nextStep": "Record the caller and process-leader network namespace inodes when restoring a namespace. At each connect, capture the socket namespace cookie, loopback link state and local routing table to establish which namespace lost its route.",
       "evidence": [
         {
+          "label": "Calling-thread namespace fix in #17613",
+          "url": "https://github.com/google/gvisor/pull/17613"
+        },
+        {
           "label": "Failed cgroupv2 hostinet test and boot log",
           "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54736/jobs/01a1d194-d6e5-46de-ac76-1760ef618538/artifacts/01a1d19d-5e45-4a7c-b4c7-76e2a2387a57"
         },
@@ -108553,17 +108595,22 @@
       ],
       "repo": "google/gvisor",
       "head": "7b0e57daf4c7857a8343e072f69eb1b70151a8e1",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "7b0e57daf4c7857a8343e072f69eb1b70151a8e1",
-        "baseHead": "2a653cea7b2054a2dc9c6419337d3de8031275d6",
-        "url": "https://github.com/tamird/gvisor/commit/7b0e57daf",
-        "title": "Restore the calling thread's namespace in runsc",
-        "body": "ApplyNS joins a namespace on a locked OS thread. It first opens\n/proc/self/ns to save the previous namespace, but that directory\nbelongs to the thread group leader. If the thread starts in a different\nnetwork namespace, restoring the saved handle puts it in the leader's.\n\nOpen the namespace under /proc/thread-self/ns, as the sandbox network\ntests already do (962441d4e).",
-        "requestedAt": "2026-11-12T21:42:17+00:00",
-        "summary": "Open the independently verified ApplyNS correction. Whether it caused the loopback failure is still unknown."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "7b0e57daf4c7857a8343e072f69eb1b70151a8e1",
+          "baseHead": "2a653cea7b2054a2dc9c6419337d3de8031275d6",
+          "url": "https://github.com/tamird/gvisor/commit/7b0e57daf",
+          "title": "Restore the calling thread's namespace in runsc",
+          "body": "ApplyNS joins a namespace on a locked OS thread. It first opens\n/proc/self/ns to save the previous namespace, but that directory\nbelongs to the thread group leader. If the thread starts in a different\nnetwork namespace, restoring the saved handle puts it in the leader's.\n\nOpen the namespace under /proc/thread-self/ns, as the sandbox network\ntests already do (962441d4e).",
+          "requestedAt": "2026-11-12T21:42:17+00:00",
+          "summary": "Open the independently verified ApplyNS correction. Whether it caused the loopback failure is still unknown.",
+          "outcome": "approved",
+          "at": "2026-11-13T02:20:39+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17613",
+          "note": "Opened #17613 as the reviewed single commit. The cause of the loopback failure remains unconfirmed."
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-podman-rootless-oom-score",
@@ -108640,6 +108687,101 @@
         {
           "label": "48 original Podman results and process diagnostics",
           "url": "https://github.com/tamird/gvisor/actions/runs/43318639229/artifacts/13989787857"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-java-monitor-vm-start-terminate",
+      "title": "Java MonitorVmStartTerminate times out after failing to attach to one child",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T02:04:52+00:00",
+      "summary": "In build #54744 the listener received all ten process IDs, but all 30 attempts to attach to PID 1381 failed. It recognized nine starts and timed out after 600 seconds waiting for the tenth. The same shard passed on retry.",
+      "findings": [
+        {
+          "text": "The listener discarded the start after attachment failed. The log does not show the underlying exception or the state of that child’s perfdata file.",
+          "evidence": [
+            {
+              "label": "Original OpenJDK test log",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54744/jobs/01a1d1cd-54e2-460c-8842-43901607f3b6/artifacts/01a1d1e1-769e-44d5-a9b5-aa621cbeaa1b"
+            },
+            {
+              "label": "Passing same-source retry",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54744#01a1d1e2-3126-4773-ad99-165466b06747"
+            }
+          ]
+        },
+        {
+          "text": "With the same OpenJDK 21.0.2 runtime, the 21.0.3 and 21.0.13 versions of the test each ran three times on native Linux and three times on the archived gVisor runtime. All twelve observed ten starts and ten terminations. The later test changes adjust polling for missing arguments after attachment; the failure in #54744 happened during attachment.",
+          "evidence": [
+            {
+              "label": "12 OpenJDK test logs on native Linux and archived gVisor",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43322269868/artifacts/13990777842"
+            },
+            {
+              "label": "OpenJDK monitor test retry change",
+              "url": "https://github.com/openjdk/jdk21u-dev/commit/3641b5bf0"
+            },
+            {
+              "label": "OpenJDK monitor test polling change",
+              "url": "https://github.com/openjdk/jdk21u-dev/commit/192b86714"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Capture the nested exception and the child’s perfdata file state on the first failed attachment in a failing batch.",
+      "evidence": [
+        {
+          "label": "Original OpenJDK test log",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54744/jobs/01a1d1cd-54e2-460c-8842-43901607f3b6/artifacts/01a1d1e1-769e-44d5-a9b5-aa621cbeaa1b"
+        },
+        {
+          "label": "Passing same-source retry",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54744#01a1d1e2-3126-4773-ad99-165466b06747"
+        },
+        {
+          "label": "12 OpenJDK test logs on native Linux and archived gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43322269868/artifacts/13990777842"
+        }
+      ]
+    },
+    {
+      "id": "investigation:ci-flake-systemd-version",
+      "title": "FIO container startup intermittently fails reading the systemd version",
+      "group": "ci-flakes",
+      "status": "active",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T02:20:39+00:00",
+      "summary": "On build #54765, one libaio FIO case failed before the workload started. Its cgroup constructor reported “unable to get systemd version”. Adjacent FIO containers started. The existing gVisor issue is #11877.",
+      "findings": [
+        {
+          "text": "On a controlled D-Bus failure the candidate preserved the ServiceUnknown error and named the missing service. The parent discarded that information. Both succeeded against the host systemd service, and the cgroup suite passed. The original CI error did not identify which D-Bus call outcome the worker saw.",
+          "evidence": [
+            {
+              "label": "Native cgroup and D-Bus comparisons",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43350315367/artifacts/14004090992"
+            },
+            {
+              "label": "Diagnostic candidate",
+              "url": "https://github.com/tamird/gvisor/commit/4c4cb19bb"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check Nogo on the diagnostic change and collect its error detail on a worker that reproduces #11877.",
+      "evidence": [
+        {
+          "label": "Original FIO startup failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54765#01a1d21e-c88c-482e-a459-e32112f64047"
+        },
+        {
+          "label": "Existing gVisor report #11877",
+          "url": "https://github.com/google/gvisor/issues/11877"
+        },
+        {
+          "label": "Native cgroup and D-Bus comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43350315367/artifacts/14004090992"
         }
       ]
     }
