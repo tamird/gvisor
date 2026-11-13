@@ -1,5 +1,6 @@
 """Deliver one review request to its selected reviewer after refreshing the PR."""
 
+import base64
 import hashlib
 import json
 import os
@@ -43,9 +44,10 @@ def live_posting_mode() -> str:
     return posting_mode(switches.get("WORK_MAP_POSTING_PAUSED"), switches.get("WORK_MAP_REVIEW_ROTATIONS_ENABLED"))
 
 
-def allows_post(mode: str, fresh: dict | None = None) -> bool:
+def allows_post(mode: str, fresh: dict | None = None, *, channel: str | None = None) -> bool:
     return mode == "all" or (mode == "rotations" and fresh is not None
-                             and fresh.get("kind") != "import-status" and fresh.get("sourceRotation") is True)
+                             and fresh.get("kind") != "import-status" and fresh.get("sourceRotation") is True
+                             and (channel or fresh.get("channel")) == "request")
 
 
 def api(path: str, data: dict | None = None) -> dict:
@@ -104,6 +106,33 @@ def confirmation(scheduled: dict, fresh: dict | None) -> dict:
     return {**versions, "status": "due"}
 
 
+def save_native_denial(action: dict, status: int) -> None:
+    """Record a rejected native request on the fork without replacing a newer receipt."""
+    path = f"repos/{FORK}/contents/outreach-holds.json"
+    env = {**os.environ, "GH_TOKEN": os.environ["WORK_MAP_RECEIPT_TOKEN"]}
+    receipt = {key: action[key] for key in ("head", "reviewer", "lastContactAt")}
+    receipt.update(http=status, observedAt=datetime.now(timezone.utc).isoformat())
+    for _ in range(3):
+        raw = subprocess.check_output(["gh", "api", "--hostname", "github.com", path + "?ref=gh-pages"],
+                                      env=env, text=True, timeout=30)
+        file = json.loads(raw)
+        holds = json.loads(base64.b64decode(file["content"]))
+        previous = holds.get(str(action["number"]))
+        if previous and previous["observedAt"] >= receipt["observedAt"]:
+            return
+        holds[str(action["number"])] = receipt
+        content = base64.b64encode((json.dumps(holds, indent=2, sort_keys=True) + "\n").encode()).decode()
+        data = {"branch": "gh-pages", "sha": file["sha"], "content": content,
+                "message": f"Record the rejected native review request on #{action['number']}"}
+        result = subprocess.run(["gh", "api", "--hostname", "github.com", "--method", "PUT", path, "--input", "-"],
+                                input=json.dumps(data), env=env, text=True, capture_output=True, timeout=30)
+        if result.returncode == 0:
+            return
+        if "(HTTP 409)" not in result.stderr:
+            raise RuntimeError(f"Could not publish the native request receipt: {result.stderr.strip()}")
+    raise RuntimeError("Concurrent fork updates prevented the native request receipt from being recorded")
+
+
 def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, registry_oid: str) -> dict:
     number = action["number"]
     reviewer = action["reviewer"]
@@ -126,8 +155,15 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
             observed = api(requests + "?per_page=100")
             return any(row["login"].lower() == reviewer.lower() for row in observed["users"])
 
-        if not allows_post(live_posting_mode(), current):
+        mode = live_posting_mode()
+        if not allows_post(mode, current, channel="request"):
             return {"status": "held"}
+        if mode == "rotations":
+            # Another run may have recorded a denial since this checkout was published.
+            published = api(f"repos/{FORK}/contents/outreach-holds.json?ref=gh-pages")
+            hold = json.loads(base64.b64decode(published["content"])).get(str(number))
+            if hold and hold["head"] == current["head"] and hold["lastContactAt"] == current["lastContactAt"]:
+                return {**checked, "status": "native-request-denied", "reviewer": hold["reviewer"], "http": hold["http"]}
         try:
             api(requests, {"reviewers": [reviewer]})
         except GitHubError as error:
@@ -138,6 +174,11 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
                 return {**checked, "status": "request-observed", "reviewer": reviewer}
             if error.status not in (403, 404, 422):
                 raise
+            if mode == "rotations" or live_posting_mode() == "rotations":
+                if not current.get("sourceRotation") or not current.get("lastContactAt"):
+                    return {"status": "held"}
+                save_native_denial(current, error.status)
+                return {**checked, "status": "native-request-denied", "reviewer": reviewer, "http": error.status}
             # A definite rejection can mean the PR author lacks triage access.
             # Re-read the PR and the registry before falling back to a mention.
             current = refresh()
@@ -152,7 +193,7 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
             return {**checked, "status": "requested", "reviewer": reviewer}
 
     comments = f"repos/{REPO}/issues/{number}/comments"
-    if not allows_post(live_posting_mode(), current):
+    if not allows_post(live_posting_mode(), current, channel="comment"):
         return {"status": "held"}
     posted = api(comments, {"body": action["body"]})
     comment_id = posted.get("id")
@@ -180,8 +221,13 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
         print(json.dumps({"outreachPostingMode": mode, "held": sorted(held)}))
     if not plans:
         return
+    if post and mode == "rotations" and not os.environ.get("WORK_MAP_RECEIPT_TOKEN"):
+        print(json.dumps({"outreachPostingMode": mode, "held": [a["number"] for a in plans],
+                          "reason": "No fork credential to record rejected native review requests"}))
+        return
     if post and api("user").get("login") != owner:
         raise RuntimeError("Review-outreach credential does not belong to the configured owner")
+    native_denials = json.loads(Path(__file__).with_name("outreach-holds.json").read_text())
     nodes = {node["number"]: node for node in registry["nodes"] if node.get("type") == "pr" and node.get("repo") == REPO}
     specialties = {name: set(areas) for name, areas in snapshot.get("reviewerSpecialties", {}).items()}
     history = reviewer_history(snapshot["prs"], owner, maintainers=active_reviewers, specialties=specialties,
@@ -209,7 +255,7 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
                 return None
             current = plan(pr, nodes.get(number, {}), outreach_states(latest, registry).get(str(number), {}),
                            at, owner, maintainers, history, preferred=scheduled["reviewer"],
-                           rotations_only=mode == "rotations")
+                           rotations_only=mode == "rotations", native_denial=native_denials.get(str(number)))
             return {**current, "base": pr.get("base"), "mergeable": pr.get("mergeable")} if current else None
 
         if not post:

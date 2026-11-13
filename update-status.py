@@ -28,6 +28,7 @@ from work_states import FAILURES, check_purpose, check_states, current_rebase_re
 
 ROOT = Path(__file__).resolve().parent
 REGISTRY, REGISTRY_OID = load_registry(ROOT / "registry.json")
+NATIVE_DENIALS = json.loads((ROOT / "outreach-holds.json").read_text())
 REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
 PR_BATCH_SIZE = 8
@@ -1666,7 +1667,7 @@ def main(*, outreach_mode: str = "unknown") -> None:
         number = str(pr["number"])
         node = nodes.get((pr.get("repo"), pr["number"]), {})
         if action := outreach_plan(pr, node, source_states.get(number, {}), checked_at, OWNER, maintainers, history,
-                                  rotations_only=outreach_mode == "rotations"):
+                                  rotations_only=outreach_mode == "rotations", native_denial=NATIVE_DENIALS.get(number)):
             snapshot["reviewOutreach"][number] = action
     # Allocate equally qualified reviewers across this batch, in deadline
     # order. A larger backlog changes the distribution, not the number due.
@@ -1677,7 +1678,8 @@ def main(*, outreach_mode: str = "unknown") -> None:
     for row in due:
         number = row["number"]
         action = outreach_plan(by_number[number], nodes.get((REPO, number), {}), source_states[str(number)],
-                               checked_at, OWNER, maintainers, history, planned=planned, rotations_only=outreach_mode == "rotations")
+                               checked_at, OWNER, maintainers, history, planned=planned, rotations_only=outreach_mode == "rotations",
+                               native_denial=NATIVE_DENIALS.get(str(number)))
         snapshot["reviewOutreach"][str(number)] = action
         if action["status"] in {"due", "verify-mergeability"} and allows_post(outreach_mode, action):
             planned[action["reviewer"].lower()] += 1

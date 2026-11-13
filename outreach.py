@@ -198,7 +198,7 @@ def import_status_plan(pr: dict, node: dict, disposition: dict, approval: dict, 
 
 def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, maintainers: set[str],
          history: History, *, planned: dict[str, int] | None = None, preferred: str | None = None,
-         rotations_only: bool = False) -> dict | None:
+         rotations_only: bool = False, native_denial: dict | None = None) -> dict | None:
     """Decide the next request from the same observations the sender verifies."""
     now = instant(now)
     if (pr.get("repo") != "google/gvisor" or pr.get("authorLogin") != owner
@@ -220,9 +220,10 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     # A review from a maintainer on hiatus remains valid. If only they
     # approved, the next personal request belongs to an active maintainer.
     needs_replacement = bool(recipients) and recipients.isdisjoint(history.people)
+    hold = node.get("reviewOutreachHold")
     if (states.keys() & blocked or mergeable not in {"MERGEABLE", "UNKNOWN"}
             or "conflicts" in states and mergeable != "UNKNOWN"
-            or pr.get("branchHead") != head or node.get("reviewOutreachHold")
+            or pr.get("branchHead") != head or hold and hold.get("head", head) == head
             or waiting_for_release(node, head)
             or node.get("contributorChangesRequested", {}).get("head") == head
             or landed_patch(pr, node.get("landedPatch"))
@@ -345,6 +346,10 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
         return {**info, "status": "incomplete"}
     if now < due or now.astimezone(PACIFIC).weekday() >= 5:
         return {**info, "status": "waiting"}
+    if (rotations_only and rotation and native_denial and native_denial["head"] == head
+            and native_denial["lastContactAt"] == info["lastContactAt"]):
+        return {**info, "status": "native-request-denied", "reviewer": native_denial["reviewer"],
+                "http": native_denial["http"]}
     # A reviewer who responded on a previous revision is eligible again after
     # new source lands. An unanswered or still-pending request is not repeated.
     contacted = contacts.keys() | seen_requests | current | removed | other_recipients
@@ -365,7 +370,7 @@ def plan(pr: dict, node: dict, states: dict, now: str | datetime, owner: str, ma
     key = f"{number}:{head}:{who.lower()}"
     return {**info, "status": "due" if mergeable == "MERGEABLE" else "verify-mergeability",
             "base": pr.get("base"), "key": key, "reviewer": who,
-            "channel": "request" if channel == "review_request" else channel,
+            "channel": "request" if rotations_only and rotation or channel == "review_request" else channel,
             "evidence": candidate["evidence"], "reason": candidate["reason"],
             "body": f"@{who}, could you review the changes to `{scope}` in this PR? {candidate['reason']}\n\n"
                     f"Posted by Codex on behalf of @{owner}.\n\n<!-- gvisor-review-outreach {key} -->"}

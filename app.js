@@ -710,7 +710,7 @@ function attentionReasons(node, owner) {
   const publicFailures = failedValidationChecks(pr).filter(check => !isPrivateBuildkiteCheck(pr, check));
   const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id));
   if (!landed && authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
-  const reviewHold = node.reviewOutreachHold;
+  const reviewHold = activeReviewHold(node, pr);
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
   if (!landed && !reviewHold && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
@@ -1918,18 +1918,22 @@ function appendSettledPublications(parent, node) {
   }
 }
 function outreachPauseNotice(snapshot) {
-  if (snapshot?.outreachPostingMode === "rotations") return "Only reviewer rotations are enabled. Initial requests, repeat reminders and import follow-ups are paused.";
+  if (snapshot?.outreachPostingMode === "rotations") return "Only native GitHub requests to new reviewers are enabled. Automated comments, first requests and import reminders are paused.";
   if (snapshot?.outreachPostingMode === "paused") return "Automated GitHub review requests and reminders are paused. Read-only monitoring continues.";
   if (snapshot?.outreachPostingMode === "unknown") return "The collector could not verify whether GitHub outreach is enabled. Read-only monitoring continues.";
   return "";
 }
+function activeReviewHold(node, pr) {
+  const hold = node.reviewOutreachHold;
+  return hold && (!hold.head || hold.head === pr?.head) ? hold : null;
+}
 function currentOutreach(node) {
   const pr = node.github;
-  if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open" || pr.mergeable === "CONFLICTING" || node.reviewOutreachHold) return null;
+  if (node.type !== "pr" || node.repo !== "google/gvisor" || pr?.status !== "open" || pr.mergeable === "CONFLICTING" || activeReviewHold(node, pr)) return null;
   const row = liveSnapshot?.reviewOutreach?.[pr.number];
   if (row?.head !== pr.head || row?.kind === "import-status" && !currentHeadApproval(pr) && !reviewedExport(node)) return null;
   if (row && outreachPauseNotice(liveSnapshot)
-      && !(liveSnapshot.outreachPostingMode === "rotations" && row.sourceRotation === true && row.kind !== "import-status")) return { ...row, status: "paused" };
+      && !(liveSnapshot.outreachPostingMode === "rotations" && row.sourceRotation === true && row.kind !== "import-status" && (row.channel === "request" || row.status === "native-request-denied"))) return { ...row, status: "paused" };
   return row;
 }
 function appendOutreach(parent, node) {
@@ -1941,6 +1945,8 @@ function appendOutreach(parent, node) {
   const due = new Date(row.dueAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
   if (row.status === "paused") {
     section.append(element("p", "detail-meta", outreachPauseNotice(liveSnapshot)));
+  } else if (row.status === "native-request-denied") {
+    section.append(element("p", "", `GitHub rejected the native review request for @${row.reviewer} (HTTP ${row.http}). This rotation is held.`));
   } else if (["due", "verify-mergeability"].includes(row.status)) {
     if (row.status === "verify-mergeability") section.append(element("p", "detail-meta", "GitHub is recalculating mergeability. Check the current PR head and base before sending."));
     section.append(element("p", "", `${row.channel === "request" ? "Request a GitHub review from" : "Mention"} @${row.reviewer}. ${row.reason}`), link("Reviewer evidence ↗", row.evidence));
@@ -2626,10 +2632,11 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       throw new Error("Invalid gVisor review outreach");
     for (const [id, row] of Object.entries(snapshot.reviewOutreach)) {
       if (!row || String(row.number) !== id || !/^[1-9]\d*$/.test(id) || !/^[a-f0-9]{40}$/.test(row.head) ||
-          !["due", "verify-mergeability", "waiting", "needs-reviewer", "incomplete"].includes(row.status) ||
+          !["due", "verify-mergeability", "waiting", "needs-reviewer", "incomplete", "native-request-denied"].includes(row.status) ||
           row.kind !== undefined && row.kind !== "import-status" ||
           [row.lastActivityURL, row.lastContactURL].some(url => url !== undefined && !/^https:\/\/github\.com\/google\/gvisor\/pull\/[1-9]\d*(?:#[a-z0-9_-]+)?$/i.test(url)) ||
           row.status !== "incomplete" && !Number.isFinite(Date.parse(row.dueAt)) ||
+          row.status === "native-request-denied" && (!/^[A-Za-z0-9-]+$/.test(row.reviewer) || ![403, 404, 422].includes(row.http)) ||
           ["due", "verify-mergeability"].includes(row.status) && (!["request", "comment"].includes(row.channel) || !/^[A-Za-z0-9-]+$/.test(row.reviewer) ||
             !row.reason || !/^https:\/\/github\.com\/google\/gvisor\//.test(row.evidence)))
         throw new Error("Invalid gVisor review outreach record");

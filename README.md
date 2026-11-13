@@ -376,7 +376,13 @@ active reviewer who has reviewed the affected code or maintains that area.
 It uses that person's history of responding to GitHub review requests and
 mentions. After a personal request, allow two business days before asking
 another reviewer. A bot's initial assignment does not establish personal
-outreach. A pending native request can receive a personal mention.
+outreach. While automated pings are paused, a rotation may only request a
+previously uncontacted reviewer through GitHub’s native review request. If
+GitHub rejects the request, the sender records the recipient, source head,
+last contact and HTTP status in `outreach-holds.json` on the fork. The PR card
+shows the hold until the source or contact changes. Remove the receipt if
+native review access is restored. With posting fully enabled, the sender may
+fall back to a personal mention.
 
 The PR card shows when the next request is eligible. **Find or contact a
 reviewer** lists requests due and cases where another qualified reviewer is

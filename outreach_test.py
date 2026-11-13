@@ -166,7 +166,12 @@ class OutreachTest(unittest.TestCase):
         p = pr()
         p["reviewTimeline"]["items"] = [ask("alice", "2026-11-03T18:00:00Z")]
         row = action(p, rotations_only=True)
-        self.assertEqual((row["sourceRotation"], row["reviewer"]), (True, "bob"))
+        self.assertEqual((row["sourceRotation"], row["reviewer"], row["channel"]), (True, "bob", "request"))
+        denial = {"head": HEAD, "lastContactAt": row["lastContactAt"], "reviewer": "bob", "http": 422}
+        self.assertEqual(action(p, rotations_only=True, native_denial=denial)["status"], "native-request-denied")
+        self.assertEqual(action(p, rotations_only=True, native_denial={**denial, "head": "b"*40})["status"], "due")
+        self.assertEqual(action(p, rotations_only=True, native_denial={**denial, "lastContactAt": OLD})["status"], "due")
+        self.assertEqual(action(p, native_denial=denial)["channel"], "comment")
         p["feedback"]["items"] = [comment("alice", "Testing passed", "2026-11-04T18:00:00Z")]
         self.assertNotIn("sourceRotation", action(p, rotations_only=True))
         p["feedback"]["items"] = []

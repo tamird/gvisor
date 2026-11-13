@@ -190,7 +190,13 @@ test('review outreach follows only the observed open gVisor source', () => {
   c.snapshotInput.outreachPostingMode = 'rotations';
   assert.equal(read().status, 'paused');
   row.sourceRotation = true;
+  assert.equal(read().status, 'paused');
+  row.channel = 'request';
   assert.equal(read().status, 'due');
+  row.status = 'native-request-denied';
+  row.http = 422;
+  assert.equal(read().status, 'native-request-denied');
+  row.status = 'due';
   c.snapshotInput.outreachPostingMode = 'paused';
   assert.equal(read().status, 'paused');
   c.snapshotInput.outreachPostingMode = 'unknown';

@@ -43,26 +43,64 @@ class ReviewDeliveryTest(unittest.TestCase):
                 self.live.return_value = fresh
                 self.assertEqual(self.send()["status"], "held")
                 self.api.assert_not_called()
-        self.action["channel"] = "request"
-        self.live.side_effect = [self.action, {**self.action, "sourceRotation": False}]
-        self.api.side_effect = [delivery.GitHubError(403, "Forbidden"), {"users": []}]
-        self.assertEqual(self.send()["status"], "held")
-        self.assertEqual(self.api.call_count, 2)
-
-    def test_native_and_mention_follow_fresh_rotation_only(self):
+    def test_rotation_uses_only_the_native_request(self):
         self.mode.return_value = "rotations"
-        self.action["sourceRotation"] = True
+        self.action.update(sourceRotation=True, lastContactAt="2026-11-09T20:00:00Z")
         self.live.return_value = self.action
-        self.api.side_effect = [{}, {"users": [{"login": "reviewer"}]}]
+        self.api.side_effect = [{"content": "e30="}, {}, {"users": [{"login": "reviewer"}]}]
         self.assertEqual(self.send()["status"], "requested")
         self.action["channel"] = "comment"
-        self.api.side_effect = [{"id": 456}, self.receipt]
-        self.assertEqual(self.send()["status"], "commented")
         self.api.reset_mock()
-        self.mode.side_effect = subprocess.CalledProcessError(1, "gh")
-        with self.assertRaises(subprocess.CalledProcessError):
-            self.send()
+        self.assertEqual(self.send()["status"], "held")
         self.api.assert_not_called()
+
+    def test_rotations_hold_after_a_definitive_native_denial(self):
+        self.mode.return_value = "rotations"
+        self.action.update(sourceRotation=True, lastContactAt="2026-11-09T20:00:00Z")
+        self.live.return_value = self.action
+        for status in (403, 404, 422):
+            with self.subTest(status=status), patch.object(delivery, "save_native_denial") as save:
+                self.api.reset_mock()
+                self.api.side_effect = [{"content": "e30="}, delivery.GitHubError(status, "Rejected"), {"users": []}]
+                self.assertEqual(self.send()["status"], "native-request-denied")
+                save.assert_called_once_with(self.action, status)
+                self.assertEqual([c.args for c in self.api.call_args_list if len(c.args) == 2],
+                                 [(self.requests, {"reviewers": ["reviewer"]})])
+
+    def test_pause_during_initial_request_does_not_record_a_rotation(self):
+        self.mode.side_effect = ["all", "rotations"]
+        self.api.side_effect = [delivery.GitHubError(403, "Forbidden"), {"users": []}]
+        with patch.object(delivery, "save_native_denial") as save:
+            self.assertEqual(self.send()["status"], "held")
+            save.assert_not_called()
+        self.assertEqual([c.args for c in self.api.call_args_list if len(c.args) == 2],
+                         [(self.requests, {"reviewers": ["reviewer"]})])
+
+    def test_stale_snapshot_observes_published_denial_before_a_write(self):
+        self.mode.return_value = "rotations"
+        self.action.update(sourceRotation=True, lastContactAt="2026-11-09T20:00:00Z")
+        self.live.return_value = self.action
+        hold = {k: self.action[k] for k in ("head", "reviewer", "lastContactAt")}
+        self.api.return_value = {"content": delivery.base64.b64encode(json.dumps({"123": {**hold, "http": 422}}).encode()).decode()}
+        self.assertEqual(self.send()["status"], "native-request-denied")
+        self.api.assert_called_once()
+
+    def test_denial_is_persisted_to_the_fork_with_its_observed_file_sha(self):
+        action = {**self.action, "lastContactAt": "2026-11-09T20:00:00Z"}
+        prior = {"124": {"http": 403, "reviewer": "other"}}
+        file = {"sha": "d" * 40, "content": delivery.base64.b64encode(json.dumps(prior).encode()).decode()}
+        with patch.dict(delivery.os.environ, {"WORK_MAP_RECEIPT_TOKEN": "fork-only"}), \
+             patch.object(subprocess, "check_output", return_value=json.dumps(file)), patch.object(subprocess, "run") as run:
+            run.return_value.returncode = 0
+            delivery.save_native_denial(action, 422)
+        request = run.call_args
+        self.assertEqual(request.args[0][-3:], ["repos/tamird/gvisor/contents/outreach-holds.json", "--input", "-"])
+        payload = json.loads(request.kwargs["input"])
+        self.assertEqual((payload["sha"], payload["branch"]), (file["sha"], "gh-pages"))
+        saved = json.loads(delivery.base64.b64decode(payload["content"]))
+        self.assertEqual(saved["124"], prior["124"])
+        self.assertEqual((saved["123"]["head"], saved["123"]["lastContactAt"], saved["123"]["reviewer"], saved["123"]["http"]),
+                         (action["head"], action["lastContactAt"], action["reviewer"], 422))
 
     def test_confirm_native_request(self):
         self.api.side_effect = [{}, {"users": [{"login": "Reviewer"}]}]
