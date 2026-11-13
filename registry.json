@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:09:34.116848+00:00",
+    "updatedAt": "2026-11-13T16:16:01.404510+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40428,6 +40428,10 @@
       "summary": "Ryan’s #17612 passes Make’s Bazel command and cache options through tools/lint.sh. Combining its export #17638 with #16663 left all three new Bazel invocations using bare bazel. In the merged test fixture the three goimports calls received the caller’s options, but buildifier check, buildifier fix and cpplint dropped them. Using run_bazel for those three calls passed all six lint tests and built //tools/lint:check on Linux.\n\nThe published patch header links to Buildifier’s upstream toolchain export, 9cefc248d. Its 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.\n\nThe formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
       "evidence": [
         {
+          "label": "Posted question to Ryan about the Buildkite clang-tidy target",
+          "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858458989"
+        },
+        {
           "label": "Original failing and corrected option traces",
           "url": "https://github.com/tamird/gvisor/actions/runs/43458301974/artifacts/14054892169"
         },
@@ -40629,7 +40633,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-13T16:03:11.726011+00:00",
+      "updatedAt": "2026-11-13T16:16:01.404510+00:00",
       "refinement": {
         "before": {
           "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b"
@@ -40699,33 +40703,37 @@
           "at": "2026-11-12T19:40:14+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16663",
           "note": "Published the reviewed patch-header amendment as the PR’s single commit. The patch still applies to release 8.5.1.4."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "8fd9f92fc93317266162ce83b78a67480dbd749d",
+          "baseHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
+          "url": "https://github.com/tamird/gvisor/commit/8fd9f92fc",
+          "title": "Run Buildifier and cpplint as Bazel actions",
+          "body": "Source lint discovers files in the checkout and installs its tools in\nthe builder. Give each checker one Bazel action with the first-party\nfiles and configuration it needs. A new C++ or BUILD file then joins\nthe check without a test declaration in its package.\n\nExpose both checks through //tools/lint:check. Keep the tools and file\ninventory as development dependencies so importing gVisor does not add\nits lint tools to the consuming module.\n\nRun //tools/lint:format in the writable checkout so Buildifier can fix\nthe same files from any working directory. Include the repair command\nin the formatting diagnostic.\n\nOn Linux, the clean actions matched all 629 Starlark and 486 C/C++ inputs.\nThe formatter fixed a misformatted file and a new check passed. A separate\nmissing module docstring still failed lint [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962",
+          "summary": "After #17612 lands, pass the caller’s Bazel options to Buildifier, its formatter and cpplint. The published calls dropped all three test flags. The amendment passed all six lint tests and built both repository-wide checks.",
+          "requestedAt": "2026-11-13T16:05:07.206232+00:00",
+          "outcome": "approved",
+          "at": "2026-11-13T16:16:01.404510+00:00",
+          "note": "Approved for publication after #17612 lands."
         }
       ],
       "followup": {
         "owner": "Agent",
         "sourceHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
-        "observedAt": "2026-11-13T16:03:11.726011+00:00",
-        "disposition": "The current master and #16663 do not yet contain Ryan’s cache wrapper. The tested combined source preserves option forwarding.",
-        "nextAction": "When #17612 lands, rebase #16663 using the tested three run_bazel calls and the combined lint fixture. If #16663 lands first, recheck #17612 for those calls.",
+        "observedAt": "2026-11-13T16:16:01.404510+00:00",
+        "disposition": "The contributor approved 8fd9f92fc. Ryan’s open #17612 supplies run_bazel. The published #16663 still uses the three bare Bazel calls.",
+        "nextAction": "After #17612 lands, rebase the approved amendment onto master, verify the three calls pass Make’s options, and publish on #16663 if it is open. If #16663 has landed, inspect the merged code and follow up separately only if the calls still drop those options.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/43458301974/artifacts/14054892169",
           "https://github.com/tamird/gvisor/commit/8fd9f92fc",
           "https://github.com/google/gvisor/pull/17612",
           "https://github.com/google/gvisor/pull/17638",
           "https://github.com/google/gvisor/pull/16663",
-          "https://github.com/google/gvisor/pull/16663#discussion_r4537464299"
+          "https://github.com/google/gvisor/pull/16663#discussion_r4537464299",
+          "https://github.com/google/gvisor/pull/17612#issuecomment-6858458989"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "8fd9f92fc93317266162ce83b78a67480dbd749d",
-        "baseHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
-        "url": "https://github.com/tamird/gvisor/commit/8fd9f92fc",
-        "title": "Run Buildifier and cpplint as Bazel actions",
-        "body": "Source lint discovers files in the checkout and installs its tools in\nthe builder. Give each checker one Bazel action with the first-party\nfiles and configuration it needs. A new C++ or BUILD file then joins\nthe check without a test declaration in its package.\n\nExpose both checks through //tools/lint:check. Keep the tools and file\ninventory as development dependencies so importing gVisor does not add\nits lint tools to the consuming module.\n\nRun //tools/lint:format in the writable checkout so Buildifier can fix\nthe same files from any working directory. Include the repair command\nin the formatting diagnostic.\n\nOn Linux, the clean actions matched all 629 Starlark and 486 C/C++ inputs.\nThe formatter fixed a misformatted file and a new check passed. A separate\nmissing module docstring still failed lint [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43011501247/artifacts/13850098962",
-        "summary": "After #17612 lands, pass the caller’s Bazel options to Buildifier, its formatter and cpplint. The published calls dropped all three test flags. The amendment passed all six lint tests and built both repository-wide checks.",
-        "requestedAt": "2026-11-13T16:05:07.206232+00:00"
       }
     },
     {
@@ -102831,6 +102839,10 @@
       "nextStep": "Wait for the first golang.org/x/tools tag that contains CL 858482, then verify the full lint build on an empty worker. The v0.52.0 tag predates the merged goimports change.",
       "evidence": [
         {
+          "label": "Asked Ryan what the Make C++ lint path needs to preserve",
+          "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858458989"
+        },
+        {
           "label": "Gazelle: qualified proposal",
           "url": "https://github.com/tamird/gvisor/commit/de64c6b62"
         },
@@ -102886,7 +102898,18 @@
           "label": "Minimal ARM64 consuming root · cgroup2 source selection and subsequent Nogo failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/43242407780/artifacts/13955967390"
         }
-      ]
+      ],
+      "reviewWatch": {
+        "repo": "google/gvisor",
+        "numbers": [
+          17612
+        ],
+        "owner": "Repository lint",
+        "reviewers": [
+          "tamird"
+        ],
+        "since": "2026-11-13T16:13:35Z"
+      }
     },
     {
       "id": "investigation:proc-boot-identity",
@@ -110057,5 +110080,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:09:34.116848+00:00"
+  "updatedAt": "2026-11-13T16:16:01.404510+00:00"
 }

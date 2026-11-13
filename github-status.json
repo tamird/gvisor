@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-13T15:38:02.860045+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-13T16:09:34.116848+00:00",
+  "registryDate": "2026-11-13T16:16:01.404510+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -454313,6 +454313,48 @@
         "IC_kwDOB9IlXs8AAAABigD5dg": "bba4c63b27424f09bbde372858ad47674714d252",
         "PRRC_kwDOB9IlXs8AAAABCuWdeA": "ff79390649cbb3c92c1d775d609d758b90af6f0c",
         "PRRC_kwDOB9IlXs8AAAABC9y94g": "1668e58d4c0cb17ecb5fcf6457389575a3c01459"
+      }
+    },
+    {
+      "repo": "google/gvisor",
+      "number": 17612,
+      "url": "https://github.com/google/gvisor/pull/17612",
+      "head": "0bf24c0a73fa1349c21c672605a276f6765950ab",
+      "status": "open",
+      "authorLogin": "relkochta",
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABmMvHbQ",
+            "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858458989",
+            "body": "@relkochta, this fixes a real problem for the current C++ lint job. I’m working toward having Buildkite invoke Bazel directly, so CI can pass its cache options once and a remote worker can run the checks without the builder image.\n\nTwo changes overlap with yours:\n\n- #16663 moves Buildifier and cpplint into `bazel build //tools/lint:check`. I tested it on top of your change and will update those calls to use `run_bazel` once this lands.\n- For `lint-cc` itself, the [clang-tidy prototype](https://github.com/tamird/gvisor/commit/89a85fa8f) runs the LLVM tool on each configured C++ compilation with its flags and headers. CI can then skip generating `compile_commands.json`; developers can still generate it for their editors. That change depends on the LLVM toolchain migration.\n\nDoes running that clang-tidy aspect directly from Buildkite cover what you need from `make lint-cc`, or is there something else the Make path provides that we should preserve?\n\nAssisted-by: OpenAI Codex, acting on behalf of Tamir Duberstein.",
+            "createdAt": "2026-11-13T16:13:35Z",
+            "updatedAt": "2026-11-13T16:13:35Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABXzkA3A",
+            "url": "https://github.com/google/gvisor/pull/17612#pullrequestreview-5892538588",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-11-13T14:16:57Z",
+            "updatedAt": "2026-11-13T14:16:57Z",
+            "authorAssociation": "COLLABORATOR",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "0bf24c0a73fa1349c21c672605a276f6765950ab"
+            }
+          }
+        ]
       }
     }
   ],
