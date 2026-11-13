@@ -1,35 +1,68 @@
-name: CI
-
-"on":
+name: Refresh the NVIDIA driver sources and their licenses
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nvproxy-driver-source-refresh]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  presubmit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Check source and tools
+        id: setup
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 9618e3d9f27c2af64a628583b0bc9e2b34113f9a
+          test "$(git rev-parse HEAD^^)" = cc818770889c5bdc4309b0bc83bbbe2b2b434f28
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/verify_nv.py'
+          test "$(cat .bazelversion)" = 9.3.1
+          w="$RUNNER_TEMP/llvm-source-presubmit"
+          mkdir -m 700 "$w" "$w/dist" "$w/results"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 -H 'Accept: application/octet-stream' https://api.github.com/repos/cerisier/glibc-headers/releases/assets/253918436 -o "$w/dist/x86_64-linux-gnu.2.28.tar.zst"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 --max-time 180 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          cp .github/qualification/verify_nv.py "$w/"
+          git switch --detach HEAD^
+          test "$(git rev-parse HEAD)" = 9618e3d9f27c2af64a628583b0bc9e2b34113f9a
+          test -z "$(git status --porcelain)"
+          cd "$w"
+          sha256sum -c <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          8015f4a710987439dfdcde7539b62cc5db52d2cd9456af5e2e297494f13c56f3  dist/x86_64-linux-gnu.2.28.tar.zst
+          SUMS
+          chmod 700 bazel
+      - name: Regenerate and verify the catalog and test driver ABIs and checksums
+        timeout-minutes: 270
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?existing BuildBuddy key is required}"
+          w="$RUNNER_TEMP/llvm-source-presubmit"
+          rc="$w/remote.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io
+          build --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io
+          build --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02
+          build --spawn_strategy=remote --noremote_local_fallback --remote_download_outputs=minimal
+          test --strategy=TestRunner=remote --modify_execution_info=^TestRunner$=+no-remote-cache
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -IB "$w/verify_nv.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled() && steps.setup.outcome == 'success'
+        with:
+          name: nvproxy-driver-source-refresh
+          path: ${{ runner.temp }}/llvm-source-presubmit/results/
+          if-no-files-found: error
+          retention-days: 14
