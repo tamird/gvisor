@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:18:25.873898+00:00",
+    "updatedAt": "2026-11-13T15:21:02.875851+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21631,7 +21631,7 @@
       "group": "release",
       "status": "open",
       "summary": "Keep audited license terms while the URL and SHA256 of a binary artifact match. An invalid local reference cannot cause automatic discovery to overwrite a reviewed entry.",
-      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
+      "updatedAt": "2026-11-13T15:21:02.875851+00:00",
       "evidence": [
         {
           "label": "Exact revision: all 46 checker cases",
@@ -21688,6 +21688,10 @@
         {
           "label": "Prior fork candidate with both audit modes",
           "url": "https://github.com/tamird/gvisor/commit/dbf12f4d3"
+        },
+        {
+          "label": "Jing reviewed how Verify enforces the licensing policy",
+          "url": "https://github.com/google/gvisor/pull/14442#discussion_r3938240100"
         }
       ],
       "ciRecovery": {
@@ -25847,16 +25851,18 @@
       "followup": {
         "owner": "maintainer",
         "sourceHead": "94e8c3760f27577ab466bb750a3479531bb7a676",
-        "observedAt": "2026-10-30T04:46:20.780605+00:00",
-        "disposition": "Merge conflict repaired",
-        "nextAction": "Review the Protobuf upgrade.",
+        "observedAt": "2026-11-13T15:21:02.875851+00:00",
+        "disposition": "Awaiting the referred reviewer or a stable Protobuf release",
+        "nextAction": "Follow Etienne’s review. When stable Protobuf 37 reaches BCR, evaluate the stable pin and retest the four gRPC targets against it.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16254#issuecomment-6382233256",
           "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3",
           "https://github.com/protocolbuffers/protobuf/blob/v36.2/MODULE.bazel#L217",
           "https://github.com/protocolbuffers/protobuf/blob/v37.0-rc1/MODULE.bazel#L216-L219",
           "https://github.com/tamird/gvisor/commit/94e8c3760",
-          "https://github.com/tamird/gvisor/actions/runs/41003452270/artifacts/12954284152"
+          "https://github.com/tamird/gvisor/actions/runs/41003452270/artifacts/12954284152",
+          "https://api.github.com/repos/google/gvisor/issues/events/35719004528",
+          "https://github.com/protocolbuffers/protobuf/releases/tag/v37.0-rc3"
         ],
         "attentionDispositions": [
           {
@@ -25925,7 +25931,7 @@
           }
         ]
       },
-      "updatedAt": "2026-10-30T04:46:20.780605+00:00",
+      "updatedAt": "2026-11-13T15:21:02.875851+00:00",
       "refinement": {
         "before": {
           "head": "6c330bf066b45334570a16b293a135fc167951b2",
@@ -25952,9 +25958,22 @@
         {
           "label": "Protobuf37 full canonical catalog",
           "url": "https://app.buildbuddy.io/invocation/6b2a247c-93ce-425c-926c-9c4179545ddc"
+        },
+        {
+          "label": "Parth requested Etienne’s review",
+          "url": "https://api.github.com/repos/google/gvisor/issues/events/35719004528"
+        },
+        {
+          "label": "Latest Protobuf 37 release is still a candidate",
+          "url": "https://github.com/protocolbuffers/protobuf/releases/tag/v37.0-rc3"
         }
       ],
-      "number": 16254
+      "number": 16254,
+      "reviewOutreachHold": {
+        "head": "94e8c3760f27577ab466bb750a3479531bb7a676",
+        "reason": "Parth requested Etienne’s review on November 10. Tamir has answered his question about taking a release candidate. Revisit when Etienne responds or stable Protobuf 37 reaches BCR, then check whether gRPC still needs the local patch.",
+        "evidence": "https://api.github.com/repos/google/gvisor/issues/events/35719004528"
+      }
     },
     {
       "id": "pr:16234",
@@ -109673,5 +109692,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:18:25.873898+00:00"
+  "updatedAt": "2026-11-13T15:21:02.875851+00:00"
 }

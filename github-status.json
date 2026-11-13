@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-13T11:08:43.099758+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-13T15:18:25.873898+00:00",
+  "registryDate": "2026-11-13T15:21:02.875851+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -467352,7 +467352,9 @@
         "relkochta"
       ],
       "lastContactURL": "https://github.com/google/gvisor/pull/16051#issuecomment-6779305763",
-      "status": "needs-reviewer"
+      "status": "native-request-denied",
+      "reviewer": "milantracy",
+      "http": 404
     },
     "16076": {
       "number": 16076,
@@ -467380,18 +467382,6 @@
       "lastActivity": "2026-11-10T15:07:24+00:00",
       "dueAt": "2026-11-17T07:07:24-08:00",
       "status": "waiting"
-    },
-    "16254": {
-      "number": 16254,
-      "head": "94e8c3760f27577ab466bb750a3479531bb7a676",
-      "lastActivity": "2026-10-30T04:43:13+00:00",
-      "dueAt": "2026-11-12T11:06:35-08:00",
-      "sourceRotation": true,
-      "lastContactAt": "2026-11-10T19:06:35+00:00",
-      "lastReviewers": [
-        "etienneperot"
-      ],
-      "status": "needs-reviewer"
     },
     "16258": {
       "number": 16258,
