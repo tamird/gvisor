@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:33:01.762170+00:00",
+    "updatedAt": "2026-11-13T15:39:57.423004+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51734,7 +51734,7 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T13:18:48.077Z",
+      "updatedAt": "2026-11-13T15:39:57.423004+00:00",
       "summary": "The ordinary declared-LLVM release has run on AMD64 and ARM64 without this static-glibc branch. The AMD64 musl race binaries also linked and staged on 3dab3494e. The static GNU TLDK runtime passed a guest TCP and UDP exchange on AMD64 in one optional plugin configuration. A separate assembly build on a scratch worker required a writable temporary directory.",
       "evidence": [
         {
@@ -51796,6 +51796,10 @@
         {
           "label": "Native ARM64 guest using the ordinary declared-LLVM release",
           "url": "https://github.com/tamird/gvisor/actions/runs/42103026284/artifacts/13451557204"
+        },
+        {
+          "label": "Installed musl TLDK plugin and runc exchanged TCP and UDP",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878"
         }
       ],
       "settledReviews": [
@@ -51819,13 +51823,15 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "On hold",
         "sourceHead": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
-        "observedAt": "2026-11-06T13:18:48.077Z",
-        "disposition": "The contributor declined a request for the author to cherry-pick these commits.",
-        "nextAction": "Check whether an existing gVisor target requires an upstream change before proposing one.",
+        "observedAt": "2026-11-13T15:39:57.423004+00:00",
+        "disposition": "The ordinary AMD64 and ARM64 LLVM releases run without static glibc. The optional TLDK plugin in #17444 also linked with musl and exchanged TCP and UDP using the installed AMD64 runtime.",
+        "nextAction": "Revisit if a gVisor target needs static glibc for behavior the musl toolchain cannot provide.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238"
+          "https://github.com/google/gvisor/pull/17444",
+          "https://github.com/tamird/gvisor/actions/runs/42880926437/artifacts/13793562878",
+          "https://github.com/tamird/gvisor/actions/runs/42103026284/artifacts/13451557204"
         ]
       }
     },
@@ -109755,5 +109761,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:33:01.762170+00:00"
+  "updatedAt": "2026-11-13T15:39:57.423004+00:00"
 }
