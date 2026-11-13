@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:11:10.238238+00:00",
+    "updatedAt": "2026-11-13T15:16:07.381884+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7656,9 +7656,9 @@
       "url": "https://github.com/google/gvisor/pull/15370",
       "group": "bazel",
       "status": "open",
-      "head": "d41dcb1744e773fe6d7f58b1ad1ee0c1e0771d55",
-      "updatedAt": "2026-11-13T15:11:10.238238+00:00",
-      "summary": "The PR runs the Go and C++ tests on native AMD64 and ARM64 workers. Nogo now analyzes the architecture-specific Go test sources. The original run passed 10,933 Go cases and three C++ cases on each native architecture and both Nogo targets.",
+      "head": "70c6454fef55f460afb8d0bcbe977cacbaeff07b",
+      "updatedAt": "2026-11-13T15:16:07.381884+00:00",
+      "summary": "The PR runs the Go and C++ tests on native AMD64 and ARM64 workers. Nogo now analyzes the architecture-specific Go test sources. The original run passed 10,933 Go test records and three C++ cases on each native architecture and both Nogo targets.",
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -7867,11 +7867,11 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "d41dcb1744e773fe6d7f58b1ad1ee0c1e0771d55",
-        "observedAt": "2026-11-13T15:11:10.238238+00:00",
-        "disposition": "Published the approved amendment as the PR’s single commit. GitHub reports it merges cleanly with master.",
-        "nextAction": "Diagnose the upstream lint failure on the published commit and verify the correction.",
+        "owner": "Maintainer review",
+        "sourceHead": "70c6454fef55f460afb8d0bcbe977cacbaeff07b",
+        "observedAt": "2026-11-13T15:16:07.381884+00:00",
+        "disposition": "The pinned Buildifier inserted one blank line into the approved amendment. The complete tree passed the formatter before publication.",
+        "nextAction": "Review the native Go and C++ test rules and the Nogo analysis for architecture-specific Go tests.",
         "mergeable": "CONFLICTING",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b3cf8596d",
@@ -109663,5 +109663,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:11:10.238238+00:00"
+  "updatedAt": "2026-11-13T15:16:07.381884+00:00"
 }
