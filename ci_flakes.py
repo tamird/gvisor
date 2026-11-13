@@ -39,12 +39,18 @@ def read(url: str) -> bytes:
     return data
 
 
-def latest_build(slug: str) -> int:
+def listed_builds(slug: str) -> tuple[int, list[tuple[int, str]]]:
     listing = read(f"{ROOT}/{slug}/builds").decode()
     numbers = re.findall(rf"/gvisor/{slug}/builds/([1-9][0-9]*)(?![0-9])", listing)
     if not numbers:
         raise ValueError("No build numbers in the public pipeline listing")
-    return max(map(int, numbers))
+    # Prefer finished rows for the live sample. Four newer running builds can
+    # otherwise hide the job that just passed on retry. inspect() verifies
+    # each sampled build and its individual attempts against the JSON API.
+    rows = re.findall(rf'/gvisor/{slug}/builds/([1-9][0-9]*)/row"[^>]*>(.*?)</turbo-frame>', listing, re.S)
+    finished = [(int(number), match[1].lower()) for number, row in rows
+                if (match := re.search(r'&quot;state&quot;:&quot;(PASSED|FAILED|CANCELED)&quot;', row))]
+    return max(map(int, numbers)), sorted(set(finished), reverse=True)
 
 
 def job_records(url: str) -> dict[str, dict]:
@@ -116,7 +122,7 @@ def recoveries(slug: str, number: int, build: dict, jobs: dict[str, dict]) -> li
     return records
 
 
-def inspect(slug: str, number: int, now: datetime) -> tuple[list[dict], bool]:
+def inspect(slug: str, number: int, now: datetime) -> tuple[list[dict], bool, str]:
     base = f"{ROOT}/{slug}/builds/{number}"
     build = json.loads(read(base + ".json"))
     if not isinstance(build, dict) or build.get("number") != number or build.get("path") != f"/gvisor/{slug}/builds/{number}":
@@ -124,7 +130,7 @@ def inspect(slug: str, number: int, now: datetime) -> tuple[list[dict], bool]:
     if not isinstance(status := build.get("state"), str):
         raise ValueError("Buildkite did not report a build state")
     if status not in {"passed", "failed", "canceled", "skipped", "not_run"}:
-        return [], True
+        return [], True, status
     if not isinstance(head := build.get("commit_id"), str) or not HEAD.fullmatch(head):
         raise ValueError("Buildkite did not report an exact commit")
     # A maintainer can retry a failed job after the build finishes.
@@ -135,7 +141,7 @@ def inspect(slug: str, number: int, now: datetime) -> tuple[list[dict], bool]:
             raise ValueError("Missing build completion time zone")
         revisit = now - at < RETRY_WINDOW
     jobs = job_records(base + "/data/jobs")
-    return recoveries(slug, number, build, jobs), revisit or any(job.get("retry_pending") for job in jobs.values())
+    return recoveries(slug, number, build, jobs), revisit or any(job.get("retry_pending") for job in jobs.values()), status
 
 
 def scan(slug: str, previous: dict, now: str) -> tuple[dict, list]:
@@ -144,41 +150,72 @@ def scan(slug: str, previous: dict, now: str) -> tuple[dict, list]:
     state = dict(previous, checkedAt=now, status="ok")
     state.pop("error", None)
     try:
-        latest = latest_build(slug)
+        latest, finished = listed_builds(slug)
     except ERRORS as error:
         return {**state, "status": "unavailable", "error": str(error)}, []
     state["latest"] = max(latest, state.get("latest", latest))
     state.setdefault("firstBuild", max(1, latest - LOOKBACK + 1))
     next_build = state.get("nextBuild", state["firstBuild"])
     pending = list(state.get("pending", []))
-    stop = min(state["latest"] + 1, next_build + NEW_PER_SCAN)
-    fresh = list(range(next_build, max(next_build, stop)))
-    state["nextBuild"] = next_build + len(fresh)
-    retry, pending = pending[:PENDING_PER_SCAN], pending[PENDING_PER_SCAN:]
+    recent = {n for n in state.get("recentBuilds", []) if n >= next_build and n > latest - LOOKBACK}
+    # The cursor covers a contiguous prefix. A live sample ahead of that
+    # prefix must not advance it over builds that have never been inspected.
+    # A job sampled while running may finish long before it gets to the head
+    # of the retry queue. A new terminal status merits a prompt inspection,
+    # including a failed build that a maintainer subsequently turns green.
+    observed = {int(n): status for n, status in state.get("recentStates", {}).items() if int(n) > latest - LOOKBACK}
+    current = []
+    for n, status in finished:
+        if (n in pending and observed.get(n) != status or
+                n >= next_build + NEW_PER_SCAN and n not in recent and n not in pending):
+            current.append(n)
+            if len(current) == NEW_PER_SCAN // 2:
+                break
+    if (len(current) < NEW_PER_SCAN // 2 and latest >= next_build + NEW_PER_SCAN
+            and latest not in current and latest not in recent and latest not in pending):
+        current.append(latest)
+    history = list(range(next_build, min(state["latest"] + 1, next_build + NEW_PER_SCAN - len(current))))
+    retry = pending[:PENDING_PER_SCAN]
+    work = dict.fromkeys([*current[:1], *retry, *history, *current[1:]])
     records = []
-    work = [*retry, *fresh]
-    for i, number in enumerate(work):
+    for number in work:
+        if number in recent and number not in retry and number not in current:
+            if number == next_build:
+                next_build += 1
+            continue
         if time.monotonic() - started > 25:
             state.update(status="partial", error="Buildkite refresh time budget reached")
-            pending.extend(work[i:])
             break
+        # Keep the slot for a retry until it has actually been inspected.
+        if number in pending:
+            pending.remove(number)
         try:
-            found, revisit = inspect(slug, number, at)
+            found, revisit, status = inspect(slug, number, at)
         except ERRORS as error:
             state.update(status="partial", error=f"Build #{number}: {error}")
             if isinstance(error, HTTPError) and error.code in (404, 410):
                 # Sequential numbers include builds deleted by the provider.
                 state["missingBuilds"] = (state.get("missingBuilds", []) + [number])[-LOOKBACK:]
-                continue
-            found, revisit = [], True
-        if revisit:
-            pending.append(number)
+                found, revisit, status = [], False, None
+            else:
+                found, revisit, status = [], True, None
         records.extend(found)
-    if len(pending) > MAX_PENDING:
-        state.update(status="partial", error="Unfinished builds exceeded the retry queue limit")
-        missed = pending[:-MAX_PENDING]
-        state["unobservedBuilds"] = (state.get("unobservedBuilds", []) + missed)[-LOOKBACK:]
-        pending = pending[-MAX_PENDING:]
+        if revisit:
+            if len(pending) >= MAX_PENDING:
+                state.update(status="partial", error="Retry queue full; unfinished build remains due")
+                continue
+            pending.append(number)
+        if status is not None and number > latest - LOOKBACK:
+            observed[number] = status
+        if number == next_build:
+            next_build += 1
+        elif number > next_build:
+            recent.add(number)
+    while next_build in recent:
+        next_build += 1
+    state["nextBuild"] = next_build
+    state["recentBuilds"] = sorted(n for n in recent if n >= next_build and n > latest - LOOKBACK)
+    state["recentStates"] = {str(n): observed[n] for n in pending if n in observed}
     state["pending"] = pending
     return state, records
 

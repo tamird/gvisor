@@ -1479,8 +1479,9 @@ function appendCIFlakeScan(card, scan) {
   for (const [name, state] of Object.entries(scan.pipelines)) {
     const line = element("li"); line.append(link(name, `https://buildkite.com/gvisor/${name}/builds`));
     const facts = [];
-    if (state.nextBuild > state.firstBuild) facts.push(`visited #${state.firstBuild}–${state.nextBuild - 1}`);
-    if (state.latest >= state.nextBuild) facts.push(`${state.latest - state.nextBuild + 1} newer builds queued`);
+    if (state.nextBuild > state.firstBuild) facts.push(`sequential scan #${state.firstBuild}–${state.nextBuild - 1}`);
+    if (state.recentBuilds?.length) facts.push(`checked ahead ${state.recentBuilds.map(number => "#" + number).join(", ")}`);
+    if (state.latest >= state.nextBuild) facts.push(`sequential scan has ${state.latest - state.nextBuild + 1} builds through #${state.latest} remaining`);
     if (state.pending?.length) facts.push(`${state.pending.length} to revisit`);
     if (state.unobservedBuilds?.length) facts.push(`${state.unobservedBuilds.length} unobserved`);
     if (state.missingBuilds?.length) facts.push(`${state.missingBuilds.length} missing`);
@@ -2602,7 +2603,9 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     const uuid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
     if (!scan || !Number.isFinite(Date.parse(scan.checkedAt)) || !scan.pipelines || Array.isArray(scan.pipelines) ||
         typeof scan.pipelines !== "object" || Object.entries(scan.pipelines).some(([name, state]) =>
-          !slug.test(name) || !state || typeof state.status !== "string" || (state.error != null && typeof state.error !== "string")) ||
+          !slug.test(name) || !state || typeof state.status !== "string" || (state.error != null && typeof state.error !== "string") ||
+          (state.recentBuilds != null && (!Array.isArray(state.recentBuilds) || state.recentBuilds.some(number =>
+            !Number.isSafeInteger(number) || number < state.nextBuild || number > state.latest)))) ||
         !Array.isArray(scan.observations) || scan.observations.some(row => !row || !Object.hasOwn(scan.pipelines, row.pipeline) ||
           !Number.isSafeInteger(row.build) || row.build < 1 || !/^[a-f0-9]{40}$/.test(row.head) ||
           (row.pr != null && (!Number.isSafeInteger(row.pr) || row.pr < 1)) || typeof row.job !== "string" || !row.job.trim() ||

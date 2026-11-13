@@ -252,6 +252,11 @@ test('retry evidence must identify distinct attempts in the scanned pipeline', (
   const validate = () => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
   validate();  // A snapshot collected before CI intake is still usable.
   context.snapshotInput.ciFlakes = scan;
+  Object.assign(scan.pipelines.pipeline, {nextBuild: 20, latest: 35, recentBuilds: [31, 35]});
+  validate();
+  scan.pipelines.pipeline.recentBuilds.push(19);
+  assert.throws(validate, /Invalid CI flake scan/);
+  scan.pipelines.pipeline.recentBuilds.pop();
   const attempt = scan.observations[0];
   context.attemptInput = attempt;
   const label = () => vm.runInContext('buildkiteFailureLabel(attemptInput)', context);

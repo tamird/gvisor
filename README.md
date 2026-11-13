@@ -140,7 +140,11 @@ check next. Link subsequent occurrences, the upstream issue and the fix on
 the same card. Conclude it when the repair has been exercised.
 
 Each scheduled work-map refresh scans the public Buildkite build listings
-and follows job retry IDs. Investigations can also watch a named status on
+and follows job retry IDs. When the sequential scan falls behind, two of
+its four new-build slots sample recent builds, preferring completed builds.
+Two more slots revisit unfinished builds and late retries. The queue shows
+the out-of-order checks separately from the sequential cursor.
+Investigations can also watch a named status on
 gVisor's current default-branch commit. The first PR inventory page reads
 the branch, commit and status together. A successful PGO run prompts the
 investigation owner to check the published profile. Pending or missing

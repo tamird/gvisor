@@ -80,7 +80,7 @@ class FlakeTest(unittest.TestCase):
 
     def test_jobs_revisited_independently_of_new_builds(self):
         state = {"firstBuild": 30, "latest": 40, "nextBuild": 41, "pending": [32, 33, 34]}
-        with patch.object(ci, "latest_build", side_effect=[44, 48]), patch.object(ci, "inspect", return_value=([], True)) as read:
+        with patch.object(ci, "listed_builds", side_effect=[(44, []), (48, [])]), patch.object(ci, "inspect", return_value=([], True, "running")) as read:
             state, _ = ci.scan("pipeline", state, NOW)
             self.assertEqual([c.args[1] for c in read.call_args_list], [32, 33, 41, 42, 43, 44])
             read.reset_mock()
@@ -89,12 +89,74 @@ class FlakeTest(unittest.TestCase):
         self.assertEqual(final["nextBuild"], 49)
         self.assertCountEqual(final["pending"], [32, 33, 34, *range(41, 49)])
 
+    def test_finished_builds_ahead_of_cursor_surface_before_catchup(self):
+        rows = "".join(
+            f'<turbo-frame data-reload-src="/gvisor/pipeline/builds/{n}/row">'
+            f'<turbo-react-component props="{{&quot;state&quot;:&quot;{state}&quot;}}"></turbo-react-component></turbo-frame>'
+            for n, state in [(105, "RUNNING"), (104, "PASSED"), (103, "FAILED"), (102, "PASSED")]
+        )
+
+        def inspect(_slug, n, _now):
+            return ([{"build": n}] if n == 104 else [], n == 103, "failed" if n == 103 else "passed")
+
+        with patch.object(ci, "read", return_value=rows.encode()), patch.object(ci, "inspect", side_effect=inspect) as read:
+            state, found = ci.scan("pipeline", {"nextBuild": 41, "pending": [35, 36, 37]}, NOW)
+            self.assertEqual(found, [{"build": 104}])
+            self.assertEqual({c.args[1] for c in read.call_args_list}, {104, 103, 35, 36, 41, 42})
+            self.assertEqual((state["nextBuild"], state["recentBuilds"], state["pending"]), (43, [103, 104], [37, 103]))
+            read.reset_mock()
+            state, _ = ci.scan("pipeline", state, NOW)
+            self.assertEqual({c.args[1] for c in read.call_args_list}, {105, 102, 37, 103, 43, 44})
+            self.assertEqual((state["nextBuild"], state["recentBuilds"], state["pending"]), (45, [102, 103, 104, 105], [103]))
+
+            # Catch-up accounts for the sampled builds without fetching them twice.
+            read.reset_mock()
+            state, _ = ci.scan("pipeline", dict(state, nextBuild=101), NOW)
+            self.assertEqual([c.args[1] for c in read.call_args_list], [103, 101])
+            self.assertEqual((state["nextBuild"], state["recentBuilds"], state["pending"]), (106, [], [103]))
+
+    def test_recent_running_build_is_revisited_as_soon_as_it_finishes(self):
+        state = {"nextBuild": 41, "recentBuilds": [95], "pending": [1, 2, 3, 4, 95]}
+
+        def inspect(_slug, n, _now):
+            return ([{"build": n}] if n == 95 else [], n == 95, "failed" if n == 95 else "passed")
+
+        with patch.object(ci, "listed_builds", return_value=(100, [(95, "failed")])), \
+             patch.object(ci, "inspect", side_effect=inspect) as read:
+            state, found = ci.scan("pipeline", state, NOW)
+            self.assertEqual(found, [{"build": 95}])
+            self.assertEqual((read.call_args_list[0].args[1], state["recentStates"]["95"]), (95, "failed"))
+            read.reset_mock()
+            state, _ = ci.scan("pipeline", state, NOW)
+            self.assertNotIn(95, [c.args[1] for c in read.call_args_list])
+        with patch.object(ci, "listed_builds", return_value=(100, [(95, "passed")])), \
+             patch.object(ci, "inspect", return_value=([], False, "passed")) as read:
+            state, _ = ci.scan("pipeline", state, NOW)
+            self.assertEqual(read.call_args_list[0].args[1], 95)
+            self.assertNotIn(95, state["pending"])
+
+    def test_time_budget_preserves_unvisited_history_and_pending_retry(self):
+        with patch.object(ci, "listed_builds", return_value=(101, [(100, "passed"), (99, "passed")])), \
+             patch.object(ci, "inspect", return_value=([], False, "passed")) as inspect, \
+             patch.object(ci.time, "monotonic", side_effect=[0, 1, 26]):
+            state, _ = ci.scan("pipeline", {"nextBuild": 41, "pending": [25, 26]}, NOW)
+        self.assertEqual([c.args[1] for c in inspect.call_args_list], [100])
+        self.assertEqual((state["status"], state["nextBuild"], state["pending"], state["recentBuilds"]),
+                         ("partial", 41, [25, 26], [100]))
+
+    def test_full_retry_queue_keeps_old_obligations_and_cursor(self):
+        with patch.object(ci, "listed_builds", return_value=(100, [(99, "passed"), (98, "passed")])), \
+             patch.object(ci, "MAX_PENDING", 2), patch.object(ci, "inspect", return_value=([], True, "running")):
+            state, _ = ci.scan("pipeline", {"nextBuild": 41, "pending": [25, 26]}, NOW)
+        self.assertEqual((state["status"], state["nextBuild"], state["pending"], state["recentBuilds"]),
+                         ("partial", 41, [25, 26], []))
+
     def test_late_manual_retry(self):
         base = dict(BUILD, state="failed", finished_at=NOW)
         records = {"records": [job(FIRST, False)], "has_next_page": False}
         with patch.object(ci, "read", side_effect=[json.dumps(base), json.dumps(records)] * 2):
-            self.assertEqual(ci.inspect("pipeline", 42, datetime.fromisoformat(NOW)), ([], True))
-            self.assertEqual(ci.inspect("pipeline", 42, datetime.fromisoformat("2026-11-11T12:00:00+00:00")), ([], False))
+            self.assertEqual(ci.inspect("pipeline", 42, datetime.fromisoformat(NOW)), ([], True, "failed"))
+            self.assertEqual(ci.inspect("pipeline", 42, datetime.fromisoformat("2026-11-11T12:00:00+00:00")), ([], False, "failed"))
 
 
 if __name__ == "__main__":
