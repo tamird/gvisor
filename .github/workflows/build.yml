@@ -1,35 +1,79 @@
-name: CI
-
-"on":
+name: Check the Python socket fixture on Linux and gVisor
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/python312-client-socket]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  socket:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Prepare the published source and archived runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 022
+          git init -q .
+          git fetch -q --depth=2 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 51d285840f99692fdb9a6268e5b6dbc1f1a4627c
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/runtimes/qualification_python_socket'
+          w="$RUNNER_TEMP/python-socket"
+          mkdir -p "$w"/{runtime,trace,receipt,docker-client}
+          echo "PYTHON_SOCKET=$w" >> "$GITHUB_ENV"
+          curl -qfsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          chmod +x "$w/bazel"
+          curl -qfsSL --retry 2 https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54845/jobs/01a1d2e8-d5e7-4478-a004-a24028d52b75/artifacts/01a1d2f7-fa9f-4996-90a8-fd688c5351ff -o "$w/runtime.tgz"
+          echo "334c8b5aff6865709ee0ae033fbdd49f1d8d1da846fce06211422382c68d42c5  $w/runtime.tgz" | sha256sum -c -
+          python3 - "$w" <<'PY'
+          import json, pathlib, sys, tarfile
+          w = pathlib.Path(sys.argv[1])
+          names = ["runsc", "containerd-shim-runsc-v1"] + ["gvisor-bin/" + s for s in ("gvisor_sentry", "checkpointgofer", "runsc-netgofer", "runsc-metric-server", "runsc-fd-parking", "gvisor-sentry-prewarmer", "gvisor-proc-umounter")]
+          with tarfile.open(w / "runtime.tgz") as archive:
+              for name in names:
+                  member = archive.getmember("buildkite_runtime/" + name)
+                  assert member.isfile() and 0 < member.size < 150_000_000
+                  out = w / "runtime" / name
+                  out.parent.mkdir(exist_ok=True)
+                  out.write_bytes(archive.extractfile(member).read())
+                  out.chmod(0o755)
+          args = ["--platform=systrap", "--network=sandbox"]
+          (w / "daemon.json").write_text(json.dumps({"runtimes":{"signal-ci":{"path":str(w / "runtime/runsc"),"runtimeArgs":args}}}))
+          PY
+      - name: Build the proposed image and install the archived runsc
+        shell: bash
+        run: |
+          set -euo pipefail
+          w="$PYTHON_SOCKET"
+          if test -f /etc/docker/daemon.json; then
+            jq -s '.[0] * .[1]' /etc/docker/daemon.json "$w/daemon.json" > "$w/merged.json"
+          else
+            cp "$w/daemon.json" "$w/merged.json"
+          fi
+          sudo install -m 0644 "$w/merged.json" /etc/docker/daemon.json
+          sudo systemctl restart docker
+          docker info --format '{{json .Runtimes}}' | tee "$w/receipt/runtimes.json"
+          context=images/runtimes/python3.12.3
+          docker build --file "$context/Dockerfile.x86_64" --tag python-socket-check "$context" 2>&1 | tee "$w/receipt/build.log"
+          docker image inspect python-socket-check --format '{{.Id}} {{.Os}}/{{.Architecture}}' | tee "$w/receipt/image.txt"
+          curl -qfsSL --retry 2 https://raw.githubusercontent.com/python/cpython/v3.12.3/Lib/test/test_socket.py -o "$w/receipt/test_socket.py"
+          echo "329cfccf19e7dab4f3e193747720ba131af014870fbac504d53ad666ae22b9e9  $w/receipt/test_socket.py" | sha256sum -c -
+          echo "PYTHON_SOCKET_RECEIPT=$w/receipt" >> "$GITHUB_ENV"
+      - name: Run the socket tests with and without the image patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$PYTHON_SOCKET/bazel" --nosystem_rc --nohome_rc test --config=x86_64 \
+            --remote_executor= --remote_cache= --bes_backend= --jobs=2 --lockfile_mode=off \
+            --module_mirrors=https://bcr.cloudflaremirrors.com --strategy=TestRunner=local \
+            --nocache_test_results --flaky_test_attempts=1 --test_timeout=600 --test_output=errors \
+            --test_env=PYTHON_SOCKET_RECEIPT //test/runtimes/qualification_python_socket:socket
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: python-socket-results
+          path: ${{ runner.temp }}/python-socket/receipt/*
+          retention-days: 14
+          if-no-files-found: warn
