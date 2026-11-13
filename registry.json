@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T10:40:24+00:00",
+    "updatedAt": "2026-11-13T10:44:04+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -105617,7 +105617,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-12T19:22:51+00:00",
+      "updatedAt": "2026-11-13T10:44:04+00:00",
       "summary": "Seven ARM64 jobs timed out in nested Docker bridge builds or privileged container runs with VFS or overlay storage. Two AMD64 jobs on build 54543 timed out in the same privileged VFS bridge test under systrap and KVM. Both same-head retries passed.",
       "findings": [
         {
@@ -105726,10 +105726,39 @@
               "url": "https://buildkite.com/gvisor/pipeline/builds/54706#01a1d11d-086a-4dc0-85f4-a7d8ee4e7761"
             }
           ]
+        },
+        {
+          "text": "The only public job still failing on #17622 was the ARM64 Docker shard. All three attempts timed out after 15 minutes reading the output of a nested VFS bridge container. Two runs reached the unprivileged case and one reached the privileged case. The same privileged subtest timed out on an earlier unrelated build. The export’s base passed the shard. The private build reported failure without a public job log.",
+          "evidence": [
+            {
+              "label": "First ARM64 VFS bridge timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54857#01a1d313-15dc-454f-856e-02b6f79dc350"
+            },
+            {
+              "label": "Second ARM64 VFS bridge timeout",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54857#01a1d32e-4892-4aa7-83b1-ff026d23cd8c"
+            },
+            {
+              "label": "Third attempt, privileged container",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54857#01a1d345-2261-48c1-b384-1312c6585de9"
+            },
+            {
+              "label": "Same privileged failure before #17613",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54387#01a1c968-e07b-4201-b202-cad023d87017"
+            },
+            {
+              "label": "Base revision ran the shard in 94.7 seconds",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54844#01a1d2bd-8849-4934-884f-77a958e2ad20"
+            }
+          ]
         }
       ],
       "nextStep": "Use the inner dockerd output captured by #17445 to distinguish a bridge DNS or HTTPS wait during apk add curl from a process that failed to exit. Both host-network runs on build 54543 had already used the same local image.",
       "evidence": [
+        {
+          "label": "Third attempt, privileged container",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54857#01a1d345-2261-48c1-b384-1312c6585de9"
+        },
         {
           "label": "#54388 ARM64 overlay build log",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54388#01a1c97c-2f3b-4849-ab9f-bac64631a532"
@@ -108916,7 +108945,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T04:16:47+00:00",
+      "updatedAt": "2026-11-13T10:44:04+00:00",
       "summary": "In build #54736, localhost TCP connects returned ENETUNREACH in two hostinet cases. The cgroupv2 shard passed when retried on the same commit.",
       "findings": [
         {
@@ -108967,6 +108996,23 @@
             },
             {
               "label": "Copybara export of the approved head",
+              "url": "https://github.com/google/gvisor/pull/17622"
+            }
+          ]
+        },
+        {
+          "text": "The public import build for #17613 failed in the separately tracked nested Docker bridge timeout. Those logs do not identify the network namespace responsible for the hostinet ENETUNREACH.",
+          "evidence": [
+            {
+              "label": "Third attempt, privileged container",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54857#01a1d345-2261-48c1-b384-1312c6585de9"
+            },
+            {
+              "label": "Same privileged failure before #17613",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54387#01a1c968-e07b-4201-b202-cad023d87017"
+            },
+            {
+              "label": "Copybara import of #17613",
               "url": "https://github.com/google/gvisor/pull/17622"
             }
           ]
@@ -109345,5 +109391,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T10:40:24+00:00"
+  "updatedAt": "2026-11-13T10:44:04+00:00"
 }
