@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Check the affected OpenJDK partition and nearby JMX tests
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/java-broken-connection-54874-shard]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  java:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the proposal to the failed source, runtime and test partition
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q .
+          git fetch --quiet --depth=3 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout --quiet --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 755ab261c331bceadedf5d09660c97cb80b29bcb
+          test "$(git rev-parse HEAD^^)" = f98c31b5b7d292061d990c97e5ef9d1601d72d8d
+          test "$(git diff-tree --no-commit-id --name-only -r HEAD^)" = test/runtimes/exclude/java21.csv
+          d="$RUNNER_TEMP/java-jmx"
+          mkdir -p "$d/receipt"
+          runtime=/tmp/gvisor-java-54874-runtime
+          mkdir -m 0755 "$runtime"
+          echo "JAVA_RECEIPT=$d/receipt" >> "$GITHUB_ENV"
+          echo "JAVA_WORK=$d" >> "$GITHUB_ENV"
+          git show HEAD^^:test/runtimes/exclude/java21.csv > "$d/receipt/parent.csv"
+          base=https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54874/jobs/01a1d3ce-6394-49bd-8cd1-01050e335fe8/artifacts
+          curl -fsSL --retry 3 "$base/01a1d3d6-e92b-49b6-b4d9-baa9f38481ec" -o "$d/receipt/original.log"
+          curl -fsSL --retry 3 "$base/01a1d3d7-085d-4d98-9459-03b0fd2b3961" -o "$d/archive"
+          curl -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          (cd "$d" && sha256sum -c - <<'END'
+          aecdb7fe994e714d09845b9180cad8ddb8d727231c6ca540e5468896fc994c0d  receipt/original.log
+          f84b69ea83858909d139fee484da35d5a2be7b45ba3210c4f359d2f0df70890a  archive
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          END
+          )
+          chmod +x "$d/bazel"
+          tar xf "$d/archive" --directory "$runtime" --strip-components=1 buildkite_runtime/runsc buildkite_runtime/gvisor-bin buildkite_runtime/containerd-shim-runsc-v1
+          sudo install -d /etc/docker
+          if sudo test -f /etc/docker/daemon.json; then sudo cat /etc/docker/daemon.json > "$d/daemon.json"; else echo '{}' > "$d/daemon.json"; fi
+          jq --arg p "$runtime/runsc" '.runtimes["ci-jmx"] = {path:$p,runtimeArgs:["--directfs=false","--platform=systrap","--watchdog-action=panic"]}' "$d/daemon.json" | sudo tee /etc/docker/daemon.json >/dev/null
+          sudo systemctl restart docker
+          docker info >/dev/null
+          image=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/java21_x86_64@sha256:c5a1419701eea132bc82193018a09a91296a8d9e96492495a72dd84040e0bb47
+          docker pull --platform=linux/amd64 "$image"
+          docker tag "$image" gvisor.dev/images/runtimes/java21
+          docker run --rm --runtime=ci-jmx "$image" java -version > "$d/receipt/version.txt" 2>&1
+          grep -F '21.0.2' "$d/receipt/version.txt"
+          docker run --rm --runtime=runc "$image" grep -F 'BrokenConnectionTest.java 8262312 linux-all' /root/jdk/test/jdk/ProblemList.txt > "$d/receipt/upstream-exclusion.txt"
+          docker run --rm --runtime=runc "$image" grep -F '@requires os.maxMemory >= 16G' /root/jdk/test/jdk/java/io/File/SetLastModified.java > "$d/receipt/upstream-memory.txt"
+          cat /proc/meminfo | head -1 >> "$d/receipt/upstream-memory.txt"
+      - name: Run the published partition and the neighboring tests under the archived Sentry
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$JAVA_WORK/bazel" --nosystem_rc --nohome_rc test --config=x86_64 --remote_executor= --remote_cache= --bes_backend= --jobs=2 --lockfile_mode=off --module_mirrors=https://bcr.cloudflaremirrors.com --strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 --test_timeout=3600 --test_env=JAVA_RECEIPT --test_output=errors //test/runtimes:qualify_jmx
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: java-broken-connection
+          path: ${{ runner.temp }}/java-jmx/receipt/*
+          retention-days: 14
