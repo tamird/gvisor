@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T15:27:25.356246+00:00",
+    "updatedAt": "2026-11-13T15:30:38+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -109671,7 +109671,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "CI flake triage",
-      "updatedAt": "2026-11-13T15:07:52+00:00",
+      "updatedAt": "2026-11-13T15:30:38+00:00",
       "summary": "All three UDP cases passed in 5 ms on #17572. The guest exited successfully, then the Sentry spent more than three minutes waiting for the lisafs watchdog during mount teardown. The shard passed on retry.",
       "findings": [
         {
@@ -109729,9 +109729,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/43448278191/artifacts/14050095031"
             }
           ]
+        },
+        {
+          "text": "The three original UDP cases and Sentry teardown passed in eight runs on the original code and eight with watchdog tracing. Each traced Sentry used one lisafs client and WaitGroup. The gofer disconnect was logged before Wait returned in four runs and after it in four. All eight waits returned within 117 µs. The upstream hang did not recur on this Linux AMD64 worker.",
+          "evidence": [
+            {
+              "label": "Sixteen original-shard runs, Sentry/gofer logs and the tracing diff",
+              "url": "https://github.com/tamird/gvisor/actions/runs/43451556570/artifacts/14052257272"
+            }
+          ]
         }
       ],
-      "nextStep": "Run the original systrap/directfs UDP shard with the socket-only client instrumented in the Sentry. Correlate the client and WaitGroup addresses at watchdog startup, poll completion, Done and Wait with the gofer’s disconnect time. The native connection fixture already completed with both orders of Wait and watchdog return.",
+      "nextStep": "At the next failure, retain the Sentry and gofer logs and the full goroutine dump for the same sandbox. If tracing is available, compare the client and WaitGroup addresses and identify the last watchdog event before the stuck Wait. Both orders of the gofer disconnect and Wait returning completed on the fork.",
       "evidence": [
         {
           "label": "Same-shard retry passed",
@@ -109744,5 +109753,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T15:27:25.356246+00:00"
+  "updatedAt": "2026-11-13T15:30:38+00:00"
 }
