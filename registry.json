@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:55:10.232441+00:00",
+    "updatedAt": "2026-11-13T17:02:10.410444+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -110301,7 +110301,63 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/54914#01a1d5b4-2dcc-480a-96b0-7d1e11bcd345"
         }
       ]
+    },
+    {
+      "id": "investigation:ci-flake-nested-docker-netns-bind",
+      "title": "Nested Docker lost a network namespace path on ARM64",
+      "status": "active",
+      "group": "ci-flakes",
+      "owner": "CI flake triage",
+      "updatedAt": "2026-11-13T17:02:10.410444+00:00",
+      "summary": "On the #17135 import, TestSystemdDocker started one Alpine container with --network=none. Starting the next one failed when the nested Docker daemon tried to bind-mount /proc/322/ns/net. The ARM64 target passed on retry.",
+      "findings": [
+        {
+          "text": "The original Sentry logged the first Alpine command at 16:45:13.053 UTC and the detached counter command at 16:45:13.775. Docker returned status 127 and reported ENOENT for the bind mount. The test had not yet called docker pause. The logs do not show whether PID 322 had exited or whether the target mount path disappeared.",
+          "evidence": [
+            {
+              "label": "Original ARM64 Docker CLI failure",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54916/jobs/01a1d5b9-223a-4099-a182-4b78c8549da6/artifacts/01a1d5cc-8fa6-4e75-853c-08b82ac72659"
+            },
+            {
+              "label": "Original runsc startup and exec logs",
+              "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54916/jobs/01a1d5b9-223a-4099-a182-4b78c8549da6/artifacts/01a1d5cc-a2d0-4abb-8987-6ab14039d800"
+            },
+            {
+              "label": "Two consecutive Docker runs in TestSystemdDocker",
+              "url": "https://github.com/google/gvisor/blob/ba54523fb3bf18b12052b634fe964b0838d72b36/test/e2e/systemd_test.go#L537-L569"
+            }
+          ]
+        },
+        {
+          "text": "The same commit reran the integration target on ARM64 in 49.4 s and passed.",
+          "evidence": [
+            {
+              "label": "Same-head ARM64 retry executed integration_runtime_test in 49.4 s",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54916#01a1d5cd-efa6-48a2-8619-bb603784b5e2"
+            }
+          ]
+        }
+      ],
+      "nextStep": "On a recurrence, save the nested dockerd and containerd journals and inspect the child state, /proc/<pid>/ns/net and the destination under /var/run/docker/netns while the bind fails. Keep the first, successful --network=none launch as the control.",
+      "evidence": [
+        {
+          "label": "Original ARM64 Docker CLI failure",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54916/jobs/01a1d5b9-223a-4099-a182-4b78c8549da6/artifacts/01a1d5cc-8fa6-4e75-853c-08b82ac72659"
+        },
+        {
+          "label": "Original runsc startup and exec logs",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/54916/jobs/01a1d5b9-223a-4099-a182-4b78c8549da6/artifacts/01a1d5cc-a2d0-4abb-8987-6ab14039d800"
+        },
+        {
+          "label": "Two consecutive Docker runs in TestSystemdDocker",
+          "url": "https://github.com/google/gvisor/blob/ba54523fb3bf18b12052b634fe964b0838d72b36/test/e2e/systemd_test.go#L537-L569"
+        },
+        {
+          "label": "Same-head ARM64 retry executed integration_runtime_test in 49.4 s",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54916#01a1d5cd-efa6-48a2-8619-bb603784b5e2"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-13T16:55:10.232441+00:00"
+  "updatedAt": "2026-11-13T17:02:10.410444+00:00"
 }
