@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T16:16:01.404510+00:00",
+    "updatedAt": "2026-11-13T16:22:06+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5725,9 +5725,13 @@
       "group": "bazel",
       "status": "Approved; waiting for four remaining compiler prerequisites",
       "summary": "AMD64 workers using hermetic-llvm 0.8.27 cross-built the nine ARM64 release binaries for both 4 KiB and 64 KiB pages. Each Linux guest booted its packaged Sentry and ran a workload that reported the matching page size. Bazel selected the new llvm-23.1.2-3 compiler archive and compiled all four signal-handler sources with the matching page-size definition.\n\nOn LLVM 0.8.26, the nvproxy parity test failed to start Git on both AMD64 and ARM64. With #17112 and the proposed Bazel driver archives, both workers reached the ABI test and reported that the source index lacked 580.196.07, which #17540 added. Adding its public archive to the index gave each worker 26 passing ABI comparisons and nine skips for unpublished source tags. Each also passed all 35 installer checksum cases with the declared CA bundle.\n\nWith #16507 applied to the LLVM 0.8.26 integration, AMD64 workers built all eight previously failing coverage binaries: runsc and gvisor_sentry for AMD64 and ARM64, each with and without race instrumentation. All eight started, and both Sentry variants on each architecture listed kernel source positions (9,192 on AMD64 and 9,179 on ARM64), with none from excluded packages. Native ARM64 ran the exact two race binaries that QEMU could not start.\n\nLLVM 0.8.26 on native AMD64 and ARM64 ran the full runsc sandbox package. With Eren Akbulut’s #15866 applied to 48f457b4e, AMD64 passed all 126 test records. ARM64 passed 125 and skipped TestOpenReadOnlyTree. All three previously failing route-collection cases, the six new selector tests and master’s netgofer loopback test passed on both. The compiler-only control failed the same three collection cases on each architecture. The pinned netlink decoder puts the IPv4 default in the interface’s route list.\n\nThe other three sandbox targets ran without a filter on 48f457b4e. On each architecture docprocessor passed all nine tests, Go sandboxexec passed 49 of 50 and Python sandboxexec passed 41 of 42, with one skip in each sandboxexec target.\n\nThe LLVM 0.8.26 integration (a81045f73) cross-built two releases on Linux AMD64. Each ran its AArch64 workload as PID 1 under systrap in an emulated guest. With the default 4 KiB release, Linux 7.3.0-rc3 reported 4,096 bytes through both AT_PAGESZ and sysconf. With --//tools/bazeldefs:page_size=64k, Linux 6.8.0-138-generic-64k reported 65,536 through both. Both uncached guest tests exited zero. The earlier 64 KiB guest run used the default 4 KiB release and exited before the workload. The separate Python sandbox test could not write cgroup.subtree_control on either architecture.\n\nOn native AMD64 and ARM64 workers, all 66 tests that previously failed to build reached execution with LLVM 0.8.26. Of those, 61 passed on AMD64 and 60 passed on ARM64. Across the full selection, AMD64 built 3,257 of 3,261 targets and passed 369 of 376 test shards. ARM64 built 3,255 of 3,259 targets and passed 368 of 376 shards, with two other selectors skipped for the platform.\n\nThe four build failures on each architecture were runsc and gvisor_sentry with coverage, each with and without race instrumentation. Both architectures reported failures in the GitHub workflow check, docprocessor, nvproxy driver parity, runsc sandbox, the Python sandbox test, the Go sandbox test and the vDSO test. ARM64 also reported a trace test failure. The workflow check includes the fork’s qualification workflow. On the exact product tree the workflow and ARM64 trace tests passed. All four coverage builds stopped at build_cover.sh:47 because curl was absent. The NVIDIA test could not run git and the vDSO test could not run readelf. Docprocessor and the Go sandbox test could not write cgroup.subtree_control. The runsc sandbox test received EPERM creating a network namespace.\n\nAn AMD64 Linux worker cross-built the ARM64 release with LLVM 0.8.26 at 48f457b4e and linked all three AMD64 sidecars with the caller’s allocator. The nine ARM64 ELF files matched the release manifest. An uncached QEMU test booted a 4 KiB ARM64 guest, started the archived Sentry (SHA-256 prefix 566231c75) under systrap, and ran a static musl program as PID 1. Both AT_PAGESZ and sysconf returned 4,096. The program exited successfully.\n\nThe declared LLVM toolchains replace the Coral GCC installation and supply the sysroot for each target. On a default Linux target, static Go binaries that explicitly require cgo or enable race use the musl sysroot. Ordinary builds and explicitly selected toolchains keep their own libc. With rules_go 0.65.0 on master 79c4fcfce, the integrated change built the nine-file AMD64 release archive. The packaged launcher ran and identified OCI spec 1.2.1. The successful downstream ARM64 build changed both module files. gVisor moved its Linux 6.18 header selection and ten Go override tags to root-only extension usages. The consuming root adopted those settings and gVisor’s three Bazel module overrides, then cross-built all nine release files. With gVisor unchanged, both master and the compiler integration rejected the default consumer at Gazelle evaluation. A follow-up on the same supplier module cross-built the simple seqnum Go archive without consumer overrides. The bare release failed compiling cgroup2 for the shim with undefined stats.Metrics. Adopting only its Gazelle directive restored metrics.pb.go and compiled cgroup2. The release then failed in Nogo importing metric_go_proto. Removing the benchmark override and its patch from the previously successful consuming root preserved all nine ARM64 release file hashes.\n\nWith the supplier extension split already in place, a consuming root using stock rules_go and only the cgroups Gazelle directive built all nine AArch64 release ELFs when gVisor also included #16098. In the matched Nogo check, stock rules_go supplied metric_go_proto.a and failed. The export-only rules_go patch supplied .x and passed. #16098 produced and consumed its own .export file and passed with stock rules_go. The proc-umounter, sentry-prewarmer and fd-parking files matched the fully adopting root byte for byte. The other six ELF files differed, including runsc and its Sentry. This run did not execute those binaries or establish the cause of the differences.\n\nAn uncached ARM64 4 KiB guest then used those exact nine downstream hashes. The launcher ee3551b03 started Sentry 45b67547f under systrap and ran the original static musl probe as PID 1. AT_PAGESZ and sysconf both returned 4,096 and the probe exited 0. This product did not include #17089. The test covered launcher and Sentry startup on the 4 KiB guest.\n\nA three-line downstream MODULE then built all nine Linux ARM64 release files with the same gVisor supplier separation, #16098, stock rules_go and unreleased Gazelle #2513. The consumer declared gVisor and its local source without any go_deps overrides. The same consumer on Gazelle 0.51.3 or on #2513’s immediate parent generated a cgroup2 stats Go library containing only doc.go and failed to compile stats.Metrics. With #2513 the Go library includes the shipped metrics.pb.go and the proto targets are still available. Six release file hashes differ from the prior one-tag integration.\n\nThe same three-line consumer, using unreleased Gazelle #2513 (45c5eebc1), gVisor’s supplier policy changes and #16098, then exercised its own release in a 4 KiB AArch64 guest. The cache-only Bazel build recovered all nine original file hashes with 3,432 remote cache hits and 1,555 internal actions. An uncached QEMU test verified that runsc 245eba16a selected Sentry 2417d9dfc under systrap. The workload ran as PID 1, read 4,096 through both AT_PAGESZ and sysconf, and exited successfully.\n\nThe same three-line external MODULE, with compiler integration a066005a6, built a separate ARM64 release using --@gvisor//tools/bazeldefs:page_size=64k. The cache-only invocation missed. Rebuild f4ab221b-7490-4538-8c1f-42a4cfbf81a8 produced all nine ARM64 ELF files, six with different digests from the 4 KiB release. Uncached remote Bazel test 453b258d-06bc-4b6f-9abb-9e9072894d54 took 13.422 seconds. It booted an emulated AArch64 Ubuntu 6.8.0-138-generic-64k guest; runsc selected Sentry 2f8cca6b6, and guest PID 1 read 65,536 bytes from both AT_PAGESZ and sysconf and exited zero. On 48f457b4e the multicast-disabled and multicast-enabled sandbox tests passed on AMD64 and ARM64. On each architecture 535 Go compilations and 13 links ran uncached in OCI. Firecracker ran the two cases uncached. Earlier OCI test runs stopped at network namespace creation.",
-      "updatedAt": "2026-11-13T15:53:37.543532+00:00",
+      "updatedAt": "2026-11-13T16:22:06+00:00",
       "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
       "evidence": [
+        {
+          "label": "Regenerated source pins, 250-entry catalog, and native ABI and installer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43458859424/artifacts/14056222096"
+        },
         {
           "label": "LLVM 0.8.27 cross-builds, archive hashes and 4 KiB and 64 KiB ARM64 guest logs",
           "url": "https://github.com/tamird/gvisor/actions/runs/43454981075/artifacts/14054775395"
@@ -6644,9 +6648,10 @@
         "owner": "Compiler migration",
         "sourceHead": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
         "disposition": "The parser prerequisite landed. The released LLVM 0.8.27 compiler cross-built the 4 KiB and 64 KiB ARM64 releases on AMD64 and both passed in their matching guests. With #16507 applied, all eight coverage binaries now build and run on their target architecture or under emulation.",
-        "observedAt": "2026-11-13T15:53:37.543532+00:00",
+        "observedAt": "2026-11-13T16:22:06+00:00",
         "nextAction": "Submit the approved compiler change after #16522, #16516, #17067 and #17444 merge.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/43458859424/artifacts/14056222096",
           "https://github.com/tamird/gvisor/actions/runs/43454981075/artifacts/14054775395",
           "https://github.com/tamird/gvisor/actions/runs/43453274387/artifacts/14054296009",
           "https://github.com/tamird/gvisor/actions/runs/43447121128/artifacts/14049741824",
@@ -13443,20 +13448,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/nvproxy-upstream-build",
-      "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
+      "head": "674cbd9ae7b8d3e2414e5a6a2dde070e1d092500",
       "title": "Compare NVIDIA driver ABIs using declared source archives",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/73a5b30ce",
+      "url": "https://github.com/tamird/gvisor/commit/674cbd9ae",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-13T15:49:44+00:00",
-      "summary": "On LLVM 0.8.26, the nvproxy parity test failed to start Git on both AMD64 and ARM64. With #17112 and the proposed Bazel driver archives, both workers reached the ABI test and reported that the source index lacked 580.196.07, which #17540 added. Adding its public archive to the index gave each worker 26 passing ABI comparisons and nine skips for unpublished source tags. Each also passed all 35 installer checksum cases with the declared CA bundle.\n\nThe ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. Without CA roots, all 34 online checksum cases failed TLS verification. On native AMD64 and ARM64 workers, all 34 passed with the declared roots. On each architecture, 25 public ABI comparisons passed and nine versions had no public source tag. The proposal's nvproxy and downloader directories match those runs byte for byte. Renaming the archive overlay to upstream/BUILD preserved all 17,893 file labels in the 25 driver archives and all 14 targets under //tools/nvidia_driver_differ/... in Bazel 9.3.1.",
+      "updatedAt": "2026-11-13T16:22:06+00:00",
+      "summary": "The revised proposal includes the source archive and license record for 580.196.07, which #17540 added. The updater regenerated the source index, and removing the new catalog record made verification name the missing dependency. Fetch recreated the complete catalog byte for byte, and all 250 records passed verification. With the LLVM 0.8.26 compiler, each native AMD64 and ARM64 worker passed 26 ABI comparisons and all 35 installer checksum cases, including 580.196.07. Nine driver versions have no public source tag.\n\nOn LLVM 0.8.26, the nvproxy parity test failed to start Git on both AMD64 and ARM64. With #17112 and the proposed Bazel driver archives, both workers reached the ABI test and reported that the source index lacked 580.196.07, which #17540 added. Adding its public archive to the index gave each worker 26 passing ABI comparisons and nine skips for unpublished source tags. Each also passed all 35 installer checksum cases with the declared CA bundle.\n\nThe ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. Without CA roots, all 34 online checksum cases failed TLS verification. On native AMD64 and ARM64 workers, all 34 passed with the declared roots. On each architecture, 25 public ABI comparisons passed and nine versions had no public source tag. The proposal's nvproxy and downloader directories match those runs byte for byte. Renaming the archive overlay to upstream/BUILD preserved all 17,893 file labels in the 25 driver archives and all 14 targets under //tools/nvidia_driver_differ/... in Bazel 9.3.1.",
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
-        "observedAt": "2026-11-13T15:49:44+00:00",
-        "disposition": "Single-commit proposal prepared.",
-        "nextAction": "Refresh the proposed driver source index and its license records for 580.196.07. The two-line test fixture verified the ABI and installer checks. The updated proposal still needs contributor review and #17112 before submission.",
+        "sourceHead": "674cbd9ae7b8d3e2414e5a6a2dde070e1d092500",
+        "observedAt": "2026-11-13T16:22:06+00:00",
+        "disposition": "The 580.196.07 pin, module declaration, license catalog entry and policy exception are included in the single proposal.",
+        "nextAction": "Review the revised proposal. After #17112 merges, submit the approved change on gVisor.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/674cbd9ae",
+          "https://github.com/tamird/gvisor/actions/runs/43458859424/artifacts/14056222096",
           "https://github.com/tamird/gvisor/actions/runs/43453274387/artifacts/14054296009",
           "https://github.com/tamird/gvisor/commit/73a5b30ce",
           "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
@@ -13464,6 +13471,14 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Revised single commit with the source and license records for 580.196.07",
+          "url": "https://github.com/tamird/gvisor/commit/674cbd9ae"
+        },
+        {
+          "label": "Regenerated source pins, 250-entry catalog, and native ABI and installer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43458859424/artifacts/14056222096"
+        },
         {
           "label": "LLVM 0.8.26 on AMD64 and ARM64: existing test, declared inputs and updated driver index",
           "url": "https://github.com/tamird/gvisor/actions/runs/43453274387/artifacts/14054296009"
@@ -13531,12 +13546,12 @@
       ],
       "refinement": {
         "before": {
-          "head": "4b9a9bc5d270b5a54af336142496284af3f5cf05",
+          "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
           "base": "4a735693062dedd81863e75f7a82efd8414dbe6f"
         },
         "after": {
-          "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
-          "base": "4a735693062dedd81863e75f7a82efd8414dbe6f"
+          "head": "674cbd9ae7b8d3e2414e5a6a2dde070e1d092500",
+          "base": "cc818770889c5bdc4309b0bc83bbbe2b2b434f28"
         }
       },
       "settledReviews": [
@@ -13553,13 +13568,13 @@
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "73a5b30ce19b8bfaea97bd60f06e62bdd8735780",
-        "baseHead": "4a735693062dedd81863e75f7a82efd8414dbe6f",
-        "url": "https://github.com/tamird/gvisor/commit/73a5b30ce",
+        "head": "674cbd9ae7b8d3e2414e5a6a2dde070e1d092500",
+        "baseHead": "cc818770889c5bdc4309b0bc83bbbe2b2b434f28",
+        "url": "https://github.com/tamird/gvisor/commit/674cbd9ae",
         "title": "Compare NVIDIA driver ABIs using declared source archives",
         "body": "The NVIDIA ABI test clones a driver repository during each comparison. Without Git or network access, the test fails before Clang can compare the driver’s ioctl definitions with the corresponding nvproxy types.\n\nGive the ABI test and driver differ the same pinned header archives as Bazel runfiles. Record versions without a public source tag so the test can distinguish them from missing build inputs. Developers can also pin a candidate version for the differ before nvproxy adopts it. Keep these archives development dependencies of the gVisor module.\n\nThe existing parity suite runs the offline ABI comparison and a separate test that downloads the installers to check their hashes. Give the checksum test the pinned gRPC CA bundle so it can verify NVIDIA’s HTTPS certificate on workers without a system trust store.",
-        "requestedAt": "2026-11-11T02:24:40+00:00",
-        "summary": "Review the offline ABI comparison, the CA bundle for online checksum verification, and the driver header BUILD file. Publication follows #17112, #17114 and #17151."
+        "requestedAt": "2026-11-13T16:22:06+00:00",
+        "summary": "Review the source pin and license records for 580.196.07. The existing proposal still depends on #17112 before submission."
       }
     },
     {
@@ -110080,5 +110095,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T16:16:01.404510+00:00"
+  "updatedAt": "2026-11-13T16:22:06+00:00"
 }
