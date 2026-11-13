@@ -1,35 +1,78 @@
-name: CI
-
-"on":
+name: Measure single graph waiters during a 50,000-file restore
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-queue-reuse-50000-20261113]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 115
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-          name: runsc
-          path: bin/
+      - name: Bind the original census and rootless guest
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          base=ae0f8d5908b6a94de21eb9bc8ec0cb47f2cc3d9d
+          fix=def563ab85bac5ec0815faa51ec0001357228153
+          census=2ca2cf90cd9ca82bed176418d40970728fc212ab
+          guest=631e08f3b1687c026e09566d0f3d61654f5e1f1e
+          stats=f948a2221d2329e8e0897eb8b562c859da77468a
+          live=2d37320cca8e4e5ea653dbdfaec094d3daf79127
+          capsule=8d980b39ad21950f42c5aeec48935d52c3e50b85
+          transport=2145a51af63194e16b59d673dd1905c6c32935b6
+          seed=c3569a60dc1836ac6fad05e86d7951866c796b4f
+          assets=7ea7ebc29e63bf98bc221f8419a34c6cb57e7003
+          git init -q
+          git fetch -q --no-auto-maintenance --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$census" "$live" "$capsule" "$seed" "$assets" "$transport" "$guest" "$stats"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$fix"
+          test "$(git rev-parse HEAD^^)" = "$base"
+          test "$(git rev-parse "$fix^{tree}")" = 011bbd570ead3ceb775d504bdb10c182aa7e8e5c
+          git diff --exit-code "$base" "$fix" -- . ':!pkg/state/graph_decode_unsafe.go' ':!pkg/state/graph_decode_callbacks_unsafe.go'
+          git diff --exit-code "$fix" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/state_single_waiter.py'
+          w="$RUNNER_TEMP/trial"
+          mkdir -p "$w/results"
+          cp .github/qualification/state_single_waiter.py "$w/run.py"
+          git show "$census:test/rbe/callback_census/run.py" > "$w/census.py"
+          # Use Bazel 9's product-defined public mirrors with the existing bounded, digest-checked public-input recovery.
+          sed -i 's/"--experimental_downloader_config=" + str(ROOT \/ "downloader"), //g' "$w/census.py"
+          git show "$guest:.github/qualification/restore-limit-vm/payload.sh" > "$w/payload.sh"
+          git show "$stats:.github/qualification/state_working_set/benchstat.module" > "$w/benchstat.module"
+          echo "373bba0a70f04c2a39a30a45b4acd23f3bfa884e05a5e27cce1ce7010c406cd5  $w/benchstat.module" | sha256sum -c
+          # Reuse the namespace and public transport helpers without their original workload entry points.
+          git show "$live:.github/qualification/live_child/run.py" | sed '/^try:$/,$d' > "$w/live.py"
+          git show "$capsule:test/rbe/runtime_guest.py" > "$w/original-capsule.py"
+          git show "$transport:.github/qualification/checkpoint_dir.py" | sed '/^def bazel(/,$d' > "$w/recovery.py"
+          git show "$transport:.github/qualification/checkpoint_archive_probe.py" > "$w/checkpoint_archive_probe.py"
+          git show "$seed:.github/qualification/tldk_installed_inputs.json" > "$w/inputs.json"
+          git show "$seed:.github/qualification/tldk_public_inputs.py" > "$w/tldk_public_inputs.py"
+          git show "$assets:.github/qualification/recvbuf_deps.py" > "$w/public_assets.py"
+          curl -q -fsSL --max-time 120 --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c
+          test "$(cat .bazelversion)" = 9.3.1
+          chmod 755 "$w/bazel"
+          file=pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_amd64.deb
+          curl -q -fsSL --retry 2 --max-time 50 "https://archive.ubuntu.com/ubuntu/$file" -o "$w/guest.deb" ||
+            curl -q -fsSL --retry 2 --max-time 50 "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/$file" -o "$w/guest.deb"
+          echo "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed  $w/guest.deb" | sha256sum -c
+          dpkg-deb --fsys-tarfile "$w/guest.deb" | tar -xO ./usr/bin/busybox > "$w/busybox"
+          chmod 755 "$w/busybox"
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu $suite main universe"
+          done > "$w/jammy.list"
+          opts=(-o "Dir::Etc::sourcelist=$w/jammy.list" -o Dir::Etc::sourceparts=-)
+          sudo -n apt-get "${opts[@]}" update -qq
+          sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends build-essential crossbuild-essential-arm64 libnuma-dev
+      - name: Check the callback order and both codecs on each arm, then compare decode and first guest command
+        timeout-minutes: 108
+        run: |
+          w="$RUNNER_TEMP/trial"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$w" GITHUB_SHA="$GITHUB_SHA" python3 -B "$w/run.py" compare
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: single-waiter-50000-after-16867
+          path: ${{ runner.temp }}/trial/results/
+          if-no-files-found: warn
+          retention-days: 30
