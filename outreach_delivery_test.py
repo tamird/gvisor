@@ -102,6 +102,17 @@ class ReviewDeliveryTest(unittest.TestCase):
         self.assertEqual((saved["123"]["head"], saved["123"]["lastContactAt"], saved["123"]["reviewer"], saved["123"]["http"]),
                          (action["head"], action["lastContactAt"], action["reviewer"], 422))
 
+    def test_late_old_job_cannot_replace_a_denial_on_the_new_head(self):
+        old = {**self.action, "lastContactAt": "2026-11-09T20:00:00Z"}
+        newer = {"head": "b" * 40, "lastContactAt": old["lastContactAt"],
+                 "observedAt": "2026-11-10T20:00:00Z", "reviewer": "someone", "http": 422}
+        file = {"sha": "a" * 40, "content": delivery.base64.b64encode(json.dumps({"123": newer}).encode()).decode()}
+        with patch.dict(delivery.os.environ, {"WORK_MAP_RECEIPT_TOKEN": "test"}), \
+             patch.object(subprocess, "check_output", return_value=json.dumps(file)), patch.object(subprocess, "run") as put:
+            self.api.return_value = {"head": {"sha": newer["head"]}}
+            delivery.save_native_denial(old, 403)
+            put.assert_not_called()
+
     def test_confirm_native_request(self):
         self.api.side_effect = [{}, {"users": [{"login": "Reviewer"}]}]
         self.assertEqual(self.send(), {**self.versions, "status": "requested", "reviewer": "reviewer"})

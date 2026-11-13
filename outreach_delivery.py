@@ -118,8 +118,14 @@ def save_native_denial(action: dict, status: int) -> None:
         file = json.loads(raw)
         holds = json.loads(base64.b64decode(file["content"]))
         previous = holds.get(str(action["number"]))
-        if previous and previous["observedAt"] >= receipt["observedAt"]:
-            return
+        if previous:
+            if (previous["observedAt"] >= receipt["observedAt"]
+                    or previous["lastContactAt"] > receipt["lastContactAt"]):
+                return
+            if previous["head"] != receipt["head"]:
+                pr = api(f"repos/{REPO}/pulls/{action['number']}")
+                if pr["head"]["sha"] != receipt["head"]:
+                    return
         holds[str(action["number"])] = receipt
         content = base64.b64encode((json.dumps(holds, indent=2, sort_keys=True) + "\n").encode()).decode()
         data = {"branch": "gh-pages", "sha": file["sha"], "content": content,

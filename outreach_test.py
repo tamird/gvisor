@@ -307,6 +307,8 @@ class OutreachTest(unittest.TestCase):
                                              kind="inline",threadId="t",isResolved=False))
         self.assertEqual(action(p)["status"],"due")
         self.assertIsNone(action(p,node={"reviewOutreachHold":{"evidence":"documented hold"}}))
+        self.assertIsNone(action(p, node={"reviewOutreachHold": {"head": HEAD}}))
+        self.assertEqual(action(p, node={"reviewOutreachHold": {"head": "b" * 40}})["status"], "due")
         self.assertEqual(action(p, node={"releaseWait": {"head": HEAD, "blocking": False}}), action(p))
 
     def test_incomplete_history_and_real_blockers(self):
