@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T02:24:56.989082+00:00",
+    "updatedAt": "2026-11-13T02:54:20.944705+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33952,26 +33952,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/declared-go-coverage",
-      "head": "e717d5d32cf6428d4bef76487991d0cd96218a0c",
+      "head": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
       "title": "Build runsc and Sentry coverage binaries with rules_go",
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "The published rebase on 3238f32db preserves all 84 added and 181 removed lines across nine files. It keeps the tar.bzl 0.10.9 catalog entry from #17469 and the with_cfg.bzl 1.0.2 entry from this PR. The owning Bazel test passed on native macOS ARM64, and the actual license verifier checked all 225 dependencies. On the prior source, coverage and race+coverage CLI/Sentry pairs exercised KCOV on native AMD64 and ARM64. The optional host-kernel controls skipped on both workers.",
-      "updatedAt": "2026-11-11T20:50:41+00:00",
+      "summary": "All four normal and race coverage binaries built and ran on native AMD64 after the rebase onto ae0f8d590. Both Sentry binaries mapped 9,195 kernel source positions, with no positions from the excluded packages. The rebase preserved the reviewed changes across all nine files.",
+      "updatedAt": "2026-11-13T02:54:20.944705+00:00",
       "followup": {
         "owner": "Upstream review",
-        "sourceHead": "e717d5d32cf6428d4bef76487991d0cd96218a0c",
-        "observedAt": "2026-11-11T20:50:41+00:00",
+        "sourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
+        "observedAt": "2026-11-13T02:54:20.944705+00:00",
         "disposition": "Rebase published. GitHub reports mergeable.",
-        "nextAction": "Follow review and current-head CI. Recheck the shared dependency declaration if #15370 lands first.",
+        "nextAction": "Await maintainer review and monitor checks on the published head.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/c2a942643",
-          "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13547220519",
-          "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13546536906",
-          "https://github.com/tamird/gvisor/blob/127967d31/tools/bazeldefs/BUILD",
-          "https://github.com/tamird/gvisor/commit/e717d5d32",
-          "https://github.com/google/gvisor/pull/17469"
+          "https://github.com/tamird/gvisor/commit/c2799abaa",
+          "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231"
         ],
         "mergeable": "MERGEABLE"
       },
@@ -33981,7 +33977,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42272993483/artifacts/13537866543"
         },
         {
-          "label": "Qualification in progress on this published head",
+          "label": "Earlier CLI coverage qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/42272993483"
         },
         {
@@ -34035,6 +34031,14 @@
         {
           "label": "Release archives adopted tar.bzl 0.10.9",
           "url": "https://github.com/google/gvisor/pull/17469"
+        },
+        {
+          "label": "Published rebase on ae0f8d590",
+          "url": "https://github.com/tamird/gvisor/commit/c2799abaa"
+        },
+        {
+          "label": "Four AMD64 coverage binaries and both Sentry source maps",
+          "url": "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231"
         }
       ],
       "number": 16507,
@@ -108890,5 +108894,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-13T02:24:56.989082+00:00"
+  "updatedAt": "2026-11-13T02:54:20.944705+00:00"
 }
