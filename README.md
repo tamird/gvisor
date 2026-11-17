@@ -529,6 +529,34 @@ review or a response in the same thread clears the request it answers.
 An internal inspection leaves it open until the reviewer responds.
 The workflow publishes the queue. The active supervisor owns the review.
 
+### Scheduled ownership
+
+The GitHub timer collects observations; it does not start a coding agent.
+For periodic engineering follow-up, configure a scheduled task in the owning
+chat, initially every 30 minutes, using this prompt:
+
+```text
+Own the existing gVisor work map at https://tamird.github.io/gvisor/.
+Follow the repository instructions and the supervisor protocol in its gh-pages
+README. Read the existing worker handoff before selecting work. Prioritize
+unclaimed human feedback on our PRs and replies to reviews we gave, then CI,
+conflicts and newly landed prerequisites. Verify each selected PR and complete
+conversation live before acting. Advance implementation, remote qualification
+and delivery within the existing workstream. Keep contributor decisions on the
+tracker, preserve exact approved revisions and drafts, and request review before
+publishing new or changed proposals. Use remote builds and tests. Recheck the
+queue while long jobs run, reuse valid evidence and avoid duplicate collection
+or qualification. Update the existing owning record with evidence and the next
+action. Report decisions, blockers and meaningful deliveries; omit unchanged
+status. At each handoff reassess searches, validation and coordination for ways
+to reduce time and token use. Keep explicit holds and publication boundaries.
+```
+
+Use the app's [scheduled task controls](https://learn.chatgpt.com/docs/automations)
+to create the task in the existing chat so it retains its context. Local-project
+runs require the computer and app to remain running. The repository contains
+the prompt and collector, not a configured app schedule.
+
 Each refresh puts a compact `reviewerHandoff` before routine check output and
 retains it in the snapshot. It routes new human comments, reviews and replies
 on source and linked import PRs to the source's existing `followup.owner`;
