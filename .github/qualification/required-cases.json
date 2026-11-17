@@ -1,0 +1,56 @@
+{
+  "systrap": [
+    "TestSleepOnStateHostStall",
+    "TestSleepOnStateRecoveredContext",
+    "TestSleepOnStateRepeatedInterruptsStillStuck",
+    "TestSleepOnStateStuckContext",
+    "TestSleepOnStateStuckContextWhenStubIsGone"
+  ],
+  "shim": [
+    "TestManagerInfo",
+    "TestManagerStopBoundsBlockedUnmountAndReportsFailure",
+    "TestManagerStopBoundsWedgedRuntime",
+    "TestManagerStopCleansRootfsAfterDeleteFailure",
+    "TestManagerStopPreservesCallerCancellation"
+  ],
+  "proc": [
+    "TestCreatePinsOnlyMatchingSandbox",
+    "TestCreateWedgedRunscIsBounded",
+    "TestDeleteBoundsBlockedUnmountAndReusesWorker",
+    "TestDeleteClosesBlockedOutputPipe",
+    "TestDeleteClosesPidfdBeforeFailedUnmount",
+    "TestDeleteTimeoutAfterSuccessfulKill",
+    "TestExecCanceledCallerDoesNotWaitBehindLock",
+    "TestExecDeleteBoundsIOWaitAndCanRetry",
+    "TestExecRuntimeCallsAreBounded",
+    "TestExplicitSandboxKillAfterFuseWatchdog",
+    "TestFailedDeleteRetainsOnlyLivePidfd",
+    "TestFuseStatusRetryPreservesOutcome",
+    "TestInitCallsObserveCancellationWhileLocked",
+    "TestInitDeleteBoundsIOWaitAndCanRetry",
+    "TestInitExitRetainsLiveSandboxForExplicitDelete",
+    "TestKillAllWedgedRunscReturnsAndSparesSandbox",
+    "TestKillWedgedRunscTimesOut",
+    "TestLongRuntimeOperationsAreBounded",
+    "TestOnlyExplicitSandboxTeardownEscalates",
+    "TestPinnedSandboxRemainsOwnedAcrossExec",
+    "TestRuntimeCallsAreBounded",
+    "TestRuntimeDeadlineIncludesLockWait",
+    "TestRuntimeLockCancellationHandoff",
+    "TestStatsWedgedRunscTimesOut",
+    "TestStatusWedgedRunscTimesOut",
+    "TestTeardownDoesNotInterruptCheckpoint"
+  ],
+  "cmd": [
+    "TestDeleteRunningRequiresForce",
+    "TestListUnresponsiveSandbox"
+  ],
+  "specutils": [
+    "TestIsProcessRunning",
+    "TestProcessIdentity",
+    "TestWaitForReadyFail",
+    "TestWaitForReadyHappy",
+    "TestWaitForReadyNotRunning",
+    "TestWaitForReadyTimeout"
+  ]
+}
