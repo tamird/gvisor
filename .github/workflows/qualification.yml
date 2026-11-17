@@ -1,0 +1,165 @@
+name: Qualify exact source
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: Exact source commit (40 lowercase hex characters)
+        required: true
+        type: string
+      plan:
+        description: Single child of source changing only .github/qualification
+        required: true
+        type: string
+      architecture:
+        required: true
+        type: choice
+        options: [amd64, arm64]
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/master'
+    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 330
+    env:
+      SOURCE: ${{ inputs.source }}
+      PLAN: ${{ inputs.plan }}
+      QUAL_ARCH: ${{ inputs.architecture }}
+      QUAL_CONFIG: ${{ inputs.architecture == 'arm64' && 'aarch64' || 'x86_64' }}
+      RESULT_DIR: ${{ runner.temp }}/qualification/results
+    steps:
+      - name: Initialize result identity
+        run: |
+          set -euo pipefail
+          mkdir -m 700 "$RUNNER_TEMP/qualification" "$RESULT_DIR"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path(os.environ['RESULT_DIR'], 'identity.json').write_text(json.dumps({
+              'source': os.environ['SOURCE'], 'plan': os.environ['PLAN'],
+              'architecture': os.environ['QUAL_ARCH'], 'run': os.environ['GITHUB_RUN_ID'],
+              'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'sourceVerified': False,
+          }, indent=2) + '\n')
+          PY
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify and stage the exact plan
+        id: prepare
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$PLAN" =~ ^[0-9a-f]{40}$ ]]
+          case "$QUAL_ARCH" in amd64|arm64) ;; *) exit 1;; esac
+          git fetch --depth=2 --no-tags --no-write-fetch-head origin "$SOURCE" "$PLAN"
+          test "$(git rev-parse "$SOURCE^{commit}")" = "$SOURCE"
+          test "$(git rev-parse "$PLAN^{commit}")" = "$PLAN"
+          test "$(git show -s --format=%P "$PLAN")" = "$SOURCE"
+          python3 - <<'PY'
+          import os, subprocess
+          source, plan = os.environ['SOURCE'], os.environ['PLAN']
+          paths = subprocess.check_output(['git', 'diff', '--no-renames', '--name-only', '-z', source, plan, '--']).split(b'\0')
+          paths = [path for path in paths if path]
+          if not paths or any(not path.startswith(b'.github/qualification/') for path in paths):
+              raise SystemExit('Plan must change only .github/qualification/ files')
+          entries = subprocess.check_output(['git', 'ls-tree', '-rz', plan, '--', '.github/qualification/']).split(b'\0')
+          entrypoint = False
+          for entry in filter(None, entries):
+              metadata, path = entry.split(b'\t', 1)
+              mode, kind, oid = metadata.split()
+              if mode not in (b'100644', b'100755') or kind != b'blob':
+                  raise SystemExit('Plan support files must be regular files, without symlinks or submodules')
+              entrypoint |= path == b'.github/qualification/run.sh'
+          if not entrypoint:
+              raise SystemExit('Plan requires a regular .github/qualification/run.sh')
+          PY
+          mkdir -m 700 "$RUNNER_TEMP/qualification/plan"
+          git archive "$PLAN" .github/qualification/ | tar -x -C "$RUNNER_TEMP/qualification/plan"
+          git checkout --detach "$SOURCE"
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          BASE=$(git show -s --format=%P "$SOURCE" | cut -d' ' -f1)
+          echo "BASE=$BASE" >> "$GITHUB_ENV"
+          python3 - "$BASE" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          path = Path(os.environ['RESULT_DIR'], 'identity.json')
+          identity = json.loads(path.read_text())
+          identity.update(sourceVerified=True, base=sys.argv[1])
+          path.write_text(json.dumps(identity, indent=2) + '\n')
+          PY
+      - name: Prepare source-appropriate tooling
+        id: tools
+        run: |
+          set -euo pipefail
+          if [[ ! -e .bazelversion && ! -L .bazelversion ]]; then
+            test -f app.js
+            test -f metadata-preflight.mjs
+            test -f registry.json
+            if [[ -n "$(git ls-files -- BUILD BUILD.bazel MODULE.bazel MODULE ':(glob)**/BUILD' ':(glob)**/BUILD.bazel' ':(glob)**/MODULE.bazel' ':(glob)**/MODULE')" ]]; then
+              echo 'Non-Bazel scope is restricted to the standalone static tracker' >&2
+              exit 1
+            fi
+            echo 'QUAL_TOOLING_SCOPE=static-tracker' >> "$GITHUB_ENV"
+            exit 0
+          fi
+          test "$(cat .bazelversion)" = 9.3.1
+          case "$QUAL_ARCH" in
+            amd64) arch=x86_64; sha=7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c ;;
+            arm64) arch=arm64; sha=10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366 ;;
+            *) exit 1 ;;
+          esac
+          mkdir -m 700 "$RUNNER_TEMP/qualification/bin"
+          bazel="$RUNNER_TEMP/qualification/bin/bazel"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 "https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-$arch" -o "$bazel"
+          printf '%s  %s\n' "$sha" "$bazel" | sha256sum -c -
+          chmod 700 "$bazel"
+          echo "$RUNNER_TEMP/qualification/bin" >> "$GITHUB_PATH"
+          echo 'QUAL_TOOLING_SCOPE=bazel-9.3.1' >> "$GITHUB_ENV"
+      - name: Execute the verified plan against source
+        id: qualify
+        run: |
+          set -euo pipefail
+          bash "$RUNNER_TEMP/qualification/plan/.github/qualification/run.sh"
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          git diff --exit-code --quiet
+          git diff --cached --exit-code --quiet
+      - name: Record outcome
+        if: always()
+        env:
+          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
+          TOOLS_OUTCOME: ${{ steps.tools.outcome }}
+          QUALIFY_OUTCOME: ${{ steps.qualify.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          path = Path(os.environ['RESULT_DIR'])
+          path.mkdir(parents=True, exist_ok=True)
+          outcomes = {name: os.environ[name.upper() + '_OUTCOME'] for name in ('prepare', 'tools', 'qualify')}
+          def git_result(*args):
+              return subprocess.run(['git', *args], text=True, capture_output=True)
+          head = git_result('rev-parse', 'HEAD')
+          worktree = git_result('diff', '--quiet', '--exit-code')
+          index = git_result('diff', '--cached', '--quiet', '--exit-code')
+          actual_head = head.stdout.strip() if head.returncode == 0 else None
+          clean = worktree.returncode == 0 and index.returncode == 0
+          source_preserved = actual_head == os.environ['SOURCE'] and clean
+          (path / 'outcome.json').write_text(json.dumps({
+              'source': os.environ['SOURCE'], 'plan': os.environ['PLAN'],
+              'toolingScope': os.environ.get('QUAL_TOOLING_SCOPE', 'not-established'),
+              'actualFinalHead': actual_head,
+              'trackedWorktreeDirty': worktree.returncode == 1 if worktree.returncode in (0, 1) else None,
+              'indexDirty': index.returncode == 1 if index.returncode in (0, 1) else None,
+              'gitInspectionErrors': {name: result.stderr.strip() for name, result in (('head', head), ('worktree', worktree), ('index', index)) if result.returncode != 0 and (name == 'head' or result.returncode != 1)},
+              'architecture': os.environ['QUAL_ARCH'], 'steps': outcomes,
+              'status': 'passed' if source_preserved and all(value == 'success' for value in outcomes.values()) else 'not-passed',
+          }, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: qualification-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qualification/results/
+          if-no-files-found: error
+          retention-days: 30
