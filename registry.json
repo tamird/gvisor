@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-13T17:19:21.884387+00:00",
+    "updatedAt": "2026-11-17T16:17:28.405755+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45373,7 +45373,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-10-30T16:08:10.677990+00:00",
+      "updatedAt": "2026-11-17T16:17:28.405755+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -45395,7 +45395,30 @@
           "label": "Stock ordinary systrap failed the real exclusive group open with EBUSY",
           "url": "https://github.com/tamird/gvisor/actions/runs/41074917348/artifacts/12987455909"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ef55959ef13c80404a1efe7890044f9ca211f047",
+        "observedAt": "2026-11-17T16:17:28.405755+00:00",
+        "disposition": "Read Ayush’s complete November 16 thread on the unchanged published head. Traced both device-proxy paths and the ordinary control-FD consumers. No source revision or new runtime validation was needed to prepare the response. Original qualification run remains completed and its VFIO artifact is not expired.",
+        "nextAction": "Contributor review of the exact reply below. After approval, post on Ayush’s original thread; do not expand to a general O_PATH migration without agreeing scope.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
+          "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
+          "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/sentry/fsimpl/gofer/inode_impl.go",
+          "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/runsc/gofer/fs/lisafs.go"
+        ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "ef55959ef13c80404a1efe7890044f9ca211f047",
+        "url": "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
+        "requestedAt": "2026-11-17T16:17:28.405755+00:00",
+        "title": "Answer the device-gofer O_PATH review",
+        "summary": "Explain the existing DirectFS device path, identify consumers that prevent a blanket O_PATH replacement, and agree the scope before revising code. The origin of the earlier experiment remains unknown.",
+        "body": "The device-proxy path differs from ordinary DirectFS inode walking. In pkg/devutil/devutil.go, GoferClient.OpenAt uses one openat with the requested access mode when it has the donated /dev host FD. Without that FD, it calls WalkMultiple and then OpenAt; before this change, that walk opened the exclusive VFIO group before the application open. The published change uses O_PATH for that walk.\n\nMaking all control descriptors O_PATH needs changes to their consumers too. In DirectFS, dentry.readHandleForDeleted seeks and reads the control descriptor when an unlinked file has no shared read handle. In the gofer, SetStat uses fchmod on ordinary control descriptors, and the xattr operations use fgetxattr/fsetxattr/flistxattr except for symlinks and sockets. Simply replacing both tryOpen implementations would break those paths.\n\nThe preserved reproducer is a provisioned VFIO PCI device, rather than evidence of an actual TPU workload. The original stock systrap run failed with EBUSY; the corrected Open case passed on Linux and both gVisor modes: https://github.com/tamird/gvisor/actions/runs/41077957739/artifacts/12989396172. I have not recovered enough earlier context to establish what first prompted that experiment.\n\nWould you prefer to keep the device-gofer change scoped here, or migrate the control-descriptor consumers as part of a general O_PATH change?\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:vfio-eventfd-irq-syscall",
@@ -110568,5 +110591,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-13T17:19:21.884387+00:00"
+  "updatedAt": "2026-11-17T16:17:28.405755+00:00"
 }
