@@ -1955,6 +1955,36 @@ class CheckReportTest(unittest.TestCase):
             current.update(mergeable="CONFLICTING", status="closed")
             self.assertEqual(updater.mergeability_handoff(updater.check_report([current], previous), previous), [])
 
+    def test_published_branch_conflict_uses_its_unique_exact_owner(self) -> None:
+        source = retained(raw_pr(17336))
+        source.update(mergeable="CONFLICTING", headRepo="tamird/gvisor", ref="review/shared-testprocess-systrap-wait")
+        followup = {"owner": "root", "sourceHead": source["head"], "base": source["base"],
+                    "mergeable": "CONFLICTING", "nextAction": "Rebase the published lifecycle tests."}
+        branch = {"type": "branch", "repo": source["headRepo"], "ref": source["ref"],
+                  "head": source["head"], "followup": followup}
+
+        def row():
+            result, = updater.mergeability_handoff(updater.check_report([source], {}), {})
+            return result
+
+        registry = {"nodes": [branch]}
+        with mock.patch.object(updater, "REGISTRY", registry):
+            self.assertEqual((row()["owner"], row()["action"]), ("root", followup["nextAction"]))
+            for field, other in (("repo", "other/gvisor"), ("ref", "another-branch"), ("head", "b" * 40)):
+                with self.subTest(identity=field):
+                    original = branch[field]
+                    branch[field] = other
+                    self.assertEqual(row()["owner"], "Agent")
+                    branch[field] = original
+            registry["nodes"].append(copy.deepcopy(branch))
+            self.assertEqual(row()["owner"], "Agent")
+            registry["nodes"].pop()
+            # An explicitly registered PR remains authoritative over its branch.
+            direct = {"type": "pr", "repo": "google/gvisor", "number": 17336,
+                      "followup": {**followup, "owner": "pr-owner"}}
+            registry["nodes"].append(direct)
+            self.assertEqual(row()["owner"], "pr-owner")
+
     def test_owned_source_conflict_precedes_a_recorded_review_wait(self) -> None:
         source = retained(raw_pr(16458), [linked(imported(17300, 16458), 16458)])
         source["mergeable"] = source["imports"][0]["mergeable"] = "CONFLICTING"
@@ -1970,6 +2000,30 @@ class CheckReportTest(unittest.TestCase):
             # Master can conflict again while the same head is still waiting for review.
             followup["mergeable"] = "CONFLICTING"
             self.assertEqual(rows()[0]["owner"], "Agent")
+            # A verified disposition owns this exact conflict, rather than
+            # adding a second sourceConflict owner/action record.
+            followup.update(owner="root", nextAction="Prepare the image conflict repair.", base=source["base"])
+            ours, export = rows()
+            self.assertEqual((ours["owner"], ours["action"]), ("root", followup["nextAction"]))
+            legacy = {"sourceHead": source["head"], "owner": "legacy-owner", "nextAction": "Resolve the conflict."}
+            node["sourceConflict"] = legacy
+            ours, export = rows()
+            self.assertEqual((ours["owner"], ours["action"]), (legacy["owner"], legacy["nextAction"]))
+            for conflict in ({**legacy, "sourceHead": "b" * 40},
+                             {"sourceHead": source["head"], "nextAction": legacy["nextAction"]},
+                             {"sourceHead": source["head"], "owner": legacy["owner"]}):
+                with self.subTest(legacy=conflict):
+                    node["sourceConflict"] = conflict
+                    ours, export = rows()
+                    self.assertEqual((ours["owner"], ours["action"]), ("root", followup["nextAction"]))
+            del node["sourceConflict"]
+            for field, stale in (("base", "f" * 40), ("sourceHead", "e" * 40), ("mergeable", "MERGEABLE")):
+                with self.subTest(stale=field):
+                    original = followup[field]
+                    followup[field] = stale
+                    self.assertEqual(rows()[0]["owner"], "Agent")
+                    followup[field] = original
+            followup["owner"] = "Maintainer"
             node["sourceConflict"] = {"owner": "image-owner", "sourceHead": source["head"],
                                       "nextAction": "Hold the image rebase for its maintainer."}
             source["base"] = "c" * 40

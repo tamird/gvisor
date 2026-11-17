@@ -1054,11 +1054,24 @@ def check_report(prs: list[dict], previous: dict) -> dict:
              for source in previous.get("prs", []) for pr in (source, *source.get("imports", []))}
     nodes = {(node["repo"], node["number"]): node
               for node in REGISTRY["nodes"] if node["type"] == "pr"}
+    branches = defaultdict(list)
+    for node in REGISTRY["nodes"]:
+        if node["type"] == "branch":
+            branches[(node.get("repo"), node.get("ref"), node.get("head"))].append(node)
     failures, changes, imports, mergeability, mergeability_changes = [], [], [], [], []
     for source in prs:
         repo = source.get("repo", REPO)
         source_status_changed = source["status"] != prior.get((repo, source["number"]), {}).get("status")
-        node = nodes.get((repo, source["number"]), {})
+        node = nodes.get((repo, source["number"]))
+        if node is None:
+            # Published work may retain its owner in the original branch card.
+            # A title or commit alone does not establish repository ownership.
+            matches = branches.get((source.get("headRepo"), source.get("ref"), source.get("head")), [])
+            match matches:
+                case [branch] if all(source.get(field) for field in ("headRepo", "ref", "head")):
+                    node = branch
+                case _:
+                    node = {}
         followup = node.get("followup", {})
         delivered = verified_landing(source, node.get("landedPatch"))
         assignment = {key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
@@ -1117,6 +1130,15 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                         and source.get("authorLogin") == OWNER and source.get("headOwner") == OWNER
                         and pr["mergeable"] == "CONFLICTING" and not observation["sourceBranchMismatch"]):
                     conflict = node.get("sourceConflict", {})
+                    # A review wait on the same head can predate a new conflict.
+                    # Adopt the ordinary owner only after the conflict disposition
+                    # was verified against this exact source and upstream base.
+                    if (not (conflict.get("sourceHead") == source["head"] and conflict.get("owner")
+                             and conflict.get("nextAction"))
+                            and followup.get("sourceHead") == source["head"]
+                            and source.get("base") and followup.get("base") == source["base"]
+                            and followup.get("mergeable") == "CONFLICTING"):
+                        conflict = followup
                     if (conflict.get("sourceHead") == source["head"] and conflict.get("owner")
                             and conflict.get("nextAction")):
                         issue.update(owner=conflict["owner"], action=conflict["nextAction"])
