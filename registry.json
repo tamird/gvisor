@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-17T17:20:44.991697Z",
+    "updatedAt": "2026-11-17T17:30:13.158188Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34471,19 +34471,26 @@
       "group": "bazel",
       "status": "open",
       "summary": "Moved the unchanged ELF offset generator into //tools/systrap_offsets:gen_offsets in response to Lucas’s review. The contributor approved the amendment and reply, and both are published. Hosted AMD64/ARM64 builds, equality of every exported offset, source lint and C++ lint passed. Independent review found no substantive issues. The separately approved raw stub extraction still waits for #16516 to land.",
-      "updatedAt": "2026-11-17T17:20:44.991697Z",
+      "updatedAt": "2026-11-17T17:30:13.158188Z",
       "followup": {
         "owner": "root",
         "sourceHead": "4c529a8079409c05cd8a5c16133683a94fc991ba",
         "observedAt": "2026-11-17T17:20:44.991697Z",
         "disposition": "Published the contributor-approved generator relocation and exact reply to Lucas. The original Go source blob is unchanged. GitHub confirms the published head is mergeable. Remote builds and offset parity on AMD64/ARM64, source lint and C++ lint pass; all required independent review roles found no substantive issues.",
-        "nextAction": "Follow current upstream checks and maintainer review. Native re-request to Lucas is awaiting separate contributor authorization. Submit the separately approved raw-stub extraction after #16516 lands.",
+        "nextAction": "Follow current upstream checks and maintainer review. The authorized native re-request to Lucas returned HTTP 404, and read-back confirmed he was not added; do not substitute another notification channel. Submit the separately approved raw-stub extraction after #16516 lands.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
           "https://github.com/tamird/gvisor/actions/runs/44131524229",
           "https://github.com/tamird/gvisor/commit/4c529a8079409c05cd8a5c16133683a94fc991ba"
-        ]
+        ],
+        "nativeReviewRequest": {
+          "reviewer": "manninglucas",
+          "head": "4c529a8079409c05cd8a5c16133683a94fc991ba",
+          "http": 404,
+          "observedAt": "2026-11-17T17:30:13.158188Z",
+          "delivered": false
+        }
       },
       "evidence": [
         {
@@ -110654,5 +110661,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-17T17:20:44.991697Z"
+  "updatedAt": "2026-11-17T17:30:13.158188Z"
 }
