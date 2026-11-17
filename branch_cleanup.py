@@ -16,6 +16,8 @@ from urllib.parse import unquote
 
 FORK = "tamird/gvisor"
 UPSTREAM = "google/gvisor"
+# GitHub repository IDs survive transfers between organizations.
+UPSTREAM_ID = "MDEwOlJlcG9zaXRvcnkxMzEyMTI2Mzg="
 HEADS = "refs/heads/"
 DISPOSABLE = ("qualification/", "diagnostics/")
 MANAGED = DISPOSABLE + ("proposal/", "research/", "review/", "integration/",
@@ -114,7 +116,7 @@ def live_merged_sources(rows: list[dict], fork: dict[str, str], local: dict[str,
             ref = json.dumps(HEADS + name)
             fields.append(f"b{i}:ref(qualifiedName:{ref})" + """{target{oid}
                 associatedPullRequests(first:10,states:[OPEN,MERGED]){pageInfo{hasNextPage}
-                    nodes{number state headRefName headRefOid headRepository{nameWithOwner} baseRepository{nameWithOwner}}}}""")
+                    nodes{number state headRefName headRefOid headRepository{nameWithOwner} baseRepository{id}}}}""")
         query = 'query{repository(owner:"tamird",name:"gvisor"){' + " ".join(fields) + "}}"
         result = json.loads(command("gh", "api", "--hostname", "github.com", "graphql", "-f", "query=" + query))
         for i, name in enumerate(batch):
@@ -126,7 +128,7 @@ def live_merged_sources(rows: list[dict], fork: dict[str, str], local: dict[str,
                 continue
             if any(pr["number"] == row["number"] and pr["state"] == "MERGED" and pr["headRefName"] == name
                    and pr["headRefOid"] == row["head"] and (pr["headRepository"] or {}).get("nameWithOwner") == FORK
-                   and (pr["baseRepository"] or {}).get("nameWithOwner") == UPSTREAM for pr in prs["nodes"]):
+                   and (pr["baseRepository"] or {}).get("id") == UPSTREAM_ID for pr in prs["nodes"]):
                 confirmed[name] = row["number"]
     return confirmed
 

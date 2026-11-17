@@ -16,7 +16,7 @@ class BranchCleanupTest(unittest.TestCase):
         name, tip, moved = "topic", "a" * 40, "b" * 40
         row = {"ref": name, "head": tip, "number": 82, "status": "merged", "headRepo": cleanup.FORK}
         pr = {"number": 82, "state": "MERGED", "headRefName": name, "headRefOid": tip,
-              "baseRepository": {"nameWithOwner": cleanup.UPSTREAM}, "headRepository": {"nameWithOwner": cleanup.FORK}}
+              "baseRepository": {"id": cleanup.UPSTREAM_ID}, "headRepository": {"nameWithOwner": cleanup.FORK}}
         connection = {"pageInfo": {"hasNextPage": False}, "nodes": [pr]}
         ref = {"target": {"oid": tip}, "associatedPullRequests": connection}
 
@@ -25,6 +25,11 @@ class BranchCleanupTest(unittest.TestCase):
             return json.dumps({"data": {"repository": {"b0": ref}}}).encode()
 
         with mock.patch.object(cleanup, "git", return_value=tip.encode()), mock.patch.object(cleanup, "command", side_effect=native) as api:
+            self.assertEqual(cleanup.live_merged_sources([row], {name: tip}, {}, tip), {name: 82})
+            for base in (None, {}, {"id": "other-repository", "nameWithOwner": cleanup.UPSTREAM}):
+                pr["baseRepository"] = base
+                self.assertFalse(cleanup.live_merged_sources([row], {name: tip}, {}, tip))
+            pr["baseRepository"] = {"id": cleanup.UPSTREAM_ID, "nameWithOwner": "gvisor/gvisor"}
             self.assertEqual(cleanup.live_merged_sources([row], {name: tip}, {}, tip), {name: 82})
             for fork, local in [({name: moved}, {}), ({name: tip}, {name: moved}), ({}, {})]:
                 api.reset_mock()
