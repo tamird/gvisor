@@ -51,7 +51,8 @@ def allows_post(mode: str, fresh: dict | None = None, *, channel: str | None = N
 
 
 def api(path: str, data: dict | None = None) -> dict:
-    command = ["gh", "api", "--hostname", "github.com", "--include"]
+    command = ["gh", "api", "--hostname", "github.com", "--include",
+               "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10"]
     if data is not None:
         command.extend(["--method", "POST", "--input", "-"])
     try:
@@ -171,7 +172,8 @@ def send_one(action: dict, refresh: Callable[[], dict | None], owner: str, regis
             if hold and hold["head"] == current["head"] and hold["lastContactAt"] == current["lastContactAt"]:
                 return {**checked, "status": "native-request-denied", "reviewer": hold["reviewer"], "http": hold["http"]}
         try:
-            api(requests, {"reviewers": [reviewer]})
+            endpoint = requests + "/rerequest" if current.get("rerequest") else requests
+            api(endpoint, {"reviewers": [reviewer]})
         except GitHubError as error:
             if error.limited:
                 raise
@@ -262,7 +264,11 @@ def deliver(snapshot: dict, registry: dict, now: str | datetime, owner: str, mai
             current = plan(pr, nodes.get(number, {}), outreach_states(latest, registry).get(str(number), {}),
                            at, owner, maintainers, history, preferred=scheduled["reviewer"],
                            rotations_only=mode == "rotations", native_denial=native_denials.get(str(number)))
-            return {**current, "base": pr.get("base"), "mergeable": pr.get("mergeable")} if current else None
+            reviewed = any(item.get("kind") == "review"
+                           and ((item.get("author") or {}).get("login") or "").lower() == scheduled["reviewer"].lower()
+                           for item in pr.get("feedback", {}).get("items", []))
+            return {**current, "base": pr.get("base"), "mergeable": pr.get("mergeable"),
+                    "rerequest": reviewed} if current else None
 
         if not post:
             current = refresh()

@@ -119,6 +119,26 @@ class ReviewDeliveryTest(unittest.TestCase):
         self.assertEqual(self.api.call_args_list[0].args, (self.requests, {"reviewers": ["reviewer"]}))
         self.assertEqual(self.api.call_count, 2)
 
+    def test_fresh_review_history_selects_the_native_endpoint(self):
+        self.action["dueAt"] = "2026-11-17T16:00:00Z"
+        registry = {"meta": {"repo": delivery.REPO}, "nodes": []}
+        fixed = delivery.datetime(2026, 11, 17, 17, tzinfo=delivery.timezone.utc)
+        for author, suffix in (("Reviewer", "/rerequest"), ("other", "")):
+            pr = {"repo": delivery.REPO, "number": self.number, "authorLogin": "tamird", "status": "open",
+                  **self.versions, "mergeable": "MERGEABLE",
+                  "feedback": {"items": [{"kind": "review", "author": {"login": author}}]}}
+            snapshot = {"prs": [pr], "reviewOutreach": {str(self.number): self.action}}
+            self.api.reset_mock()
+            self.api.side_effect = [{"login": "tamird"}, {}, {"users": [{"login": "reviewer"}]}]
+            with self.subTest(author=author), patch("outreach.plan", return_value=self.action), patch(
+                    "outreach.outreach_states", return_value={}), patch("outreach.reviewer_history", return_value={}), patch.object(
+                    delivery, "datetime", wraps=delivery.datetime) as clock:
+                clock.now.return_value = fixed
+                delivery.deliver(snapshot, registry, fixed, "tamird", set(), lambda number: pr,
+                                 active_reviewers=set(), post=True, registry_oid=self.registry_oid, mode="all")
+            self.assertEqual(self.api.call_args_list, [call("user"),
+                call(self.requests + suffix, {"reviewers": ["reviewer"]}), call(self.requests + "?per_page=100")])
+
     def test_unknown_source_is_rechecked_but_cannot_send_until_proven_mergeable(self):
         self.action["status"] = "verify-mergeability"
         self.live.return_value = {**self.action, "mergeable": "UNKNOWN"}
@@ -218,6 +238,13 @@ class ReviewDeliveryTest(unittest.TestCase):
 
 
 class GitHubStatusTest(unittest.TestCase):
+    @patch("subprocess.run")
+    def test_versioned_json_request(self, run):
+        run.return_value = subprocess.CompletedProcess([], 0, "HTTP/2.0 201 Created\n\n{}", "")
+        delivery.api("repos/google/gvisor/pulls/123/requested_reviewers/rerequest", {"reviewers": ["reviewer"]})
+        self.assertEqual(json.loads(run.call_args.kwargs["input"]), {"reviewers": ["reviewer"]})
+        self.assertIn("X-GitHub-Api-Version: 2026-03-10", run.call_args.args[0])
+
     def test_fork_switches_are_read_fresh_even_with_a_conflicting_environment(self):
         with patch.dict(delivery.os.environ, {"WORK_MAP_POSTING_PAUSED": "false"}), patch("subprocess.run") as run:
             for paused, rotations, expected in (("false", "true", "all"), ("true", "true", "rotations"),

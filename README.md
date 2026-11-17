@@ -532,6 +532,10 @@ The workflow publishes the queue. The active supervisor owns the review.
 ### Scheduled ownership
 
 The GitHub timer collects observations; it does not start a coding agent.
+On hosts without Python 3.10 or newer, read the final `workerHandoff` JSON
+from the latest successful hosted refresh log. It uses the same selection
+function as the local command. Verify its observation time and the selected
+PR live before acting; do not start a second collector.
 For periodic engineering follow-up, configure a scheduled task in the owning
 chat, initially every 30 minutes, using this prompt:
 
