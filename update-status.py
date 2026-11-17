@@ -1133,7 +1133,9 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                     # A review wait on the same head can predate a new conflict.
                     # Adopt the ordinary owner only after the conflict disposition
                     # was verified against this exact source and upstream base.
-                    if (not conflict and followup.get("sourceHead") == source["head"]
+                    if (not (conflict.get("sourceHead") == source["head"] and conflict.get("owner")
+                             and conflict.get("nextAction"))
+                            and followup.get("sourceHead") == source["head"]
                             and source.get("base") and followup.get("base") == source["base"]
                             and followup.get("mergeable") == "CONFLICTING"):
                         conflict = followup

@@ -2005,6 +2005,18 @@ class CheckReportTest(unittest.TestCase):
             followup.update(owner="root", nextAction="Prepare the image conflict repair.", base=source["base"])
             ours, export = rows()
             self.assertEqual((ours["owner"], ours["action"]), ("root", followup["nextAction"]))
+            legacy = {"sourceHead": source["head"], "owner": "legacy-owner", "nextAction": "Resolve the conflict."}
+            node["sourceConflict"] = legacy
+            ours, export = rows()
+            self.assertEqual((ours["owner"], ours["action"]), (legacy["owner"], legacy["nextAction"]))
+            for conflict in ({**legacy, "sourceHead": "b" * 40},
+                             {"sourceHead": source["head"], "nextAction": legacy["nextAction"]},
+                             {"sourceHead": source["head"], "owner": legacy["owner"]}):
+                with self.subTest(legacy=conflict):
+                    node["sourceConflict"] = conflict
+                    ours, export = rows()
+                    self.assertEqual((ours["owner"], ours["action"]), ("root", followup["nextAction"]))
+            del node["sourceConflict"]
             for field, stale in (("base", "f" * 40), ("sourceHead", "e" * 40), ("mergeable", "MERGEABLE")):
                 with self.subTest(stale=field):
                     original = followup[field]
