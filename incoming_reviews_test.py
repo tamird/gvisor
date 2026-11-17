@@ -42,6 +42,10 @@ def observe(messages, previous=None, complete=True):
 
 
 class IncomingReviewsTest(unittest.TestCase):
+    def test_transferred_repository_link(self):
+        body = LINKED_BODY.replace("google/gvisor", "gvisor/gvisor")
+        self.assertEqual(incoming_reviews.linked_target(body, OWNER), 17214)
+
     def test_linked_reference_spellings(self):
         target_url, body = LINKED_URL, LINKED_BODY
         for text in (f"@tamird thanks for your help. See {target_url}", f"@other please review {target_url}. cc @tamird",

@@ -20,6 +20,41 @@ OLD = "2000-01-01T00:00:00+00:00"
 LATER = "2000-01-02T00:00:00+00:00"
 
 
+class RepositoryTransferTest(unittest.TestCase):
+    def test_graphql_import_identity_and_historical_footer(self) -> None:
+        head = "e84407a2b6d59c3b522e15a5677e4845b1654981"
+        source = "https://github.com/google/gvisor/pull/14338"
+        for footer_url in (source, source.replace("google/gvisor", "gvisor/gvisor")):
+            body = f"FUTURE_COPYBARA_INTEGRATE_REVIEW={footer_url} from tamird:checklocks-tcp-state {head}"
+            candidate = {"number": 17355, "repository": {"nameWithOwner": "gvisor/gvisor"},
+                         "url": "https://github.com/gvisor/gvisor/pull/17355",
+                         "author": {"login": "copybara-service"}, "body": body}
+            response = {"data": {"repository": {"pullRequest": candidate}, "rateLimit": {"cost": 1, "remaining": 100}}}
+            result = subprocess.CompletedProcess([], 0, json.dumps(response), "")
+            with self.subTest(footer_url=footer_url), mock.patch.multiple(updater, requests=0, query_cost=0, rate_remaining=None), mock.patch.object(
+                    updater.subprocess, "run", return_value=result):
+                data = updater.graphql("query { repository { pullRequest { number } } }")
+            observed = data["repository"]["pullRequest"]
+            self.assertEqual(observed["body"], body)
+            self.assertEqual(observed["url"], "https://github.com/google/gvisor/pull/17355")
+            self.assertEqual(observed["repository"]["nameWithOwner"], "google/gvisor")
+            self.assertEqual(updater.import_source(observed, source, "tamird", "checklocks-tcp-state"), head)
+            for field, value in (("repository", {"nameWithOwner": "other/gvisor"}),
+                                 ("author", {"login": "other-service"}),
+                                 ("body", body.replace("checklocks-tcp-state", "different-branch"))):
+                self.assertIsNone(updater.import_source({**observed, field: value}, source, "tamird", "checklocks-tcp-state"))
+            self.assertIsNone(updater.import_source(observed, source.replace("14338", "14339"), "tamird", "checklocks-tcp-state"))
+
+    def test_transferred_footer_cannot_change_source_revision(self) -> None:
+        source = "https://github.com/google/gvisor/pull/14338"
+        candidate = {"number": 17355, "repository": {"nameWithOwner": "gvisor/gvisor"},
+                     "author": {"login": "copybara-service"},
+                     "body": f"FUTURE_COPYBARA_INTEGRATE_REVIEW={source} from tamird:topic " + "a" * 40 + "\n"
+                             + f"FUTURE_COPYBARA_INTEGRATE_REVIEW={source.replace('google/gvisor', 'gvisor/gvisor')} from tamird:topic " + "b" * 40}
+        with self.assertRaisesRegex(RuntimeError, "ambiguous source revisions"):
+            updater.import_source(candidate, source, "tamird", "topic")
+
+
 class ApprovedBranchTest(unittest.TestCase):
     def test_last_prerequisite_lands(self) -> None:
         proposal = {"id": "branch:waiter", "type": "branch", "repo": "tamird/gvisor", "ref": "research/waiter",

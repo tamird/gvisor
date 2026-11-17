@@ -18,6 +18,7 @@ from pathlib import Path
 
 from ci_actions import collect as collect_ci_actions
 from ci_flakes import collect as collect_ci_flakes
+from github_identity import equivalent_repository_urls, normalize_api_response, repository_identity
 from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
@@ -185,7 +186,7 @@ def graphql(query: str, variables: dict[str, object] | None = None, *,
         rate = data.pop("rateLimit")
         query_cost += rate["cost"]
         rate_remaining = rate["remaining"]
-        return data
+        return normalize_api_response(data)
 
 
 def public_url(value: str | None) -> str | None:
@@ -768,9 +769,10 @@ def fetch_registered_prs(repositories: set[str]) -> dict[tuple[str, int], dict]:
 
 
 def import_source(candidate: dict, source_url: str, head_owner: str | None, head_ref: str, repo: str = REPO) -> str | None:
-    if candidate.get("repository", {}).get("nameWithOwner") != repo or (candidate.get("author") or {}).get("login") != "copybara-service":
+    if repository_identity(candidate.get("repository", {}).get("nameWithOwner", "")) != repo or (candidate.get("author") or {}).get("login") != "copybara-service":
         return None
-    footer = re.compile(r"FUTURE_COPYBARA_INTEGRATE_REVIEW=" + re.escape(source_url)
+    urls = "(?:" + "|".join(re.escape(url) for url in equivalent_repository_urls(source_url)) + ")"
+    footer = re.compile(r"FUTURE_COPYBARA_INTEGRATE_REVIEW=" + urls
                         + " from " + re.escape(f"{head_owner}:{head_ref}")
                         + r" ([0-9a-f]{40})")
     heads = {match[1] for line in candidate["body"].splitlines() if (match := footer.fullmatch(line.strip()))}

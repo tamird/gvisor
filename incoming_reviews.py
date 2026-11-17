@@ -4,6 +4,8 @@ from collections.abc import Callable, Iterable
 import json
 import re
 
+from github_identity import repository_identity
+
 IDENTITY = "id number title url state headRefOid updatedAt createdAt author{login __typename} repository{nameWithOwner isPrivate}"
 MESSAGE = "id url body createdAt updatedAt author{login __typename}"
 PAGING = "pageInfo{hasPreviousPage startCursor}"
@@ -58,7 +60,7 @@ def linked_target(body: str | None, owner: str) -> int | None:
         return None
     full_repo, short_repo, digits = references[0]
     number = int(digits)
-    if (full_repo or short_repo or REPOSITORY).lower() != REPOSITORY or number > 2**31 - 1:
+    if repository_identity((full_repo or short_repo or REPOSITORY).lower()) != REPOSITORY or number > 2**31 - 1:
         return None
     for paragraph in re.split(r"\n\s*\n", re.sub(link, "LINKED_PR", text)):
         if {login.lower() for login in re.findall(r"(?<![\w-])@([\w-]+)", paragraph)} != {owner.lower()}:
