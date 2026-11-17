@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-17T21:09:15.022997+00:00",
+    "updatedAt": "2026-11-17T22:54:58.728628+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4832,21 +4832,44 @@
         "owner": "root",
         "sourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
         "observedAt": "2026-11-17T21:09:15.022997+00:00",
-        "disposition": "The first native run found a test diagnostic uint64/int mismatch; corrected in candidate 7dfa385ef0. Both native safecopy tests and source lint passed previously; corrected allocator tests and exact-base ARM C++ lint comparison are running.",
-        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
+        "disposition": "Native run 44189880016 verified 85 AMD64 / 123 ARM64 pgalloc and 609 safecopy cases per architecture, zero skips. Candidate f84 is the reviewed 7dfa implementation rebased onto 1f33; their only tree differences are CONTRIBUTING.md and website/blog/README.md. ARM C++ lint has the existing candidate/base failure and is not clean. Runtime hosts used 4 KiB pages; 64 KiB host execution is not established.",
+        "nextAction": "Await the contributor decision on the exact f84 amendment already sent. Reverify the unchanged original PR head and current feedback before publishing only the approved revision; preserve prior approval heads and explicit holds.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
           "https://github.com/tamird/gvisor/actions/runs/43007012855",
           "https://github.com/gvisor/gvisor/pull/15181",
           "https://github.com/tamird/gvisor/commit/d96e0b649990478a367d3e9d0b360c8d5f65d9c9",
           "https://github.com/tamird/gvisor/actions/runs/44176619047",
-          "https://github.com/tamird/gvisor/commit/7dfa385ef0dd6286eaff54ee1c988db289f4f044"
+          "https://github.com/tamird/gvisor/commit/7dfa385ef0dd6286eaff54ee1c988db289f4f044",
+          "https://github.com/tamird/gvisor/actions/runs/44189880016",
+          "https://github.com/tamird/gvisor/commit/f84b27e5f16607463fa034034acf84ff867438be"
         ],
-        "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes.",
+        "recheckCondition": "Contributor approves/revises the exact amendment, original PR/head/feedback changes, or qualification evidence changes.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "mergeable": "CONFLICTING"
+        "mergeable": "CONFLICTING",
+        "qualificationHistory": [
+          {
+            "observedAt": "2026-11-17T21:09:15.022997+00:00",
+            "disposition": "The first native run found a test diagnostic uint64/int mismatch; corrected in candidate 7dfa385ef0. Both native safecopy tests and source lint passed previously; corrected allocator tests and exact-base ARM C++ lint comparison are running.",
+            "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
+            "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes."
+          }
+        ],
+        "qualificationUpdate": {
+          "curatedAt": "2026-11-17T22:54:31.464617+00:00",
+          "publishedSourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
+          "evidence": [
+            "https://github.com/tamird/gvisor/actions/runs/44189880016",
+            "https://github.com/tamird/gvisor/commit/f84b27e5f16607463fa034034acf84ff867438be"
+          ],
+          "candidate": {
+            "head": "f84b27e5f16607463fa034034acf84ff867438be",
+            "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+            "qualifiedCodeHead": "7dfa385ef0dd6286eaff54ee1c988db289f4f044"
+          }
+        }
       },
-      "updatedAt": "2026-11-17T21:09:15.022997+00:00",
+      "updatedAt": "2026-11-17T22:54:31.464617+00:00",
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "evidence": [
         {
@@ -4992,7 +5015,19 @@
           "postedURL": "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
           "note": "The posted reply gives Ayush both rebase dates and the completed AMD64 and ARM64 results."
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "f84b27e5f16607463fa034034acf84ff867438be",
+        "baseHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
+        "url": "https://github.com/tamird/gvisor/commit/f84b27e5f16607463fa034034acf84ff867438be",
+        "title": "Honor committed memory allocation requests",
+        "summary": "Approve publication of this exact reviewed amendment over the unchanged original PR head? Native qualification and documentation-only rebase proof are recorded below. Historical approvals remain bound to their original heads.",
+        "body": "Approve amending #15181 to https://github.com/tamird/gvisor/commit/f84b27e5f16607463fa034034acf84ff867438be ? The rebase preserves its allocation algorithm and adapts page-size types/tests to current upstream. AMD64 passed 85 pgalloc + 609 safecopy cases; ARM64 passed 123 + 609, all without skips. Independent reviews found no issues. ARM64 C++ lint retains the identical verified upstream failure; both hosts used 4 KiB pages. Validation: https://github.com/tamird/gvisor/actions/runs/44189880016 . This candidate differs from the tested revision only in two upstream documentation files; range-diff is unchanged.",
+        "requestedAt": "2026-11-17T22:54:31.464617+00:00",
+        "note": "This records only the already-sent approval request, not an external message or PR-description replacement. The original tool request time is unavailable; requestedAt records current curation observation unless an exact timestamp is supplied."
+      }
     },
     {
       "id": "pr:15183",
@@ -37011,24 +37046,47 @@
       "group": "bazel",
       "status": "open",
       "summary": "All four normal and race coverage binaries built and ran on native AMD64 after the rebase onto ae0f8d590. Both Sentry binaries mapped 9,195 kernel source positions, with no positions from the excluded packages. The rebase preserved the reviewed changes across all nine files.",
-      "updatedAt": "2026-11-17T21:09:15.022997+00:00",
+      "updatedAt": "2026-11-17T22:54:31.464617+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
         "observedAt": "2026-11-17T21:09:15.022997+00:00",
-        "disposition": "First qualification stopped when its harness overwrote read-only staged runtime files. The harness now replaces those files explicitly; the exact unchanged source candidate is being qualified again. KCOV and final lint were not reached in the first run.",
-        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
+        "disposition": "Candidate 7eafb7afe2 is rebased on 1f33 and adds a default-true canonical runner collect-coverage flag. KCOV qualification passes false to avoid report collection disabling KCOV while retaining debug logs. Focused run 44190856301 was launched and remains pending in this curated assessment; no passing result is inferred. Original PR remains untouched.",
+        "nextAction": "Inspect focused run 44190856301 through completion: strict normal/race directfs/shared KCOV zero-skip XML, runner owner, default-on report/debug control, source lints and exact-base ARM C++ lint control. Resolve failures and finish review before asking to amend the original PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
           "https://github.com/gvisor/gvisor/pull/16507",
           "https://github.com/tamird/gvisor/commit/43f4e3871d",
           "https://github.com/tamird/gvisor/commit/f1131c5e796c82c26560601c8b2f86593f33fba9",
-          "https://github.com/tamird/gvisor/actions/runs/44176467049"
+          "https://github.com/tamird/gvisor/actions/runs/44176467049",
+          "https://github.com/tamird/gvisor/commit/7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+          "https://github.com/tamird/gvisor/actions/runs/44190856301"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes.",
-        "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa"
+        "recheckCondition": "Remote run completes/fails, source or feedback changes, or contributor decision.",
+        "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+        "qualificationHistory": [
+          {
+            "observedAt": "2026-11-17T21:09:15.022997+00:00",
+            "disposition": "First qualification stopped when its harness overwrote read-only staged runtime files. The harness now replaces those files explicitly; the exact unchanged source candidate is being qualified again. KCOV and final lint were not reached in the first run.",
+            "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
+            "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes."
+          }
+        ],
+        "qualificationUpdate": {
+          "curatedAt": "2026-11-17T22:54:31.464617+00:00",
+          "publishedSourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
+          "evidence": [
+            "https://github.com/tamird/gvisor/commit/7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+            "https://github.com/tamird/gvisor/actions/runs/44190856301"
+          ],
+          "candidate": {
+            "head": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+            "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+            "comparisonBase": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa"
+          }
+        }
       },
       "evidence": [
         {
@@ -60257,7 +60315,19 @@
           "label": "Corrected 7.2.1 minimum; all reported checks passed",
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518/checks"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
+        "observedAt": "2026-11-17T22:31:20.170000+00:00",
+        "disposition": "Maintainer notification is informational; corrected overlay Bazel minimum is published and reported checks pass.",
+        "nextAction": "Follow existing upstream maintainer review and checks on the published source. The bazel-io notification requests review from iperf maintainer @kgreenek, not a new author response. Preserve the published >=7.2.1 constraint that addresses the separate automated overlay finding; no acknowledgement or new source work is required by the identified notification.",
+        "recheckCondition": "New substantive maintainer reply, exact source/check change, or terminal PR state; follow through the existing upstream workstream.",
+        "evidence": [
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11518#issuecomment-6582183969",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11518#discussion_r4444832725"
+        ]
+      }
     },
     {
       "id": "pr:16805",
@@ -60745,7 +60815,19 @@
           "at": "2026-11-03T11:41:49Z",
           "url": "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6602869919"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+        "observedAt": "2026-11-17T22:31:20.170000+00:00",
+        "disposition": "Fabian’s SDK-tool efficiency question was answered by the approved measured reply; awaiting maintainer response.",
+        "nextAction": "Follow the existing maintainer discussion and checks on the published source. The approved reply already explains the 113-versus-18-package measurement and asks whether the optional SDK configuration belongs here. Await that answer; do not add the option or send another response without a new substantive request and applicable authorization.",
+        "recheckCondition": "New substantive maintainer reply, exact source/check change, or terminal PR state; follow through the existing upstream workstream.",
+        "evidence": [
+          "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6597471154",
+          "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6602869919"
+        ]
+      }
     },
     {
       "id": "pr:16810",
@@ -67273,7 +67355,7 @@
       "url": "https://github.com/google/gvisor/pull/17049",
       "title": "Start syscall tests without Bash",
       "status": "open",
-      "updatedAt": "2026-11-17T18:16:01.120596+00:00",
+      "updatedAt": "2026-11-17T22:54:58.728628+00:00",
       "summary": "A syscall test fails before the test runner starts on a worker without /bin/bash. Each test variant generates a Bash script to prepare its output directory and put the test executable after any runner flags. Public lint on the earlier head rejected the C++ system_error header and Starlark spacing. The published amendment uses the existing filesystem helpers to create the output directory and grant access without clearing special permission bits. All four native AMD64 cases, both supported umasks, sticky/setgid permissions, regular-file rejection, and the three affected lint checks passed on the fork.",
       "evidence": [
         {
@@ -67327,14 +67409,37 @@
         "owner": "root",
         "sourceHead": "b0b2a33254ea8cc25320a078fba8d3e1852fad61",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
-        "nextAction": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication.",
-        "recheckCondition": "After rebase qualification and approved publication, verify exact head/base mergeability and current CI.",
+        "nextAction": "Inspect native qualification through completion, address actual failures, and complete adversarial source review before requesting approval to amend the original PR.",
+        "recheckCondition": "Either native qualification completes or fails, source or feedback changes, or contributor decision.",
         "evidence": [
-          "https://github.com/gvisor/gvisor/pull/17049"
+          "https://github.com/gvisor/gvisor/pull/17049",
+          "https://github.com/tamird/gvisor/commit/c825b4c37e988240d853788a3a1dceb1ec027db4",
+          "https://github.com/tamird/gvisor/actions/runs/44194408510",
+          "https://github.com/tamird/gvisor/actions/runs/44194413157"
         ],
-        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "disposition": "The queued conflict is repaired in fork proposal c825b4c37e on current upstream 1f33. The resolution preserves upstream add_host_random and the native executable launcher; DCO is included. Original PR remains unchanged. Native AMD64 and ARM64 qualification is running.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "mergeable": "CONFLICTING"
+        "mergeable": "CONFLICTING",
+        "qualificationHistory": [
+          {
+            "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+            "nextAction": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication.",
+            "recheckCondition": "After rebase qualification and approved publication, verify exact head/base mergeability and current CI."
+          }
+        ],
+        "qualificationUpdate": {
+          "curatedAt": "2026-11-17T22:54:58.728628+00:00",
+          "publishedSourceHead": "b0b2a33254ea8cc25320a078fba8d3e1852fad61",
+          "candidate": {
+            "head": "c825b4c37e988240d853788a3a1dceb1ec027db4",
+            "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
+          },
+          "evidence": [
+            "https://github.com/tamird/gvisor/commit/c825b4c37e988240d853788a3a1dceb1ec027db4",
+            "https://github.com/tamird/gvisor/actions/runs/44194408510",
+            "https://github.com/tamird/gvisor/actions/runs/44194413157"
+          ]
+        }
       }
     },
     {
@@ -86538,25 +86643,43 @@
       "url": "https://github.com/google/gvisor/pull/17446",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T21:09:15.022997+00:00",
+      "updatedAt": "2026-11-17T22:54:31.464617+00:00",
       "summary": "The systrap signal stub defines its own memcpy. Its old declaration returned void while the C interface returns the destination pointer. The revision uses the standard prototype, returns the destination, and makes the memory-order wrappers explicit.",
       "followup": {
         "owner": "root",
         "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
         "observedAt": "2026-11-17T21:09:15.022997+00:00",
-        "disposition": "Candidate repairs the three remaining AMD64 atomic_store callers. Exact-candidate AMD64/ARM64 qualification and matched startup/syscall measurements are running; earlier ARM C++ lint limitation remains explicit.",
-        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
+        "disposition": "Cleaned paired analysis reports +3.22% optimized getpid time (p=0.008, 24 observations per arm). Independent controlled replication 44193164299 is running. Byte-identical hot stub instructions do not establish full-process equivalence or explain the measured regression.",
+        "nextAction": "Inspect the independent matched run, including per-batch measurements and exact-base A/A controls, alongside the retained original regression. Diagnose reproducibility; a nonsignificant repeat alone is not proof of equivalence. Do not amend the original PR until qualification and contributor approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17446",
           "https://github.com/tamird/gvisor/commit/4e82d9605",
           "https://github.com/tamird/gvisor/commit/41fba60a3d3261850b2f48f155a8da43d9920a3c",
           "https://github.com/tamird/gvisor/actions/runs/44149963100",
           "https://github.com/tamird/gvisor/commit/5a397632d896158997ee7594866b33d741c56917",
-          "https://github.com/tamird/gvisor/actions/runs/44175301095"
+          "https://github.com/tamird/gvisor/actions/runs/44175301095",
+          "https://github.com/tamird/gvisor/actions/runs/44190929074",
+          "https://github.com/tamird/gvisor/actions/runs/44193164299"
         ],
         "mergeable": "CONFLICTING",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes."
+        "recheckCondition": "A/A evidence arrives, benchmark analysis changes, source/feedback changes or contributor decision.",
+        "qualificationHistory": [
+          {
+            "observedAt": "2026-11-17T21:09:15.022997+00:00",
+            "disposition": "Candidate repairs the three remaining AMD64 atomic_store callers. Exact-candidate AMD64/ARM64 qualification and matched startup/syscall measurements are running; earlier ARM C++ lint limitation remains explicit.",
+            "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
+            "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes."
+          }
+        ],
+        "qualificationUpdate": {
+          "curatedAt": "2026-11-17T22:54:31.464617+00:00",
+          "publishedSourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
+          "evidence": [
+            "https://github.com/tamird/gvisor/actions/runs/44190929074",
+            "https://github.com/tamird/gvisor/actions/runs/44193164299"
+          ]
+        }
       },
       "evidence": [
         {
@@ -105400,7 +105523,7 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-17T21:08:30.872483+00:00",
+      "updatedAt": "2026-11-17T22:54:58.728628+00:00",
       "summary": "The default-branch workflow requests a refresh at minutes 7, 17, 27, 37, 47 and 57. On November 8 GitHub recorded five scheduled runs, at 01:32, 07:52, 14:34, 19:01 and 22:45 UTC. All five succeeded. These timestamps establish gaps between scheduled runs. The cause of the missing events is unknown. An explicit dispatch at 00:03 UTC on November 9 succeeded, and the active owner’s next collection checked GitHub at 00:14 UTC.",
       "findings": [
         {
@@ -105588,9 +105711,63 @@
               "url": "https://github.com/tamird/gvisor/commit/34cf711cf048ad55822d5ab5ade07d1cf30efe36"
             }
           ]
+        },
+        {
+          "text": "Metadata-only refresh 44190366462 succeeded with all three outreach steps skipped. Dispatcher default-branch fix 1748f94369 initializes RESULT_DIR in the first step and persists it for later steps. Both positive dispatcher smokes 44191031419 and 44191036362 succeeded. All five intentional negative tests were independently verified from actual artifacts: failure exit, dirty worktree, dirty index, wrong HEAD and invalid parent are rejected with not-passed outcomes. These tests establish dispatcher plumbing, not workload qualification. Reliable scheduled cadence remains unproven.",
+          "evidence": [
+            {
+              "label": "Successful metadata-only refresh",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44190366462"
+            },
+            {
+              "label": "Dispatcher default-branch environment fix",
+              "url": "https://github.com/tamird/gvisor/commit/1748f94369"
+            },
+            {
+              "label": "Positive dispatcher smoke",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44191031419"
+            },
+            {
+              "label": "Second positive dispatcher smoke",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44191036362"
+            },
+            {
+              "label": "Verified dispatcher rejection: exit23",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44192972081"
+            },
+            {
+              "label": "Verified dispatcher rejection: dirty-worktree",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44192977726"
+            },
+            {
+              "label": "Verified dispatcher rejection: dirty-index",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44192982574"
+            },
+            {
+              "label": "Verified dispatcher rejection: wrong-head",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44192987431"
+            },
+            {
+              "label": "Verified dispatcher rejection: invalid-parent",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44192991510"
+            }
+          ]
+        },
+        {
+          "text": "Source-only qualification plans can be published without changing credential scopes: initialize the remote branch at the already published source using the existing GitHub connection, then publish only its support-file child. The installed dispatcher executes the immutable source/plan pair on hosted runners. SSH signing remains intermittent; no persistent configuration was changed.",
+          "evidence": [
+            {
+              "label": "Reusable dispatcher on fork default",
+              "url": "https://github.com/tamird/gvisor/commit/1748f94369"
+            },
+            {
+              "label": "Independent matched replication through dispatcher",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44193164299"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the existing default-branch refresh workflow after the repair is published. Distinguish missed schedule events from collection failures. Configure the owning chat’s periodic task separately using the Scheduled ownership prompt in README; no app schedule is currently installed by this work.",
+      "nextStep": "Monitor the repaired default-branch refresh workflow and verify subsequent scheduled events. Distinguish missed schedule events from collection failures. The active portfolio goal supervises ongoing ownership; no separate fixed-cadence app task is installed.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -124744,5 +124921,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-17T21:09:15.022997+00:00"
+  "updatedAt": "2026-11-17T22:54:58.728628+00:00"
 }

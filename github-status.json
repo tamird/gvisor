@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-17T22:31:20.170000+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-17T21:09:15.022997+00:00",
+  "registryDate": "2026-11-17T22:54:58.728628+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -446722,7 +446722,7 @@
       "number": 11518,
       "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
       "sourceNumber": 11518,
-      "owner": null,
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOElfRPs8AAAABiFQoIQ",
       "needsTriage": false,
@@ -446848,7 +446848,7 @@
       "number": 4772,
       "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
       "sourceNumber": 4772,
-      "owner": null,
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOAzdJo88AAAABiT1rsg",
       "needsTriage": false,
@@ -448344,8 +448344,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
-        "disposition": "The first native run found a test diagnostic uint64/int mismatch; corrected in candidate 7dfa385ef0. Both native safecopy tests and source lint passed previously; corrected allocator tests and exact-base ARM C++ lint comparison are running.",
-        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval."
+        "disposition": "Native run 44189880016 verified 85 AMD64 / 123 ARM64 pgalloc and 609 safecopy cases per architecture, zero skips. Candidate f84 is the reviewed 7dfa implementation rebased onto 1f33; their only tree differences are CONTRIBUTING.md and website/blog/README.md. ARM C++ lint has the existing candidate/base failure and is not clean. Runtime hosts used 4 KiB pages; 64 KiB host execution is not established.",
+        "nextAction": "Await the contributor decision on the exact f84 amendment already sent. Reverify the unchanged original PR head and current feedback before publishing only the approved revision; preserve prior approval heads and explicit holds."
       },
       "conflictObservedSince": "2026-11-14T02:13:34.447877+00:00"
     },
@@ -448416,8 +448416,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
-        "disposition": "First qualification stopped when its harness overwrote read-only staged runtime files. The harness now replaces those files explicitly; the exact unchanged source candidate is being qualified again. KCOV and final lint were not reached in the first run.",
-        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval."
+        "disposition": "Candidate 7eafb7afe2 is rebased on 1f33 and adds a default-true canonical runner collect-coverage flag. KCOV qualification passes false to avoid report collection disabling KCOV while retaining debug logs. Focused run 44190856301 was launched and remains pending in this curated assessment; no passing result is inferred. Original PR remains untouched.",
+        "nextAction": "Inspect focused run 44190856301 through completion: strict normal/race directfs/shared KCOV zero-skip XML, runner owner, default-on report/debug control, source lints and exact-base ARM C++ lint control. Resolve failures and finish review before asking to amend the original PR."
       },
       "conflictObservedSince": "2026-11-13T22:05:46.828170+00:00"
     },
@@ -448536,8 +448536,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "b0b2a33254ea8cc25320a078fba8d3e1852fad61",
-        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication."
+        "disposition": "The queued conflict is repaired in fork proposal c825b4c37e on current upstream 1f33. The resolution preserves upstream add_host_random and the native executable launcher; DCO is included. Original PR remains unchanged. Native AMD64 and ARM64 qualification is running.",
+        "nextAction": "Inspect native qualification through completion, address actual failures, and complete adversarial source review before requesting approval to amend the original PR."
       },
       "conflictObservedSince": "2026-11-15T17:30:45.445430+00:00"
     },
@@ -448608,8 +448608,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
-        "disposition": "Candidate repairs the three remaining AMD64 atomic_store callers. Exact-candidate AMD64/ARM64 qualification and matched startup/syscall measurements are running; earlier ARM C++ lint limitation remains explicit.",
-        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval."
+        "disposition": "Cleaned paired analysis reports +3.22% optimized getpid time (p=0.008, 24 observations per arm). Independent controlled replication 44193164299 is running. Byte-identical hot stub instructions do not establish full-process equivalence or explain the measured regression.",
+        "nextAction": "Inspect the independent matched run, including per-batch measurements and exact-base A/A controls, alongside the retained original regression. Diagnose reproducibility; a nonsignificant repeat alone is not proof of equivalence. Do not amend the original PR until qualification and contributor approval."
       },
       "conflictObservedSince": "2026-11-13T22:05:51.472667+00:00"
     },
@@ -457780,6 +457780,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-17T22:30:41.784271+00:00"
+      },
+      "contributor-review": {
+        "scope": "f84b27e5f16607463fa034034acf84ff867438be",
+        "since": "2026-11-17T22:54:58.728628+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "pr:15183": {
@@ -461157,7 +461164,7 @@
         "since": "2026-11-17T19:10:34.089237+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "pr:16745": {
@@ -465003,7 +465010,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465012,7 +465019,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465021,7 +465028,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465030,7 +465037,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465039,7 +465046,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465048,7 +465055,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -465057,7 +465064,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465066,7 +465073,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T21:09:15.022997+00:00"
+        "observedAt": "2026-11-17T22:54:58.728628+00:00"
       }
     }
   },
