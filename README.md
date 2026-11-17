@@ -542,10 +542,13 @@ chat, initially every 30 minutes, using this prompt:
 ```text
 Own the existing gVisor work map at https://tamird.github.io/gvisor/.
 Follow the repository instructions and the supervisor protocol in its gh-pages
-README. Read the existing worker handoff before selecting work. Prioritize
-unclaimed human feedback on our PRs and replies to reviews we gave, then CI,
-conflicts and newly landed prerequisites. Verify each selected PR and complete
-conversation live before acting. Advance implementation, remote qualification
+README. Consume existing queues before selecting new work. On every sweep,
+reconcile human feedback, CI, conflicts, dependencies, approvals, imports,
+pending contributor decisions and tracker health. Give every active item an
+owner, verified current state, concrete next action or explicit blocker, and
+recheck condition. Advance actionable work; escalate stale or unowned
+obligations. Recording a problem does not discharge it. Verify each selected
+PR and complete conversation live before acting. Advance implementation, remote qualification
 and delivery within the existing workstream. Keep contributor decisions on the
 tracker, preserve exact approved revisions and drafts, and request review before
 publishing new or changed proposals. Use remote builds and tests. Recheck the
