@@ -244,6 +244,17 @@ class GitHubStatusTest(unittest.TestCase):
         delivery.api("repos/google/gvisor/pulls/123/requested_reviewers/rerequest", {"reviewers": ["reviewer"]})
         self.assertEqual(json.loads(run.call_args.kwargs["input"]), {"reviewers": ["reviewer"]})
         self.assertIn("X-GitHub-Api-Version: 2026-03-10", run.call_args.args[0])
+        self.assertEqual(run.call_args.args[0][-1], "repos/gvisor/gvisor/pulls/123/requested_reviewers/rerequest")
+
+    @patch("subprocess.run")
+    def test_transferred_comment_receipt_preserves_the_message(self, run):
+        body = "See https://github.com/gvisor/gvisor/pull/123"
+        receipt = {"body": body, "issue_url": "https://api.github.com/repos/gvisor/gvisor/issues/123",
+                   "html_url": "https://github.com/gvisor/gvisor/pull/123#issuecomment-456"}
+        run.return_value = subprocess.CompletedProcess([], 0, "HTTP/2.0 200 OK\n\n" + json.dumps(receipt), "")
+        observed = delivery.api("repos/google/gvisor/issues/comments/456")
+        self.assertEqual(observed, {"body": body, "issue_url": "https://api.github.com/repos/google/gvisor/issues/123",
+                                    "html_url": "https://github.com/google/gvisor/pull/123#issuecomment-456"})
 
     def test_fork_switches_are_read_fresh_even_with_a_conflicting_environment(self):
         with patch.dict(delivery.os.environ, {"WORK_MAP_POSTING_PAUSED": "false"}), patch("subprocess.run") as run:

@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from github_identity import api_repository_path, normalize_api_response
+
 REPO = "google/gvisor"
 FORK = "tamird/gvisor"
 PACIFIC = ZoneInfo("America/Los_Angeles")
@@ -56,7 +58,7 @@ def api(path: str, data: dict | None = None) -> dict:
     if data is not None:
         command.extend(["--method", "POST", "--input", "-"])
     try:
-        result = subprocess.run([*command, path], input=json.dumps(data) if data is not None else None,
+        result = subprocess.run([*command, api_repository_path(path)], input=json.dumps(data) if data is not None else None,
                                 text=True, capture_output=True, timeout=35)
     except subprocess.TimeoutExpired as error:
         raise GitHubError(None, "GitHub request timed out") from error
@@ -79,7 +81,7 @@ def api(path: str, data: dict | None = None) -> dict:
         limited = limited or any(s in (message + str(body.get("errors", ""))).lower()
                                  for s in ("rate limit", "abuse", "spam"))
         raise GitHubError(status if body.get("message") else None, message, limited)
-    return body
+    return normalize_api_response(body)
 
 
 def load_registry(path: Path) -> tuple[dict, str]:
