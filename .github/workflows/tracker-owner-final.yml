@@ -13,6 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: 80b925c04d
+          ref: 80b925c04da2bfdfe7552d9fd3c71ba1cd357aac
           persist-credentials: false
       - run: node metadata-preflight.mjs .
