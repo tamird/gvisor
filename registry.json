@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-17T16:17:28.405755+00:00",
+    "updatedAt": "2026-11-17T16:39:09.946563Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40484,11 +40484,11 @@
       "repo": "google/gvisor",
       "number": 16663,
       "ref": "review/buildifier-native-diff",
-      "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
+      "head": "cfb38adfa3c60dbfd6f4f234cae63f03c76477bf",
       "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Ryan’s #17612 passes Make’s Bazel command and cache options through tools/lint.sh. Combining its export #17638 with #16663 left all three new Bazel invocations using bare bazel. In the merged test fixture the three goimports calls received the caller’s options, but buildifier check, buildifier fix and cpplint dropped them. Using run_bazel for those three calls passed all six lint tests and built //tools/lint:check on Linux.\n\nThe published patch header links to Buildifier’s upstream toolchain export, 9cefc248d. Its 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.\n\nThe formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
+      "summary": "Prerequisite #17612 merged. The approved option-forwarding amendment is published as cfb38adfa3c60dbfd6f4f234cae63f03c76477bf on the existing #16663. GitHub confirms the exact head is mergeable. Hosted lint command tests, both declared checker builds, make lint and make lint-cc passed on this source; two independent reviewers found no substantive issues.\n\nThe published patch header links to Buildifier’s upstream toolchain export, 9cefc248d. Its 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.\n\nThe formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
       "evidence": [
         {
           "label": "Posted question to Ryan about the Buildkite clang-tidy target",
@@ -40700,13 +40700,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-13T16:42:43.864980+00:00",
+      "updatedAt": "2026-11-17T16:39:09.946563Z",
       "refinement": {
         "before": {
           "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b"
         },
         "after": {
-          "head": "8fd9f92fc93317266162ce83b78a67480dbd749d"
+          "head": "cfb38adfa3c60dbfd6f4f234cae63f03c76477bf"
         }
       },
       "settledReviews": [
@@ -40783,23 +40783,21 @@
           "requestedAt": "2026-11-13T16:05:07.206232+00:00",
           "outcome": "approved",
           "at": "2026-11-13T16:16:01.404510+00:00",
-          "note": "Approved for publication after #17612 lands."
+          "note": "Published after #17612 landed as cfb38adfa3; range-diff verifies the rebased patch is unchanged.",
+          "postedURL": "https://github.com/google/gvisor/pull/16663"
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
-        "observedAt": "2026-11-13T16:16:01.404510+00:00",
-        "disposition": "The contributor approved 8fd9f92fc. Ryan’s open #17612 supplies run_bazel. The published #16663 still uses the three bare Bazel calls.",
-        "nextAction": "After #17612 lands, rebase the approved amendment onto master, verify the three calls pass Make’s options, and publish on #16663 if it is open. If #16663 has landed, inspect the merged code and follow up separately only if the calls still drop those options.",
+        "owner": "Maintainer review",
+        "sourceHead": "cfb38adfa3c60dbfd6f4f234cae63f03c76477bf",
+        "observedAt": "2026-11-17T16:39:09.946563Z",
+        "disposition": "Published the already-approved amendment after #17612 landed. The rebase preserved the patch according to range-diff. Hosted tests, checker build, make lint and make lint-cc passed. Independent correctness, catch-all, style, documentation and free-range reviews found no substantive issues. GitHub reports the published head as mergeable.",
+        "nextAction": "Follow maintainer review and upstream checks on the published head. The existing repair-command feedback is already addressed; do not duplicate the earlier reply.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/43458301974/artifacts/14054892169",
-          "https://github.com/tamird/gvisor/commit/8fd9f92fc",
-          "https://github.com/google/gvisor/pull/17612",
-          "https://github.com/google/gvisor/pull/17638",
           "https://github.com/google/gvisor/pull/16663",
-          "https://github.com/google/gvisor/pull/16663#discussion_r4537464299",
-          "https://github.com/google/gvisor/pull/17612#issuecomment-6858458989"
+          "https://github.com/google/gvisor/pull/17612",
+          "https://github.com/tamird/gvisor/commit/cfb38adfa3c60dbfd6f4f234cae63f03c76477bf",
+          "https://github.com/tamird/gvisor/actions/runs/44125058497"
         ]
       }
     },
@@ -110591,5 +110589,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-17T16:17:28.405755+00:00"
+  "updatedAt": "2026-11-17T16:39:09.946563Z"
 }
