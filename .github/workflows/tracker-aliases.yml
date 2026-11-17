@@ -14,16 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: 42054453b1f45e1128696ea8b98d547e2325036f
+          ref: a1abc67ab244c54b443e083621248c6d88057452
           persist-credentials: false
       - name: Run the tracker regression suites
         run: |
           python3 -m unittest discover -p '*_test.py'
           node --test app_test.mjs
-      - name: Collect current public observations
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 update-status.py
       - name: Validate the complete snapshot
         run: node metadata-preflight.mjs .
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
