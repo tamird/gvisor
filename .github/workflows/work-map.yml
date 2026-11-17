@@ -5,6 +5,10 @@ name: Refresh work map
     - cron: '7,17,27,37,47,57 * * * *'
   workflow_dispatch:
     inputs:
+      snapshot_only:
+        description: Refresh and publish metadata without outreach
+        type: boolean
+        default: false
       check_outreach_only:
         description: Read the fork outreach policy with the delivery credential
         type: boolean
@@ -76,6 +80,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST repos/tamird/gvisor/pages/builds --jq '{status, url}'
       - name: Choose outreach mode
+        if: ${{ !inputs.snapshot_only }}
         id: outreach
         env:
           COMMENT_TOKEN_CONFIGURED: ${{ secrets.WORK_MAP_COMMENT_TOKEN != '' }}
@@ -104,14 +109,14 @@ jobs:
           echo "reviews=$reviews" >> "$GITHUB_OUTPUT"
           echo "reminders=$reminders" >> "$GITHUB_OUTPUT"
       - name: Remind approvers of amended source
-        if: ${{ !inputs.check_outreach_only }}
+        if: ${{ !inputs.check_outreach_only && !inputs.snapshot_only }}
         env:
           GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
           MODE: ${{ steps.outreach.outputs.reminders }}
         run: python3 update-status.py --reapproval-reminders "$MODE"
       - name: Follow up on outstanding source reviews
         timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 360 || 15 }}
-        if: ${{ !inputs.check_outreach_only && !cancelled() && steps.outreach.outcome == 'success' }}
+        if: ${{ !inputs.check_outreach_only && !inputs.snapshot_only && !cancelled() && steps.outreach.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
           WORK_MAP_RECEIPT_TOKEN: ${{ github.token }}
