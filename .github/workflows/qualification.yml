@@ -26,11 +26,12 @@ jobs:
       PLAN: ${{ inputs.plan }}
       QUAL_ARCH: ${{ inputs.architecture }}
       QUAL_CONFIG: ${{ inputs.architecture == 'arm64' && 'aarch64' || 'x86_64' }}
-      RESULT_DIR: ${{ runner.temp }}/qualification/results
     steps:
       - name: Initialize result identity
         run: |
           set -euo pipefail
+          export RESULT_DIR="$RUNNER_TEMP/qualification/results"
+          echo "RESULT_DIR=$RESULT_DIR" >> "$GITHUB_ENV"
           mkdir -m 700 "$RUNNER_TEMP/qualification" "$RESULT_DIR"
           python3 - <<'PY'
           import json, os
