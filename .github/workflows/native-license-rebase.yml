@@ -1,0 +1,57 @@
+name: Qualify the rebased native license job
+on:
+  push:
+    branches: [qualification/native-license-rebase-20261117]
+permissions: {contents: read}
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the source and install pinned Bazel
+        run: |
+          set -euo pipefail
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/native-license-rebase.yml'
+          git switch --detach HEAD^
+          test "$(git rev-parse --short=10 HEAD)" = 2a28623273
+          test "$(cat .bazelversion)" = 9.3.1
+          mkdir -p "$RUNNER_TEMP/native-license/bin" "$RUNNER_TEMP/native-license/results"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/native-license/bin/bazel"
+          echo '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  '"$RUNNER_TEMP/native-license/bin/bazel" | sha256sum -c
+          chmod +x "$RUNNER_TEMP/native-license/bin/bazel"
+          echo "$RUNNER_TEMP/native-license/bin" >> "$GITHUB_PATH"
+      - name: Verify native license and governance jobs
+        id: jobs
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          export DOCKER_BUILD=false
+          w="$RUNNER_TEMP/native-license/results"
+          make license-check 2>&1 | tee "$w/license.log"
+          make governance-check 2>&1 | tee "$w/governance.log"
+          bazel query 'tests(//:all) intersect tests(//:governance-check)' --output=label | sort > "$w/unit-owners.txt"
+          bazel query 'tests(//:governance-check)' --output=label | sort > "$w/dedicated-owners.txt"
+          diff -u "$w/dedicated-owners.txt" "$w/unit-owners.txt"
+          test -s "$w/unit-owners.txt"
+      - name: Source lint
+        id: lint
+        continue-on-error: true
+        run: make lint DOCKER_BUILD=false
+      - name: C++ lint
+        id: lint_cc
+        continue-on-error: true
+        run: make lint-cc DOCKER_BUILD=false
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: rebased-native-license
+          path: ${{ runner.temp }}/native-license/results/
+      - name: Require all checks
+        if: always()
+        env:
+          JOBS: ${{ steps.jobs.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          LINT_CC: ${{ steps.lint_cc.outcome }}
+        run: test "$JOBS/$LINT/$LINT_CC" = success/success/success
