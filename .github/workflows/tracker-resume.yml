@@ -1,0 +1,32 @@
+name: Refresh and validate the resumed work record
+
+on:
+  push:
+    branches: [qualification/tracker-resume-20261117]
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 381374f30ae8a9e01ca52947cdc0dd7f4c7f9538
+          persist-credentials: false
+      - name: Refresh the public observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 update-status.py
+      - name: Validate the paired metadata
+        run: node metadata-preflight.mjs .
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: resumed-work-metadata
+          path: |
+            registry.json
+            github-status.json
+          if-no-files-found: error
+          retention-days: 14
