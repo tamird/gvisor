@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-17T18:47:41.720703+00:00",
+    "updatedAt": "2026-11-17T18:48:07.411041+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -849,14 +849,14 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-11T19:57:39+00:00",
+      "updatedAt": "2026-11-17T18:48:06.494358+00:00",
       "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
       "followup": {
-        "owner": "Maintainer",
+        "owner": "root",
         "sourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
-        "observedAt": "2026-11-11T19:57:39+00:00",
-        "disposition": "Published c83396e33 on #15106 and answered Zachary’s lint report. Buildifier passed all 627 tracked inputs and the assembler test passed. The Linux AMD64 GoExport action key and arguments matched before and after reordering go.mod on the same base.",
-        "nextAction": "Await review of c83396e33.",
+        "observedAt": "2026-11-17T18:48:06.494358+00:00",
+        "disposition": "Zachary approved the exact c83396e33 source and said he would attempt to land it during the CNCF transition. No author changes or reply are requested. Matching Copybara import #17664 remains open and mergeable; its pipeline #55134 failed while internal #36956 passed. Landing is not complete.",
+        "nextAction": "Follow Zachary's accepted landing ownership without another review request or reminder. Root must inspect the original failed result for import #17664 pipeline #55134 and identify the concrete CI repair or infrastructure blocker; do not infer a cause from the aggregate status. Preserve the exact approved source and do not push the Copybara branch.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -866,7 +866,316 @@
           "https://github.com/google/gvisor/actions/runs/42848612826/job/129942779320",
           "https://github.com/tamird/gvisor/commit/c83396e33",
           "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255",
-          "https://github.com/google/gvisor/pull/15106#issuecomment-6805836974"
+          "https://github.com/google/gvisor/pull/15106#issuecomment-6805836974",
+          "https://github.com/google/gvisor/pull/15106#issuecomment-6864207722",
+          "https://github.com/google/gvisor/pull/15106#pullrequestreview-5897656505",
+          "https://github.com/google/gvisor/pull/17664",
+          "https://buildkite.com/gvisor/pipeline/builds/55134"
+        ],
+        "recheckCondition": "Import #17664 gains a new CI result, head, merge or closure; Zachary supplies a landing update; source head changes or new substantive feedback arrives.",
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Maintainer landing ownership accepted; import CI follow-up retained",
+            "nextAction": "Follow Zachary's accepted landing ownership without another review request or reminder. Root must inspect the original failed result for import #17664 pipeline #55134 and identify the concrete CI repair or infrastructure blocker; do not infer a cause from the aggregate status. Preserve the exact approved source and do not push the Copybara branch.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15106#issuecomment-6864207722",
+              "https://github.com/google/gvisor/pull/15106#pullrequestreview-5897656505",
+              "https://github.com/google/gvisor/pull/17664",
+              "https://buildkite.com/gvisor/pipeline/builds/55134"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-11T19:39:13Z",
+              "headIntroducedAt": "2026-11-11T19:55:03Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABYhXK5g",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-5940562662",
+                    "body": "Updated all four command source groups to exclude `*_test.go`, and the assembler now includes `go.mod` from the bytes it already reads. The existing `TestAssemble` now exercises that behavior without passing `go.mod` as an extra file.\n\nThe helper test, AMD64/ARM64 Nogo checks, and inspection of the produced archive passed.\n\nAssisted-by: OpenAI Codex\n",
+                    "createdAt": "2026-10-01T21:06:27Z",
+                    "updatedAt": "2026-10-01T21:06:27Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABY3Jjpw",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-5963408295",
+                    "body": "Rebased onto current master, @EtiennePerot.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-10-03T00:05:01Z",
+                    "updatedAt": "2026-10-03T00:05:01Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABavC2Cw",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6089127435",
+                    "body": "The current Go source-archive change is\n[0827e3e26](https://github.com/tamird/gvisor/commit/0827e3e26).\nIt was updated after your previous approval.\n\n@zkoopmans, please take another look at this head.\n\nAssisted-by: Codex\n",
+                    "createdAt": "2026-10-09T20:57:16Z",
+                    "updatedAt": "2026-10-09T20:57:16Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABb6PbWg",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6167976794",
+                    "body": "Rebased onto current master. The archive now includes the sentry command\nsources added upstream in bf6270701.\n\n@zkoopmans, please take another look at the\n[updated change](https://github.com/tamird/gvisor/commit/fc9590023c2424202c5683e4e9d4fa39f4bdfb89).\n\nAssisted-by: OpenAI Codex\n",
+                    "createdAt": "2026-10-14T12:08:17Z",
+                    "updatedAt": "2026-10-14T12:08:17Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABdvryEg",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6291124754",
+                    "body": "@zkoopmans, the archive now includes the command entrypoints, C sidecar\nsources, and build guidance added by [0e12fb902][1]. The generated archive\nmatches all 2,496 expected entries; the assembler tests and owning\nanalyzers pass. Could you review the updated export inputs?\n\n[1]: https://github.com/google/gvisor/commit/0e12fb902\n\nPosted by Codex on behalf of @tamird.\n",
+                    "createdAt": "2026-10-20T12:44:06Z",
+                    "updatedAt": "2026-10-20T12:44:06Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABd6mrWQ",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6302575449",
+                    "body": "[🤖] Invalidating approval due to rebase as a means to notify @zkoopmans to re-review. Current diff looks different from pre-rebase diff.",
+                    "createdAt": "2026-10-20T21:56:16Z",
+                    "updatedAt": "2026-10-20T21:56:16Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe6PWfA",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6369302140",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [e758ff20aee5](https://github.com/google/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d) before it is imported. Your earlier approval covered [0827e3e26b7f](https://github.com/google/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=e758ff20aee552bab5474f8f36bc50efd5a74c8d -->",
+                    "createdAt": "2026-10-23T16:10:13Z",
+                    "updatedAt": "2026-10-23T16:10:13Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe7iGqQ",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6370657961",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [e758ff20aee5](https://github.com/google/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d) before it is imported. Your earlier approval covered [0827e3e26b7f](https://github.com/google/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=e758ff20aee552bab5474f8f36bc50efd5a74c8d -->",
+                    "createdAt": "2026-10-23T17:20:59Z",
+                    "updatedAt": "2026-10-23T17:20:59Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe8zRLQ",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6371987757",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [e758ff20aee5](https://github.com/google/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d) before it is imported. Your earlier approval covered [0827e3e26b7f](https://github.com/google/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=e758ff20aee552bab5474f8f36bc50efd5a74c8d -->",
+                    "createdAt": "2026-10-23T18:30:38Z",
+                    "updatedAt": "2026-10-23T18:30:38Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe92eWA",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6373088856",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [e758ff20aee5](https://github.com/google/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d) before it is imported. Your earlier approval covered [0827e3e26b7f](https://github.com/google/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=e758ff20aee552bab5474f8f36bc50efd5a74c8d -->",
+                    "createdAt": "2026-10-23T19:30:57Z",
+                    "updatedAt": "2026-10-23T19:30:57Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe-4UqA",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6374167720",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [e758ff20aee5](https://github.com/google/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d) before it is imported. Your earlier approval covered [0827e3e26b7f](https://github.com/google/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=e758ff20aee552bab5474f8f36bc50efd5a74c8d -->",
+                    "createdAt": "2026-10-23T20:32:44Z",
+                    "updatedAt": "2026-10-23T20:32:44Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe_9cKg",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6375300138",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [e758ff20aee5](https://github.com/google/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d) before it is imported. Your earlier approval covered [0827e3e26b7f](https://github.com/google/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=e758ff20aee552bab5474f8f36bc50efd5a74c8d -->",
+                    "createdAt": "2026-10-23T21:41:14Z",
+                    "updatedAt": "2026-10-23T21:41:14Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABfA9GTA",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6376343116",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [e758ff20aee5](https://github.com/google/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d) before it is imported. Your earlier approval covered [0827e3e26b7f](https://github.com/google/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended archive includes the current Go and C sidecar sources and uses the repository ZIP proxy.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557...e758ff20aee552bab5474f8f36bc50efd5a74c8d)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=e758ff20aee552bab5474f8f36bc50efd5a74c8d -->",
+                    "createdAt": "2026-10-23T22:54:06Z",
+                    "updatedAt": "2026-10-23T22:54:06Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABlAmpIw",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6778628387",
+                    "body": "[🤖] Invalidating approval due to rebase as a means to notify @zkoopmans to re-review. Current diff looks different from pre-rebase diff.",
+                    "createdAt": "2026-11-10T20:36:15Z",
+                    "updatedAt": "2026-11-10T20:36:15Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABlZythA",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6805040516",
+                    "body": "Genearlly approve, other than it is currently failing the linter and first pass CI. I think we limited CI quota and you're above it for CI :). ",
+                    "createdAt": "2026-11-11T19:17:18Z",
+                    "updatedAt": "2026-11-11T19:17:18Z",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABlajUrg",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6805836974",
+                    "body": "@zkoopmans, fixed the Buildifier failure in c83396e33. The repository-wide Buildifier check and the archive assembler test pass. Ryan confirmed that first-pass can be ignored while the pipeline is being set up: https://github.com/google/gvisor/issues/16791#issuecomment-6585124255.",
+                    "createdAt": "2026-11-11T19:55:25Z",
+                    "updatedAt": "2026-11-11T19:55:25Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABmSN_ag",
+                    "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6864207722",
+                    "body": "Done. I'm not sure how the mechanism is going to work as we're transitioning to CNCF repos soon, but I'll attempt to land this.",
+                    "createdAt": "2026-11-13T20:33:45Z",
+                    "updatedAt": "2026-11-13T20:33:45Z",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABQOwXXw",
+                    "url": "https://github.com/google/gvisor/pull/15106#pullrequestreview-5384181599",
+                    "body": "LGTM! Very clean improvement—decoupling the Go export layout assembly from git branch manipulation is a great win for testability.\n\nA couple of minor non-blocking thoughts:\n- In the binary entrypoint filegroups (`runsc`, `shim`, etc.), consider `glob([\"*.go\"], exclude = [\"*_test.go\"])` just to future-proof against any unit tests added to those top-level packages getting accidentally bundled into the export archive.\n- In `BUILD`, `$(execpath go.mod)` is passed both to `--go-mod` and in the positional args list. Harmless since it just populates `files[\"go.mod\"]`, but `assemble` could also just implicitly write `files[\"go.mod\"] = data` from the already-read `--go-mod` file.",
+                    "state": "DISMISSED",
+                    "submittedAt": "2026-10-01T19:05:07Z",
+                    "updatedAt": "2026-10-21T19:57:48Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "a1620973b43a2d60ae8d8b542e45a46a341c95b7"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABR4ntUA",
+                    "url": "https://github.com/google/gvisor/pull/15106#pullrequestreview-5495188816",
+                    "body": "LGTM",
+                    "state": "DISMISSED",
+                    "submittedAt": "2026-10-12T19:31:38Z",
+                    "updatedAt": "2026-10-21T19:57:50Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "0827e3e26b7f35218ebd0b6caa5bfdb8e3063557"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABVLQYiw",
+                    "url": "https://github.com/google/gvisor/pull/15106#pullrequestreview-5716056203",
+                    "body": "",
+                    "state": "DISMISSED",
+                    "submittedAt": "2026-10-30T17:22:54Z",
+                    "updatedAt": "2026-11-10T20:36:11Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "b61651f9371f514411dbb4fc2bd367f860204546"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABX4cYuQ",
+                    "url": "https://github.com/google/gvisor/pull/15106#pullrequestreview-5897656505",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-11-13T20:32:53Z",
+                    "updatedAt": "2026-11-13T20:32:53Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e"
+            }
+          }
         ]
       },
       "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
@@ -66611,7 +66920,7 @@
       "url": "https://github.com/google/gvisor/pull/17196",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-07T17:29:49+00:00",
+      "updatedAt": "2026-11-17T18:48:07.411041+00:00",
       "summary": "The native Linux and gVisor receivers both passed TestDSACKBelowCumulativeACK at c6f1cf9b9. The first four bytes drew ACK 4 without SACK. Retransmitting [1,3) drew ACK 4 with D-SACK [1,3). Sending [2,6) advanced the ACK to 6 and reported only the overlapping bytes [2,4). The above-gap case is separate in #16999.",
       "evidence": [
         {
@@ -66647,14 +66956,62 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
-        "observedAt": "2026-11-07T17:29:49+00:00",
-        "disposition": "The approved change is on #17196 at c6f1cf9b9.",
-        "nextAction": "Follow #17196 for maintainer review and import.",
+        "observedAt": "2026-11-17T18:48:07.411041+00:00",
+        "disposition": "Lucas's experimental assisted COMMENTED review recommends approval of the D-SACK wire test and requests no changes or reply. The unchanged source remains mergeable; GitHub still reports REVIEW_REQUIRED. Advisory First Pass #874 remains failed.",
+        "nextAction": "Follow maintainer review and import of the unchanged D-SACK test. Reuse its existing native Linux/netstack qualification, retain the advisory First Pass result, and do not post an acknowledgement or treat the assisted recommendation as approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17196",
-          "https://github.com/tamird/gvisor/commit/c6f1cf9b9"
+          "https://github.com/tamird/gvisor/commit/c6f1cf9b9",
+          "https://github.com/google/gvisor/pull/17196#pullrequestreview-5926743349"
+        ],
+        "recheckCondition": "New substantive feedback, source head change, a new relevant CI result, or import creation/status change.",
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Informational assisted recommendation triaged",
+            "nextAction": "Follow maintainer review and import of the unchanged D-SACK test. Reuse its existing native Linux/netstack qualification, retain the advisory First Pass result, and do not post an acknowledgement or treat the assisted recommendation as approval.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/17196#pullrequestreview-5926743349"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-07T12:08:34Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABYULtNQ",
+                    "url": "https://github.com/google/gvisor/pull/17196#pullrequestreview-5926743349",
+                    "body": "LGTM — `TestDSACKBelowCumulativeACK` cleanly verifies RFC 2883 §4.1 wire-level D-SACK reporting on both native Linux and gVisor netstack across full (`[1,3)`) and partially overlapping (`[2,6)`) retransmissions. Recommend approval.\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-16T20:08:01Z",
+                    "updatedAt": "2026-11-16T20:08:01Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789"
+            }
+          }
         ]
       },
       "number": 17196
@@ -66730,7 +67087,7 @@
       "url": "https://github.com/google/gvisor/pull/17202",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T20:13:27+00:00",
+      "updatedAt": "2026-11-17T18:48:03.988306+00:00",
       "summary": "TCP uses the endpoint mutex to update the receive window, its sequence number and the buffered-byte count sampled at the last advertisement. The RTT estimator also holds the receive queue mutex when it reads the advertised window. This change lets Nogo check the existing endpoint lock at both RTT reads and in the segment acceptance and window helpers. It adds no runtime locks.\n\nOn the final commit, a fresh TCP Nogo run on native AMD64 reported zero findings for both Linux AMD64 and ARM64. On the preceding two-field version, TestZeroScaledWindowReceive passed on AMD64. Removing only the RTT helper’s endpoint-lock precondition produced three findings across its two accesses on each analyzer architecture. Each finding named the missing endpoint mutex and the held receive queue mutex. The final revision also covers the buffered-byte sample and leaves the tested Go statements unchanged.",
       "evidence": [
         {
@@ -66770,14 +67127,62 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba",
-        "observedAt": "2026-11-07T20:13:27+00:00",
-        "disposition": "The approved change is on #17202 at a6536561c.",
-        "nextAction": "Follow #17202 for maintainer review and import.",
+        "observedAt": "2026-11-17T18:48:03.988306+00:00",
+        "disposition": "Lucas's experimental assisted COMMENTED review recommends approval and no source change. GitHub still reports REVIEW_REQUIRED. First Pass #878 remains failed; the review recommends exercising checklocks because its pipeline steps did not run.",
+        "nextAction": "Follow maintainer review of the unchanged source. Check existing exact-head AMD64/ARM64 stack Nogo evidence and establish whether the relevant nogo-tests ran; if that evidence is missing, qualify those targets remotely. Preserve the advisory First Pass failure; do not claim the review or a rerun establishes approval, and do not post an acknowledgement.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17202",
-          "https://github.com/tamird/gvisor/commit/a6536561c"
+          "https://github.com/tamird/gvisor/commit/a6536561c",
+          "https://github.com/google/gvisor/pull/17202#pullrequestreview-5896773843"
+        ],
+        "recheckCondition": "New substantive feedback, source head change, relevant Nogo qualification result, or import creation/status change.",
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Assisted recommendation triaged; validation follow-up retained",
+            "nextAction": "Follow maintainer review of the unchanged source. Check existing exact-head AMD64/ARM64 stack Nogo evidence and establish whether the relevant nogo-tests ran; if that evidence is missing, qualify those targets remotely. Preserve the advisory First Pass failure; do not claim the review or a rerun establishes approval, and do not post an acknowledgement.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/17202#pullrequestreview-5896773843"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-07T19:01:00Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABX3mg0w",
+                    "url": "https://github.com/google/gvisor/pull/17202#pullrequestreview-5896773843",
+                    "body": "LGTM — guards `receiver.{rcvWnd,rcvWUP,prevBufUsed}` with `+checklocks:ep.mu` and annotates `acceptable`, `currentWindow`, and `updateRTT` with `+checklocks:r.ep.mu`, matching the lock already held by `getSendParams`, `handleRcvdSegment`, and `handleReset` (via `+checklocksalias:rcv.ep.mu=mu`).\n\nNote: `buildkite/first-pass` ([build #878](https://buildkite.com/gvisor/first-pass/builds/878)) failed before starting its pipeline steps during the Nov 7 Buildkite queue hiccup, so re-running it will exercise `nogo-tests` (`checklocks`) before merge. Recommend approval.\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-13T19:23:54Z",
+                    "updatedAt": "2026-11-13T19:23:54Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba"
+            }
+          }
         ]
       },
       "number": 17202
@@ -73329,7 +73734,7 @@
       "group": "rbe",
       "head": "7e25e0168a6171890c02da0036b6e373fdc74108",
       "status": "open",
-      "updatedAt": "2026-11-09T19:07:20+00:00",
+      "updatedAt": "2026-11-17T18:48:04.899184+00:00",
       "summary": "Two PacketImpact tests expect their testbench to fail. The original runner also returned success when the executable was missing or its process was killed by a signal. The corrected runner rejected both in six uncached exit-status controls. It still accepts an expected nonzero exit, propagates an unexpected exit code 7, and distinguishes ordinary from unexpected success.",
       "evidence": [
         {
@@ -73354,7 +73759,64 @@
           "outcome": "approved",
           "at": "2026-11-09T18:52:37+00:00"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "7e25e0168a6171890c02da0036b6e373fdc74108",
+        "observedAt": "2026-11-17T18:48:04.899184+00:00",
+        "disposition": "Lucas's experimental assisted COMMENTED review recommends approval without requesting a source change or reply. It describes First Pass #1033 as an infrastructure failure; that diagnosis is attributed to the review, not independently established here. GitHub still reports REVIEW_REQUIRED.",
+        "nextAction": "Follow maintainer review and import of the unchanged source. Retain the advisory First Pass #1033 result without treating it as a source defect or claiming the assistant review grants approval. No outgoing acknowledgement or new source amendment is requested.",
+        "recheckCondition": "New substantive feedback, source head change, a new relevant CI result, or import creation/status change.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17296#pullrequestreview-5896774651"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Informational assisted recommendation triaged",
+            "nextAction": "Follow maintainer review and import of the unchanged source. Retain the advisory First Pass #1033 result without treating it as a source defect or claiming the assistant review grants approval. No outgoing acknowledgement or new source amendment is requested.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/17296#pullrequestreview-5896774651"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-09T18:55:15Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABX3mj-w",
+                    "url": "https://github.com/google/gvisor/pull/17296#pullrequestreview-5896774651",
+                    "body": "LGTM — requiring `errors.AsType[*exec.ExitError]` with `exitStatus.Exited()` ensures `--expect_failure` only accepts a normal nonzero testbench exit while reporting launch errors and signal terminations with `testBinary`. (Note: `buildkite/first-pass` #1033 failed with Buildkite infra `exit_status: 80` on post-smoke jobs, unrelated to this change.) Recommend approval.\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-13T19:23:58Z",
+                    "updatedAt": "2026-11-13T19:23:58Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "7e25e0168a6171890c02da0036b6e373fdc74108"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "7e25e0168a6171890c02da0036b6e373fdc74108"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "pr:17297",
@@ -76594,7 +77056,7 @@
       "ref": "proposal/issue-reviver-loopback-reference",
       "status": "open",
       "url": "https://github.com/google/gvisor/pull/17481",
-      "updatedAt": "2026-11-11T15:24:12+00:00",
+      "updatedAt": "2026-11-17T18:48:05.578967+00:00",
       "evidence": [
         {
           "label": "Published gVisor correction",
@@ -76630,14 +77092,62 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "cd3363d74d2c5c1d46baa8856459bb7cdcd71a25",
-        "observedAt": "2026-11-11T15:24:12+00:00",
-        "disposition": "The tested one-line correction is on the upstream PR.",
-        "nextAction": "Await gVisor review.",
+        "observedAt": "2026-11-17T18:48:05.578967+00:00",
+        "disposition": "Lucas's experimental assisted COMMENTED review recommends approval of the direct PR-link correction; it requests no changes or reply. The source remains mergeable with successful public validation other than advisory First Pass #1174; GitHub still reports REVIEW_REQUIRED.",
+        "nextAction": "Follow maintainer review and import of the unchanged one-line correction. Retain the existing owning qualification and advisory First Pass result. No acknowledgement, source amendment or repeated qualification is requested by this review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17481",
-          "https://github.com/tamird/gvisor/actions/runs/43047036820/artifacts/13867317414"
+          "https://github.com/tamird/gvisor/actions/runs/43047036820/artifacts/13867317414",
+          "https://github.com/google/gvisor/pull/17481#pullrequestreview-5896775479"
+        ],
+        "recheckCondition": "New substantive feedback, source head change, or import creation/status change.",
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Informational assisted recommendation triaged",
+            "nextAction": "Follow maintainer review and import of the unchanged one-line correction. Retain the existing owning qualification and advisory First Pass result. No acknowledgement, source amendment or repeated qualification is requested by this review.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/17481#pullrequestreview-5896775479"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-11T15:14:52Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABX3mnNw",
+                    "url": "https://github.com/google/gvisor/pull/17481#pullrequestreview-5896775479",
+                    "body": "LGTM — replacing `TODO(gvisor.dev/issue/15559)` with a direct link to https://github.com/google/gvisor/pull/15559 stops `tools/github/reviver` from attempting to reopen PR #15559 via the Issues API while keeping the `SIOCSIFFLAGS` / `nsjail` context on `CreateStack`. Recommend approval.\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-13T19:24:01Z",
+                    "updatedAt": "2026-11-13T19:24:01Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "cd3363d74d2c5c1d46baa8856459bb7cdcd71a25"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "cd3363d74d2c5c1d46baa8856459bb7cdcd71a25"
+            }
+          }
         ]
       }
     },
@@ -110832,5 +111342,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-17T18:47:41.720703+00:00"
+  "updatedAt": "2026-11-17T18:48:07.411041+00:00"
 }

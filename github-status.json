@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-17T18:00:15.214046+00:00",
   "outreachPostingMode": "unknown",
-  "registryDate": "2026-11-17T18:47:41.720703+00:00",
+  "registryDate": "2026-11-17T18:48:07.411041+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -463794,24 +463794,6 @@
       "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
     },
     {
-      "repo": "google/gvisor",
-      "number": 15106,
-      "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
-      "sourceNumber": 15106,
-      "owner": "Maintainer",
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABlAmpIw",
-      "needsTriage": false,
-      "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6778628387",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-10T20:36:15Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
       "repo": "bazel-contrib/bazel-gazelle",
       "number": 2510,
       "head": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
@@ -464335,78 +464317,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 17202,
-      "head": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba",
-      "sourceNumber": 17202,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABX3mg0w",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/17202#pullrequestreview-5896773843",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-13T19:23:54Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 17296,
-      "head": "7e25e0168a6171890c02da0036b6e373fdc74108",
-      "sourceNumber": 17296,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABX3mj-w",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/17296#pullrequestreview-5896774651",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-13T19:23:58Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 17481,
-      "head": "cd3363d74d2c5c1d46baa8856459bb7cdcd71a25",
-      "sourceNumber": 17481,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABX3mnNw",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/17481#pullrequestreview-5896775479",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-13T19:24:01Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 15106,
-      "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
-      "sourceNumber": 15106,
-      "owner": "Agent",
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABmSN_ag",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6864207722",
-      "author": "zkoopmans",
-      "updatedAt": "2026-11-13T20:33:45Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16597,
       "head": "e46a1e757f8a1fe00e04d8c854139fbc7e189ebf",
       "sourceNumber": 16597,
@@ -464453,24 +464363,6 @@
       "url": "https://github.com/google/gvisor/pull/15368#issuecomment-6902577517",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-15T22:41:08Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 17196,
-      "head": "c6f1cf9b93aa4cfd3a8baef92f1c7e57377c7789",
-      "sourceNumber": 17196,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABYULtNQ",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/17196#pullrequestreview-5926743349",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-16T20:08:01Z",
       "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
@@ -465060,10 +464952,10 @@
       ],
       "importedSourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
       "recordedFollowup": {
-        "owner": "Maintainer",
+        "owner": "root",
         "sourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
-        "disposition": "Published c83396e33 on #15106 and answered Zachary’s lint report. Buildifier passed all 627 tracked inputs and the assembler test passed. The Linux AMD64 GoExport action key and arguments matched before and after reordering go.mod on the same base.",
-        "nextAction": "Await review of c83396e33."
+        "disposition": "Zachary approved the exact c83396e33 source and said he would attempt to land it during the CNCF transition. No author changes or reply are requested. Matching Copybara import #17664 remains open and mergeable; its pipeline #55134 failed while internal #36956 passed. Landing is not complete.",
+        "nextAction": "Follow Zachary's accepted landing ownership without another review request or reminder. Root must inspect the original failed result for import #17664 pipeline #55134 and identify the concrete CI repair or infrastructure blocker; do not infer a cause from the aggregate status. Preserve the exact approved source and do not push the Copybara branch."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANuCGExA"
@@ -470155,7 +470047,7 @@
         "since": "2026-11-17T16:45:09.051335Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "pr:16745": {
@@ -473122,7 +473014,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -473131,7 +473023,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -473140,7 +473032,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -473149,7 +473041,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -473158,7 +473050,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -473167,7 +473059,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -473176,7 +473068,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -473185,7 +473077,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T18:47:41.720703+00:00"
+        "observedAt": "2026-11-17T18:48:07.411041+00:00"
       }
     }
   },
