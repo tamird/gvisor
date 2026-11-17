@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-17T20:23:01.763698+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-17T20:44:04.002099+00:00",
+  "registryDate": "2026-11-17T21:09:15.022997+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448247,7 +448247,7 @@
       "repo": "google/gvisor",
       "number": 16887,
       "head": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
-      "action": "Obtain the contributor decision on the exact COMMENTED review draft. Before full approval obtain the existing broad network benchmark results; do not substitute 16-sample component data. After draft approval reverify the head/conversation and post that exact review without granting commit approval. Preserve Botir's source ownership and Netstack review workstream.",
+      "action": "Await before/after results from an existing broad network benchmark before full approval. Do not substitute the reported component samples. Re-review changed source or new author evidence while preserving Botir's source ownership.",
       "claimed": true,
       "firstObservedHead": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
       "reviewHead": null,
@@ -448352,12 +448352,12 @@
       "mergeabilityCheckedAt": "2026-11-17T20:19:46.041991+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval.",
+      "action": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
-        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval."
+        "disposition": "The first native run found a test diagnostic uint64/int mismatch; corrected in candidate 7dfa385ef0. Both native safecopy tests and source lint passed previously; corrected allocator tests and exact-base ARM C++ lint comparison are running.",
+        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval."
       },
       "conflictObservedSince": "2026-11-14T02:13:34.447877+00:00"
     },
@@ -448424,12 +448424,12 @@
       "mergeabilityCheckedAt": "2026-11-17T20:20:08.457198+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval.",
+      "action": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
-        "disposition": "Conflict repair preserves the upstream cgoextras import in shared binary dependencies; native coverage qualification is being prepared.",
-        "nextAction": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval."
+        "disposition": "First qualification stopped when its harness overwrote read-only staged runtime files. The harness now replaces those files explicitly; the exact unchanged source candidate is being qualified again. KCOV and final lint were not reached in the first run.",
+        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval."
       },
       "conflictObservedSince": "2026-11-13T22:05:46.828170+00:00"
     },
@@ -448616,12 +448616,12 @@
       "mergeabilityCheckedAt": "2026-11-17T20:21:47.971117+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval.",
+      "action": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
-        "disposition": "The first native qualification found three upstream AMD64 atomic_store callers left after the helper rename. Candidate 5a397632d8 fixes all three. ARM64 builds, systrap/FP tests and source lint passed on the prior candidate; ARM64 C++ lint found an unrelated io_uring include-cleaner finding. New-candidate qualification remains pending SSH workflow publication.",
-        "nextAction": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval."
+        "disposition": "Candidate repairs the three remaining AMD64 atomic_store callers. Exact-candidate AMD64/ARM64 qualification and matched startup/syscall measurements are running; earlier ARM C++ lint limitation remains explicit.",
+        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval."
       },
       "conflictObservedSince": "2026-11-13T22:05:51.472667+00:00"
     },
@@ -461169,7 +461169,7 @@
         "since": "2026-11-17T19:10:34.089237+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "pr:16745": {
@@ -462143,13 +462143,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-17T20:22:14.624717+00:00"
-      },
-      "contributor-review": {
-        "scope": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
-        "since": "2026-11-17T20:13:53.813850+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
       }
     },
     "pr:16893": {
@@ -464435,13 +464428,6 @@
         "basis": "transition",
         "qualifier": null,
         "observedAt": "2026-11-17T20:22:14.624717+00:00"
-      },
-      "contributor-review": {
-        "scope": "dee0321ac1c870dd210094f5a4ef12a741044df6",
-        "since": "2026-11-17T20:13:53.813850+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:11090": {
@@ -465029,7 +465015,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465038,7 +465024,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465047,7 +465033,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465056,7 +465042,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465065,7 +465051,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465074,7 +465060,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -465083,7 +465069,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465092,7 +465078,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T20:37:04.433680+00:00"
+        "observedAt": "2026-11-17T21:09:15.022997+00:00"
       }
     }
   },

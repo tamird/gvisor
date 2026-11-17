@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-17T20:44:04.002099+00:00",
+    "updatedAt": "2026-11-17T21:09:15.022997+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4831,20 +4831,22 @@
       "followup": {
         "owner": "root",
         "sourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
-        "observedAt": "2026-11-17T18:16:01.120596+00:00",
-        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval.",
+        "observedAt": "2026-11-17T21:09:15.022997+00:00",
+        "disposition": "The first native run found a test diagnostic uint64/int mismatch; corrected in candidate 7dfa385ef0. Both native safecopy tests and source lint passed previously; corrected allocator tests and exact-base ARM C++ lint comparison are running.",
+        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
           "https://github.com/tamird/gvisor/actions/runs/43007012855",
           "https://github.com/gvisor/gvisor/pull/15181",
-          "https://github.com/tamird/gvisor/commit/d96e0b649990478a367d3e9d0b360c8d5f65d9c9"
+          "https://github.com/tamird/gvisor/commit/d96e0b649990478a367d3e9d0b360c8d5f65d9c9",
+          "https://github.com/tamird/gvisor/actions/runs/44176619047",
+          "https://github.com/tamird/gvisor/commit/7dfa385ef0dd6286eaff54ee1c988db289f4f044"
         ],
-        "recheckCondition": "SSH authentication recovers, then candidate qualification finishes or fails; new human feedback or upstream changes.",
+        "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING"
       },
-      "updatedAt": "2026-11-17T18:16:01.120596+00:00",
+      "updatedAt": "2026-11-17T21:09:15.022997+00:00",
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "evidence": [
         {
@@ -37009,22 +37011,23 @@
       "group": "bazel",
       "status": "open",
       "summary": "All four normal and race coverage binaries built and ran on native AMD64 after the rebase onto ae0f8d590. Both Sentry binaries mapped 9,195 kernel source positions, with no positions from the excluded packages. The rebase preserved the reviewed changes across all nine files.",
-      "updatedAt": "2026-11-17T18:47:41.720703+00:00",
+      "updatedAt": "2026-11-17T21:09:15.022997+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
-        "observedAt": "2026-11-17T18:47:41.720703+00:00",
-        "disposition": "Conflict repair preserves the upstream cgoextras import in shared binary dependencies; native coverage qualification is being prepared.",
-        "nextAction": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval.",
+        "observedAt": "2026-11-17T21:09:15.022997+00:00",
+        "disposition": "First qualification stopped when its harness overwrote read-only staged runtime files. The harness now replaces those files explicitly; the exact unchanged source candidate is being qualified again. KCOV and final lint were not reached in the first run.",
+        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
           "https://github.com/gvisor/gvisor/pull/16507",
           "https://github.com/tamird/gvisor/commit/43f4e3871d",
-          "https://github.com/tamird/gvisor/commit/f1131c5e796c82c26560601c8b2f86593f33fba9"
+          "https://github.com/tamird/gvisor/commit/f1131c5e796c82c26560601c8b2f86593f33fba9",
+          "https://github.com/tamird/gvisor/actions/runs/44176467049"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "SSH authentication recovers, then candidate qualification finishes or fails; new human feedback or upstream changes.",
+        "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa"
       },
       "evidence": [
@@ -86535,24 +86538,25 @@
       "url": "https://github.com/google/gvisor/pull/17446",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T18:47:41.720703+00:00",
+      "updatedAt": "2026-11-17T21:09:15.022997+00:00",
       "summary": "The systrap signal stub defines its own memcpy. Its old declaration returned void while the C interface returns the destination pointer. The revision uses the standard prototype, returns the destination, and makes the memory-order wrappers explicit.",
       "followup": {
         "owner": "root",
         "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
-        "observedAt": "2026-11-17T18:47:41.720703+00:00",
-        "disposition": "The first native qualification found three upstream AMD64 atomic_store callers left after the helper rename. Candidate 5a397632d8 fixes all three. ARM64 builds, systrap/FP tests and source lint passed on the prior candidate; ARM64 C++ lint found an unrelated io_uring include-cleaner finding. New-candidate qualification remains pending SSH workflow publication.",
-        "nextAction": "Publish the prepared remote qualification workflow after the SSH agent is unlocked, then complete exact-candidate qualification and independent review before requesting contributor approval for the source amendment. Preserve the original PR head until approval.",
+        "observedAt": "2026-11-17T21:09:15.022997+00:00",
+        "disposition": "Candidate repairs the three remaining AMD64 atomic_store callers. Exact-candidate AMD64/ARM64 qualification and matched startup/syscall measurements are running; earlier ARM C++ lint limitation remains explicit.",
+        "nextAction": "Inspect the running exact-candidate remote qualification through completion, fix actual failures, then finish independent review before requesting approval to amend the source PR. Preserve the original PR head until approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17446",
           "https://github.com/tamird/gvisor/commit/4e82d9605",
           "https://github.com/tamird/gvisor/commit/41fba60a3d3261850b2f48f155a8da43d9920a3c",
           "https://github.com/tamird/gvisor/actions/runs/44149963100",
-          "https://github.com/tamird/gvisor/commit/5a397632d896158997ee7594866b33d741c56917"
+          "https://github.com/tamird/gvisor/commit/5a397632d896158997ee7594866b33d741c56917",
+          "https://github.com/tamird/gvisor/actions/runs/44175301095"
         ],
         "mergeable": "CONFLICTING",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "recheckCondition": "SSH authentication recovers, then candidate qualification finishes or fails; new human feedback or upstream changes."
+        "recheckCondition": "Remote qualification completes or fails; new human feedback or source changes."
       },
       "evidence": [
         {
@@ -88637,8 +88641,8 @@
       "title": "Separate MemoryFile sharing counts from allocation occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "For 16,384 separated shared pages, MemoryFile.SaveTo took 5.35 ms on the parent, 6.31 ms on the PR and 5.49 ms with a forward iterator. Five v1 checkpoints matched byte for byte across all three arms; each revision read the other’s images. The timing fixture had no committed page data. The mixed-size compatibility fixture included one dirty page.\n\nBotir addressed Ayush’s fragmented whole-range reference update observation in 736823ca0, then added removal and insertion coverage at 65a9e6eaa. Tamir’s measured checkpoint exporter follow-up still applies to SaveTo.",
-      "updatedAt": "2026-11-17T20:37:04.433680+00:00",
+      "summary": "Both prior traversal requests are addressed on 80c001d2b. Full independent source review found no further source issues and the approved COMMENTED response was delivered. Full approval still requires before/after results from an existing broad workload benchmark; no fresh tests or benchmarks were run. Earlier checkpoint measurements remain historical evidence for their tested revisions.",
+      "updatedAt": "2026-11-17T21:08:30.872483+00:00",
       "evidence": [
         {
           "label": "Single tested follow-up on Botir’s current commit",
@@ -88681,20 +88685,32 @@
           "outcome": "approved",
           "at": "2026-11-12T02:46:27+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/17374#discussion_r4545607204"
+        },
+        {
+          "kind": "review",
+          "head": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
+          "url": "https://github.com/gvisor/gvisor/pull/17374",
+          "title": "Respond to the full sharing-count review invitation",
+          "body": "Both traversal issues I raised are addressed in 80c001d2b. I reviewed the full current change and found no further source issues. The component benchmark results disclose both gains and regressions; before full approval, I still need before/after results from an existing broad workload benchmark. I have not rerun tests or benchmarks. Posted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-17T21:08:30.872483+00:00",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17374#pullrequestreview-5946597005",
+          "note": "User approved this exact COMMENTED response and it was posted at the bound source head. Response delivered; no source approval or fresh runtime validation. Root verified native requested_reviewers after submission: manninglucas, ayushr2 and aaltinaydev remained; tamird was absent. Our formal native request was consumed; broad workload benchmark remains required for full approval."
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
         "observedAt": "2026-11-17T20:37:04.433680+00:00",
-        "disposition": "The reply to our earlier traversal comment was inspected and addressed. A separate native formal review invitation remains outstanding on this exact head; it requires a complete source review rather than another acknowledgement of the resolved thread.",
-        "nextAction": "Complete independent review of the full sharing-count change, including checkpoint compatibility, range/refcount invariants, tests and performance evidence. Prepare an exact review decision for contributor review; do not treat the earlier resolved-thread inspection as fulfilment of this formal invitation.",
+        "disposition": "Full source review completed and exact COMMENTED response delivered at the current head. This answers the invitation with a response, not source approval. Root verified tamird absent from the native requested_reviewers response after submission; our formal native request was consumed.",
+        "nextAction": "Await before/after results from an existing broad workload benchmark before full approval. Re-review new source or evidence; do not substitute component samples or claim fresh runtime validation. Keep the outstanding broad benchmark approval obligation separate from the consumed native request.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
-          "https://github.com/gvisor/gvisor/blob/80c001d2b316feaa887a5ee53498d6ee55799a6a/pkg/sentry/pgalloc/save_restore.go#L135"
+          "https://github.com/gvisor/gvisor/blob/80c001d2b316feaa887a5ee53498d6ee55799a6a/pkg/sentry/pgalloc/save_restore.go#L135",
+          "https://github.com/gvisor/gvisor/pull/17374#pullrequestreview-5946597005"
         ],
-        "recheckCondition": "Independent review finishes, the author changes the source/conversation, or the contributor decides on a prepared exact review.",
+        "recheckCondition": "Author supplies broad workload benchmark evidence, changes source or conversation, or provider-side review/request state changes.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -88708,7 +88724,15 @@
           "updatedAt": "2026-11-14T23:51:15.307174+00:00",
           "owner": "root",
           "observedAt": "2026-11-17T20:37:04.433680+00:00",
-          "status": "claimed-unanswered"
+          "status": "response-delivered",
+          "previousStatus": "claimed-unanswered",
+          "responseDelivered": {
+            "head": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
+            "url": "https://github.com/gvisor/gvisor/pull/17374#pullrequestreview-5946597005",
+            "state": "COMMENTED",
+            "at": "2026-11-17T21:04:26Z",
+            "note": "Response delivered; root verified tamird absent from native requested_reviewers after submission. Source approval withheld pending broad workload benchmark."
+          }
         }
       },
       "reviewWatch": {
@@ -89979,31 +90003,35 @@
       "group": "bazel",
       "status": "merged",
       "githubState": "merged",
-      "summary": "Existing CI owner workstream: required two-pipeline admission, untrusted queue mapping and missing Pipeline status. Source author relkochta retains source authority; exact operator question awaits contributor review.",
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "dee0321ac1c870dd210094f5a4ef12a741044df6",
-        "url": "https://github.com/google/gvisor/pull/17733",
-        "requestedAt": "2026-11-17T19:37:05.807270+00:00",
-        "title": "Ask the CI owner about required fork-build admission and queue routing",
-        "summary": "Verified existing owner relkochta authored the both-pipelines-required change and owns /.buildkite/. Ask about quota, untrusted queue mapping, and missing required Pipeline status without requesting rule/access changes. Review this exact message before any posting; no quota, queue, ruleset, access or retry change is requested.",
-        "body": "@relkochta, the required fork checks are blocked by two admission failures:\n\n* First Pass 1608: @tamird reached the 36000 compute-minute daily quota before an agent started: https://buildkite.com/gvisor/first-pass/builds/1608#01a1eae5-3bd8-44b4-9976-04821d411f30\n* First Pass 1445: upload was rejected with `Queue 'default' does not exist in the 'untrusted' cluster`: https://buildkite.com/gvisor/first-pass/builds/1445#01a1ead1-be31-4430-8185-f9fee90713f1\n\nCould you confirm the quota reset/admission policy, supported untrusted queue mapping, and how required Pipeline builds are triggered? Current master rules require `buildkite/first-pass/pr` and `buildkite/pipeline/pr`; neither example head has a Pipeline status. The source does not identify a supported replacement queue.\n\nOld-source bootstrap failures fixed by #17735 still need branch updates; those are distinct from the two failures above.\n\nPosted by Codex on behalf of @tamird."
-      },
+      "summary": "Existing CI owner workstream. User declined the prepared operator outreach; no message posted. Quota, untrusted queue routing and missing required Pipeline status remain external blockers.",
       "followup": {
         "owner": "root",
         "sourceNumber": 17733,
         "sourceHead": "dee0321ac1c870dd210094f5a4ef12a741044df6",
         "observedAt": "2026-11-17T19:37:05.807270+00:00",
-        "nextAction": "Obtain contributor review of the exact CI-owner reply draft. After approval reverify destination/head and operator context before posting; await CI operator clarification of quota/reset, valid untrusted queue mapping and required Pipeline trigger. Do not retry while quota is exhausted.",
-        "recheckCondition": "Contributor decision, new owner feedback, exact source/destination change, admission reset, queue mapping or required-check provider change.",
+        "nextAction": "Monitor the existing CI-owner workstream and admission/provider state. User declined the prepared outreach; do not post it. Preserve quota, untrusted queue and required Pipeline blockers until observed resolved; do not retry while quota is exhausted.",
+        "recheckCondition": "New CI-owner feedback, observed admission reset, supported queue mapping, required-check provider change, or new user instruction.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17733",
           "https://github.com/gvisor/gvisor/blob/bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa/CODEOWNERS#L5",
           "https://github.com/gvisor/gvisor/pull/17733#issuecomment-6934127399"
         ]
       },
-      "updatedAt": "2026-11-17T20:12:30.244547+00:00"
+      "updatedAt": "2026-11-17T21:08:30.872483+00:00",
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "dee0321ac1c870dd210094f5a4ef12a741044df6",
+          "url": "https://github.com/google/gvisor/pull/17733",
+          "requestedAt": "2026-11-17T19:37:05.807270+00:00",
+          "title": "Ask the CI owner about required fork-build admission and queue routing",
+          "summary": "Verified existing owner relkochta authored the both-pipelines-required change and owns /.buildkite/. Ask about quota, untrusted queue mapping, and missing required Pipeline status without requesting rule/access changes. Review this exact message before any posting; no quota, queue, ruleset, access or retry change is requested.",
+          "body": "@relkochta, the required fork checks are blocked by two admission failures:\n\n* First Pass 1608: @tamird reached the 36000 compute-minute daily quota before an agent started: https://buildkite.com/gvisor/first-pass/builds/1608#01a1eae5-3bd8-44b4-9976-04821d411f30\n* First Pass 1445: upload was rejected with `Queue 'default' does not exist in the 'untrusted' cluster`: https://buildkite.com/gvisor/first-pass/builds/1445#01a1ead1-be31-4430-8185-f9fee90713f1\n\nCould you confirm the quota reset/admission policy, supported untrusted queue mapping, and how required Pipeline builds are triggered? Current master rules require `buildkite/first-pass/pr` and `buildkite/pipeline/pr`; neither example head has a Pipeline status. The source does not identify a supported replacement queue.\n\nOld-source bootstrap failures fixed by #17735 still need branch updates; those are distinct from the two failures above.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "declined",
+          "at": "2026-11-17T21:08:30.872483+00:00",
+          "note": "User declined outreach: \"no need, i am sure they are on it\". Exact draft retained; no message posted and no operator resolution inferred."
+        }
+      ]
     },
     {
       "id": "pr:16887",
@@ -90017,24 +90045,14 @@
       "group": "runtime",
       "status": "open",
       "summary": "Botir's existing watched transmit-batch change. Prior fallback-budget and fixed-array marshal review requests are addressed. Full approval still needs the existing broad network benchmark baseline; the reported component samples do not supply it.",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
-        "url": "https://github.com/google/gvisor/pull/16887",
-        "title": "Respond to Botir's transmit-batch review request",
-        "requestedAt": "2026-11-17T20:12:30.472399+00:00",
-        "summary": "Submit this exact COMMENTED review response? Our prior fixes are present and source review found no additional bug, but full approval needs the existing broad network benchmark results. The author's request remains unanswered until contributor approval and actual posting.",
-        "body": "The two points I raised are addressed in 1668e58d4: the fallback fixtures derive writevMaxIovs from their three-iovec budget, and virtioNetHdr.marshal takes *[virtioNetHdrSize]byte.\n\nI also rechecked that the iovec storage is sized before any message retains a pointer into it, and that the partial-send loop finishes before the next batch reuses the arrays. I found no further source issues.\n\nBefore I can approve the full change, I still need before/after results from an existing broad network benchmark. The reported component benchmark does not cover end-to-end effects. I have not rerun tests or benchmarks.\n\nPosted by Codex on behalf of @tamird."
-      },
       "followup": {
         "owner": "root",
         "sourceNumber": 16887,
         "sourceHead": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
         "observedAt": "2026-11-17T20:12:30.472399+00:00",
-        "disposition": "Read the complete live conversation and all three changed files on the published single-commit head. Prior fixes are present; correctness/style/security/performance source review found no further bug. Broad network benchmark baseline remains a validation gap. The actual author review request remains unanswered.",
-        "nextAction": "Obtain the contributor decision on the exact COMMENTED review draft. Before full approval obtain the existing broad network benchmark results; do not substitute 16-sample component data. After draft approval reverify the head/conversation and post that exact review without granting commit approval. Preserve Botir's source ownership and Netstack review workstream.",
-        "recheckCondition": "Contributor approves or revises the draft; author changes source or conversation; current required checks produce new results. Keep the explicit review request open until the approved response is actually posted.",
+        "disposition": "Approved exact COMMENTED response posted and verified at 1668e58d4c0cb17ecb5fcf6457389575a3c01459. The author request has received a response; source approval remains withheld pending an existing broad network benchmark baseline. No fresh runtime validation claimed.",
+        "nextAction": "Await before/after results from an existing broad network benchmark before full approval. Do not substitute the reported component samples. Re-review changed source or new author evidence while preserving Botir's source ownership.",
+        "recheckCondition": "Author supplies the broad network benchmark baseline, changes source or conversation, or current required checks produce new results. Posted response does not grant source approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776",
           "https://github.com/gvisor/gvisor/blob/1668e58d4c0cb17ecb5fcf6457389575a3c01459/pkg/tcpip/link/fdbased/endpoint.go#L588",
@@ -90042,7 +90060,8 @@
           "https://github.com/gvisor/gvisor/blob/1668e58d4c0cb17ecb5fcf6457389575a3c01459/pkg/tcpip/link/fdbased/endpoint.go#L843",
           "https://github.com/gvisor/gvisor/blob/1668e58d4c0cb17ecb5fcf6457389575a3c01459/pkg/tcpip/link/fdbased/endpoint_test.go#L904",
           "https://github.com/google/gvisor/pull/16887#discussion_r4457983215",
-          "https://github.com/google/gvisor/pull/16887#discussion_r4493780726"
+          "https://github.com/google/gvisor/pull/16887#discussion_r4493780726",
+          "https://github.com/gvisor/gvisor/pull/16887#pullrequestreview-5946565652"
         ],
         "ciObservation": "Observed context buildkite/first-pass (unsuffixed) failed as build #906. No current buildkite/first-pass/pr or buildkite/pipeline/pr result appeared in the queried contexts. This is not a claim of passing required CI; current /pr requirements remain separate.",
         "actionableComment": {
@@ -90052,7 +90071,22 @@
           "url": "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776"
         }
       },
-      "updatedAt": "2026-11-17T20:12:30.472399+00:00"
+      "updatedAt": "2026-11-17T21:08:30.872483+00:00",
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
+          "url": "https://github.com/google/gvisor/pull/16887",
+          "title": "Respond to Botir's transmit-batch review request",
+          "requestedAt": "2026-11-17T20:12:30.472399+00:00",
+          "summary": "Submit this exact COMMENTED review response? Our prior fixes are present and source review found no additional bug, but full approval needs the existing broad network benchmark results. The author's request remains unanswered until contributor approval and actual posting.",
+          "body": "The two points I raised are addressed in 1668e58d4: the fallback fixtures derive writevMaxIovs from their three-iovec budget, and virtioNetHdr.marshal takes *[virtioNetHdrSize]byte.\n\nI also rechecked that the iovec storage is sized before any message retains a pointer into it, and that the partial-send loop finishes before the next batch reuses the arrays. I found no further source issues.\n\nBefore I can approve the full change, I still need before/after results from an existing broad network benchmark. The reported component benchmark does not cover end-to-end effects. I have not rerun tests or benchmarks.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-17T21:08:30.872483+00:00",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/16887#pullrequestreview-5946565652",
+          "note": "User approved this exact COMMENTED response; posted at the bound source head and verified by receipt. This settles the response request, not approval of the source commit."
+        }
+      ]
     }
   ],
   "edges": [
@@ -105366,7 +105400,7 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-17T17:20:44.991697Z",
+      "updatedAt": "2026-11-17T21:08:30.872483+00:00",
       "summary": "The default-branch workflow requests a refresh at minutes 7, 17, 27, 37, 47 and 57. On November 8 GitHub recorded five scheduled runs, at 01:32, 07:52, 14:34, 19:01 and 22:45 UTC. All five succeeded. These timestamps establish gaps between scheduled runs. The cause of the missing events is unknown. An explicit dispatch at 00:03 UTC on November 9 succeeded, and the active owner’s next collection checked GitHub at 00:14 UTC.",
       "findings": [
         {
@@ -105539,6 +105573,19 @@
             {
               "label": "Transfer-safe cleanup identity guard",
               "url": "https://github.com/tamird/gvisor/commit/9f116c841e6b5b292ebff053d9232443a7e92592"
+            }
+          ]
+        },
+        {
+          "text": "The existing work-map workflow completed normal scheduled run 44158035947 successfully and published bot status commit 34cf711cf048ad55822d5ab5ade07d1cf30efe36. This establishes successful scheduled execution and publication for that event; reliable ten-minute cadence remains unproven.",
+          "evidence": [
+            {
+              "label": "Successful normal scheduled refresh",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44158035947"
+            },
+            {
+              "label": "Published bot snapshot",
+              "url": "https://github.com/tamird/gvisor/commit/34cf711cf048ad55822d5ab5ade07d1cf30efe36"
             }
           ]
         }
@@ -113067,9 +113114,9 @@
       "status": "active",
       "owner": "root",
       "group": "runtime",
-      "updatedAt": "2026-11-17T20:12:30.472399+00:00",
+      "updatedAt": "2026-11-17T21:09:15.022997+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019. For #16887, obtain the contributor decision on the exact pending COMMENTED review; keep Botir's explicit request unanswered until actual approved posting. Recheck its published head and complete conversation before delivery.",
+      "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019. For #16887, the approved exact COMMENTED response was posted at 1668e58d4c0cb17ecb5fcf6457389575a3c01459. Await before/after results from an existing broad network benchmark before full approval; the response supplies no fresh runtime validation. Re-review new source or evidence.",
       "findings": [
         {
           "text": "Reusing the receive buffers in #17187 reduced whole-Sentry allocations per GiB received by 63.16% on the single-worker TCP download (p < 0.001). Skipping flow parsing in #17188 alone yielded 55.48k allocations/GiB against 55.36k on stock (p = 0.378). The earlier two-build comparison had measured a 63.18% reduction with both changes applied.",
@@ -124697,5 +124744,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-17T20:44:04.002099+00:00"
+  "updatedAt": "2026-11-17T21:09:15.022997+00:00"
 }
