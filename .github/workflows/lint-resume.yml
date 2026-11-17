@@ -1,0 +1,71 @@
+name: Qualify the rebased native lint amendment
+
+on:
+  push:
+    branches: [qualification/lint-resume-20261117]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: cfb38adfa3c60dbfd6f4f234cae63f03c76477bf
+          persist-credentials: false
+      - name: Prepare the pinned Bazel coordinator
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/lint-resume/bin"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 \
+            https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 \
+            -o "$RUNNER_TEMP/lint-resume/bin/bazel"
+          echo '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  '"$RUNNER_TEMP/lint-resume/bin/bazel" | sha256sum -c
+          chmod +x "$RUNNER_TEMP/lint-resume/bin/bazel"
+          echo "$RUNNER_TEMP/lint-resume/bin" >> "$GITHUB_PATH"
+      - name: Test the lint command boundary
+        id: tests
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          bazel test --test_output=errors //tools:lint_test 2>&1 | tee "$RUNNER_TEMP/lint-resume/tests.log"
+      - name: Build both declared checkers
+        id: build
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          bazel build //tools/lint:check 2>&1 | tee "$RUNNER_TEMP/lint-resume/build.log"
+      - name: Run source lint
+        id: lint
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          make lint DOCKER_BUILD=false 2>&1 | tee "$RUNNER_TEMP/lint-resume/lint.log"
+      - name: Run C++ lint
+        id: lint_cc
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          make lint-cc DOCKER_BUILD=false 2>&1 | tee "$RUNNER_TEMP/lint-resume/lint-cc.log"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: lint-resume-results
+          path: |
+            ${{ runner.temp }}/lint-resume/*.log
+            bazel-testlogs/tools/lint_test/test.xml
+          if-no-files-found: error
+          retention-days: 14
+      - name: Report combined result
+        if: always()
+        env:
+          TESTS: ${{ steps.tests.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          LINT_CC: ${{ steps.lint_cc.outcome }}
+        run: |
+          printf 'tests=%s build=%s lint=%s lint-cc=%s\n' "$TESTS" "$BUILD" "$LINT" "$LINT_CC"
+          test "$TESTS/$BUILD/$LINT/$LINT_CC" = success/success/success/success
