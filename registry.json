@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-17T16:45:09.051335Z",
+    "updatedAt": "2026-11-17T17:20:44.991697Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34465,23 +34465,24 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/systrap-elf-offsets",
-      "head": "353fb5556844a9b683887f432cb19c123b3e4168",
+      "head": "4c529a8079409c05cd8a5c16133683a94fc991ba",
       "title": "Generate systrap stub offsets from the linked ELF",
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "The PR generates Go offsets from the linked systrap ELF. It is awaiting maintainer review. The approved follow-up 6a54750c6 extracts the raw stub after #16516 lands.",
-      "updatedAt": "2026-11-06T02:45:41.617288Z",
+      "summary": "Moved the unchanged ELF offset generator into //tools/systrap_offsets:gen_offsets in response to Lucas’s review. The contributor approved the amendment and reply, and both are published. Hosted AMD64/ARM64 builds, equality of every exported offset, source lint and C++ lint passed. Independent review found no substantive issues. The separately approved raw stub extraction still waits for #16516 to land.",
+      "updatedAt": "2026-11-17T17:20:44.991697Z",
       "followup": {
-        "owner": "pinring_source_scope",
-        "sourceHead": "353fb5556844a9b683887f432cb19c123b3e4168",
-        "observedAt": "2026-11-06T02:45:41.617288Z",
-        "disposition": "The contributor approved the offset generator and raw stub extraction separately.",
-        "nextAction": "Await maintainer review of the offset generator. Submit the approved raw stub extraction after #16516 lands.",
+        "owner": "root",
+        "sourceHead": "4c529a8079409c05cd8a5c16133683a94fc991ba",
+        "observedAt": "2026-11-17T17:20:44.991697Z",
+        "disposition": "Published the contributor-approved generator relocation and exact reply to Lucas. The original Go source blob is unchanged. GitHub confirms the published head is mergeable. Remote builds and offset parity on AMD64/ARM64, source lint and C++ lint pass; all required independent review roles found no substantive issues.",
+        "nextAction": "Follow current upstream checks and maintainer review. Native re-request to Lucas is awaiting separate contributor authorization. Submit the separately approved raw-stub extraction after #16516 lands.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16516",
-          "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
-          "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
+          "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
+          "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
+          "https://github.com/tamird/gvisor/actions/runs/44131524229",
+          "https://github.com/tamird/gvisor/commit/4c529a8079409c05cd8a5c16133683a94fc991ba"
         ]
       },
       "evidence": [
@@ -34514,7 +34515,36 @@
           "url": "https://github.com/tamird/gvisor/commit/b540bc616"
         }
       ],
-      "number": 16516
+      "number": 16516,
+      "refinement": {
+        "before": {
+          "head": "353fb5556844a9b683887f432cb19c123b3e4168"
+        },
+        "after": {
+          "head": "4c529a8079409c05cd8a5c16133683a94fc991ba"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "4c529a8079409c05cd8a5c16133683a94fc991ba",
+          "baseHead": "353fb5556844a9b683887f432cb19c123b3e4168",
+          "url": "https://github.com/tamird/gvisor/commit/4c529a8079409c05cd8a5c16133683a94fc991ba",
+          "outcome": "approved",
+          "at": "2026-11-17T17:20:44.991697Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16516",
+          "note": "Contributor approved the exact amendment and reply in this recovery session after completed remote qualification and independent review."
+        },
+        {
+          "kind": "reply",
+          "head": "4c529a8079409c05cd8a5c16133683a94fc991ba",
+          "url": "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
+          "body": "Moved the generator to //tools/systrap_offsets:gen_offsets and updated sysmsg to use that tool. The Go source is unchanged. Both AMD64 and ARM64 builds pass, and every generated offset matches the original shell generator.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-17T17:20:44.991697Z",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023"
+        }
+      ]
     },
     {
       "id": "branch:hermetic-arch-copy",
@@ -93148,7 +93178,7 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-17T16:45:09.051335Z",
+      "updatedAt": "2026-11-17T17:20:44.991697Z",
       "summary": "The default-branch workflow requests a refresh at minutes 7, 17, 27, 37, 47 and 57. On November 8 GitHub recorded five scheduled runs, at 01:32, 07:52, 14:34, 19:01 and 22:45 UTC. All five succeeded. These timestamps establish gaps between scheduled runs. The cause of the missing events is unknown. An explicit dispatch at 00:03 UTC on November 9 succeeded, and the active owner’s next collection checked GitHub at 00:14 UTC.",
       "findings": [
         {
@@ -93306,9 +93336,26 @@
               "url": "https://github.com/gvisor/gvisor/pull/14338"
             }
           ]
+        },
+        {
+          "text": "The repository-transfer repair passed the complete Python and browser regression suites, live collection and canonical metadata validation. The new snapshot checked GitHub at 2026-11-17T17:06:02.291910+00:00. API identity fields retain the registry namespace; original message bodies and old/new Copybara footer URLs are preserved. The standalone cleanup tool uses the immutable upstream repository ID rather than an organization name for its merged-source guard. App-level scheduled agent wake-ups are not configured by the GitHub collector.",
+          "evidence": [
+            {
+              "label": "Successful live collection and regression suites",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44132402664"
+            },
+            {
+              "label": "Collector repair",
+              "url": "https://github.com/tamird/gvisor/commit/c0ecc3908809a4d966d1613ee9b89038279fa928"
+            },
+            {
+              "label": "Transfer-safe cleanup identity guard",
+              "url": "https://github.com/tamird/gvisor/commit/9f116c841e6b5b292ebff053d9232443a7e92592"
+            }
+          ]
         }
       ],
-      "nextStep": "Reconcile the verified google/gvisor to gvisor/gvisor repository alias throughout collection and import matching, preserving stable tracker identities and historical footer evidence. Validate the migration before repeating the full refresh. The older GitHub snapshot remains explicitly dated.",
+      "nextStep": "Follow the existing default-branch refresh workflow after the repair is published. Distinguish missed schedule events from collection failures. Configure the owning chat’s periodic task separately using the Scheduled ownership prompt in README; no app schedule is currently installed by this work.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -110607,5 +110654,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-17T16:45:09.051335Z"
+  "updatedAt": "2026-11-17T17:20:44.991697Z"
 }
