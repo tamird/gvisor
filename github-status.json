@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-17T18:00:15.214046+00:00",
   "outreachPostingMode": "unknown",
-  "registryDate": "2026-11-17T18:36:09.022796+00:00",
+  "registryDate": "2026-11-17T18:47:41.720703+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -462664,7 +462664,7 @@
       "number": 15181,
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "sourceNumber": 15181,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUEqxGg",
       "needsTriage": false,
@@ -462700,7 +462700,7 @@
       "number": 16419,
       "head": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e",
       "sourceNumber": 16419,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUTON0A",
       "needsTriage": false,
@@ -463042,7 +463042,7 @@
       "number": 16419,
       "head": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e",
       "sourceNumber": 16419,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzsOnQ",
       "needsTriage": false,
@@ -463312,7 +463312,7 @@
       "number": 17067,
       "head": "005743727b3d80d373085133b5da9cd906cc9d7c",
       "sourceNumber": 17067,
-      "owner": "Systrap native stub",
+      "owner": "root / existing Systrap native stub workstream",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWUw6YQ",
       "needsTriage": false,
@@ -463510,7 +463510,7 @@
       "number": 15181,
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "sourceNumber": 15181,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWlGSow",
       "needsTriage": false,
@@ -463564,7 +463564,7 @@
       "number": 15181,
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "sourceNumber": 15181,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABkNe89A",
       "needsTriage": false,
@@ -463924,7 +463924,7 @@
       "number": 15181,
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "sourceNumber": 15181,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXO9YjQ",
       "needsTriage": false,
@@ -463942,7 +463942,7 @@
       "number": 15181,
       "head": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
       "sourceNumber": 15181,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABlJ-GmQ",
       "needsTriage": false,
@@ -464086,7 +464086,7 @@
       "number": 16419,
       "head": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e",
       "sourceNumber": 16419,
-      "owner": "Maintainer",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXbKd7w",
       "needsTriage": false,
@@ -464335,24 +464335,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 17545,
-      "head": "086b82de617401078acdbb5c3cc2dde615e9d02d",
-      "sourceNumber": 17545,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABX3mZcw",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-13T19:23:47Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 17202,
       "head": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba",
       "sourceNumber": 17202,
@@ -464558,7 +464540,7 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "e9289d0a24c17e33d9dccf880ddef2f7e7bf886c",
-        "disposition": "Current master conflicts in tools/licensecheck/licensecheck.go. The documented maintainer hold remains in force.",
+        "disposition": "Existing maintainer internal license-exception hold and CHANGES_REQUESTED remain recorded.",
         "nextAction": "Await confirmation of the existing maintainer hold before revising the conflicting checker implementation."
       },
       "conflictObservedSince": "2026-11-05T02:55:44.320721+00:00"
@@ -464582,8 +464564,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "The published head still conflicts. The fork repair 23b8ddf0a passed the package target and verified the existing 224-entry catalog. No individual testcase records were emitted.",
-        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold."
+        "disposition": "Existing maintainer internal license-exception hold and CHANGES_REQUESTED remain recorded.",
+        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold. The matching Copybara export #17126 also conflicts; its importing maintainer owns any internal refresh and re-export. Do not push its branch."
       },
       "conflictObservedSince": "2026-11-06T02:35:04.797881+00:00"
     },
@@ -464606,8 +464588,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "The published head still conflicts. The fork repair 23b8ddf0a passed the package target and verified the existing 224-entry catalog. No individual testcase records were emitted.",
-        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold."
+        "disposition": "Existing maintainer internal license-exception hold and CHANGES_REQUESTED remain recorded.",
+        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold. The matching Copybara export #17126 also conflicts; its importing maintainer owns any internal refresh and re-export. Do not push its branch."
       },
       "conflictObservedSince": null
     },
@@ -464625,13 +464607,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:57:15.906775+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication. The #17214 prerequisite is verified MERGED; it does not block this rebase.",
       "recordedFollowup": {
-        "owner": "Maintainer",
+        "owner": "root",
         "sourceHead": "f05d6b909334e792bf64f83a3b7abe4c633a32a4",
-        "disposition": "Ayush received the rebase chronology, the refreshed single-commit source and both architecture results.",
-        "nextAction": "Await maintainer review of f05d6b909."
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication. The #17214 prerequisite is verified MERGED; it does not block this rebase."
       },
       "conflictObservedSince": "2026-11-14T02:13:34.447877+00:00"
     },
@@ -464649,9 +464631,14 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:57:21.952188+00:00",
       "sourceBranchMismatch": false,
-      "owner": null,
+      "owner": "Upstream importing maintainer / Copybara change owner; root tracks",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
-      "recordedFollowup": {},
+      "recordedFollowup": {
+        "owner": "Upstream importing maintainer / Copybara change owner; root tracks",
+        "sourceHead": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+        "disposition": "Published branch is owned by Copybara in upstream, outside contributor source publication authority.",
+        "nextAction": "Retain conflict as an import blocker; importing maintainer must refresh or resolve the internal change and re-export. Do not push the export branch."
+      },
       "conflictObservedSince": "2026-10-29T17:01:20.099512+00:00"
     },
     {
@@ -464668,13 +464655,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:57:33.811474+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication.",
       "recordedFollowup": {
-        "owner": "Maintainer",
+        "owner": "root",
         "sourceHead": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e",
-        "disposition": "The rebase keeps the single persist guard from 597f36270 and both zero-window assertions. The commit and PR description explain the behavior already supplied by master. The approved revision and replies are published.",
-        "nextAction": "Await maintainer review of the revised recovery change."
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication."
       },
       "conflictObservedSince": "2026-11-14T02:14:23.011470+00:00"
     },
@@ -464692,13 +464679,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:57:38.736007+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Complete remote qualification and independent review of the repaired candidate, then present the exact amendment for contributor review before replacing the published PR head.",
       "recordedFollowup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
-        "disposition": "Rebase published. GitHub reports mergeable.",
-        "nextAction": "Await maintainer review and monitor checks on the published head."
+        "disposition": "Conflict repair preserves the upstream cgoextras import in shared binary dependencies; native coverage qualification is being prepared.",
+        "nextAction": "Complete remote qualification and independent review of the repaired candidate, then present the exact amendment for contributor review before replacing the published PR head."
       },
       "conflictObservedSince": "2026-11-13T22:05:46.828170+00:00"
     },
@@ -464716,13 +464703,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:57:56.228719+00:00",
       "sourceBranchMismatch": false,
-      "owner": "PR author",
+      "owner": "parth-opensrc",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "PR author",
+        "owner": "parth-opensrc",
         "sourceHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
-        "disposition": "The guest checkpoint on c31b2adc2 leaves its memory limit unset. A zero budget prevents or ends the GC suspension. The nested-cgroup case still depends on the open ancestor-limit fix in #16767.",
-        "nextAction": "Await Parth’s state-engine and compression settings for the C4 bigheap results. Compare like-for-like saves when those settings are known."
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Author resolves source conflicts; retain request for like-for-like checkpoint engine/compression settings and the #16767 ancestor-limit dependency."
       },
       "conflictObservedSince": "2026-11-07T21:19:48.597671+00:00"
     },
@@ -464740,13 +464727,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:57:56.228724+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Preserve pending exact reply and source; prepare only conflict-only work without adopting a general O_PATH migration. Obtain the recorded contributor decision before publishing the reply or a changed proposal.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "ef55959ef13c80404a1efe7890044f9ca211f047",
-        "disposition": "Read Ayush’s complete November 16 thread on the unchanged published head. Traced both device-proxy paths and the ordinary control-FD consumers. No source revision or new runtime validation was needed to prepare the response. Original qualification run remains completed and its VFIO artifact is not expired.",
-        "nextAction": "Contributor review of the exact reply below. After approval, post on Ayush’s original thread; do not expand to a general O_PATH migration without agreeing scope."
+        "disposition": "Exact O_PATH reply is pending contributor approval; maintainer scope question remains unresolved.",
+        "nextAction": "Preserve pending exact reply and source; prepare only conflict-only work without adopting a general O_PATH migration. Obtain the recorded contributor decision before publishing the reply or a changed proposal."
       },
       "conflictObservedSince": "2026-11-15T17:30:42.789547+00:00"
     },
@@ -464764,13 +464751,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:58:21.264857+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Complete remote qualification and independent review of the repaired candidate, then present the exact amendment for contributor review before replacing the published PR head.",
       "recordedFollowup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac",
-        "disposition": "Published the approved single-commit amendment.",
-        "nextAction": "Follow the published head for maintainer review and import."
+        "disposition": "Conflict repair preserves upstream removal of main-pipeline source checks; native license/governance qualification and lint are running.",
+        "nextAction": "Complete remote qualification and independent review of the repaired candidate, then present the exact amendment for contributor review before replacing the published PR head."
       },
       "conflictObservedSince": "2026-11-17T17:05:09.390694+00:00"
     },
@@ -464788,13 +464775,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:58:30.265101+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
+      "owner": "hky1999",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "Agent",
+        "owner": "hky1999",
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
-        "disposition": "The author retained the root-registry fix and credit and added the requested bridge/veth test. The reported runs cover the new head.",
-        "nextAction": "Follow upstream integration or a new review request."
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Author resolves source conflict while preserving root registry credit and bridge/veth coverage; follow integration or a new review request."
       },
       "conflictObservedSince": "2026-11-14T20:02:27.078720+00:00"
     },
@@ -464812,9 +464799,14 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:58:30.265102+00:00",
       "sourceBranchMismatch": false,
-      "owner": null,
+      "owner": "hky1999",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
-      "recordedFollowup": {},
+      "recordedFollowup": {
+        "owner": "hky1999",
+        "sourceHead": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Author resolves checkpoint-test source conflict; retain Docker-compatible subtest names and follow review."
+      },
       "conflictObservedSince": "2026-11-14T20:02:27.078720+00:00"
     },
     {
@@ -464831,9 +464823,14 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:58:30.265105+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
-      "recordedFollowup": {},
+      "owner": "root",
+      "action": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication.",
+      "recordedFollowup": {
+        "owner": "root",
+        "sourceHead": "b0b2a33254ea8cc25320a078fba8d3e1852fad61",
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication."
+      },
       "conflictObservedSince": "2026-11-15T17:30:45.445430+00:00"
     },
     {
@@ -464850,13 +464847,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:58:35.077807+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root / existing Systrap native stub workstream",
+      "action": "Retain approved amendment and integration evidence; after #16522 actually lands, rebase and qualify the approved freestanding adapter amendment, including current runtime page-size layout. Internal toolchain check belongs to import.",
       "recordedFollowup": {
-        "owner": "Systrap native stub",
+        "owner": "root / existing Systrap native stub workstream",
         "sourceHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
-        "disposition": "Tamir approved 7f6ecfff6. The reviewer received the explanation.",
-        "nextAction": "Wait for #16522 to land, then rebase and publish the approved amendment. Check the link with the internal toolchain during import."
+        "disposition": "Approved 7f6ecfff6 amendment explicitly waits for #16522, verified OPEN/MERGEABLE.",
+        "nextAction": "Retain approved amendment and integration evidence; after #16522 actually lands, rebase and qualify the approved freestanding adapter amendment, including current runtime page-size layout. Internal toolchain check belongs to import."
       },
       "conflictObservedSince": "2026-11-13T22:05:00.740537+00:00"
     },
@@ -464874,9 +464871,14 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:59:10.031669+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
-      "recordedFollowup": {},
+      "owner": "root",
+      "action": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication.",
+      "recordedFollowup": {
+        "owner": "root",
+        "sourceHead": "6b171e1d51728e414c10e7ba0188f90f8438eb75",
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Prepare a conflict-only rebase from the exact live source head onto current upstream; review the complete resulting patch and qualify remotely. Preserve existing approvals on their exact revisions; seek contributor approval for changed proposals before publication."
+      },
       "conflictObservedSince": "2026-11-14T02:14:26.724757+00:00"
     },
     {
@@ -464893,13 +464895,13 @@
       "checkedAt": "2026-11-17T17:59:40.422752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:59:14.133330+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Complete remote qualification and independent review of the repaired candidate, then present the exact amendment for contributor review before replacing the published PR head.",
       "recordedFollowup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
-        "disposition": "Published as one commit on #17446 at the exact approved head.",
-        "nextAction": "Follow checks and maintainer review on #17446."
+        "disposition": "Conflict repair preserves upstream FPU-state handling; native AMD64/ARM64 build, FP syscall tests, lint and performance qualification are running.",
+        "nextAction": "Complete remote qualification and independent review of the repaired candidate, then present the exact amendment for contributor review before replacing the published PR head."
       },
       "conflictObservedSince": "2026-11-13T22:05:51.472667+00:00"
     },
@@ -464917,13 +464919,13 @@
       "checkedAt": "2026-11-17T17:59:43.393242+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:59:43.393160+00:00",
       "sourceBranchMismatch": false,
-      "owner": "work_map_current",
+      "owner": "bduffany",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "work_map_current",
+        "owner": "bduffany",
         "sourceHead": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
-        "disposition": "Monitor the maintainer replacement until actual merge",
-        "nextAction": "Follow current checks and actual merge in the ordinary snapshot; report landing to root for the retained #13803 disposition."
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Maintainer bduffany owns replacement source repair and merge; root monitors actual merge for retained #13803 disposition."
       },
       "conflictObservedSince": "2026-11-12T20:31:41.721423+00:00"
     },
@@ -464941,13 +464943,13 @@
       "checkedAt": "2026-11-17T17:59:43.393242+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:59:43.393174+00:00",
       "sourceBranchMismatch": false,
-      "owner": "bduffany",
+      "owner": "bduffany for policy; root for contributor source",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "bduffany",
+        "owner": "bduffany for policy; root for contributor source",
         "sourceHead": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "disposition": "Maintainer-owned API and support-policy consensus pending",
-        "nextAction": "Await the maintainer’s internal consensus on selection API and support policy. Preserve the explicit cache-identity requirement; do not substitute a mutable kernel track without an agreed contract."
+        "disposition": "Kernel-selection API/support consensus pending; no new support commitment authorized.",
+        "nextAction": "Keep explicit cache-identity requirement and known ARM64 unavailable-series correction; await API/support decision before changing the proposal."
       },
       "conflictObservedSince": "2026-10-30T19:07:02.310580+00:00"
     },
@@ -464965,13 +464967,13 @@
       "checkedAt": "2026-11-17T18:00:05.616052+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:59:57.557429+00:00",
       "sourceBranchMismatch": false,
-      "owner": "On hold",
+      "owner": "geligeli / upstream maintainer",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "On hold",
+        "owner": "geligeli / upstream maintainer",
         "sourceHead": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
-        "disposition": "The ordinary AMD64 and ARM64 LLVM releases run without static glibc. The optional TLDK plugin in #17444 also linked with musl and exchanged TCP and UDP using the installed AMD64 runtime.",
-        "nextAction": "Revisit if a gVisor target needs static glibc for behavior the musl toolchain cannot provide."
+        "disposition": "No demonstrated gVisor need for static glibc; existing On hold decision.",
+        "nextAction": "Keep static-glibc work on hold; no rebase without a demonstrated target behavior unavailable through musl."
       },
       "conflictObservedSince": "2026-11-01T14:27:27.852694+00:00"
     },
@@ -464989,13 +464991,13 @@
       "checkedAt": "2026-11-17T18:00:05.619576+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:59:52.509088+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Bazel PR author and maintainers",
+      "owner": "dzbarsky",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "Bazel PR author and maintainers",
+        "owner": "dzbarsky",
         "sourceHead": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
-        "disposition": "Prepared fork rebase available",
-        "nextAction": "Follow the author’s revision of #30837 and the maintainers’ decision about prebuilt wrappers for cross-platform executors."
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Author/maintainers own source revision and cross-platform prebuilt-wrapper decision; preserve prepared fork aa90c0a75 without publishing into the author branch."
       },
       "conflictObservedSince": "2026-10-30T17:29:54.753875+00:00"
     },
@@ -465013,9 +465015,14 @@
       "checkedAt": "2026-11-17T18:00:05.627752+00:00",
       "mergeabilityCheckedAt": "2026-11-17T17:59:52.509086+00:00",
       "sourceBranchMismatch": false,
-      "owner": null,
+      "owner": "fmeum",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
-      "recordedFollowup": {},
+      "recordedFollowup": {
+        "owner": "fmeum",
+        "sourceHead": "aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
+        "nextAction": "Author fmeum owns conflict repair and release of file-backed shell API; root follows dependency availability, without adopting author branch ownership."
+      },
       "conflictObservedSince": "2026-11-16T18:58:36.762884+00:00"
     }
   ],
@@ -465934,10 +465941,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "bduffany",
+        "owner": "bduffany for policy; root for contributor source",
         "sourceHead": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "disposition": "Maintainer-owned API and support-policy consensus pending",
-        "nextAction": "Await the maintainer’s internal consensus on selection API and support policy. Preserve the explicit cache-identity requirement; do not substitute a mutable kernel track without an agreed contract."
+        "disposition": "Kernel-selection API/support consensus pending; no new support commitment authorized.",
+        "nextAction": "Keep explicit cache-identity requirement and known ARM64 unavailable-series correction; await API/support decision before changing the proposal."
       }
     },
     {
@@ -470148,7 +470155,7 @@
         "since": "2026-11-17T16:45:09.051335Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "pr:16745": {
@@ -473115,7 +473122,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -473124,7 +473131,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -473133,7 +473140,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -473142,7 +473149,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -473151,7 +473158,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -473160,7 +473167,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -473169,7 +473176,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -473178,7 +473185,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-17T17:42:43.236533Z"
+        "observedAt": "2026-11-17T18:47:41.720703+00:00"
       }
     }
   },
