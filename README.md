@@ -155,7 +155,11 @@ through Show history. The CI flake
 triage owner checks new observations, unrecovered failures and public flake
 reports for repeat symptoms. Look through passing builds as well as failed
 ones. Record service outages, cancellations and persistent failures separately
-from intermittent test failures. First-pass alone is advisory under #16791.
+from intermittent test failures. Check the current branch rules before describing a check as advisory. On November 17,
+master required `buildkite/first-pass/pr` and `buildkite/pipeline/pr` under
+[ruleset 27417624](https://github.com/gvisor/gvisor/rules/27417624). The legacy
+`buildkite/first-pass` context retains its separate advisory classification
+under #16791; this does not apply to the required `/pr` contexts.
 The queue shows the covered builds, backlog and provider errors. A recovered
 job is a lead until its original log identifies the failing operation.
 
