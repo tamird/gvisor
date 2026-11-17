@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: a1abc67ab244c54b443e083621248c6d88057452
+          ref: bdaa602ed84892f45f2d3b880c4a77ef97b96dbb
           persist-credentials: false
       - name: Run the tracker regression suites
         run: |
