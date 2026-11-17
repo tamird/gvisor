@@ -1,0 +1,82 @@
+name: Reanalyze exact systrap benchmark artifacts
+on:
+  push:
+    branches: [qualification/atomic-systrap-reanalysis]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  analyze:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {arch: amd64, artifact: '14373798624', digest: 0d494b02af08b8236fd7664578cae8b29ee0fb11c6d77ae387e9979d32efcb0b}
+          - {arch: arm64, artifact: '14369404218', digest: be8ebe015a441c954722f1b528cadba4f9ea4840c69ed4d34bd94472b5b9ac45}
+    env:
+      SOURCE: 5a397632d896158997ee7594866b33d741c56917
+      BASE: bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa
+      ARTIFACT: ${{ matrix.artifact }}
+      DIGEST: ${{ matrix.digest }}
+      QUAL_ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind plan and retrieve immutable original samples
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git show -s --format=%P HEAD)" = "$SOURCE"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/atomic-systrap-reanalysis.yml' ':!.github/qualification/clean-benchmarks.py'
+          w="$RUNNER_TEMP/atomic-systrap-reanalysis"
+          mkdir -m 700 "$w" "$w/results" "$w/bin"
+          cp .github/qualification/clean-benchmarks.py "$w/clean.py"
+          git switch --detach "$SOURCE"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          gh api "repos/tamird/gvisor/actions/artifacts/$ARTIFACT" > "$w/results/original-artifact.json"
+          python3 - "$w/results/original-artifact.json" <<'PY'
+          import json, os, sys
+          value = json.load(open(sys.argv[1]))
+          assert value['id'] == int(os.environ['ARTIFACT'])
+          assert value['name'] == 'atomic-systrap-native-' + os.environ['QUAL_ARCH']
+          assert value['workflow_run']['id'] == 44175301095
+          assert value['workflow_run']['head_sha'] == '5b5f92be3ca71e545a2f171a9a167069caf8f532'
+          assert value['digest'] == 'sha256:' + os.environ['DIGEST']
+          assert not value['expired']
+          PY
+          gh api "repos/tamird/gvisor/actions/artifacts/$ARTIFACT/zip" > "$w/original.zip"
+          printf '%s  %s\n' "$DIGEST" "$w/original.zip" | sha256sum -c -
+          python3 - "$w/original.zip" "$w/results" <<'PY'
+          import sys, zipfile
+          from pathlib import Path
+          names = ['base-benchmarks.txt', 'candidate-benchmarks.txt', 'commands.tsv', 'source.txt', 'base.txt', 'worker.txt']
+          with zipfile.ZipFile(sys.argv[1]) as archive:
+              for name in names:
+                  Path(sys.argv[2], name).write_bytes(archive.read(name))
+          PY
+          python3 "$w/clean.py" "$w/results" "$QUAL_ARCH"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with: {go-version: 1.27.3, cache: false}
+      - name: Compare cleaned samples with pinned benchstat
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/atomic-systrap-reanalysis"
+          cd "$w"
+          GOBIN="$w/bin" GOWORK=off go install golang.org/x/perf/cmd/benchstat@4febdb082b2ce2a0f9f6f496698aa5a2273279b8
+          go version -m "$w/bin/benchstat" > "$w/results/benchstat-version.txt"
+          "$w/bin/benchstat" "$w/results/base-benchmarks-clean.txt" "$w/results/candidate-benchmarks-clean.txt" | tee "$w/results/benchstat-clean.log"
+          cd "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          git diff --quiet --exit-code
+          git diff --cached --quiet --exit-code
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: atomic-systrap-reanalysis-${{ matrix.arch }}
+          path: ${{ runner.temp }}/atomic-systrap-reanalysis/results/
+          if-no-files-found: error
+          retention-days: 30
