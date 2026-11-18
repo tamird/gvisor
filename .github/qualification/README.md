@@ -1,0 +1,11 @@
+# AMD64 race sandbox diagnostics
+
+Exact unchanged source7eafb7afe2c0255c98392c2e701ec6aecad22b27 and parent1f33fe3003455db178b97f3b43d3a012f1611994. Preserve failed capability44224377125 and its archive14393785690 (SHA256260bc04d62fee15d7e3fc867a97bea109bdf2c05ae9a6a348d8a6fe48f35d899): all builds and readiness passed, but the first BASE sandbox exited before container start. No benchmark samples or candidate executions resulted. Interpreter metadata does not establish the cause.
+
+The dispatcher has no authenticated artifact-download mechanism available to support scripts. No permissions, credentials or signed URLs are added. The root authorized the smallest necessary canonical rebuild of race runtime filesets and the BASE static benchmark harness. No functional tests, lints or completed NORMAL sampling repeat. Expected preparation25–35minutes from the failed pilot's1583seconds; hard whole-plan110minutes plus180seconds termination grace, within the approved120minute race pilot scope.
+
+The original old-Go BASE race link mode remains unchanged. Both original coverage runsc/Sentry binaries replace their two corresponding slots in complete opaque releases. All existing pinned input/hash audits and ELF records remain. Native worker and image architecture gates and full frozen runfiles remain unchanged.
+
+Both task runtimes enable debug logging into separate task-owned result directories. This changes diagnostic arguments, so it establishes neither default-argument capability nor performance comparability. Each BASE startup/syscall suite retains its real failure, while candidate suites execute independently rather than being withheld by the BASE failure. Exact finite leaf parsers remain strict, and any failed suite keeps the overall job failed. Raw debug logs and a bounded Docker-unit journal excerpt cover only this exclusive disposable job. Cleanup restores Docker and the candidate source; command bounds total157seconds inclusive, within180second grace.
+
+After actual diagnosis, propose the smallest responsible default-argument capability or paired sampling action. Do not silently force BASE static, mask failed cases, infer an interpreter cause, or pool diagnostic timings with the NORMAL study.
