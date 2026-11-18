@@ -1,0 +1,32 @@
+{
+  "manifest_url": "https://go.dev/dl/?mode=json&include=all",
+  "files": [
+    {
+      "filename": "go1.27.3.src.tar.gz",
+      "os": "",
+      "arch": "",
+      "version": "go1.27.3",
+      "sha256": "6e7749035cf360f06b2575d162ea79df9fda8ef671889e5c375f8e50777f26bb",
+      "size": 35134035,
+      "kind": "source"
+    },
+    {
+      "filename": "go1.27.3.linux-amd64.tar.gz",
+      "os": "linux",
+      "arch": "amd64",
+      "version": "go1.27.3",
+      "sha256": "65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40",
+      "size": 70588678,
+      "kind": "archive"
+    },
+    {
+      "filename": "go1.27.3.linux-arm64.tar.gz",
+      "os": "linux",
+      "arch": "arm64",
+      "version": "go1.27.3",
+      "sha256": "a06e99309dbcbdca1a8ccd2282c3ee146e55930886e26b4f1193269587165f49",
+      "size": 67076044,
+      "kind": "archive"
+    }
+  ]
+}
