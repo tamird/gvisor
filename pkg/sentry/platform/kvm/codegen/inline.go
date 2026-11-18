@@ -82,6 +82,10 @@ func Read(path, arch string) ([]Inline, error) {
 	if err != nil {
 		return nil, err
 	}
+	return read(data)
+}
+
+func read(data *dwarf.Data) ([]Inline, error) {
 	reader := data.Reader()
 	var stack []scope
 	var records []Inline
@@ -107,10 +111,13 @@ func Read(path, arch string) ([]Inline, error) {
 		switch entry.Tag {
 		case dwarf.TagCompileUnit:
 			lines, err := data.LineReader(entry)
-			if err != nil || lines == nil {
-				return nil, fmt.Errorf("missing compilation-unit line table: %v", err)
+			if err != nil {
+				return nil, fmt.Errorf("compilation-unit line table: %w", err)
 			}
-			current = scope{files: lines.Files()}
+			current = scope{}
+			if lines != nil {
+				current.files = lines.Files()
+			}
 		case dwarf.TagSubprogram:
 			current.caller, _ = name(data, entry)
 			current.owner = current.caller
@@ -121,6 +128,9 @@ func Read(path, arch string) ([]Inline, error) {
 				return nil, err
 			}
 			if selected {
+				if current.files == nil {
+					return nil, fmt.Errorf("missing line table for selected inline owner %q", current.owner)
+				}
 				ranges, err := data.Ranges(entry)
 				if err != nil {
 					return nil, err

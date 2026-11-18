@@ -14,7 +14,13 @@
 
 package codegen
 
-import "testing"
+import (
+	"bytes"
+	"debug/dwarf"
+	"encoding/binary"
+	"strings"
+	"testing"
+)
 
 func TestValidateActualSite(t *testing.T) {
 	site := Site{Caller: kvm + ".seccompMmapHandler", Callee: kvm + ".(*machineAtomicPtr).Load", File: "pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go", Line: 42}
@@ -82,5 +88,43 @@ func TestNoSplit(t *testing.T) {
 				t.Fatalf("NoSplit() = %v, want accepted=%t", err, test.accepted)
 			}
 		})
+	}
+}
+
+// TestCompilationUnitWithoutLines distinguishes valid non-code units from
+// selected inline evidence that requires source positions.
+func TestCompilationUnitWithoutLines(t *testing.T) {
+	for _, selected := range []bool{false, true} {
+		// DWARF4 abbreviations: compilation unit, subprogram and inline entry,
+		// each with an inline string name. Only the first two have children.
+		abbrev := []byte{1, 0x11, 1, 3, 8, 0, 0, 2, 0x2e, 1, 3, 8, 0, 0, 3, 0x1d, 0, 3, 8, 0, 0, 0}
+		body := append([]byte{1}, append([]byte("unrelated"), 0)...)
+		if selected {
+			body = append(body, 2)
+			body = append(body, []byte(kvm+".seccompMmapHandler")...)
+			body = append(body, 0, 3)
+			body = append(body, []byte(kvm+".(*machineAtomicPtr).Load")...)
+			body = append(body, 0, 0)
+		}
+		body = append(body, 0)
+		var info bytes.Buffer
+		for _, value := range []any{uint32(len(body) + 7), uint16(4), uint32(0), uint8(8)} {
+			if err := binary.Write(&info, binary.LittleEndian, value); err != nil {
+				t.Fatal(err)
+			}
+		}
+		info.Write(body)
+		data, err := dwarf.New(abbrev, nil, nil, info.Bytes(), nil, nil, nil, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = read(data)
+		want := "no live DWARF inline records"
+		if selected {
+			want = "missing line table for selected inline owner"
+		}
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Fatalf("read(selected=%t) = %v, want %q", selected, err, want)
+		}
 	}
 }
