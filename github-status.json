@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T16:32:08.777561+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T15:19:38.271579+00:00",
+  "registryDate": "2026-11-18T16:29:11.251438+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -464043,7 +464043,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464052,7 +464052,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464061,7 +464061,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464070,7 +464070,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464079,7 +464079,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464088,7 +464088,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464097,7 +464097,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464106,16 +464106,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     "branch:benchmark-reliability": {
-      "changes-requested": {
-        "scope": "af131d57abcab71b361073a48efd8607959aa5ae",
-        "since": "2026-11-18T15:19:38.271579+00:00",
+      "contributor-review": {
+        "scope": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+        "since": "2026-11-18T16:29:11.251438+00:00",
         "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-11-18T15:19:38.271579+00:00"
+        "qualifier": null,
+        "observedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     }
   },

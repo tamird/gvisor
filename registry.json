@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T15:19:38.271579+00:00",
+    "updatedAt": "2026-11-18T16:29:11.251438+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -92703,27 +92703,31 @@
       "id": "branch:benchmark-reliability",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/benchmark-reliability-complete-20261118",
-      "head": "af131d57abcab71b361073a48efd8607959aa5ae",
-      "title": "Fix network benchmark readiness and reporting",
-      "url": "https://github.com/tamird/gvisor/compare/b29c8320a...af131d57a",
+      "ref": "review/benchmark-structured-output-20261118",
+      "head": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+      "title": "Correct network benchmark timing and reporting",
+      "url": "https://github.com/tamird/gvisor/compare/b29c8320a...d9908cfeb",
       "group": "bazel",
-      "status": "Agent work: contributor feedback being implemented",
-      "updatedAt": "2026-11-18T15:09:12.764966+00:00",
-      "summary": "Three qualified fixes propagate readiness errors and clean up Node clients/timing, report Iperf aggregate payload metrics, and reject Hey client errors. Exact integrated owner/consumer check passes; old component controls and original metric limits retained. No upstream PR yet.",
+      "status": "Contributor decision: qualified revised proposal",
+      "updatedAt": "2026-11-18T16:29:11.251438+00:00",
+      "summary": "Five commits restore Node timing, propagate readiness errors, report Hey JSON and Iperf CSV, and pin compatible producer images. Functional validation and final reviews passed. Native N1 runs establish integration only; no upstream PR yet.",
       "followup": {
         "owner": "root",
-        "sourceHead": "af131d57abcab71b361073a48efd8607959aa5ae",
-        "observedAt": "2026-11-18T07:42:24.729369+00:00",
-        "disposition": "Three qualified patches af131 passed integrated44258637313:exact29XML cases,zero skips/failures/errors,four consumers built,six original qualified blobs exact,clean source/index. Range-diff preserves two old patches and adds only Hey rejection, with website-only base refresh. Earlier component negatives and lints retained. Superseding contributor decision pending; no upstream PR.",
-        "nextAction": "Probe exact cached Hey template and Iperf CSV capabilities remotely before changing parsers. Preserve error visibility and metric semantics; implement structured reporting, validate and return an exact revised proposal. Node timer/history correction separated locally from readiness; no upstream publication.",
-        "recheckCondition": "Actual producer preflight evidence, revised source/qualification, or contributor decision.",
+        "sourceHead": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+        "observedAt": "2026-11-18T16:29:11.251438+00:00",
+        "disposition": "Validated revised proposal awaiting contributor approval",
+        "nextAction": "Consume the pending publication decision; if approved, verify exact head/base and open the prepared upstream PR, then follow its lifecycle.",
+        "recheckCondition": "Contributor responds, source/base changes, or a validation finding is reported.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
           "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08",
           "https://github.com/tamird/gvisor/actions/runs/44254674522",
-          "https://github.com/tamird/gvisor/actions/runs/44258637313"
+          "https://github.com/tamird/gvisor/actions/runs/44258637313",
+          "https://github.com/tamird/gvisor/compare/b29c8320a...d9908cfeb",
+          "https://github.com/tamird/gvisor/actions/runs/44342260353",
+          "https://github.com/tamird/gvisor/actions/runs/44333507177",
+          "https://github.com/tamird/gvisor/actions/runs/44337126320"
         ],
         "qualificationHistory": [
           {
@@ -92732,27 +92736,40 @@
             "disposition": "Exact two-commit fork source verified; independently qualified blobs preserved. Both final independent source reviews found no issues. Master is still the exact common base.",
             "nextAction": "On contributor approval, reverify source/base and open the exact approved PR; follow full CI and human feedback. Keep future runtime baseline explicitly bound to 1f33 rather than the dispatcher source parent.",
             "recheckCondition": "Contributor decision, upstream master/source change, review finding or publication result."
+          },
+          {
+            "state": "Superseded proposal; contributor requested changes",
+            "proposal": {
+              "head": "af131d57abcab71b361073a48efd8607959aa5ae",
+              "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+              "run": 44258637313,
+              "plan": "d7331492012e0a3c760d009cdef3259a5ca0e913",
+              "state": "passed",
+              "owner": "tcp_conflict",
+              "supersedingDecisionSent": true,
+              "artifact": 14408050244,
+              "artifactDigest": "565195f1fd2d50341d72c1dbb2dfac7627a2c20825b802c41d0bf671fbc52434"
+            }
           }
         ],
         "integratedProposal": {
-          "head": "af131d57abcab71b361073a48efd8607959aa5ae",
+          "head": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
-          "run": 44258637313,
-          "plan": "d7331492012e0a3c760d009cdef3259a5ca0e913",
-          "state": "passed",
-          "owner": "tcp_conflict",
-          "supersedingDecisionSent": true,
-          "artifact": 14408050244,
-          "artifactDigest": "565195f1fd2d50341d72c1dbb2dfac7627a2c20825b802c41d0bf671fbc52434"
+          "run": 44342260353,
+          "plan": "8a59640934f1a6adab3d4ef104e03ca03f33478f",
+          "state": "passed; publication approval pending",
+          "owner": "root",
+          "artifact": 14444468589,
+          "scope": "Functional integration; no throughput accuracy, Sentry runtime or statistical performance claim."
         },
-        "curatedAt": "2026-11-18T15:09:12.764966+00:00",
+        "curatedAt": "2026-11-18T16:29:11.251438+00:00",
         "submissionPolicy": {
           "source": "b29c8320a862a77f4c55894d00c56eb5850c8066",
           "url": "https://github.com/gvisor/gvisor/blob/b29c8320a862a77f4c55894d00c56eb5850c8066/CONTRIBUTING.md",
           "rule": "Multiple commits are permitted when independent logical units that can be applied separately. Current policy was verified; no policy-change date is asserted.",
-          "decision": "The af131 proposal received requested changes and its pending approval request is settled. It is not approved for upstream publication; a validated revised proposal requires new explicit approval."
+          "decision": "Current five-commit revised proposal is qualified and awaits explicit approval to open one upstream PR; the older af131 proposal remains settled as changes-requested."
         },
-        "technicalOwner": "tcp_conflict",
+        "technicalOwner": "root",
         "contributorFeedback": {
           "observedAt": "2026-11-18T15:09:12.764966+00:00",
           "reviewedHeads": [
@@ -92767,10 +92784,13 @@
           ],
           "preparedLocalCommits": [
             "5b9bd275ff5cbf983664478c9b7cdde4bb18328a",
-            "b465ccd80edcd896d1288a65fff447bd4a0d69da"
+            "b465ccd80edcd896d1288a65fff447bd4a0d69da",
+            "322cb2fbb205272664a20aaa1c600520690e79a5",
+            "8f8a2befc5be6aecfe73eab01b1b0039baaf2078",
+            "d9908cfeb81ccdaa26a660403273c154ae7c37c6"
           ],
           "historyConfirmed": "ffa9a715aaf4 removed Node StopTimer while retaining stop-before-parsing comment; GetNativeContainer now precedes ResetTimer.",
-          "state": "Implementation and actual producer probe pending; no revised-source qualification or upstream approval inferred"
+          "state": "Requested changes implemented and qualified; final reviews passed; explicit upstream publication approval pending."
         }
       },
       "settledReviews": [
@@ -92797,9 +92817,26 @@
           "note": "Tamir requested machine-readable Hey/Iperf reporting; verify historical Node StopTimer removal, split its restoration and move ResetTimer immediately before client.Run. Earlier three-commit proposal is not approved for upstream publication."
         }
       ],
-      "contributorChangesRequested": {
-        "head": "af131d57abcab71b361073a48efd8607959aa5ae",
-        "url": "https://github.com/tamird/gvisor/commit/af131d57abcab71b361073a48efd8607959aa5ae"
+      "refinement": {
+        "before": {
+          "head": "af131d57abcab71b361073a48efd8607959aa5ae",
+          "base": "b29c8320a862a77f4c55894d00c56eb5850c8066"
+        },
+        "after": {
+          "head": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+          "base": "b29c8320a862a77f4c55894d00c56eb5850c8066"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+        "baseHead": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+        "url": "https://github.com/tamird/gvisor/compare/b29c8320a...d9908cfeb",
+        "title": "Correct network benchmark timing and reporting",
+        "body": "Static HTTP and Node benchmarks discarded readiness errors and could run their clients before a server was ready. Fail on those errors. Restore the Node StopTimer removed in ffa9a715aaf4, and move ResetTimer immediately before client.Run so client setup, reporting and cleanup stay outside the measured interval.\n\nUse Hey’s JSON template and pin the verified v0.1.5 producer. Reject producer-declared request errors before publishing its request rate and average latency; intentional HTTP error responses remain valid workloads.\n\nUse Iperf CSV with the exact reported byte count and bit rate. Pin Iperf 2.1.9 on Ubuntu Noble because the previous Jammy/Iperf 2.1.5 image did not emit aggregate CSV reports. Require complete stream and aggregate byte accounting, and parse stdout separately while retaining stderr. MB/s uses actual payload divided by the stopped benchmark interval, including client container execution. The bandwidth metric preserves Iperf’s reported aggregate interval rate; it is not physical wire throughput, and rounded CSV interval endpoints are not used to reconstruct it.\n\nThese changes alter benchmark timing, payload accounting, producer images and output precision. Before/after runtime comparisons must use the same repaired harness and identical producer images on both sides. Historical differences cannot be attributed solely to parsing. The native one-iteration checks establish functional integration; the anomalous short Iperf aggregate rate is retained as producer output, not throughput validation.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Approve opening one upstream PR containing five independent logical commits. Machine-readable producer probes, 32 uncached tool cases, five consumer builds, eight Iperf and four HTTPD N1 leaves passed. Node, Ruby and Nginx were built but not run. C++ lint reused with unchanged inputs. No physical throughput or statistical performance claim.",
+        "requestedAt": "2026-11-18T16:29:11.251438+00:00"
       }
     },
     {
@@ -127664,5 +127701,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T15:19:38.271579+00:00"
+  "updatedAt": "2026-11-18T16:29:11.251438+00:00"
 }
