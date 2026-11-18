@@ -1,0 +1,20 @@
+{
+  "syntax": "passed",
+  "exactCategoryCounts": {
+    "httpd": 42,
+    "node": 4,
+    "ruby": 4,
+    "redis": 20
+  },
+  "httpdConcurrencyCounts": [
+    9,
+    9,
+    6,
+    9,
+    9
+  ],
+  "redisZeroLatencyAccepted": true,
+  "nonfiniteOrZeroRateRejected": true,
+  "fixtureScope": "metadata parser only; no project build/test or runtime execution",
+  "heyRoundedZeroLatencyAccepted": true
+}
