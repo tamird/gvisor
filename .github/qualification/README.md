@@ -1,0 +1,17 @@
+# Native ARM semaphore availability preflight
+
+Preparation only. Root review is required before dispatch. Source09b196bf630b2a6be83ab28e6c7611f7e766a023 and parentc4428378b2cb54c3c94a5c36aaedcbbcc3447513 remain unchanged. Use trusted1748 qualification.yml with architecture=arm64: ubuntu-24.04-arm, QUAL_CONFIG=aarch64, canonical Bazel9.3.1 ARM download SHA10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366.
+
+The preflight proves actual worker/native host ELF and compiler architecture, passwordless root capabilities, empty SystemV semaphore inventory, real native IPC namespace creation, Docker server architecture/runc availability, dropped UID/GID65534 traversal/execution under a unique task-owned public /tmp root, and the existing exited-leader/stubborn-descendant cleanup gate. No Docker objects or configuration are created or changed. No package installation or AppArmor change occurs.
+
+Canonical Bazel info --config=aarch64 records the workspace. A bounded canonical query resolves exactly the native Go owner, native C++ owner, and three maintained systrap_directfs ordinary/save/save_resume labels. Query performs loading, not compile or test actions. Cold external dependency loading can exceed75seconds; that is an actual preflight failure, not grounds for a larger budget. No no-CLI bool_setting flag is passed.
+
+This is host and label availability evidence only. It does not execute native syscall cases, build/install a Sentry runtime, prove configured transition/action closure, or establish wrapper XML/restore outputs. Those remain the subsequent missing-only native-ARM functional gate. Stage commands/logs/statuses and any available prefix receipts survive later failure. No GTest/BEP success is manufactured for commands that are not tests.
+
+Four helpers are byte-identical to the reviewed semaphore syscall protocol. The process fixture creates only its owned disposable group and requires complete quiescence; cleanup refuses task-directory removal if its marker remains. Public probe contents are removed, the empty task root is removed, SystemV IPC is read again without deleting any IPC, Bazel shutdown and clean-source checks are bounded. Signal cleanup ignores repeated TERM/INT.
+
+The plan deadline is240seconds plus60seconds grace:5minutes inclusive after the generic dispatcher prepares tooling. Listed phase caps total215seconds and cleanup caps46seconds. Stage TERM grace remains inside the240second global body. Cold cost is unknown. The unchanged dispatcher's checkout/tool-download/upload phases are outside this timeout; its330minute job cap means a5minute whole-workflow guarantee cannot be claimed without changing the trusted workflow, which this plan does not do.
+
+No source/checker/lint/nativeAMD/SentryAMD tests are repeated. The separately owned AMD race run44400554546 and its qualification ref remain untouched. The ARM CI-only ref is qualification/semaphore-arm-availability-20261118; no review/upstream ref, DCO trailer, notification, or atomic publication operation belongs to this plan.
+
+First preflight44408135392 verified all host/privilege/IPC/path/group/Bazel-info gates, then the unconfigured query rejected build:aarch64. Remove that build-only config only from query. Native architecture assertions and configured info remain; query still proves labels only. The failed receipt and all original8files are retained. No cap or scope change.

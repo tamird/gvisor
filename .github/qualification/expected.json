@@ -1,0 +1,26 @@
+{
+  "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+  "base": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
+  "trustedDispatcher": "1748f943694d376fd26123b11009ab01ffa9b597",
+  "architecture": "arm64",
+  "configuration": "aarch64",
+  "runner": "ubuntu-24.04-arm",
+  "bazelVersion": "9.3.1",
+  "bazelDownloadSHA256": "10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366",
+  "labels": [
+    "//pkg/sentry/kernel/semaphore:semaphore_test",
+    "//test/syscalls/linux:semaphore_test",
+    "//test/syscalls:semaphore_test_runsc_systrap_directfs",
+    "//test/syscalls:semaphore_test_runsc_systrap_directfs_save",
+    "//test/syscalls:semaphore_test_runsc_systrap_directfs_save_resume"
+  ],
+  "unchangedHelperSHA256": {
+    "exec_root_probe.py": "abbfa3aec30895d4930a5aa132c6adf33d93498a15584a664b3cf7d3f48df3f6",
+    "group_preflight.py": "bc4ee8f2f9ed365236a8fe29d00a92cffc666cba689b1bfc600b76fff8d0766f",
+    "process_group.py": "289e8a77a0ed8e1eb6eccfbfdf49770196a52d0d5b3b430bcecc36f4b7488003",
+    "prerequisites.py": "7dee7e590e3352c01ee2b27b2e3c178595011049624a13d1061da70896acc8d0"
+  },
+  "reuse": "Existing09b source/nogo/nativeAMD/SentryAMD receipts retained; no ARM capability inferred. Existing AMD race44400554546 has separate owner/ref and is untouched.",
+  "proposedQualificationRef": "qualification/semaphore-arm-availability-20261118",
+  "noSourceReviewRefUpdate": true
+}

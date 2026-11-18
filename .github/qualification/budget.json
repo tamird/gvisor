@@ -1,0 +1,25 @@
+{
+  "bodySeconds": 240,
+  "cleanupGraceSeconds": 60,
+  "inclusivePlanSeconds": 300,
+  "listedPhaseCapsSeconds": 215,
+  "listedCleanupCapsIncludingKillGraceSeconds": 46,
+  "expectedSeconds": null,
+  "coldQueryCostUnknown": true,
+  "genericDispatcherPreparation": "Trusted existing330m workflow checkout/tool download and final upload are outside plan timeout; no claim whole workflow finishes in5minutes. Plan body+cleanup alone <=5min.",
+  "phaseCapsSeconds": {
+    "sourceIdentity": 10,
+    "nativeHost": 15,
+    "dockerReadiness": 15,
+    "ipcCapabilities": 10,
+    "ipcNamespace": 5,
+    "droppedActorExecution": 35,
+    "ownedGroup": 15,
+    "bazelVersion": 10,
+    "bazelWorkspace": 20,
+    "ownerQuery": 75,
+    "queryOutput": 5
+  },
+  "noBuildTestInstall": true,
+  "cleanup": "15+5 Bazel shutdown;2*(3+1) public probe/root removal;5+1 IPC readback;2*(5+1) clean-tree checks =46seconds; signal-safe60second grace. Unproved owned-group marker refuses competingcleanup."
+}
