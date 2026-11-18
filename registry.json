@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T05:53:00.594117+00:00",
+    "updatedAt": "2026-11-18T06:58:20.703035+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45,7 +45,494 @@
     "registryDate": "2026-11-01",
     "branchCleanup": {
       "lastCompletedAt": "2026-11-13T03:43:50+00:00",
-      "lastResult": "Removed 148 local branches and 67 fork branches. Local branches went from 2,704 to 2,556 and fork branches from 3,676 to 3,609. The 227 open upstream PR heads and 1 open fork PR head all matched their published branches. refs/branch-cleanup/archive at 3f221e657 preserves 177 distinct tips and all 148 original local reflogs."
+      "lastResult": "Removed 148 local branches and 67 fork branches. Local branches went from 2,704 to 2,556 and fork branches from 3,676 to 3,609. The 227 open upstream PR heads and 1 open fork PR head all matched their published branches. refs/branch-cleanup/archive at 3f221e657 preserves 177 distinct tips and all 148 original local reflogs.",
+      "owner": "root",
+      "observedAt": "2026-11-18T06:58:20.703035+00:00",
+      "nextAction": "Await explicit authorization for the exact 79 merged fork refs below. No deletion executed. On approval, select only still-eligible allow-listed refs, archive first and use canonical live protections plus atomic exact leases. The full retention sweep beyond merged-source refs remains due.",
+      "recheckCondition": "Contributor approval/decline, selected ref/head change or live protection change.",
+      "pendingApproval": {
+        "status": "pending",
+        "manifestSHA256": "e6db36dbf362bacd1a883a512a42a39530cb974ce046f708e5137cce88e35ab9",
+        "targets": [
+          {
+            "scope": "fork",
+            "ref": "aio-short-submit",
+            "head": "1b27c4020492a36a499db03f9bbf7cbff116d7e9",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "benchmark-umbrella-exports-bcr",
+            "head": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "bwrap-sudo-id-bounds",
+            "head": "a51fb04e5f49a367435fa87e9b7a302c6150f9fb",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "checklocks-seccheck-state",
+            "head": "2a057f2bba3e94fc57ac86911b275febd284a176",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "coretag-unit-selection",
+            "head": "9da6f49c82abc45876590cffb68f38ece09ef76a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "cos-metadata-http-errors",
+            "head": "c1ae7f4705ba582853fb8c8179c7a2019ebd268a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "delivery/metricsviz-time-offset-bounds",
+            "head": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "file-lock-wait-registration",
+            "head": "f292312cc3bb1516813e54b9438c839481c6e9f7",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/http-readiness-cancellation",
+            "head": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/licensecheck-codeload",
+            "head": "e50192311bce590086f82cb4c955c1c010c7628a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/nested-runtime-host-cgroupns",
+            "head": "328b512656744bb12ce870146f4d3aa23f7ffb15",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/netstack-multicast-capability",
+            "head": "b584529cbf05e11ed7ba8f59b2706c554bf78250",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/rack-reorder-test",
+            "head": "792659c3733210dd8943e52dcd64a47b467791cd",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/remove-obsolete-basic-ruby",
+            "head": "c7cd9df3d78a1f7615a0bc72241370ed59fb6ff5",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/rseq-periodic-interrupt",
+            "head": "3a7fe444c2169cf136de4305d4670ea45f4e869b",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/sample-tcp-port-parseuint",
+            "head": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/socket-stress-port-fixtures",
+            "head": "89158277b62e30e7554108567bdf28510507c0c9",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/tcp-receiver-dsack",
+            "head": "c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "fix/tpu-timeout-parseuint",
+            "head": "72b4500d37af524b19dfd6acd11655ffb83da529",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "go-static-portable-tools",
+            "head": "76919b76075ddd8031cd0f35b42f5dc94f51feb7",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "hostinet-port-range",
+            "head": "29eff9a55b6ae52f47aa0b977276ac67d298264f",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "image/benchmark-alpine-grouped",
+            "head": "0a730fd58273aac0d337929b69e2fbf884ffa78c",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "lazy-file-lock-trees",
+            "head": "710b3f2e976929d4455fe5bc3c6587740a4879f3",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "llvm-parser-targets",
+            "head": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "nftables-comment-match",
+            "head": "a6df5d5df1fa74145beaeefd57646258a317ca5d",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/declare-x-text-direct",
+            "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/fd-stale-lock-preconditions",
+            "head": "68eb2f443ab14dae2cf23a04a3662fe3187e38be",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/nogo-native-test-runner",
+            "head": "5a25e47ce2003fb203a9cfa90e0451cfbe054b43",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/packet-mmap-host-pages",
+            "head": "dec1b82660c2974f5b98b2c5ab88d0857b34adb8",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/syscall-libc-interfaces",
+            "head": "1f613440f059fce4bb0dad6d2b4c1425c07f9f35",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/tcp-keepalive-locks",
+            "head": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/tcp-maxseg-connected",
+            "head": "14eed8da0602b906cd9641cbaec967e3cc0a2674",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "proposal/tcp-yield-after-queue-pass",
+            "head": "5d6ca5025d9dfe7e1dff121d55ee5a6027338237",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "qualification/proc-immutable-pid-dirs-synthetic",
+            "head": "7b4ac67e907d150e6b36f8c9f628eb55cc84cb73",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/java21-unref-descriptor-count",
+            "head": "6dd410ba8616363e892d973e770ba8e59d4e4a08",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/native-release-archives",
+            "head": "8469c237d9f493a9183f50ea7de304cd13fcf91a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/packetimpact-debug-log-names",
+            "head": "4dad1e4b9741b815b3332d75994ee01224602912",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/proc-umounter-process-handle",
+            "head": "c218182e12bb4a117a5bdccebe24dd919a21b82c",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/state-clear-used-decode-storage",
+            "head": "2effeef1023e837ec9ccb143b856ce9c3648d498",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/state-fresh-decode-benchmark",
+            "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/state-graph-root",
+            "head": "5d1cdcc112de9b8e93c8791a9318dff3fffbf7b9",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/tcp-eifel-first-repair",
+            "head": "74952bf99e98a628b5621812118bd24b381168b7",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/tcp-soft-error-test-lock",
+            "head": "2d4356b749b34804db0a6aff306724d2cb9aff2a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/timekeeper-updater-locks",
+            "head": "b40bb52d45af39bf7e4bdc2c337e2568d728a4e8",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "research/tun-persist-reference-v2",
+            "head": "b616271679703669920b1f2b7fff567ccd8ff069",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "restore-basic-image-source-contexts",
+            "head": "dc6c326b80583ea024cccae2cd49d88aa9f44253",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/address-merged-review-notes",
+            "head": "93a31792b187b722bd9352ce987732e39b92010a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/bazel-9-3-1",
+            "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/bcr-download-mirror",
+            "head": "125585fde855513c1ab42e0574e196e0350030d3",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/eventfd-preserve-host-counter",
+            "head": "d94cb4a5563d03e38f0b0d5e62ee1744c091cfbb",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/fdnotifier-epoll-registration",
+            "head": "9f4158394611d1b23f1453ef511048cea7b2bc04",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/fifo-reader-hangup",
+            "head": "d6786915fa60f2dc04fc6969fc8ebf3274b39328",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/gofer-restored-device-syscall",
+            "head": "38104a3919e6ba9f3292056c2d22ebfdf57feb82",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/issue-reviver-native",
+            "head": "3f9a9984a26daaf62abdb8498b98a2499e7e132f",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/kernel-14345-exit-notify",
+            "head": "7a75a64009c25e96b719c5b8e9538253344b6b46",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/kernel-14345-parent-death",
+            "head": "ff770a72187cd725f6679dc0246062ce1b72fe8b",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/kernel-14345-signal-delivery",
+            "head": "94cbcd44baf8e25bc87edabd68338ee4aab43dc8",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/mixed-owner-getlk",
+            "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/nginx-checkpoint-http-readiness",
+            "head": "5fc68d2b9e7f63884283293113f4d13933475667",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/overlay-close-lifetime",
+            "head": "a97d208dfc275838f04f18c7367b5b88b7f67260",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/overlay-file-cache-guards",
+            "head": "05eca6e0c2d6d3b1c2826939d8a150c98b27935d",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/portforward-readiness-imports",
+            "head": "be98bb4a72dbdbbda89ae07c87d05d1167a484af",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/portforward-stock-images",
+            "head": "a57c3a82dc51c3b6e60e5844d5eecd0ac49a160b",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/proc-creation-locking",
+            "head": "b039155d0869ebda7eb3973a6f8b79fab4f6d001",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/resolver-official-image-current",
+            "head": "a869d645affee8384c7e6b063a0ebec9f1a64360",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/rules-go-reproducible-coverage",
+            "head": "6f2f1f4f70be77c329e2be8d92eb5491b238392a",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/runner-xml-collation",
+            "head": "1cbd8021a9c1dac5ed3d0cbb286477c29d06aca9",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/signalfd-mask-wakeup",
+            "head": "3257b4b2a6481c604f656db18c74456b0355f38b",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/state-preserve-negative-zero",
+            "head": "1f4905b21f956027a76ded34b96584e00f9269f1",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/state-wire-storage-current",
+            "head": "3c6804639b39ceeb6dd55b49d25a905794cbece1",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/task-foreign-fd",
+            "head": "d2de4e5fe1ed5541e75b58493525cf753bd3f865",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/tcp-tail-probe-window-update",
+            "head": "77908db33f4f1af20d5b1c88e8805e3811b1ded5",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "review/udp-recv-icmp-wakeup",
+            "head": "cf2a26737bd6a255ef74c136a3c6fd06f5a5ab30",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "sandbox-python-null-netns-lifetime",
+            "head": "ca87e0a2feca78a38602066c0c70a8c8b78c3133",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "systrap-test-glibc-rseq",
+            "head": "7cf0ed8044e738fa01709f9ec5fd213a4a26b165",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "tcp-cookie-sack-negotiation",
+            "head": "0b06fce451fe2bff770f870740690f3e1772b859",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "tcp-cubic-epoch",
+            "head": "0ef892cc517f8e53e52f00ca53f76d392578c085",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "tcp-proxy-port-bounds",
+            "head": "641a5c300750a72805d4cacbcd71c92f91f5d46f",
+            "reason": "merged PR at exact upstream-reachable tip"
+          },
+          {
+            "scope": "fork",
+            "ref": "trace-assertions",
+            "head": "06a73ca10996bd195ddedfe9dcca489c03460923",
+            "reason": "merged PR at exact upstream-reachable tip"
+          }
+        ],
+        "blocker": "Automatic approval review rejected remote branch deletion because explicit user authorization was missing. The operation was rejected before execution.",
+        "canonicalPlannerBlob": "eed606911a9771352608ce531cda8c78f06051e2",
+        "executor": "apply-approved-merged-branches.py binds exact manifest and fresh canonical eligibility; no local branch selected."
+      }
     }
   },
   "groups": [
@@ -33433,12 +33920,12 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T05:53:00.594117+00:00",
+      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
       "summary": "Keep the congestion threshold across repeated timeouts without an advancing ACK and when a timeout interrupts fast recovery. Master already preserves cwnd and ssthresh on an idle zero-window probe. The amendment drops the duplicate early return and retains both TestZeroWindowSend assertions. Five original XML files contain 20 passing records with zero skips.",
       "followup": {
         "owner": "tcp_conflict",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "observedAt": "2026-11-18T05:53:00.594117+00:00",
+        "observedAt": "2026-11-18T06:58:20.703035+00:00",
         "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
         "nextAction": "Complete costed statistical qualification of remaining broad network categories and loss cases; correct separately the existing benchmark measurement and readiness defects through scoped source proposals. Preserve prior failed pilots and actual measurements.",
         "evidence": [
@@ -33496,13 +33983,16 @@
         },
         "categoryPilot": {
           "owner": "tcp_conflict",
-          "failedRun": 44238122262,
-          "source": "b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
+          "run": 44250351891,
+          "source": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
           "runtime": "1f33fe3003455db178b97f3b43d3a012f1611994",
-          "state": "Recovery preparation; not dispatched",
-          "disposition": "Prior33HTTPD leaves and4native controls demonstrate completed execution/finite summaries, not request-valid capability: raw status/error counts were not retained. High group deadline interrupted ninth case.",
-          "nextAction": "Review corrected diagnostic recorder/parser and bounded180m plan capturing all70Sentry leaves,4native light controls and1native high control. Reject calibration request errors and unknown raw accounting; preserve all original receipts. New33+4validity rechecks cost about108observed seconds plus about2.23GB static bodies; no statistical extension.",
-          "recheckCondition": "Stable executable/peer review and root authorization, exact new dispatch receipt, raw validity or budget evidence."
+          "state": "Workflow failure retained; all70 actual leaves consumed",
+          "disposition": "61 Sentry leaves request-valid:33HTTPD+4Node+4Ruby+20Redis. All five native controls valid. All nine Sentry HTTPD concurrency1000 cases had391\u2013665 actual client timeout errors per1000 despite finite QPS. Peer-reviewed retained-raw Redis LPUSH setup-row accounting corrected five false parser rejections without reruns. No TCP candidate ran.",
+          "nextAction": "Qualify minimal Hey reporting correction separately. Prepare bounded native/BASE diagnosis of representative existing high-concurrency HTTPD case using actual server config/log/resource evidence before choosing timeout/config changes; no all-category retry or statistical launch.",
+          "recheckCondition": "Hey qualifier outcome, complete diagnostic executable review/authorization or actual new baseline evidence.",
+          "evidence": [
+            "https://github.com/tamird/gvisor/actions/runs/44250351891"
+          ]
         }
       },
       "evidence": [
@@ -37163,13 +37653,13 @@
       "group": "bazel",
       "status": "open",
       "summary": "All four normal and race coverage binaries built and ran on native AMD64 after the rebase onto ae0f8d590. Both Sentry binaries mapped 9,195 kernel source positions, with no positions from the excluded packages. The rebase preserved the reviewed changes across all nine files.",
-      "updatedAt": "2026-11-18T05:53:00.594117+00:00",
+      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
       "followup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "observedAt": "2026-11-18T05:53:00.594117+00:00",
+        "observedAt": "2026-11-18T06:58:20.703035+00:00",
         "disposition": "Candidate7eafb7af default-argument RACE capability is verified on AMD44240006357 (8leaves) and ARM44240001660 (3portable leaves), no skips/failures; debugfalse, reportunset, frozen products/images and clean restoration. This is candidate capability only: original BASE re-execution remains unusable, so paired RACE performance is unavailable. Non-race COVERAGE studies retain ARM startup+0.82%p=.006 and pipe/thread ns/op-1.55%p=.002; ordinary uninstrumented parity remains a separate historical scope.",
-        "nextAction": "Consume corrected bounded report/KCOV pilot44246691602. Preserve both0-workload failures and exact historical comparisonBasebf5 for44190856301; candidate parent remains1f. Complete source-bound feature-cost assessment and exact amendment proposal after the gate, retaining ARM coverage startup cost and original unavailable paired RACE baseline.",
+        "nextAction": "Own terminal consumption of retention recovery44254336532 and source-bound full coverage delivery assessment. Preserve both historical functional comparisonBasebf5 and current candidate parent1f; retain ARM startup cost and unavailable paired RACE baseline. Do not compare old unwrapped BASE time with wrapped observations.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -37193,7 +37683,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44240001660",
           "https://github.com/tamird/gvisor/actions/runs/44241963234",
           "https://github.com/tamird/gvisor/actions/runs/44246691602",
-          "https://github.com/tamird/gvisor/actions/runs/44246313719"
+          "https://github.com/tamird/gvisor/actions/runs/44246313719",
+          "https://github.com/tamird/gvisor/actions/runs/44254336532"
         ],
         "mergeable": "CONFLICTING",
         "recheckCondition": "Owned runs become terminal, new performance/review evidence, source changes or contributor decision.",
@@ -37247,23 +37738,19 @@
         },
         "reportGate": {
           "owner": "coverage_security_review",
-          "currentRun": 44246691602,
+          "currentRun": 44254336532,
           "source": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
-          "plan": "69344df54aa5f0d78a86149583c3a3aab513554a",
+          "plan": "78bcae1e7164ec502e5c6148651e255dda882144",
           "state": "dispatched",
-          "scope": "Six matched100-repeat NORMAL coverage observations; expected35\u201350min, hard117m+180s. Not statistical or RACE qualification.",
+          "scope": "All six matched100-repeat observations under one shared support-only path-relocation wrapper; expected35\u201350min, hard120min inclusive. No runtime ELF/sidecar/source/permission or statistical change.",
           "retainedFailures": [
-            {
-              "run": 44241963234,
-              "kind": "Actual7e runtime builds/versions/symbolization passed; undeclared unsuffixed harness targets stopped execution before workloads."
-            },
-            {
-              "run": 44246313719,
-              "kind": "Support staging failed on non-flat run.sh before source verification/tools/builds/workloads."
-            }
+            44241963234,
+            44246313719,
+            44246691602
           ],
-          "correction": "Exact source-generated directfs targets queried before rebuild; early per-arm runtime archives; flat regular entrypoint and byte-identical support verified against exact dispatcher guard.",
-          "recheckCondition": "Terminal exact run, query/identity/output/coverage validation failure or new source decision."
+          "observationLimit": "Last executed BASE reportoff/reporton each passed100 actual Uname iterations, but canonical successful cleanup removes generated profiles before post-run parsing. This does not prove report generation failed; candidate/KCOV were not reached.",
+          "correction": "Only exact generated coverage-report path relocated outside deleted log tree; original/final/no-flag argv and same ELF/sidecar hashes audited. All six rerun under common wrapper. Its launch overhead and omitted profile unlink are explicit timing limits.",
+          "recheckCondition": "Actual terminal artifact/argv/profile/XML/identity/cleanup result."
         }
       },
       "evidence": [
@@ -49407,7 +49894,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-18T05:53:00.594117+00:00",
+      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49446,9 +49933,9 @@
       "followup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "observedAt": "2026-11-18T05:53:00.594117+00:00",
+        "observedAt": "2026-11-18T06:58:20.703035+00:00",
         "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
-        "nextAction": "Consume exact ordinary-gofer traversal recovery44245490184 (plan110b9cab85eb86169316d59f4151f0fbc02e07b4) within75m+180s and strict old-image/full-harness/runtime gates. Source review is now independently complete at exact1b. Originalc7 remains OPEN/CONFLICTING; the approved scope reply has no new maintainer response. Finish remaining performance limits and obtain exact contributor amendment decision before replacing the PR.",
+        "nextAction": "Prepare the remaining relevant broad filesystem/startup variant capability/cost screen and bounded balanced statistical plan before launch. Preserve successful N1 capability and all earlier failed traversal receipts; no physical TPU/ARM/statistical approval is claimed. Root handles current-base publication readiness and exact amendment decision after qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49467,7 +49954,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44237348330",
           "https://github.com/tamird/gvisor/actions/runs/44241402550",
           "https://github.com/tamird/gvisor/actions/runs/44241613500",
-          "https://github.com/tamird/gvisor/actions/runs/44245490184"
+          "https://github.com/tamird/gvisor/actions/runs/44245490184",
+          "https://github.com/tamird/gvisor/actions/runs/44249884428"
         ],
         "recheckCondition": "Exact recovery terminal evidence, new maintainer scope reply, source/conflict change or contributor decision.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
@@ -49502,6 +49990,21 @@
           "scope": "Complete six-file diff plus actual device client/server consumers, ownership, flags and test selection",
           "finding": "No further concrete source issue; no execution/performance approval claimed.",
           "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        },
+        "capabilityResult": {
+          "run": 44249884428,
+          "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+          "plan": "08e1d357c42bc3f170c5c078a5acbcb1f8dfebae",
+          "status": "verified success",
+          "artifact": 14403976729,
+          "artifactSHA256": "7dcb30b70a0cec48be7d6a1b087a2fcbc6ecf43be08f4b3036bb270d867a9660",
+          "scope": "Four N1 existing StartupEmpty/RubyNoOp leaves across BASE/candidate; no effect inference. Actual mapped-actor probe, all executable access, real Docker launches, strict prior images/full harness/both9-member runtimes and clean source/Docker/public-root removal verified."
+        },
+        "baseObservation": {
+          "head": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "prior": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "observedAt": "2026-11-18T06:58:20.703035+00:00",
+          "verifiedRange": "Only website/_includes/footer-links.html changed; prior source/results retain exact bindings. Local merge-tree output is not hosting-service mergeability evidence."
         }
       },
       "dcoAmendment": {
@@ -91065,7 +91568,7 @@
       "followup": {
         "owner": "tcp_conflict",
         "sourceHead": "b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
-        "observedAt": "2026-11-18T05:53:00.594117+00:00",
+        "observedAt": "2026-11-18T06:58:20.703035+00:00",
         "disposition": "Source b5933c08 is qualified by original builds/negative controls/lints plus successful44231839538 repaired positives. All6 printed leaves are finite and leave no containers; compiled harness hashes match the original run. Initial8-versus4 calibration-client harness failure remains retained. Two independent final source reviews found no issues.",
         "nextAction": "Follow the contributor decision and full lifecycle of branch:benchmark-reliability; keep separate original qualification receipts and historical metric definitions.",
         "recheckCondition": "Positive controls become terminal, review findings, category pilot or contributor decision.",
@@ -91086,16 +91589,19 @@
         ],
         "categoryPilot": {
           "owner": "tcp_conflict",
-          "failedRun": 44238122262,
-          "source": "b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
+          "run": 44250351891,
+          "source": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
           "runtime": "1f33fe3003455db178b97f3b43d3a012f1611994",
-          "state": "Recovery preparation; not dispatched",
-          "disposition": "Prior33HTTPD leaves and4native controls demonstrate completed execution/finite summaries, not request-valid capability: raw status/error counts were not retained. High group deadline interrupted ninth case.",
-          "nextAction": "Review corrected diagnostic recorder/parser and bounded180m plan capturing all70Sentry leaves,4native light controls and1native high control. Reject calibration request errors and unknown raw accounting; preserve all original receipts. New33+4validity rechecks cost about108observed seconds plus about2.23GB static bodies; no statistical extension.",
-          "recheckCondition": "Stable executable/peer review and root authorization, exact new dispatch receipt, raw validity or budget evidence."
+          "state": "Workflow failure retained; all70 actual leaves consumed",
+          "disposition": "61 Sentry leaves request-valid:33HTTPD+4Node+4Ruby+20Redis. All five native controls valid. All nine Sentry HTTPD concurrency1000 cases had391\u2013665 actual client timeout errors per1000 despite finite QPS. Peer-reviewed retained-raw Redis LPUSH setup-row accounting corrected five false parser rejections without reruns. No TCP candidate ran.",
+          "nextAction": "Qualify minimal Hey reporting correction separately. Prepare bounded native/BASE diagnosis of representative existing high-concurrency HTTPD case using actual server config/log/resource evidence before choosing timeout/config changes; no all-category retry or statistical launch.",
+          "recheckCondition": "Hey qualifier outcome, complete diagnostic executable review/authorization or actual new baseline evidence.",
+          "evidence": [
+            "https://github.com/tamird/gvisor/actions/runs/44250351891"
+          ]
         }
       },
-      "updatedAt": "2026-11-18T05:53:00.594117+00:00"
+      "updatedAt": "2026-11-18T06:58:20.703035+00:00"
     },
     {
       "id": "branch:iperf-measurement",
@@ -91181,6 +91687,56 @@
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
           "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08"
+        ]
+      }
+    },
+    {
+      "id": "branch:tracker-proposal-ranges",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tracker-proposal-ranges-20261118",
+      "head": "6c1e76eba4b346a4462b23b73d2024ec7396408f",
+      "title": "Accept complete proposal comparison links",
+      "url": "https://github.com/tamird/gvisor/commit/6c1e76eba",
+      "group": "bazel",
+      "status": "Deployed; collector verified",
+      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
+      "summary": "The published metadata checker now accepts canonical validated multi-commit comparison links while requiring card and decision heads/URLs to agree. A local-only correction initially left collector44247469558 failing; the code-only publication6c1e76 and collector44248606045 succeeded. Exact staged code+paired metadata validation now gates the shared publisher.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "6c1e76eba4b346a4462b23b73d2024ec7396408f",
+        "observedAt": "2026-11-18T06:58:20.703035+00:00",
+        "disposition": "Independent review confirmed the two-line delta preserves canonical owner/repo/full-head/base URL validation. Five metadata CLI cases pass intended outcomes; actual old staged tree541 is rejected and new6c1 accepted. Live snapshot checked06:07UTC has no untriaged feedback/incoming requests or changed tracked PR head/state.",
+        "nextAction": "Follow exact staged publication validation and collector health; keep manual existing-goal sweeps while verifying scheduled observations, without creating a competing monitor.",
+        "recheckCondition": "Collector/publication validation failure, source/schema change or fresh feedback.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/44247469558",
+          "https://github.com/tamird/gvisor/actions/runs/44248606045"
+        ]
+      }
+    },
+    {
+      "id": "branch:hey-client-errors",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/hey-client-errors-20261118",
+      "head": "ca0536a0eb74b24e306098f6bfb8ee1f1c60742f",
+      "title": "Reject Hey client error reports",
+      "url": "https://github.com/tamird/gvisor/commit/ca0536a0e",
+      "group": "bazel",
+      "status": "Remote qualification running",
+      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
+      "summary": "Actual BASE HTTPD output reported finite QPS with hundreds of timed-out requests. The minimal shared Report correction rejects an Error distribution section before publishing metrics, preserving intentional HTTP404 workloads. Public Report tests use captured success/404/timeout output and an old-helper negative control. No upstream PR or runtime performance result is claimed.",
+      "followup": {
+        "owner": "tcp_conflict",
+        "sourceHead": "ca0536a0eb74b24e306098f6bfb8ee1f1c60742f",
+        "observedAt": "2026-11-18T06:58:20.703035+00:00",
+        "disposition": "Exact fork source and test-only old-helper control68c88a5 are verified. Parent is latest upstreamb29c8320. Source/test and executable peer reviews found no issues; root read the complete two-file patch. Qualifier44254674522 is dispatched, not yet qualified.",
+        "nextAction": "Consume exact remote owner/negative-control/build/lint results, finish independent review and prepare a reviewable publication integrated with existing benchmark reliability work. Keep the approved/pending46ec source and all failed runtime evidence distinct.",
+        "recheckCondition": "Exact run terminal outcome, review findings or contributor publication decision.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/44254674522",
+          "https://github.com/tamird/gvisor/actions/runs/44250351891"
         ]
       }
     }
@@ -125894,5 +126450,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-18T05:53:00.594117+00:00"
+  "updatedAt": "2026-11-18T06:58:20.703035+00:00"
 }

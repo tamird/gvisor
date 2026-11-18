@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T06:07:04.849829+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T05:53:00.594117+00:00",
+  "registryDate": "2026-11-18T06:58:20.703035+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447971,7 +447971,7 @@
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "Candidate7eafb7af default-argument RACE capability is verified on AMD44240006357 (8leaves) and ARM44240001660 (3portable leaves), no skips/failures; debugfalse, reportunset, frozen products/images and clean restoration. This is candidate capability only: original BASE re-execution remains unusable, so paired RACE performance is unavailable. Non-race COVERAGE studies retain ARM startup+0.82%p=.006 and pipe/thread ns/op-1.55%p=.002; ordinary uninstrumented parity remains a separate historical scope.",
-        "nextAction": "Consume corrected bounded report/KCOV pilot44246691602. Preserve both0-workload failures and exact historical comparisonBasebf5 for44190856301; candidate parent remains1f. Complete source-bound feature-cost assessment and exact amendment proposal after the gate, retaining ARM coverage startup cost and original unavailable paired RACE baseline."
+        "nextAction": "Own terminal consumption of retention recovery44254336532 and source-bound full coverage delivery assessment. Preserve both historical functional comparisonBasebf5 and current candidate parent1f; retain ARM startup cost and unavailable paired RACE baseline. Do not compare old unwrapped BASE time with wrapped observations."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -448019,7 +448019,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
-        "nextAction": "Consume exact ordinary-gofer traversal recovery44245490184 (plan110b9cab85eb86169316d59f4151f0fbc02e07b4) within75m+180s and strict old-image/full-harness/runtime gates. Source review is now independently complete at exact1b. Originalc7 remains OPEN/CONFLICTING; the approved scope reply has no new maintainer response. Finish remaining performance limits and obtain exact contributor amendment decision before replacing the PR."
+        "nextAction": "Prepare the remaining relevant broad filesystem/startup variant capability/cost screen and bounded balanced statistical plan before launch. Preserve successful N1 capability and all earlier failed traversal receipts; no physical TPU/ARM/statistical approval is claimed. Root handles current-base publication readiness and exact amendment decision after qualification."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -450452,7 +450452,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
-        "nextAction": "Consume exact ordinary-gofer traversal recovery44245490184 (plan110b9cab85eb86169316d59f4151f0fbc02e07b4) within75m+180s and strict old-image/full-harness/runtime gates. Source review is now independently complete at exact1b. Originalc7 remains OPEN/CONFLICTING; the approved scope reply has no new maintainer response. Finish remaining performance limits and obtain exact contributor amendment decision before replacing the PR."
+        "nextAction": "Prepare the remaining relevant broad filesystem/startup variant capability/cost screen and bounded balanced statistical plan before launch. Preserve successful N1 capability and all earlier failed traversal receipts; no physical TPU/ARM/statistical approval is claimed. Root handles current-base publication readiness and exact amendment decision after qualification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -457292,7 +457292,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "pr:15183": {
@@ -461936,7 +461936,7 @@
         "since": "2026-11-18T05:17:02.746861+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "pr:17023": {
@@ -462355,7 +462355,7 @@
         "since": "2026-11-18T05:35:02.192622+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "pr:17122": {
@@ -463937,7 +463937,7 @@
         "since": "2026-11-18T04:43:17.763943+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:11090": {
@@ -464525,7 +464525,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464534,7 +464534,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464543,7 +464543,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464552,7 +464552,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464561,7 +464561,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464570,7 +464570,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464579,7 +464579,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464588,7 +464588,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     },
     "branch:benchmark-reliability": {
@@ -464597,7 +464597,7 @@
         "since": "2026-11-18T05:07:20.408252+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        "observedAt": "2026-11-18T06:58:20.703035+00:00"
       }
     }
   },
