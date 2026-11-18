@@ -1,0 +1,46 @@
+{
+  "status": "Prepared for root/peer review; not dispatched",
+  "source": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
+  "runtimeBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+  "selector": "BenchmarkContinuousHttpd\\z/filesize[.]1Mb\\z/concurrency[.]1000\\z",
+  "visits": [
+    "runc",
+    "systrap"
+  ],
+  "finalN": 1000,
+  "calibrationN": 1,
+  "maximumRequestedStaticBodyBytes": 2099249152,
+  "expectedMinutesIfComparable": [
+    10,
+    15
+  ],
+  "phaseCapsMinutes": {
+    "fetch": 1,
+    "publicHostProbe": 0.75,
+    "specificPulls": 15,
+    "utilPreflight": 0.5,
+    "staticConfig": 2,
+    "baseRelease": 15,
+    "archiveManifest": 2,
+    "oneHarness": 10,
+    "cquery": 1,
+    "harnessFreezeManifest": 2,
+    "shutdown": 1,
+    "runtimeFilesetAccess": 1.5,
+    "activation": 3.5833333333333335,
+    "twoVisitsAndAccounting": 6,
+    "authorizedApparmorPrerequisite": 0.5
+  },
+  "outerMinutes": 67,
+  "cleanupGraceSeconds": 180,
+  "cleanupCapsSeconds": 152,
+  "signalChildStopWorstSeconds": 19,
+  "globalInclusiveMinutes": 70,
+  "networkSysctlTuning": false,
+  "apparmorPolicy": "Established ephemeral user-namespace prerequisite only, original/active values retained and bounded cleanup restores original. TCP/backlog/resource sysctls remain read-only.",
+  "noStatisticalReuse": true,
+  "noCandidates": true,
+  "listedPhaseCapSumMinutes": 61.833333333333336,
+  "timingEvidence": "Actual initial inspect start time retained. Stop times can be unavailable, especially short calibration; missingStopTimeEvidence is explicit. No stop-time capture claim.",
+  "captureCompleteness": "Requires final actual linked client/server identities, usable nonempty final-server log and resource evidence, and status+error totals=N for every raw calibration/final report. Capture completion does not clear failed requests."
+}
