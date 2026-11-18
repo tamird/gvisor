@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T12:25:40.178284+00:00",
+    "updatedAt": "2026-11-18T12:35:19.739747+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57316,7 +57316,7 @@
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-18T12:25:40.178284+00:00",
+      "updatedAt": "2026-11-18T12:35:19.739747+00:00",
       "summary": "The fork checker on fa6b9080f diagnosed 13 of 23 marked cases on each of AMD64 and ARM64, including wrong-owner use with both sets locked. It accepted all four valid uses. Six lifetime cases also went unreported: two unlock/relock sequences and four cases involving a waiter-list cursor. The native package ran five tests with no skips. A saved semaphore element retained its address across unlock and exposed the updated value and PID after relocking. In a test-only count predicate that released the mutex and called AbortWait, traversal visited one of three waiters and left the other two queued. The two production count predicates only read the semaphore value.",
       "evidence": [
         {
@@ -57420,7 +57420,7 @@
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
         "observedAt": "2026-11-18T10:51:13.405419+00:00",
         "disposition": "Recovered complete user changes-requested history: annotate member fields with protecting-lock link and retain sem.wakeWaiters() withoutSet parameter. Latest returned-reference question is answered by distinguishing stable slice storage from guarded access and mutable list cursors. Existingfa6 prototype354line checker is preserved, not recreated; its two lifetime/fourcursor cases were exploratory, not declared negative expectations. Current type aliases do not connect returned member lock toSet.mu.",
-        "nextAction": "Root owns the checker-mechanism typed-nil panic repair queued after the current atomicptr writer releases the checkout. Preserve both failed runs and the actual lint/two-owner passes; prepare a reviewed source-bound correction before resuming the still-missing fixture/native8/old-control gates. Runtime/ARM/race/C++/performance scopes remain open.",
+        "nextAction": "Root follows existing corrected-source run44305026783 through terminal BEP/XML/findings/native logs, diagnoses any actual failures and completes the same original gate without duplicate launch. After those gates pass, consume open native ARM/race/syscall/runtime/C++/performance scopes before source delivery approval.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -57443,7 +57443,7 @@
           "owner": "root"
         },
         "technicalOwner": "coverage_security_review",
-        "recheckCondition": "Reviewed checker-mechanism source correction and exact remote evidence, or contributor decision; no generic SSH hold remains.",
+        "recheckCondition": "Existing44305026783 becomes terminal or exact source/human requirements change.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -57451,6 +57451,91 @@
             "disposition": "The checker enforces the owner at use. The native test distinguished stable slice storage from a waiter-list cursor whose next link changes during removal.",
             "nextAction": "Keep the semaphore change in agent investigation. Determine whether the checker can diagnose escape and invalidation of a waiter-list cursor without rejecting reuse of the same slice element under its original mutex.",
             "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+          },
+          {
+            "curatedAt": "2026-11-18T12:35:19.739747+00:00",
+            "qualificationPlan": {
+              "owner": "root",
+              "technicalOwner": "coverage_security_review",
+              "source": "1752d6197be03fe73519122946c8d360517b2b75",
+              "base": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
+              "plan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
+              "sourceBranch": "review/semaphore-owner-lock-20261118",
+              "planBranch": "qualification/semaphore-owner-lock-amd64-20261118",
+              "proofSHA256": "aba0fb6bbfc1089dd5208b7134d51a3ff54413f7f50374dc881392d37683513e",
+              "files": 5,
+              "state": "Published/read back; run44301694165 FAILED before tests at shallow-parent preparation check",
+              "published": true,
+              "dispatched": true,
+              "bodyMinutes": 87,
+              "cleanupGraceSeconds": 180,
+              "inclusiveMinutesAfterGenericPreparation": 90,
+              "nativeCases": 8,
+              "analysisArchitectures": [
+                "amd64",
+                "arm64"
+              ],
+              "nativeArchitecture": "amd64",
+              "oldCheckerControl": "Exactly two current fixtures over the unchanged c442 checker; both architectures must reject the known valid-owner access.",
+              "performanceQualification": false,
+              "run": 44301694165,
+              "receipt": {
+                "source": "1752d6197be03fe73519122946c8d360517b2b75",
+                "plan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
+                "sourceBranch": "review/semaphore-owner-lock-20261118",
+                "planBranch": "qualification/semaphore-owner-lock-amd64-20261118",
+                "state": "dispatch request returned; identify exact existing run before any further action",
+                "dispatchAttempted": true,
+                "dispatchExit": 0,
+                "dispatchOutput": "https://github.com/tamird/gvisor/actions/runs/44301694165\n",
+                "dispatchError": ""
+              },
+              "recoveryPreparation": {
+                "run": 44301694165,
+                "previousPlan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
+                "source": "1752d6197be03fe73519122946c8d360517b2b75",
+                "diagnosis": "Dispatcher fetch depth2 makes BASE a shallow boundary; git show %P respects synthetic shallow root. Replace traversal parent check with raw immutable commit-header inspection; expected exact single parent unchanged.",
+                "runSHASHA256": "69e144e8521e13171a549f4506579630466e54c1025efa2582de2bba6ac2715c",
+                "status": "patch prepared; independent review and revised immutable plan required",
+                "observedAt": "2026-11-18T12:14:08.142058+00:00"
+              },
+              "revisedPreparedPlan": {
+                "plan": "d75c5ecd5df8609fe0666f3c96ece845c9af6e08",
+                "source": "1752d6197be03fe73519122946c8d360517b2b75",
+                "state": "Published/read back;44302665452 FAILED at checker fixture typed-nil panic; source lint and two semaphore analyzer owners passed",
+                "run": 44302665452,
+                "dispatchReceipt": {
+                  "source": "1752d6197be03fe73519122946c8d360517b2b75",
+                  "oldPlan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
+                  "plan": "d75c5ecd5df8609fe0666f3c96ece845c9af6e08",
+                  "branch": "qualification/semaphore-owner-lock-amd64-20261118",
+                  "state": "dispatch returned; identify exact run",
+                  "reviews": [
+                    "root",
+                    "systrap_regression",
+                    "tcp_conflict"
+                  ],
+                  "dispatchAttempted": true,
+                  "dispatchOutput": "https://github.com/tamird/gvisor/actions/runs/44302665452"
+                },
+                "outcome": {
+                  "run": 44302665452,
+                  "state": "FAILED",
+                  "sourceLint": "passed",
+                  "passedTargets": [
+                    "//pkg/sentry/kernel/semaphore:semaphore_nogo",
+                    "//pkg/sentry/kernel/semaphore:semaphore_test_nogo"
+                  ],
+                  "failedTarget": "//tools/checklocks/test:test_nogo",
+                  "actualFailure": "Typed-nil *ssa.Call panic in resolvedValue.valueAndObject facts.go:144, via lockState.addAlias state.go:485 and checkFunctionCall analysis.go:696. Expected negative diagnostics also appeared; they do not negate this panic.",
+                  "nativeEightCases": "not reached",
+                  "oldCheckerControl": "not reached",
+                  "rawLog": "semaphore-44302665452-failed.log",
+                  "evidence": "https://github.com/tamird/gvisor/actions/runs/44302665452"
+                }
+              }
+            },
+            "preparedRevision": "1752d6197be03fe73519122946c8d360517b2b75"
           }
         ],
         "currentMechanismAssessment": {
@@ -57479,21 +57564,45 @@
           "deliveryOwner": "root",
           "scope": "Reuse the existing approved real-queue clearing fix as an explicit prerequisite; do not duplicate it in owner-link work. Existing regression retained."
         },
-        "preparationState": "Source1752/plan8a98 were published/read back; initial44301694165 failed before tests at shallow parent check. Revised d75 raw-header correction passed three reviews and was published/dispatched;44302665452 passed source lint and both semaphore analyzer owners but failed the checker fixture with a typed-nil *ssa.Call panic. Native8 and old-checker semantic control were not reached. No full qualification.",
-        "preparedLocalRevision": "1752d6197be03fe73519122946c8d360517b2b75",
+        "preparationState": "Typed-nil deferred-call result defect repaired at returnGuard.resolveCommon; existing single-defer and additional tuple-defer fixtures cover both result shapes. Two independent source/plan reviews passed; original source and both failed runs are preserved. Corrected source8dd and plan7c085 are published/read back; actual run44305026783 is live, with no qualified outcome yet.",
+        "preparedLocalRevision": "8ddff6399afcfcbae05390e417e0c82e34a997ea",
         "qualificationPlan": {
           "owner": "root",
-          "technicalOwner": "coverage_security_review",
-          "source": "1752d6197be03fe73519122946c8d360517b2b75",
+          "technicalOwner": "root",
+          "source": "8ddff6399afcfcbae05390e417e0c82e34a997ea",
+          "plan": "7c085cde9674f297756292207799f16319eb0db4",
           "base": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
-          "plan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
-          "sourceBranch": "review/semaphore-owner-lock-20261118",
-          "planBranch": "qualification/semaphore-owner-lock-amd64-20261118",
-          "proofSHA256": "aba0fb6bbfc1089dd5208b7134d51a3ff54413f7f50374dc881392d37683513e",
-          "files": 5,
-          "state": "Published/read back; run44301694165 FAILED before tests at shallow-parent preparation check",
+          "state": "Published/read back; exact corrected-source run44305026783 verified IN_PROGRESS",
+          "run": 44305026783,
+          "job": 134804251026,
           "published": true,
           "dispatched": true,
+          "dispatchReceipt": {
+            "source": "8ddff6399afcfcbae05390e417e0c82e34a997ea",
+            "previousSource": "1752d6197be03fe73519122946c8d360517b2b75",
+            "plan": "7c085cde9674f297756292207799f16319eb0db4",
+            "previousPlan": "d75c5ecd5df8609fe0666f3c96ece845c9af6e08",
+            "state": "dispatch returned; identify exact run before further action",
+            "reviews": [
+              "root",
+              "systrap_regression",
+              "coverage_security_review"
+            ],
+            "dispatchAttempted": true,
+            "dispatchOutput": "https://github.com/tamird/gvisor/actions/runs/44305026783"
+          },
+          "filesSHA256": {
+            "README.md": "51396d619082b87cd613d629a4027255a9dd396c3c5e7cb57c388c4ec2e1e97c",
+            "budget.json": "fc947a0f64d1f2703203a2877e83303804f736435b011c4a7c6e4275d6027189",
+            "collect.py": "80a2c7e974bee92cc2d2bfb2bdd420bf17affd005a26c2abb8d3bafc69ff7864",
+            "expected.json": "2b28b884090fdde2ecd402bb5b269df51a4725e9054b19e7a4037405cbca9022",
+            "run.sh": "56f9d75e8143644344e79dd723b60bc5eeb7d4abe04374780eeb6f0e344e97a2"
+          },
+          "sourceReviews": [
+            "root",
+            "coverage_security_review",
+            "systrap_regression"
+          ],
           "bodyMinutes": 87,
           "cleanupGraceSeconds": 180,
           "inclusiveMinutesAfterGenericPreparation": 90,
@@ -57503,66 +57612,10 @@
             "arm64"
           ],
           "nativeArchitecture": "amd64",
-          "oldCheckerControl": "Exactly two current fixtures over the unchanged c442 checker; both architectures must reject the known valid-owner access.",
           "performanceQualification": false,
-          "run": 44301694165,
-          "receipt": {
-            "source": "1752d6197be03fe73519122946c8d360517b2b75",
-            "plan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
-            "sourceBranch": "review/semaphore-owner-lock-20261118",
-            "planBranch": "qualification/semaphore-owner-lock-amd64-20261118",
-            "state": "dispatch request returned; identify exact existing run before any further action",
-            "dispatchAttempted": true,
-            "dispatchExit": 0,
-            "dispatchOutput": "https://github.com/tamird/gvisor/actions/runs/44301694165\n",
-            "dispatchError": ""
-          },
-          "recoveryPreparation": {
-            "run": 44301694165,
-            "previousPlan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
-            "source": "1752d6197be03fe73519122946c8d360517b2b75",
-            "diagnosis": "Dispatcher fetch depth2 makes BASE a shallow boundary; git show %P respects synthetic shallow root. Replace traversal parent check with raw immutable commit-header inspection; expected exact single parent unchanged.",
-            "runSHASHA256": "69e144e8521e13171a549f4506579630466e54c1025efa2582de2bba6ac2715c",
-            "status": "patch prepared; independent review and revised immutable plan required",
-            "observedAt": "2026-11-18T12:14:08.142058+00:00"
-          },
-          "revisedPreparedPlan": {
-            "plan": "d75c5ecd5df8609fe0666f3c96ece845c9af6e08",
-            "source": "1752d6197be03fe73519122946c8d360517b2b75",
-            "state": "Published/read back;44302665452 FAILED at checker fixture typed-nil panic; source lint and two semaphore analyzer owners passed",
-            "run": 44302665452,
-            "dispatchReceipt": {
-              "source": "1752d6197be03fe73519122946c8d360517b2b75",
-              "oldPlan": "8a98e8e7e5bf4752c0e83aa1605834a7d8d4c6e9",
-              "plan": "d75c5ecd5df8609fe0666f3c96ece845c9af6e08",
-              "branch": "qualification/semaphore-owner-lock-amd64-20261118",
-              "state": "dispatch returned; identify exact run",
-              "reviews": [
-                "root",
-                "systrap_regression",
-                "tcp_conflict"
-              ],
-              "dispatchAttempted": true,
-              "dispatchOutput": "https://github.com/tamird/gvisor/actions/runs/44302665452"
-            },
-            "outcome": {
-              "run": 44302665452,
-              "state": "FAILED",
-              "sourceLint": "passed",
-              "passedTargets": [
-                "//pkg/sentry/kernel/semaphore:semaphore_nogo",
-                "//pkg/sentry/kernel/semaphore:semaphore_test_nogo"
-              ],
-              "failedTarget": "//tools/checklocks/test:test_nogo",
-              "actualFailure": "Typed-nil *ssa.Call panic in resolvedValue.valueAndObject facts.go:144, via lockState.addAlias state.go:485 and checkFunctionCall analysis.go:696. Expected negative diagnostics also appeared; they do not negate this panic.",
-              "nativeEightCases": "not reached",
-              "oldCheckerControl": "not reached",
-              "rawLog": "semaphore-44302665452-failed.log",
-              "evidence": "https://github.com/tamird/gvisor/actions/runs/44302665452"
-            }
-          }
+          "scope": "Same original three analyzer owners, eight native tests, two-fixture old-checker semantic negative. No full runtime/race/ARM-native/C++/performance claim."
         },
-        "curatedAt": "2026-11-18T12:25:40.178284+00:00"
+        "curatedAt": "2026-11-18T12:35:19.739747+00:00"
       },
       "contributorChangesRequested": {
         "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -127297,5 +127350,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T12:25:40.178284+00:00"
+  "updatedAt": "2026-11-18T12:35:19.739747+00:00"
 }
