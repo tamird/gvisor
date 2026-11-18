@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T21:15:29.687318+00:00",
+    "updatedAt": "2026-11-18T21:49:57.504662+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2705,12 +2705,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
-      "summary": "The architecture revision passed fresh source lint and31codegen cases. Its compiler continuation built products but failed actual-source applicability and8-alias collection; the owner is preparing a cheap real-source guard check before missing-only continuation.",
+      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "summary": "The actual-source guard and eight-alias correction is prepared and independently reviewed, but automatic approval review rejected its exact CI-only publication/dispatch action before execution. No new qualification or production pass is established.",
       "followup": {
-        "disposition": "The architecture revision passed fresh source lint and31codegen cases. Its compiler continuation built products but failed actual-source applicability and8-alias collection; the owner is preparing a cheap real-source guard check before missing-only continuation.",
+        "disposition": "The actual-source guard and eight-alias correction is prepared and independently reviewed, but automatic approval review rejected its exact CI-only publication/dispatch action before execution. No new qualification or production pass is established.",
         "owner": "root",
-        "nextAction": "Owner systrap_regression verifies the actual unchanged source conditional and eight declared aliases cheaply, then resumes only unresolved compiler gates after review. Preserve prefix passes and all earlier failed acquisition/collector attempts.",
+        "nextAction": "Await the already-asked exact action authorization decision for localb35/plancabc. Preserve the original PR and all passed/failed evidence; do not retry or route around the action-specific execution rejection. If legitimately authorized, fresh actual-source owner tests precede cold links.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
@@ -2730,8 +2730,8 @@
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-18T20:00:58.033079+00:00",
-        "recheckCondition": "Actual-source/alias preflight or reviewed missing-only continuation result; no production/ARM/performance pass yet.",
-        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
+        "recheckCondition": "Decision on the existing exact action request or a substantive source/protocol change.",
+        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
         "historicalEvidenceCorrection": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
           "correction": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof.",
@@ -2884,7 +2884,24 @@
             "file": "atomicptr-architecture-44391663447-evidence.json",
             "sha256": "7525b5fa4fe0e07c72c9a96497f6584d751ea6ba7055a43020e82edba1ab00a2"
           },
-          "prefixScope": "Fresh source format/lint and full codegen owner31XML including all8named applicability subcases passed; outerURIspelling gate failed before production."
+          "prefixScope": "Fresh source format/lint and full codegen owner31XML including all8named applicability subcases passed; outerURIspelling gate failed before production.",
+          "preparedContinuation": {
+            "source": "b35ded894d3e1f6982cdb6fe13a2ba3b76343188",
+            "plan": "cabc3a87559835172fd15300e77a0fe716a62c9d",
+            "state": "Autoapproval rejected publication/dispatch command before execution; no retry or workaround",
+            "pushExecuted": false,
+            "dispatchExecuted": false,
+            "canonicalGuard": "PASS",
+            "metadataOutcomes": 41,
+            "reviewManifest": "e10a5cc50f7cd2852023021e6050b47e1a96f5d4d60e07fd8f585e6eafdc4609",
+            "receipt": {
+              "file": "atomicptr-guard-format-publication-blocked.json",
+              "sha256": "9626b8a17d305c76f443655ecc72cba63c7c8a6308795ff809d9d638e76358e1"
+            },
+            "owner": "systrap_regression",
+            "authorizationDecision": "Existing exact approval question pending; no duplicate ask or workaround",
+            "limits": "Fresh source lint/full owner with ten named applicability cases and current production13live+1provedN/A gates remain unexecuted for this revision."
+          }
         }
       },
       "head": "17197905852cdebf53a1f60b9de9652ced640e7c",
@@ -52628,8 +52645,8 @@
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T20:11:46.639485+00:00",
-      "summary": "First Pass1770 passed on the rebased author head. The removed shared SetBytes128KiB accounting defect is fixed; current topology/readiness/cleanup changes and measurements still need technical review.",
+      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "summary": "The full current nine-file topic review found no additional source defects and confirmed the earlier accounting/setup/profile/cleanup concerns are addressed. Current native/Sentry ten-topology execution and distinct metric evidence remain necessary; approval to post the prepared COMMENTED review is pending.",
       "evidence": [
         {
           "label": "15 native transfer cases with sender and receiver byte counts",
@@ -52661,9 +52678,9 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "First Pass1770 passed on the rebased author head. The removed shared SetBytes128KiB accounting defect is fixed; current topology/readiness/cleanup changes and measurements still need technical review.",
-        "nextAction": "Review the actual author source and performance evidence; preserve the separate BCR/Iperf3 prerequisites. Passing CI does not establish full technical approval.",
-        "recheckCondition": "Author source/reply, measurements, review or prerequisite changes.",
+        "disposition": "The full current nine-file topic review found no additional source defects and confirmed the earlier accounting/setup/profile/cleanup concerns are addressed. Current native/Sentry ten-topology execution and distinct metric evidence remain necessary; approval to post the prepared COMMENTED review is pending.",
+        "nextAction": "Await the already-asked contributor decision on posting the exact COMMENTED review. Preserve author ownership and require current execution, cleanup/profile regression and distinct ns/op-versus-iperf results before full technical approval.",
+        "recheckCondition": "Existing review-posting decision, author evidence/source reply or current CI change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16445"
         ],
@@ -52688,7 +52705,28 @@
           "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
           "CI": "Exact-head First Pass1770 SUCCESS at20:06 snapshot"
         },
-        "curatedAt": "2026-11-18T20:11:46.639485+00:00"
+        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+        "currentSourceReview": {
+          "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+          "scope": "Full nine-file current topic and complete review discussion",
+          "confirmedAdditionalCodeFindings": [],
+          "receipt": {
+            "file": "16445-current-source-review.json",
+            "sha256": "be5140f65ed21f2f83e8c9cf9a885c5ed3466a9bab7a2ab2e2982586b767d16a"
+          },
+          "execution": "Not rerun; native/Sentry ten-topology and cleanup/profile/measurement gates unresolved"
+        }
+      },
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+        "url": "https://github.com/google/gvisor/pull/16445",
+        "title": "Review current Docker-in-gVisor benchmark revision",
+        "body": "The current e264e33d addresses the accounting, setup, profile-path and canceled-context cleanup concerns. I reviewed the complete current source and found no further source issues.\n\nBefore full approval, I still need current native and Sentry results for the ten topologies, evidence that canceled setup cleans up its containers and concurrent DINGs retain separate profiles, and measurement results that distinguish whole-invocation ns/op from iperf transfer bandwidth. First Pass 1770 passed, but this benchmark is manual, so that status does not establish those results. I have not rerun tests or benchmarks.\n\nPosted by Codex on behalf of @tamird.\n",
+        "event": "COMMENTED",
+        "summary": "Approve posting the already-proposed source review and evidence request; no full approval or execution claim.",
+        "requestedAt": "2026-11-18T21:49:57.504662+00:00"
       }
     },
     {
@@ -57947,8 +57985,8 @@
       "url": "https://github.com/tamird/gvisor/commit/09b196bf630b2a6be83ab28e6c7611f7e766a023",
       "group": "runtime",
       "status": "Agent work: functional gates passed; remaining qualification open",
-      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
-      "summary": "The AMD64 race release and ordinary30-case wrapper passed. Save/restore made252real restore calls and passed19cases before its900-second test timeout; save/resume was not executed. No overall race functional pass or source regression is established.",
+      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "summary": "The earlier race release and ordinary30pass and save/restore900-second timeout remain recorded. The approved missing-only save/restore plus save/resume continuation is running under110minutes; no terminal result is inferred.",
       "evidence": [
         {
           "label": "Two architecture analyzers on all 23 marked cases in fa6b9080f",
@@ -58050,8 +58088,8 @@
         "owner": "root",
         "sourceHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "The AMD64 race release and ordinary30-case wrapper passed. Save/restore made252real restore calls and passed19cases before its900-second test timeout; save/resume was not executed. No overall race functional pass or source regression is established.",
-        "nextAction": "Owner fuse_full20_resume has proposed only the two missing race wrappers with a measured bounded budget, unchanged race options and full30-case/restore proof. Await root review of the concrete timeout/cost continuation; no retry launched. Preserve compiled opaque9products, ordinary30 and all prior passes.",
+        "disposition": "The earlier race release and ordinary30pass and save/restore900-second timeout remain recorded. The approved missing-only save/restore plus save/resume continuation is running under110minutes; no terminal result is inferred.",
+        "nextAction": "Owner fuse_full20_resume consumes exact44400554546 two-wrapper artifacts, required30cases each, actual restore and cleanup. Keep GORACE and prior failure evidence unchanged; stop and inspect another timeout before any further cap change.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -58074,7 +58112,7 @@
           "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes."
         },
         "technicalOwner": "systrap_regression",
-        "recheckCondition": "Reviewed missing-only continuation budget/protocol, actual artifact reuse permission or changed source/runtime inputs.",
+        "recheckCondition": "Actual continuation terminal artifact/cleanup or changed source/runtime/protocol inputs.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -58367,7 +58405,7 @@
             44316942020
           ]
         },
-        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
         "preparedSyscallConsumer": {
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "8adfbf18fadfd0c5a5cd3c64528939c3c90b55ce",
@@ -58428,6 +58466,23 @@
           },
           "cleanup": "Source/index clean, AppArmor1restored, IPC0; no group fences/errors recorded. Failed outerstatus has no separate runtime-root-removal receipt.",
           "inclusiveMinutes": 120
+        },
+        "raceCheckpointContinuation": {
+          "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+          "plan": "6d3f8af67c8874beed8f11c52197bf29a7ba61be",
+          "run": 44400554546,
+          "state": "LIVE; no new compiler/checkpoint result inferred",
+          "owner": "fuse_full20_resume",
+          "inclusiveMinutes": 110,
+          "testTimeoutSeconds": {
+            "saveRestore": 1800,
+            "saveResume": 1200
+          },
+          "scope": "Only two missing race wrappers; previous ordinary30/Go8/source/checker/Linux/C++ scopes reused. No nativeARM/performance/prerequisite17127landing claim.",
+          "receipt": {
+            "file": "semaphore-race-checkpoint-dispatch.json",
+            "sha256": "1a0fe802e7f31dbc4d200f53632cc81434341031554992570b7bfd190c9b5072"
+          }
         }
       },
       "contributorChangesRequested": {
@@ -62985,8 +63040,8 @@
       "url": "https://github.com/google/gvisor/pull/14999",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T20:11:46.639485+00:00",
-      "summary": "The posted lint/description/coverage follow-up received an assisted review response claiming native/Sentry coverage. The author head is unchanged and source-bound lint findings remain unresolved.",
+      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "summary": "The complete primary automated coverage review reports31passed cases plus10expected socket-type skips, not missing-CAP_SETGID skips. It supplies no execution artifacts; author lint and description fixes remain pending.",
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
@@ -62994,14 +63049,14 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "The posted lint/description/coverage follow-up received an assisted review response claiming native/Sentry coverage. The author head is unchanged and source-bound lint findings remain unresolved.",
-        "nextAction": "Await author lint/description changes. Inspect the supplied coverage claims against actual case/runtime evidence before technical approval; no duplicate acknowledgement or new approval.",
-        "recheckCondition": "Author reply/source change, direct coverage evidence or current CI change.",
+        "disposition": "The complete primary automated coverage review reports31passed cases plus10expected socket-type skips, not missing-CAP_SETGID skips. It supplies no execution artifacts; author lint and description fixes remain pending.",
+        "nextAction": "Await author lint/description changes and source-bound execution artifacts. Named coverage is reported but independently unverified; no duplicate outreach or technical approval solely from the automated review.",
+        "recheckCondition": "Author source/reply, concrete native/Sentry logs/XML or current CI change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14999"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-18T20:11:46.639485+00:00",
+        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
         "reviewPing": {
           "url": "https://github.com/gvisor/gvisor/pull/14999#issuecomment-6986819507",
           "state": "Review request only; no new source delta or authorization"
@@ -63033,9 +63088,17 @@
         "coverageResponse": {
           "url": "https://github.com/google/gvisor/pull/14999#pullrequestreview-5964095127",
           "author": "aaltinaydev",
-          "state": "COMMENTED",
+          "state": "Primary automated review consumed, not an author response or independent retained test evidence",
           "claim": "31 peer-group cases pass under named systrap directfs/save/resume; native root passes while sandboxed native setgroups may failEPERM. Assisted reviewer claim only, not independent qualification.",
-          "observedAt": "2026-11-18T20:06:11.890448+00:00"
+          "observedAt": "2026-11-18T20:06:11.890448+00:00",
+          "reportedPassed": 31,
+          "reportedExpectedSocketTypeSkips": 10,
+          "reportedMissingCAP_SETGIDSkips": 0,
+          "evidenceLimitation": "No run links, XML, logs or immutable artifact identity; native environment diagnosis remains unverified",
+          "receipt": {
+            "file": "14999-coverage-review-consumption.json",
+            "sha256": "c7aaf9fcf749e443646e275313a3fcb1c385b0beba065fb7009b975f1071112b"
+          }
         }
       }
     },
@@ -78622,8 +78685,8 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
-      "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire → graph → wire restore verified the guest’s 768 KiB memory mapping.",
+      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "summary": "All eight checkpoint N1 rows and owning completion JSON passed, as did scoped namespace/lease/content cleanup. Final original-Docker restart failed after package restoration; original-store/image/daemon reattachment is unverified, so the run is not qualified.",
       "evidence": [
         {
           "label": "Eight restored guest checkpoints, two failing stock header offsets and independently decoded MemoryFile regions",
@@ -78749,8 +78812,8 @@
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "observedAt": "2026-11-18T17:34:57.517822+00:00",
-        "disposition": "Full8 run44350079319 passed BASE CheckpointEmpty N1, then the sampled-volume observer did not capture nonempty data. Namespace cleanup separately failed with retained task lease/blob references. Original Docker packages were restored before that failure, but original configuration/store/inventory restoration was not verified. No candidate result or product defect established.",
-        "nextAction": "Owner coverage_security_review completes the typed-JSON completion boundary and integrates the existing proved cleanup API before proposing the bounded missing full8 recovery. Preserve prior443500 partial/restoration failure and narrow native-only proof.",
+        "disposition": "All eight checkpoint N1 rows and owning completion JSON passed, as did scoped namespace/lease/content cleanup. Final original-Docker restart failed after package restoration; original-store/image/daemon reattachment is unverified, so the run is not qualified.",
+        "nextAction": "Owner coverage_security_review diagnoses and prepares cleanup-only recovery for the final original-daemon restart. Reuse validated eight observations and immutable products; do not repeat workloads/cold links or claim whole-run restoration until the actual failure is resolved.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -78803,7 +78866,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44350079319"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Concrete reviewed completion/integration or actual bounded recovery result.",
+        "recheckCondition": "Bounded final-restoration diagnosis/proposal or verified cleanup-only recovery result.",
         "qualificationHistory": [
           {
             "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
@@ -79118,6 +79181,11 @@
                 }
               },
               "correction": "Acquire exact frozen official original CE/CLI archives directly; verify package fields, size and SHA before mutation. Private-store and rollback protections unchanged."
+            },
+            {
+              "owner": "coverage_security_review",
+              "state": "Preparing owning typed-JSON completion and existing native cleanup API integration; no source-hook or full8 qualification",
+              "prerequisite": "Native cleanup API probe44386251141PASS retained"
             }
           ],
           "actualExecutionEvidencePending": false,
@@ -79125,8 +79193,8 @@
             "file": "checkpoint-full8-44350079319-evidence.json",
             "sha256": "9da5b1c126dab17224e8e2c4e75f3863b9300279163391c95dfe3059c22ff132"
           },
-          "completedObservations": 1,
-          "candidateObservations": 0,
+          "completedObservations": 8,
+          "candidateObservations": 4,
           "restorationVerified": false,
           "originalDockerPackagesRestored": true,
           "nativeNamespacePreflight": {
@@ -79145,12 +79213,30 @@
             "elapsedSeconds": 12
           },
           "completionIntegration": {
+            "source": "3da09be4fe5f629a8b9b86a40d3dd22af27bd089",
+            "plan": "af49cd32d25d4deadf6c3e99c1afe43119e1cc5e",
+            "run": 44401662215,
+            "url": "https://github.com/tamird/gvisor/actions/runs/44401662215",
+            "state": "PARTIAL:8workload/completionJSONPASS; finaloriginalDockerrestartFAIL/restoredfalse",
             "owner": "coverage_security_review",
-            "state": "Preparing owning typed-JSON completion and existing native cleanup API integration; no source-hook or full8 qualification",
-            "prerequisite": "Native cleanup API probe44386251141PASS retained"
+            "firstBASEBeforeCandidateColdBuild": true,
+            "validatedObservations": 8,
+            "privateNamespaceLeaseContentCleanup": "PASS",
+            "checkpointDirectoriesAbsent": 8,
+            "originalPackagesVerifiedRestored": true,
+            "originalConfigRestoredToAbsent": true,
+            "finalSystemctlRestartExit": 1,
+            "originalStoreImageDaemonReattachmentVerified": false,
+            "sourceIndexUsernsRestored": true,
+            "failureCause": "Unknown; owner/root terminal audit summary, detailed receipt pending",
+            "dispatchReceipt": {
+              "file": "checkpoint-completion-full8-dispatch.json",
+              "sha256": "4b55ba0f1d0b33b006b0c59f6d7e957bb063266a7c41ddb97e8c623f1c8f436e"
+            },
+            "limits": "No whole-run restoration/statistical/runtime-effect/ARM/KVM qualification. No private payload copied or uploaded."
           }
         },
-        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
+        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
         "technicalOwner": "coverage_security_review"
       },
       "refinement": {
@@ -93866,7 +93952,7 @@
       "url": "https://github.com/google/gvisor/pull/17780",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
       "summary": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
       "followup": {
         "owner": "root",
@@ -93960,12 +94046,12 @@
           "artifact": 14444468589,
           "scope": "Functional integration; no throughput accuracy, Sentry runtime or statistical performance claim."
         },
-        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
+        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
         "submissionPolicy": {
-          "source": "b29c8320a862a77f4c55894d00c56eb5850c8066",
-          "url": "https://github.com/gvisor/gvisor/blob/b29c8320a862a77f4c55894d00c56eb5850c8066/CONTRIBUTING.md",
-          "rule": "Multiple commits are permitted when independent logical units that can be applied separately. Current policy was verified; no policy-change date is asserted.",
-          "decision": "CF304 received conditional LGTM plus requested changes, not upstream publication approval. Revise, validate and review the requested interfaces before proposing publication."
+          "decision": "Upstream CONTRIBUTING now explicitly permits multiple commits per PR and maintainer squash merge; the tested/published four-commit topic is consistent with that convention.",
+          "policyCommit": "63ba875326b7f99528df0d1447e37e2d034e88fb",
+          "evidence": "https://github.com/gvisor/gvisor/commit/63ba875326b7f99528df0d1447e37e2d034e88fb",
+          "limits": "This documentation update does not change DCO requirements, current source approvals or the actual DCO execution blocker."
         },
         "technicalOwner": "root",
         "contributorFeedback": {
@@ -129125,5 +129211,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T21:15:29.687318+00:00"
+  "updatedAt": "2026-11-18T21:49:57.504662+00:00"
 }
