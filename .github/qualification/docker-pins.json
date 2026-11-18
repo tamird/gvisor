@@ -1,0 +1,38 @@
+{
+  "source": "https://download.docker.com/linux/ubuntu/dists/noble/stable/binary-amd64/Packages.gz",
+  "packages": [
+    {
+      "Package": "docker-ce-cli",
+      "Version": "5:27.5.1-1~ubuntu.24.04~noble",
+      "Filename": "dists/noble/pool/stable/amd64/docker-ce-cli_27.5.1-1~ubuntu.24.04~noble_amd64.deb",
+      "Size": "15235356",
+      "SHA256": "cf45b119c819bf5a19dbd9a943d33d4a0b0731b461de1b6cc51d0eb57a822ab7"
+    },
+    {
+      "Package": "docker-ce",
+      "Version": "5:27.5.1-1~ubuntu.24.04~noble",
+      "Filename": "dists/noble/pool/stable/amd64/docker-ce_27.5.1-1~ubuntu.24.04~noble_amd64.deb",
+      "Size": "26057340",
+      "SHA256": "b64ffb46853fdb252adb4aecb6c85976756fc290435e27dfe45a944300a91f26"
+    }
+  ],
+  "rollbackPackages": [
+    {
+      "Package": "docker-ce-cli",
+      "Version": "5:28.0.4-1~ubuntu.24.04~noble",
+      "Architecture": "amd64",
+      "Filename": "dists/noble/pool/stable/amd64/docker-ce-cli_28.0.4-1~ubuntu.24.04~noble_amd64.deb",
+      "Size": "15766216",
+      "SHA256": "b1069d84a0b4d9ecb196df7890e0aa872a738c227403507d0e9cb5aa7ce1568f"
+    },
+    {
+      "Package": "docker-ce",
+      "Version": "5:28.0.4-1~ubuntu.24.04~noble",
+      "Architecture": "amd64",
+      "Filename": "dists/noble/pool/stable/amd64/docker-ce_28.0.4-1~ubuntu.24.04~noble_amd64.deb",
+      "Size": "19131740",
+      "SHA256": "fd13d5ecb1e6019ed7ecb6c10b9df67e21ccac7c99906fc95111e8c43e9f2113"
+    }
+  ],
+  "retainedOfficialIndexSHA256": "e546e124c881610e9a9bd2ac24bd30bcb52e119da653aec61c91acaa438c032e"
+}
