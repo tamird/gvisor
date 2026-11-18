@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T02:45:00.167851+00:00",
+    "updatedAt": "2026-11-18T02:51:55.835560+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -15734,10 +15734,10 @@
       "status": "open",
       "updatedAt": "2026-11-18T00:52:10.274668+00:00",
       "followup": {
-        "disposition": "Fork proposal 983dc3a36b4c481da9911e05b97d7a02b18b8e71 mechanically rebases the prepared PAWS repair onto 1f33; range-diff is unchanged. The original PR remains d531ad7020. First plan 44209699406 failed before any project action because --version followed Bazel startup options. The one-line harness correction is dispatched in 44210296597; no source qualification result is inferred.",
+        "disposition": "Exact candidate 983dc3a completed every actual remote command successfully: AMD64 build, ARM64 cross-build, native TCP62, timestamp8, timestamp race8, Linux/netstack PAWS one each, export provenance and both lints. Original harness failed only because it expected unsharded e2e XML; all four retained shards contain 405 unique passing cases, zero skips/failures. Original failure preserved. Native ARM64 execution and performance gates remain open.",
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
-        "nextAction": "Inspect the bounded native TCP/timestamp/race, Linux-then-netstack PAWS, canonical Go export and lint run. Diagnose actual failures, finish independent full-source review and performance qualification before requesting the original PR amendment.",
+        "nextAction": "Complete required native ARM64 functional coverage and shared-base broad networking qualification, then independent source review before an exact amendment decision. Reuse saved functional evidence; do not rerun because of the corrected shard accounting.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15651",
           "https://github.com/tamird/gvisor/commit/c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
@@ -15753,11 +15753,12 @@
           "https://github.com/tamird/gvisor/commit/0e5a9579352fbad6643c030499524d5645c60629",
           "https://github.com/tamird/gvisor/commit/983dc3a36b4c481da9911e05b97d7a02b18b8e71",
           "https://github.com/tamird/gvisor/actions/runs/44209699406",
+          "https://github.com/tamird/gvisor/actions/runs/44210296597",
           "https://github.com/tamird/gvisor/actions/runs/44210296597"
         ],
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "Corrected qualification completes/fails, current source/feedback changes, or contributor decision.",
+        "observedAt": "2026-11-18T02:51:55.835560+00:00",
+        "recheckCondition": "Native ARM64 or networking qualification evidence, independent review, source/feedback change or contributor decision.",
         "qualificationHistory": [
           {
             "disposition": "Prepared separate rebase candidate 0e5a957935 on current master. Its only topic change is the required nil SACK argument in the new SYN-RCVD ACK call; original PR source remains unchanged. Native qualification plan is prepared for publication.",
@@ -37144,7 +37145,7 @@
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T02:45:00.167851+00:00",
-        "disposition": "Normal AMD64 all-eight capability pilot 44214811731 passed. Normal AMD64 n24 study 44220494683 and AMD64 race capability 44224377125 are running. ARM capability 44224385958 failed at apt before source work due to cross-compiler package spelling; peer-reviewed support-only correction is owned by the same agent. No full performance clearance.",
+        "disposition": "Normal AMD64 study44220494683 fully verified: all eight broad workload leaves,24 samples/source,50 balanced same-path visits, frozen harness/full releases, zero skips/failures, cleanup clean. All comparisons nonsignificant (p=.071\u2013.736); no equivalence or benefit claim. Race44224377125 and corrected ARM capability44225345386 remain active. Original ARM package-spelling failure44224385958 retained. Report/KCOV consumption performance is unmeasured; full gate remains open.",
         "nextAction": "Finish the active normal study and race pilot; launch the peer-reviewed ARM package-name recovery and validate exact mode/workload coverage. Cost remaining statistical runs from actual pilot evidence.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
@@ -37159,7 +37160,8 @@
           "https://github.com/tamird/gvisor/commit/ff0990b09bd00da593e32370ff81a51e95179ddb",
           "https://github.com/tamird/gvisor/actions/runs/44208124597",
           "https://github.com/tamird/gvisor/actions/runs/44208817043",
-          "https://github.com/tamird/gvisor/commit/058a3eec75c4e1ca8279cd249fe4dc597dc11531"
+          "https://github.com/tamird/gvisor/commit/058a3eec75c4e1ca8279cd249fe4dc597dc11531",
+          "https://github.com/tamird/gvisor/actions/runs/44220494683"
         ],
         "mergeable": "CONFLICTING",
         "recheckCondition": "Owned remote runs become terminal, ARM recovery publishes, source/feedback changes or cost decision required.",
@@ -73577,9 +73579,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
-        "observedAt": "2026-11-09T17:16:09+00:00",
-        "disposition": "Prerequisite #17045 is merged. Existing approved source a8e54633 was mechanically rebased onto 1f33 as 1298a7c6dbc820209ef66bf7a86b8cbb097012d1; range-diff changes only the DCO trailer. Published the separate fork proposal and dispatched source-bound native AMD64 and ARM64 functional integration, analyzers, fairness and temporary cross-processor controls. Supplemental overlay is identified and restored. Historical sixteen-pair nonsignificant HTTP results do not close current broad performance qualification.",
-        "nextAction": "Inspect both native integration runs, resolve failures and complete independent current-source review and sufficient broad benchmark qualification. Then open the already-authorized single-commit PR if no additional behavioral change is needed; do not ask for duplicate publication approval or merge.",
+        "observedAt": "2026-11-18T02:51:55.835560+00:00",
+        "disposition": "Candidate1298a7c preserves the approved patch over merged prerequisite. Native TCP62 per architecture, race63 AMD64 and focused fairness fixtures passed. Saved missing-owner XML verifies e2e405+nogo1 per architecture, zero failures/skips; source lint passed both and AMD64 C++ lint passed. Original harness failures retained: terminal-control PASS prefix and unsupported per-architecture Nogo stdout marker. ARM64 C++ baseline limitation stays explicit. Performance and final independent source review remain open.",
+        "nextAction": "Finish shared-base broad network performance qualification and final independent source review, preserving existing approval on the original patch. Open the already-authorized unchanged proposal only after full gates; do not merge.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a8e54633f",
           "https://github.com/google/gvisor/pull/17045",
@@ -73598,7 +73600,7 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "Either integration job completes/fails, performance evidence arrives, source/feedback changes, or a genuine contributor decision is required.",
+        "recheckCondition": "Networking qualification, review findings, upstream/source changes or publication gates complete.",
         "qualificationHistory": [
           {
             "disposition": "Approved for publication after #17045 lands.",
@@ -89220,11 +89222,11 @@
       "repo": "hermeticbuild/hermetic-llvm",
       "number": 938,
       "ref": "toolchain-stage-config",
-      "head": "fc824d720b6c5228575559b0f3fa2cc889323298",
+      "head": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
       "title": "Share toolchain args and features across runtime stages",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938",
       "status": "open",
-      "updatedAt": "2026-11-12T17:28:55+00:00",
+      "updatedAt": "2026-11-18T02:51:55.835560+00:00",
       "summary": "The author cherry-picked the static ASan symbolizer fix at fc824d720. Its complete tree matches the supplied change at 7c9e7687d. The complete toolchain argument list stays in the caller\u2019s configuration, and the Bazel 9.x and last_rc rules_cc checks pass.",
       "evidence": [
         {
@@ -89268,6 +89270,20 @@
             "head": "fc824d720b6c5228575559b0f3fa2cc889323298",
             "evidence": "https://github.com/hermeticbuild/hermetic-llvm/commit/fc824d720"
           }
+        ]
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
+        "observedAt": "2026-11-18T02:50:12.387322+00:00",
+        "mergeable": "MERGEABLE",
+        "base": "ba5740963159588c175e8cdd0f60feb03294fcf1",
+        "disposition": "Latest rebase retains the carried caller-configuration fix with identical stable patch ID to 59a0d965; all 46 current checks pass. Scope is rebase reconciliation, not new full-PR approval. The author explanation and inline thread were inspected.",
+        "nextAction": "Follow supplier review and merge; after merge, qualify the dependent gVisor adoption against the actual landed revision. No additional external reply or approval is authorized.",
+        "recheckCondition": "Supplier head, review, CI or merge changes; then qualify the dependent gVisor adoption against the actual landed revision.",
+        "evidence": [
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/938#issuecomment-6965808544",
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/2cc45ff9bec63826318f7f35e736187ad0eb72db"
         ]
       }
     },

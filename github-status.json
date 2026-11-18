@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T02:49:56.432216+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T02:45:00.167851+00:00",
+  "registryDate": "2026-11-18T02:51:55.835560+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447816,7 +447816,7 @@
         "disposition": "Native run 44189880016 verified 85 AMD64 / 123 ARM64 pgalloc and 609 safecopy cases per architecture, zero skips. Candidate f84 is the reviewed 7dfa implementation rebased onto 1f33; their only tree differences are CONTRIBUTING.md and website/blog/README.md. ARM C++ lint has the existing candidate/base failure and is not clean. Runtime hosts used 4 KiB pages; 64 KiB host execution is not established.",
         "nextAction": "Await the contributor decision on the exact f84 amendment already sent. Reverify the unchanged original PR head and current feedback before publishing only the approved revision; preserve prior approval heads and explicit holds."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -447864,7 +447864,7 @@
         "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
         "nextAction": "Complete costed statistical qualification of remaining broad network categories and loss cases; correct separately the existing benchmark measurement and readiness defects through scoped source proposals. Preserve prior failed pilots and actual measurements."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -447885,10 +447885,10 @@
       "recordedFollowup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "disposition": "Normal AMD64 all-eight capability pilot 44214811731 passed. Normal AMD64 n24 study 44220494683 and AMD64 race capability 44224377125 are running. ARM capability 44224385958 failed at apt before source work due to cross-compiler package spelling; peer-reviewed support-only correction is owned by the same agent. No full performance clearance.",
+        "disposition": "AMD64 normal n24 study44220494683 is terminal successful; owner is validating raw evidence before interpretation. AMD64 race44224377125 and corrected ARM capability44225345386 remain active. Original ARM package-spelling failure44224385958 is retained; recovery was independently peer-reviewed. Full performance gate remains open.",
         "nextAction": "Finish the active normal study and race pilot; launch the peer-reviewed ARM package-name recovery and validate exact mode/workload coverage. Cost remaining statistical runs from actual pilot evidence."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -448032,7 +448032,7 @@
         "disposition": "Reviewed proposal b29c22ea preserves the fully qualified 31bb6a5e source tree and shortens only the commit subject. Initial owner runs found a dropped os/exec import required by a new upstream namespace test; the restored import passed 95 specutils cases on both architectures in 44200657043/44200662533, including all seven required cases, with no skips. The other unchanged owners retain their earlier actual passes and disclosed command-suite environment skips. Independent full-source reviews found no issue. The exact b29 amendment and matching PR title are awaiting the already-requested contributor decision; original PR is untouched.",
         "nextAction": "Await the existing contributor decision for exact b29c22ea83f058e9ae8c859609e445d27bd14771 and title Share test processes across lifecycle tests. Reverify live source head/feedback and publish only the approved revision; do not duplicate the request."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
     {
       "repo": "buildbuddy-io/buildbuddy",
@@ -448858,8 +448858,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
-        "disposition": "Fork proposal 983dc3a36b4c481da9911e05b97d7a02b18b8e71 mechanically rebases the prepared PAWS repair onto 1f33; range-diff is unchanged. The original PR remains d531ad7020. First plan 44209699406 failed before any project action because --version followed Bazel startup options. The one-line harness correction is dispatched in 44210296597; no source qualification result is inferred.",
-        "nextAction": "Inspect the bounded native TCP/timestamp/race, Linux-then-netstack PAWS, canonical Go export and lint run. Diagnose actual failures, finish independent full-source review and performance qualification before requesting the original PR amendment."
+        "disposition": "Exact candidate 983dc3a completed every actual remote command successfully: AMD64 build, ARM64 cross-build, native TCP62, timestamp8, timestamp race8, Linux/netstack PAWS one each, export provenance and both lints. Original harness failed only because it expected unsharded e2e XML; all four retained shards contain 405 unique passing cases, zero skips/failures. Original failure preserved. Native ARM64 execution and performance gates remain open.",
+        "nextAction": "Complete required native ARM64 functional coverage and shared-base broad networking qualification, then independent source review before an exact amendment decision. Reuse saved functional evidence; do not rerun because of the corrected shard accounting."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAfQ41NSQ",
@@ -457207,7 +457207,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "pr:15183": {
@@ -464440,7 +464440,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464449,7 +464449,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464458,7 +464458,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464467,7 +464467,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464476,7 +464476,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464485,7 +464485,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464494,7 +464494,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464503,7 +464503,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:45:00.167851+00:00"
+        "observedAt": "2026-11-18T02:51:55.835560+00:00"
       }
     }
   },
