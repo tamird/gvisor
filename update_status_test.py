@@ -1369,6 +1369,106 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertNotIn("rebaseRequest", other)
         self.assertEqual(updater.reviewer_handoff([other], {}), [])
 
+    def test_published_branch_feedback_uses_its_unique_exact_owner(self) -> None:
+        source = retained(raw_pr(16869))
+        finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
+                   "body": "Please preserve the write error.", "createdAt": OLD, "updatedAt": OLD,
+                   "url": source["url"] + "#discussion_r1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        source["feedback"]["items"] = [finding]
+        branch = {"type": "branch", "repo": source["headRepo"], "ref": source["ref"],
+                  "head": source["head"], "followup": {"owner": "root", "sourceHead": source["head"],
+                  "observedAt": OLD, "evidence": [finding["url"]]}}
+        registry = {"nodes": [branch]}
+
+        def assignment() -> tuple[str, bool]:
+            row, = updater.reviewer_handoff([source], {})
+            return row["owner"], row["claimed"]
+
+        with mock.patch.object(updater, "REGISTRY", registry):
+            self.assertEqual(assignment(), ("root", True))
+            for field, other in (("repo", "other/gvisor"), ("ref", "another-branch"), ("head", "b" * 40),
+                                 ("repo", None), ("ref", None), ("head", None)):
+                with self.subTest(identity=field, value=other), mock.patch.dict(branch, {field: other}):
+                    self.assertEqual(assignment(), ("Agent", False))
+            registry["nodes"].append(copy.deepcopy(branch))
+            self.assertEqual(assignment(), ("Agent", False))
+            registry["nodes"].pop()
+            direct = {"type": "pr", "repo": "google/gvisor", "number": source["number"],
+                      "followup": {**branch["followup"], "owner": "pr-owner"}}
+            registry["nodes"].append(direct)
+            self.assertEqual(assignment(), ("pr-owner", True))
+
+    def test_retained_branch_feedback_revalidates_current_claim(self) -> None:
+        source = retained(raw_pr(16869))
+        finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
+                   "body": "Please preserve the write error.", "createdAt": OLD, "updatedAt": OLD,
+                   "url": source["url"] + "#discussion_r1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        source["feedback"]["items"] = [finding]
+        followup = {"owner": "root", "sourceHead": source["head"], "observedAt": OLD,
+                    "evidence": [finding["url"]]}
+        branch = {"type": "branch", "repo": source["headRepo"], "ref": source["ref"],
+                  "head": source["head"], "followup": followup}
+        registry = {"nodes": [branch]}
+        with mock.patch.object(updater, "REGISTRY", registry):
+            first = updater.reviewer_handoff([source], {})
+            self.assertTrue(first[0]["claimed"])
+            previous = {"prs": [copy.deepcopy(source)], "reviewerHandoff": first}
+            partial = copy.deepcopy(source)
+            partial["feedback"].update(complete=False, items=[])
+
+            def assignment() -> tuple[str, bool]:
+                row, = updater.reviewer_handoff([partial], previous)
+                return row["owner"], row["claimed"]
+
+            self.assertEqual(assignment(), ("root", True))
+            registry["nodes"].append(copy.deepcopy(branch))
+            self.assertEqual(assignment(), ("Agent", False))
+            rows = updater.reviewer_handoff([partial], previous)
+            work = updater.worker_handoff({"prs": [partial], "reviewerHandoff": rows}, [])
+            self.assertEqual(work["nextWork"]["id"], finding["id"])
+            registry["nodes"].pop()
+            direct = {"type": "pr", "repo": "google/gvisor", "number": source["number"],
+                      "followup": {**followup, "owner": "pr-owner"}}
+            registry["nodes"].append(direct)
+            self.assertEqual(assignment(), ("pr-owner", True))
+            direct["followup"] = {"owner": "root"}
+            self.assertEqual(assignment(), ("Agent", False))
+            registry["nodes"].pop()
+            with mock.patch.dict(followup, evidence=[]):
+                self.assertEqual(assignment(), ("Agent", False))
+            with mock.patch.dict(followup, {}, clear=True):
+                unclaimed = updater.reviewer_handoff([source], {})
+                overdue = updater.reviewer_handoff([source], {
+                    "prs": [copy.deepcopy(source)], "reviewerHandoff": unclaimed})
+                self.assertTrue(overdue[0]["overdue"])
+                row, = updater.reviewer_handoff([partial], {
+                    "prs": [copy.deepcopy(source)], "reviewerHandoff": overdue})
+                self.assertEqual((row["owner"], row["claimed"], row["overdue"]), ("Agent", False, True))
+
+    def test_retained_manual_claim_keeps_its_head_binding_and_known_date(self) -> None:
+        source = retained(raw_pr(16869))
+        message = {"id": "note", "kind": "comment", "body": "Please update the test.",
+                   "createdAt": OLD, "updatedAt": OLD, "url": source["url"] + "#issuecomment-1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        source["feedback"]["items"] = [message]
+        assignment = {"head": source["head"], "commentId": message["id"], "url": message["url"]}
+        node = {"type": "pr", "repo": "google/gvisor", "number": source["number"],
+                "followup": {"owner": "root", "actionableComment": assignment}}
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
+            previous = {"prs": [copy.deepcopy(source)], "reviewerHandoff": updater.reviewer_handoff([source], {})}
+            self.assertTrue(previous["reviewerHandoff"][0]["claimed"])
+            partial = copy.deepcopy(source)
+            partial["feedback"].update(complete=False, items=[])
+            for _ in range(2):
+                rows = updater.reviewer_handoff([partial], previous)
+                self.assertEqual((rows[0]["owner"], rows[0]["claimed"]), ("root", True))
+                previous = {"prs": [copy.deepcopy(partial)], "reviewerHandoff": rows}
+            assignment["head"] = "b" * 40
+            row, = updater.reviewer_handoff([partial], previous)
+            self.assertEqual((row["owner"], row["claimed"]), ("Agent", False))
+
     def test_reviewer_handoff_tracks_latest_reply_and_top_level_events(self) -> None:
         pr = retained(raw_pr(5))
         pr.update(reviewDecision="APPROVED", approvedHead=pr["head"])
@@ -1539,7 +1639,7 @@ class CollectorHistoryTest(unittest.TestCase):
                    "url": pr["url"] + "#issuecomment-6805040516",
                    "author": {"login": "zkoopmans", "__typename": "User"}}
         pr["feedback"]["items"] = [message]
-        node = {"id": "pr:15106", "repo": updater.REPO, "number": pr["number"],
+        node = {"id": "pr:15106", "type": "pr", "repo": updater.REPO, "number": pr["number"],
                 "followup": {"owner": "Upstream review", "sourceHead": pr["head"], "observedAt": OLD}}
         with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
             def advance(previous: dict) -> dict:

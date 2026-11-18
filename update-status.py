@@ -24,7 +24,7 @@ from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import allows_post, live_posting_mode, load_registry, posting_mode, registry_is_published
 from reviewer_selection import is_generic_review, needs_reviewer_paths, recent_reviewer_work, reviewer_governance
-from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, pr_identity, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
+from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, matches_feedback_binding, pr_identity, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -294,9 +294,45 @@ def closed_supplier_pr(pr: dict, registered: Container[tuple[str, int]]) -> bool
     return pr["status"] == "closed" and repo != REPO and (repo, pr["number"]) in registered
 
 
+def registry_source_indexes() -> tuple[
+        dict[tuple[str, int], dict], dict[tuple[str, str, str], list[dict]]]:
+    nodes = {(node["repo"], node["number"]): node
+             for node in REGISTRY["nodes"] if node["type"] == "pr"}
+    branches = defaultdict(list)
+    for node in REGISTRY["nodes"]:
+        if node["type"] == "branch" and all(node.get(field) for field in ("repo", "ref", "head")):
+            branches[(node["repo"], node["ref"], node["head"])].append(node)
+    return nodes, branches
+
+
+def registered_source(source: dict, nodes: dict[tuple[str, int], dict],
+                      branches: dict[tuple[str, str, str], list[dict]]) -> dict:
+    if (node := nodes.get((source.get("repo", REPO), source["number"]))) is not None:
+        return node
+    # Published work may retain its owner in the original branch card.
+    # A title or commit alone does not establish repository ownership.
+    if not all(source.get(field) for field in ("headRepo", "ref", "head")):
+        return {}
+    matches = branches.get((source["headRepo"], source["ref"], source["head"]), [])
+    match matches:
+        case [branch]:
+            return branch
+        case _:
+            return {}
+
+
+def feedback_claimed(source: dict, item: dict, followup: dict, assigned: bool) -> bool:
+    """Require current source and edit evidence before treating feedback as owned."""
+    observed = bool(followup.get("observedAt") and item.get("updatedAt")
+                    and datetime.fromisoformat(followup["observedAt"]) >= datetime.fromisoformat(item["updatedAt"]))
+    unedited = bool(item.get("createdAt") and item.get("updatedAt") == item["createdAt"])
+    linked = followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
+    return bool(followup.get("owner") and (assigned and (observed or unedited) or observed and linked))
+
+
 def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     """Put human feedback before routine checks, without treating replies as resolution."""
-    nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]}
+    nodes, branches = registry_source_indexes()
     prior = {(pr.get("repo", REPO), pr["number"]): pr for source in previous.get("prs", [])
              for pr in (source, *source.get("imports", []))}
     pending = {(item["repo"], item["number"], item["id"]): item
@@ -310,7 +346,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         closed = pr["status"] == "closed"
         key = pr.get("repo", REPO), pr["number"]
         current_discussion = pr is source or pr in import_lineage(source)
-        node = nodes.get((source.get("repo", REPO), source["number"]), {})
+        node = registered_source(source, nodes, branches)
         followup = node.get("followup", {})
         old = {item["id"]: item for item in prior.get(key, {}).get("feedback", {}).get("items", [])}
         items = pr.get("feedback", {}).get("items", [])
@@ -375,11 +411,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
             # A PR's old owner or review label does not claim a new thread.
             # Match the current source, linked comment and the reviewer's last edit.
             worker = followup.get("owner")
-            observed = bool(followup.get("observedAt") and item.get("updatedAt")
-                            and datetime.fromisoformat(followup["observedAt"]) >= datetime.fromisoformat(item["updatedAt"]))
-            unedited = bool(item.get("createdAt") and item.get("updatedAt") == item["createdAt"])
-            linked = followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
-            claimed = bool(worker and (assigned and (observed or unedited) or observed and linked))
+            claimed = feedback_claimed(source, item, followup, assigned)
             # A cold inventory may contain years of comments. Queue newly seen or
             # edited feedback, and carry forward the exact untriaged observation.
             last_scan = previous.get("checkedAt")
@@ -402,18 +434,32 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
                             "owner": "Agent" if inspect or awaiting_author and not claimed else worker, **claim, "kind": item["kind"], "id": item["id"],
                             **({"needsTriage": inspect} if item["kind"] in {"comment", "review"} else {}),
                             **({"rebaseRequested": True} if is_rebase else {}),
+                            **({"createdAt": item["createdAt"]} if item.get("createdAt") else {}),
                             "url": item["url"], "author": author["login"], "updatedAt": item.get("updatedAt"),
                             "newOrChanged": changed, "awaitingAuthor": awaiting_author, "assigned": assigned or awaiting_author,
                             "feedbackComplete": pr.get("feedback", {}).get("complete", False),
                             "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."})
         if not pr.get("feedback", {}).get("complete"):
             visible = {item["id"] for item in items}
-            records.extend({**record, "head": pr["head"], "newOrChanged": False, "feedbackComplete": False,
-                            **({"needsTriage": False} if record.get("needsTriage") and not current_discussion else {}),
-                            **({"owner": "Agent", "claimed": False, "overdue": False}
-                               if record.get("awaitingAuthor") and record["head"] != pr["head"] else {})}
-                           for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible
-                           and (not closed or record.get("needsTriage")))
+            for identity, record in pending.items():
+                if identity[:2] != key or identity[2] in visible or closed and not record.get("needsTriage"):
+                    continue
+                retained = {**record, "head": pr["head"], "newOrChanged": False, "feedbackComplete": False}
+                if record.get("needsTriage") and not current_discussion:
+                    retained["needsTriage"] = False
+                if record.get("awaitingAuthor"):
+                    # Retained records already passed the visible-message checks.
+                    # Preserve known dates across repeated incomplete responses.
+                    known = {**old.get(record["id"], {}), **record}
+                    assigned = matches_feedback_binding(pr, known, followup.get("actionableComment", {}))
+                    claimed = record["head"] == pr["head"] and feedback_claimed(source, known, followup, assigned)
+                    retained.update(owner=followup.get("owner") if claimed else "Agent", claimed=claimed,
+                                    overdue=bool(not claimed and record["head"] == pr["head"] and record.get("overdue")))
+                    if known.get("createdAt"):
+                        retained["createdAt"] = known["createdAt"]
+                else:
+                    retained["owner"] = "Agent" if retained.get("needsTriage") else followup.get("owner")
+                records.append(retained)
     return sorted(records, key=lambda item: (not item["awaitingAuthor"], item.get("updatedAt") or "", item["url"]))
 
 
@@ -1052,26 +1098,12 @@ def check_report(prs: list[dict], previous: dict) -> dict:
     """Report service failures without conflating old imports with current source."""
     prior = {(pr.get("repo", REPO), pr["number"]): pr
              for source in previous.get("prs", []) for pr in (source, *source.get("imports", []))}
-    nodes = {(node["repo"], node["number"]): node
-              for node in REGISTRY["nodes"] if node["type"] == "pr"}
-    branches = defaultdict(list)
-    for node in REGISTRY["nodes"]:
-        if node["type"] == "branch":
-            branches[(node.get("repo"), node.get("ref"), node.get("head"))].append(node)
+    nodes, branches = registry_source_indexes()
     failures, changes, imports, mergeability, mergeability_changes = [], [], [], [], []
     for source in prs:
         repo = source.get("repo", REPO)
         source_status_changed = source["status"] != prior.get((repo, source["number"]), {}).get("status")
-        node = nodes.get((repo, source["number"]))
-        if node is None:
-            # Published work may retain its owner in the original branch card.
-            # A title or commit alone does not establish repository ownership.
-            matches = branches.get((source.get("headRepo"), source.get("ref"), source.get("head")), [])
-            match matches:
-                case [branch] if all(source.get(field) for field in ("headRepo", "ref", "head")):
-                    node = branch
-                case _:
-                    node = {}
+        node = registered_source(source, nodes, branches)
         followup = node.get("followup", {})
         delivered = verified_landing(source, node.get("landedPatch"))
         assignment = {key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
