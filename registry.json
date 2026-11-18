@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+    "updatedAt": "2026-11-18T20:00:58.033079+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2705,12 +2705,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
-      "summary": "The c679 source lint and changed codegen owner passed. The compiler-only continuation stopped at APT acquisition; a bounded exact-large-package probe now verifies the official HTTPS route while the EC2 HTTP route times out. Production qualification remains incomplete.",
+      "updatedAt": "2026-11-18T20:00:58.033079+00:00",
+      "summary": "The URI-only APT recovery passed acquisition/readiness and both production links. AMD64 inline evidence passed; required ARM inline evidence and action capture remain unresolved, so the full compiler gate is not qualified.",
       "followup": {
-        "disposition": "The c679 source lint and changed codegen owner passed. The compiler-only continuation stopped at APT acquisition; a bounded exact-large-package probe now verifies the official HTTPS route while the EC2 HTTP route times out. Production qualification remains incomplete.",
+        "disposition": "The URI-only APT recovery passed acquisition/readiness and both production links. AMD64 inline evidence passed; required ARM inline evidence and action capture remain unresolved, so the full compiler gate is not qualified.",
         "owner": "root",
-        "nextAction": "Owner systrap_regression is preparing the task-scoped HTTPS APT recovery, preserving package signature/hash checks and existing time caps, then resuming only missing compiler/production gates.",
+        "nextAction": "Owner systrap_regression audits retained443839 ARM reachability/compiler products and action capture1 before proposing only missing gates. Preserve all source/functional/lint passes and prior APT/format failures; no new run yet.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
@@ -2729,9 +2729,9 @@
         ],
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-18T19:41:39.857079+00:00",
-        "recheckCondition": "Recovery terminal result, changed source/compiler/configuration or actual infrastructure evidence.",
-        "curatedAt": "2026-11-18T17:34:57.517822+00:00",
+        "observedAt": "2026-11-18T20:00:58.033079+00:00",
+        "recheckCondition": "Retained-product diagnosis, concrete missing-gate proposal, changed source/toolchain/configuration or actual new result.",
+        "curatedAt": "2026-11-18T20:00:58.033079+00:00",
         "historicalEvidenceCorrection": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
           "correction": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof.",
@@ -2832,11 +2832,28 @@
           "failedRun": 44379676578,
           "largePackageProbe": 44381907708,
           "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
-          "production": "not qualified",
+          "production": "Both production link commands passed; required full compiler gate remains NOT qualified",
           "owner": "systrap_regression",
-          "recoveryRun": 44382830296,
+          "recoveryRun": 44383929244,
           "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
-          "state": "Failed before package mutation on a comment-only Deb822 paragraph; owner simplifying URI-only source preservation before continuation"
+          "state": "APT/readiness and both production links passed; AMD64 inline passed. Required ARM inline evidence and action capture1 failed; owner is investigating retained products, no full-gate qualification or new run.",
+          "history": [
+            {
+              "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+              "failedRun": 44379676578,
+              "largePackageProbe": 44381907708,
+              "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
+              "production": "not qualified",
+              "owner": "systrap_regression",
+              "recoveryRun": 44382830296,
+              "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
+              "state": "Failed before package mutation on a comment-only Deb822 paragraph; owner simplifying URI-only source preservation before continuation"
+            }
+          ],
+          "artifact": 14464909203,
+          "artifactSHA256": "b783d148c9abc87703690b39e44ca39d56f46deaacd383b5cb736f24842a7610",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44383929244",
+          "limits": "ARM handler reachability and action capture are under investigation; no proven codegen-regression claim and no ARM/full-gate pass."
         }
       },
       "head": "17197905852cdebf53a1f60b9de9652ced640e7c",
@@ -25397,14 +25414,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
-      "summary": "Confirmed the current review finding: singular rootpath fails with multiple compiler outputs, and FindFile expects a project-relative path. A fresh-base proposal reuses the existing export selector through a runfile alias; upstream source is unchanged.",
+      "updatedAt": "2026-11-18T20:00:58.033079+00:00",
+      "summary": "The compiler-export runfile correction passed its targeted public integration preflight and final reviews. The already-asked single-commit amendment and reply decision is pending; upstream source is unchanged.",
       "followup": {
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
-        "observedAt": "2026-11-18T19:41:39.857079+00:00",
-        "disposition": "Confirmed the current review finding: singular rootpath fails with multiple compiler outputs, and FindFile expects a project-relative path. A fresh-base proposal reuses the existing export selector through a runfile alias; upstream source is unchanged.",
-        "nextAction": "Owner coverage_security_review is exercising configured provider/runfile analysis and the single compiler-import identity test before proposing an upstream amendment for user review.",
+        "observedAt": "2026-11-18T20:00:58.033079+00:00",
+        "disposition": "The compiler-export runfile correction passed its targeted public integration preflight and final reviews. The already-asked single-commit amendment and reply decision is pending; upstream source is unchanged.",
+        "nextAction": "Await the already-asked amendment and reply decision for11af. On approval, reverify exact old/new heads and publish the reviewed amendment/body/reply; preserve private compiler and broad qualification limits.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -25423,16 +25440,23 @@
           "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9915-46a8-995f-da5317a484c1"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual preflight result, source/review change or contributor decision.",
+        "recheckCondition": "Contributor amendment/reply decision, source/base change or substantive new review finding.",
         "preparedRevision": {
-          "head": "538e220b3d87f549b2f3bfe16e1076011f901283",
+          "head": "11af41f15e37b1ab4260735a25378a79085c770e",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
-          "state": "Cheap integration preflight live; not qualified or published upstream",
-          "owner": "coverage_security_review",
-          "limits": "Actual internal compiler environment unavailable; no private integration pass claim.",
+          "state": "Targeted fixture preflight PASS; final tree/delta reviews PASS; awaiting already-asked contributor amendment/reply decision",
+          "owner": "root",
+          "limits": "Public AMD64 adapter cquery, goimports/buildifier and one fresh uncached compiler import identity case only; no full Nogo/private compiler/ARM/performance qualification.",
           "run": 44382753105,
-          "plan": "39496579770cc5a692522c9b8ad67bc4b991d172"
-        }
+          "plan": "39496579770cc5a692522c9b8ad67bc4b991d172",
+          "testedSource": "538e220b3d87f549b2f3bfe16e1076011f901283",
+          "tree": "7d3ad0640c7f97bed991893bf78faaee4aaaf55a",
+          "receipt": {
+            "file": "nogo-16098-44382753105-evidence.json",
+            "sha256": "437adab0160bbd0dbcea6deb0a2d739ca63afbb7ef4ad824e143d0b1fd3dee10"
+          }
+        },
+        "curatedAt": "2026-11-18T20:00:58.033079+00:00"
       },
       "evidence": [
         {
@@ -25625,6 +25649,19 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "11af41f15e37b1ab4260735a25378a79085c770e",
+        "baseHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
+        "url": "https://github.com/tamird/gvisor/commit/11af41f15e37b1ab4260735a25378a79085c770e",
+        "title": "Generate Nogo export data from source",
+        "body": "Generate export data during Nogo's existing source analysis and read it\nwith the supported x/tools API. Replace deprecated compiler-archive\ndecoding, reusing the type-checked package when serializing exports.\nDeclare standard-library exports per SDK and build mode.\n\nPreserve primary dependency imports ahead of import aliases, matching\nrules_go. The s2a token manager imports both protocol versions, while\nthe v2 package also aliases the v1 path; treating that alias as primary\notherwise collapses the distinct Identity types during source analysis.\n\nForward dependencies from source-only Go embeds to the consuming package\nwithout creating separate analysis actions for those sources.\n\nAnalyze protobuf packages when the build rules supply their generated\nGo sources. For rules that expose only compiled packages, import the\ntarget archive and its additional protobuf dependencies with the Go\nSDK. Convert these inputs to Nogo export data so all imports share one\npackage identity. Do not require other Go rule implementations to expose\nrules_go providers or protobuf compiler attributes.\n\nExempt only the unsafe-import filename diagnostic for generated .pb.go\nfiles, since protoc-gen-go emits unsafe descriptor access.\n\nOn one amd64 worker, serial warm-cache Nogo analysis of sync and\neventchannel and their dependencies took 83.5-85.4 s before and\n84.8-85.0 s after (two measured passes per revision). This includes\nstandard-library work, export writes and newly analyzed protobuf\ndependencies; compilation and downloads are excluded.\n\nExpose the compiler-import test fixture through a package-relative\nrunfile alias. Select its compiler export with the existing archive\nadapter so rules with multiple outputs do not require a singular\nrootpath, and FindFile does not receive a workspace-prefixed path.\n\nUpdated by Codex on behalf of @tamird.\n",
+        "replyBody": "Replaced the singular rootpath/environment-variable fixture with a package-relative runfile alias. The alias uses the existing compiler-export selector, so it handles the compiler export without assuming a single DefaultInfo output or passing a workspace prefix to FindFile. The current public Bazel provider emitted flags.x; adapter/runfile analysis and the uncached TestCompilerImportIdentity passed. I have not run the private internal compiler integration.\n\nPosted by Codex on behalf of @tamird.\n",
+        "reviewThreadURL": "https://github.com/gvisor/gvisor/pull/16098#discussion_r4619004827",
+        "summary": "Approve the already-proposed amendment and reply. Reuses the human-approved unchanged original patch after rebase; the three-path compiler-export fixture correction passed actual adapter/runfile analysis, formatting and fresh uncached TestCompilerImportIdentity. Proposed single-commit tree equals tested538. No full Nogo/private compiler/ARM/performance qualification claim.",
+        "requestedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     {
@@ -78185,7 +78222,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T17:34:57.517822+00:00",
+      "updatedAt": "2026-11-18T20:00:58.033079+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire → graph → wire restore verified the guest’s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -78313,7 +78350,7 @@
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "observedAt": "2026-11-18T17:34:57.517822+00:00",
         "disposition": "Full8 run44350079319 passed BASE CheckpointEmpty N1, then the sampled-volume observer did not capture nonempty data. Namespace cleanup separately failed with retained task lease/blob references. Original Docker packages were restored before that failure, but original configuration/store/inventory restoration was not verified. No candidate result or product defect established.",
-        "nextAction": "Review checkpoint-owner completion-time metadata capture and ownership-constrained namespace cleanup. Prove exact CLI/cleanup with a cheap private-namespace preflight before a workload retry; no global pruning or volume-oracle waiver.",
+        "nextAction": "Owner coverage_security_review consumes the live native namespace/cleanup API probe44386251141 before any full8 recovery; preserve previous partial observation/restoration failure.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -78366,7 +78403,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44350079319"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Exact cleanup/completion proposal review, cheap namespace preflight or full8 result; source/human/import changes.",
+        "recheckCondition": "Native probe terminal artifact and cleanup result, then concrete bounded full8 recovery proposal.",
         "qualificationHistory": [
           {
             "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
@@ -78691,9 +78728,22 @@
           "completedObservations": 1,
           "candidateObservations": 0,
           "restorationVerified": false,
-          "originalDockerPackagesRestored": true
+          "originalDockerPackagesRestored": true,
+          "nativeNamespacePreflight": {
+            "source": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+            "plan": "937b523af9706f0d8580bc0e3096803ede250688",
+            "run": 44386251141,
+            "state": "LIVE; actual result and cleanup audit pending",
+            "owner": "coverage_security_review",
+            "inclusiveMinutes": 6,
+            "receipt": {
+              "file": "checkpoint-namespace-preflight-dispatch.json",
+              "sha256": "4a91d7fc6f3d041c0dee942af925cb5453e1d313422161bb40e23e5a5948936a"
+            },
+            "scope": "Native namespace/owned-lease/rooted-public-marker cleanup API probe only. No package/configuration/project build/runtime/source-hook/full8 qualification."
+          }
         },
-        "curatedAt": "2026-11-18T17:34:57.517822+00:00",
+        "curatedAt": "2026-11-18T20:00:58.033079+00:00",
         "technicalOwner": "coverage_security_review"
       },
       "refinement": {
@@ -128472,5 +128522,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T19:41:39.857079+00:00"
+  "updatedAt": "2026-11-18T20:00:58.033079+00:00"
 }

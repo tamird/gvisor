@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T19:22:58.577211+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T19:41:39.857079+00:00",
+  "registryDate": "2026-11-18T20:00:58.033079+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448014,8 +448014,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
-        "disposition": "The c679 source lint and changed codegen owner passed. The compiler-only continuation stopped at APT acquisition; a bounded exact-large-package probe now verifies the official HTTPS route while the EC2 HTTP route times out. Production qualification remains incomplete.",
-        "nextAction": "Owner systrap_regression is preparing the task-scoped HTTPS APT recovery, preserving package signature/hash checks and existing time caps, then resuming only missing compiler/production gates."
+        "disposition": "The URI-only APT recovery passed acquisition/readiness and both production links. AMD64 inline evidence passed; required ARM inline evidence and action capture remain unresolved, so the full compiler gate is not qualified.",
+        "nextAction": "Owner systrap_regression audits retained443839 ARM reachability/compiler products and action capture1 before proposing only missing gates. Preserve all source/functional/lint passes and prior APT/format failures; no new run yet."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxwQaXQ"
@@ -448973,8 +448973,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
-        "disposition": "Confirmed the current review finding: singular rootpath fails with multiple compiler outputs, and FindFile expects a project-relative path. A fresh-base proposal reuses the existing export selector through a runfile alias; upstream source is unchanged.",
-        "nextAction": "Owner coverage_security_review is exercising configured provider/runfile analysis and the single compiler-import identity test before proposing an upstream amendment for user review."
+        "disposition": "The compiler-export runfile correction passed its targeted public integration preflight and final reviews. The already-asked single-commit amendment and reply decision is pending; upstream source is unchanged.",
+        "nextAction": "Await the already-asked amendment and reply decision for11af. On approval, reverify exact old/new heads and publish the reviewed amendment/body/reply; preserve private compiler and broad qualification limits."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_X2w"
@@ -453500,7 +453500,7 @@
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "disposition": "Full8 run44350079319 passed BASE CheckpointEmpty N1, then the sampled-volume observer did not capture nonempty data. Namespace cleanup separately failed with retained task lease/blob references. Original Docker packages were restored before that failure, but original configuration/store/inventory restoration was not verified. No candidate result or product defect established.",
-        "nextAction": "Review checkpoint-owner completion-time metadata capture and ownership-constrained namespace cleanup. Prove exact CLI/cleanup with a cheap private-namespace preflight before a workload retry; no global pruning or volume-oracle waiver."
+        "nextAction": "Owner coverage_security_review consumes the live native namespace/cleanup API probe44386251141 before any full8 recovery; preserve previous partial observation/restoration failure."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -458988,6 +458988,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-18T19:22:18.629714+00:00"
+      },
+      "contributor-review": {
+        "scope": "11af41f15e37b1ab4260735a25378a79085c770e",
+        "since": "2026-11-18T20:00:58.033079+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     "pr:16101": {
@@ -464282,7 +464289,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:41:39.857079+00:00"
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464291,7 +464298,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:41:39.857079+00:00"
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464300,7 +464307,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:41:39.857079+00:00"
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464309,7 +464316,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:41:39.857079+00:00"
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464318,7 +464325,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:41:39.857079+00:00"
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464327,7 +464334,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:41:39.857079+00:00"
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464336,7 +464343,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:41:39.857079+00:00"
+        "observedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     }
   },
