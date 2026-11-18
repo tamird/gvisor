@@ -1,0 +1,36 @@
+{
+  "scope": "metadata parser fixtures only, not current runtime output",
+  "sourceFixture": "b5933c08:test/benchmarks/tools/hey_test.go",
+  "normal200": true,
+  "intentional404": true,
+  "unexpectedStatusRejected": true,
+  "requestErrorsRejected": true,
+  "allErrorsPreserved": true,
+  "redisDescriptorAndRoundedZeroLatency": true,
+  "nonfiniteRedisRateRejected": true,
+  "reportedDataBytesRetained": true,
+  "all70Scope": true,
+  "oldExecutionEvidenceNotUpgraded": true,
+  "invalidCalibrationRejectedDespiteValidFinal": true,
+  "unparsedStatusRejected": true,
+  "unparsedErrorRejected": true,
+  "allRecordsAndFinalFieldsSeparate": true,
+  "missingCalibrationRejected": true,
+  "reviewedFileSHA256": {
+    "run.sh": "f7e4f0995e4935b87cd8ff419dd002aecb91cdc0532b141cbe2f8b90b08a5a8b",
+    "pilot.py": "4e5d5bacc1ac3cde2c96f9834695f3586fca97a91a845b1f5d679f2140edbaee",
+    "raw_output.py": "72667c8c238a73a5201f7b0ddb01b7d539854acda1b7f2e1006a4552155013f9",
+    "expected.json": "2085679d28f8ea670b90c638614655e9ab05e475b7f48797b1dd6596ef4d69b9",
+    "budget.json": "d4ee931067dc38034b2eda8a0b200b1f760c1772eda67aae8cd6aaf842599d00"
+  },
+  "postTraversalSyntaxCheckedFileSHA256": {
+    "run.sh": "ce61781d300cdee08c4f624f50f7e64185a17be3ed3d1633e572dc95478a03c2",
+    "pilot.py": "5a9155930600a1e116a07490e0c7cb38817f78cdf9fa001e9d28c4dd510b0068",
+    "raw_output.py": "72667c8c238a73a5201f7b0ddb01b7d539854acda1b7f2e1006a4552155013f9",
+    "expected.json": "2085679d28f8ea670b90c638614655e9ab05e475b7f48797b1dd6596ef4d69b9",
+    "budget.json": "4579e1b1f3b5aadfda104a4d3cef8dc3c542407d4998688d0559761caba00b0c",
+    "exec_root_probe.py": "abbfa3aec30895d4930a5aa132c6adf33d93498a15584a664b3cf7d3f48df3f6",
+    "runtime_access.py": "9353a0116d67e4f4094fb99a5e807e468fdf273acfcf7493583f7291f04bdcb3"
+  },
+  "postTraversalScope": "Parser code unchanged; run/pilot changed only runtime-root and cleanup paths. Prior fixture outcomes retained, not rerun project tests."
+}

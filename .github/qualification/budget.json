@@ -1,0 +1,88 @@
+{
+  "status": "Revised for root review: all70 Sentry leaves and four lightweight native controls rechecked with raw validity; no publication/launch.",
+  "diagnosticSource": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
+  "diagnosticParent": "b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
+  "runtimeBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+  "publicationProposalUnchanged": "46ec4ba08f60c5a2e89269d09b2b970f3cde5685",
+  "reused": {
+    "run": 44238122262,
+    "scope": "Retain execution/finite-summary evidence only; no request-validity upgrade",
+    "priorHttpdCompletedExecutionLeaves": 33,
+    "priorNativeCompletedExecutionControls": 4,
+    "failedReceiptRetained": true
+  },
+  "newExecution": {
+    "nativeLightControls": 4,
+    "nativeHighControl": 1,
+    "httpdLeaves": 42,
+    "nodeLeaves": 4,
+    "rubyLeaves": 4,
+    "redisLeaves": 20,
+    "totalSentryLeaves": 70,
+    "runtimeCandidates": 0,
+    "statisticalExtension": false,
+    "capabilityVisitsPerCase": 1
+  },
+  "phaseCapsMinutes": {
+    "sixSpecificPulls": 30,
+    "dependencyMetadata": 2,
+    "baseRelease": 20,
+    "archiveFreeze": 2,
+    "harnessBuild": 25,
+    "cquery": 2,
+    "harnessFreezeManifest": 3,
+    "shutdown": 2,
+    "runtimeActivation": 3.4,
+    "newNativeHighControl": 3,
+    "nodeRubyRedis": 45,
+    "accounting": 2,
+    "cleanupGrace": 3,
+    "globalInclusive": 180,
+    "nativeLightControls": 14,
+    "fullHttpdCategory": 12,
+    "publicTraversalAndRuntimePreflight": 3.75,
+    "explicitRuntimeBaseFetch": 1
+  },
+  "observedCostBasis": {
+    "previousBaseBazelSeconds": 221.996,
+    "previousHarnessBazelSeconds": 187.6,
+    "previousHttpdHighEightFinalTimersSeconds": "~20.14 per leaf; ninth was just starting when170s group cap expired",
+    "unknown": "No Sentry Node/Ruby/Redis category has executed yet; no precise total forecast claimed.",
+    "extraHttpdAndNativeElapsedSeconds": 107.73109735900016
+  },
+  "requestedApplicationPayload": {
+    "nativeHighKnownStaticBodyBytesIncludingCalibration": 1049624576,
+    "exclusions": "404 bodies, headers, readiness requests; response counts/errors may reduce delivered data and will be captured. No wire-byte claim.",
+    "nodeRequests": 4004,
+    "rubyRequests": 4004,
+    "redisOneAttemptRequestedOperations": 20020,
+    "redisThreeAttemptBound": 60060,
+    "httpdFullKnownStaticBodyBytesIncludingCalibration": 15055652864
+  },
+  "rawParserGate": "Actual native high-concurrency producer must create parseable raw records before subsequent groups. HTTP expected status200 or intentional404 must account for all requests with no client errors to classify capability valid. Redis requires finite positive rate; unknown actual retries remain explicit.",
+  "phaseCapSumBeforeCleanupMinutes": 170.15,
+  "extraVersusPriorDraft": {
+    "sentryLeavesForMissingValidity": 33,
+    "nativeLightControlsForMissingValidity": 4,
+    "observedPriorHttpd33Seconds": 73.49001945300006,
+    "observedPriorNative4Seconds": 34.2410779060001,
+    "additionalHttpdRequestsIncludingCalibration": 1458,
+    "additionalHttpdKnownStaticBodyBytes": 2233627648,
+    "additionalNativeHttpdRequests": 1001,
+    "additionalNativeHttpdKnownStaticBodyBytes": 10250240,
+    "additionalNativeNodeRequests": 1001,
+    "additionalNativeNodeValueBytesUpperBound": 4100096,
+    "additionalNativeRubyRequests": 1001,
+    "additionalNativeRubyValueBytes": 5125120,
+    "additionalNativeRedisRequestedOperationsOneAttempt": 1001,
+    "additionalNativeRedisRequestedOperationsThreeAttemptBound": 3003,
+    "exclusions": "HTML templates,404 bodies,headers,readiness and Redis tool setup; not wire-byte counts."
+  },
+  "runtimeTraversal": "Unique owned0711 /tmp root; actual UID/GID65534 copied-host execution before builds; immutable whole release actor access and configured Docker true before observations. Private work/results remain unchanged.",
+  "retainedRecoveryFailure": {
+    "run": 44249610485,
+    "source": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
+    "plan": "76fa9e8765a7a3f6bbfada47957ba55c2cd26dcd",
+    "cause": "Shallow dispatcher fetch lacks separate pinned runtime BASE tree; no builds or observations. Early actual mapped-actor public-root probe passed."
+  }
+}
