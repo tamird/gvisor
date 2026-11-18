@@ -1,0 +1,378 @@
+{
+  "run": 44391986188,
+  "artifact": 14471842124,
+  "artifactSHA256": "924b601fbe0fbcf5ea83267df95edb53d8c1119e525abd6580d80b5a2dcbc527",
+  "outcome": {
+    "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+    "plan": "b4bc23328483393a3edcee1440fab7f08ac52012",
+    "toolingScope": "bazel-9.3.1",
+    "actualFinalHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+    "trackedWorktreeDirty": false,
+    "indexDirty": false,
+    "gitInspectionErrors": {},
+    "architecture": "amd64",
+    "steps": {
+      "prepare": "success",
+      "tools": "success",
+      "qualify": "failure"
+    },
+    "status": "not-passed"
+  },
+  "stages": [
+    [
+      "native-host-prerequisites",
+      "0",
+      "0"
+    ],
+    [
+      "public-root-preflight",
+      "0",
+      "0"
+    ],
+    [
+      "owned-group-interruption-preflight",
+      "3",
+      "0"
+    ],
+    [
+      "userns-setup",
+      "0",
+      "0"
+    ],
+    [
+      "exact-owner-query",
+      "63",
+      "0"
+    ],
+    [
+      "native-tool-readiness",
+      "0",
+      "0"
+    ],
+    [
+      "source-release",
+      "804",
+      "0"
+    ],
+    [
+      "runtime-elf-identity",
+      "0",
+      "0"
+    ],
+    [
+      "runtime-manifest",
+      "0",
+      "0"
+    ],
+    [
+      "runtime-actor-access",
+      "0",
+      "0"
+    ],
+    [
+      "runtime-archive",
+      "5",
+      "0"
+    ],
+    [
+      "ordinary-runtime-before",
+      "0",
+      "0"
+    ],
+    [
+      "ordinary",
+      "137",
+      "0"
+    ],
+    [
+      "ordinary-evidence",
+      "0",
+      "0"
+    ],
+    [
+      "ordinary-runtime-after",
+      "0",
+      "0"
+    ],
+    [
+      "save-restore-runtime-before",
+      "0",
+      "0"
+    ],
+    [
+      "save-restore",
+      "929",
+      "2"
+    ],
+    [
+      "save-restore-evidence",
+      "0",
+      "1"
+    ]
+  ],
+  "raceRelease": {
+    "configuredRaceOwnersVerified": true,
+    "completeOpaque9Reproduced": true,
+    "runtimeArchiveSHA256": "b54e96aecba0b790bbd58e3aa8b0ce0cf366bb71989b000eef6ae728eafbab9b",
+    "files": {
+      "containerd-shim-runsc-v1": {
+        "sha256": "fb3d25d0bffb2d25c4d737c5ef4c0e26a69b1b898d6a9600b9ca28493669b48c",
+        "size": 22838433,
+        "mode": 365
+      },
+      "gvisor-bin/checkpointgofer": {
+        "sha256": "e33f9d1f72caede4c58c17280823f9b4879ee3730fd35b4e842c9643f3747d0a",
+        "size": 33312928,
+        "mode": 365
+      },
+      "gvisor-bin/gvisor-proc-umounter": {
+        "sha256": "f8bcc91a9ea695c817cab5e401f93d02b791717385c95ac5d4d9b4d2ff42f7ab",
+        "size": 1280,
+        "mode": 365
+      },
+      "gvisor-bin/gvisor-sentry-prewarmer": {
+        "sha256": "fd80f1972b1d4284cf489ae54c8250a820ac5a9edb81d73affbf2faea755aebf",
+        "size": 1752,
+        "mode": 365
+      },
+      "gvisor-bin/gvisor_sentry": {
+        "sha256": "ff756332a61538fdae8c869cd6df365edc93bfd5b03e60d0155f2525a4a1f410",
+        "size": 48160967,
+        "mode": 365
+      },
+      "gvisor-bin/runsc-fd-parking": {
+        "sha256": "c367c27ce0da4ce8529c9ba0b091eda0e159e966062137e963d451c37d25880a",
+        "size": 1304,
+        "mode": 365
+      },
+      "gvisor-bin/runsc-metric-server": {
+        "sha256": "8b14b52ff5087347f517ead9ffb9f24d86c26e1d655df12e357f994b298b3b13",
+        "size": 14729376,
+        "mode": 365
+      },
+      "gvisor-bin/runsc-netgofer": {
+        "sha256": "9cc72f8c5446097cf268c43f26c9f79205769316d422eb0c880c7e4cfe1d25eb",
+        "size": 12583072,
+        "mode": 365
+      },
+      "runsc": {
+        "sha256": "10c72c647286841c899a4cff514b0f5aeaa3737a3a1cffa54fc38e2b2a112600",
+        "size": 19344359,
+        "mode": 365
+      }
+    },
+    "nativeAMD64ELFs": {
+      "architecture": "amd64",
+      "sourceBuiltCanonicalRelease": true,
+      "ELFs": [
+        {
+          "path": "containerd-shim-runsc-v1",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "gvisor-bin/checkpointgofer",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "gvisor-bin/gvisor-proc-umounter",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "gvisor-bin/gvisor-sentry-prewarmer",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "gvisor-bin/gvisor_sentry",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "gvisor-bin/runsc-fd-parking",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "gvisor-bin/runsc-metric-server",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "gvisor-bin/runsc-netgofer",
+          "class": 64,
+          "machine": 62
+        },
+        {
+          "path": "runsc",
+          "class": 64,
+          "machine": 62
+        }
+      ]
+    },
+    "actorAccess": true,
+    "buildSeconds": 804
+  },
+  "ordinary": {
+    "freshCases": 30,
+    "freshUncachedBEP": true,
+    "noFailuresOrSkips": true,
+    "raceReports": 0,
+    "runtimeAfterMatches": true,
+    "seconds": 137,
+    "verified": {
+      "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+      "label": "//test/syscalls:semaphore_test_runsc_systrap_directfs",
+      "configuration": "c0bce4c7b4bfe8c3e0aa38fd19957350faa2f3de30186e371cf43e96f519a8dc",
+      "cases": [
+        "SemaphoreTest.SemGet",
+        "SemaphoreTest.SemGetSystemLimits",
+        "SemaphoreTest.SemOpSingleNoBlock",
+        "SemaphoreTest.SemTimedOpSingleNoBlock",
+        "SemaphoreTest.SemOpMultiNoBlock",
+        "SemaphoreTest.SemOpBlock",
+        "SemaphoreTest.SemTimedOpBlock",
+        "SemaphoreTest.SemOpNoBlock",
+        "SemaphoreTest.SemOpSimple",
+        "SemaphoreTest.SemOpRemoveWithWaiter",
+        "SemaphoreTest.SemOpBestFitExecution",
+        "SemaphoreTest.SemOpRandom",
+        "SemaphoreTest.SemOpNamespace",
+        "SemaphoreTest.SemCtlVal",
+        "SemaphoreTest.SemCtlValAll",
+        "SemaphoreTest.SemCtlGetPid",
+        "SemaphoreTest.SemCtlGetPidFork",
+        "SemaphoreTest.SemIpcSet",
+        "SemaphoreTest.SemCtlIpcStat",
+        "SemaphoreTest.SemopGetzcnt",
+        "SemaphoreTest.SemopGetzcntOnSetRemoval",
+        "SemaphoreTest.SemopGetzcntOnSignal",
+        "SemaphoreTest.SemopGetncnt",
+        "SemaphoreTest.SemopGetncntOnSetRemoval",
+        "SemaphoreTest.SemopGetncntOnSignal",
+        "SemaphoreTest.IpcInfo",
+        "SemaphoreTest.SemInfo",
+        "SemaphoreTest.RemoveWithoutPermission",
+        "SempahoreTest.RemoveNonExistentSemaphore",
+        "SempahoreTest.RemoveDeletedSemaphore"
+      ],
+      "runtimeProof": {
+        "actualRuntimeCommands": [
+          "/tmp/gvisor-semaphore-consumer.xnydao/active/runsc -root /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3807/execroot/_main/_tmp/29e09493ea67a709639c787d86bab2e9/containers1157322148 -network none -log-format=text -TESTONLY-unsafe-nonroot=true -allow-packet-socket-write=true -panic-signal=15 -iouring=false -watchdog-action=panic -platform systrap -file-access exclusive -gvisor-gro -host-settings=check_mandatory -allow-suid -net-raw -overlay2=none -debug -log-packets=true -strace -ref-leak-mode=log-names -directfs -kvm-use-cpu-nums=false -in-sandbox-cgroup=v1 -debug-log /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3807/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/semaphore_test_runsc_systrap_directfs/test.outputs/main.test/runsc1795621780/logs/ -coverage-report /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3807/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/semaphore_test_runsc_systrap_directfs/test.outputs/main.test/runsc1795621780/coverage/ -log=/dev/null run --bundle /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3807/execroot/_main/_tmp/29e09493ea67a709639c787d86bab2e9/bundle1005306837 test-container-MR7DO2XIMUOLOKM4XSXPVQPB2UND7AZ3"
+        ],
+        "actualRestoreCommands": 0,
+        "actualAutosaveCommands": 0,
+        "actualResumeCommands": 0
+      },
+      "nativeBazelTestResult": null,
+      "checkpointPayloadUploaded": false
+    }
+  },
+  "saveRestore": {
+    "state": "FAILURE900s test timeout; no completed30-case result",
+    "passedCasesBeforeTimeout": [
+      "SemaphoreTest.SemGet",
+      "SemaphoreTest.SemGetSystemLimits",
+      "SemaphoreTest.SemOpSingleNoBlock",
+      "SemaphoreTest.SemTimedOpSingleNoBlock",
+      "SemaphoreTest.SemOpMultiNoBlock",
+      "SemaphoreTest.SemOpBlock",
+      "SemaphoreTest.SemTimedOpBlock",
+      "SemaphoreTest.SemOpNoBlock",
+      "SemaphoreTest.SemOpSimple",
+      "SemaphoreTest.SemOpRemoveWithWaiter",
+      "SemaphoreTest.SemOpBestFitExecution",
+      "SemaphoreTest.SemOpRandom",
+      "SemaphoreTest.SemOpNamespace",
+      "SemaphoreTest.SemCtlVal",
+      "SemaphoreTest.SemCtlValAll",
+      "SemaphoreTest.SemCtlGetPid",
+      "SemaphoreTest.SemCtlGetPidFork",
+      "SemaphoreTest.SemIpcSet",
+      "SemaphoreTest.SemCtlIpcStat"
+    ],
+    "lastStartedCase": "SemaphoreTest.SemopGetzcnt",
+    "actualRestoreCommands": 252,
+    "raceReportsObserved": 0,
+    "sourceRuntimeBeforeMatches": true,
+    "commandExit": 2,
+    "collectorCapturedRawFailure": true,
+    "savedPayloadUploaded": false,
+    "cause": "Not established; progressing repeated restores observed before timeout. Do not label source regression or pass."
+  },
+  "saveResume": "Not executed after required save/restore failure",
+  "cleanup": {
+    "sourceAndIndexClean": true,
+    "AppArmorRestored": 1,
+    "IPCsetsAfter": 0,
+    "ownedGroupFenceOrCleanupErrorArtifact": false,
+    "limits": "Failed outerstatus remains1; runtime-root removal has no separate structured receipt. Actual unchanged cleanup executes quiescence before removal; fulljoblog has no cleanup traceback."
+  },
+  "limits": [
+    "No overall racefunctional pass; save/restore and save/resume remain missing",
+    "No nativeARM/performance/prerequisite17127 landing claim"
+  ],
+  "memberSHA256": {
+    "identity.json": "8869b555419e4d8675261fcaf0b8144c14df697874b48b598674f1562f0e100c",
+    "semaphore-syscall-consumer/apparmor-active.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "outcome.json": "06369fa76a43a5402ef7b7018f8d3e51e86834a4e842113e3625de0d21dfe8c9",
+    "semaphore-syscall-consumer/apparmor-original.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "semaphore-syscall-consumer/apparmor-restored.txt": "9aea25871d648a9b1e7a422ff78bfc50e418059d2cdaecf2d810dcf9c3c44e02",
+    "semaphore-syscall-consumer/commands.txt": "0a70d589b49c29a4a2c0eaebbb4a19b212fd696e669a5af57b09ec0f1c69dfad",
+    "semaphore-syscall-consumer/cpu.txt": "9fbd02919f59bad77574f80f1953d97ccda6075b98a14d4f7bd05519811475c3",
+    "semaphore-syscall-consumer/exact-owner-query.log": "ec0bd966c41dedeb74747e3bfda4924e373faa65a1a7ebbf3f9d34e0e87f198f",
+    "semaphore-syscall-consumer/final-status.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "semaphore-syscall-consumer/native-host-gcc-version.txt": "8497f84b2b8334c413d9c6166bd39d009ba55d2ff60a8f23e66dfa5819c2b048",
+    "semaphore-syscall-consumer/native-host-gxx-version.txt": "59d1cbef41d4ae78d5063d525b7aa13d18dc0493ea00537efc19b2ee398cb5a8",
+    "semaphore-syscall-consumer/native-host-ipc-after.json": "11dfd56196bba9d4c5730c89968ce1fae7e99e00bbed905eb2f32546cb9aef11",
+    "semaphore-syscall-consumer/native-host-prerequisites.json": "779e07b248bf929093aaf6c73cc6c5e00b04e5eeb9988aad0cf7622567b3ec1c",
+    "semaphore-syscall-consumer/native-host-prerequisites.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/native-tool-readiness.log": "f678465fee21f2d7b9232be0b9dcf57d170b7722ccf54a4a83b536057b649b65",
+    "semaphore-syscall-consumer/ordinary-evidence/canonical-wrapper.sh": "a73924c0ef1aa43a4df85de1ce9174295130dbf34b2cdfe9f1700e84e37a5048",
+    "semaphore-syscall-consumer/ordinary-evidence/events.bep": "490de9870dbb71f01ad6dbcdc75ac65e77500690fd9f2ca9cb1ca522bc461b3a",
+    "semaphore-syscall-consumer/ordinary-evidence/capture.json": "c16b6b10010cae1306813d7bcd12bf87ca2a52f9f6aae521497273a4c48c24d7",
+    "semaphore-syscall-consumer/ordinary-evidence/test.log": "ea8b223a4827d88f1253ec5ef08f1685de9681801f9df108fd7c3a25bb89641f",
+    "semaphore-syscall-consumer/ordinary-evidence/test.xml": "307ee047b7efb3dbdaf0fa0ca1c97a5f8c155dc575f3e7c920340a4840e8cad3",
+    "semaphore-syscall-consumer/ordinary-evidence/verified.json": "70cb4f460f07de5294a70cf9c094ea319472b4a254be782424da27ec7d358826",
+    "semaphore-syscall-consumer/ordinary-evidence.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/ordinary-exit.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "semaphore-syscall-consumer/ordinary-runtime-after.json": "300a10985bbd74c7053bba7cb6b3a52467d0076ca9332e99aed332c0461c5d91",
+    "semaphore-syscall-consumer/ordinary-runtime-after.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/ordinary-runtime-before.json": "300a10985bbd74c7053bba7cb6b3a52467d0076ca9332e99aed332c0461c5d91",
+    "semaphore-syscall-consumer/ordinary-runtime-before.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/ordinary-start-ms.txt": "ad0138f66ec5535dbe2b481107b1e5f5a0444dba324a59d3eae781bbabb3562e",
+    "semaphore-syscall-consumer/ordinary.bep": "490de9870dbb71f01ad6dbcdc75ac65e77500690fd9f2ca9cb1ca522bc461b3a",
+    "semaphore-syscall-consumer/ordinary.log": "1c9ba94d73ad00379ec1a15f043b1edef8b1466cd08be108dd1e7904c1012edd",
+    "semaphore-syscall-consumer/owned-group-interruption-preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/owned-group-preflight.json": "238a371eacea0077a463ba3558846068deebb3467305983945526ca922741443",
+    "semaphore-syscall-consumer/public-root-preflight.json": "dbdc24e6fcbe6b5e936b66c0ef5b99f49b1745eb6abc0aeb67ba206584674fce",
+    "semaphore-syscall-consumer/public-root-preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/reused-native-gate.json": "3f809bf044762b8403f70eecbdeee67b66f4ec18671497ad3804e39c5688b913",
+    "semaphore-syscall-consumer/reused-race-owner-gate.json": "7bfe5fa4de50a0c551dd527e94407d784425e37b2ef8435094b19963d21b12b4",
+    "semaphore-syscall-consumer/reused-source-gate.json": "de52076089ab98ea4127a2a1871c942a64163c6f9b28f7fe505589e3d5ec5d21",
+    "semaphore-syscall-consumer/runtime-access.json": "c8e337f67c72b5159759751c9608f6d79fa0dfa33c3425ce7b7770c9b814b424",
+    "semaphore-syscall-consumer/runtime-actor-access.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/runtime-archive.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/runtime-elf-identity.json": "77278b28a464f90ebe6adad55ae445779eeb99e214f086dfef6e7fe068294d0a",
+    "semaphore-syscall-consumer/runtime-manifest.json": "acca505a900fdfdfa5935c59a4ea478e5116810d1af361830ee41d39b347c000",
+    "semaphore-syscall-consumer/runtime-manifest.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/runtime-elf-identity.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/save-restore-evidence/capture.json": "8218d07c76e779190e378c290a0c23853b0c3e329ef06444a7379d12859fb485",
+    "semaphore-syscall-consumer/save-restore-evidence/events.bep": "31072d9ad60a88f7686c7df74b9a28d674b0138c83eff8231ee47ebf8b31cb94",
+    "semaphore-syscall-consumer/save-restore-evidence/test.log": "5cf56d7a612781ca3e46b972a0c23bbe7535d8137dc2b3480f893b127f857052",
+    "semaphore-syscall-consumer/save-restore-evidence/test.xml": "8c166f65cbd1de2bc01c0b73b1c9be77405db069f875d70b1361cb511586f017",
+    "semaphore-syscall-consumer/save-restore-evidence.log": "554b79f52d2a99a9b494e43e971301303ee3e4643f54639553cb0e01d19a6e0e",
+    "semaphore-syscall-consumer/save-restore-exit.txt": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "semaphore-syscall-consumer/save-restore-runtime-before.json": "300a10985bbd74c7053bba7cb6b3a52467d0076ca9332e99aed332c0461c5d91",
+    "semaphore-syscall-consumer/save-restore-runtime-before.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semaphore-syscall-consumer/save-restore-start-ms.txt": "02a6cc71b3de1f9600e7bfc9a7666d6687216365bf7e6a8b5a753d30af7acc30",
+    "semaphore-syscall-consumer/save-restore.bep": "31072d9ad60a88f7686c7df74b9a28d674b0138c83eff8231ee47ebf8b31cb94",
+    "semaphore-syscall-consumer/save-restore.log": "87ef6d3fb7bfec2b72626a82ef8952c3bb2a34d6af4f4efcbecf215a8f80f20c",
+    "semaphore-syscall-consumer/source-release.log": "aa08517b563d76a17cecc63f84c87987668e5492753e717e7b8803426d17d3c1",
+    "semaphore-syscall-consumer/stages.tsv": "3ef5e87d17a5f38b38c75ba36df85b95d7cd6c15e9661c8188da34d5b0f65457",
+    "semaphore-syscall-consumer/userns-setup.log": "ac5c6a2a69e7acc443d58159567b0d29a95be6d82e6ae14936ffa883f1160a83",
+    "semaphore-syscall-consumer/worker.txt": "4be565484e5d2351365ea25322c384b18705d10640b1e9268089424c40cb766b"
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "state": "Missing-only save/restore and save/resume race continuation; original443919 failure retained",
+  "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+  "base": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
+  "architecture": "nativeAMD64",
+  "Bazel": "9.3.1",
+  "canonicalStartup": [
+    "bazel",
+    "--host_jvm_args=-Xmx4g",
+    "--nosystem_rc",
+    "--nohome_rc"
+  ],
+  "canonicalFlags": [
+    "--config=x86_64",
+    "--config=race",
+    "--jobs=3",
+    "--nostamp",
+    "--remote_cache=",
+    "--remote_executor=",
+    "--bes_backend=",
+    "--bes_results_url=",
+    "--color=no",
+    "--curses=no"
+  ],
+  "steps": [
+    {
+      "phase": "identity",
+      "contract": "Verify SOURCE tree/raw commit parent, cleanworktree/index and19mechanism file hashes; attach prior sourcegate evidence and digest. No source switch or overlay."
+    },
+    {
+      "phase": "early-metadata-prerequisites",
+      "contract": "Record actualsudo UID/GID/CapEff; require CAP_SYS_ADMIN(bit21) and CAP_SETUID(bit7) before nativeLinux full30. Record /proc/sysvipc/sem and require no existing sets on disposable exclusive worker. Do not delete unrelated IPC state. Verify public /tmp runtime parent traversal with reviewed actual dropped-actor helper before expensive builds; run reviewed owned-group interruption gate before dependency mutation."
+    },
+    {
+      "phase": "query",
+      "argv": [
+        "bazel",
+        "--nosystem_rc",
+        "--nohome_rc",
+        "query",
+        "--output=label",
+        "set(//test/syscalls/linux:semaphore_test //test/syscalls:semaphore_test_runsc_systrap_directfs //test/syscalls:semaphore_test_runsc_systrap_directfs_save //test/syscalls:semaphore_test_runsc_systrap_directfs_save_resume)"
+      ],
+      "contract": "Configured race cquery verifies actual wrapper owners and selected full-release race runsc/Sentry/other canonical sidecars before cold build."
+    },
+    {
+      "phase": "release",
+      "argv": [
+        "make",
+        "DOCKER_BUILD=false",
+        "BAZEL=bazel --host_jvm_args=-Xmx4g --nosystem_rc --nohome_rc",
+        "BAZEL_OPTIONS=--config=x86_64 --jobs=3 --nostamp --remote_cache= --remote_executor= --bes_backend= --bes_results_url= --color=no --curses=no",
+        "copy",
+        "TARGETS=//:release",
+        "DESTINATION=<unique-public-/tmp-root>/active/"
+      ],
+      "contract": "Canonical source-built opaque fullrelease. Require expected source-built release tree and actualAMD64ELF; retain fullarchive/manifests, verify allmembers before/after eachconsumer. Public runtime-only root0711 and normalreleaseexecutepermissions; private logs/work remain0700. NoDockerinstallation/config or remoteartifact reuse."
+    },
+    {
+      "phase": "save-restore",
+      "argv": [
+        "make",
+        "DOCKER_BUILD=false",
+        "BAZEL=bazel --host_jvm_args=-Xmx4g --nosystem_rc --nohome_rc",
+        "BAZEL_OPTIONS=--config=x86_64 --jobs=3 --nostamp --remote_cache= --remote_executor= --bes_backend= --bes_results_url= --color=no --curses=no",
+        "RUNTIME_DIR=<unique-public-/tmp-root>/active",
+        "syscall-tests",
+        "TARGETS=//test/syscalls:semaphore_test_runsc_systrap_directfs_save",
+        "OPTIONS=--nocache_test_results --flaky_test_attempts=1 --test_sharding_strategy=disabled --test_timeout=900 --test_output=all --test_tag_filters= --build_event_json_file=<results>/save-restore.bep"
+      ],
+      "contract": "Make supplies source-builtRUNTIME/GVISOR_SIDECAR_BINARIES_DIR/HOST_KERNEL and-cxxopt=-Werror. Runtime target isPHONY; anycanonicalcachedcopy is verified identical. Explicitoneowner, freshBEPtestResult/summary/actualGTestXML30exactcases/no-skips; no Go-onlyflags or inventedGTest filter. Capture before next phase overwrites outputs; testcommand failure sticky."
+    },
+    {
+      "phase": "save-resume",
+      "argv": [
+        "make",
+        "DOCKER_BUILD=false",
+        "BAZEL=bazel --host_jvm_args=-Xmx4g --nosystem_rc --nohome_rc",
+        "BAZEL_OPTIONS=--config=x86_64 --jobs=3 --nostamp --remote_cache= --remote_executor= --bes_backend= --bes_results_url= --color=no --curses=no",
+        "RUNTIME_DIR=<unique-public-/tmp-root>/active",
+        "syscall-tests",
+        "TARGETS=//test/syscalls:semaphore_test_runsc_systrap_directfs_save_resume",
+        "OPTIONS=--nocache_test_results --flaky_test_attempts=1 --test_sharding_strategy=disabled --test_timeout=900 --test_output=all --test_tag_filters= --build_event_json_file=<results>/save-resume.bep"
+      ],
+      "contract": "Make supplies source-builtRUNTIME/GVISOR_SIDECAR_BINARIES_DIR/HOST_KERNEL and-cxxopt=-Werror. Runtime target isPHONY; anycanonicalcachedcopy is verified identical. Explicitoneowner, freshBEPtestResult/summary/actualGTestXML30exactcases/no-skips; no Go-onlyflags or inventedGTest filter. Capture before next phase overwrites outputs; testcommand failure sticky."
+    },
+    {
+      "phase": "runtime-config-proof",
+      "contract": "Read canonical generated wrapper from its actualBEPdefault output set and require platformsystrap/directfstrue/networknone plus expected save/save-resume booleans. Record test.log actualExecuting command containing exactpublicruntimepath, systrap/directfs andautosave flags. Save-restore must show at least1actual restore --image-path command after canonicalautosave run; save-resume is distinct and does not prove afterLoad. Missingactualrestore evidence is incomplete/failure, not passed based only onlabel."
+    },
+    {
+      "phase": "artifact-safety",
+      "contract": "Copy actualBEP/XML/test.log immediately before laterinvocations. If outputs.zip exists, retain only boundedselectedtext logs and metadata/counts/size; nevercopy/upload memoryimages orcheckpointstatedumps/fulloutputs.zip. Successfulcanonicalrunner normally deletes per-testlogs; test.logExecuting receipts and actualXML remain required. Anycheckpointvolume observation is metadata-only and not a hardpeak claim."
+    },
+    {
+      "phase": "cleanup",
+      "contract": "Use reviewed whole-owned-process-group stage helper with durable publication; stop/reap before cleanup, refuse if stage/child markers remain. CanonicalBazelshutdown before mutable cleanup. Verify runtimequiescence before removing onlytaskpublicroot; iflive fail/retain. RestoreoriginalAppArmorvalue, verify cleanHEAD/index SOURCE; no source/fixture edits orDocker changes. NativeIPCmetadata retained; neverbroadIPCdelete."
+    }
+  ],
+  "implementationRequirements": [
+    "Reuse reviewedstage/process_group/group_preflight/exec_root_probe/fileset/quiescent helpers; no newframework or compilerdriver.",
+    "Collector must require exactBEPconfiguredowner identity, actual complete XML shards (shardingdisabled stillfail ifunexpected/incomplete), positive cases and no cached/unexpectedattempts.",
+    "Native XML must use actual suite+case identities including existing SempahoreTest spelling; do not silentlynormalize.",
+    "ActualGTestXML shape and coldcost unmeasured; exercise metadata parser on saved canonical syscallXML when available before dispatch."
+  ],
+  "openAfterThisScope": [
+    "Native ARM functional",
+    "Performance",
+    "Prerequisite17127 stillopen",
+    "Any actual unresolved race/checkpoint failure"
+  ],
+  "implementedSupport": "run.sh/collect.py/prerequisites.py/release.py and exact reviewed sharedhelpers; actual saved syscallXML parser exercised before freeze",
+  "cheapIntegrationMilestone": "Existing443919 configured race/fullopaque9/ordinary30 passed; reuse exactscope and run only two missing checkpoint wrappers.",
+  "nativeReuse": {
+    "run": 44337494099,
+    "receiptSHA256": "3f809bf044762b8403f70eecbdeee67b66f4ec18671497ad3804e39c5688b913",
+    "newWorkerGate": "Exact native gcc/g++ version digest, x86_64 target and native binutils readiness; actual privilege/IPC/group gates retained",
+    "originalFailure": "APT timeout240 during download; no Sentry reached"
+  },
+  "supportRecovery": {
+    "run": 44346644829,
+    "cause": "export_go_sources is non-CLI bool_setting, defaultFalse",
+    "change": "Remove unsupported CLI pin; retained source-defaultFalse and native transition proof"
+  },
+  "instrumentation": "GORACE=halt_on_error=1; actual configured race release and three fresh30-case Sentry wrappers"
+}

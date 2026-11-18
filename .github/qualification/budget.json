@@ -1,0 +1,68 @@
+{
+  "status": "Root-approved missing-only two checkpoint race wrappers; prior failing900s gate retained",
+  "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+  "bodyMinutes": 107,
+  "cleanupGraceSeconds": 180,
+  "inclusiveMinutes": 110,
+  "expectedColdMinutes": null,
+  "measuredConsumerCost": false,
+  "phaseCapsMinutes": {
+    "sourceIdentity": 1,
+    "nativeHostPrerequisites": 0.3333333333333333,
+    "publicRootProbe": 0.75,
+    "ownedGroupPreflight": 0.25,
+    "usernsSetup": 0.5,
+    "exactTargetQuery": 3,
+    "sourceRelease": 30,
+    "releaseELFIdentity": 0.25,
+    "runtimeManifest": 0.5,
+    "runtimeActorAccess": 0.5,
+    "runtimeArchive": 1,
+    "threeRuntimePreChecks": 1,
+    "saveRestore": 35,
+    "saveResume": 25,
+    "threeBEPXMLCollectors": 2,
+    "threeRuntimePostChecks": 1,
+    "finalBazelShutdown": 1,
+    "nativeHostCompilerMetadata": 0.2,
+    "nativeToolReadiness": 0.5
+  },
+  "listedNominalMinutes": 103.7833,
+  "stageKillGraceSeconds": 15,
+  "globalDominatesStageGrace": true,
+  "cleanupCapsInclusiveSeconds": {
+    "stageWrapperStopWait": 20,
+    "BazelShutdown": 20,
+    "runtimeQuiescence": 6,
+    "taskRootRemovalIfQuiescent": 6,
+    "AppArmorRestoration": 5,
+    "nativeIPCAfter": 6,
+    "cleanTreeAndIndex": 12,
+    "finalReceiptMargin": 5
+  },
+  "cleanupInclusiveSeconds": 80,
+  "observations": {
+    "nativeLinuxCases": 0,
+    "ordinarySentryCases": 0,
+    "saveRestoreSentryCases": 30,
+    "saveResumeSentryCases": 30
+  },
+  "noBenchmarks": true,
+  "forecast": "Unknown. The completed source gate took about8.5min of listed stages, but that is not a measurement of cold C++/runtime builds or checkpoint-heavy consumer execution. Caps are proposed stop bounds, not elapsed predictions.",
+  "capabilityFailurePolicy": "Stop on native failure or missing30-case/no-skip accounting; retain failed receipt. Runtime/checkpoint failure remains failed, no automatic cap increase or statistic claim.",
+  "reusedNativeLinuxCases": 30,
+  "recovery": "Reuse exact source/normal/Linux30/raceGo8 passes. No APT or repeated source/checker/native tests; current race release and wrappers required.",
+  "raceOwnerReused": 44388076421,
+  "reusedRaceOrdinary": {
+    "run": 44391986188,
+    "cases": 30,
+    "sourceReleaseSeconds": 804,
+    "ordinarySeconds": 137
+  },
+  "testTimeoutSeconds": {
+    "saveRestore": 1800,
+    "saveResume": 1200
+  },
+  "raceOptions": "halt_on_error=1 unchanged; default exit delay unchanged",
+  "transport": "Current dispatcher same permissions as retained actual403 artifact transport; no permission/credential route change. Canonical race release rebuild bounded30m if immutable product cannot be consumed."
+}
