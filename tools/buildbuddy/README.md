@@ -20,7 +20,7 @@ On a configured Linux worker, the initial Go-only integration check is:
 bazel test --keep_going --config=buildbuddy --config=x86_64 \
   --credential_helper="remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)" \
   --build_event_json_file="$RESULTS/events.json" \
-  //tools/buildbuddy:credential_helper_test //pkg/tcpip/seqnum:seqnum_test
+  //tools/buildbuddy:credential_helper_test //pkg/atomicbitops:atomicbitops_test
 ```
 
 `RESULTS` names the task's temporary result directory. Use `aarch64` in place of
@@ -34,7 +34,12 @@ build cache enabled. Controlled before/after measurements remain separate from
 the correctness suite.
 
 The current Coral C toolchain does not declare its host compiler and sysroot as
-action inputs. C++, cgo and external linking need action-specific restrictions
-or a hermetic toolchain before using shared caching or remote execution. The
-initial check above exercises pure Go and the credential helper; it does not
-qualify those host-C actions or the complete correctness matrix.
+action inputs. Native C++ actions and Go actions that can invoke absolute host C
+tools stay local and out of the remote cache. The systrap host-tool generators
+have the same restriction. Pure Go actions remain eligible for remote execution
+and caching. Remove these exceptions when the hermetic toolchain declares and
+qualifies the compiler, linker, sysroot and runtime-library inputs.
+
+The initial check above exercises pure Go and the credential helper. Canonical
+action-graph inspection and the affected correctness suites must also pass
+before the profile is used for the full native and race matrix.
