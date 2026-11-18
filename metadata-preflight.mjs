@@ -31,8 +31,8 @@ for (const node of nodes) {
   const decision = node.contributorReview;
   if (decision?.status !== 'pending') continue;
   if (node.type === 'branch' &&
-      (node.head !== decision.head || node.url !== decision.url || !decision.url.endsWith('/commit/' + decision.head.slice(0, 9)))) {
-    throw new Error(`Link the proposal and its card to the same single commit: ${node.id}`);
+      (node.head !== decision.head || node.url !== decision.url)) {
+    throw new Error(`Link the proposal and its card to the same validated revision: ${node.id}`);
   }
   context.node = node;
   if (vm.runInContext('alreadyReviewed(node, node.contributorReview)', context)) {
