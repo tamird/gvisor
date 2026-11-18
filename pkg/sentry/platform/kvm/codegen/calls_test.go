@@ -24,10 +24,10 @@ import (
 func TestValidateCalls(t *testing.T) {
 	const caller = kvm + ".seccompMmapHandler"
 	for _, test := range []struct {
-		name string
-		calls map[string][]checkescape.ObjectCall
+		name     string
+		calls    map[string][]checkescape.ObjectCall
 		accepted bool
-		wrapper bool
+		wrapper  bool
 	}{
 		{"no_calls", map[string][]checkescape.ObjectCall{caller: {}}, true, false},
 		{"ordinary_call", map[string][]checkescape.ObjectCall{caller: {{Target: "runtime.atomicstorep", Resolved: true}}}, true, false},

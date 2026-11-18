@@ -31,18 +31,18 @@ import (
 
 // Inline is a live inlined subroutine in a concrete production function.
 type Inline struct {
-	Owner string
+	Owner  string
 	Caller string
 	Callee string
-	File string
-	Line int64
+	File   string
+	Line   int64
 	Ranges [][2]uint64
 }
 
 type scope struct {
-	owner string
+	owner  string
 	caller string
-	files []*dwarf.LineFile
+	files  []*dwarf.LineFile
 }
 
 func name(data *dwarf.Data, entry *dwarf.Entry) (string, error) {
@@ -145,12 +145,12 @@ func Read(path, arch string) ([]Inline, error) {
 
 // Site identifies an actual source call and its required inlined wrapper.
 type Site struct {
-	Caller string
+	Caller   string
 	Receiver string
-	Method string
-	Callee string
-	File string
-	Line int64
+	Method   string
+	Callee   string
+	File     string
+	Line     int64
 }
 
 const kernel = "gvisor.dev/gvisor/pkg/sentry/kernel"

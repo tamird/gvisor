@@ -33,14 +33,14 @@ import (
 )
 
 type codegenRecord struct {
-	Arch string `json:"arch"`
+	Arch      string            `json:"arch"`
 	Artifacts map[string]string `json:"artifacts"`
-	Sources []string `json:"sources"`
+	Sources   []string          `json:"sources"`
 }
 
 type codegenInputs struct {
-	Go string `json:"go"`
-	SDK string `json:"sdk"`
+	Go      string          `json:"go"`
+	SDK     string          `json:"sdk"`
 	Records []codegenRecord `json:"records"`
 }
 
@@ -161,7 +161,7 @@ func TestAtomicPtrProductionCodegen(t *testing.T) {
 				data := codegenSource(t, record, source)
 				sourceHashes[source] = fmt.Sprintf("%x", sha256.Sum256(data))
 			}
-			for _, declaration := range []struct { file, function string }{{handler, "seccompMmapHandler"}, {"atomicptr_machine.go", "Load"}} {
+			for _, declaration := range []struct{ file, function string }{{handler, "seccompMmapHandler"}, {"atomicptr_machine.go", "Load"}} {
 				if err := codegen.NoSplit(declaration.file, codegenSource(t, record, declaration.file), declaration.function); err != nil {
 					t.Fatal(err)
 				}
@@ -178,7 +178,7 @@ func TestAtomicPtrProductionCodegen(t *testing.T) {
 			defer cancel()
 			const handlerSymbol = "gvisor.dev/gvisor/pkg/sentry/platform/kvm.seccompMmapHandler"
 			owners := map[string][]string{
-				"kvm_archive": {handlerSymbol},
+				"kvm_archive":    {handlerSymbol},
 				"kernel_archive": {"gvisor.dev/gvisor/pkg/sentry/kernel.(*FDTable).get", "gvisor.dev/gvisor/pkg/sentry/kernel.(*FDTable).swap"},
 			}
 			for _, name := range []string{"kvm_archive", "kernel_archive"} {

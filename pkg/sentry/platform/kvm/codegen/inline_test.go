@@ -20,7 +20,7 @@ func TestValidateActualSite(t *testing.T) {
 	site := Site{Caller: kvm + ".seccompMmapHandler", Callee: kvm + ".(*machineAtomicPtr).Load", File: "pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go", Line: 42}
 	valid := Inline{Owner: site.Caller, Caller: site.Caller, Callee: site.Callee, File: "gvisor.dev/gvisor/" + site.File, Line: site.Line, Ranges: [][2]uint64{{100, 104}}}
 	for _, test := range []struct {
-		name string
+		name   string
 		change func(*Inline)
 	}{
 		{"valid", func(*Inline) {}},
@@ -68,8 +68,8 @@ func TestBindProductionSourceSite(t *testing.T) {
 
 func TestNoSplit(t *testing.T) {
 	for _, test := range []struct {
-		name string
-		comment string
+		name     string
+		comment  string
 		accepted bool
 	}{
 		{"directive", "//go:nosplit\n", true},

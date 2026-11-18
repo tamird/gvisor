@@ -51,6 +51,7 @@ def _inputs_impl(ctx):
         mode = archive.source.mode
         if mode.debug or mode.race or mode.msan or not mode.pure or archive.source.gc_goopts:
             fail("expected ordinary optimized pure production Sentry")
+
         # Match the ordinary binary linker's archive set. Coverage is rejected
         # above, and this is a go_binary, so no test archives are injected.
         archives = depset(transitive = [dependency.transitive for dependency in archive.direct]).to_list()

@@ -823,7 +823,7 @@ func loadObjdumpWithGo(parent context.Context, binary io.Reader, goTool, pattern
 
 // ObjectCall describes a call target without discarding unresolved identities.
 type ObjectCall struct {
-	Target string
+	Target   string
 	Resolved bool
 }
 
