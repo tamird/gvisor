@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T20:06:11.890448+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T20:11:46.639485+00:00",
+  "registryDate": "2026-11-18T20:13:56.809299+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -455777,7 +455777,7 @@
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
         "disposition": "The current head remains approved and First Pass1772 passed. A maintainer now requests a rebase and push; the prior public import17651 is closed without merge.",
-        "nextAction": "Root owns the maintainer-requested source rebase: prepare and validate the exact revision, preserve prior approval/input scopes, and obtain any required amendment decision before upstream replacement. No merge or import-source rewrite."
+        "nextAction": "Root prepares and validates the requested rebase without adding a DCO trailer; the human must review and personally sign off the exact final commit before upstream push for review. Preserve historical approval and input scopes; no merge or import-source rewrite."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzgQHpA"
@@ -459212,7 +459212,7 @@
         "since": "2026-11-18T20:00:58.033079+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "pr:16101": {
@@ -464493,7 +464493,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464502,7 +464502,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464511,7 +464511,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464520,7 +464520,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464529,7 +464529,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464538,7 +464538,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464547,7 +464547,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:11:46.639485+00:00"
+        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     }
   },

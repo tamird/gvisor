@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T20:11:46.639485+00:00",
+    "updatedAt": "2026-11-18T20:13:56.809299+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25419,7 +25419,7 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T20:00:58.033079+00:00",
+      "updatedAt": "2026-11-18T20:13:56.809299+00:00",
       "summary": "The compiler-export runfile correction passed its targeted public integration preflight and final reviews. The already-asked single-commit amendment and reply decision is pending; upstream source is unchanged.",
       "followup": {
         "owner": "root",
@@ -25461,7 +25461,14 @@
             "sha256": "437adab0160bbd0dbcea6deb0a2d739ca63afbb7ef4ad824e143d0b1fd3dee10"
           }
         },
-        "curatedAt": "2026-11-18T20:00:58.033079+00:00"
+        "curatedAt": "2026-11-18T20:13:56.809299+00:00",
+        "amendmentPublicationCondition": {
+          "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+          "owner": "root",
+          "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+        }
       },
       "evidence": [
         {
@@ -25665,7 +25672,7 @@
         "body": "Generate export data during Nogo's existing source analysis and read it\nwith the supported x/tools API. Replace deprecated compiler-archive\ndecoding, reusing the type-checked package when serializing exports.\nDeclare standard-library exports per SDK and build mode.\n\nPreserve primary dependency imports ahead of import aliases, matching\nrules_go. The s2a token manager imports both protocol versions, while\nthe v2 package also aliases the v1 path; treating that alias as primary\notherwise collapses the distinct Identity types during source analysis.\n\nForward dependencies from source-only Go embeds to the consuming package\nwithout creating separate analysis actions for those sources.\n\nAnalyze protobuf packages when the build rules supply their generated\nGo sources. For rules that expose only compiled packages, import the\ntarget archive and its additional protobuf dependencies with the Go\nSDK. Convert these inputs to Nogo export data so all imports share one\npackage identity. Do not require other Go rule implementations to expose\nrules_go providers or protobuf compiler attributes.\n\nExempt only the unsafe-import filename diagnostic for generated .pb.go\nfiles, since protoc-gen-go emits unsafe descriptor access.\n\nOn one amd64 worker, serial warm-cache Nogo analysis of sync and\neventchannel and their dependencies took 83.5-85.4 s before and\n84.8-85.0 s after (two measured passes per revision). This includes\nstandard-library work, export writes and newly analyzed protobuf\ndependencies; compilation and downloads are excluded.\n\nExpose the compiler-import test fixture through a package-relative\nrunfile alias. Select its compiler export with the existing archive\nadapter so rules with multiple outputs do not require a singular\nrootpath, and FindFile does not receive a workspace-prefixed path.\n\nUpdated by Codex on behalf of @tamird.\n",
         "replyBody": "Replaced the singular rootpath/environment-variable fixture with a package-relative runfile alias. The alias uses the existing compiler-export selector, so it handles the compiler export without assuming a single DefaultInfo output or passing a workspace prefix to FindFile. The current public Bazel provider emitted flags.x; adapter/runfile analysis and the uncached TestCompilerImportIdentity passed. I have not run the private internal compiler integration.\n\nPosted by Codex on behalf of @tamird.\n",
         "reviewThreadURL": "https://github.com/gvisor/gvisor/pull/16098#discussion_r4619004827",
-        "summary": "Approve the already-proposed amendment and reply. Reuses the human-approved unchanged original patch after rebase; the three-path compiler-export fixture correction passed actual adapter/runfile analysis, formatting and fresh uncached TestCompilerImportIdentity. Proposed single-commit tree equals tested538. No full Nogo/private compiler/ARM/performance qualification claim.",
+        "summary": "Approve the already-proposed amendment and reply. Reuses the human-approved unchanged original patch after rebase; the three-path compiler-export fixture correction passed actual adapter/runfile analysis, formatting and fresh uncached TestCompilerImportIdentity. Proposed single-commit tree equals tested538. No full Nogo/private compiler/ARM/performance qualification claim. The existing question remains pending; any newly rebased/amended commit additionally needs the human personal final-commit signoff under upstream9ad3 policy before push for review.",
         "requestedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
@@ -92040,13 +92047,13 @@
       "url": "https://github.com/google/gvisor/pull/17545",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T20:11:46.639485+00:00",
+      "updatedAt": "2026-11-18T20:13:56.809299+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
         "disposition": "The current head remains approved and First Pass1772 passed. A maintainer now requests a rebase and push; the prior public import17651 is closed without merge.",
-        "nextAction": "Root owns the maintainer-requested source rebase: prepare and validate the exact revision, preserve prior approval/input scopes, and obtain any required amendment decision before upstream replacement. No merge or import-source rewrite.",
+        "nextAction": "Root prepares and validates the requested rebase without adding a DCO trailer; the human must review and personally sign off the exact final commit before upstream push for review. Preserve historical approval and input scopes; no merge or import-source rewrite.",
         "recheckCondition": "Prepared rebase, contributor amendment decision, source/import/review or CI change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
@@ -92138,7 +92145,7 @@
           "humanRequestURL": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
           "posted": false
         },
-        "curatedAt": "2026-11-18T20:11:46.639485+00:00",
+        "curatedAt": "2026-11-18T20:13:56.809299+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -92207,6 +92214,13 @@
           },
           "import17651": "closed without merge",
           "owner": "root"
+        },
+        "amendmentPublicationCondition": {
+          "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+          "owner": "root",
+          "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
         }
       },
       "dcoCoordination": {
@@ -93370,7 +93384,7 @@
       "url": "https://github.com/google/gvisor/pull/17780",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-18T20:11:46.639485+00:00",
+      "updatedAt": "2026-11-18T20:13:56.809299+00:00",
       "summary": "Exact-head First Pass1778 failed: seventeen attempts were rejected before agent assignment by the30-day compute quota, and an earlier syscall shard failed a Watchdog.Start warning. Native Hey qualification remains valid; no Hey-path failure is established.",
       "followup": {
         "owner": "root",
@@ -93464,7 +93478,7 @@
           "artifact": 14444468589,
           "scope": "Functional integration; no throughput accuracy, Sentry runtime or statistical performance claim."
         },
-        "curatedAt": "2026-11-18T20:11:46.639485+00:00",
+        "curatedAt": "2026-11-18T20:13:56.809299+00:00",
         "submissionPolicy": {
           "source": "b29c8320a862a77f4c55894d00c56eb5850c8066",
           "url": "https://github.com/gvisor/gvisor/blob/b29c8320a862a77f4c55894d00c56eb5850c8066/CONTRIBUTING.md",
@@ -93664,6 +93678,13 @@
           "checkedAt": "2026-11-18T20:06:11.890448+00:00",
           "complete": true,
           "state": "No matching export; not eligible without current approval/label prerequisites"
+        },
+        "amendmentPublicationCondition": {
+          "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+          "owner": "root",
+          "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
         }
       },
       "settledReviews": [
@@ -128600,5 +128621,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T20:11:46.639485+00:00"
+  "updatedAt": "2026-11-18T20:13:56.809299+00:00"
 }
