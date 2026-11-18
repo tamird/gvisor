@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/test/benchmarks/harness"
@@ -133,6 +134,12 @@ func RunWithDifferentFilesystems(ctx context.Context, b *testing.B, machine harn
 				Mounts: mts,
 			}
 			if variant.fsType == harness.FuseFS {
+				// A privileged exec does not add devices to the container.
+				runOpts.Devices = []dockercontainer.DeviceMapping{{
+					PathOnHost:        "/dev/fuse",
+					PathInContainer:   "/dev/fuse",
+					CgroupPermissions: "rwm",
+				}}
 				if err := container.CopyFiles(&runOpts, "/fusebin", "test/runner/fuse/fuse"); err != nil {
 					b.Fatalf("copy FUSE server: %v", err)
 				}
