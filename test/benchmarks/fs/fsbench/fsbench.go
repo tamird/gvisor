@@ -134,7 +134,11 @@ func RunWithDifferentFilesystems(ctx context.Context, b *testing.B, machine harn
 				Mounts: mts,
 			}
 			if variant.fsType == harness.FuseFS {
-				// A privileged exec does not add devices to the container.
+				// Mount permissions and security profiles are set at container
+				// creation; a privileged exec alone does not update them or
+				// expose the FUSE device.
+				runOpts.CapAdd = []string{"SYS_ADMIN"}
+				runOpts.SecurityOpts = []string{"apparmor=unconfined"}
 				runOpts.Devices = []dockercontainer.DeviceMapping{{
 					PathOnHost:        "/dev/fuse",
 					PathInContainer:   "/dev/fuse",
