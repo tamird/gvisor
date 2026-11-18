@@ -1,6 +1,7 @@
 load("//pkg/seccomp/precompiledseccomp:defs.bzl", "precompiled_seccomp_rules")
 load("//tools:defs.bzl", "cc_objcopy", "cc_objdump", "go_library", "go_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
+load(":atomicptr_codegen.bzl", "atomicptr_codegen_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -23,6 +24,35 @@ config_setting(
     values = {
         "compilation_mode": "dbg",
     },
+)
+
+# Compile the actual package with inlining disabled, without replacing any
+# production source or rebuilding dependencies in that mode.
+go_library(
+    name = "atomicptr_noinline",
+    testonly = True,
+    srcs = [],
+    embed = [":kvm"],
+    gc_goopts = ["-l"],
+    nogo = False,
+    stateify = False,
+)
+
+atomicptr_codegen_inputs(
+    name = "atomicptr_codegen_inputs",
+    testonly = True,
+)
+
+# This inspects both architectures as data and never opens /dev/kvm.
+go_test(
+    name = "atomicptr_codegen_test",
+    size = "large",
+    srcs = ["atomicptr_codegen_test.go"],
+    data = [":atomicptr_codegen_inputs"],
+    deps = [
+        "//pkg/sentry/platform/kvm/codegen",
+        "//pkg/test/testutil",
+    ],
 )
 
 precompiled_seccomp_rules(

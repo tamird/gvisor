@@ -625,6 +625,7 @@ type compiledFunction struct {
 	filename  string
 	entryLine int
 	unlocated callSet
+	calls     callSet
 }
 
 type compiledCode struct {
@@ -641,6 +642,10 @@ type compiledCode struct {
 //
 // Line keys use <basename.go>:<line>, as provided by objdump, within this package.
 func loadObjdump(binary io.Reader) (*compiledCode, error) {
+	return loadObjdumpWithGo(context.Background(), binary, flags.Go, "")
+}
+
+func loadObjdumpWithGo(parent context.Context, binary io.Reader, goTool, pattern string) (*compiledCode, error) {
 	// Do we have a binary? If it's missing, then the nil will simply be
 	// plumbed all the way down here.
 	if binary == nil {
@@ -677,11 +682,15 @@ func loadObjdump(binary io.Reader) (*compiledCode, error) {
 		input = f
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
 	// Execute go tool objdump given the input.
-	cmd := exec.CommandContext(ctx, flags.Go, "tool", "objdump", input.Name())
+	args := []string{"tool", "objdump"}
+	if pattern != "" {
+		args = append(args, "-s", pattern)
+	}
+	cmd := exec.CommandContext(ctx, goTool, append(args, input.Name())...)
 	if goroot, ok := os.LookupEnv("GOROOT"); ok && strings.HasPrefix(goroot, "bazel-out/") {
 		// Under Bazel, our nogo machinery sets GOROOT to a stdlib output tree,
 		// which does not include the prebuilt objdump tool. Some Go versions
@@ -773,6 +782,12 @@ func loadObjdump(binary io.Reader) (*compiledCode, error) {
 				continue
 			}
 			call := parseCallTarget(fields)
+			if current != nil && pattern != "" {
+				if current.calls == nil {
+					current.calls = make(callSet)
+				}
+				current.calls[call] = struct{}{}
+			}
 			if located {
 				if code.lines[site] == nil {
 					code.lines[site] = make(callSet)
@@ -804,6 +819,34 @@ func loadObjdump(binary io.Reader) (*compiledCode, error) {
 	}
 
 	return code, nil
+}
+
+// ObjectCall describes a call target without discarding unresolved identities.
+type ObjectCall struct {
+	Target string
+	Resolved bool
+}
+
+// ObjectCalls returns the calls in each TEXT symbol using the configured Go
+// SDK's object reader. Missing and unresolved targets remain explicit.
+func ObjectCalls(ctx context.Context, binary io.Reader, goTool, pattern string) (map[string][]ObjectCall, error) {
+	if pattern == "" {
+		return nil, fmt.Errorf("an object-call inspection requires a symbol filter")
+	}
+	code, err := loadObjdumpWithGo(ctx, binary, goTool, pattern)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string][]ObjectCall)
+	for _, function := range code.functions {
+		calls := make([]ObjectCall, 0, len(function.calls))
+		for call := range function.calls {
+			calls = append(calls, ObjectCall{Target: call.String(), Resolved: call.kind == symbolTarget && call.offset == 0})
+		}
+		slices.SortFunc(calls, func(a, b ObjectCall) int { return strings.Compare(a.Target, b.Target) })
+		result[function.symbol.Name] = calls
+	}
+	return result, nil
 }
 
 // poser is a type that implements Pos.
