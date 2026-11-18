@@ -1369,6 +1369,36 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertNotIn("rebaseRequest", other)
         self.assertEqual(updater.reviewer_handoff([other], {}), [])
 
+    def test_published_branch_feedback_uses_its_unique_exact_owner(self) -> None:
+        source = retained(raw_pr(16869))
+        finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
+                   "body": "Please preserve the write error.", "createdAt": OLD, "updatedAt": OLD,
+                   "url": source["url"] + "#discussion_r1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        source["feedback"]["items"] = [finding]
+        branch = {"type": "branch", "repo": source["headRepo"], "ref": source["ref"],
+                  "head": source["head"], "followup": {"owner": "root", "sourceHead": source["head"],
+                  "observedAt": OLD, "evidence": [finding["url"]]}}
+        registry = {"nodes": [branch]}
+
+        def assignment() -> tuple[str, bool]:
+            row, = updater.reviewer_handoff([source], {})
+            return row["owner"], row["claimed"]
+
+        with mock.patch.object(updater, "REGISTRY", registry):
+            self.assertEqual(assignment(), ("root", True))
+            for field, other in (("repo", "other/gvisor"), ("ref", "another-branch"), ("head", "b" * 40),
+                                 ("repo", None), ("ref", None), ("head", None)):
+                with self.subTest(identity=field, value=other), mock.patch.dict(branch, {field: other}):
+                    self.assertEqual(assignment(), ("Agent", False))
+            registry["nodes"].append(copy.deepcopy(branch))
+            self.assertEqual(assignment(), ("Agent", False))
+            registry["nodes"].pop()
+            direct = {"type": "pr", "repo": "google/gvisor", "number": source["number"],
+                      "followup": {**branch["followup"], "owner": "pr-owner"}}
+            registry["nodes"].append(direct)
+            self.assertEqual(assignment(), ("pr-owner", True))
+
     def test_reviewer_handoff_tracks_latest_reply_and_top_level_events(self) -> None:
         pr = retained(raw_pr(5))
         pr.update(reviewDecision="APPROVED", approvedHead=pr["head"])
@@ -1539,7 +1569,7 @@ class CollectorHistoryTest(unittest.TestCase):
                    "url": pr["url"] + "#issuecomment-6805040516",
                    "author": {"login": "zkoopmans", "__typename": "User"}}
         pr["feedback"]["items"] = [message]
-        node = {"id": "pr:15106", "repo": updater.REPO, "number": pr["number"],
+        node = {"id": "pr:15106", "type": "pr", "repo": updater.REPO, "number": pr["number"],
                 "followup": {"owner": "Upstream review", "sourceHead": pr["head"], "observedAt": OLD}}
         with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
             def advance(previous: dict) -> dict:

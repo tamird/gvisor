@@ -294,9 +294,36 @@ def closed_supplier_pr(pr: dict, registered: Container[tuple[str, int]]) -> bool
     return pr["status"] == "closed" and repo != REPO and (repo, pr["number"]) in registered
 
 
+def registry_source_indexes() -> tuple[
+        dict[tuple[str, int], dict], dict[tuple[str, str, str], list[dict]]]:
+    nodes = {(node["repo"], node["number"]): node
+             for node in REGISTRY["nodes"] if node["type"] == "pr"}
+    branches = defaultdict(list)
+    for node in REGISTRY["nodes"]:
+        if node["type"] == "branch" and all(node.get(field) for field in ("repo", "ref", "head")):
+            branches[(node["repo"], node["ref"], node["head"])].append(node)
+    return nodes, branches
+
+
+def registered_source(source: dict, nodes: dict[tuple[str, int], dict],
+                      branches: dict[tuple[str, str, str], list[dict]]) -> dict:
+    if (node := nodes.get((source.get("repo", REPO), source["number"]))) is not None:
+        return node
+    # Published work may retain its owner in the original branch card.
+    # A title or commit alone does not establish repository ownership.
+    if not all(source.get(field) for field in ("headRepo", "ref", "head")):
+        return {}
+    matches = branches.get((source["headRepo"], source["ref"], source["head"]), [])
+    match matches:
+        case [branch]:
+            return branch
+        case _:
+            return {}
+
+
 def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     """Put human feedback before routine checks, without treating replies as resolution."""
-    nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]}
+    nodes, branches = registry_source_indexes()
     prior = {(pr.get("repo", REPO), pr["number"]): pr for source in previous.get("prs", [])
              for pr in (source, *source.get("imports", []))}
     pending = {(item["repo"], item["number"], item["id"]): item
@@ -310,7 +337,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         closed = pr["status"] == "closed"
         key = pr.get("repo", REPO), pr["number"]
         current_discussion = pr is source or pr in import_lineage(source)
-        node = nodes.get((source.get("repo", REPO), source["number"]), {})
+        node = registered_source(source, nodes, branches)
         followup = node.get("followup", {})
         old = {item["id"]: item for item in prior.get(key, {}).get("feedback", {}).get("items", [])}
         items = pr.get("feedback", {}).get("items", [])
@@ -1052,26 +1079,12 @@ def check_report(prs: list[dict], previous: dict) -> dict:
     """Report service failures without conflating old imports with current source."""
     prior = {(pr.get("repo", REPO), pr["number"]): pr
              for source in previous.get("prs", []) for pr in (source, *source.get("imports", []))}
-    nodes = {(node["repo"], node["number"]): node
-              for node in REGISTRY["nodes"] if node["type"] == "pr"}
-    branches = defaultdict(list)
-    for node in REGISTRY["nodes"]:
-        if node["type"] == "branch":
-            branches[(node.get("repo"), node.get("ref"), node.get("head"))].append(node)
+    nodes, branches = registry_source_indexes()
     failures, changes, imports, mergeability, mergeability_changes = [], [], [], [], []
     for source in prs:
         repo = source.get("repo", REPO)
         source_status_changed = source["status"] != prior.get((repo, source["number"]), {}).get("status")
-        node = nodes.get((repo, source["number"]))
-        if node is None:
-            # Published work may retain its owner in the original branch card.
-            # A title or commit alone does not establish repository ownership.
-            matches = branches.get((source.get("headRepo"), source.get("ref"), source.get("head")), [])
-            match matches:
-                case [branch] if all(source.get(field) for field in ("headRepo", "ref", "head")):
-                    node = branch
-                case _:
-                    node = {}
+        node = registered_source(source, nodes, branches)
         followup = node.get("followup", {})
         delivered = verified_landing(source, node.get("landedPatch"))
         assignment = {key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
