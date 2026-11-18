@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T14:44:15.260922+00:00",
+    "updatedAt": "2026-11-18T15:19:38.271579+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2705,12 +2705,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-18T14:40:57.235824+00:00",
+      "updatedAt": "2026-11-18T15:19:38.271579+00:00",
       "summary": "Measured reply posted; awaiting reviewer response. Follow the original reviewer thread. No contributor response authorization remains.\n\nPreserved proposal and evidence:\n\nEtienne’s request for inlining evidence now has a bounded, independently reviewed compiler result for the unchanged public proposal 9e17fdee. With pinned Go 1.27.2, selected old/new Load, Store and Swap probes have identical emitted bytes, relocations and stack frames on AMD64 and ARM64. The real KVM go:nosplit Load consumer has no AtomicPtr wrapper call on either CPU; deliberate noinline controls retain their calls. ARM64 linking and both AMD64 correctness tests passed. The original codegen job remains FAIL because two qualifier analyzer owners rejected a missing package comment. A separate comment-only follow-up passes both analyzer owners on both CPUs, without repeating codegen. These results do not establish a timing gain, full-runsc stack budget or future universal inlining guarantee. The measured reply is now posted in the original thread; the public source remains unchanged.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
       "followup": {
         "disposition": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof. Prepared local4109 addresses complete typeparameter scope, composite type arguments/indexed calls, known imported selectors under anon mode, and the used-atomic-pointer FD growth copy contract. Full static source reviews are complete; no new compilation, test, restore, codegen, stack-budget or performance result is claimed.",
         "owner": "root",
-        "nextAction": "Finish exact provider/first-proof executable review, then run the canonical cold current-source proof with measured cost. Preserve public171979 unchanged; actual formatting, generator compilation, production provider/action/DWARF bindings, current SDK instruction/frame evidence and runtime/performance remain open.",
+        "nextAction": "Apply exact remote formatter whitespace output in isolated index, review exact revised source/pins, then resume native functional checks before compiler dependency/readiness and production links. Preserve actual443299 dependency timeout and443331 formatting failure. No compiler, DWARF, runtime or performance pass inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
@@ -2727,7 +2727,7 @@
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
         "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nExact source head gains a supported pipeline entry point and provider quota permits validation, or upstream CI changes pipeline selection.",
-        "curatedAt": "2026-11-18T14:40:57.235824+00:00",
+        "curatedAt": "2026-11-18T15:19:38.271579+00:00",
         "historicalEvidenceCorrection": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
           "correction": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof.",
@@ -2745,13 +2745,29 @@
           "codegenPrototype": {
             "head": "9dbe0f7b5259b370831efb69d53c46877d8ada81",
             "changedFilesBeyond4109": 11,
-            "publication": "Local only; original public171979 unchanged",
+            "publication": "Research source9dbe and exact plans published; original upstream171979 unchanged",
             "sourceReview": "Earlier full static reviews retained; provider-owning delta and first-proof protocol require final independent review.",
-            "qualification": "Five-file first proof frozen locally; source-header ancestry guard hardened. No project execution or publication.",
+            "qualification": "44333112823 failed canonical formatting after owner query; no generator/inspector, ARM compiler install or production gate ran",
             "limits": "Current SDK1.27.3 real-caller instruction/frame/stack-budget evidence and actual permanent CI cost remain necessary. Historical1.27.2 evidence is not current qualification.",
             "receipt": {
-              "file": "atomicptr-caller-proof-frozen.json",
-              "sha256": "3d2ebd415a6a01b2bd44eb764da3a43f6692ce3aaeac16b950a1598f34883207"
+              "file": "atomicptr-caller-proof-before-xml-freshness-fix-3d2ebd41/atomicptr-caller-proof-frozen.json",
+              "sha256": "3d2ebd415a6a01b2bd44eb764da3a43f6692ce3aaeac16b950a1598f34883207",
+              "scope": "Historical frozen protocol before later freshness, ordering and source-pin revisions"
+            },
+            "failure": {
+              "run": 44333112823,
+              "source": "9dbe0f7b5259b370831efb69d53c46877d8ada81",
+              "plan": "26a260a5f99789a5b1fef144cfbd9e22204d14cc",
+              "stage": "canonical lint exit2: five Go formatter diffs and one buildifier blank line",
+              "passed": [
+                "owner query",
+                "canonical goimports tool build",
+                "clang-format/cpplint/spelling"
+              ],
+              "receipt": {
+                "file": "atomicptr-443331-formatting-proposal.json",
+                "sha256": "d276b3a3f9bf868513847bf9e8fe549d054ced55778ef45e7852ce05c52da83d"
+              }
             }
           }
         }
@@ -49706,7 +49722,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-18T14:40:57.235824+00:00",
+      "updatedAt": "2026-11-18T15:19:38.271579+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49747,7 +49763,7 @@
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "observedAt": "2026-11-18T09:52:57.232471+00:00",
         "disposition": "The missing-only screen44261892579 passed native tmpfs/rootfs then stopped at native FUSE ENOENT; zero BASE/candidate observations. All preparation/manifests and cleanup verified. The first tiny probe44264852083 failed image acquisition before containers. Corrected immutable-digest probe44265522148 proves /dev/fuse absent inside old-config container and visible/openable with only its device mapping. This is prerequisite evidence, not actual FUSE mount/Ruby capability.",
-        "nextAction": "Writer completes maintained Smoke identity/cleanup and freshness correction; root and TCP re-review exact delta before native validation publication/launch. Keep original upstream PR unchanged. Full20 and performance qualification remain open.",
+        "nextAction": "Advance original full20 matrix and three functional Smoke controls using reviewed whole-group/ownership lifecycle. First cheaply verify immutable product transport, source/toolchain/config/image identity and actual activation; avoid rebuilding valid accessible products. Native4f proof is reusable within recorded scope. Full20/Sentry/lints/C++/performance remain unqualified; upstream PR unchanged.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49772,7 +49788,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44264852083",
           "https://github.com/tamird/gvisor/actions/runs/44265522148"
         ],
-        "recheckCondition": "Corrected exact protocol reviewed or native validation evidence; source/human update.",
+        "recheckCondition": "Actual product handoff/activation or remaining full20 result, source feedback or contributor decision.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -49916,14 +49932,20 @@
           "mountPermissionRecovery": {
             "owner": "coverage_security_review",
             "source": "4f51c3b3a663f39cb1dec661f83406e4f014348a",
-            "state": "Local source reviewed; native validation HELD for Smoke ownership/cleanup and freshness correction",
+            "state": "VERIFIED PASS: native Ruby N1 and maintained TestFuseSmoke; full20/Sentry/performance still open",
             "sourceReceipt": {
               "file": "fuse-mount-permissions-source-prepared.json",
               "sha256": "fa8c2f954fe5d1826d9a756e231a93a2ec9db0a9feec57b2f90663878700015d"
             },
             "sourceChange": "FuseFS-only creation SYS_ADMIN and apparmor=unconfined; retain default seccomp/device/privileged exec.",
-            "protocol": "One native Ruby N1 then maintained TestFuseSmoke;47-minute proposed inclusive cap. Not published/launched.",
-            "blocker": "Interrupted maintained Smoke was outside Ruby observer ownership capture; complete actual identity/recovery cleanup before launch. Tighten unsupported freshness allowance."
+            "protocol": "Published and executed47-minute-cap native validation44328398694: one Ruby N1 and maintained TestFuseSmoke verified. Full20/Sentry/performance remain open.",
+            "blocker": null,
+            "plan": "ac45af3fa3ca0d0bee4699bebe4150dab570d106",
+            "run": 44328398694,
+            "receipt": {
+              "file": "fuse-mount-44328398694-evidence.json",
+              "sha256": "b2d8cd4358f9ad5396740003b44d16246ee1d2d1e7cc84755e0ee558d0a9752c"
+            }
           }
         },
         "fuseContinuousCI": {
@@ -49938,7 +49960,7 @@
           "selectionGap": "Master-onlysoft-failingbenchmark lane already includednative; not PR-blocking FUSEfixture coverage. Newsmall maintained owner smoke targets that specific gap.",
           "causeLimit": "No claim thatf196 introduced missingdevice or that this fix resolves laterbenchmark cancellation."
         },
-        "curatedAt": "2026-11-18T14:40:57.235824+00:00"
+        "curatedAt": "2026-11-18T15:19:38.271579+00:00"
       },
       "dcoAmendment": {
         "oldHead": "ef55959ef13c80404a1efe7890044f9ca211f047",
@@ -57374,7 +57396,7 @@
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-18T14:40:57.235824+00:00",
+      "updatedAt": "2026-11-18T15:19:38.271579+00:00",
       "summary": "The fork checker on fa6b9080f diagnosed 13 of 23 marked cases on each of AMD64 and ARM64, including wrong-owner use with both sets locked. It accepted all four valid uses. Six lifetime cases also went unreported: two unlock/relock sequences and four cases involving a waiter-list cursor. The native package ran five tests with no skips. A saved semaphore element retained its address across unlock and exposed the updated value and PID after relocking. In a test-only count predicate that released the mutex and called AbortWait, traversal visited one of three waiters and left the other two queued. The two production count predicates only read the semaphore value.",
       "evidence": [
         {
@@ -57478,7 +57500,7 @@
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
         "observedAt": "2026-11-18T10:51:13.405419+00:00",
         "disposition": "Initial source gate verified from actual BEP/XML/findings and immutable source/plan. Three analyzer owners and eight native cases pass; old-checker control fails for the intended valid-owner reason. Full syscall/runtime/performance qualification remains incomplete.",
-        "nextAction": "Prepare exact-source native Linux then actual Sentry systrap semaphore syscall consumer qualification, including supported restore variants after target/cost review. Reuse passed lint/nogo/native8. ARM execution, race, runtime/C++ and compiler/runtime performance remain open; no upstream approval inferred.",
+        "nextAction": "Finish meaningful protocol review and launch exact-source functional consumer gate. Preserve native prefix evidence before cross-compiler/Sentry failure; do not repeat passed lint/nogo/native8. ARM/race/compiler/runtime performance remain separate open gates.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -57706,7 +57728,7 @@
             "Current README explicitly says the readany modifier does not add alias lifetime tracking. A successful old member lookup check does not establish cursor invalidation checking.",
             "Set.sems storage is immutable after initialization; its member address can validly survive unlock and be reused under the same mutex. Waiter-list membership may change and must not be treated as the same lifetime rule."
           ],
-          "nextAction": "Prepare exact-source native Linux then actual Sentry systrap semaphore syscall consumer qualification, including supported restore variants after target/cost review. Reuse passed lint/nogo/native8. ARM execution, race, runtime/C++ and compiler/runtime performance remain open; no upstream approval inferred.",
+          "nextAction": "Finish meaningful protocol review and launch exact-source functional consumer gate. Preserve native prefix evidence before cross-compiler/Sentry failure; do not repeat passed lint/nogo/native8. ARM/race/compiler/runtime performance remain separate open gates.",
           "recheckCondition": "Actual recovery qualification evidence, source change or contributor decision.",
           "runtimeOrCheckerTestsRun": true,
           "actualExecutionLimit": "Initial source gate passed on AMD64 with static findings for AMD64/ARM64; actual ARM execution, syscall/Sentry integration and performance remain open."
@@ -57754,7 +57776,15 @@
             44316942020
           ]
         },
-        "curatedAt": "2026-11-18T14:40:57.235824+00:00"
+        "curatedAt": "2026-11-18T15:19:38.271579+00:00",
+        "preparedSyscallConsumer": {
+          "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+          "state": "Frozen16-file functional protocol; root reviewed, independent milestone review pending; no launch",
+          "manifestSHA256": "e1c895980906ab5fefa823a8339bcd7f9531392e46819e50c5d84669ab18cc1e",
+          "metadataCases": 32,
+          "inclusiveMinutes": 120,
+          "scope": "Cheap privilege/IPC/path/group gate, native Linux30 before cross setup, then ordinary/save/restore/resume systrap30 each; prior source gate reused."
+        }
       },
       "contributorChangesRequested": {
         "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -77883,7 +77913,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T14:40:57.235824+00:00",
+      "updatedAt": "2026-11-18T15:19:38.271579+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire → graph → wire restore verified the guest’s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -78011,7 +78041,7 @@
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "observedAt": "2026-11-18T10:08:52.027930+00:00",
         "disposition": "Current-base d2c5c08 preserves published440aba98 stable patch. Existing44230748413 verifies159 owner cases and three actual candidate/live BASE cross-engine visits, but live BASE also passed and exact CI unreachable cause is unproven. Corrected synthetic control44244417672 now proves the original current-BASE inline-format defect:4generic/legacy/split compatibility leaves pass, ZeroOwners/Inline fail on incorrect printed raw-region/graph-ID output in both text/HTML; candidate passes these identical fixtures in the earlier owner run. Actual XML/BEP and exact source clean restoration verified. First control44243638873 failed protobuf visibility analysis before tests and is retained.",
-        "nextAction": "Consume exact D2/51b run44326611869, verify dependency and restoration evidence before interpreting eight N1 samples. Preserve both earlier failures. No successful package/store rollback or benchmark result is yet established.",
+        "nextAction": "Resume full eight-N1 screen with checkpoint-owned readiness guard and retained cleanup diagnostics. Reuse immutable built harness/runtime products only after source/toolchain/configuration/transport checks; otherwise use canonical builds. Keep dependency diagnostic separate from benchmark/performance proof; original namespace failure cause remains unknown.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -78063,7 +78093,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44244417672"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Run44326611869 terminal evidence, source change or substantive review/import update.",
+        "recheckCondition": "Exact full-screen preparation, actual product-handoff/activation evidence or source/human/import change.",
         "qualificationHistory": [
           {
             "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
@@ -78173,29 +78203,31 @@
           "preparedRecovery": {
             "owner": "root",
             "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
-            "plan": "51b0962a1998d4dcadfd7b6313907be47c760c0f",
-            "run": 44326611869,
-            "url": "https://github.com/tamird/gvisor/actions/runs/44326611869",
-            "state": "RUNNING at dispatch; no outcome inferred",
-            "manifestSHA256": "20ebd954b4b381147e350bf71f2023ca26be04f8bb1b53432ce1219b7257c888",
-            "files": 21,
-            "metadataCases": 80,
-            "inclusiveMinutesAfterGenericPreparation": 95,
-            "cleanupSeconds": 296,
-            "graceSeconds": 300,
+            "plan": "2dea98ea6d5265fea6ed705f36af94367eaae2fa",
+            "run": 44330495102,
+            "state": "VERIFIED PASS: dependency/private-store rollback diagnostic only",
             "receipt": {
-              "file": "checkpoint-direct-acquisition-dispatch.json",
-              "sha256": "2b88d52b96f8bd087aed5761f319ba99a6d08d1f17732f9bf0f07772d62abb7f"
+              "file": "checkpoint-44330495102-evidence.json",
+              "sha256": "cffc2f74589402597e20209c7b05272fe27ee129ffcda6f67c240d269997aec5"
             },
-            "previousFailure": {
-              "run": 44320197504,
-              "reason": "Original Docker28.0.4 APT version unavailable; failed before daemon/package/store mutation. Cleanup reports no mutation/errors.",
+            "verified": [
+              "native namespace probe",
+              "original Docker28.0.4 restored",
+              "original six-image/zero-volume inventory equal",
+              "namespace removal succeeded",
+              "source/index clean"
+            ],
+            "benchmarkObservations": 0,
+            "priorFailure": {
+              "run": 44326611869,
+              "primary": "Stale VFIO-only runtime-name guard rejected checkpoint-cost before N1",
+              "cleanup": "Namespace removal failed; restored=false and original inventory restoration unverified",
               "receipt": {
-                "file": "checkpoint-44320197504-diagnosis.json",
-                "sha256": "6aaa3d00f481d12e12066802fb2bff03d3d61213636add7e509144123ccd3eba"
+                "file": "checkpoint-44326611869-diagnosis.json",
+                "sha256": "b2b5afba212b61af3fe2a11fb66dee4befe3489105746fb523913a5227df8eaa"
               }
             },
-            "correction": "Acquire exact frozen official original CE/CLI archives directly; verify package fields, size and SHA before mutation. Private-store and rollback protections unchanged."
+            "limit": "Successful later dependency cycle does not establish earlier namespace removal cause or rollback after checkpoint workloads."
           },
           "recoveryHistory": [
             {
@@ -78213,10 +78245,37 @@
               },
               "reviewScope": "The recorded7b53 manifest/73-case proof was independently reviewed; later stage single-cleanup correction is pending final review and must receive its own exact frozen hash. Obsolete19-file70a plan was never published.",
               "manifestStatus": "Prior reviewed revision, not a claim that latest held bytes match this manifest"
+            },
+            {
+              "owner": "root",
+              "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+              "plan": "51b0962a1998d4dcadfd7b6313907be47c760c0f",
+              "run": 44326611869,
+              "url": "https://github.com/tamird/gvisor/actions/runs/44326611869",
+              "state": "RUNNING at dispatch; no outcome inferred",
+              "manifestSHA256": "20ebd954b4b381147e350bf71f2023ca26be04f8bb1b53432ce1219b7257c888",
+              "files": 21,
+              "metadataCases": 80,
+              "inclusiveMinutesAfterGenericPreparation": 95,
+              "cleanupSeconds": 296,
+              "graceSeconds": 300,
+              "receipt": {
+                "file": "checkpoint-direct-acquisition-dispatch.json",
+                "sha256": "2b88d52b96f8bd087aed5761f319ba99a6d08d1f17732f9bf0f07772d62abb7f"
+              },
+              "previousFailure": {
+                "run": 44320197504,
+                "reason": "Original Docker28.0.4 APT version unavailable; failed before daemon/package/store mutation. Cleanup reports no mutation/errors.",
+                "receipt": {
+                  "file": "checkpoint-44320197504-diagnosis.json",
+                  "sha256": "6aaa3d00f481d12e12066802fb2bff03d3d61213636add7e509144123ccd3eba"
+                }
+              },
+              "correction": "Acquire exact frozen official original CE/CLI archives directly; verify package fields, size and SHA before mutation. Private-store and rollback protections unchanged."
             }
           ]
         },
-        "curatedAt": "2026-11-18T14:40:57.235824+00:00"
+        "curatedAt": "2026-11-18T15:19:38.271579+00:00"
       },
       "refinement": {
         "before": {
@@ -92649,36 +92708,16 @@
       "title": "Fix network benchmark readiness and reporting",
       "url": "https://github.com/tamird/gvisor/compare/b29c8320a...af131d57a",
       "group": "bazel",
-      "status": "Qualified; superseding contributor decision pending",
-      "updatedAt": "2026-11-18T12:19:41.750038+00:00",
+      "status": "Agent work: contributor feedback being implemented",
+      "updatedAt": "2026-11-18T15:09:12.764966+00:00",
       "summary": "Three qualified fixes propagate readiness errors and clean up Node clients/timing, report Iperf aggregate payload metrics, and reject Hey client errors. Exact integrated owner/consumer check passes; old component controls and original metric limits retained. No upstream PR yet.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "af131d57abcab71b361073a48efd8607959aa5ae",
-        "baseHead": "b29c8320a862a77f4c55894d00c56eb5850c8066",
-        "url": "https://github.com/tamird/gvisor/compare/b29c8320a...af131d57a",
-        "title": "Fix network benchmark readiness and reporting",
-        "summary": "Supersedes pending two-commit proposal with the unchanged two patches plus qualified Hey client-error rejection. Exact integrated29-case/four-consumer qualification passes. No upstream PR.",
-        "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue after their readiness probe failed. Abort on returned errors before timed client requests. Clean up Node's native client and stop its timer before metric reporting and deferred cleanup.\n\nIperf selected a single connection even when parallel output included an aggregate summary. Select the final reported summary and use its payload size for MB/s instead of the write-buffer size. MB/s uses the stopped timer at Report, while bandwidth uses iperf's own reported interval. Neither measures physical wire throughput. Iperf's final ns/op can include work timed after Report.\n\nHey emitted finite request rates and average latencies even when its report included client timeout errors. Reject reports with an Error distribution section before publishing metrics. Keep HTTP status handling unchanged so intentional 404 workloads continue to work. This check rejects errors declared by the CLI; it does not establish complete response accounting for arbitrary reports.\n\nThese changes alter Node elapsed accounting and Iperf metric values. Comparisons must use one identical repaired harness across runtime arms; historical results retain their original definitions. A failed Hey workload must remain failed rather than becoming a finite-QPS performance result.\n\nMissing-image controls exercise returned readiness failures, and restored inputs check benchmark completion and client cleanup. Captured single, tiny and parallel Iperf outputs exercise the parser and public reporting boundary. Captured successful, 404 and timeout Hey reports exercise its public reporting boundary. The same reporting tests detect each old helper's defect.\n\nPosted by Codex on behalf of @tamird.\n",
-        "supersedes": {
-          "kind": "proposal",
-          "status": "pending",
-          "head": "46ec4ba08f60c5a2e89269d09b2b970f3cde5685",
-          "baseHead": "1f33fe3003455db178b97f3b43d3a012f1611994",
-          "url": "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08",
-          "title": "Fix network benchmark readiness and reporting",
-          "summary": "Approve one upstream PR for both qualified commits. Full comparison covers the readiness commit and Iperf commit; no upstream PR has been opened.",
-          "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue after their readiness probe failed. Abort on returned errors before timed client requests. Clean up Node's native client and stop its timer before metric reporting and deferred cleanup.\n\nIperf selected a single connection even when parallel output included an aggregate summary. Select the final reported summary and use its payload size for MB/s instead of the write-buffer size. MB/s uses the stopped timer at Report, while bandwidth uses iperf's own reported interval. Neither measures physical wire throughput. Final ns/op can include work timed after Report.\n\nThese changes alter Node elapsed accounting and Iperf metric values. Comparisons must use one identical repaired harness across runtime arms; historical results retain their original definitions.\n\nMissing-image controls exercise returned readiness failures, and restored inputs check successful requests and client cleanup. Captured single, tiny and parallel Iperf outputs exercise the parser and public reporting boundary; the same reporting tests fail against the old helper.\n\nPosted by Codex on behalf of @tamird.\n"
-        }
-      },
       "followup": {
         "owner": "root",
         "sourceHead": "af131d57abcab71b361073a48efd8607959aa5ae",
         "observedAt": "2026-11-18T07:42:24.729369+00:00",
         "disposition": "Three qualified patches af131 passed integrated44258637313:exact29XML cases,zero skips/failures/errors,four consumers built,six original qualified blobs exact,clean source/index. Range-diff preserves two old patches and adds only Hey rejection, with website-only base refresh. Earlier component negatives and lints retained. Superseding contributor decision pending; no upstream PR.",
-        "nextAction": "On explicit approval of this three-commit proposal and complete body, reverify exact head/base and publish one upstream PR. Do not use approval of the old two-commit proposal as approval for the added Hey fix.",
-        "recheckCondition": "Contributor decision, source/base change, publication result or substantive feedback.",
+        "nextAction": "Probe exact cached Hey template and Iperf CSV capabilities remotely before changing parsers. Preserve error visibility and metric semantics; implement structured reporting, validate and return an exact revised proposal. Node timer/history correction separated locally from readiness; no upstream publication.",
+        "recheckCondition": "Actual producer preflight evidence, revised source/qualification, or contributor decision.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -92706,13 +92745,61 @@
           "artifact": 14408050244,
           "artifactDigest": "565195f1fd2d50341d72c1dbb2dfac7627a2c20825b802c41d0bf671fbc52434"
         },
-        "curatedAt": "2026-11-18T12:19:41.750038+00:00",
+        "curatedAt": "2026-11-18T15:09:12.764966+00:00",
         "submissionPolicy": {
           "source": "b29c8320a862a77f4c55894d00c56eb5850c8066",
           "url": "https://github.com/gvisor/gvisor/blob/b29c8320a862a77f4c55894d00c56eb5850c8066/CONTRIBUTING.md",
           "rule": "Multiple commits are permitted when independent logical units that can be applied separately. Current policy was verified; no policy-change date is asserted.",
-          "decision": "The exact three-commit af131 proposal is still pending explicit user approval; no publication authorized."
+          "decision": "The af131 proposal received requested changes and its pending approval request is settled. It is not approved for upstream publication; a validated revised proposal requires new explicit approval."
+        },
+        "technicalOwner": "tcp_conflict",
+        "contributorFeedback": {
+          "observedAt": "2026-11-18T15:09:12.764966+00:00",
+          "reviewedHeads": [
+            "af131d57abcab71b361073a48efd8607959aa5ae",
+            "2b27d0c3ad88e71cacf9e5b9602b7b8cbed6c69e",
+            "414eb34cd3f58a727129972002622beddb35cc43"
+          ],
+          "requestedChanges": [
+            "Use machine-readable producer output rather than repairing human-output parsers",
+            "Confirm StopTimer removal history and separate restoration",
+            "Move ResetTimer immediately before client.Run or justify timed setup"
+          ],
+          "preparedLocalCommits": [
+            "5b9bd275ff5cbf983664478c9b7cdde4bb18328a",
+            "b465ccd80edcd896d1288a65fff447bd4a0d69da"
+          ],
+          "historyConfirmed": "ffa9a715aaf4 removed Node StopTimer while retaining stop-before-parsing comment; GetNativeContainer now precedes ResetTimer.",
+          "state": "Implementation and actual producer probe pending; no revised-source qualification or upstream approval inferred"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "af131d57abcab71b361073a48efd8607959aa5ae",
+          "baseHead": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "url": "https://github.com/tamird/gvisor/compare/b29c8320a...af131d57a",
+          "title": "Fix network benchmark readiness and reporting",
+          "summary": "Supersedes pending two-commit proposal with the unchanged two patches plus qualified Hey client-error rejection. Exact integrated29-case/four-consumer qualification passes. No upstream PR.",
+          "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue after their readiness probe failed. Abort on returned errors before timed client requests. Clean up Node's native client and stop its timer before metric reporting and deferred cleanup.\n\nIperf selected a single connection even when parallel output included an aggregate summary. Select the final reported summary and use its payload size for MB/s instead of the write-buffer size. MB/s uses the stopped timer at Report, while bandwidth uses iperf's own reported interval. Neither measures physical wire throughput. Iperf's final ns/op can include work timed after Report.\n\nHey emitted finite request rates and average latencies even when its report included client timeout errors. Reject reports with an Error distribution section before publishing metrics. Keep HTTP status handling unchanged so intentional 404 workloads continue to work. This check rejects errors declared by the CLI; it does not establish complete response accounting for arbitrary reports.\n\nThese changes alter Node elapsed accounting and Iperf metric values. Comparisons must use one identical repaired harness across runtime arms; historical results retain their original definitions. A failed Hey workload must remain failed rather than becoming a finite-QPS performance result.\n\nMissing-image controls exercise returned readiness failures, and restored inputs check benchmark completion and client cleanup. Captured single, tiny and parallel Iperf outputs exercise the parser and public reporting boundary. Captured successful, 404 and timeout Hey reports exercise its public reporting boundary. The same reporting tests detect each old helper's defect.\n\nPosted by Codex on behalf of @tamird.\n",
+          "supersedes": {
+            "kind": "proposal",
+            "status": "pending",
+            "head": "46ec4ba08f60c5a2e89269d09b2b970f3cde5685",
+            "baseHead": "1f33fe3003455db178b97f3b43d3a012f1611994",
+            "url": "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08",
+            "title": "Fix network benchmark readiness and reporting",
+            "summary": "Approve one upstream PR for both qualified commits. Full comparison covers the readiness commit and Iperf commit; no upstream PR has been opened.",
+            "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue after their readiness probe failed. Abort on returned errors before timed client requests. Clean up Node's native client and stop its timer before metric reporting and deferred cleanup.\n\nIperf selected a single connection even when parallel output included an aggregate summary. Select the final reported summary and use its payload size for MB/s instead of the write-buffer size. MB/s uses the stopped timer at Report, while bandwidth uses iperf's own reported interval. Neither measures physical wire throughput. Final ns/op can include work timed after Report.\n\nThese changes alter Node elapsed accounting and Iperf metric values. Comparisons must use one identical repaired harness across runtime arms; historical results retain their original definitions.\n\nMissing-image controls exercise returned readiness failures, and restored inputs check successful requests and client cleanup. Captured single, tiny and parallel Iperf outputs exercise the parser and public reporting boundary; the same reporting tests fail against the old helper.\n\nPosted by Codex on behalf of @tamird.\n"
+          },
+          "outcome": "changes-requested",
+          "at": "2026-11-18T15:09:12.764966+00:00",
+          "note": "Tamir requested machine-readable Hey/Iperf reporting; verify historical Node StopTimer removal, split its restoration and move ResetTimer immediately before client.Run. Earlier three-commit proposal is not approved for upstream publication."
+        }
+      ],
+      "contributorChangesRequested": {
+        "head": "af131d57abcab71b361073a48efd8607959aa5ae",
+        "url": "https://github.com/tamird/gvisor/commit/af131d57abcab71b361073a48efd8607959aa5ae"
       }
     },
     {
@@ -108086,7 +108173,7 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-18T08:22:46.540846+00:00",
+      "updatedAt": "2026-11-18T15:19:38.271579+00:00",
       "summary": "The default-branch workflow requests a refresh at minutes 7, 17, 27, 37, 47 and 57. On November 8 GitHub recorded five scheduled runs, at 01:32, 07:52, 14:34, 19:01 and 22:45 UTC. All five succeeded. These timestamps establish gaps between scheduled runs. The cause of the missing events is unknown. An explicit dispatch at 00:03 UTC on November 9 succeeded, and the active owner’s next collection checked GitHub at 00:14 UTC.",
       "findings": [
         {
@@ -108393,7 +108480,7 @@
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "currentHealth": {
-        "observedAt": "2026-11-18T09:37:58.499426+00:00",
+        "observedAt": "2026-11-18T15:19:38.271579+00:00",
         "owner": "root",
         "workflowState": "active",
         "actionsEnabled": true,
@@ -108402,13 +108489,13 @@
         "latestNativeScheduleRun": 44273240471,
         "latestNativeScheduleAt": "2026-11-18T09:09:14Z",
         "latestNativeScheduleConclusion": "success",
-        "currentManualSweep": 44265387900,
-        "currentSnapshotAt": "2026-11-18T09:12:28.925717+00:00",
+        "currentManualSweep": 44331826303,
+        "currentSnapshotAt": "2026-11-18T15:10:11.753341+00:00",
         "currentManualConclusion": "success",
-        "cause": "One native scheduled run resumed successfully after the 01:43 run. This does not prove the configured ten-minute cadence; the earlier missing events remain unexplained.",
+        "cause": "Workflow remains active but no native schedule event after successful44273240471 at09:09:14Z. Manual snapshot-only collectors succeed; cause of missing native events remains unknown.",
         "nextAction": "Preserve this newer automated snapshot. Continue snapshot-only collection during active lifecycle sweeps and recheck native event creation; do not create a competing scheduler or blindly re-register the active workflow.",
         "recheckCondition": "A new native scheduled event, provider/activation change, manual collector failure or stale snapshot.",
-        "currentSnapshotSource": "native scheduled run 44273240471"
+        "currentSnapshotSource": "snapshot-only manual sweep44331826303"
       }
     },
     {
@@ -127577,5 +127664,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T14:44:15.260922+00:00"
+  "updatedAt": "2026-11-18T15:19:38.271579+00:00"
 }
