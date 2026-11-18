@@ -35,7 +35,7 @@ _optimized_arch_transition = transition(
 
 def _inputs_impl(ctx):
     go = go_context(ctx)
-    files = []
+    links = {}
     records = []
     for arch in ["amd64", "arm64"]:
         sentry = ctx.split_attr.sentry[arch]
@@ -59,12 +59,28 @@ def _inputs_impl(ctx):
             "kvm_archive": kvm[GoArchive].data.file,
             "negative_archive": negative[GoArchive].data.file,
         }
-        sources = kernel[GoInfo].srcs + kvm[GoInfo].srcs
-        files += artifacts.values() + sources
+        prefix = ctx.label.package + "/" + ctx.label.name + "/" + arch + "/"
+        artifact_paths = {}
+        for name, file in artifacts.items():
+            alias = prefix + name
+            links[alias] = file
+            artifact_paths[name] = alias
+        sources = []
+        for logical, target in [
+            ("pkg/sentry/kernel/fd_table_unsafe.go", kernel),
+            ("pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go", kvm),
+            ("pkg/sentry/platform/kvm/atomicptr_machine.go", kvm),
+        ]:
+            matches = [file for file in target[GoInfo].srcs if file.short_path == logical]
+            if len(matches) != 1:
+                fail("expected one production source %s, got %s" % (logical, matches))
+            alias = prefix + "sources/" + logical
+            links[alias] = matches[0]
+            sources.append(alias)
         records.append(struct(
             arch = arch,
-            artifacts = {name: file.short_path for name, file in artifacts.items()},
-            sources = [file.short_path for file in sources],
+            artifacts = artifact_paths,
+            sources = sources,
         ))
     manifest = ctx.actions.declare_file(ctx.label.name + ".json")
     ctx.actions.write(manifest, json.encode_indent(struct(
@@ -74,7 +90,9 @@ def _inputs_impl(ctx):
     )) + "\n")
     return [DefaultInfo(
         files = depset([manifest]),
-        runfiles = ctx.runfiles(files = files + [manifest] + go.runfiles.to_list()),
+        # Short paths are not unique across configurations of the same target.
+        # Publish only these architecture-qualified aliases for split inputs.
+        runfiles = ctx.runfiles(files = [manifest] + go.runfiles.to_list(), symlinks = links),
     )]
 
 atomicptr_codegen_inputs = go_rule(
