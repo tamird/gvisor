@@ -98,10 +98,17 @@ func BenchmarkIperfOneConnection(b *testing.B) {
 				Links: []string{server.MakeLink("iperfsrv")},
 			}, iperf.MakeCmd("iperfsrv", port)...)
 			if err != nil {
-				b.Fatalf("failed to run client: %v", err)
+				b.Fatalf("failed to run client: %v (output: %q)", err, out)
 			}
 			b.StopTimer()
-			iperf.Report(b, out)
+			stdout, stderr, err := client.OutputStreams(ctx)
+			if err != nil {
+				b.Fatalf("failed to get iperf output streams: %v", err)
+			}
+			if stderr != "" {
+				b.Logf("iperf stderr: %s", stderr)
+			}
+			iperf.Report(b, stdout)
 			b.StartTimer()
 		})
 	}
@@ -218,7 +225,14 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				b.Fatalf("failed to run client: %v (output: %q)", err, out)
 			}
 			b.StopTimer()
-			iperf.Report(b, out)
+			stdout, stderr, err := client.OutputStreams(ctx)
+			if err != nil {
+				b.Fatalf("failed to get iperf output streams: %v", err)
+			}
+			if stderr != "" {
+				b.Logf("iperf stderr: %s", stderr)
+			}
+			iperf.Report(b, stdout)
 			b.StartTimer()
 		})
 	}
