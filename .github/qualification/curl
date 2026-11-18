@@ -1,0 +1,20 @@
+#!/bin/bash
+# Qualification-only transport verification for the immutable old genrule.
+set -euo pipefail
+if test "$#" != 2 || test "$1" != -fsSL; then
+  echo 'Unexpected baseline curl arguments' >&2
+  exit 64
+fi
+case "$2" in
+  https://dl.google.com/go/go1.27.3.src.tar.gz) expected='6e7749035cf360f06b2575d162ea79df9fda8ef671889e5c375f8e50777f26bb'; archive='go1.27.3.src.tar.gz' ;;
+  https://dl.google.com/go/go1.27.3.linux-amd64.tar.gz) expected='65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40'; archive='go1.27.3.linux-amd64.tar.gz' ;;
+  https://dl.google.com/go/go1.27.3.linux-arm64.tar.gz) expected='a06e99309dbcbdca1a8ccd2282c3ee146e55930886e26b4f1193269587165f49'; archive='go1.27.3.linux-arm64.tar.gz' ;;
+  *) echo 'Unexpected baseline curl URL' >&2; exit 64 ;;
+esac
+: "${VERIFY_COVERAGE_DOWNLOAD_AUDIT:?audit path must be supplied to the Bazel action}"
+: "${VERIFY_COVERAGE_ARCHIVES:?task archive directory must be supplied to the Bazel action}"
+: "${VERIFY_COVERAGE_INPUT_SHA256:?verification inputs must be part of the action key}"
+payload="$VERIFY_COVERAGE_ARCHIVES/$archive"
+printf '%s  %s\n' "$expected" "$payload" | sha256sum -c - >&2
+printf '%s\t%s\n' "$2" "$expected" >> "$VERIFY_COVERAGE_DOWNLOAD_AUDIT"
+cat "$payload"
