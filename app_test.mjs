@@ -18,6 +18,24 @@ function client() {
   return context;
 }
 
+test('registry requires an aware update timestamp for collected branches', () => {
+  const context = client();
+  const node = { id: 'branch:benchmark', type: 'branch', repo: 'tamird/gvisor', head: 'a'.repeat(40) };
+  context.registryInput = { ...context.registryInput, nodes: [node], groups: [], edges: [] };
+  const validate = () => vm.runInContext('validateRegistry(registryInput)', context);
+  for (const updatedAt of [undefined, null, 1, '', 'not-a-date', '2026-10-12T18:05:00', '2026-13-12T18:05:00Z', '2026-02-30T18:05:00Z', '2026-02-29T18:05:00Z', '2026-10-12T24:00:00Z', '0000-10-12T18:05:00Z', 'Oct 12 2026 18:05:00 +00:00']) {
+    node.updatedAt = updatedAt;
+    assert.throws(validate, /Invalid branch update timestamp/, String(updatedAt));
+  }
+  for (const updatedAt of ['2026-10-12T18:05:00Z', '2026-10-12T18:05:00+00:00', '2026-10-12T13:05:00-05:00', '2024-02-29T23:05:00-05:00']) {
+    node.updatedAt = updatedAt;
+    validate();
+  }
+  delete node.head;
+  delete node.updatedAt;
+  validate();
+});
+
 test('a requested rebase belongs to its author and source head', () => {
   const c = client();
   c.pr = { authorLogin: 'tamird', head: 'a'.repeat(40),
@@ -837,7 +855,7 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
   const context = client();
   const before = '7e371d8acc44a23b419a84618471efe9ffc51c42';
   const after = 'ca492fef95e67b769f0369c68e18a7edb28e1f2d';
-  const node = { id: 'branch:compact', type: 'branch', repo: 'tamird/gvisor', head: after,
+  const node = { id: 'branch:compact', type: 'branch', updatedAt: '2026-10-12T18:05:00Z', repo: 'tamird/gvisor', head: after,
     refinement: { before: { head: before }, after: { head: after } } };
   context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
   context.nodeInput = node;
@@ -921,7 +939,7 @@ test('promotion uses an exact-head branch refinement when the PR comparison is s
 
 test('refinement metadata rejects malformed ranges but tolerates a newer node head', () => {
   const context = client(), before = 'a'.repeat(40), after = 'b'.repeat(40);
-  const node = { id: 'branch:proposal', type: 'branch', repo: 'tamird/gvisor', head: after };
+  const node = { id: 'branch:proposal', type: 'branch', updatedAt: '2026-10-12T18:05:00Z', repo: 'tamird/gvisor', head: after };
   context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
   for (const refinement of [null, {}, { before: { head: before }, after: { head: before } },
     { before: { head: before, base: before }, after: { head: after } },
@@ -975,7 +993,7 @@ test('companion reviewer replies require nonempty text on a proposal or amendmen
   const decision = { status: 'pending', kind: 'proposal', head, body: 'Open this change',
     url: `https://github.com/tamird/gvisor/commit/${head}` };
   context.registryInput = { ...context.registryInput, groups: [], edges: [], nodes: [
-    { id: 'branch:test', type: 'branch', repo: 'tamird/gvisor', head, contributorReview: decision },
+    { id: 'branch:test', type: 'branch', updatedAt: '2026-10-12T18:05:00Z', repo: 'tamird/gvisor', head, contributorReview: decision },
   ] };
   const validate = () => vm.runInContext('validateRegistry(registryInput)', context);
   validate();
@@ -1004,7 +1022,7 @@ test('new contributor observation survives an older full snapshot and controls a
 test('new registry decisions appear in table, DAG and counts before a provider refresh', () => {
   const nodes = ['nginx-checkpoint-http-readiness', 'benchmark-alpine'].map((name, index) => {
     const head = String(index + 1).repeat(40);
-    return { id: `branch:${name}`, type: 'branch', title: name, repo: 'tamird/gvisor', head,
+    return { id: `branch:${name}`, type: 'branch', updatedAt: '2026-10-12T18:05:00Z', title: name, repo: 'tamird/gvisor', head,
       contributorReview: { status: 'pending', head, url: `https://github.com/tamird/gvisor/commit/${head}` } };
   });
   nodes.push({ id: 'branch:approved', type: 'branch', title: 'Approved child', status: 'Awaiting prerequisites' });
@@ -1086,7 +1104,7 @@ test('registry decisions retain only same-candidate ages and never revive consum
 test('contributor decisions bind the registered branch repository and exact proposal head', () => {
   const context = client(), head = 'c'.repeat(40);
   for (const repo of ['tamird/gvisor', 'tamird/go']) {
-    const node = { id: 'branch:proposal', type: 'branch', repo, head,
+    const node = { id: 'branch:proposal', type: 'branch', updatedAt: '2026-10-12T18:05:00Z', repo, head,
       contributorReview: { status: 'pending', head, url: `https://github.com/${repo}/commit/${head}` },
       workStates: { 'contributor-review': { scope: head, basis: 'unknown', since: null } } };
     context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
