@@ -8,7 +8,11 @@ on:
         type: string
       plan:
         description: Single child of source changing only .github/qualification
-        required: true
+        required: false
+        type: string
+      targets:
+        description: Bazel labels or patterns separated by spaces; empty runs the legacy plan
+        required: false
         type: string
       architecture:
         required: true
@@ -18,7 +22,7 @@ permissions:
   contents: read
 jobs:
   native:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/master'
+    if: inputs.targets == '' && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/master'
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 330
     env:
@@ -162,5 +166,90 @@ jobs:
         with:
           name: qualification-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/qualification/results/
+          if-no-files-found: error
+          retention-days: 30
+  bazel:
+    if: inputs.targets != '' && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/master'
+    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 15
+    env:
+      SOURCE: ${{ inputs.source }}
+      TARGETS: ${{ inputs.targets }}
+      PLAN: ${{ inputs.plan }}
+      QUAL_ARCH: ${{ inputs.architecture }}
+      QUAL_CONFIG: ${{ inputs.architecture == 'arm64' && 'aarch64' || 'x86_64' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify exact source and prepare Bazel
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE" =~ ^[0-9a-f]{40}$ ]]
+          test -z "$PLAN"
+          read -r -a targets <<< "$TARGETS"
+          test "${#targets[@]}" -gt 0
+          for target in "${targets[@]}"; do
+            [[ "$target" == //* || "$target" == @*//* ]]
+          done
+          git fetch --depth=1 --no-tags --no-write-fetch-head origin "$SOURCE"
+          git checkout --detach "$SOURCE"
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          test "$(cat .bazelversion)" = 9.3.1
+          case "$QUAL_ARCH" in
+            amd64) arch=x86_64; sha=7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c ;;
+            arm64) arch=arm64; sha=10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366 ;;
+            *) exit 1 ;;
+          esac
+          mkdir -m 700 "$RUNNER_TEMP/bazel-qualification"
+          bazel="$RUNNER_TEMP/bazel-qualification/bazel"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 "https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-$arch" -o "$bazel"
+          printf '%s  %s\n' "$sha" "$bazel" | sha256sum -c -
+          chmod 700 "$bazel"
+      - name: Build the credential helper
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/bazel-qualification/bazel" build --announce_rc=false //tools/buildbuddy:credential_helper
+      - name: Run Bazel correctness targets
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          results="$RUNNER_TEMP/bazel-qualification"
+          test -n "$BUILDBUDDY_API_KEY"
+          credentials="$results/credentials"
+          mkdir -m 700 "$credentials"
+          export BUILDBUDDY_API_KEY_FILE="$credentials/key"
+          trap 'rm -f "$BUILDBUDDY_API_KEY_FILE"; rmdir "$credentials"' EXIT
+          umask 077
+          printf '%s' "$BUILDBUDDY_API_KEY" > "$BUILDBUDDY_API_KEY_FILE"
+          unset BUILDBUDDY_API_KEY
+          helper=$(realpath bazel-bin/tools/buildbuddy/credential_helper)
+          test -x "$helper"
+          read -r -a targets <<< "$TARGETS"
+          "$results/bazel" test --announce_rc=false --keep_going --config=buildbuddy --config="$QUAL_CONFIG" \
+            --credential_helper="remote.buildbuddy.io=$helper" \
+            --build_event_json_file="$results/events.json" --profile="$results/profile.gz" \
+            "${targets[@]}" 2>&1 | tee "$results/bazel.log"
+      - name: Verify source preserved
+        if: always()
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          git diff --exit-code --quiet
+          git diff --cached --exit-code --quiet
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: bazel-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/bazel-qualification/events.json
+            ${{ runner.temp }}/bazel-qualification/profile.gz
+            ${{ runner.temp }}/bazel-qualification/bazel.log
+            bazel-testlogs/**/test.xml
+            bazel-testlogs/**/test.log
+            bazel-testlogs/**/runsc.log.*.boot.txt
+            bazel-testlogs/**/runsc.log.*.gofer.txt
+            bazel-testlogs/**/runsc.log.*.run.txt
           if-no-files-found: error
           retention-days: 30
