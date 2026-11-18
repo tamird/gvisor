@@ -1,0 +1,35 @@
+{
+  "publicationOrLaunchAuthorized": false,
+  "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+  "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+  "expectedMinutes": [
+    10,
+    20
+  ],
+  "observedPriorTotalStagedSeconds": 517,
+  "outerMinutes": 60,
+  "cleanupGraceSeconds": 180,
+  "inclusiveCleanupSeconds": 169,
+  "observationPhaseMinutes": 12,
+  "observations": {
+    "nativeNewRubyMounts": 3,
+    "sourceRuby": 14,
+    "sourceStartup": 2,
+    "total": 19,
+    "iterationsEach": 1
+  },
+  "perInvocation": {
+    "goTimeoutSeconds": 25,
+    "outerSeconds": 30,
+    "killGraceSeconds": 3,
+    "finalKillWaitSeconds": 1
+  },
+  "cleanCacheOrDropCaches": false,
+  "statisticalQualification": false,
+  "physicalDevices": false,
+  "volumeLimit": "17 RubyNoOp workloads plus image /files copy setup and two empty startups; no measured image-sized setup-IO or tmpfs peak-memory bound yet",
+  "nominalPreparationAndObservationCapsMinutes": 55.75,
+  "phaseTimeoutGraceDoesNotExtendOuterDeadline": true,
+  "screenSignalChildStopSeconds": 4,
+  "cleanupAndChildStopSeconds": 173
+}

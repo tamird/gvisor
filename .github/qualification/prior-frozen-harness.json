@@ -1,0 +1,49 @@
+{
+  "actual": {
+    "rubydev_test": {
+      "sha256": "8a895880fbc7f93e20648562ca9077b91856f28fcb4a2a5f7a5d93f23c0746b8",
+      "size": 15536288,
+      "mode": 365
+    },
+    "rubydev_test.runfiles/MANIFEST": {
+      "sha256": "d2ba7e1388048e8ea7831fe43cb02697315ac14ca6b8070d155bbe7a41c4e075",
+      "size": 578,
+      "mode": 365
+    },
+    "rubydev_test.runfiles/_main/test/benchmarks/fs/rubydev_test_/rubydev_test": {
+      "sha256": "8a895880fbc7f93e20648562ca9077b91856f28fcb4a2a5f7a5d93f23c0746b8",
+      "size": 15536288,
+      "mode": 365
+    },
+    "rubydev_test.runfiles/_main/test/runner/fuse/fuse_/fuse": {
+      "sha256": "12ec9e6fbfc478f0c5791e34888cfd58f998b052488b43d6ccd378924350f1cc",
+      "size": 3362976,
+      "mode": 365
+    },
+    "rubydev_test.runfiles/_repo_mapping": {
+      "sha256": "2e43b7e16fe4c5feca9bcd8d1ddc93537b26eaf8363ff9104d64a74c7fe3c659",
+      "size": 58,
+      "mode": 365
+    },
+    "startup_test": {
+      "sha256": "20c9d000595042a6ac1523246ec414455dc87c7bee668d815b993c34d2a04922",
+      "size": 15528096,
+      "mode": 365
+    },
+    "startup_test.runfiles/MANIFEST": {
+      "sha256": "f28a46cae5f9d87320c8929a4edfa8cdbf2498441b9ae744a7360f18da3ffe8a",
+      "size": 407,
+      "mode": 365
+    },
+    "startup_test.runfiles/_main/test/benchmarks/base/startup_test_/startup_test": {
+      "sha256": "20c9d000595042a6ac1523246ec414455dc87c7bee668d815b993c34d2a04922",
+      "size": 15528096,
+      "mode": 365
+    },
+    "startup_test.runfiles/_repo_mapping": {
+      "sha256": "2e43b7e16fe4c5feca9bcd8d1ddc93537b26eaf8363ff9104d64a74c7fe3c659",
+      "size": 58,
+      "mode": 365
+    }
+  }
+}
