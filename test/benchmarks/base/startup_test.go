@@ -16,8 +16,10 @@ package startup_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -155,6 +157,98 @@ func skipUnlessCheckpointSupported(b *testing.B) {
 	}
 }
 
+type checkpointCompletionMetadata struct {
+	Benchmark                 string `json:"benchmark"`
+	ContainerID               string `json:"containerID"`
+	Checkpoint                string `json:"checkpoint"`
+	FileCount                 int64  `json:"fileCount"`
+	LogicalBytes              int64  `json:"logicalBytes"`
+	AtCompletionBeforeCleanup bool   `json:"atCompletionBeforeCleanup"`
+}
+
+// recordCheckpointMetadata observes completed checkpoint files before cleanup.
+// The root is unset during ordinary benchmark execution.
+func recordCheckpointMetadata(b *testing.B, container *dockerutil.Container, checkpoint string) {
+	b.Helper()
+	root := os.Getenv("GVISOR_CHECKPOINT_METADATA_ROOT")
+	if root == "" {
+		return
+	}
+	output := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	for _, dir := range []string{root, output} {
+		resolved, err := filepath.EvalSymlinks(dir)
+		if !filepath.IsAbs(dir) || filepath.Clean(dir) != dir || err != nil || resolved != dir {
+			b.Fatalf("invalid checkpoint metadata directory %q: %v", dir, err)
+		}
+	}
+	id := container.ID()
+	if len(id) != 64 || len(checkpoint) == 0 || len(checkpoint) > 64 {
+		b.Fatal("invalid checkpoint metadata identity")
+	}
+	for _, c := range id {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
+			b.Fatal("invalid checkpoint container ID")
+		}
+	}
+	for _, c := range checkpoint {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c == '-') {
+			b.Fatal("invalid checkpoint name")
+		}
+	}
+	path := filepath.Join(root, "containers", id, "checkpoints", checkpoint)
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil || resolved != path {
+		b.Fatalf("checkpoint metadata path is missing or indirect: %v", err)
+	}
+	var entries, files, logicalBytes int64
+	if err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		entries++
+		if entries > 1<<16 {
+			return fmt.Errorf("checkpoint exceeds metadata entry bound")
+		}
+		if info.Mode().IsRegular() {
+			files++
+			if info.Size() < 0 || info.Size() > (2<<30)-logicalBytes {
+				return fmt.Errorf("checkpoint exceeds logical byte bound")
+			}
+			logicalBytes += info.Size()
+		} else if !info.IsDir() {
+			return fmt.Errorf("checkpoint has a non-regular entry")
+		}
+		return nil
+	}); err != nil {
+		b.Fatalf("checkpoint metadata traversal failed: %v", err)
+	}
+	if files == 0 || logicalBytes == 0 {
+		b.Fatal("completed checkpoint has no nonempty files")
+	}
+	record, err := json.Marshal(checkpointCompletionMetadata{
+		Benchmark: b.Name(), ContainerID: id, Checkpoint: checkpoint,
+		FileCount: files, LogicalBytes: logicalBytes, AtCompletionBeforeCleanup: true,
+	})
+	if err != nil {
+		b.Fatal(err)
+	}
+	if len(record) > 4096 {
+		b.Fatal("checkpoint completion record exceeds byte bound")
+	}
+	name := filepath.Join(output, "checkpoint-completion-"+id+"-"+checkpoint+".json")
+	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if _, err := f.Write(append(record, '\n')); err != nil {
+		f.Close()
+		b.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		b.Fatal(err)
+	}
+}
+
 // BenchmarkCheckpointEmpty times checkpoint creation for an empty container.
 func BenchmarkCheckpointEmpty(b *testing.B) {
 	skipUnlessCheckpointSupported(b)
@@ -193,6 +287,7 @@ func BenchmarkCheckpointEmpty(b *testing.B) {
 				b.Fatalf("failed to checkpoint container: %v", err)
 			}
 			b.StopTimer()
+			recordCheckpointMetadata(b, container, ckptName)
 		}()
 	}
 }
@@ -226,6 +321,7 @@ func BenchmarkRestoreEmpty(b *testing.B) {
 				b.Fatalf("failed to checkpoint container: %v", err)
 			}
 
+			recordCheckpointMetadata(b, container, ckptName)
 			time.Sleep(2 * time.Second)
 			b.StartTimer()
 			if err := container.Restore(ctx, ckptName); err != nil {
@@ -307,6 +403,7 @@ func runCheckpointServerWorkload(b *testing.B, name string, port int) {
 				b.Fatalf("failed to checkpoint %s: %v", name, err)
 			}
 			b.StopTimer()
+			recordCheckpointMetadata(b, server, ckptName)
 		}()
 	}
 }
@@ -333,6 +430,7 @@ func runRestoreServerWorkload(b *testing.B, name string, port int) {
 				b.Fatalf("failed to checkpoint %s: %v", name, err)
 			}
 
+			recordCheckpointMetadata(b, server, ckptName)
 			time.Sleep(2 * time.Second)
 			b.StartTimer()
 			if err := server.Restore(ctx, ckptName); err != nil {
