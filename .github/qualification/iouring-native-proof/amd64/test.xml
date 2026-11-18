@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="26" failures="0" disabled="0" errors="0" time="0.146" timestamp="2026-11-18T00:21:46.797" name="AllTests">
+  <testsuite name="IOUringTest" tests="26" failures="0" disabled="0" skipped="4" errors="0" time="0.146" timestamp="2026-11-18T00:21:46.797">
+    <testcase name="ValidFD" file="test/syscalls/linux/io_uring.cc" line="105" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.797" classname="IOUringTest" />
+    <testcase name="ParamsNonZeroResv" file="test/syscalls/linux/io_uring.cc" line="113" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.797" classname="IOUringTest" />
+    <testcase name="ZeroCQEntries" file="test/syscalls/linux/io_uring.cc" line="122" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.797" classname="IOUringTest" />
+    <testcase name="ZeroCQEntriesLessThanSQEntries" file="test/syscalls/linux/io_uring.cc" line="131" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.797" classname="IOUringTest" />
+    <testcase name="UnsupportedFlags" file="test/syscalls/linux/io_uring.cc" line="141" status="run" result="skipped" time="0." timestamp="2026-11-18T00:21:46.797" classname="IOUringTest">
+      <skipped message="test/syscalls/linux/io_uring.cc:143&#x0A;!IsRunningOnGvisor()&#x0A;"><![CDATA[test/syscalls/linux/io_uring.cc:143
+!IsRunningOnGvisor()
+]]></skipped>
+    </testcase>
+    <testcase name="MMapMUnMapWork" file="test/syscalls/linux/io_uring.cc" line="153" status="run" result="completed" time="0.144" timestamp="2026-11-18T00:21:46.797" classname="IOUringTest" />
+    <testcase name="MMapWrongOffset" file="test/syscalls/linux/io_uring.cc" line="182" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.941" classname="IOUringTest" />
+    <testcase name="MMapOffsets" file="test/syscalls/linux/io_uring.cc" line="198" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.941" classname="IOUringTest" />
+    <testcase name="ReturnedParamsValues" file="test/syscalls/linux/io_uring.cc" line="234" status="run" result="skipped" time="0." timestamp="2026-11-18T00:21:46.941" classname="IOUringTest">
+      <skipped message="test/syscalls/linux/io_uring.cc:235&#x0A;!IsRunningOnGvisor()&#x0A;"><![CDATA[test/syscalls/linux/io_uring.cc:235
+!IsRunningOnGvisor()
+]]></skipped>
+    </testcase>
+    <testcase name="SqeIndexArrayCacheAligned" file="test/syscalls/linux/io_uring.cc" line="264" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.941" classname="IOUringTest" />
+    <testcase name="SingleNOPTest" file="test/syscalls/linux/io_uring.cc" line="276" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.941" classname="IOUringTest" />
+    <testcase name="QueueingNOPTest" file="test/syscalls/linux/io_uring.cc" line="315" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="MultipleNOPTest" file="test/syscalls/linux/io_uring.cc" line="377" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="MultiThreadedNOPTest" file="test/syscalls/linux/io_uring.cc" line="423" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="InvalidOpCodeTest" file="test/syscalls/linux/io_uring.cc" line="473" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="CorruptRingHeader" file="test/syscalls/linux/io_uring.cc" line="510" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="SQERingBuffersWrapAroundTest" file="test/syscalls/linux/io_uring.cc" line="555" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="NonNullSigsetTest" file="test/syscalls/linux/io_uring.cc" line="624" status="run" result="skipped" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest">
+      <skipped message="test/syscalls/linux/io_uring.cc:625&#x0A;!IsRunningOnGvisor()&#x0A;"><![CDATA[test/syscalls/linux/io_uring.cc:625
+!IsRunningOnGvisor()
+]]></skipped>
+    </testcase>
+    <testcase name="OverflowCQTest" file="test/syscalls/linux/io_uring.cc" line="649" status="run" result="skipped" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest">
+      <skipped message="test/syscalls/linux/io_uring.cc:651&#x0A;!IsRunningOnGvisor()&#x0A;"><![CDATA[test/syscalls/linux/io_uring.cc:651
+!IsRunningOnGvisor()
+]]></skipped>
+    </testcase>
+    <testcase name="SingleREADVTest" file="test/syscalls/linux/io_uring.cc" line="732" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="ReadvEmptyFile" file="test/syscalls/linux/io_uring.cc" line="803" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="ThreeREADVSingleEnterTest" file="test/syscalls/linux/io_uring.cc" line="858" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.942" classname="IOUringTest" />
+    <testcase name="ReadClosedFD" file="test/syscalls/linux/io_uring.cc" line="950" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.943" classname="IOUringTest" />
+    <testcase name="ShortReadREADVTest" file="test/syscalls/linux/io_uring.cc" line="1009" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.943" classname="IOUringTest" />
+    <testcase name="NoReadPermissionsREADVTest" file="test/syscalls/linux/io_uring.cc" line="1083" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.943" classname="IOUringTest" />
+    <testcase name="READVWithInvalidSqeFieldValue" file="test/syscalls/linux/io_uring.cc" line="1159" status="run" result="completed" time="0." timestamp="2026-11-18T00:21:46.943" classname="IOUringTest" />
+  </testsuite>
+</testsuites>
