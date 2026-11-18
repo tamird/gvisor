@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T05:03:39.606175+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T05:07:20.408252+00:00",
+  "registryDate": "2026-11-18T05:17:02.746861+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447968,8 +447968,8 @@
       "recordedFollowup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "disposition": "The studies measured non-race coverage binaries. AMD64 covered all eight workloads with 24 samples per source. ARM64 run 44231171716 verified 50 balanced visits, three workloads with 24 samples per source, stable filesets and clean restoration. StartupEmpty increased 0.82% (p=.006); pipe/thread ns/op decreased 1.55% (p=.002); process ns/op had p=.051. Preserve the coverage-mode startup cost. Historical ordinary uninstrumented section parity is separate evidence. The original race baseline fails capability re-execution on both architectures; candidate debug-mode workloads pass, while default-argument capability and comparative race timing remain unqualified.",
-        "nextAction": "Coverage owner diagnoses coverage-mode startup/init changes from existing artifacts, prepares costed candidate default-argument race capability, and owns report/KCOV consumption performance. Do not force a different baseline or resample the observed ARM cost to dismiss it."
+        "disposition": "Candidate7eafb7af default-argument RACE capability is verified on AMD44240006357 (8leaves) and ARM44240001660 (3portable leaves), no skips/failures; debugfalse, reportunset, frozen products/images and clean restoration. This is candidate capability only: original BASE re-execution remains unusable, so paired RACE performance is unavailable. Non-race COVERAGE studies retain ARM startup+0.82%p=.006 and pipe/thread ns/op-1.55%p=.002; ordinary uninstrumented parity remains a separate historical scope.",
+        "nextAction": "Own terminal consumption of approved six-invocation report/KCOV pilot44241963234. Use existing source/init artifacts for the observed ARM coverage-mode startup cost; do not force a changed baseline or resample it away. Finish feature-cost/final review and exact amendment decision after remaining gates."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -448016,8 +448016,8 @@
       "recordedFollowup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Original PR stays c7aee950. Fork1b37f9cf adds the directly owning posix_error.h include to rebased5d776df8; runtime source/body/author/date/DCO unchanged. Initial consumer run found this direct-include lint error and a sudo TestRunner remap problem. KVM run44230374348 proves actual native/systrap/directfs VFIO Open on5d, but overall failed outer XML/ownership handling. Both source and support recoveries are owned; no physical TPU/ARM/performance inference. Recovery44237381349 is now verified successful at exact1b37:16 product file hashes/modes, actual native/systrap/directfs VFIO Open each1pass/no skips, outer Bazel3-case evidence and clean source restoration. Consumer44237348330 still awaits terminal reconciliation.",
-        "nextAction": "Qualify1b37f9cf through the minimal source-check and cause-based KVM recovery. Preserve actual old3-case execution evidence with its old source binding, finish required performance/final review, and obtain an exact amendment decision before replacing the original PR."
+        "disposition": "Original PR staysc7aee950; candidate1b37f9cf preserves rebased runtime changes and adds the direct posix_error.h owner include. Strict native owner recovery44241402550 verifies3PASSED BEP actions and55XMLcases=53pass+2source-required UDS skips, no errors/unexpected skips. Reuse exact1b builds/both lints44237348330 and KVM44237381349 native/systrap/directfs Open. KVM is QEMU-emulated PCI capability, not physical TPU or a current-BASE negative comparison. All original failed receipts remain retained.",
+        "nextAction": "Consume approved bounded ordinary-gofer capability pilot44241613500, reconcile full-source review/current feedback/conflict state, and prepare the exact amendment for contributor decision. No broader filesystem variants, n24 comparison, physical TPU or ARM claim is qualified."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -450449,8 +450449,8 @@
       "recordedFollowup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Original PR stays c7aee950. Fork1b37f9cf adds the directly owning posix_error.h include to rebased5d776df8; runtime source/body/author/date/DCO unchanged. Initial consumer run found this direct-include lint error and a sudo TestRunner remap problem. KVM run44230374348 proves actual native/systrap/directfs VFIO Open on5d, but overall failed outer XML/ownership handling. Both source and support recoveries are owned; no physical TPU/ARM/performance inference. Recovery44237381349 is now verified successful at exact1b37:16 product file hashes/modes, actual native/systrap/directfs VFIO Open each1pass/no skips, outer Bazel3-case evidence and clean source restoration. Consumer44237348330 still awaits terminal reconciliation.",
-        "nextAction": "Qualify1b37f9cf through the minimal source-check and cause-based KVM recovery. Preserve actual old3-case execution evidence with its old source binding, finish required performance/final review, and obtain an exact amendment decision before replacing the original PR."
+        "disposition": "Original PR staysc7aee950; candidate1b37f9cf preserves rebased runtime changes and adds the direct posix_error.h owner include. Strict native owner recovery44241402550 verifies3PASSED BEP actions and55XMLcases=53pass+2source-required UDS skips, no errors/unexpected skips. Reuse exact1b builds/both lints44237348330 and KVM44237381349 native/systrap/directfs Open. KVM is QEMU-emulated PCI capability, not physical TPU or a current-BASE negative comparison. All original failed receipts remain retained.",
+        "nextAction": "Consume approved bounded ordinary-gofer capability pilot44241613500, reconcile full-source review/current feedback/conflict state, and prepare the exact amendment for contributor decision. No broader filesystem variants, n24 comparison, physical TPU or ARM claim is qualified."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -453764,7 +453764,7 @@
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "disposition": "Current-base fork proposal d2c5c08 preserves published440aba98’s exact stable patch. Run44230748413 passed159 affected-owner cases,three candidate live systrap runs with both cross-engine direction leaves and both AMD64 lints. All three corresponding BASE runs also passed: the intended unreachable dump error was not reproduced, so the original job remains not-passed at that negative-control gate. Current CI1664/1665 preserved the same error in logs, but the uploader selected boot/gofer logs rather than checkpoint images; exact failed images were not recovered.",
-        "nextAction": "Reconcile the CI failure against representative full-suite/cgroupv2 context and the diagnostic artifact gap; do not repeat identical passing BASE samples as proof. Finish current-base/performance evidence and independent review before proposing the original PR amendment. Preserve the existing #17491 v2 split-restore/v1 inline-reader integration checks."
+        "nextAction": "Peer-review the prepared bounded synthetic inline-format BASE control, then run it if accepted: exact six already-passing SOURCE fixture cases through unchanged BASE Statefile.writeTo with only test files/deps adjusted. Keep live-CI reproduction inconclusive and avoid another identical passing workload. Complete performance/full-source review and #17491 split/inline compatibility before amendment decision."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -457290,7 +457290,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "pr:15183": {
@@ -461928,6 +461928,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-18T05:03:04.040788+00:00"
+      },
+      "contributor-review": {
+        "scope": "5f4e4e2e9f036fd40891f14167f3c20ec4b099f5",
+        "since": "2026-11-18T05:17:02.746861+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "pr:17023": {
@@ -463921,7 +463928,7 @@
         "since": "2026-11-18T04:43:17.763943+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:11090": {
@@ -464509,7 +464516,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464518,7 +464525,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464527,7 +464534,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464536,7 +464543,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464545,7 +464552,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464554,7 +464561,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464563,7 +464570,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464572,7 +464579,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     "branch:benchmark-reliability": {
@@ -464581,7 +464588,7 @@
         "since": "2026-11-18T05:07:20.408252+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:07:20.408252+00:00"
+        "observedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     }
   },

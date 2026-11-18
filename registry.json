@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T05:07:20.408252+00:00",
+    "updatedAt": "2026-11-18T05:17:02.746861+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37153,13 +37153,13 @@
       "group": "bazel",
       "status": "open",
       "summary": "All four normal and race coverage binaries built and ran on native AMD64 after the rebase onto ae0f8d590. Both Sentry binaries mapped 9,195 kernel source positions, with no positions from the excluded packages. The rebase preserved the reviewed changes across all nine files.",
-      "updatedAt": "2026-11-18T00:52:10.274668+00:00",
+      "updatedAt": "2026-11-18T05:17:02.746861+00:00",
       "followup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "observedAt": "2026-11-18T04:43:17.763943+00:00",
-        "disposition": "The studies measured non-race coverage binaries. AMD64 covered all eight workloads with 24 samples per source. ARM64 run 44231171716 verified 50 balanced visits, three workloads with 24 samples per source, stable filesets and clean restoration. StartupEmpty increased 0.82% (p=.006); pipe/thread ns/op decreased 1.55% (p=.002); process ns/op had p=.051. Preserve the coverage-mode startup cost. Historical ordinary uninstrumented section parity is separate evidence. The original race baseline fails capability re-execution on both architectures; candidate debug-mode workloads pass, while default-argument capability and comparative race timing remain unqualified.",
-        "nextAction": "Coverage owner diagnoses coverage-mode startup/init changes from existing artifacts, prepares costed candidate default-argument race capability, and owns report/KCOV consumption performance. Do not force a different baseline or resample the observed ARM cost to dismiss it.",
+        "observedAt": "2026-11-18T05:17:02.746861+00:00",
+        "disposition": "Candidate7eafb7af default-argument RACE capability is verified on AMD44240006357 (8leaves) and ARM44240001660 (3portable leaves), no skips/failures; debugfalse, reportunset, frozen products/images and clean restoration. This is candidate capability only: original BASE re-execution remains unusable, so paired RACE performance is unavailable. Non-race COVERAGE studies retain ARM startup+0.82%p=.006 and pipe/thread ns/op-1.55%p=.002; ordinary uninstrumented parity remains a separate historical scope.",
+        "nextAction": "Own terminal consumption of approved six-invocation report/KCOV pilot44241963234. Use existing source/init artifacts for the observed ARM coverage-mode startup cost; do not force a changed baseline or resample it away. Finish feature-cost/final review and exact amendment decision after remaining gates.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -37178,7 +37178,10 @@
           "https://github.com/tamird/gvisor/actions/runs/44225345386",
           "https://github.com/tamird/gvisor/actions/runs/44231171716",
           "https://github.com/tamird/gvisor/actions/runs/44229427552",
-          "https://github.com/tamird/gvisor/actions/runs/44230450058"
+          "https://github.com/tamird/gvisor/actions/runs/44230450058",
+          "https://github.com/tamird/gvisor/actions/runs/44240006357",
+          "https://github.com/tamird/gvisor/actions/runs/44240001660",
+          "https://github.com/tamird/gvisor/actions/runs/44241963234"
         ],
         "mergeable": "CONFLICTING",
         "recheckCondition": "Owned runs become terminal, new performance/review evidence, source changes or contributor decision.",
@@ -37207,6 +37210,13 @@
             "disposition": "Normal AMD64 study44220494683 fully verified: all eight broad workload leaves,24 samples/source,50 balanced same-path visits, frozen harness/full releases, zero skips/failures, cleanup clean. All comparisons nonsignificant (p=.071\u2013.736); no equivalence or benefit claim. Race44224377125 and corrected ARM capability44225345386 remain active. Original ARM package-spelling failure44224385958 retained. Report/KCOV consumption performance is unmeasured; full gate remains open.",
             "nextAction": "Finish the active normal study and race pilot; launch the peer-reviewed ARM package-name recovery and validate exact mode/workload coverage. Cost remaining statistical runs from actual pilot evidence.",
             "recheckCondition": "Owned remote runs become terminal, ARM recovery publishes, source/feedback changes or cost decision required."
+          },
+          {
+            "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
+            "observedAt": "2026-11-18T04:43:17.763943+00:00",
+            "disposition": "The studies measured non-race coverage binaries. AMD64 covered all eight workloads with 24 samples per source. ARM64 run 44231171716 verified 50 balanced visits, three workloads with 24 samples per source, stable filesets and clean restoration. StartupEmpty increased 0.82% (p=.006); pipe/thread ns/op decreased 1.55% (p=.002); process ns/op had p=.051. Preserve the coverage-mode startup cost. Historical ordinary uninstrumented section parity is separate evidence. The original race baseline fails capability re-execution on both architectures; candidate debug-mode workloads pass, while default-argument capability and comparative race timing remain unqualified.",
+            "nextAction": "Coverage owner diagnoses coverage-mode startup/init changes from existing artifacts, prepares costed candidate default-argument race capability, and owns report/KCOV consumption performance. Do not force a different baseline or resample the observed ARM cost to dismiss it.",
+            "recheckCondition": "Owned runs become terminal, new performance/review evidence, source changes or contributor decision."
           }
         ],
         "qualificationUpdate": {
@@ -49365,7 +49375,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-17T19:05:02.369627+00:00",
+      "updatedAt": "2026-11-18T05:17:02.746861+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49404,9 +49414,9 @@
       "followup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "observedAt": "2026-11-18T04:14:40.243881+00:00",
-        "disposition": "Original PR stays c7aee950. Fork1b37f9cf adds the directly owning posix_error.h include to rebased5d776df8; runtime source/body/author/date/DCO unchanged. Initial consumer run found this direct-include lint error and a sudo TestRunner remap problem. KVM run44230374348 proves actual native/systrap/directfs VFIO Open on5d, but overall failed outer XML/ownership handling. Both source and support recoveries are owned; no physical TPU/ARM/performance inference. Recovery44237381349 is now verified successful at exact1b37:16 product file hashes/modes, actual native/systrap/directfs VFIO Open each1pass/no skips, outer Bazel3-case evidence and clean source restoration. Consumer44237348330 still awaits terminal reconciliation.",
-        "nextAction": "Qualify1b37f9cf through the minimal source-check and cause-based KVM recovery. Preserve actual old3-case execution evidence with its old source binding, finish required performance/final review, and obtain an exact amendment decision before replacing the original PR.",
+        "observedAt": "2026-11-18T05:17:02.746861+00:00",
+        "disposition": "Original PR staysc7aee950; candidate1b37f9cf preserves rebased runtime changes and adds the direct posix_error.h owner include. Strict native owner recovery44241402550 verifies3PASSED BEP actions and55XMLcases=53pass+2source-required UDS skips, no errors/unexpected skips. Reuse exact1b builds/both lints44237348330 and KVM44237381349 native/systrap/directfs Open. KVM is QEMU-emulated PCI capability, not physical TPU or a current-BASE negative comparison. All original failed receipts remain retained.",
+        "nextAction": "Consume approved bounded ordinary-gofer capability pilot44241613500, reconcile full-source review/current feedback/conflict state, and prepare the exact amendment for contributor decision. No broader filesystem variants, n24 comparison, physical TPU or ARM claim is qualified.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49421,7 +49431,10 @@
           "https://github.com/tamird/gvisor/commit/1b37f9cfca65287f8c153314e392d4fbf7c4094b",
           "https://github.com/tamird/gvisor/actions/runs/44229379105",
           "https://github.com/tamird/gvisor/actions/runs/44230374348",
-          "https://github.com/tamird/gvisor/actions/runs/44237381349"
+          "https://github.com/tamird/gvisor/actions/runs/44237381349",
+          "https://github.com/tamird/gvisor/actions/runs/44237348330",
+          "https://github.com/tamird/gvisor/actions/runs/44241402550",
+          "https://github.com/tamird/gvisor/actions/runs/44241613500"
         ],
         "recheckCondition": "Recovery qualification or performance evidence, maintainer scope response, source or contributor decision.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
@@ -49433,6 +49446,13 @@
             "disposition": "Approved O_PATH scope reply is posted. Conflict-only fork proposal5d776df85f08eec3cf37a9c2a78f34e1f173b2b2 is rebased onto1f33: both upstream random and VFIO setup blocks retained; all original topic change lines preserved. Original source remains c7aee950. Earlier VFIO evidence used a QEMU-emulated PCI/VFIO device inside KVM, not a physical TPU; source-bound remote harness recovery is in preparation.",
             "nextAction": "Qualify ordinary affected consumers and recover the pinned KVM/QEMU VFIO Open workflow on authorized infrastructure. Keep hardware/virtualization limits explicit; no general O_PATH migration or source amendment before the exact decision.",
             "recheckCondition": "Remote VFIO/consumer qualification, maintainer scope response, source/base change or contributor decision."
+          },
+          {
+            "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
+            "observedAt": "2026-11-18T04:14:40.243881+00:00",
+            "disposition": "Original PR stays c7aee950. Fork1b37f9cf adds the directly owning posix_error.h include to rebased5d776df8; runtime source/body/author/date/DCO unchanged. Initial consumer run found this direct-include lint error and a sudo TestRunner remap problem. KVM run44230374348 proves actual native/systrap/directfs VFIO Open on5d, but overall failed outer XML/ownership handling. Both source and support recoveries are owned; no physical TPU/ARM/performance inference. Recovery44237381349 is now verified successful at exact1b37:16 product file hashes/modes, actual native/systrap/directfs VFIO Open each1pass/no skips, outer Bazel3-case evidence and clean source restoration. Consumer44237348330 still awaits terminal reconciliation.",
+            "nextAction": "Qualify1b37f9cf through the minimal source-check and cause-based KVM recovery. Preserve actual old3-case execution evidence with its old source binding, finish required performance/final review, and obtain an exact amendment decision before replacing the original PR.",
+            "recheckCondition": "Recovery qualification or performance evidence, maintainer scope response, source or contributor decision."
           }
         ],
         "proposalHead": "1b37f9cfca65287f8c153314e392d4fbf7c4094b"
@@ -66610,7 +66630,7 @@
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-13T11:03:39+00:00",
+      "updatedAt": "2026-11-18T05:17:02.746861+00:00",
       "summary": "Aditya rebased after #16851 landed and reports that all 27 TCP targets pass. #17022 and #16596 both change the tail-probe loss response. Aditya tested the combination that keeps the direct response from #16596. Earlier combined tests also found that a reordered segment can leave an Eifel response pending with #17023.",
       "evidence": [
         {
@@ -66721,9 +66741,9 @@
         "owner": "root",
         "sourceHead": "5f4e4e2e9f036fd40891f14167f3c20ec4b099f5",
         "providerHead": "5f4e4e2e9f036fd40891f14167f3c20ec4b099f5",
-        "observedAt": "2026-11-18T04:14:40.243881+00:00",
+        "observedAt": "2026-11-18T05:17:02.746861+00:00",
         "disposition": "Verified #16596 merged028b86716. Root and independent peer compared complete old f38afb and current5f4e4 topics: only the obsolete TLP pipePrev reset and two comments changed. The merged direct loss response calls HandleLossDetected/PostRecovery without entering recovery. This is a narrow rebase assessment, not a new full approval or test result; historical #17023 interaction evidence remains on its actual revisions.",
-        "nextAction": "Review the current behavioral test before answering the author\u2019s keep/drop question in issuecomment6879199871; inspect current benchmark disclosures before formal full approval. Follow existing requested reviews and changing dependency/source combinations.",
+        "nextAction": "On contributor approval, post the exact test-retention reply after rechecking current source and thread. Continue broader performance/review obligations before full approval; preserve the rebase reconciliation and old-stack scope.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17022#issuecomment-6850802221",
           "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
@@ -66748,6 +66768,16 @@
             "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery."
           }
         ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "5f4e4e2e9f036fd40891f14167f3c20ec4b099f5",
+        "url": "https://github.com/google/gvisor/pull/17022#issuecomment-6879199871",
+        "title": "Reply about retaining the tail-probe test",
+        "summary": "Answer the current author question after checking the complete test on5f4e4e2e9. This is a narrow reply, not full PR approval or a rerun claim.",
+        "body": "Please keep `TestTailLossProbeResponseIsKept`. Passing on master after #16596 is expected: it still guards the interaction with the Eifel response. The test covers a prior DSACK followed by a lost tail repaired by a probe, and checks that the final loss response retains `ssthresh = 2` without a timeout. I checked the test on 5f4e4e2e9, but have not rerun it.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-18T05:17:02.746861+00:00"
       }
     },
     {
@@ -76728,7 +76758,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:55.832924+00:00",
+      "updatedAt": "2026-11-18T05:17:02.746861+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire \u2192 graph \u2192 wire restore verified the guest\u2019s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -76854,9 +76884,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
-        "observedAt": "2026-11-18T04:14:40.243881+00:00",
+        "observedAt": "2026-11-18T05:17:02.746861+00:00",
         "disposition": "Current-base fork proposal d2c5c08 preserves published440aba98\u2019s exact stable patch. Run44230748413 passed159 affected-owner cases,three candidate live systrap runs with both cross-engine direction leaves and both AMD64 lints. All three corresponding BASE runs also passed: the intended unreachable dump error was not reproduced, so the original job remains not-passed at that negative-control gate. Current CI1664/1665 preserved the same error in logs, but the uploader selected boot/gofer logs rather than checkpoint images; exact failed images were not recovered.",
-        "nextAction": "Reconcile the CI failure against representative full-suite/cgroupv2 context and the diagnostic artifact gap; do not repeat identical passing BASE samples as proof. Finish current-base/performance evidence and independent review before proposing the original PR amendment. Preserve the existing #17491 v2 split-restore/v1 inline-reader integration checks.",
+        "nextAction": "Peer-review the prepared bounded synthetic inline-format BASE control, then run it if accepted: exact six already-passing SOURCE fixture cases through unchanged BASE Statefile.writeTo with only test files/deps adjusted. Keep live-CI reproduction inconclusive and avoid another identical passing workload. Complete performance/full-source review and #17491 split/inline compatibility before amendment decision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -125763,5 +125793,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-18T05:07:20.408252+00:00"
+  "updatedAt": "2026-11-18T05:17:02.746861+00:00"
 }
