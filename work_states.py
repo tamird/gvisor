@@ -272,13 +272,18 @@ def current_rebase_request(pr: dict, owner: str) -> dict | None:
     return max(pending, key=lambda pair: pair[0])[1] if pending else None
 
 
+def matches_feedback_binding(pr: dict, item: dict, assignment: dict) -> bool:
+    """Match the identity of a current or retained top-level message."""
+    kind = assignment.get("kind", "comment")
+    return (kind in ("comment", "review") and assignment.get("head") == pr["head"] and item.get("kind") == kind
+            and item.get("id") == assignment.get("commentId") and item.get("url") == assignment.get("url"))
+
+
 def matches_feedback_assignment(pr: dict, item: dict, assignment: dict) -> bool:
     """Match a manually assigned top-level message to the observed PR and head."""
-    kind = assignment.get("kind", "comment")
-    return (assignment.get("head") == pr["head"] and item.get("kind") == kind
-            and (kind == "comment" or kind == "review" and item.get("state") in {
-                "COMMENTED", "CHANGES_REQUESTED", "APPROVED"} and bool(item.get("body", "").strip()))
-            and item.get("id") == assignment.get("commentId") and item.get("url") == assignment.get("url"))
+    return (matches_feedback_binding(pr, item, assignment)
+            and (item["kind"] == "comment" or item.get("state") in {
+                "COMMENTED", "CHANGES_REQUESTED", "APPROVED"} and bool(item.get("body", "").strip())))
 
 
 def review_decision(pr: dict) -> str | None:
