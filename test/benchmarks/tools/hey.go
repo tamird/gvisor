@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -45,6 +46,11 @@ func (h *Hey) MakeCmd(host string, port int) []string {
 // Report parses output from 'hey' and reports metrics.
 func (h *Hey) Report(b *testing.B, output string) {
 	b.Helper()
+	for _, line := range strings.Split(output, "\n") {
+		if strings.TrimSpace(line) == "Error distribution:" {
+			b.Fatalf("hey reported request errors: %s", output)
+		}
+	}
 	requests, err := h.parseRequestsPerSecond(output)
 	if err != nil {
 		b.Fatalf("failed to parse requests per second: %v", err)
