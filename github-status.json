@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T20:06:11.890448+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T20:00:58.033079+00:00",
+  "registryDate": "2026-11-18T20:11:46.639485+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447681,7 +447681,7 @@
       "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994",
       "author": "milantracy",
       "updatedAt": "2026-11-18T19:51:23Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -448090,10 +448090,10 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
-        "disposition": "Latest rebase retains the carried caller-configuration fix with identical stable patch ID to 59a0d965; all 46 current checks pass. Scope is rebase reconciliation, not new full-PR approval. The author explanation and inline thread were inspected.",
-        "nextAction": "Follow supplier review and merge; after merge, qualify the dependent gVisor adoption against the actual landed revision. No additional external reply or approval is authorized."
+        "disposition": "The supplier-owned head is unchanged, but current base895a19 now conflicts. Prior46-check pass and caller-configuration review remain historical; dependency landing is blocked.",
+        "nextAction": "Root tracks supplier author resolution of the actual merge conflict, then rechecks the changed source and qualifies dependent gVisor adoption against the landed revision. No new external outreach or supplier source edit authorized."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-18T20:06:11.307246+00:00"
     },
     {
       "repo": "bazelbuild/bazel",
@@ -453665,7 +453665,7 @@
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "disposition": "Full8 run44350079319 passed BASE CheckpointEmpty N1, then the sampled-volume observer did not capture nonempty data. Namespace cleanup separately failed with retained task lease/blob references. Original Docker packages were restored before that failure, but original configuration/store/inventory restoration was not verified. No candidate result or product defect established.",
-        "nextAction": "Owner coverage_security_review consumes the live native namespace/cleanup API probe44386251141 before any full8 recovery; preserve previous partial observation/restoration failure."
+        "nextAction": "Owner coverage_security_review uses the verified native cleanup API proof to prepare only the existing missing full8 recovery. Preserve prior443500 partial result and restoration failure; no workload or source-hook pass inferred."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -455095,8 +455095,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "60a7129eb22bacfcddb598d35f78f1d022047473",
-        "disposition": "Published the approved one-commit revision on #17416. The retained-slot control failed at the 1.50-second shared deadline. The retained-host and longer-echo controls failed at their own assertions.",
-        "nextAction": "Follow checks and maintainer review on the published revision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 60a7129eb22bacfcddb598d35f78f1d022047473; observed 2026-11-17T19:29:29.454062+00:00): build 1580 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Current-head First Pass1749 failed because Nogo and cgroupv2 unit jobs timed out. Earlier C++ download, container and syscall failures passed on retry; no current source-regression cause is established.",
+        "nextAction": "Root consumes the retained Nogo/unit timeout evidence and upstream CI disposition before any authorized retry. Keep the exact approved source and historical provider failures separate; no source change inferred."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANziFEUQ",
@@ -455776,8 +455776,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-        "disposition": "The maintainer closed the old exact export and requested source DCO certification. The standing-authorized sign-off amendment is published with identical tree, parents, original author/date and original message body. DCO passes on the exact new source head. First Pass and Go generation are still running; no terminal source failure was observed in the bounded check. Exact-head First Pass and GitHub/DCO checks now pass; the PR remains open, mergeable and unmerged. Earlier failed automatic attempts remain recorded in currentCI.",
-        "nextAction": "Follow maintainer submission, matching import/closure and exact-head checks on the approved DCO-signed head."
+        "disposition": "The current head remains approved and First Pass1772 passed. A maintainer now requests a rebase and push; the prior public import17651 is closed without merge.",
+        "nextAction": "Root owns the maintainer-requested source rebase: prepare and validate the exact revision, preserve prior approval/input scopes, and obtain any required amendment decision before upstream replacement. No merge or import-source rewrite."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzgQHpA"
@@ -456066,8 +456066,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
-        "disposition": "Published the reviewed four-commit HTTP benchmark correction. Buffer output and standard JSON decoding are qualified; DCO passes and required First Pass1778 is scheduled. Iperf3 and Docker removal remain separate.",
-        "nextAction": "Follow exact-head First Pass1778, substantive feedback, mergeability and any matching import. Preserve native-only qualification limits; do not repeat passed functional gates absent changed inputs."
+        "disposition": "Exact-head First Pass1778 failed: seventeen attempts were rejected before agent assignment by the30-day compute quota, and an earlier syscall shard failed a Watchdog.Start warning. Native Hey qualification remains valid; no Hey-path failure is established.",
+        "nextAction": "Root tracks the upstream30-day quota and separate syscall watchdog failure before any authorized retry; preserve passed exact-source local qualification. Review required; complete import lookup found no matching export."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzkVM_w"
@@ -459212,7 +459212,7 @@
         "since": "2026-11-18T20:00:58.033079+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     },
     "pr:16101": {
@@ -464493,7 +464493,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464502,7 +464502,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464511,7 +464511,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464520,7 +464520,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464529,7 +464529,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464538,7 +464538,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464547,7 +464547,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:00:58.033079+00:00"
+        "observedAt": "2026-11-18T20:11:46.639485+00:00"
       }
     }
   },
