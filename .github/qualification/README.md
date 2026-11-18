@@ -1,0 +1,28 @@
+Native AMD64 VFIO consumer/build qualification
+
+Exact candidate1b37f9cfca65287f8c153314e392d4fbf7c4094b, parent1f33fe3003455db178b97f3b43d3a012f1611994.
+The change is a conflict-only replay ofc7aee950; original PR source remains untouched.
+
+Build the full opaque release and all affected gofer/device-proxy/runner and new
+VFIO test targets through canonical Make/Bazel. Run existing lisafs/groups/runner
+owners with native CAP_SETGID via Bazel's run_under=sudo -E, explicitly preserving
+verbose Go test XML. Collect actual complete unique XML shards immediately,
+requiring named owner cases and no failures, errors or skips. Then source/C++ lint.
+No custom source tests, local project execution, cloud permission change, secret,
+remote cache/executor or new tool/cache home is introduced. Native host dependency
+installation follows the established hosted Linux plans; AppArmor userns control
+is applied before builds when present.
+
+180m whole-script cap plus120s termination grace bounds the individually capped
+steps. Cleanup caps97s including kill grace, reclaiming only task results and
+shutting down Bazel. The source never switches or changes; final tracked/index
+cleanliness remains a dispatcher gate.
+
+This is deliberately only consumer/build qualification. VFIO Open is compiled,
+not executed. No hardware, ARM, TPU application or performance claim is made.
+A separate candidate-bound reuse of the existing KVM guest/emulated PCI harness
+is in preparation; its earlier authenticated remote-executor configuration will
+not be silently inherited. The original public reviewer scope question remains
+open; no general O_PATH migration has been adopted.
+
+Original run44229379105 failed before its three native tests: sudo inside linux-sandbox saw remapped uid65534 and refused execution. The corrected command keeps canonical Bazel test ownership and sudo run_under but selects TestRunner=local. Product build and source lint passed. C++ lint demonstrated a missing direct posix_error.h include; SOURCE1b37f9c differs from5d776df only by that header, with runtime source unchanged. Original failure is retained; completed owner checks are not claimed from it.
