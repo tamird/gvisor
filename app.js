@@ -2361,6 +2361,19 @@ function validIssueDraft(decision) {
   return decision?.kind === "issue" && /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/new$/.test(decision.url)
     && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
 }
+function validBranchTimestamp(value) {
+  if (typeof value !== "string") return false;
+  const fields = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
+  if (!fields) return false;
+  const [, year, month, day, hour, minute, second, , sign, offsetHours = "0", offsetMinutes = "0"] = fields;
+  const offset = (Number(offsetHours) * 60 + Number(offsetMinutes)) * (sign === "-" ? -1 : 1);
+  const clock = new Date(Date.parse(value) + offset * 60000);
+  // Date.parse normalizes some invalid dates; retain the original clock fields.
+  return Number(year) > 0 && clock.getUTCFullYear() === Number(year)
+    && clock.getUTCMonth() + 1 === Number(month) && clock.getUTCDate() === Number(day)
+    && clock.getUTCHours() === Number(hour) && clock.getUTCMinutes() === Number(minute)
+    && clock.getUTCSeconds() === Number(second);
+}
 function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
@@ -2375,6 +2388,8 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
         node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
+    if (node.type === "branch" && node.head && !validBranchTimestamp(node.updatedAt))
+      throw new Error(`Invalid branch update timestamp for ${node.id}`);
     if (node.inactive !== undefined && typeof node.inactive !== "boolean") throw new Error("Invalid inactive classification");
     if (node.group !== undefined && !candidate.groups.some(group => group.id === node.group))
       throw new Error("Invalid node group");
