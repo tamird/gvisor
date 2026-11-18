@@ -49480,7 +49480,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
+      "updatedAt": "2026-11-18T07:51:06.529957+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49519,9 +49519,9 @@
       "followup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "observedAt": "2026-11-18T06:58:20.703035+00:00",
-        "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
-        "nextAction": "Prepare the remaining relevant broad filesystem/startup variant capability/cost screen and bounded balanced statistical plan before launch. Preserve successful N1 capability and all earlier failed traversal receipts; no physical TPU/ARM/statistical approval is claimed. Root handles current-base publication readiness and exact amendment decision after qualification.",
+        "observedAt": "2026-11-18T07:51:06.529957+00:00",
+        "disposition": "Exact1b/1f ordinary-gofer capability44249884428 passed four N1 source observations,full opaque runtimes/harness/images,actual mapped actor/Docker launch and clean restoration;517s staged cost only. Missing-only19observation screen44261892579 now running:three new native mount controls then16 source/mode observations,full prior identities required for reused controls,60min+180s hardcap. Functional/lint/KVM evidence retained, including two intentional UDS skips; QEMU VFIO is not physical TPU evidence.",
+        "nextAction": "systrap_regression consumes44261892579 terminal artifacts,actual19names/no skips,fullfilesets,cleanup and actual volume/cost. NativeFUSE or other real failures stop capability; no automatic relaxation. Then cost full relevant filesystem/startup statistical scope and remaining larger/clean/FIO capabilities; no full performance approval yet.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49541,9 +49541,10 @@
           "https://github.com/tamird/gvisor/actions/runs/44241402550",
           "https://github.com/tamird/gvisor/actions/runs/44241613500",
           "https://github.com/tamird/gvisor/actions/runs/44245490184",
-          "https://github.com/tamird/gvisor/actions/runs/44249884428"
+          "https://github.com/tamird/gvisor/actions/runs/44249884428",
+          "https://github.com/tamird/gvisor/actions/runs/44261892579"
         ],
-        "recheckCondition": "Exact recovery terminal evidence, new maintainer scope reply, source/conflict change or contributor decision.",
+        "recheckCondition": "Current screen terminal, fidelity/manifest or source/feedback change, cost decision or contributor amendment decision.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -49567,6 +49568,13 @@
             "disposition": "Original PR staysc7aee950; candidate1b37f9cf preserves rebased runtime changes and adds the direct posix_error.h owner include. Strict native owner recovery44241402550 verifies3PASSED BEP actions and55XMLcases=53pass+2source-required UDS skips, no errors/unexpected skips. Reuse exact1b builds/both lints44237348330 and KVM44237381349 native/systrap/directfs Open. KVM is QEMU-emulated PCI capability, not physical TPU or a current-BASE negative comparison. All original failed receipts remain retained.",
             "nextAction": "Consume approved bounded ordinary-gofer capability pilot44241613500, reconcile full-source review/current feedback/conflict state, and prepare the exact amendment for contributor decision. No broader filesystem variants, n24 comparison, physical TPU or ARM claim is qualified.",
             "recheckCondition": "Recovery qualification or performance evidence, maintainer scope response, source or contributor decision."
+          },
+          {
+            "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
+            "observedAt": "2026-11-18T06:58:20.703035+00:00",
+            "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
+            "nextAction": "Prepare the remaining relevant broad filesystem/startup variant capability/cost screen and bounded balanced statistical plan before launch. Preserve successful N1 capability and all earlier failed traversal receipts; no physical TPU/ARM/statistical approval is claimed. Root handles current-base publication readiness and exact amendment decision after qualification.",
+            "recheckCondition": "Exact recovery terminal evidence, new maintainer scope reply, source/conflict change or contributor decision."
           }
         ],
         "proposalHead": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
@@ -49591,6 +49599,16 @@
           "prior": "1f33fe3003455db178b97f3b43d3a012f1611994",
           "observedAt": "2026-11-18T06:58:20.703035+00:00",
           "verifiedRange": "Only website/_includes/footer-links.html changed; prior source/results retain exact bindings. Local merge-tree output is not hosting-service mergeability evidence."
+        },
+        "missingCapabilityScreen": {
+          "run": 44261892579,
+          "plan": "334c0f416bfdf0ad1c851d3b48d0db0aa6445846",
+          "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+          "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "state": "running",
+          "owner": "systrap_regression",
+          "observations": 19,
+          "statisticalQualification": false
         }
       },
       "dcoAmendment": {
@@ -56956,7 +56974,7 @@
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
+      "updatedAt": "2026-11-18T07:51:06.529957+00:00",
       "summary": "The fork checker on fa6b9080f diagnosed 13 of 23 marked cases on each of AMD64 and ARM64, including wrong-owner use with both sets locked. It accepted all four valid uses. Six lifetime cases also went unreported: two unlock/relock sequences and four cases involving a waiter-list cursor. The native package ran five tests with no skips. A saved semaphore element retained its address across unlock and exposed the updated value and PID after relocking. In a test-only count predicate that released the mutex and called AbortWait, traversal visited one of three waiters and left the other two queued. The two production count predicates only read the semaphore value.",
       "evidence": [
         {
@@ -57058,9 +57076,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "observedAt": "2026-11-11T10:50:43+00:00",
-        "disposition": "The checker enforces the owner at use. The native test distinguished stable slice storage from a waiter-list cursor whose next link changes during removal.",
-        "nextAction": "Keep the semaphore change in agent investigation. Determine whether the checker can diagnose escape and invalidation of a waiter-list cursor without rejecting reuse of the same slice element under its original mutex.",
+        "observedAt": "2026-11-18T07:51:06.529957+00:00",
+        "disposition": "Reconciled exact8d8 proposal against currentb29 checker and semaphore source. Related16806 is merged, not a dependency blocker. Current field-access guards do not establish alias lifetimes; stable Set.sems member storage may validly survive unlock, while waiter cursor membership may change. Existing production count callbacks only read immutable waiter.value. Old proposal also predates the current int32 wake predicate; preserve that behavior on any rebase.",
+        "nextAction": "Design the checker contract at the owning alias/returned-value mechanism, distinguishing persistent slice-member ownership from mutable list cursor membership. Preserve current semaphore algorithm on any later rebase. Do not publish old annotation-only proposal or claim its13/23 diagnostic probe covers lifetime invalidation. Implementation must wait for the exclusively allocated checkout to be released; design can proceed from indexed objects.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -57083,7 +57101,31 @@
           "owner": "root"
         },
         "technicalOwner": "Agent",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "Coverage checkout release, concrete checker design disposition, current checker source change or contributor decision.",
+        "qualificationHistory": [
+          {
+            "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
+            "observedAt": "2026-11-11T10:50:43+00:00",
+            "disposition": "The checker enforces the owner at use. The native test distinguished stable slice storage from a waiter-list cursor whose next link changes during removal.",
+            "nextAction": "Keep the semaphore change in agent investigation. Determine whether the checker can diagnose escape and invalidation of a waiter-list cursor without rejecting reuse of the same slice element under its original mutex.",
+            "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+          }
+        ],
+        "currentMechanismAssessment": {
+          "owner": "root",
+          "proposal": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
+          "currentBase": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "verifiedCurrentFacts": [
+            "Related semop PID fix16806 is merged as dbcce494395f0f40564701651b76de5a96d70c8f; it is not a current dependency blocker.",
+            "Current wakeWaiters predicate differs from old proposal: int32(value)+int32(wait.value)<0. A future rebase must preserve this current behavior rather than resurrect abs-based comparison.",
+            "Current tools/checklocks/analysis.go checkInstruction checks Field/FieldAddr at access and returns current lockState on Return. It does not process IndexAddr to propagate guarded-member ownership.",
+            "Current README explicitly says the readany modifier does not add alias lifetime tracking. A successful old member lookup check does not establish cursor invalidation checking.",
+            "Set.sems storage is immutable after initialization; its member address can validly survive unlock and be reused under the same mutex. Waiter-list membership may change and must not be treated as the same lifetime rule."
+          ],
+          "nextAction": "Design the checker contract at the owning alias/returned-value mechanism, distinguishing persistent slice-member ownership from mutable list cursor membership. Preserve current semaphore algorithm on any later rebase. Do not publish old annotation-only proposal or claim its13/23 diagnostic probe covers lifetime invalidation. Implementation must wait for the exclusively allocated checkout to be released; design can proceed from indexed objects.",
+          "recheckCondition": "Coverage checkout release, concrete checker design disposition, current checker source change or contributor decision.",
+          "runtimeOrCheckerTestsRun": false
+        }
       },
       "contributorChangesRequested": {
         "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -76926,7 +76968,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T07:38:03.401208+00:00",
+      "updatedAt": "2026-11-18T07:51:06.529957+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire → graph → wire restore verified the guest’s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -77052,9 +77094,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
-        "observedAt": "2026-11-18T07:38:03.401208+00:00",
+        "observedAt": "2026-11-18T07:51:06.529957+00:00",
         "disposition": "Current-base d2c5c08 preserves published440aba98 stable patch. Existing44230748413 verifies159 owner cases and three actual candidate/live BASE cross-engine visits, but live BASE also passed and exact CI unreachable cause is unproven. Corrected synthetic control44244417672 now proves the original current-BASE inline-format defect:4generic/legacy/split compatibility leaves pass, ZeroOwners/Inline fail on incorrect printed raw-region/graph-ID output in both text/HTML; candidate passes these identical fixtures in the earlier owner run. Actual XML/BEP and exact source clean restoration verified. First control44243638873 failed protobuf visibility analysis before tests and is retained.",
-        "nextAction": "Runtime LoadFrom changes shared metadata decoding, so this is not CLI-only performance scope. Root prepares a four-leaf existing checkpoint/restore BASE/candidate capability and cost screen (Empty and Nginx each). Freeze baseline harness and opaque releases; require actual no-skip systrap results and record disk/setup costs before full statistical proposal. runc intentionally skips this category. Keep exact live-CI error cause unproven and foreign v2 compatibility as a watch, not a prerequisite.",
+        "nextAction": "systrap_regression prepares the eight-N1 four-leaf BASE/candidate checkpoint/restore capability/cost screen; root retains source/delivery ownership. Freeze exact baseline harness and complete releases, private checkpoint outputs and disk volume limits, actual no-skip systrap results. Review executable support before launch and cost full statistical scope from actual observations. runc intentionally skips; current live-CI error cause remains unproven.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -77155,7 +77197,9 @@
           "nextAction": "Prepare one frozen-baseline four-leaf BASE/candidate capability and cost screen with exact full opaque releases, real systrap runtime, actual no-skip benchmark output, checkpoint outputs treated as private. Measure setup, disk volume and all four per-invocation costs before proposing full n24 sampling. Existing owner tests and live cross-engine passes remain functional evidence only.",
           "recheckCondition": "Executable cost-screen review, current source/benchmark change, failure-image recovery or contributor decision.",
           "launched": false,
-          "limits": "No new source edits or launches from this scope assessment. No claimed allocation regression without measurements."
+          "limits": "No new source edits or launches from this scope assessment. No claimed allocation regression without measurements.",
+          "screenOwner": "systrap_regression",
+          "screenState": "executable support preparation; not dispatched"
         }
       },
       "refinement": {
@@ -91325,7 +91369,7 @@
           "plan": "d7331492012e0a3c760d009cdef3259a5ca0e913",
           "state": "passed",
           "owner": "tcp_conflict",
-          "supersedingDecisionSent": false,
+          "supersedingDecisionSent": true,
           "artifact": 14408050244,
           "artifactDigest": "565195f1fd2d50341d72c1dbb2dfac7627a2c20825b802c41d0bf671fbc52434"
         }
@@ -125339,7 +125383,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-17T19:05:02.905327+00:00",
+      "updatedAt": "2026-11-18T07:51:06.529957+00:00",
       "summary": "170 metadata-only DCO amendments are published with identical trees, parents and author/date, provider/fork head agreement and successful DCO observations. Twenty-five active exact imports retain separate per-source coordination. Seven source rebases remain owned by their existing workstreams; #16516 and #16663 were already signed. Existing approvals, behavioral proposals and qualification retain their original head identities.",
       "nextStep": "Follow each source's current-head CI and substantive feedback. Coordinate the 25 exact-import cases without rewriting upstream export branches; preserve explicit holds and pending contributor decisions. Finish the seven existing source-rebase workstreams independently. A canonical hosted collection must observe the final API state; this reconciliation does not refresh the GitHub observation clock. Recheck on current-head CI changes, import changes, contributor decisions and restored remote qualification access.",
       "completedMetadataAmendments": 170,
@@ -126088,8 +126132,25 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "currentReportedChecks": {
+        "snapshotRun": 44259479683,
+        "checkedAt": "2026-11-18T07:34:15.916823+00:00",
+        "reportedDCO": 181,
+        "ownReported": 180,
+        "ownReportedNotSuccess": [],
+        "foreignNotSuccess": [
+          {
+            "number": 17082,
+            "repo": "google/gvisor",
+            "head": "f91dca887d1653e28098a4943cacef384fb99aa0",
+            "headOwner": "ayushr2",
+            "state": "ACTION_REQUIRED"
+          }
+        ],
+        "limit": "This audits reported check contexts, not unreported checks or exact-import policy. Foreign certification is not authorized."
       }
     }
   ],
-  "updatedAt": "2026-11-18T07:42:24.729369+00:00"
+  "updatedAt": "2026-11-18T07:51:06.529957+00:00"
 }
