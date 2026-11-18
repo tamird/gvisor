@@ -1,6 +1,6 @@
 """Production atomic pointer code-generation test inputs."""
 
-load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo")
+load("@io_bazel_rules_go//go:def.bzl", "GoArchive")
 load("//tools:arch.bzl", "arch_transition_impl", "transition_allowlist")
 load("//tools/bazeldefs:defs.bzl", "arch_config")
 load("//tools/bazeldefs:go.bzl", "go_context", "go_rule")
@@ -33,20 +33,31 @@ _optimized_arch_transition = transition(
     ],
 )
 
+def _production_archive(archives, importmap, label):
+    matches = [archive for archive in archives if archive.importmap == importmap]
+    if len(matches) != 1 or matches[0].label != Label(label):
+        fail("expected one production archive for %s, got %s" % (importmap, matches))
+    return matches[0]
+
 def _inputs_impl(ctx):
+    if ctx.configuration.coverage_enabled:
+        fail("production code-generation inspection requires coverage disabled")
     go = go_context(ctx)
     links = {}
     records = []
     for arch in ["amd64", "arm64"]:
         sentry = ctx.split_attr.sentry[arch]
-        kernel = ctx.split_attr.kernel[arch]
-        kvm = ctx.split_attr.kvm[arch]
+        archive = sentry[GoArchive]
+        mode = archive.source.mode
+        if mode.debug or mode.race or mode.msan or not mode.pure or archive.source.gc_goopts:
+            fail("expected ordinary optimized pure production Sentry")
+        # Match the ordinary binary linker's archive set. Coverage is rejected
+        # above, and this is a go_binary, so no test archives are injected.
+        archives = depset(transitive = [dependency.transitive for dependency in archive.direct]).to_list()
+        kernel = _production_archive(archives, "gvisor.dev/gvisor/pkg/sentry/kernel", "//pkg/sentry/kernel:kernel")
+        kvm = _production_archive(archives, "gvisor.dev/gvisor/pkg/sentry/platform/kvm", "//pkg/sentry/platform/kvm:kvm")
         negative = ctx.split_attr.negative[arch]
-        for target in [sentry, kernel, kvm]:
-            archive = target[GoArchive]
-            if archive.mode.debug or archive.mode.race or archive.mode.msan or archive.source.gc_goopts:
-                fail("expected ordinary optimized production archive: %s" % target.label)
-        if sentry[GoArchive].mode.strip:
+        if mode.strip:
             fail("production DWARF must be retained")
         if negative[GoArchive].source.gc_goopts != ["-l"]:
             fail("negative control must disable inlining for the actual package")
@@ -55,8 +66,8 @@ def _inputs_impl(ctx):
             fail("expected one production Sentry executable")
         artifacts = {
             "elf": executable[0],
-            "kernel_archive": kernel[GoArchive].data.file,
-            "kvm_archive": kvm[GoArchive].data.file,
+            "kernel_archive": kernel.file,
+            "kvm_archive": kvm.file,
             "negative_archive": negative[GoArchive].data.file,
         }
         prefix = ctx.label.package + "/" + ctx.label.name + "/" + arch + "/"
@@ -66,7 +77,7 @@ def _inputs_impl(ctx):
             links[alias] = file
             artifact_paths[name] = alias
         sources = []
-        for logical, target in [
+        for logical, archive_data in [
             ("pkg/sentry/kernel/fd_table_unsafe.go", kernel),
             ("pkg/sentry/kernel/atomicptr_bucket_slice.go", kernel),
             ("pkg/sentry/kernel/atomicptr_bucket.go", kernel),
@@ -74,7 +85,7 @@ def _inputs_impl(ctx):
             ("pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go", kvm),
             ("pkg/sentry/platform/kvm/atomicptr_machine.go", kvm),
         ]:
-            matches = [file for file in target[GoInfo].srcs if file.short_path == logical]
+            matches = [file for file in archive_data.srcs if file.short_path == logical]
             if len(matches) != 1:
                 fail("expected one production source %s, got %s" % (logical, matches))
             alias = prefix + "sources/" + logical
@@ -102,9 +113,7 @@ atomicptr_codegen_inputs = go_rule(
     rule,
     implementation = _inputs_impl,
     attrs = {
-        "sentry": attr.label(default = "//runsc/cmd/sentry:gvisor_sentry", cfg = _optimized_arch_transition),
-        "kernel": attr.label(default = "//pkg/sentry/kernel:kernel", cfg = _optimized_arch_transition, providers = [GoArchive, GoInfo]),
-        "kvm": attr.label(default = "//pkg/sentry/platform/kvm:kvm", cfg = _optimized_arch_transition, providers = [GoArchive, GoInfo]),
+        "sentry": attr.label(default = "//runsc/cmd/sentry:gvisor_sentry", cfg = _optimized_arch_transition, providers = [GoArchive]),
         "negative": attr.label(default = "//pkg/sentry/platform/kvm:atomicptr_noinline", cfg = _optimized_arch_transition, providers = [GoArchive]),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
     },
