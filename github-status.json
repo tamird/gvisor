@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T02:49:56.432216+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T02:57:42.449215+00:00",
+  "registryDate": "2026-11-18T03:06:03.349464+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447931,10 +447931,10 @@
       "owner": "Agent",
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Approved exact O_PATH reply posted; maintainer scope decision and conflict repair remain open.",
-        "nextAction": "Repair the existing conflict within the device-gofer scope, validate the VFIO consumers, and follow the maintainer response. Existing review requests are pending; do not duplicate them."
+        "disposition": "Approved O_PATH scope reply is posted. Conflict-only fork proposal5d776df85f08eec3cf37a9c2a78f34e1f173b2b2 is rebased onto1f33: both upstream random and VFIO setup blocks retained; all original topic change lines preserved. Original source remains c7aee950. Earlier VFIO evidence used a QEMU-emulated PCI/VFIO device inside KVM, not a physical TPU; source-bound remote harness recovery is in preparation.",
+        "nextAction": "Qualify ordinary affected consumers and recover the pinned KVM/QEMU VFIO Open workflow on authorized infrastructure. Keep hardware/virtualization limits explicit; no general O_PATH migration or source amendment before the exact decision."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -448858,8 +448858,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
-        "disposition": "Exact candidate 983dc3a completed every actual remote command successfully: AMD64 build, ARM64 cross-build, native TCP62, timestamp8, timestamp race8, Linux/netstack PAWS one each, export provenance and both lints. Original harness failed only because it expected unsharded e2e XML; all four retained shards contain 405 unique passing cases, zero skips/failures. Original failure preserved. Native ARM64 execution and performance gates remain open.",
-        "nextAction": "Complete required native ARM64 functional coverage and shared-base broad networking qualification, then independent source review before an exact amendment decision. Reuse saved functional evidence; do not rerun because of the corrected shard accounting."
+        "disposition": "Exact candidate 983dc3a completed every actual remote command successfully: AMD64 build, ARM64 cross-build, native TCP62, timestamp8, timestamp race8, Linux/netstack PAWS one each, export provenance and both lints. Original harness failed only because it expected unsharded e2e XML; all four retained shards contain 405 unique passing cases, zero skips/failures. Original failure preserved. Native ARM64 execution and performance gates remain open. Independently reviewed missing-only native ARM64 run44227886194 is now dispatched on unchanged candidate983dc3a; plan0ce3cf64,180m body cap. No ARM execution success is asserted yet.",
+        "nextAction": "Root follows native ARM64 run44227886194 to terminal state and handles any actual failure. Finish shared-base broad network performance and final source review before an exact amendment decision; preserve corrected AMD64 evidence."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAfQ41NSQ",
@@ -450364,10 +450364,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Approved exact O_PATH reply posted; maintainer scope decision and conflict repair remain open.",
-        "nextAction": "Repair the existing conflict within the device-gofer scope, validate the VFIO consumers, and follow the maintainer response. Existing review requests are pending; do not duplicate them."
+        "disposition": "Approved O_PATH scope reply is posted. Conflict-only fork proposal5d776df85f08eec3cf37a9c2a78f34e1f173b2b2 is rebased onto1f33: both upstream random and VFIO setup blocks retained; all original topic change lines preserved. Original source remains c7aee950. Earlier VFIO evidence used a QEMU-emulated PCI/VFIO device inside KVM, not a physical TPU; source-bound remote harness recovery is in preparation.",
+        "nextAction": "Qualify ordinary affected consumers and recover the pinned KVM/QEMU VFIO Open workflow on authorized infrastructure. Keep hardware/virtualization limits explicit; no general O_PATH migration or source amendment before the exact decision."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -457207,7 +457207,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "pr:15183": {
@@ -464440,7 +464440,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464449,7 +464449,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464458,7 +464458,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464467,7 +464467,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464476,7 +464476,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464485,7 +464485,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464494,7 +464494,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464503,7 +464503,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:57:42.449215+00:00"
+        "observedAt": "2026-11-18T03:06:03.349464+00:00"
       }
     }
   },
