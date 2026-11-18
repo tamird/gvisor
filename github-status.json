@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T23:21:49.882507+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T22:30:58.775869+00:00",
+  "registryDate": "2026-11-18T23:27:40.021573+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -445857,7 +445857,7 @@
       "sourceNumber": 16098,
       "owner": "Agent",
       "claimed": false,
-      "overdue": false,
+      "overdue": true,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
       "createdAt": "2026-11-18T18:38:18Z",
@@ -447624,7 +447624,7 @@
       "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
       "author": "manninglucas",
       "updatedAt": "2026-11-18T22:37:24Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -449080,9 +449080,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
-        "disposition": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
-        "nextAction": "Root completes the already-authorized source amendment and approved reply once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection."
+        "sourceHead": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
+        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1811 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
+        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it. Exact approved reply/body are saved; native rexren re-request returned404 despite the correct explicit API contract. Its cause is UNKNOWN; preserve existing kerumeto request and no alternate notification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyYWiw"
@@ -455760,9 +455760,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-        "disposition": "The published4e head has another approval, but new CI is blocked: First Pass1796 was rejected by the one-day compute quota; pipeline55376 treats the fork-prefixed branch as a fetch refspec and fails before source checks. The actual fork branch still exists.",
-        "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection."
+        "sourceHead": "b268d5a615c56fe1d40014ef7807bfa0b04f0e6d",
+        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1810 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
+        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyWt-A"
@@ -456050,9 +456050,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
-        "disposition": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
-        "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection."
+        "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
+        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1812 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
+        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyZv5g"
@@ -459644,7 +459644,7 @@
         "since": "2026-11-18T21:49:57.504662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     },
     "pr:16453": {
@@ -464471,7 +464471,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464480,7 +464480,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464489,7 +464489,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464498,7 +464498,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464507,7 +464507,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464516,7 +464516,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464525,7 +464525,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T22:30:58.775869+00:00"
+        "observedAt": "2026-11-18T23:27:40.021573+00:00"
       }
     }
   },
