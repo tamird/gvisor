@@ -68,6 +68,9 @@ def _inputs_impl(ctx):
         sources = []
         for logical, target in [
             ("pkg/sentry/kernel/fd_table_unsafe.go", kernel),
+            ("pkg/sentry/kernel/atomicptr_bucket_slice.go", kernel),
+            ("pkg/sentry/kernel/atomicptr_bucket.go", kernel),
+            ("pkg/sentry/kernel/atomicptr_descriptor.go", kernel),
             ("pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go", kvm),
             ("pkg/sentry/platform/kvm/atomicptr_machine.go", kvm),
         ]:

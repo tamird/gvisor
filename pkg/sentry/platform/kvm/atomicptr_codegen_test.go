@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -50,6 +51,20 @@ func codegenFile(t *testing.T, path string) string {
 		t.Fatal(err)
 	}
 	return value
+}
+
+func codegenDigest(t *testing.T, path string) string {
+	t.Helper()
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	digest := sha256.New()
+	if _, err := io.Copy(digest, file); err != nil {
+		t.Fatal(err)
+	}
+	return fmt.Sprintf("%x", digest.Sum(nil))
 }
 
 func codegenSource(t *testing.T, record codegenRecord, suffix string) []byte {
@@ -119,11 +134,7 @@ func TestAtomicPtrProductionCodegen(t *testing.T) {
 					t.Fatalf("missing %s input", name)
 				}
 				artifacts[name] = codegenFile(t, value)
-				data, err := os.ReadFile(artifacts[name])
-				if err != nil {
-					t.Fatal(err)
-				}
-				hashes[name] = fmt.Sprintf("%x", sha256.Sum256(data))
+				hashes[name] = codegenDigest(t, artifacts[name])
 			}
 			report["artifactSHA256"] = hashes
 			const handler = "pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go"
@@ -141,6 +152,15 @@ func TestAtomicPtrProductionCodegen(t *testing.T) {
 				sites = append(sites, bound...)
 			}
 			report["requiredSites"] = sites
+			for _, source := range []string{
+				"pkg/sentry/platform/kvm/atomicptr_machine.go",
+				"pkg/sentry/kernel/atomicptr_bucket_slice.go",
+				"pkg/sentry/kernel/atomicptr_bucket.go",
+				"pkg/sentry/kernel/atomicptr_descriptor.go",
+			} {
+				data := codegenSource(t, record, source)
+				sourceHashes[source] = fmt.Sprintf("%x", sha256.Sum256(data))
+			}
 			for _, declaration := range []struct { file, function string }{{handler, "seccompMmapHandler"}, {"atomicptr_machine.go", "Load"}} {
 				if err := codegen.NoSplit(declaration.file, codegenSource(t, record, declaration.file), declaration.function); err != nil {
 					t.Fatal(err)
