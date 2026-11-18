@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+    "updatedAt": "2026-11-18T21:15:29.687318+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4998,15 +4998,15 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "The user approved exact f84 and it is published to #15181. Native qualification44189880016 passed85 AMD64/123 ARM64 pgalloc and609 safecopy cases per architecture without skips. The candidate preserves the qualified code across two upstream documentation changes. ARM C++ lint retains the verified baseline failure; hosts used4 KiB pages, with no64 KiB host execution claim. All current GitHub checks, DCO, generate44300845915 and First Pass1713 pass. The original cross-engine statefile-dump failure and successful automatic retry are retained; no cause is established. The PR remains OPEN/MERGEABLE with the existing nixprime review request.",
+      "summary": "The latest assisted review reports no findings on the unchanged published head. Required human review remains outstanding; existing exact-head CI and qualification limits are preserved.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
         "owner": "root",
         "sourceHead": "f84b27e5f16607463fa034034acf84ff867438be",
-        "observedAt": "2026-11-17T21:09:15.022997+00:00",
-        "disposition": "Exact user-approved f84 is published and remains OPEN/MERGEABLE. First Pass1713 and all current GitHub checks now pass. No new feedback; existing nixprime review request remains. Successful retry does not establish the initial cross-engine statefile failure cause.",
-        "nextAction": "Follow existing nixprime review request and import for exact published f84. All current GitHub checks and First Pass1713 pass; retain the original failed container attempt and successful automatic retry. Preserve native qualification, ARM C++ baseline failure and 4 KiB-host/64 KiB-host execution limits. No new outreach or merge.",
+        "observedAt": "2026-11-18T21:05:51.124797+00:00",
+        "disposition": "The latest assisted review reports no findings on the unchanged published head. Required human review remains outstanding; existing exact-head CI and qualification limits are preserved.",
+        "nextAction": "Follow the existing human review request and exact-head checks/import. The informational assisted review needs no reply, source change or technical-approval claim.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
           "https://github.com/tamird/gvisor/actions/runs/43007012855",
@@ -5017,7 +5017,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44189880016",
           "https://github.com/tamird/gvisor/commit/f84b27e5f16607463fa034034acf84ff867438be"
         ],
-        "recheckCondition": "Substantive maintainer feedback, exact source/check/import change, or existing review request completion.",
+        "recheckCondition": "Substantive human feedback, source/import/check change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -5041,7 +5041,7 @@
             "qualifiedCodeHead": "7dfa385ef0dd6286eaff54ee1c988db289f4f044"
           }
         },
-        "curatedAt": "2026-11-18T13:38:30.011543+00:00",
+        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
         "publicationReceipt": {
           "number": 15181,
           "old": "ff86663d7c1077d1d2c0d3e4b51d0613cd95685c",
@@ -5180,9 +5180,300 @@
             ],
             "scope": "One root-requested fresh exact-head API read near metadata freeze; snapshot API observations unchanged."
           }
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-17T22:32:55Z",
+              "headIntroducedAt": "2026-11-18T12:06:53Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 1,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABY3HYdg",
+                    "url": "https://github.com/google/gvisor/pull/15181#issuecomment-5963372662",
+                    "body": "Rebased onto current master, @EtiennePerot.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-10-03T00:01:34Z",
+                    "updatedAt": "2026-10-03T00:01:34Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABcGQCig",
+                    "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6180569738",
+                    "body": "/gemini review",
+                    "createdAt": "2026-10-14T23:14:18Z",
+                    "updatedAt": "2026-10-14T23:14:18Z",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABj4wKzw",
+                    "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6703286991",
+                    "body": "@aaltinaydev could I get human eyes on this please?",
+                    "createdAt": "2026-11-07T06:19:13Z",
+                    "updatedAt": "2026-11-07T06:19:13Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABkNe89A",
+                    "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6725025012",
+                    "body": "Should be submitted after https://github.com/google/gvisor/pull/17214",
+                    "createdAt": "2026-11-08T17:58:11Z",
+                    "updatedAt": "2026-11-08T17:58:11Z",
+                    "author": {
+                      "login": "ayushr2",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABlJ-GmQ",
+                    "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6788449945",
+                    "body": "https://github.com/google/gvisor/pull/17214 is submitted, @tamird can you rebase?",
+                    "createdAt": "2026-11-11T06:04:57Z",
+                    "updatedAt": "2026-11-11T06:04:57Z",
+                    "author": {
+                      "login": "ayushr2",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABlTw-xQ",
+                    "url": "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
+                    "body": "@ayushr2, this was already rebased onto master with #17214 at 02:14 UTC, before your request. I refreshed it again at f05d6b909. All 84 pgalloc and 609 safecopy cases passed on both AMD64 and ARM64. [Linux test results](https://github.com/tamird/gvisor/actions/runs/43007012855)\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-11-11T14:37:51Z",
+                    "updatedAt": "2026-11-11T14:37:51Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABSV-BWQ",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5525963097",
+                    "body": "## Code Review\n\nThis pull request updates the memory allocation logic in `pkg/sentry/pgalloc` to support committing allocated memory ranges under `AllocateAndCommit` mode. It replaces manual zeroing and huge page touching with a unified chunk-based iteration using `safemem.Zero`, handles bus errors by translating them to `linuxerr.ENOMEM`, and adds a comprehensive unit test `TestAllocateAndCommit` to verify these behaviors. I have no feedback to provide as there are no review comments.",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-14T23:16:04Z",
+                    "updatedAt": "2026-10-14T23:16:04Z",
+                    "authorAssociation": "NONE",
+                    "author": {
+                      "login": "gemini-code-assist",
+                      "__typename": "Bot"
+                    },
+                    "commit": {
+                      "oid": "d543737e0b8fe765d2401e0a7492f8ef4ebc779a"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT68K2Q",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5631838937",
+                    "body": "[🤖] 1 issue found:\n\n- **[minor · performance]** Zeroing recycled pages via safemem.Zero slows Allocate up to 14% (`pkg/sentry/pgalloc/pgalloc.go:708`, inline)\n",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-23T17:07:48Z",
+                    "updatedAt": "2026-10-23T17:07:48Z",
+                    "authorAssociation": "NONE",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "3255a52b212edcd2f526d3fb1afaa6d1523f7520"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT7UhsA",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5632238000",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-23T17:43:41Z",
+                    "updatedAt": "2026-10-23T17:43:41Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "3255a52b212edcd2f526d3fb1afaa6d1523f7520"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT8NSZA",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5633167972",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-23T19:01:04Z",
+                    "updatedAt": "2026-10-23T19:01:04Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "9b469b1928628f1124992e8af1746435f6b04a8e"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABUEqxGg",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5642039578",
+                    "body": "[🤖] Review agent has no findings.\n\nThanks for adding the `REP; STOSQ` ERMS path in `pkg/safecopy/memclr_amd64.s` and the multi-page fault test. That resolves the performance issue from the previous review.\n\nI reran `BenchmarkAllocateRecycled` on the Intel Xeon @ 2.80 GHz (16 alternating pinned runs per side, `-c opt`, Mann-Whitney U test) comparing the merge-base (`fc82ffe54827`) against `9b469b192862`:\n\n| Case | Base | Head | Delta | p |\n|---|---|---|---|---|\n| 4K/hot | 319.1 ns | 327.8 ns | +2.73% | <0.001 |\n| 64K/hot | 2.63 µs | 2.64 µs | +0.51% | 0.007 |\n| 2M/hot | 105.1 µs | 105.9 µs | +0.81% | 0.17 |\n| 4K/cold | 1029.5 ns | 1039.5 ns | +0.97% | 0.008 |\n| 64K/cold | 8.46 µs | 8.42 µs | -0.51% | 0.21 |\n| 2M/cold | 236.2 µs | 238.0 µs | +0.77% | 0.12 |\n\nThe cold 64 KiB and 2 MiB slowdowns on the Xeon are completely gone.\n\n---\n<sub>automated review agent</sub>",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-25T07:15:27Z",
+                    "updatedAt": "2026-10-25T08:43:00Z",
+                    "authorAssociation": "NONE",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "9b469b1928628f1124992e8af1746435f6b04a8e"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABWlGSow",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5810262691",
+                    "body": "[🤖] Review agent has no findings.\n\n---\n<sub>Automated review agent. Please address valid findings before human review, or close them with a reason.</sub>\n",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-07T05:10:01Z",
+                    "updatedAt": "2026-11-07T05:10:02Z",
+                    "authorAssociation": "NONE",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "61470ea4162137e6871edd94e369f1c03592c163"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABXO9YjQ",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5854156941",
+                    "body": "[🤖] Review agent has no findings.\n\n---\n<sub>Automated review agent. Please address valid findings before human review, or close them with a reason.</sub>\n",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-11T05:10:11Z",
+                    "updatedAt": "2026-11-11T05:10:11Z",
+                    "authorAssociation": "NONE",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "5ee96374bca7b621b033444e65f8433ae1329474"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABY4AA-g",
+                    "url": "https://github.com/google/gvisor/pull/15181#pullrequestreview-5964300538",
+                    "body": "[🤖] Review agent has no findings.\n\n---\n<sub>Automated review agent. Please address valid findings before human review, or close them with a reason.</sub>\n",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-18T20:14:58Z",
+                    "updatedAt": "2026-11-18T20:14:58Z",
+                    "authorAssociation": "NONE",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "f84b27e5f16607463fa034034acf84ff867438be"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6vszbu",
+                    "isResolved": true,
+                    "isOutdated": true,
+                    "path": "pkg/sentry/pgalloc/pgalloc.go",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBAITiA",
+                    "url": "https://github.com/google/gvisor/pull/15181#discussion_r4362212232",
+                    "body": "[🤖] **[minor · performance] Zeroing recycled pages via safemem.Zero slows Allocate up to 14%**\n\nRecycled waste pages used to be zeroed with `clear()`. That calls the Go runtime's memclr, which uses `REP STOSQ` for 2 KiB–32 MiB on CPUs with ERMS. They are now zeroed with `safemem.Zero`, and safecopy's `memclr` is a 16-byte SSE loop. `Allocate()` on recycled pages serves private-anonymous page faults, COW breaks and tmpfs writes. It is now measurably slower for cache-cold 64 KiB–2 MiB ranges and for hot 4 KiB pages. `pkg/sentry/pgalloc` is performance-sensitive, and the PR includes no benchmark data.\n\n**Suggested fix:** Add benchstat data for the recycled path to the PR, and reduce the cost in one of two ways:\n\n- (a) Give safecopy's amd64 `memclr` a `REP STOSQ` path for n ≥ 2 KiB on ERMS CPUs, as the runtime does. The safecopy signal handler already covers any PC inside `memclr`, and this would also speed up other `safemem.Zero` users.\n- (b) Keep `clear()` for recycled blocks that `MADV_POPULATE_WRITE` actually populated, and use `safemem.Zero` only for pages that population skipped. `MADV_POPULATE_WRITE` reports a backing failure as EFAULT instead of raising SIGBUS.\n\nI did not verify either option.\n\n<details><summary>Details (evidence, reproduction and test code)</summary>\n\n**Evidence:** I added `BenchmarkAllocateRecycled` to `pkg/sentry/pgalloc/pgalloc_test.go`. It recycles committed waste pages with `AllocateCallerIndirectCommit`; the \"cold\" cases rotate over 256 MiB. Setup: the same test file at the merge-base and at the PR, both built with `bazel build -c opt //pkg/sentry/pgalloc:pgalloc_test`. 16 alternating runs per side (`-test.run='^$' -test.bench=BenchmarkAllocateRecycled`), pinned with `taskset` to one CPU. Machine: Intel Xeon 2.8 GHz with ERMS/AVX2, Go 1.27.2. p-values are from a Mann-Whitney U test.\n\n| case | base | head | delta | p |\n|---|---|---|---|---|\n| 4K hot | 319 ns | 344 ns | +7.9% | 1e-6 |\n| 64K hot | 2.62 µs | 2.70 µs | +3.2% | 3e-4 |\n| 2M hot | 105.9 µs | 107.9 µs | +1.9% | 0.002 |\n| 4K cold | 1048 ns | 994 ns | −5.2% | 2e-5 |\n| 64K cold | 8.44 µs | 9.43 µs | +11.8% | 2e-5 |\n| 2M cold | 235.7 µs | 269.4 µs | +14.3% | 1e-6 |\n\nAn unpinned run gave +17% (64K cold) and +18% (2M cold). Allocations are unchanged (0 allocs/op on both sides).\n\n`BenchmarkZeroPrimitive` isolates the cause on the same cold memfd memory. `safemem.Zero` compared with `clear()` is −1% at 4K, +19% at 64K and +21% at 2M. The runtime's `memclr_amd64.s` switches to `REP STOSQ` (no read-for-ownership) at 2 KiB when ERMS is present. `pkg/safecopy/memclr_amd64.s` has only the MOVOU loop.\n\n**Reproduced with a test** (`pkg/sentry/pgalloc/pgalloc_test.go`): `bazel build -c opt //pkg/sentry/pgalloc:pgalloc_test && mkdir -p /tmp/pr15181 && cp -f bazel-bin/pkg/sentry/pgalloc/pgalloc_test_/pgalloc_test /tmp/pr15181/head_test ; bazel build -c opt //pkg/sentry/pgalloc:pgalloc_test && cp -f bazel-bin/pkg/sentry/pgalloc/pgalloc_test_/pgalloc_test /tmp/pr15181/base_test ; 'cd /tmp/pr15181 && for i in $(seq 1 16); do taskset -c 29 ./base_test -test.run=\"^$\" -test.bench=BenchmarkAllocateRecycled -test.benchtime=1s | grep ^Benchmark >> base_pin.txt; taskset -c 29 ./head_test -test.run=\"^$\" -test.bench=BenchmarkAllocateRecycled -test.benchtime=1s | grep ^Benchmark >> head_pin.txt; done; python3 stats.py base_pin.txt head_pin.txt' (stats.py in /tmp/pr15181 computes median, CV and a Mann-Whitney U p-value). Primitive check: taskset -c 29 ./head_test2 -test.run='^$' -test.bench=BenchmarkZeroPrimitive` → With n=16 per side, recycled Allocate() is 11.8% slower at 64K cold, 14.3% slower at 2M cold and 7.9% slower at 4K hot than at the merge-base (all p<0.01). The primitive benchmark shows safemem.Zero is about 20% slower than clear() for cold zeroing of 64K and larger.\n\n**Test code:**\n\n```diff\ndiff --git a/pkg/sentry/pgalloc/pgalloc_test.go b/pkg/sentry/pgalloc/pgalloc_test.go\nindex a348a9c74..3c28fe43c 100644\n--- a/pkg/sentry/pgalloc/pgalloc_test.go\n+++ b/pkg/sentry/pgalloc/pgalloc_test.go\n@@ -167,6 +167,128 @@ func TestAllocateAndCommit(t *testing.T) {\n \t}\n }\n \n+// BenchmarkAllocateRecycled measures Allocate() calls that recycle committed\n+// waste pages, as mm does for private anonymous page faults\n+// (AllocateCallerIndirectCommit). In \"hot\" cases the same range is recycled\n+// on every iteration; in \"cold\" cases a ring of ranges spanning 256 MiB is\n+// recycled, so the zeroed pages are not cache-resident.\n+func BenchmarkAllocateRecycled(b *testing.B) {\n+\tfor _, bc := range []struct {\n+\t\tname string\n+\t\tsize uint64\n+\t\tring int\n+\t}{\n+\t\t{\"4K/hot\", page, 1},\n+\t\t{\"64K/hot\", 16 * page, 1},\n+\t\t{\"2M/hot\", hugepage, 1},\n+\t\t{\"4K/cold\", page, (256 << 20) / page},\n+\t\t{\"64K/cold\", 16 * page, (256 << 20) / (16 * page)},\n+\t\t{\"2M/cold\", hugepage, (256 << 20) / hugepage},\n+\t} {\n+\t\tb.Run(bc.name, func(b *testing.B) {\n+\t\t\ttotal := bc.size * uint64(bc.ring)\n+\t\t\tfd, err := unix.MemfdCreate(\"pgalloc_bench\", unix.MFD_CLOEXEC)\n+\t\t\tif err != nil {\n+\t\t\t\tb.Fatal(err)\n+\t\t\t}\n+\t\t\tfile := os.NewFile(uintptr(fd), \"pgalloc_bench\")\n+\t\t\tdefer file.Close()\n+\t\t\tif err := file.Truncate(int64(total)); err != nil {\n+\t\t\t\tb.Fatal(err)\n+\t\t\t}\n+\t\t\tmapping, err := unix.Mmap(int(file.Fd()), 0, int(total), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)\n+\t\t\tif err != nil {\n+\t\t\t\tb.Fatal(err)\n+\t\t\t}\n+\t\t\tdefer unix.Munmap(mapping)\n+\t\t\t// Commit all pages so that recycling never faults.\n+\t\t\tfor i := range mapping {\n+\t\t\t\tmapping[i] = 0xff\n+\t\t\t}\n+\t\t\t// No releaser goroutine, so waste pages stay recyclable.\n+\t\t\tf := &MemoryFile{\n+\t\t\t\tfile: file,\n+\t\t\t\topts: MemoryFileOpts{DisableMemoryAccounting: true},\n+\t\t\t}\n+\t\t\tf.initFields()\n+\t\t\tchunks := []chunkInfo{{mapping: uintptr(unsafe.Pointer(&mapping[0]))}}\n+\t\t\tf.chunks.Store(&chunks)\n+\t\t\tall := memmap.FileRange{0, total}\n+\t\t\tf.unwasteSmall.RemoveRange(all)\n+\t\t\tf.memAcct.InsertRange(all, memAcctInfo{wasteOrReleasing: true})\n+\t\t\topts := AllocOpts{Mode: AllocateCallerIndirectCommit}\n+\t\t\tring := make([]memmap.FileRange, bc.ring)\n+\t\t\tfor j := range ring {\n+\t\t\t\tif ring[j], err = f.Allocate(bc.size, opts); err != nil {\n+\t\t\t\t\tb.Fatal(err)\n+\t\t\t\t}\n+\t\t\t}\n+\t\t\tb.SetBytes(int64(bc.size))\n+\t\t\tb.ResetTimer()\n+\t\t\tfor i := 0; i < b.N; i++ {\n+\t\t\t\tj := i % bc.ring\n+\t\t\t\t// ring[j] becomes the only waste range, so it is recycled.\n+\t\t\t\tf.DecRef(ring[j])\n+\t\t\t\tif ring[j], err = f.Allocate(bc.size, opts); err != nil {\n+\t\t\t\t\tb.Fatal(err)\n+\t\t\t\t}\n+\t\t\t}\n+\t\t\tb.StopTimer()\n+\t\t\tfor _, fr := range ring {\n+\t\t\t\tf.DecRef(fr)\n+\t\t\t}\n+\t\t})\n+\t}\n+}\n+\n+// BenchmarkZeroPrimitive compares clear() with safemem.Zero() on cache-cold\n+// pages of a shared memfd mapping.\n+func BenchmarkZeroPrimitive(b *testing.B) {\n+\tconst total = 256 << 20\n+\tfd, err := unix.MemfdCreate(\"pgalloc_bench\", unix.MFD_CLOEXEC)\n+\tif err != nil {\n+\t\tb.Fatal(err)\n+\t}\n+\tfile := os.NewFile(uintptr(fd), \"pgalloc_bench\")\n+\tdefer file.Close()\n+\tif err := file.Truncate(total); err != nil {\n+\t\tb.Fatal(err)\n+\t}\n+\tmapping, err := unix.Mmap(int(file.Fd()), 0, total, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)\n+\tif err != nil {\n+\t\tb.Fatal(err)\n+\t}\n+\tdefer unix.Munmap(mapping)\n+\tfor i := range mapping {\n+\t\tmapping[i] = 0xff\n+\t}\n+\tfor _, size := range []struct {\n+\t\tname string\n+\t\tn    int\n+\t}{{\"4K\", page}, {\"64K\", 16 * page}, {\"2M\", hugepage}} {\n+\t\tfor _, impl := range []struct {\n+\t\t\tname string\n+\t\t\tzero func([]byte)\n+\t\t}{\n+\t\t\t{\"clear\", func(bs []byte) { clear(bs) }},\n+\t\t\t{\"safemem.Zero\", func(bs []byte) {\n+\t\t\t\tif _, err := safemem.Zero(safemem.BlockFromUnsafeSlice(bs)); err != nil {\n+\t\t\t\t\tb.Fatal(err)\n+\t\t\t\t}\n+\t\t\t}},\n+\t\t} {\n+\t\t\tb.Run(size.name+\"/\"+impl.name, func(b *testing.B) {\n+\t\t\t\tring := total / size.n\n... (13 more lines in the full patch)\n```\n\n</details>\n",
+                    "createdAt": "2026-10-23T17:07:48Z",
+                    "updatedAt": "2026-10-23T17:07:48Z",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6vszbu",
+                    "isResolved": true,
+                    "isOutdated": true,
+                    "path": "pkg/sentry/pgalloc/pgalloc.go",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBAby2A",
+                    "url": "https://github.com/google/gvisor/pull/15181#discussion_r4362531544",
+                    "body": "Thanks for measuring the allocator itself. The 14.3% regression for cold 2 MiB allocations is worth fixing. Recycled pages can lack backing, so replacing `safemem.Zero` with `clear` unconditionally would bring back the fatal SIGBUS this PR fixes. I’ll compare the base, this head, and a fault-safe fast path using your hot and cold cases, and post the benchstat results here. I’ll also check that a fault partway through zeroing still returns an allocation error.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-10-23T17:43:41Z",
+                    "updatedAt": "2026-10-23T17:43:41Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6vszbu",
+                    "isResolved": true,
+                    "isOutdated": true,
+                    "path": "pkg/sentry/pgalloc/pgalloc.go",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBBGoEA",
+                    "url": "https://github.com/google/gvisor/pull/15181#discussion_r4363233296",
+                    "body": "I used your first suggestion in 9b469b1928: safecopy now uses\n`REP STOSQ` for ranges of at least 2 KiB on amd64 CPUs with ERMS.\nThe stores remain inside the fault handler's protected range. The\nallocator now returns ENOMEM even when the first page clears and the\nsecond faults; a separate test checks an unaligned clear with a tail.\n\nI ran [your benchmark on one pinned AMD EPYC core][1], 16 times per\nversion. Hot 64 KiB went from 1.638 µs with `clear()` to 2.298 µs\nwith the SSE loop and 1.625 µs with this change. Hot 2 MiB is back\nat baseline too. The 4 KiB cases still cost 1.72% hot and 2.92% cold.\nThe PR description has all six benchstat rows.\n\nThe AMD worker didn't reproduce your cold 2 MiB slowdown on the SSE\nversion. If the Xeon is still available, could you rerun the cold\n64 KiB and 2 MiB cases against this head?\n\n[1]: https://app.buildbuddy.io/invocation/892b217c-14c4-48ce-b3db-e414c9ba4777\n\nPosted by Codex on behalf of @tamird.\n",
+                    "createdAt": "2026-10-23T19:01:04Z",
+                    "updatedAt": "2026-10-23T19:01:04Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "f84b27e5f16607463fa034034acf84ff867438be"
+            },
+            "observedAt": "2026-11-18T21:05:51.124797+00:00",
+            "owner": "root",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15181#pullrequestreview-5964300538"
+            ],
+            "disposition": "Complete current feedback read: earlier performance thread resolved and rebase answered; new assisted no-findings review requests no action. Human review still required.",
+            "title": "Informational assisted review inspected; human review retained",
+            "nextAction": "Follow the existing human review request and exact-head checks/import. The informational assisted review needs no reply, source change or technical-approval claim."
+          }
         ]
       },
-      "updatedAt": "2026-11-18T13:38:30.011543+00:00",
+      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
       "head": "f84b27e5f16607463fa034034acf84ff867438be",
       "evidence": [
         {
@@ -57656,8 +57947,8 @@
       "url": "https://github.com/tamird/gvisor/commit/09b196bf630b2a6be83ab28e6c7611f7e766a023",
       "group": "runtime",
       "status": "Agent work: functional gates passed; remaining qualification open",
-      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
-      "summary": "The cheap AMD64 race Go owner passed8cases. Missing race release and three Sentry wrapper gates are running under the existing120-minute cap; no result is inferred before actual artifacts.",
+      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
+      "summary": "The AMD64 race release and ordinary30-case wrapper passed. Save/restore made252real restore calls and passed19cases before its900-second test timeout; save/resume was not executed. No overall race functional pass or source regression is established.",
       "evidence": [
         {
           "label": "Two architecture analyzers on all 23 marked cases in fa6b9080f",
@@ -57758,9 +58049,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
-        "observedAt": "2026-11-18T16:46:00.239336+00:00",
-        "disposition": "The cheap AMD64 race Go owner passed8cases. Missing race release and three Sentry wrapper gates are running under the existing120-minute cap; no result is inferred before actual artifacts.",
-        "nextAction": "Owner fuse_full20_resume consumes the exact race consumer run and cleanup; retain all previous normal/source/native/C++ evidence and open prerequisite17127/nativeARM/performance obligations.",
+        "observedAt": "2026-11-18T21:05:51.124797+00:00",
+        "disposition": "The AMD64 race release and ordinary30-case wrapper passed. Save/restore made252real restore calls and passed19cases before its900-second test timeout; save/resume was not executed. No overall race functional pass or source regression is established.",
+        "nextAction": "Owner fuse_full20_resume has proposed only the two missing race wrappers with a measured bounded budget, unchanged race options and full30-case/restore proof. Await root review of the concrete timeout/cost continuation; no retry launched. Preserve compiled opaque9products, ordinary30 and all prior passes.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -57783,7 +58074,7 @@
           "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes."
         },
         "technicalOwner": "systrap_regression",
-        "recheckCondition": "Actual race terminal artifact/cleanup, prerequisite/source change or concrete next missing gate.",
+        "recheckCondition": "Reviewed missing-only continuation budget/protocol, actual artifact reuse permission or changed source/runtime inputs.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -58076,7 +58367,7 @@
             44316942020
           ]
         },
-        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
+        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
         "preparedSyscallConsumer": {
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "8adfbf18fadfd0c5a5cd3c64528939c3c90b55ce",
@@ -58118,14 +58409,25 @@
           "run": 44391986188,
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "b4bc23328483393a3edcee1440fab7f08ac52012",
-          "state": "LIVE; no compiler/runtime result inferred",
+          "state": "PARTIAL: race fullrelease and ordinary30PASS; save_restore900s timeout; save_resumeunexecuted",
           "owner": "fuse_full20_resume",
-          "inclusiveMinutes": 120,
           "receipt": {
-            "file": "semaphore-race-consumer-dispatch.json",
-            "sha256": "5dab6d431747110a045ea991d3a1177a6569fdcdb53563ef26b865b9abeea882"
+            "file": "semaphore-race-44391986188-evidence.json",
+            "sha256": "995f37943babed179d20ac2f5cf9558c8714f38abd475bc3fcadfcb8a5897045"
           },
-          "scope": "Only missing race release plus ordinary/save-restore/save-resume30each; fullopaque runtime/flavor/actualrestore/freshno-skip proofs required. Normal/source/nogo/Linux/CPP passed evidence reused."
+          "scope": "AMD64 race Go8 and ordinary30 established; save/restore and save/resume incomplete. No nativeARM/performance or prerequisite17127landing claim.",
+          "runtimeBuildSeconds": 804,
+          "ordinarySeconds": 137,
+          "ordinaryCases": 30,
+          "saveRestore": {
+            "passedCasesBeforeTimeout": 19,
+            "actualRestoreCommands": 252,
+            "testTimeoutSeconds": 900,
+            "raceReportsObserved": 0,
+            "cause": "Not established; progressing repeated restore/CLI overhead observed"
+          },
+          "cleanup": "Source/index clean, AppArmor1restored, IPC0; no group fences/errors recorded. Failed outerstatus has no separate runtime-root-removal receipt.",
+          "inclusiveMinutes": 120
         }
       },
       "contributorChangesRequested": {
@@ -91874,8 +92176,8 @@
       "title": "unix: block connect(2) while the accept queue is full",
       "url": "https://github.com/google/gvisor/pull/17083",
       "status": "open",
-      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
-      "summary": "Author DCO-only revision; four newly requested direct headers remain unapplied. The earlier declined CI post remains settled.",
+      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
+      "summary": "Current-head First Pass1756 still fails C++ include-cleaner after three attempts:11direct-header findings in accept_bind.cc. The failed KVM fork shard passed on retry; author header changes remain due.",
       "evidence": [
         {
           "label": "Copybara import #17531",
@@ -91919,14 +92221,14 @@
       "followup": {
         "owner": "root",
         "sourceHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
-        "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "Author DCO-only revision; four newly requested direct headers remain unapplied. The earlier declined CI post remains settled.",
-        "nextAction": "Await author header changes, then inspect current-head CI and source. Preserve the older tested proposal and the declined CI-post decision.",
+        "observedAt": "2026-11-18T21:05:51.124797+00:00",
+        "disposition": "Current-head First Pass1756 still fails C++ include-cleaner after three attempts:11direct-header findings in accept_bind.cc. The failed KVM fork shard passed on retry; author header changes remain due.",
+        "nextAction": "Await author fixes to the directly reported header providers, then review the actual changed source and current CI. Preserve the prior declined CI-post decision; no retry, source rewrite or duplicate acknowledgement.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
           "https://buildkite.com/gvisor/internal/builds/36539"
         ],
-        "recheckCondition": "Author reply, source/head, required CI or prerequisite changes.",
+        "recheckCondition": "Author source/reply or required CI/header fix changes.",
         "providerHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
         "latestSourceTriage": {
           "oldHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
@@ -91946,6 +92248,19 @@
           ],
           "CI": "FirstPass1756 pending at direct check; no source/infra failure classification",
           "nextAction": "Author applies direct includes; preserve user's declined earlier CI post, no duplicate outreach"
+        },
+        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+        "currentSourceCI": {
+          "build": 1756,
+          "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
+          "state": "FAILED",
+          "receipt": {
+            "file": "sweep-current-1756.json",
+            "sha256": "b8580a552366cd02e664ffd5712f6d9448779b820e603b5b9a7833c36a443abf"
+          },
+          "findings": "accept_bind.cc direct providers for pid_t, BPF_LD/W/ABS/JMP/JEQ/K/RET, TEST_PCHECK, PR_SET_NO_NEW_PRIVS, PR_SET_SECCOMP",
+          "attempts": 3,
+          "otherRetry": "fork_test_runsc_kvm passed"
         }
       }
     },
@@ -92130,14 +92445,14 @@
       "url": "https://github.com/google/gvisor/pull/17545",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-        "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "The maintainer-requested local rebase passed fresh both-architecture source and locking-positive/negative Nogo checks. The published approved4e head is unchanged; no signed revision or amendment was created after the DCO execution block.",
-        "nextAction": "Root preserves qualified local97 and historical published4e approval; reconcile the actual DCO execution block before any upstream amendment. Do not duplicate manual-action requests or bypass the rejection.",
-        "recheckCondition": "Execution/certification condition, contributor/source/review/import or CI changes.",
+        "observedAt": "2026-11-18T21:05:51.124797+00:00",
+        "disposition": "The published4e head has another approval, but new CI is blocked: First Pass1796 was rejected by the one-day compute quota; pipeline55376 treats the fork-prefixed branch as a fetch refspec and fails before source checks. The actual fork branch still exists.",
+        "nextAction": "Root preserves the qualified local97 rebase and handles the actual DCO execution block before publication. Track CI-provider quota and the source-bound old pre-command refspec failure separately; no retry, new amendment or acknowledgement.",
+        "recheckCondition": "Execution/certification blocker, source/review/import state or current CI disposition changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
           "https://github.com/google/gvisor/pull/17651",
@@ -92145,7 +92460,9 @@
           "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
           "https://github.com/tamird/gvisor/commit/4e1667030ef7cce0777f3ba1aff1d74673896cf1",
           "https://buildkite.com/gvisor/first-pass/builds/1688",
-          "https://github.com/gvisor/gvisor/actions/runs/44286110331"
+          "https://github.com/gvisor/gvisor/actions/runs/44286110331",
+          "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994",
+          "https://github.com/google/gvisor/pull/17545#pullrequestreview-5964761065"
         ],
         "attentionDispositions": [
           {
@@ -92202,24 +92519,30 @@
           }
         ],
         "currentCI": {
-          "observedAt": "2026-11-18T12:12:59.828888+00:00",
-          "pr": 17545,
-          "exactHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-          "state": "open",
-          "mergeable": true,
-          "merged": false,
-          "mergedAt": null,
-          "feedbackSince": "2026-11-18T10:53:50Z",
-          "newFeedback": [],
-          "DCO": "SUCCESS",
+          "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+          "observedAt": "2026-11-18T21:05:51.124797+00:00",
           "firstPass": {
-            "build": 1688,
-            "state": "passed",
-            "failedAttempts": [],
-            "sourceHeadVerifiedByHelper": true
+            "build": 1796,
+            "state": "FAILED",
+            "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
+            "receipt": {
+              "file": "sweep-current-1796.json",
+              "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
+            },
+            "providerReceipt": {
+              "file": "nic-info-current-provider-1796.json",
+              "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
+            }
           },
-          "GitHubChecks": "all SUCCESS",
-          "receipt": "own-dco-and-15181-20261118T121259Z.json"
+          "pipeline": {
+            "build": 55376,
+            "state": "FAILED",
+            "receipt": {
+              "file": "sweep-current-55376.json",
+              "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
+            },
+            "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
+          }
         },
         "pendingAcknowledgement": {
           "state": "awaiting contributor approval",
@@ -92228,7 +92551,7 @@
           "humanRequestURL": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
           "posted": false
         },
-        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
+        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -92242,41 +92565,44 @@
             "goGenerateURL": "https://github.com/gvisor/gvisor/actions/runs/44286110331",
             "goGenerateState": "running",
             "limits": "No full CI clearance; additional failures remain possible."
+          },
+          {
+            "observedAt": "2026-11-18T12:12:59.828888+00:00",
+            "pr": 17545,
+            "exactHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+            "state": "open",
+            "mergeable": true,
+            "merged": false,
+            "mergedAt": null,
+            "feedbackSince": "2026-11-18T10:53:50Z",
+            "newFeedback": [],
+            "DCO": "SUCCESS",
+            "firstPass": {
+              "build": 1688,
+              "state": "passed",
+              "failedAttempts": [],
+              "sourceHeadVerifiedByHelper": true
+            },
+            "GitHubChecks": "all SUCCESS",
+            "receipt": "own-dco-and-15181-20261118T121259Z.json"
           }
         ],
         "latestReviewObservation": {
-          "checkedAt": "2026-11-18T19:22:58.577211+00:00",
+          "checkedAt": "2026-11-18T21:05:51.124797+00:00",
           "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
           "githubReviewDecision": "APPROVED",
           "reviews": [
             {
               "kind": "review",
-              "id": "PRR_kwDOB9IlXs8AAAABX3mZcw",
-              "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
-              "body": "LGTM. Replaces the prose lock precondition on `(*Stack).nicInfo` with `// +checklocksread:s.mu`, matching both `RLock`-holding callers (`SingleNICInfo` and `NICInfo`).\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon",
-              "state": "APPROVED",
-              "submittedAt": "2026-11-13T19:23:47Z",
-              "updatedAt": "2026-11-18T10:30:43Z",
-              "authorAssociation": "CONTRIBUTOR",
-              "author": {
-                "login": "manninglucas",
-                "__typename": "User"
-              },
-              "commit": {
-                "oid": "4e1667030ef7cce0777f3ba1aff1d74673896cf1"
-              }
-            },
-            {
-              "kind": "review",
-              "id": "PRR_kwDOB9IlXs8AAAABY3L_Kw",
-              "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5963448107",
+              "id": "PRR_kwDOB9IlXs8AAAABY4cH6Q",
+              "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5964761065",
               "body": "",
               "state": "APPROVED",
-              "submittedAt": "2026-11-18T19:19:38Z",
-              "updatedAt": "2026-11-18T19:19:38Z",
-              "authorAssociation": "MEMBER",
+              "submittedAt": "2026-11-18T20:44:15Z",
+              "updatedAt": "2026-11-18T20:44:15Z",
+              "authorAssociation": "CONTRIBUTOR",
               "author": {
-                "login": "milantracy",
+                "login": "kerumeto",
                 "__typename": "User"
               },
               "commit": {
@@ -92335,6 +92661,38 @@
             "scope": "Fresh both-architecture source and shared/exclusive-positive Nogo findings0; unlocked negative control exactlyone expected diagnostic per architecture. AMD64 worker; no native ARM runtime/performance claim.",
             "priorQueryFailureRetained": true
           }
+        },
+        "latestCI": {
+          "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+          "observedAt": "2026-11-18T21:05:51.124797+00:00",
+          "firstPass": {
+            "build": 1796,
+            "state": "FAILED",
+            "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
+            "receipt": {
+              "file": "sweep-current-1796.json",
+              "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
+            },
+            "providerReceipt": {
+              "file": "nic-info-current-provider-1796.json",
+              "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
+            }
+          },
+          "pipeline": {
+            "build": 55376,
+            "state": "FAILED",
+            "receipt": {
+              "file": "sweep-current-55376.json",
+              "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
+            },
+            "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
+          }
+        },
+        "actionableComment": {
+          "kind": "comment",
+          "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+          "commentId": "IC_kwDOB9IlXs8AAAABoJ82Wg",
+          "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994"
         }
       },
       "dcoCoordination": {
@@ -92368,7 +92726,7 @@
           "https://github.com/tamird/gvisor/commit/4e1667030ef7cce0777f3ba1aff1d74673896cf1"
         ]
       },
-      "summary": "The maintainer-requested local rebase passed fresh both-architecture source and locking-positive/negative Nogo checks. The published approved4e head is unchanged; no signed revision or amendment was created after the DCO execution block."
+      "summary": "The published4e head has another approval, but new CI is blocked: First Pass1796 was rejected by the one-day compute quota; pipeline55376 treats the fork-prefixed branch as a fetch refspec and fails before source checks. The actual fork branch still exists."
     },
     {
       "id": "pr:17546",
@@ -93006,8 +93364,8 @@
       "head": "1692a9405af5de11203c7cd913ead169f8f06936",
       "group": "bazel",
       "status": "open",
-      "summary": "LLVM 0.8.27 removes the need for both local backports. The native NVIDIA parser passed on AMD64 and ARM64, the Linux header default is 6.18, and all 224 catalog entries passed.",
-      "updatedAt": "2026-11-17T19:05:00.391405+00:00",
+      "summary": "First Pass1771 passed on the exact published1692head. The latest approval observation remains distinct from GitHub REVIEW_REQUIRED; older provider failures are historical, not the current CI blocker.",
+      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
       "evidence": [
         {
           "label": "Upstream PR #17641",
@@ -93045,9 +93403,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "1692a9405af5de11203c7cd913ead169f8f06936",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Published as one commit in #17641. The shorter commit message preserves the tested source tree.",
-        "nextAction": "Follow the upstream checks and maintainer review. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 1692a9405af5de11203c7cd913ead169f8f06936; observed 2026-11-17T19:29:29.454062+00:00): build 1606 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "observedAt": "2026-11-18T21:05:51.124797+00:00",
+        "disposition": "First Pass1771 passed on the exact published1692head. The latest approval observation remains distinct from GitHub REVIEW_REQUIRED; older provider failures are historical, not the current CI blocker.",
+        "nextAction": "Follow required human review and any matching import on exact published1692. Preserve previous failure/automatic retry history; no new source change, outreach or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17641",
           "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098",
@@ -93058,7 +93416,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1606#01a1eae3-d160-41f8-aad9-b411cfc9ff16"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Review/import, current source/head/base or required-check changes.",
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
           "head": "1692a9405af5de11203c7cd913ead169f8f06936",
@@ -93083,7 +93441,17 @@
             }
           ]
         },
-        "curatedAt": "2026-11-18T19:41:39.857079+00:00"
+        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+        "ciHistory": [
+          {}
+        ],
+        "currentCI": {
+          "head": "1692a9405af5de11203c7cd913ead169f8f06936",
+          "observedAt": "2026-11-18T21:05:51.124797+00:00",
+          "firstPass": 1771,
+          "state": "SUCCESS",
+          "scope": "Exact-head provider check success; no full technical approval or new qualification claim"
+        }
       },
       "dcoAmendment": {
         "oldHead": "5b433add43739d73d320b1dc029a5e5e26405ad7",
@@ -128757,5 +129125,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T20:59:19.864167+00:00"
+  "updatedAt": "2026-11-18T21:15:29.687318+00:00"
 }
