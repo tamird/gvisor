@@ -1,0 +1,65 @@
+{
+  "source": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+  "base": "8f8a2befc5be6aecfe73eab01b1b0039baaf2078",
+  "sourceBlobs": {
+    "test/benchmarks/tools/hey.go": "9f06ece7a216a403ebaed7ffdb2c205045d7fd65",
+    "test/benchmarks/tools/hey_test.go": "4b1a999dd978788d0d286902b149bb5bacb20983",
+    "test/benchmarks/tools/iperf.go": "2de8713f91388fbf6d8666d6534d89b70d7c1530",
+    "test/benchmarks/tools/iperf_test.go": "358fafbfbdda65a7cf4a697fd64e4ce215b6965d",
+    "test/benchmarks/network/iperf_test.go": "f827f2d3c7af1ff1837f25fc9ad32154c13170aa",
+    "images/benchmarks/hey/Dockerfile": "58c49354f8edee8dbeb0739fc54b011dd9741dcb",
+    "images/benchmarks/iperf/Dockerfile": "12d424003b5e213d1f00ba21195162631bdda783"
+  },
+  "expectedToolsCases": [
+    "TestApacheBench",
+    "TestFio",
+    "TestHeyReport",
+    "TestHeyReport/malformed",
+    "TestHeyReport/missingErrors",
+    "TestHeyReport/missingLatency",
+    "TestHeyReport/negativeLatency",
+    "TestHeyReport/notFound",
+    "TestHeyReport/success",
+    "TestHeyReport/timeout",
+    "TestHeyReport/zeroRate",
+    "TestIperf",
+    "TestIperf/parallel",
+    "TestIperf/single",
+    "TestIperf/tiny",
+    "TestIperfInvalidCSV",
+    "TestIperfInvalidCSV/duplicateStream",
+    "TestIperfInvalidCSV/invalidRate",
+    "TestIperfInvalidCSV/malformed",
+    "TestIperfInvalidCSV/missingAggregate",
+    "TestIperfInvalidCSV/overflow",
+    "TestIperfInvalidCSV/refused",
+    "TestIperfInvalidCSV/wrongAggregateBytes",
+    "TestIperfInvalidCSV/zeroTransfer",
+    "TestIperfReport",
+    "TestIperfReport/parallel",
+    "TestIperfReport/single",
+    "TestIperfReport/tiny",
+    "TestMeminfo",
+    "TestSysbenchCpu",
+    "TestSysbenchMemory",
+    "TestSysbenchMutex"
+  ],
+  "nativeLeaves": {
+    "native-iperf": [
+      "BenchmarkIperfOneConnection/operation.Upload",
+      "BenchmarkIperfOneConnection/operation.Download",
+      "BenchmarkIperfManyConnections/operation.Upload/parallel.4",
+      "BenchmarkIperfManyConnections/operation.Download/parallel.4",
+      "BenchmarkIperfManyConnections/operation.Upload/parallel.16",
+      "BenchmarkIperfManyConnections/operation.Download/parallel.16",
+      "BenchmarkIperfManyConnections/operation.Upload/parallel.64",
+      "BenchmarkIperfManyConnections/operation.Download/parallel.64"
+    ],
+    "native-httpd": [
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.1",
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.25",
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.100",
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.1000"
+    ]
+  }
+}

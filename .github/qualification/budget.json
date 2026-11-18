@@ -1,0 +1,8 @@
+{
+  "bodyMinutes": 83,
+  "cleanupGraceSeconds": 120,
+  "inclusiveMinutes": 85,
+  "listedPhaseMinutes": 81.25,
+  "cleanupUpperBoundSeconds": 109,
+  "scope": "32 tools cases; source lint; five consumer builds; eight Iperf N1 and four HTTPD N1 native leaves; no Sentry build or performance qualification"
+}
