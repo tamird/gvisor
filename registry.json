@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+    "updatedAt": "2026-11-18T22:30:58.775869+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2705,12 +2705,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
-      "summary": "The actual-source guard and eight-alias correction is prepared and independently reviewed, but automatic approval review rejected its exact CI-only publication/dispatch action before execution. No new qualification or production pass is established.",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
+      "summary": "Exact CI-only source02fc/plan30f1 run44409216041 passed source lint, fresh changed codegen owner and production compiler/oracle checks on both architecture outputs. The earlier exact CI publication rejection is superseded by the new CI grant and actual execution. Original PR171979 remains unchanged; no runtime performance or full C++ qualification is inferred.",
       "followup": {
-        "disposition": "The actual-source guard and eight-alias correction is prepared and independently reviewed, but automatic approval review rejected its exact CI-only publication/dispatch action before execution. No new qualification or production pass is established.",
+        "disposition": "Exact CI-only source02fc/plan30f1 run44409216041 passed source lint, fresh changed codegen owner and production compiler/oracle checks on both architecture outputs. The earlier exact CI publication rejection is superseded by the new CI grant and actual execution. Original PR171979 remains unchanged; no runtime performance or full C++ qualification is inferred.",
         "owner": "root",
-        "nextAction": "Await the already-asked exact action authorization decision for localb35/plancabc. Preserve the original PR and all passed/failed evidence; do not retry or route around the action-specific execution rejection. If legitimately authorized, fresh actual-source owner tests precede cold links.",
+        "nextAction": "Root reviews the qualified current proposal and remaining runtime/performance scope through permanent Bazel targets and thin Actions. Reuse actual lint/functional/compiler receipts; no repeated contributor execution-approval question or per-item-driver retry.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
@@ -2730,57 +2730,23 @@
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-18T20:00:58.033079+00:00",
-        "recheckCondition": "Decision on the existing exact action request or a substantive source/protocol change.",
-        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+        "recheckCondition": "Current source review, permanent owner/mechanism result, remaining runtime/performance evidence or original PR decision.",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
         "historicalEvidenceCorrection": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
           "correction": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof.",
           "historicalQualificationScopePreserved": true
         },
         "preparedRevision": {
-          "head": "470473026e48772e9abfa41b7bebb03848f7cefb",
-          "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
-          "branch": "review/atomicptr-caller-gate-20261118",
-          "publication": "Research source published; upstream171979 unchanged",
-          "sourceReview": "Root/TCP/systrap static source and delta reviews complete",
-          "qualification": "Source470 canonical lint, four Go owners53XML and eight uncached goldens passed within recorded scopes. Compiler44349748867 is a semantic failure; local c679 fixes remain unqualified pending review/rerun.",
+          "head": "02fc62f697b2957e37d53be359ba820676c0e738",
+          "parent": "b35ded894d3e1f6982cdb6fe13a2ba3b76343188",
+          "publication": "CI-only source reachable through qualification plan; original public171979 unchanged",
+          "qualification": "Exact current changed-codegen owner/source lint and production compiler/oracle PASS in44409216041; unchanged threeGoowners and eightgoldens reused with bound receipts",
           "currentSDK": "Go1.27.3",
-          "bootstrap": "Prepared source contains restored .buildkite/first-pass.yaml entry point; this is not a passing CI claim.",
-          "codegenPrototype": {
-            "head": "470473026e48772e9abfa41b7bebb03848f7cefb",
-            "changedFilesBeyond4109": 11,
-            "publication": "Research source published; upstream171979 unchanged",
-            "sourceReview": "Earlier full source reviews retained; compiler-only protocol narrow peer and root reviewed.",
-            "qualification": "Source470 lint/functional prefix remains valid within recorded scopes. Compiler44349748867 is a semantic failure: selected-proof reader rejected unrelated non-code DWARF units, action collector revisited a DAG exponentially, and shell status propagation masked failures.",
-            "limits": "Current SDK1.27.3 real-caller instruction/frame/stack-budget evidence and actual permanent CI cost remain necessary. Historical1.27.2 evidence is not current qualification.",
-            "receipt": {
-              "file": "atomicptr-caller-proof-before-xml-freshness-fix-3d2ebd41/atomicptr-caller-proof-frozen.json",
-              "sha256": "3d2ebd415a6a01b2bd44eb764da3a43f6692ce3aaeac16b950a1598f34883207",
-              "scope": "Historical frozen protocol before later freshness, ordering and source-pin revisions"
-            }
-          },
-          "compilerContinuation": {
-            "owner": "coverage_security_review",
-            "run": 44349748867,
-            "source": "470473026e48772e9abfa41b7bebb03848f7cefb",
-            "plan": "6027a30f2d59c36bcc04ce1f7d9da4b4ff843cb4",
-            "state": "SEMANTIC FAIL despite GitHub workflow success",
-            "inclusiveMinutes": 71,
-            "scope": "Same-worker dependency/readiness before production compiler/DWARF proof; no functional repeats",
-            "receipt": {
-              "file": "atomicptr-compiler-44349748867-evidence.json",
-              "sha256": "8e6c9bd13063b222ea6ab71bd8f8a5d010597c24bd71f4a8d06fab80b6390176"
-            }
-          },
-          "owningFixes": {
-            "head": "c679388288a8661039c3ddb0d644f1a875c6140f",
-            "parent": "470473026e48772e9abfa41b7bebb03848f7cefb",
-            "state": "Local source/support fixes prepared; review/qualification pending",
-            "scope": "DWARF reader, memoized action closure and explicit failure propagation",
-            "receipt": {
-              "file": "atomicptr-owning-fixes-review.json",
-              "sha256": "f6e8c469c8ce7fb5720a7481fc1de99d8e41f397b10819bbb8d5e33657b976bb"
-            }
+          "remaining": "Runtime/performance effects and full C++ not qualified by this compiler gate",
+          "receipt": {
+            "file": "atomicptr-goimports-44409216041-evidence.json",
+            "sha256": "89307df8549ffb7e3ab1574fbe69dd501966d1abe5ae65b708b85907318ca3f2"
           }
         },
         "qualificationHistory": [
@@ -2824,84 +2790,182 @@
                 }
               }
             }
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "disposition": "The actual-source guard and eight-alias correction is prepared and independently reviewed, but automatic approval review rejected its exact CI-only publication/dispatch action before execution. No new qualification or production pass is established.",
+              "owner": "root",
+              "nextAction": "Await the already-asked exact action authorization decision for localb35/plancabc. Preserve the original PR and all passed/failed evidence; do not retry or route around the action-specific execution rejection. If legitimately authorized, fresh actual-source owner tests precede cold links.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
+                "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
+                "https://github.com/tamird/gvisor/commit/9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
+                "https://github.com/google/gvisor/pull/12483#discussion_r4366348323",
+                "https://github.com/google/gvisor/pull/12483#discussion_r4366968161",
+                "https://github.com/gvisor/gvisor/pull/12483",
+                "https://github.com/tamird/gvisor/commit/0e41dbbb0cf5ebe444b0461a4425ecfe5adeafb7",
+                "https://github.com/tamird/gvisor/commit/17197905852cdebf53a1f60b9de9652ced640e7c",
+                "https://buildkite.com/gvisor/first-pass/builds/1449",
+                "https://buildkite.com/gvisor/first-pass/builds/1449#01a1ead3-74d4-4a3d-b631-eafb71995682",
+                "https://github.com/tamird/gvisor/actions/runs/44335049809",
+                "https://github.com/tamird/gvisor/actions/runs/44338516920",
+                "https://github.com/tamird/gvisor/actions/runs/44348426609",
+                "https://github.com/tamird/gvisor/actions/runs/44349748867"
+              ],
+              "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
+              "mergeable": "MERGEABLE",
+              "observedAt": "2026-11-18T20:00:58.033079+00:00",
+              "recheckCondition": "Decision on the existing exact action request or a substantive source/protocol change.",
+              "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+              "historicalEvidenceCorrection": {
+                "curatedAt": "2026-11-18T12:19:41.750038+00:00",
+                "correction": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof.",
+                "historicalQualificationScopePreserved": true
+              },
+              "preparedRevision": {
+                "head": "470473026e48772e9abfa41b7bebb03848f7cefb",
+                "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "branch": "review/atomicptr-caller-gate-20261118",
+                "publication": "Research source published; upstream171979 unchanged",
+                "sourceReview": "Root/TCP/systrap static source and delta reviews complete",
+                "qualification": "Source470 canonical lint, four Go owners53XML and eight uncached goldens passed within recorded scopes. Compiler44349748867 is a semantic failure; local c679 fixes remain unqualified pending review/rerun.",
+                "currentSDK": "Go1.27.3",
+                "bootstrap": "Prepared source contains restored .buildkite/first-pass.yaml entry point; this is not a passing CI claim.",
+                "codegenPrototype": {
+                  "head": "470473026e48772e9abfa41b7bebb03848f7cefb",
+                  "changedFilesBeyond4109": 11,
+                  "publication": "Research source published; upstream171979 unchanged",
+                  "sourceReview": "Earlier full source reviews retained; compiler-only protocol narrow peer and root reviewed.",
+                  "qualification": "Source470 lint/functional prefix remains valid within recorded scopes. Compiler44349748867 is a semantic failure: selected-proof reader rejected unrelated non-code DWARF units, action collector revisited a DAG exponentially, and shell status propagation masked failures.",
+                  "limits": "Current SDK1.27.3 real-caller instruction/frame/stack-budget evidence and actual permanent CI cost remain necessary. Historical1.27.2 evidence is not current qualification.",
+                  "receipt": {
+                    "file": "atomicptr-caller-proof-before-xml-freshness-fix-3d2ebd41/atomicptr-caller-proof-frozen.json",
+                    "sha256": "3d2ebd415a6a01b2bd44eb764da3a43f6692ce3aaeac16b950a1598f34883207",
+                    "scope": "Historical frozen protocol before later freshness, ordering and source-pin revisions"
+                  }
+                },
+                "compilerContinuation": {
+                  "owner": "coverage_security_review",
+                  "run": 44349748867,
+                  "source": "470473026e48772e9abfa41b7bebb03848f7cefb",
+                  "plan": "6027a30f2d59c36bcc04ce1f7d9da4b4ff843cb4",
+                  "state": "SEMANTIC FAIL despite GitHub workflow success",
+                  "inclusiveMinutes": 71,
+                  "scope": "Same-worker dependency/readiness before production compiler/DWARF proof; no functional repeats",
+                  "receipt": {
+                    "file": "atomicptr-compiler-44349748867-evidence.json",
+                    "sha256": "8e6c9bd13063b222ea6ab71bd8f8a5d010597c24bd71f4a8d06fab80b6390176"
+                  }
+                },
+                "owningFixes": {
+                  "head": "c679388288a8661039c3ddb0d644f1a875c6140f",
+                  "parent": "470473026e48772e9abfa41b7bebb03848f7cefb",
+                  "state": "Local source/support fixes prepared; review/qualification pending",
+                  "scope": "DWARF reader, memoized action closure and explicit failure propagation",
+                  "receipt": {
+                    "file": "atomicptr-owning-fixes-review.json",
+                    "sha256": "f6e8c469c8ce7fb5720a7481fc1de99d8e41f397b10819bbb8d5e33657b976bb"
+                  }
+                }
+              },
+              "technicalOwner": "coverage_security_review",
+              "compilerRecovery": {
+                "source": "d66785a6aef275d0e604f82fd7e46edc058e4786",
+                "failedRun": 44379676578,
+                "largePackageProbe": 44381907708,
+                "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
+                "production": "Not qualified; inline/N/A and actual8-alias product proof remain required",
+                "owner": "systrap_regression",
+                "recoveryRun": 44393330444,
+                "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
+                "state": "Builds completed, then the actual-source applicability guard rejected its conditional before inline/N/A validation; product capture still assumed6aliases instead of8. Neither production qualification nor a codegen regression is established.",
+                "history": [
+                  {
+                    "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+                    "failedRun": 44379676578,
+                    "largePackageProbe": 44381907708,
+                    "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
+                    "production": "not qualified",
+                    "owner": "systrap_regression",
+                    "recoveryRun": 44382830296,
+                    "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
+                    "state": "Failed before package mutation on a comment-only Deb822 paragraph; owner simplifying URI-only source preservation before continuation"
+                  },
+                  {
+                    "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+                    "failedRun": 44379676578,
+                    "largePackageProbe": 44381907708,
+                    "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
+                    "production": "Both production link commands passed; required full compiler gate remains NOT qualified",
+                    "owner": "systrap_regression",
+                    "recoveryRun": 44383929244,
+                    "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
+                    "state": "APT/readiness and both production links passed; AMD64 inline passed. Required ARM inline evidence and action capture1 failed; owner is investigating retained products, no full-gate qualification or new run.",
+                    "artifact": 14464909203,
+                    "artifactSHA256": "b783d148c9abc87703690b39e44ca39d56f46deaacd383b5cb736f24842a7610",
+                    "url": "https://github.com/tamird/gvisor/actions/runs/44383929244",
+                    "limits": "ARM handler reachability and action capture are under investigation; no proven codegen-regression claim and no ARM/full-gate pass.",
+                    "receipt": {
+                      "file": "atomicptr-uri-only-44383929244-evidence.json",
+                      "sha256": "665500193f72b84ab21da6f7451ad492f83935bad39d6b4259e12e9fe8a9f6c0"
+                    },
+                    "diagnosis": "ARM mapEntireAddressSpaceDefault=true makes the sole handler-install branch dead; no live handler/assembly/Go ABI wrapper records in actual nm/DWARF. Action capture1 rejected proto-JSON omitted empty environment values. Owner/root reviewing the architecture-specific gate; no waiver, new run or full qualification."
+                  }
+                ],
+                "artifact": 14464909203,
+                "artifactSHA256": "b783d148c9abc87703690b39e44ca39d56f46deaacd383b5cb736f24842a7610",
+                "url": "https://github.com/tamird/gvisor/actions/runs/44383929244",
+                "limits": "ARM handler reachability and action capture are under investigation; no proven codegen-regression claim and no ARM/full-gate pass.",
+                "receipt": {
+                  "file": "atomicptr-uri-only-44383929244-evidence.json",
+                  "sha256": "665500193f72b84ab21da6f7451ad492f83935bad39d6b4259e12e9fe8a9f6c0"
+                },
+                "diagnosis": "ARM mapEntireAddressSpaceDefault=true makes the sole handler-install branch dead; no live handler/assembly/Go ABI wrapper records in actual nm/DWARF. Action capture1 rejected proto-JSON omitted empty environment values. Owner/root reviewing the architecture-specific gate; no waiver, new run or full qualification.",
+                "prefixRun": 44391663447,
+                "prefixReceipt": {
+                  "file": "atomicptr-architecture-44391663447-evidence.json",
+                  "sha256": "7525b5fa4fe0e07c72c9a96497f6584d751ea6ba7055a43020e82edba1ab00a2"
+                },
+                "prefixScope": "Fresh source format/lint and full codegen owner31XML including all8named applicability subcases passed; outerURIspelling gate failed before production.",
+                "preparedContinuation": {
+                  "source": "b35ded894d3e1f6982cdb6fe13a2ba3b76343188",
+                  "plan": "cabc3a87559835172fd15300e77a0fe716a62c9d",
+                  "state": "Autoapproval rejected publication/dispatch command before execution; no retry or workaround",
+                  "pushExecuted": false,
+                  "dispatchExecuted": false,
+                  "canonicalGuard": "PASS",
+                  "metadataOutcomes": 41,
+                  "reviewManifest": "e10a5cc50f7cd2852023021e6050b47e1a96f5d4d60e07fd8f585e6eafdc4609",
+                  "receipt": {
+                    "file": "atomicptr-guard-format-publication-blocked.json",
+                    "sha256": "9626b8a17d305c76f443655ecc72cba63c7c8a6308795ff809d9d638e76358e1"
+                  },
+                  "owner": "systrap_regression",
+                  "authorizationDecision": "Existing exact approval question pending; no duplicate ask or workaround",
+                  "limits": "Fresh source lint/full owner with ten named applicability cases and current production13live+1provedN/A gates remain unexecuted for this revision."
+                }
+              }
+            }
           }
         ],
         "technicalOwner": "coverage_security_review",
         "compilerRecovery": {
-          "source": "d66785a6aef275d0e604f82fd7e46edc058e4786",
-          "failedRun": 44379676578,
-          "largePackageProbe": 44381907708,
-          "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
-          "production": "Not qualified; inline/N/A and actual8-alias product proof remain required",
           "owner": "systrap_regression",
-          "recoveryRun": 44393330444,
-          "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
-          "state": "Builds completed, then the actual-source applicability guard rejected its conditional before inline/N/A validation; product capture still assumed6aliases instead of8. Neither production qualification nor a codegen regression is established.",
-          "history": [
-            {
-              "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
-              "failedRun": 44379676578,
-              "largePackageProbe": 44381907708,
-              "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
-              "production": "not qualified",
-              "owner": "systrap_regression",
-              "recoveryRun": 44382830296,
-              "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
-              "state": "Failed before package mutation on a comment-only Deb822 paragraph; owner simplifying URI-only source preservation before continuation"
-            },
-            {
-              "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
-              "failedRun": 44379676578,
-              "largePackageProbe": 44381907708,
-              "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
-              "production": "Both production link commands passed; required full compiler gate remains NOT qualified",
-              "owner": "systrap_regression",
-              "recoveryRun": 44383929244,
-              "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
-              "state": "APT/readiness and both production links passed; AMD64 inline passed. Required ARM inline evidence and action capture1 failed; owner is investigating retained products, no full-gate qualification or new run.",
-              "artifact": 14464909203,
-              "artifactSHA256": "b783d148c9abc87703690b39e44ca39d56f46deaacd383b5cb736f24842a7610",
-              "url": "https://github.com/tamird/gvisor/actions/runs/44383929244",
-              "limits": "ARM handler reachability and action capture are under investigation; no proven codegen-regression claim and no ARM/full-gate pass.",
-              "receipt": {
-                "file": "atomicptr-uri-only-44383929244-evidence.json",
-                "sha256": "665500193f72b84ab21da6f7451ad492f83935bad39d6b4259e12e9fe8a9f6c0"
-              },
-              "diagnosis": "ARM mapEntireAddressSpaceDefault=true makes the sole handler-install branch dead; no live handler/assembly/Go ABI wrapper records in actual nm/DWARF. Action capture1 rejected proto-JSON omitted empty environment values. Owner/root reviewing the architecture-specific gate; no waiver, new run or full qualification."
-            }
-          ],
-          "artifact": 14464909203,
-          "artifactSHA256": "b783d148c9abc87703690b39e44ca39d56f46deaacd383b5cb736f24842a7610",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44383929244",
-          "limits": "ARM handler reachability and action capture are under investigation; no proven codegen-regression claim and no ARM/full-gate pass.",
+          "source": "02fc62f697b2957e37d53be359ba820676c0e738",
+          "plan": "30f1c0a46142efd8f97ce61370626719f0c0838a",
+          "run": 44409216041,
+          "state": "VERIFIED compiler/oracle PASS; original PR unchanged",
           "receipt": {
-            "file": "atomicptr-uri-only-44383929244-evidence.json",
-            "sha256": "665500193f72b84ab21da6f7451ad492f83935bad39d6b4259e12e9fe8a9f6c0"
+            "file": "atomicptr-goimports-44409216041-evidence.json",
+            "sha256": "89307df8549ffb7e3ab1574fbe69dd501966d1abe5ae65b708b85907318ca3f2"
           },
-          "diagnosis": "ARM mapEntireAddressSpaceDefault=true makes the sole handler-install branch dead; no live handler/assembly/Go ABI wrapper records in actual nm/DWARF. Action capture1 rejected proto-JSON omitted empty environment values. Owner/root reviewing the architecture-specific gate; no waiver, new run or full qualification.",
-          "prefixRun": 44391663447,
-          "prefixReceipt": {
-            "file": "atomicptr-architecture-44391663447-evidence.json",
-            "sha256": "7525b5fa4fe0e07c72c9a96497f6584d751ea6ba7055a43020e82edba1ab00a2"
-          },
-          "prefixScope": "Fresh source format/lint and full codegen owner31XML including all8named applicability subcases passed; outerURIspelling gate failed before production.",
-          "preparedContinuation": {
-            "source": "b35ded894d3e1f6982cdb6fe13a2ba3b76343188",
-            "plan": "cabc3a87559835172fd15300e77a0fe716a62c9d",
-            "state": "Autoapproval rejected publication/dispatch command before execution; no retry or workaround",
-            "pushExecuted": false,
-            "dispatchExecuted": false,
-            "canonicalGuard": "PASS",
-            "metadataOutcomes": 41,
-            "reviewManifest": "e10a5cc50f7cd2852023021e6050b47e1a96f5d4d60e07fd8f585e6eafdc4609",
-            "receipt": {
-              "file": "atomicptr-guard-format-publication-blocked.json",
-              "sha256": "9626b8a17d305c76f443655ecc72cba63c7c8a6308795ff809d9d638e76358e1"
-            },
-            "owner": "systrap_regression",
-            "authorizationDecision": "Existing exact approval question pending; no duplicate ask or workaround",
-            "limits": "Fresh source lint/full owner with ten named applicability cases and current production13live+1provedN/A gates remain unexecuted for this revision."
-          }
+          "limits": [
+            "Production ARM crossbuild/oracle, not native ARM execution",
+            "No runtime performance-effect, full C++ or general Sentry functional claim",
+            "ARM mmap path explicit source/ELF-guarded N/A; no fabricated inline evidence"
+          ]
         }
       },
       "head": "17197905852cdebf53a1f60b9de9652ced640e7c",
@@ -16370,12 +16434,12 @@
       "summary": "The requested post-#16046 rebase is published at 89bbc33772fd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved change is now PR #15651 at exact head c82a47083. No contributor decision remains; maintainer review and current-head CI are followed upstream.\n\nNegotiated timestamps are checked against TS.Recent before handshake, receive and TIME_WAIT state changes, with serial-number comparison and 24-day expiry on the stack clock. The reset exception and existing policy against TIME_WAIT assassination are retained. Three before assertions fail; the Linux reference, corrected packet tests, full owning TCP checks on both architectures, analyzers and lints pass. Existing RACK skips remain explicit. Validation and source composition are independently verified.",
       "url": "https://github.com/google/gvisor/pull/15651",
       "status": "open",
-      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "followup": {
         "disposition": "Native ARM64 run44227886194 independently verifies485 actual cases: TCP62, e2e405, timestamp8, timestamp race8, Linux PAWS1 and netstack PAWS1; zero skips/failures, exact983dc3a/plan0ce3cf64, restored source clean. Prior AMD64 owner/shard/export/lint evidence remains scoped to its recorded run; original harness failure preserved. Functional architecture gap is closed; performance and final review remain open.",
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
-        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
+        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15651",
           "https://github.com/tamird/gvisor/commit/c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
@@ -16396,7 +16460,7 @@
         ],
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
+        "recheckCondition": "Root shared-mechanism decision, same-operation execution-review result, actual qualification evidence or source/dependency event.",
         "qualificationHistory": [
           {
             "disposition": "Prepared separate rebase candidate 0e5a957935 on current master. Its only topic change is the required nil SACK argument in the new SYN-RCVD ACK call; original PR source remains unchanged. Native qualification plan is prepared for publication.",
@@ -16410,6 +16474,51 @@
             "disposition": "Exact candidate 983dc3a completed every actual remote command successfully: AMD64 build, ARM64 cross-build, native TCP62, timestamp8, timestamp race8, Linux/netstack PAWS one each, export provenance and both lints. Original harness failed only because it expected unsharded e2e XML; all four retained shards contain 405 unique passing cases, zero skips/failures. Original failure preserved. Native ARM64 execution and performance gates remain open. Independently reviewed missing-only native ARM64 run44227886194 is now dispatched on unchanged candidate983dc3a; plan0ce3cf64,180m body cap. No ARM execution success is asserted yet.",
             "nextAction": "Root follows native ARM64 run44227886194 to terminal state and handles any actual failure. Finish shared-base broad network performance and final source review before an exact amendment decision; preserve corrected AMD64 evidence.",
             "recheckCondition": "Native ARM64 or networking qualification evidence, independent review, source/feedback change or contributor decision."
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "disposition": "Native ARM64 run44227886194 independently verifies485 actual cases: TCP62, e2e405, timestamp8, timestamp race8, Linux PAWS1 and netstack PAWS1; zero skips/failures, exact983dc3a/plan0ce3cf64, restored source clean. Prior AMD64 owner/shard/export/lint evidence remains scoped to its recorded run; original harness failure preserved. Functional architecture gap is closed; performance and final review remain open.",
+              "owner": "root",
+              "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
+              "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/15651",
+                "https://github.com/tamird/gvisor/commit/c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
+                "https://app.buildbuddy.io/invocation/405cb942-5956-4500-b69d-93e03c1fb198",
+                "https://github.com/tamird/gvisor/commit/89bbc33772fdf5eecec78d3b920b75fdb5e3918c",
+                "https://github.com/gvisor/gvisor/pull/15651",
+                "https://github.com/tamird/gvisor/commit/d4c6ee0eae1cb9a4ec0c9fb201766a7c4428a38e",
+                "https://github.com/tamird/gvisor/commit/d531ad7020c188a6c93e3dd2e339bade982b21dd",
+                "https://github.com/gvisor/gvisor/actions/runs/44150542310/job/134277320009",
+                "https://github.com/gvisor/gvisor/commit/c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
+                "https://buildkite.com/gvisor/first-pass/builds/1456",
+                "https://buildkite.com/gvisor/first-pass/builds/1456#01a1ead4-c5d8-41bb-aa17-893a771d695f",
+                "https://github.com/tamird/gvisor/commit/0e5a9579352fbad6643c030499524d5645c60629",
+                "https://github.com/tamird/gvisor/commit/983dc3a36b4c481da9911e05b97d7a02b18b8e71",
+                "https://github.com/tamird/gvisor/actions/runs/44209699406",
+                "https://github.com/tamird/gvisor/actions/runs/44210296597",
+                "https://github.com/tamird/gvisor/actions/runs/44227886194"
+              ],
+              "mergeable": "MERGEABLE",
+              "observedAt": "2026-11-18T09:21:28.062516+00:00",
+              "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
+              "qualificationUpdate": {
+                "curatedAt": "2026-11-18T00:52:10.274668+00:00",
+                "publishedSourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
+                "evidence": [
+                  "https://github.com/tamird/gvisor/commit/983dc3a36b4c481da9911e05b97d7a02b18b8e71",
+                  "https://github.com/tamird/gvisor/actions/runs/44209699406",
+                  "https://github.com/tamird/gvisor/actions/runs/44210296597"
+                ],
+                "candidate": {
+                  "head": "983dc3a36b4c481da9911e05b97d7a02b18b8e71",
+                  "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
+                }
+              },
+              "remainingNetworkOutcomeOwner": "tcp_conflict"
+            }
           }
         ],
         "qualificationUpdate": {
@@ -16425,7 +16534,18 @@
             "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
           }
         },
-        "remainingNetworkOutcomeOwner": "tcp_conflict"
+        "remainingNetworkOutcomeOwner": "tcp_conflict",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+        "ciExecutionAuthorization": {
+          "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
+          "owner": "root",
+          "historicalPlan": "2da1c9afe20217ba15542a884d88735501dd477c",
+          "sourcePRPublicationApprovedByThisGrant": false,
+          "receipt": {
+            "file": "tcp-full-category-outcomes-publication-approval-package.json",
+            "sha256": "16b649d36d3625042152615568ab55dfdbdfa68ea910e5b38f1b7a268a8b9bce"
+          }
+        }
       },
       "number": 15651,
       "evidence": [
@@ -25753,14 +25873,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
       "followup": {
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
         "observedAt": "2026-11-18T20:00:58.033079+00:00",
         "disposition": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
-        "nextAction": "Root preserves approved11af and code-identical localf097 plus reply draft; upstream8f remains unchanged. Do not repeat the approval question or bypass the blocked DCO action.",
+        "nextAction": "Root completes the already-authorized source amendment and approved reply once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -25779,7 +25899,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9915-46a8-995f-da5317a484c1"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual execution/certification blocker changes, contributor steering or substantive source/review change.",
+        "recheckCondition": "Exact execution-review disposition, changed source/head or substantive reviewer feedback.",
         "preparedRevision": {
           "head": "f09702e855ccb3a0da8708479b3563d56da82768",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
@@ -25800,14 +25920,18 @@
             "CONTRIBUTING.md"
           ]
         },
-        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
         "amendmentPublicationCondition": {
           "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
           "owner": "root",
-          "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
-          "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
-          "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
-          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+          "state": "Execution-policy rejection before DCO addition; user decision settled, no new approval question",
+          "userDecision": "Existing amendment/rebase/code approval retained; user explicitly declined manual DCO mechanics. No human manual Git action is pending.",
+          "nextAction": "Root completes the already-authorized source amendment and approved reply once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection.",
+          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here.",
+          "receipt": {
+            "file": "human-signoff-rebases.json",
+            "sha256": "70b2f7f1f151175d26b74b009ed19fad2f2ee262adce63a21f2cf50ca125e94e"
+          }
         },
         "publicationConditionHistory": [
           {
@@ -25829,7 +25953,89 @@
             "file": "human-signoff-rebases.json",
             "sha256": "c937bbd73eb37d22b9cfa1061efd1b750ff607c567299989eccaed046ee4f94d"
           }
-        }
+        },
+        "qualificationHistory": [
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
+              "observedAt": "2026-11-18T20:00:58.033079+00:00",
+              "disposition": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
+              "nextAction": "Root preserves approved11af and code-identical localf097 plus reply draft; upstream8f remains unchanged. Do not repeat the approval question or bypass the blocked DCO action.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/16098",
+                "https://github.com/tamird/gvisor/commit/66eb27741",
+                "https://github.com/tamird/gvisor/actions/runs/42809631266/artifacts/13763175151",
+                "https://github.com/tamird/gvisor/actions/runs/42831846346/artifacts/13771214942",
+                "https://github.com/google/gvisor/pull/16098",
+                "https://github.com/tamird/gvisor/commit/cd5e5628a",
+                "https://github.com/google/gvisor/pull/16098#discussion_r4456035662",
+                "https://github.com/google/gvisor/pull/16098#discussion_r4456036079",
+                "https://github.com/google/gvisor/pull/16098#discussion_r4456036506",
+                "https://github.com/gvisor/gvisor/pull/16098",
+                "https://github.com/tamird/gvisor/commit/66eb2774175258362fb3afaa11d75dec66c3684a",
+                "https://github.com/tamird/gvisor/commit/8f15f127381605e0d3254cbdb5818bb594db0364",
+                "https://buildkite.com/gvisor/first-pass/builds/1463",
+                "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9910-4de2-86ba-488c8da31450",
+                "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9915-46a8-995f-da5317a484c1"
+              ],
+              "mergeable": "MERGEABLE",
+              "recheckCondition": "Actual execution/certification blocker changes, contributor steering or substantive source/review change.",
+              "preparedRevision": {
+                "head": "f09702e855ccb3a0da8708479b3563d56da82768",
+                "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "state": "Ready local docs-only rebase; targeted code qualification retained; publication execution blocked",
+                "owner": "root",
+                "limits": "Public AMD64 adapter cquery, goimports/buildifier and one fresh uncached compiler import identity case only; no full Nogo/private compiler/ARM/performance qualification.",
+                "run": 44382753105,
+                "plan": "39496579770cc5a692522c9b8ad67bc4b991d172",
+                "testedSource": "538e220b3d87f549b2f3bfe16e1076011f901283",
+                "tree": "7d3ad0640c7f97bed991893bf78faaee4aaaf55a",
+                "receipt": {
+                  "file": "nogo-16098-44382753105-evidence.json",
+                  "sha256": "437adab0160bbd0dbcea6deb0a2d739ca63afbb7ef4ad824e143d0b1fd3dee10"
+                },
+                "previousApprovedHead": "11af41f15e37b1ab4260735a25378a79085c770e",
+                "differencesFromValidatedSource": [
+                  "AGENTS.md",
+                  "CONTRIBUTING.md"
+                ]
+              },
+              "curatedAt": "2026-11-18T20:59:19.864167+00:00",
+              "amendmentPublicationCondition": {
+                "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                "owner": "root",
+                "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
+                "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
+                "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
+                "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+              },
+              "publicationConditionHistory": [
+                {
+                  "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                  "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                  "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+                  "owner": "root",
+                  "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+                }
+              ],
+              "readyLocalRebase": {
+                "head": "f09702e855ccb3a0da8708479b3563d56da82768",
+                "base": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                "commits": 1,
+                "DCO": "Absent; no final signed source created",
+                "remotePublication": false,
+                "scope": "Prepared local candidate; public PR head unchanged",
+                "receipt": {
+                  "file": "human-signoff-rebases.json",
+                  "sha256": "c937bbd73eb37d22b9cfa1061efd1b750ff607c567299989eccaed046ee4f94d"
+                }
+              }
+            }
+          }
+        ]
       },
       "evidence": [
         {
@@ -34138,14 +34344,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "Keep the congestion threshold across repeated timeouts without an advancing ACK and when a timeout interrupts fast recovery. Master already preserves cwnd and ssthresh on an idle zero-window probe. The amendment drops the duplicate early return and retains both TestZeroWindowSend assertions. Five original XML files contain 20 passing records with zero skips.",
       "followup": {
         "owner": "tcp_conflict",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
-        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
+        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -34168,7 +34374,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44218955130",
           "https://github.com/tamird/gvisor/actions/runs/44218958456"
         ],
-        "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
+        "recheckCondition": "Root shared-mechanism decision, same-operation execution-review result, actual qualification evidence or source/dependency event.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -34182,6 +34388,71 @@
             "nextAction": "Inspect both pilots through completion, diagnose capability/harness failures, and use actual execution time to partition all relevant networking variants and loss modes for sufficient paired sampling. Finish full-source adversarial review before requesting the original PR amendment.",
             "recheckCondition": "Either pilot completes/fails, shared ARM lint correction qualifies, source/feedback changes, or contributor decision.",
             "sourceHead": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e"
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "tcp_conflict",
+              "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
+              "observedAt": "2026-11-18T09:21:28.062516+00:00",
+              "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
+              "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/16419",
+                "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
+                "https://github.com/google/gvisor/pull/16419#discussion_r4544573717",
+                "https://github.com/tamird/gvisor/commit/52ed6dad4",
+                "https://github.com/tamird/gvisor/actions/runs/43125532274",
+                "https://github.com/tamird/gvisor/actions/runs/43125532274/artifacts/13904437554",
+                "https://github.com/google/gvisor/pull/16419#discussion_r4544891392",
+                "https://github.com/google/gvisor/pull/16419#pullrequestreview-5866954223",
+                "https://github.com/gvisor/gvisor/pull/16419",
+                "https://github.com/tamird/gvisor/commit/f9446ddf973def4ce653acbb098532c2b1eb0ef0",
+                "https://github.com/tamird/gvisor/actions/runs/44196061844",
+                "https://github.com/tamird/gvisor/actions/runs/44196066072",
+                "https://github.com/tamird/gvisor/actions/runs/44207851100",
+                "https://github.com/tamird/gvisor/actions/runs/44207884803",
+                "https://github.com/tamird/gvisor/actions/runs/44209196768",
+                "https://github.com/tamird/gvisor/commit/55492e84baec5587a144342098897e809281877c",
+                "https://github.com/tamird/gvisor/commit/958bf534aea87ce49ad86f5852760e13ac9e14e5",
+                "https://github.com/tamird/gvisor/actions/runs/44219938333",
+                "https://github.com/tamird/gvisor/actions/runs/44218955130",
+                "https://github.com/tamird/gvisor/actions/runs/44218958456"
+              ],
+              "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
+              "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+              "mergeable": "CONFLICTING",
+              "qualificationUpdate": {
+                "curatedAt": "2026-11-18T00:52:10.274668+00:00",
+                "publishedSourceHead": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e",
+                "evidence": [
+                  "https://github.com/tamird/gvisor/actions/runs/44207851100",
+                  "https://github.com/tamird/gvisor/actions/runs/44207884803",
+                  "https://github.com/tamird/gvisor/actions/runs/44209196768",
+                  "https://github.com/tamird/gvisor/commit/55492e84baec5587a144342098897e809281877c",
+                  "https://github.com/tamird/gvisor/commit/958bf534aea87ce49ad86f5852760e13ac9e14e5"
+                ],
+                "candidate": {
+                  "head": "f9446ddf973def4ce653acbb098532c2b1eb0ef0",
+                  "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
+                }
+              },
+              "categoryPilot": {
+                "owner": "tcp_conflict",
+                "run": 44250351891,
+                "source": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
+                "runtime": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "state": "Workflow failure retained; all70 actual leaves consumed",
+                "disposition": "61 Sentry leaves request-valid:33HTTPD+4Node+4Ruby+20Redis. All five native controls valid. All nine Sentry HTTPD concurrency1000 cases had391–665 actual client timeout errors per1000 despite finite QPS. Peer-reviewed retained-raw Redis LPUSH setup-row accounting corrected five false parser rejections without reruns. No TCP candidate ran.",
+                "nextAction": "Qualify minimal Hey reporting correction separately. Prepare bounded native/BASE diagnosis of representative existing high-concurrency HTTPD case using actual server config/log/resource evidence before choosing timeout/config changes; no all-category retry or statistical launch.",
+                "recheckCondition": "Hey qualifier outcome, complete diagnostic executable review/authorization or actual new baseline evidence.",
+                "evidence": [
+                  "https://github.com/tamird/gvisor/actions/runs/44250351891"
+                ]
+              },
+              "remainingNetworkOutcomeOwner": "tcp_conflict"
+            }
           }
         ],
         "qualificationUpdate": {
@@ -34212,7 +34483,18 @@
             "https://github.com/tamird/gvisor/actions/runs/44250351891"
           ]
         },
-        "remainingNetworkOutcomeOwner": "tcp_conflict"
+        "remainingNetworkOutcomeOwner": "tcp_conflict",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+        "ciExecutionAuthorization": {
+          "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
+          "owner": "root",
+          "historicalPlan": "2da1c9afe20217ba15542a884d88735501dd477c",
+          "sourcePRPublicationApprovedByThisGrant": false,
+          "receipt": {
+            "file": "tcp-full-category-outcomes-publication-approval-package.json",
+            "sha256": "16b649d36d3625042152615568ab55dfdbdfa68ea910e5b38f1b7a268a8b9bce"
+          }
+        }
       },
       "evidence": [
         {
@@ -37872,13 +38154,13 @@
       "group": "bazel",
       "status": "open",
       "summary": "The report/KCOV capability gate passes, but the rules_go replacement drops all 2,418 generated protobuf coverage positions present in the baseline. Handwritten positions are preserved. Amendment held while the coverage owner prepares a faithful fix.",
-      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "followup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Retention gate44254336532 fully verified PASS:600 actual iterations,zero skips/failures,two valid report arms,all six argv/sidecar audits,24 fileset checks,two nine-member runtime archives and clean source. Full symbolize inventory exposes a preservation defect:all2418 legacy generated .pb.go positions are absent from candidate;zero handwritten baseline positions lost. Pinned rules_go0.65 proto rule explicitly disables generated coverage. Original PR says keep existing exclusions; no approval to narrow coverage. Candidate7e amendment is held pending a faithful fix. Prior ARM startup+0.82%p=.006 and missing original RACE comparator remain.",
-        "nextAction": "Await the exact execution approval already requested. Then publish unchanged plan 046c87e012f49b26d52d1fc45f8189f3a1f0066b and dispatch one AMD64 NORMAL fidelity run for source 9ddd73c541c3b73558f3a10b0f8833b5586e9bc0. No run exists. Keep the reviewed files frozen; do not retry through another route after automatic rejection. Qualification and the original PR amendment decision remain pending.",
+        "nextAction": "Root carries the faithful generated-protobuf coverage gate into a permanent Bazel owner/thin Action. Same exact CI-only046 publication/dispatch may be re-reviewed under the new standing CI grant; no pending human execution decision remains. Keep frozen reviewed bytes and earlier rejection history, do not launch the per-item driver or bypass a renewed denial. Original PR amendment remains unqualified and separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -37907,7 +38189,7 @@
           "https://github.com/bazel-contrib/rules_go/blob/v0.65.0/proto/def.bzl#L165-L170"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Generated-source prototype/review and exact fidelity check, source/feedback change or explicit contributor coverage-policy decision.",
+        "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "qualificationHistory": [
           {
@@ -37947,6 +38229,167 @@
             "disposition": "Candidate7eafb7af default-argument RACE capability is verified on AMD44240006357 (8leaves) and ARM44240001660 (3portable leaves), no skips/failures; debugfalse, reportunset, frozen products/images and clean restoration. This is candidate capability only: original BASE re-execution remains unusable, so paired RACE performance is unavailable. Non-race COVERAGE studies retain ARM startup+0.82%p=.006 and pipe/thread ns/op-1.55%p=.002; ordinary uninstrumented parity remains a separate historical scope.",
             "nextAction": "Own terminal consumption of retention recovery44254336532 and source-bound full coverage delivery assessment. Preserve both historical functional comparisonBasebf5 and current candidate parent1f; retain ARM startup cost and unavailable paired RACE baseline. Do not compare old unwrapped BASE time with wrapped observations.",
             "recheckCondition": "Owned runs become terminal, new performance/review evidence, source changes or contributor decision."
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "coverage_security_review",
+              "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
+              "observedAt": "2026-11-18T09:21:28.062516+00:00",
+              "disposition": "Retention gate44254336532 fully verified PASS:600 actual iterations,zero skips/failures,two valid report arms,all six argv/sidecar audits,24 fileset checks,two nine-member runtime archives and clean source. Full symbolize inventory exposes a preservation defect:all2418 legacy generated .pb.go positions are absent from candidate;zero handwritten baseline positions lost. Pinned rules_go0.65 proto rule explicitly disables generated coverage. Original PR says keep existing exclusions; no approval to narrow coverage. Candidate7e amendment is held pending a faithful fix. Prior ARM startup+0.82%p=.006 and missing original RACE comparator remain.",
+              "nextAction": "Await the exact execution approval already requested. Then publish unchanged plan 046c87e012f49b26d52d1fc45f8189f3a1f0066b and dispatch one AMD64 NORMAL fidelity run for source 9ddd73c541c3b73558f3a10b0f8833b5586e9bc0. No run exists. Keep the reviewed files frozen; do not retry through another route after automatic rejection. Qualification and the original PR amendment decision remain pending.",
+              "evidence": [
+                "https://github.com/tamird/gvisor/commit/c2799abaa",
+                "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
+                "https://github.com/gvisor/gvisor/pull/16507",
+                "https://github.com/tamird/gvisor/commit/43f4e3871d",
+                "https://github.com/tamird/gvisor/commit/f1131c5e796c82c26560601c8b2f86593f33fba9",
+                "https://github.com/tamird/gvisor/actions/runs/44176467049",
+                "https://github.com/tamird/gvisor/commit/7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+                "https://github.com/tamird/gvisor/actions/runs/44190856301",
+                "https://github.com/tamird/gvisor/actions/runs/44196026066",
+                "https://github.com/tamird/gvisor/commit/ff0990b09bd00da593e32370ff81a51e95179ddb",
+                "https://github.com/tamird/gvisor/actions/runs/44208124597",
+                "https://github.com/tamird/gvisor/actions/runs/44208817043",
+                "https://github.com/tamird/gvisor/commit/058a3eec75c4e1ca8279cd249fe4dc597dc11531",
+                "https://github.com/tamird/gvisor/actions/runs/44220494683",
+                "https://github.com/tamird/gvisor/actions/runs/44225345386",
+                "https://github.com/tamird/gvisor/actions/runs/44231171716",
+                "https://github.com/tamird/gvisor/actions/runs/44229427552",
+                "https://github.com/tamird/gvisor/actions/runs/44230450058",
+                "https://github.com/tamird/gvisor/actions/runs/44240006357",
+                "https://github.com/tamird/gvisor/actions/runs/44240001660",
+                "https://github.com/tamird/gvisor/actions/runs/44241963234",
+                "https://github.com/tamird/gvisor/actions/runs/44246691602",
+                "https://github.com/tamird/gvisor/actions/runs/44246313719",
+                "https://github.com/tamird/gvisor/actions/runs/44254336532",
+                "https://github.com/bazel-contrib/rules_go/blob/v0.65.0/proto/def.bzl#L165-L170"
+              ],
+              "mergeable": "CONFLICTING",
+              "recheckCondition": "Generated-source prototype/review and exact fidelity check, source/feedback change or explicit contributor coverage-policy decision.",
+              "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+              "qualificationUpdate": {
+                "curatedAt": "2026-11-18T00:52:10.274668+00:00",
+                "publishedSourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
+                "evidence": [
+                  "https://github.com/tamird/gvisor/actions/runs/44208124597",
+                  "https://github.com/tamird/gvisor/actions/runs/44208817043",
+                  "https://github.com/tamird/gvisor/commit/058a3eec75c4e1ca8279cd249fe4dc597dc11531"
+                ],
+                "candidate": {
+                  "head": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+                  "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                  "comparisonBase": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa"
+                }
+              },
+              "reportGate": {
+                "owner": "coverage_security_review",
+                "currentRun": 44254336532,
+                "source": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+                "plan": "78bcae1e7164ec502e5c6148651e255dda882144",
+                "state": "passed",
+                "scope": "All six matched100-repeat observations under one shared support-only path-relocation wrapper; expected35–50min, hard120min inclusive. No runtime ELF/sidecar/source/permission or statistical change.",
+                "retainedFailures": [
+                  44241963234,
+                  44246313719,
+                  44246691602
+                ],
+                "observationLimit": "Last executed BASE reportoff/reporton each passed100 actual Uname iterations, but canonical successful cleanup removes generated profiles before post-run parsing. This does not prove report generation failed; candidate/KCOV were not reached.",
+                "correction": "Only exact generated coverage-report path relocated outside deleted log tree; original/final/no-flag argv and same ELF/sidecar hashes audited. All six rerun under common wrapper. Its launch overhead and omitted profile unlink are explicit timing limits.",
+                "recheckCondition": "Source or report mechanism changes; otherwise reuse exact7e/1f evidence.",
+                "totalCompletedIterations": 600,
+                "skips": 0,
+                "failures": 0,
+                "artifact": 14406811432,
+                "artifactSHA256": "613fe22ddb94b406e4063bfe5027d3bd422edd9c89efed198c9185f114426c9e",
+                "statisticalQualification": false
+              },
+              "generatedCoverageFidelity": {
+                "source": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+                "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "run": 44254336532,
+                "method": "Existing actual full symbolize -all metadata only; no execution/resampling",
+                "fullInventoryCounts": {
+                  "base": 115841,
+                  "candidate": 113424
+                },
+                "protobufPositionCounts": {
+                  "base": 2418,
+                  "candidate": 0
+                },
+                "baseOnlyCount": 2418,
+                "candidateOnlyCount": 1,
+                "baseOnlyNonProtobuf": [],
+                "candidateOnly": [
+                  "gvisor_sentry_coverage_/gvisor_sentry_coverage/sentry_main.go:25.2,26.1"
+                ],
+                "baseOnlyProtobufFiles": {
+                  "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto/syscall.pb.go": 973,
+                  "gvisor.dev/gvisor/pkg/sentry/arch/registers_go_proto/registers.pb.go": 234,
+                  "gvisor.dev/gvisor/pkg/sentry/control/tpu_control_proto_go_proto/tpu_control.pb.go": 219,
+                  "gvisor.dev/gvisor/pkg/metric/metric_go_proto/metric.pb.go": 159,
+                  "gvisor.dev/gvisor/pkg/sentry/fscheckpoint/fscheckpoint_proto_go_proto/fscheckpoint.pb.go": 88,
+                  "gvisor.dev/gvisor/pkg/sentry/vfs/events_go_proto/events.pb.go": 19,
+                  "gvisor.dev/gvisor/pkg/sentry/unimpl/unimplemented_syscall_go_proto/unimplemented_syscall.pb.go": 22,
+                  "gvisor.dev/gvisor/pkg/sentry/strace/strace_go_proto/strace.pb.go": 72,
+                  "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto/sentry.pb.go": 187,
+                  "gvisor.dev/gvisor/pkg/eventchannel/eventchannel_go_proto/event.pb.go": 22,
+                  "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto/container.pb.go": 34,
+                  "gvisor.dev/gvisor/pkg/sentry/control/control_api_go_proto/control.pb.go": 64,
+                  "gvisor.dev/gvisor/pkg/sentry/pgalloc/pgalloc_metadata_go_proto/pgalloc.pb.go": 109,
+                  "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto/common.pb.go": 166,
+                  "gvisor.dev/gvisor/pkg/sentry/socket/netstack/events_go_proto/events.pb.go": 19,
+                  "gvisor.dev/gvisor/pkg/sentry/kernel/uncaught_signal_go_proto/uncaught_signal.pb.go": 31
+                },
+                "pinnedRulesGoCause": {
+                  "version": "0.65.0",
+                  "source": "https://github.com/bazel-contrib/rules_go/blob/v0.65.0/proto/def.bzl#L165-L170",
+                  "behavior": "go_proto_library passes generated_srcs=go_srcs and coverage_instrumented=False to new_go_info; context.bzl covers only attr_srcs, not generated_srcs.",
+                  "genericBazelGeneratedFileFlag": "Not sufficient to override explicit rules_go coverage_instrumented=False; no flag fix attempted."
+                },
+                "scope": "Generated protobuf instrumentation differs from legacy. No observed ordinary binary or security failure. Must disclose/resolve fidelity policy before claiming instrumentation parity."
+              },
+              "generatedCoveragePrototype": {
+                "owner": "coverage_security_review",
+                "head": "9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
+                "parent": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+                "ref": "review/coverage-generated-proto-20261118",
+                "url": "https://github.com/tamird/gvisor/commit/9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
+                "state": "Published source and technically reviewed immutable fidelity plan; exact execution authorization pending after automatic-review rejection.",
+                "scope": "Two upstream Starlark lines: own attr+generated sources use the existing coverage selection before embed merge; proto no longer forces coverage off. MODULE binds one new patch.",
+                "requiredEvidence": [
+                  "ordinary/selected/excluded provider sets",
+                  "mixed embedded-library selection in both directions",
+                  "complete symbolization restores generated protobuf positions",
+                  "nonzero actual executed protobuf report",
+                  "native normal/race functional qualification before performance assessment"
+                ],
+                "preparedPlan": "046c87e012f49b26d52d1fc45f8189f3a1f0066b",
+                "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
+                "planPublished": false,
+                "runCreated": false
+              },
+              "executionApproval": {
+                "status": "pending",
+                "owner": "root",
+                "reason": "Automatic approval review rejected exact public support publication/workflow dispatch despite standing authorization and forbade alternate execution routes. Exact user approval requested; no attempt after rejection.",
+                "destination": "tamird/gvisor:research/coverage-protobuf-fidelity-20261118",
+                "source": "9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
+                "plan": "046c87e012f49b26d52d1fc45f8189f3a1f0066b",
+                "workflow": "qualification.yml",
+                "workflowRef": "master",
+                "architecture": "amd64",
+                "expectedMinutes": [
+                  20,
+                  30
+                ],
+                "hardMinutesAfterGenericPreparation": 90,
+                "fileCount": 16,
+                "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
+                "recheckCondition": "Explicit user decision on this exact prepared payload; preserve frozen bytes."
+              }
+            }
           }
         ],
         "qualificationUpdate": {
@@ -38036,7 +38479,7 @@
           "parent": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
           "ref": "review/coverage-generated-proto-20261118",
           "url": "https://github.com/tamird/gvisor/commit/9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
-          "state": "Published source and technically reviewed immutable fidelity plan; exact execution authorization pending after automatic-review rejection.",
+          "state": "Technically reviewed source/frozen fidelity plan; CI-only operation authorized for re-review, held for permanent Bazel mechanism migration; no run",
           "scope": "Two upstream Starlark lines: own attr+generated sources use the existing coverage selection before embed merge; proto no longer forces coverage off. MODULE binds one new patch.",
           "requiredEvidence": [
             "ordinary/selected/excluded provider sets",
@@ -38051,9 +38494,9 @@
           "runCreated": false
         },
         "executionApproval": {
-          "status": "pending",
+          "status": "Authorized CI-only; mechanism migration HOLD",
           "owner": "root",
-          "reason": "Automatic approval review rejected exact public support publication/workflow dispatch despite standing authorization and forbade alternate execution routes. Exact user approval requested; no attempt after rejection.",
+          "reason": "New standing user grant covers non-human-perturbing CI actions. Historical automatic rejection remains recorded; same exact operation requires re-review, no alternate route. User now requests permanent Bazel owners/thin Actions instead of per-item drivers.",
           "destination": "tamird/gvisor:research/coverage-protobuf-fidelity-20261118",
           "source": "9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
           "plan": "046c87e012f49b26d52d1fc45f8189f3a1f0066b",
@@ -38067,8 +38510,9 @@
           "hardMinutesAfterGenericPreparation": 90,
           "fileCount": 16,
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
-          "recheckCondition": "Explicit user decision on this exact prepared payload; preserve frozen bytes."
-        }
+          "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
+        },
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00"
       },
       "evidence": [
         {
@@ -57985,8 +58429,8 @@
       "url": "https://github.com/tamird/gvisor/commit/09b196bf630b2a6be83ab28e6c7611f7e766a023",
       "group": "runtime",
       "status": "Agent work: functional gates passed; remaining qualification open",
-      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
-      "summary": "The earlier race release and ordinary30pass and save/restore900-second timeout remain recorded. The approved missing-only save/restore plus save/resume continuation is running under110minutes; no terminal result is inferred.",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
+      "summary": "Exact source09b retains normal AMD64/source/checker/C++ and Go-race/ordinary30 evidence. Race save/restore44400554546 passed30 fresh cases; save/resume failed exit66 with cause UNKNOWN because producer boot/gofer/run logs were discarded. ARM availability44408956295 passed only its scoped preflight. No full race/ARM/performance qualification is inferred.",
       "evidence": [
         {
           "label": "Two architecture analyzers on all 23 marked cases in fa6b9080f",
@@ -58088,8 +58532,8 @@
         "owner": "root",
         "sourceHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "The earlier race release and ordinary30pass and save/restore900-second timeout remain recorded. The approved missing-only save/restore plus save/resume continuation is running under110minutes; no terminal result is inferred.",
-        "nextAction": "Owner fuse_full20_resume consumes exact44400554546 two-wrapper artifacts, required30cases each, actual restore and cleanup. Keep GORACE and prior failure evidence unchanged; stop and inspect another timeout before any further cap change.",
+        "disposition": "Exact source09b retains normal AMD64/source/checker/C++ and Go-race/ordinary30 evidence. Race save/restore44400554546 passed30 fresh cases; save/resume failed exit66 with cause UNKNOWN because producer boot/gofer/run logs were discarded. ARM availability44408956295 passed only its scoped preflight. No full race/ARM/performance qualification is inferred.",
+        "nextAction": "Root moves the missing race-save/resume diagnostic retention and native ARM functional gates into permanent Bazel owners/thin Actions. Preserve actual save30PASS, failed resume exit66 and missing producer logs; no race-cause claim or repeated per-item retry. CI-only authorization is settled; prerequisite17127 and performance/source-publication gates remain separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -58112,7 +58556,7 @@
           "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes."
         },
         "technicalOwner": "systrap_regression",
-        "recheckCondition": "Actual continuation terminal artifact/cleanup or changed source/runtime/protocol inputs.",
+        "recheckCondition": "Permanent owner/diagnostic retention result, actual remaining-gate evidence, prerequisite landing or source event.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -58347,6 +58791,175 @@
               "runtimeOrCheckerTestsRun": true,
               "actualExecutionLimit": "AMD64 source and functional consumer gates passed within exact receipt scopes. ARM execution, race, full C++ and performance qualification remain open."
             }
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+              "observedAt": "2026-11-18T21:05:51.124797+00:00",
+              "disposition": "The earlier race release and ordinary30pass and save/restore900-second timeout remain recorded. The approved missing-only save/restore plus save/resume continuation is running under110minutes; no terminal result is inferred.",
+              "nextAction": "Owner fuse_full20_resume consumes exact44400554546 two-wrapper artifacts, required30cases each, actual restore and cleanup. Keep GORACE and prior failure evidence unchanged; stop and inspect another timeout before any further cap change.",
+              "evidence": [
+                "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
+                "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
+                "https://github.com/tamird/gvisor/actions/runs/42880901658/artifacts/13795662188",
+                "https://github.com/google/gvisor/pull/16806",
+                "https://github.com/tamird/gvisor/actions/runs/42665113185/artifacts/13697018009",
+                "https://github.com/tamird/gvisor/actions/runs/42664387976/artifacts/13696378343",
+                "https://github.com/tamird/gvisor/commit/e22d237b3",
+                "https://github.com/tamird/gvisor/commit/8d8a461be",
+                "https://github.com/tamird/gvisor/actions/runs/44347958039"
+              ],
+              "branchRefObservation": {
+                "repo": "tamird/gvisor",
+                "ref": "review/semaphore-owner-lock-20261118",
+                "head": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+                "observedAt": "2026-11-18T16:46:00.239336+00:00",
+                "state": "present; exact remote ref read back",
+                "owner": "root",
+                "nextAction": "Owner prepares missing-only ARM execution, race, C++ and performance qualification, reusing valid source/native evidence and unchanged compiler inputs. Keep prerequisite #17127 and explicit publication approval separate.",
+                "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes."
+              },
+              "technicalOwner": "systrap_regression",
+              "recheckCondition": "Actual continuation terminal artifact/cleanup or changed source/runtime/protocol inputs.",
+              "currentMechanismAssessment": {
+                "owner": "root",
+                "proposal": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+                "sourceParent": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
+                "verifiedCurrentFacts": [
+                  "Exact source gate44322450121 passed canonical lint, three nogo owners on both architectures and eight native AMD64 cases. The old-checker control rejects the valid owner on both architectures.",
+                  "Exact consumer44347958039 passed30 ordinary,30 save/restore and30 save/resume cases;30 native Linux cases reused from44337494099. Full opaque runtime identity and cleanup were verified."
+                ],
+                "nextAction": "Owner prepares missing-only ARM execution, race, C++ and performance qualification, reusing valid source/native evidence and unchanged compiler inputs. Keep prerequisite #17127 and explicit publication approval separate.",
+                "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes.",
+                "runtimeOrCheckerTestsRun": true,
+                "actualExecutionLimit": "AMD64 source and functional consumer gates passed within exact receipt scopes. ARM execution, race, full C++ and performance qualification remain open."
+              },
+              "preparedPrerequisite": {
+                "number": 17127,
+                "upstreamHead": "52ff87dadb907e5facdee03b9ec746f1806a19e2",
+                "localRebase": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
+                "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "stablePatchId": "cfcc3c79d9989299a06bc339126ced456687c711",
+                "authorDateBodyDCOExact": true,
+                "upstreamPRUpdated": false,
+                "deliveryOwner": "root",
+                "scope": "Reuse the existing approved real-queue clearing fix as an explicit prerequisite; do not duplicate it in owner-link work. Existing regression retained."
+              },
+              "preparationState": "Exact source09b and source gate44322450121 passed. Native30 and90 fresh Sentry syscall cases now verified; remaining architecture/race/compiler/performance standards are open.",
+              "preparedLocalRevision": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+              "qualificationPlan": {
+                "owner": "root",
+                "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+                "base": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
+                "plan": "97bb424c8bc0311f7846ecaffad0814fb0373911",
+                "run": 44322450121,
+                "url": "https://github.com/tamird/gvisor/actions/runs/44322450121",
+                "state": "VERIFIED PASS: initial source gate only",
+                "published": true,
+                "dispatched": true,
+                "passed": [
+                  "canonical lint",
+                  "three source nogo owners, both architectures empty findings",
+                  "eight exact native AMD64 cases",
+                  "old-checker control rejects valid owner on both architectures",
+                  "cleanup and exact clean final source"
+                ],
+                "receipt": {
+                  "file": "semaphore-44322450121-evidence.json",
+                  "sha256": "de52076089ab98ea4127a2a1871c942a64163c6f9b28f7fe505589e3d5ec5d21"
+                },
+                "performanceQualification": false,
+                "priorFailedRunsPreserved": [
+                  44301694165,
+                  44302665452,
+                  44305026783,
+                  44308422121,
+                  44316942020
+                ]
+              },
+              "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+              "preparedSyscallConsumer": {
+                "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+                "plan": "8adfbf18fadfd0c5a5cd3c64528939c3c90b55ce",
+                "run": 44347958039,
+                "artifact": 14446549340,
+                "artifactSHA256": "d3a815066597c1a038103f214e5a5312bc32a4a65ac7478cad287c2b400d0355",
+                "state": "VERIFIED PASS:90 fresh Sentry cases plus30 reused native cases",
+                "freshCases": 90,
+                "reusedNativeCases": 30,
+                "receipt": {
+                  "file": "semaphore-44347958039-evidence.json",
+                  "sha256": "605844df24b02771650aca4998fb6259746de19bbff25d3f2a552f299250daa6"
+                },
+                "limits": "Normal90 pass retained; separate AMD64 raceGo8 passed and race release/consumers live. Native ARM/performance remain open; no overall completion claim.",
+                "priorFailedRunsPreserved": [
+                  44337494099,
+                  44346644829
+                ]
+              },
+              "cppLintReuse": {
+                "state": "AMD64 PASS accounted by unchanged compiler inputs; ARM baseline io_uring failure is not a pass",
+                "receipt": {
+                  "file": "semaphore-cpp-lint-reuse.json",
+                  "sha256": "809c407bbe2104aa23c38fe00bb63c9752d9a125877980c7d8687623b7290255"
+                },
+                "run": 44254674522,
+                "analyzedSources": 373
+              },
+              "raceOwnerQualification": {
+                "run": 44388076421,
+                "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+                "state": "VERIFIED PASS AMD64 Go race owner8 fresh cases/no skip/race report",
+                "receipt": {
+                  "file": "semaphore-race-owner-44388076421-evidence.json",
+                  "sha256": "7bfe5fa4de50a0c551dd527e94407d784425e37b2ef8435094b19963d21b12b4"
+                }
+              },
+              "raceConsumerQualification": {
+                "run": 44391986188,
+                "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+                "plan": "b4bc23328483393a3edcee1440fab7f08ac52012",
+                "state": "PARTIAL: race fullrelease and ordinary30PASS; save_restore900s timeout; save_resumeunexecuted",
+                "owner": "fuse_full20_resume",
+                "receipt": {
+                  "file": "semaphore-race-44391986188-evidence.json",
+                  "sha256": "995f37943babed179d20ac2f5cf9558c8714f38abd475bc3fcadfcb8a5897045"
+                },
+                "scope": "AMD64 race Go8 and ordinary30 established; save/restore and save/resume incomplete. No nativeARM/performance or prerequisite17127landing claim.",
+                "runtimeBuildSeconds": 804,
+                "ordinarySeconds": 137,
+                "ordinaryCases": 30,
+                "saveRestore": {
+                  "passedCasesBeforeTimeout": 19,
+                  "actualRestoreCommands": 252,
+                  "testTimeoutSeconds": 900,
+                  "raceReportsObserved": 0,
+                  "cause": "Not established; progressing repeated restore/CLI overhead observed"
+                },
+                "cleanup": "Source/index clean, AppArmor1restored, IPC0; no group fences/errors recorded. Failed outerstatus has no separate runtime-root-removal receipt.",
+                "inclusiveMinutes": 120
+              },
+              "raceCheckpointContinuation": {
+                "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+                "plan": "6d3f8af67c8874beed8f11c52197bf29a7ba61be",
+                "run": 44400554546,
+                "state": "LIVE; no new compiler/checkpoint result inferred",
+                "owner": "fuse_full20_resume",
+                "inclusiveMinutes": 110,
+                "testTimeoutSeconds": {
+                  "saveRestore": 1800,
+                  "saveResume": 1200
+                },
+                "scope": "Only two missing race wrappers; previous ordinary30/Go8/source/checker/Linux/C++ scopes reused. No nativeARM/performance/prerequisite17127landing claim.",
+                "receipt": {
+                  "file": "semaphore-race-checkpoint-dispatch.json",
+                  "sha256": "1a0fe802e7f31dbc4d200f53632cc81434341031554992570b7bfd190c9b5072"
+                }
+              }
+            }
           }
         ],
         "currentMechanismAssessment": {
@@ -58357,10 +58970,10 @@
             "Exact source gate44322450121 passed canonical lint, three nogo owners on both architectures and eight native AMD64 cases. The old-checker control rejects the valid owner on both architectures.",
             "Exact consumer44347958039 passed30 ordinary,30 save/restore and30 save/resume cases;30 native Linux cases reused from44337494099. Full opaque runtime identity and cleanup were verified."
           ],
-          "nextAction": "Owner prepares missing-only ARM execution, race, C++ and performance qualification, reusing valid source/native evidence and unchanged compiler inputs. Keep prerequisite #17127 and explicit publication approval separate.",
-          "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes.",
+          "nextAction": "Root moves the missing race-save/resume diagnostic retention and native ARM functional gates into permanent Bazel owners/thin Actions. Preserve actual save30PASS, failed resume exit66 and missing producer logs; no race-cause claim or repeated per-item retry. CI-only authorization is settled; prerequisite17127 and performance/source-publication gates remain separate.",
+          "recheckCondition": "Permanent owner/diagnostic retention result, actual remaining-gate evidence, prerequisite landing or source event.",
           "runtimeOrCheckerTestsRun": true,
-          "actualExecutionLimit": "AMD64 source and functional consumer gates passed within exact receipt scopes. ARM execution, race, full C++ and performance qualification remain open."
+          "actualExecutionLimit": "NormalAMD/source/checker/C++ and scoped AMD race Go/ordinary/save cases retain exact receipts. Race resume failed with unretained producer diagnostics; ARM preflight is availability only; native ARM functional and performance scopes remain open."
         },
         "preparedPrerequisite": {
           "number": 17127,
@@ -58373,7 +58986,7 @@
           "deliveryOwner": "root",
           "scope": "Reuse the existing approved real-queue clearing fix as an explicit prerequisite; do not duplicate it in owner-link work. Existing regression retained."
         },
-        "preparationState": "Exact source09b and source gate44322450121 passed. Native30 and90 fresh Sentry syscall cases now verified; remaining architecture/race/compiler/performance standards are open.",
+        "preparationState": "Exact source09b retains normal source/checker/Linux/C++ and90 Sentry case passes. AMD race Go8/ordinary30/save30 passed; resume exit66 causeUNKNOWN. ARM availability preflight passed, native ARMfunctional/performance remain open.",
         "preparedLocalRevision": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
         "qualificationPlan": {
           "owner": "root",
@@ -58405,7 +59018,7 @@
             44316942020
           ]
         },
-        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
         "preparedSyscallConsumer": {
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "8adfbf18fadfd0c5a5cd3c64528939c3c90b55ce",
@@ -58419,7 +59032,7 @@
             "file": "semaphore-44347958039-evidence.json",
             "sha256": "605844df24b02771650aca4998fb6259746de19bbff25d3f2a552f299250daa6"
           },
-          "limits": "Normal90 pass retained; separate AMD64 raceGo8 passed and race release/consumers live. Native ARM/performance remain open; no overall completion claim.",
+          "limits": "Normal90 pass retained. Separate AMD raceGo8/ordinary30/save30 passed; race resume FAILED exit66 causeUNKNOWN with producerlogs discarded. NativeARM/performance remain open; no overall completion claim.",
           "priorFailedRunsPreserved": [
             44337494099,
             44346644829
@@ -58471,8 +59084,8 @@
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "6d3f8af67c8874beed8f11c52197bf29a7ba61be",
           "run": 44400554546,
-          "state": "LIVE; no new compiler/checkpoint result inferred",
-          "owner": "fuse_full20_resume",
+          "state": "TERMINAL FAILURE: race save30PASS; resume exit66 cause UNKNOWN, producer logs discarded",
+          "owner": "root",
           "inclusiveMinutes": 110,
           "testTimeoutSeconds": {
             "saveRestore": 1800,
@@ -58480,8 +59093,18 @@
           },
           "scope": "Only two missing race wrappers; previous ordinary30/Go8/source/checker/Linux/C++ scopes reused. No nativeARM/performance/prerequisite17127landing claim.",
           "receipt": {
-            "file": "semaphore-race-checkpoint-dispatch.json",
-            "sha256": "1a0fe802e7f31dbc4d200f53632cc81434341031554992570b7bfd190c9b5072"
+            "file": "semaphore-race-44400554546-evidence.json",
+            "sha256": "21af9000376d15d418de1061f3e6fd8f30c1f030c2ce2de542eb5b7e864192df"
+          }
+        },
+        "armAvailabilityQualification": {
+          "run": 44408956295,
+          "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+          "plan": "aef06d869f4898da4c87b559302d48fb3b5f8892",
+          "state": "VERIFIED availability preflight PASS only; no ARM functional claim",
+          "receipt": {
+            "file": "semaphore-arm-query-44408956295-evidence.json",
+            "sha256": "c5b4ec736a941048400b9c46c4825dd119b6c802fbb069cc890548f4ad8bcad9"
           }
         }
       },
@@ -65519,7 +66142,7 @@
       "url": "https://github.com/tamird/gvisor/commit/e0c3c48c8",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "The governance and license checks use the same native Bazelisk installation. The combined change is open as #16904.",
       "evidence": [
         {
@@ -65584,8 +66207,38 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Wait for the contributor decision on the reviewed candidate. If approved, publish with a lease, verify current required CI and GitHub mergeability, then follow maintainer review/import.",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "nextAction": "Root verifies the recorded approved896 lineage against current e0c3/proposal2a286 and canonical published16904 before deciding any remaining source delivery. Existing authorization is preserved; provenance/alias verification is not a pending human decision and must not create a duplicate PR or approval question.",
+        "recheckCondition": "Exact policy/source/provenance verification or canonical PR feedback.",
+        "qualificationHistory": [
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "branchRefObservation": {
+                "repo": "tamird/gvisor",
+                "ref": "proposal/buildkite-license-native",
+                "head": "2a2862327306d9b0bc53dfffaa6e649837352e8d",
+                "observedAt": "2026-11-17T20:23:01.763698+00:00",
+                "state": "present",
+                "canonicalPRs": [
+                  {
+                    "number": 16904,
+                    "head": "d51e6c370f6e1e6da11a7ad463a8f86236f877ac",
+                    "state": "open",
+                    "url": "https://github.com/google/gvisor/pull/16904"
+                  }
+                ],
+                "nextAction": "Reverify this exact ref before delivery; follow the canonical PR alias where present.",
+                "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
+                "owner": "root"
+              },
+              "owner": "root",
+              "nextAction": "Wait for the contributor decision on the reviewed candidate. If approved, publish with a lease, verify current required CI and GitHub mergeability, then follow maintainer review/import.",
+              "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+            }
+          }
+        ],
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     {
@@ -75767,7 +76420,7 @@
       "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
       "status": "Contributor approved; qualifying integration",
-      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "Two peer queues can contend for the same TCP listener. Replacing the membership mutex with one atomic claim removed 63 net lines. On two AMD64 CPUs, rejected duplicate queue operations fell from 20.24 to 12.01 ns and a successful dequeue/requeue from 25.20 to 17.24 ns. The 16-pair benchmark measures queue operations. The ordinary and race TCP suites, both architecture analyzers and both single-processor scheduling controls passed.\n\nA fresh-connection HTTP/1.1 benchmark on two CPUs found no statistically distinguishable change with one or 16 concurrent clients (16 alternating pairs, 2,048 requests per sample). Every response matched. In a separate 16-client run on the parent, both TCP processors queued the listener. Of 2,235 duplicate enqueue attempts, 1,133 found the listener already queued on the other processor.",
       "evidence": [
         {
@@ -75792,7 +76445,7 @@
         "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Candidate1298a7c preserves the approved patch over merged prerequisite. Native TCP62 per architecture, race63 AMD64 and focused fairness fixtures passed. Saved missing-owner XML verifies e2e405+nogo1 per architecture, zero failures/skips; source lint passed both and AMD64 C++ lint passed. Original harness failures retained: terminal-control PASS prefix and unsupported per-architecture Nogo stdout marker. ARM64 C++ baseline limitation stays explicit. Performance and final independent source review remain open.",
-        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
+        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a8e54633f",
           "https://github.com/google/gvisor/pull/17045",
@@ -75811,13 +76464,57 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
+        "recheckCondition": "Root shared-mechanism decision, same-operation execution-review result, actual qualification evidence or source/dependency event.",
         "qualificationHistory": [
           {
             "disposition": "Approved for publication after #17045 lands.",
             "nextAction": "Prerequisite #17045 merged on 2026-11-14 as e298c498b45a3b7ebfb5fbc63f50c8623e4581b6. Queue delivery of the existing approved a8e54633 branch: compare current master and existing counterparts, reverify the exact approved head and dependencies, then open the authorized PR. Do not infer fresh approval or merge authority.",
             "recheckCondition": "Before delivery reverify exact approved ref/head, current master and absence of an existing counterpart; recheck on new contributor feedback or prerequisite changes.",
             "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf"
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
+              "observedAt": "2026-11-18T09:21:28.062516+00:00",
+              "disposition": "Candidate1298a7c preserves the approved patch over merged prerequisite. Native TCP62 per architecture, race63 AMD64 and focused fairness fixtures passed. Saved missing-owner XML verifies e2e405+nogo1 per architecture, zero failures/skips; source lint passed both and AMD64 C++ lint passed. Original harness failures retained: terminal-control PASS prefix and unsupported per-architecture Nogo stdout marker. ARM64 C++ baseline limitation stays explicit. Performance and final independent source review remain open.",
+              "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
+              "evidence": [
+                "https://github.com/tamird/gvisor/commit/a8e54633f",
+                "https://github.com/google/gvisor/pull/17045",
+                "https://github.com/tamird/gvisor/commit/1298a7c6dbc820209ef66bf7a86b8cbb097012d1",
+                "https://github.com/tamird/gvisor/commit/9e203e4216c0c33437d068e6a31e9c412899ec13",
+                "https://github.com/tamird/gvisor/actions/runs/44210610914"
+              ],
+              "branchRefObservation": {
+                "repo": "tamird/gvisor",
+                "ref": "research/tcp-atomic-queue-membership",
+                "head": "a8e54633f47fda892caa896ab37f3200b662cccf",
+                "observedAt": "2026-11-17T19:58:28.668438+00:00",
+                "state": "present",
+                "canonicalPRs": [],
+                "nextAction": "Reverify this exact ref before delivery; follow the canonical PR alias where present.",
+                "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
+                "owner": "root"
+              },
+              "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
+              "qualificationUpdate": {
+                "curatedAt": "2026-11-18T00:52:10.274668+00:00",
+                "publishedSourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
+                "evidence": [
+                  "https://github.com/tamird/gvisor/commit/1298a7c6dbc820209ef66bf7a86b8cbb097012d1",
+                  "https://github.com/tamird/gvisor/commit/9e203e4216c0c33437d068e6a31e9c412899ec13",
+                  "https://github.com/tamird/gvisor/actions/runs/44210610914"
+                ],
+                "candidate": {
+                  "head": "1298a7c6dbc820209ef66bf7a86b8cbb097012d1",
+                  "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
+                }
+              },
+              "remainingNetworkOutcomeOwner": "tcp_conflict"
+            }
           }
         ],
         "qualificationUpdate": {
@@ -75833,7 +76530,18 @@
             "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
           }
         },
-        "remainingNetworkOutcomeOwner": "tcp_conflict"
+        "remainingNetworkOutcomeOwner": "tcp_conflict",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+        "ciExecutionAuthorization": {
+          "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
+          "owner": "root",
+          "historicalPlan": "2da1c9afe20217ba15542a884d88735501dd477c",
+          "sourcePRPublicationApprovedByThisGrant": false,
+          "receipt": {
+            "file": "tcp-full-category-outcomes-publication-approval-package.json",
+            "sha256": "16b649d36d3625042152615568ab55dfdbdfa68ea910e5b38f1b7a268a8b9bce"
+          }
+        }
       },
       "refinement": {
         "before": {
@@ -78685,7 +79393,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "All eight checkpoint N1 rows and owning completion JSON passed, as did scoped namespace/lease/content cleanup. Final original-Docker restart failed after package restoration; original-store/image/daemon reattachment is unverified, so the run is not qualified.",
       "evidence": [
         {
@@ -78813,7 +79521,7 @@
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "observedAt": "2026-11-18T17:34:57.517822+00:00",
         "disposition": "All eight checkpoint N1 rows and owning completion JSON passed, as did scoped namespace/lease/content cleanup. Final original-Docker restart failed after package restoration; original-store/image/daemon reattachment is unverified, so the run is not qualified.",
-        "nextAction": "Owner coverage_security_review diagnoses and prepares cleanup-only recovery for the final original-daemon restart. Reuse validated eight observations and immutable products; do not repeat workloads/cold links or claim whole-run restoration until the actual failure is resolved.",
+        "nextAction": "Root evaluates a permanent Bazel benchmark-worker/setup and restoration owner before any further per-item execution. Frozen rollback-only1dc6 has root+independent peer source review PASS, but is held for mechanism migration, not user approval. Reuse all8 valid workload/completion records; old run remains FAILED and old daemon-start cause UNKNOWN. No cold links or eight-case repeat.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -78866,7 +79574,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44350079319"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Bounded final-restoration diagnosis/proposal or verified cleanup-only recovery result.",
+        "recheckCondition": "Root permanent worker/setup mechanism decision or scoped prospective restoration evidence.",
         "qualificationHistory": [
           {
             "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
@@ -79019,6 +79727,286 @@
                   "correction": "Acquire exact frozen official original CE/CLI archives directly; verify package fields, size and SHA before mutation. Private-store and rollback protections unchanged."
                 }
               ]
+            }
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
+              "observedAt": "2026-11-18T17:34:57.517822+00:00",
+              "disposition": "All eight checkpoint N1 rows and owning completion JSON passed, as did scoped namespace/lease/content cleanup. Final original-Docker restart failed after package restoration; original-store/image/daemon reattachment is unverified, so the run is not qualified.",
+              "nextAction": "Owner coverage_security_review diagnoses and prepares cleanup-only recovery for the final original-daemon restart. Reuse validated eight observations and immutable products; do not repeat workloads/cold links or claim whole-run restoration until the actual failure is resolved.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/17208",
+                "https://github.com/tamird/gvisor/commit/912702589",
+                "https://github.com/google/gvisor/pull/17208#discussion_r4507076013",
+                "https://github.com/tamird/gvisor/actions/runs/42502900602/artifacts/13626871767",
+                "https://github.com/google/gvisor/pull/17236",
+                "https://github.com/google/gvisor/pull/17491",
+                "https://github.com/tamird/gvisor/blob/912702589/runsc/cmd/sentry/forwardcmd/statefile.go#L490-L509",
+                "https://github.com/tamird/gvisor/blob/912702589/pkg/sentry/pgalloc/metadata/metadata.go#L43-L53",
+                "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore.go#L122-L126",
+                "https://github.com/izard/gvisor/blob/73f8612f2/pkg/sentry/pgalloc/save_restore_test.go#L274-L333",
+                "https://github.com/gvisor/gvisor/pull/17208",
+                "https://github.com/tamird/gvisor/commit/912702589414e631909e449f5926b66fa6d5a2c1",
+                "https://github.com/tamird/gvisor/commit/440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
+                "https://buildkite.com/gvisor/first-pass/builds/1554",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30a-431c-94ee-4019c0e491fb",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30b-4cfb-916e-b00572e5f0eb",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30c-4b50-86f3-2289fbaa405c",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30d-430e-b6b4-29389d534fb9",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30d-4845-b83d-6817055d08d2",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30e-441d-b62f-e341801dcd6f",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30e-4e35-8097-a8407bd45bc9",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30f-4771-a272-e8c41e4f90a2",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30f-428a-b2b2-59473775117c",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30f-4394-9a24-2a5fbac5c7d2",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30f-4c9b-a883-81e56e2adc29",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e30f-4f30-a45f-8adc6f5fa1e4",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e310-4dcb-b33c-d7d0b7a4bf9e",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e310-4ec4-b638-cade9ab5667b",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e310-4ec8-a667-d213839ea90f",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e310-4182-a381-8519ff3eba41",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e310-485e-aedc-732fd77805fd",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e311-4353-b795-ecf8f45bd9b2",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e311-4908-ab51-90b3067ec24f",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e311-4bf8-a218-606b24d621db",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e311-4a19-9b85-01f63309e446",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e311-4f5e-8d81-126255160a1f",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e312-4bbc-b8fc-698d9769b857",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e312-4553-89a9-afdd51bbfbc6",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e312-48b2-b5ec-be9c68e9dadc",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e312-445f-a3c7-fb11470c54bd",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e312-46fd-8526-16dfd661b034",
+                "https://buildkite.com/gvisor/first-pass/builds/1554#01a1ead9-e313-4376-b196-095ad4312a0a",
+                "https://github.com/tamird/gvisor/commit/d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+                "https://github.com/tamird/gvisor/actions/runs/44230748413",
+                "https://buildkite.com/gvisor/first-pass/builds/1664",
+                "https://buildkite.com/gvisor/first-pass/builds/1665",
+                "https://github.com/tamird/gvisor/actions/runs/44243638873",
+                "https://github.com/tamird/gvisor/actions/runs/44244417672",
+                "https://github.com/tamird/gvisor/actions/runs/44350079319"
+              ],
+              "mergeable": "MERGEABLE",
+              "recheckCondition": "Bounded final-restoration diagnosis/proposal or verified cleanup-only recovery result.",
+              "proposalHead": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+              "compatibilityWatch": {
+                "repo": "google/gvisor",
+                "number": 17491,
+                "head": "73f8612f2826a1a4661bb10ebc74e7a548d913fd",
+                "state": "OPEN",
+                "owner": "root",
+                "observedAt": "2026-11-18T05:53:00.594117+00:00",
+                "scope": "Existing related future compatibility only; no new implementation or outreach commitment. TestAsyncSaveToSubpages is absent from current base1f and was not part of current72-case pgalloc execution. Current native tests include TestAsyncSaveToPreservesContents.",
+                "nextAction": "If v2 lands or is explicitly stacked, preserve v2 split restore and v1 inline-reader behavior together; do not claim that proposed test already executed on plain current source."
+              },
+              "performanceScope": {
+                "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+                "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "owner": "root",
+                "verifiedSourceFacts": [
+                  "Runtime MemoryFile.LoadFrom now uses shared ReadLength/Decode/ReadPageHeader; Decode returns a protobuf pointer. Performance effects cannot be excluded by labeling this CLI-only.",
+                  "Pretty-printing object frames changes from exact preallocation/ReadFull to ReadAll(LimitReader), potentially growing allocations; ordinary dump and inline dump costs differ.",
+                  "Existing checkpoint/restore category has four broad leaves: CheckpointEmpty, RestoreEmpty, CheckpointNginx, RestoreNginx. No subvariants in exact baseline startup_test.go.",
+                  "RestoreEmpty and RestoreNginx each sleep two seconds outside their timer per iteration. Whole job cost includes that sleep.",
+                  "Canonical runc path explicitly skips checkpoint benchmarks. Native no-skip controls must not be invented."
+                ],
+                "nextAction": "Prepare one frozen-baseline four-leaf BASE/candidate capability and cost screen with exact full opaque releases, real systrap runtime, actual no-skip benchmark output, checkpoint outputs treated as private. Measure setup, disk volume and all four per-invocation costs before proposing full n24 sampling. Existing owner tests and live cross-engine passes remain functional evidence only.",
+                "recheckCondition": "Executable cost-screen review, current source/benchmark change, failure-image recovery or contributor decision.",
+                "launched": false,
+                "limits": "No new source edits or launches from this scope assessment. No claimed allocation regression without measurements.",
+                "screenOwner": "systrap_regression",
+                "screenState": "executable support preparation; not dispatched"
+              },
+              "checkpointCostScreen": {
+                "owner": "root",
+                "deliveryOwner": "root",
+                "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+                "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "plan": "bf460c3b9c0f85fc2985b44fb4d8a497eb48e5ec",
+                "branch": "qualification/checkpoint-cost-screen-20261118",
+                "state": "FAILED: completed BASE CheckpointEmpty; sampled-volume observation and final namespace cleanup failed",
+                "observations": 8,
+                "iterationsPerObservation": 1,
+                "leaves": [
+                  "CheckpointEmpty",
+                  "RestoreEmpty",
+                  "CheckpointNginx",
+                  "RestoreNginx"
+                ],
+                "bodyMinutes": 90,
+                "restorationGraceSeconds": 300,
+                "inclusiveMinutesAfterGenericPreparation": 95,
+                "nominalPhaseCapsMinutes": 76.5,
+                "cleanupAndChildStopSeconds": 296,
+                "files": 21,
+                "manifestSHA256": "7974b4d67d7d84b7cc710c3c93b4d06fad4f74f8d044b44ad9a05ae08b31d3d4",
+                "actualRemotePreflightExecuted": true,
+                "packageMutationOrProjectExecution": true,
+                "checkpointPayloadUpload": false,
+                "statisticalQualification": false,
+                "expectedColdCost": "Unknown; caps are bounds, not a forecast.",
+                "observedAt": "2026-11-18T16:46:00.239336+00:00",
+                "published": true,
+                "dispatched": true,
+                "run": 44350079319,
+                "dispatchReceipt": {
+                  "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+                  "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                  "plan": "bf460c3b9c0f85fc2985b44fb4d8a497eb48e5ec",
+                  "previousPlan": "2dea98ea6d5265fea6ed705f36af94367eaae2fa",
+                  "manifestSHA256": "7974b4d67d7d84b7cc710c3c93b4d06fad4f74f8d044b44ad9a05ae08b31d3d4",
+                  "state": "Dispatched exactly once; actual workload evidence pending",
+                  "inclusiveMinutes": 95,
+                  "branch": "qualification/checkpoint-cost-screen-20261118",
+                  "reviews": [
+                    "root",
+                    "systrap_regression"
+                  ],
+                  "pushAttempted": true,
+                  "dispatchAttempted": true,
+                  "attemptedAt": "2026-11-18T16:41:05.064053+00:00",
+                  "pushExitCode": 0,
+                  "pushOutput": "remote: \nremote: GitHub found 95 vulnerabilities on tamird/gvisor's default branch (11 critical, 35 high, 36 moderate, 13 low). To find out more, visit:        \nremote:      https://github.com/tamird/gvisor/security/dependabot        \nremote: \nTo https://github.com/tamird/gvisor.git\n + 2dea98ea6d...bf460c3b9c bf460c3b9c0f85fc2985b44fb4d8a497eb48e5ec -> qualification/checkpoint-cost-screen-20261118 (forced update)\n",
+                  "readback": "bf460c3b9c0f85fc2985b44fb4d8a497eb48e5ec",
+                  "dispatchAttemptedAt": "2026-11-18T16:41:09.177309+00:00",
+                  "dispatchExitCode": 0,
+                  "dispatchOutput": "https://github.com/tamird/gvisor/actions/runs/44350079319\n",
+                  "dispatchError": "",
+                  "run": 44350079319,
+                  "runURL": "https://github.com/tamird/gvisor/actions/runs/44350079319"
+                },
+                "preparedRecovery": {
+                  "owner": "root",
+                  "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+                  "plan": "2dea98ea6d5265fea6ed705f36af94367eaae2fa",
+                  "run": 44330495102,
+                  "state": "VERIFIED PASS: dependency/private-store rollback diagnostic only",
+                  "receipt": {
+                    "file": "checkpoint-44330495102-evidence.json",
+                    "sha256": "cffc2f74589402597e20209c7b05272fe27ee129ffcda6f67c240d269997aec5"
+                  },
+                  "verified": [
+                    "native namespace probe",
+                    "original Docker28.0.4 restored",
+                    "original six-image/zero-volume inventory equal",
+                    "namespace removal succeeded",
+                    "source/index clean"
+                  ],
+                  "benchmarkObservations": 0,
+                  "priorFailure": {
+                    "run": 44326611869,
+                    "primary": "Stale VFIO-only runtime-name guard rejected checkpoint-cost before N1",
+                    "cleanup": "Namespace removal failed; restored=false and original inventory restoration unverified",
+                    "receipt": {
+                      "file": "checkpoint-44326611869-diagnosis.json",
+                      "sha256": "b2b5afba212b61af3fe2a11fb66dee4befe3489105746fb523913a5227df8eaa"
+                    }
+                  },
+                  "limit": "Successful later dependency cycle does not establish earlier namespace removal cause or rollback after checkpoint workloads."
+                },
+                "recoveryHistory": [
+                  {
+                    "state": "HELD local20-file lifecycle recovery: latest stage single-cleanup correction and final root review pending; no publication or new run",
+                    "manifestSHA256": "7b53dda0b3d41ba93bb0b33089ef86aa9371442dfb743bd8ee459e8663b960f7",
+                    "files": 20,
+                    "metadataCases": 73,
+                    "inclusiveMinutesAfterGenericPreparation": 95,
+                    "cleanupSeconds": 296,
+                    "graceSeconds": 300,
+                    "scope": "Same eight N1 observations; original44301734441 safe precondition failure remains. Actual package/store rollback and current integration remain unexecuted.",
+                    "reviewReceipt": {
+                      "file": "checkpoint-private-store-lifecycle-independent-review.json",
+                      "sha256": "c388e40b64c23482642f0c7b8e7b63251fcb6097f37310d5c9de610da081fdff"
+                    },
+                    "reviewScope": "The recorded7b53 manifest/73-case proof was independently reviewed; later stage single-cleanup correction is pending final review and must receive its own exact frozen hash. Obsolete19-file70a plan was never published.",
+                    "manifestStatus": "Prior reviewed revision, not a claim that latest held bytes match this manifest"
+                  },
+                  {
+                    "owner": "root",
+                    "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+                    "plan": "51b0962a1998d4dcadfd7b6313907be47c760c0f",
+                    "run": 44326611869,
+                    "url": "https://github.com/tamird/gvisor/actions/runs/44326611869",
+                    "state": "RUNNING at dispatch; no outcome inferred",
+                    "manifestSHA256": "20ebd954b4b381147e350bf71f2023ca26be04f8bb1b53432ce1219b7257c888",
+                    "files": 21,
+                    "metadataCases": 80,
+                    "inclusiveMinutesAfterGenericPreparation": 95,
+                    "cleanupSeconds": 296,
+                    "graceSeconds": 300,
+                    "receipt": {
+                      "file": "checkpoint-direct-acquisition-dispatch.json",
+                      "sha256": "2b88d52b96f8bd087aed5761f319ba99a6d08d1f17732f9bf0f07772d62abb7f"
+                    },
+                    "previousFailure": {
+                      "run": 44320197504,
+                      "reason": "Original Docker28.0.4 APT version unavailable; failed before daemon/package/store mutation. Cleanup reports no mutation/errors.",
+                      "receipt": {
+                        "file": "checkpoint-44320197504-diagnosis.json",
+                        "sha256": "6aaa3d00f481d12e12066802fb2bff03d3d61213636add7e509144123ccd3eba"
+                      }
+                    },
+                    "correction": "Acquire exact frozen official original CE/CLI archives directly; verify package fields, size and SHA before mutation. Private-store and rollback protections unchanged."
+                  },
+                  {
+                    "owner": "coverage_security_review",
+                    "state": "Preparing owning typed-JSON completion and existing native cleanup API integration; no source-hook or full8 qualification",
+                    "prerequisite": "Native cleanup API probe44386251141PASS retained"
+                  }
+                ],
+                "actualExecutionEvidencePending": false,
+                "receipt": {
+                  "file": "checkpoint-full8-44350079319-evidence.json",
+                  "sha256": "9da5b1c126dab17224e8e2c4e75f3863b9300279163391c95dfe3059c22ff132"
+                },
+                "completedObservations": 8,
+                "candidateObservations": 4,
+                "restorationVerified": false,
+                "originalDockerPackagesRestored": true,
+                "nativeNamespacePreflight": {
+                  "source": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+                  "plan": "937b523af9706f0d8580bc0e3096803ede250688",
+                  "run": 44386251141,
+                  "state": "VERIFIED PASS: native cleanup API probe only",
+                  "owner": "coverage_security_review",
+                  "inclusiveMinutes": 6,
+                  "receipt": {
+                    "file": "checkpoint-namespace-44386251141-evidence.json",
+                    "sha256": "d1a1879b5d53a6ec83c35ca619bfadc9289f3d09276a7d1bc9f285fab69788fe"
+                  },
+                  "scope": "Native containerd2.4.2 namespace/owned lease/rooted public marker cleanup API proof; exact original namespaces/images/containers/volumes unchanged and clean source. No source-hook, full8, package/configuration restoration or workload qualification.",
+                  "actualCommands": 43,
+                  "elapsedSeconds": 12
+                },
+                "completionIntegration": {
+                  "source": "3da09be4fe5f629a8b9b86a40d3dd22af27bd089",
+                  "plan": "af49cd32d25d4deadf6c3e99c1afe43119e1cc5e",
+                  "run": 44401662215,
+                  "url": "https://github.com/tamird/gvisor/actions/runs/44401662215",
+                  "state": "PARTIAL:8workload/completionJSONPASS; finaloriginalDockerrestartFAIL/restoredfalse",
+                  "owner": "coverage_security_review",
+                  "firstBASEBeforeCandidateColdBuild": true,
+                  "validatedObservations": 8,
+                  "privateNamespaceLeaseContentCleanup": "PASS",
+                  "checkpointDirectoriesAbsent": 8,
+                  "originalPackagesVerifiedRestored": true,
+                  "originalConfigRestoredToAbsent": true,
+                  "finalSystemctlRestartExit": 1,
+                  "originalStoreImageDaemonReattachmentVerified": false,
+                  "sourceIndexUsernsRestored": true,
+                  "failureCause": "Unknown; owner/root terminal audit summary, detailed receipt pending",
+                  "dispatchReceipt": {
+                    "file": "checkpoint-completion-full8-dispatch.json",
+                    "sha256": "4b55ba0f1d0b33b006b0c59f6d7e957bb063266a7c41ddb97e8c623f1c8f436e"
+                  },
+                  "limits": "No whole-run restoration/statistical/runtime-effect/ARM/KVM qualification. No private payload copied or uploaded."
+                }
+              },
+              "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+              "technicalOwner": "coverage_security_review"
             }
           }
         ],
@@ -79236,8 +80224,20 @@
             "limits": "No whole-run restoration/statistical/runtime-effect/ARM/KVM qualification. No private payload copied or uploaded."
           }
         },
-        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
-        "technicalOwner": "coverage_security_review"
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+        "technicalOwner": "coverage_security_review",
+        "rollbackOnlyProposal": {
+          "manifestSHA256": "1dc6c94a53c3e7e4d1d77efe297ae85ed58fc05bbc13a50ba4a13e1c3993445f",
+          "state": "Root+peer reviewed; HOLD permanent Bazel mechanism migration; not published/dispatched",
+          "inclusiveMinutes": 27,
+          "oldCause": "UNKNOWN",
+          "oldWholeRun": "FAILED",
+          "workloadPrefix": "All8PASS independently",
+          "receipt": {
+            "file": "checkpoint-daemon-recovery-frozen.json",
+            "sha256": "1dc6c94a53c3e7e4d1d77efe297ae85ed58fc05bbc13a50ba4a13e1c3993445f"
+          }
+        }
       },
       "refinement": {
         "before": {
@@ -92531,14 +93531,14 @@
       "url": "https://github.com/google/gvisor/pull/17545",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
         "disposition": "The published4e head has another approval, but new CI is blocked: First Pass1796 was rejected by the one-day compute quota; pipeline55376 treats the fork-prefixed branch as a fetch refspec and fails before source checks. The actual fork branch still exists.",
-        "nextAction": "Root preserves the qualified local97 rebase and handles the actual DCO execution block before publication. Track CI-provider quota and the source-bound old pre-command refspec failure separately; no retry, new amendment or acknowledgement.",
-        "recheckCondition": "Execution/certification blocker, source/review/import state or current CI disposition changes.",
+        "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection.",
+        "recheckCondition": "Exact execution-review disposition, changed source/head or substantive reviewer feedback.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
           "https://github.com/google/gvisor/pull/17651",
@@ -92630,14 +93630,7 @@
             "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
           }
         },
-        "pendingAcknowledgement": {
-          "state": "awaiting contributor approval",
-          "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-          "body": "Added the DCO sign-off to the source commit; the code is unchanged. DCO now passes.\n\nPosted by Codex on behalf of @tamird.",
-          "humanRequestURL": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
-          "posted": false
-        },
-        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -92713,10 +93706,14 @@
         "amendmentPublicationCondition": {
           "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
           "owner": "root",
-          "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
-          "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
-          "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
-          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+          "state": "Execution-policy rejection before DCO addition; user decision settled, no new approval question",
+          "userDecision": "Existing amendment/rebase/code approval retained; user explicitly declined manual DCO mechanics. No human manual Git action is pending.",
+          "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection.",
+          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here.",
+          "receipt": {
+            "file": "human-signoff-rebases.json",
+            "sha256": "70b2f7f1f151175d26b74b009ed19fad2f2ee262adce63a21f2cf50ca125e94e"
+          }
         },
         "publicationConditionHistory": [
           {
@@ -92779,7 +93776,272 @@
           "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
           "commentId": "IC_kwDOB9IlXs8AAAABoJ82Wg",
           "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994"
-        }
+        },
+        "qualificationHistory": [
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+              "observedAt": "2026-11-18T21:05:51.124797+00:00",
+              "disposition": "The published4e head has another approval, but new CI is blocked: First Pass1796 was rejected by the one-day compute quota; pipeline55376 treats the fork-prefixed branch as a fetch refspec and fails before source checks. The actual fork branch still exists.",
+              "nextAction": "Root preserves the qualified local97 rebase and handles the actual DCO execution block before publication. Track CI-provider quota and the source-bound old pre-command refspec failure separately; no retry, new amendment or acknowledgement.",
+              "recheckCondition": "Execution/certification blocker, source/review/import state or current CI disposition changes.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
+                "https://github.com/google/gvisor/pull/17651",
+                "https://github.com/gvisor/gvisor/pull/17651",
+                "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
+                "https://github.com/tamird/gvisor/commit/4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "https://buildkite.com/gvisor/first-pass/builds/1688",
+                "https://github.com/gvisor/gvisor/actions/runs/44286110331",
+                "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994",
+                "https://github.com/google/gvisor/pull/17545#pullrequestreview-5964761065"
+              ],
+              "attentionDispositions": [
+                {
+                  "reason": "author-feedback",
+                  "title": "Informational assisted approval triaged",
+                  "nextAction": "Follow current exact-source import #17651 and maintainer review. The experimental assisted APPROVED review requests no fix or reply; GitHub aggregate review remains REVIEW_REQUIRED. No outgoing acknowledgement is needed.",
+                  "evidence": [
+                    "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955"
+                  ],
+                  "binding": {
+                    "reviewDecision": "REVIEW_REQUIRED",
+                    "approvedHead": null,
+                    "approvedAt": null,
+                    "headCommittedAt": "2026-11-12T10:21:59Z",
+                    "headIntroducedAt": null,
+                    "headHistoryComplete": true,
+                    "threads": {
+                      "unresolved": 0,
+                      "total": 0,
+                      "complete": true
+                    },
+                    "feedback": {
+                      "complete": true,
+                      "items": [
+                        {
+                          "kind": "review",
+                          "id": "PRR_kwDOB9IlXs8AAAABX3mZcw",
+                          "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
+                          "body": "LGTM. Replaces the prose lock precondition on `(*Stack).nicInfo` with `// +checklocksread:s.mu`, matching both `RLock`-holding callers (`SingleNICInfo` and `NICInfo`).\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon",
+                          "state": "APPROVED",
+                          "submittedAt": "2026-11-13T19:23:47Z",
+                          "updatedAt": "2026-11-13T19:23:47Z",
+                          "authorAssociation": "CONTRIBUTOR",
+                          "author": {
+                            "login": "manninglucas",
+                            "__typename": "User"
+                          },
+                          "commit": {
+                            "oid": "086b82de617401078acdbb5c3cc2dde615e9d02d"
+                          }
+                        }
+                      ]
+                    },
+                    "sourceHead": "086b82de617401078acdbb5c3cc2dde615e9d02d"
+                  }
+                }
+              ],
+              "dcoCoordinationHistory": [
+                {
+                  "sourceHead": "086b82de617401078acdbb5c3cc2dde615e9d02d",
+                  "observedAt": "2026-11-17T18:36:09.022796+00:00",
+                  "disposition": "Inspected review 5896771955: informational assisted approval, no requested changes.",
+                  "nextAction": "Follow current exact-source import #17651 and maintainer review. The experimental assisted APPROVED review requests no fix or reply; GitHub aggregate review remains REVIEW_REQUIRED. No outgoing acknowledgement is needed. DCO import coordination: Root coordinates #17651 at 6979be9a6fea. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+                }
+              ],
+              "currentCI": {
+                "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "observedAt": "2026-11-18T21:05:51.124797+00:00",
+                "firstPass": {
+                  "build": 1796,
+                  "state": "FAILED",
+                  "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
+                  "receipt": {
+                    "file": "sweep-current-1796.json",
+                    "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
+                  },
+                  "providerReceipt": {
+                    "file": "nic-info-current-provider-1796.json",
+                    "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
+                  }
+                },
+                "pipeline": {
+                  "build": 55376,
+                  "state": "FAILED",
+                  "receipt": {
+                    "file": "sweep-current-55376.json",
+                    "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
+                  },
+                  "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
+                }
+              },
+              "pendingAcknowledgement": {
+                "state": "awaiting contributor approval",
+                "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "body": "Added the DCO sign-off to the source commit; the code is unchanged. DCO now passes.\n\nPosted by Codex on behalf of @tamird.",
+                "humanRequestURL": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
+                "posted": false
+              },
+              "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+              "ciHistory": [
+                {
+                  "owner": "tcp_conflict",
+                  "observedAt": "2026-11-18T10:42:43.629789+00:00",
+                  "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                  "state": "preliminary; live checks remain",
+                  "firstPassBuild": 1688,
+                  "firstPassURL": "https://buildkite.com/gvisor/first-pass/builds/1688",
+                  "firstPassState": "running",
+                  "goGenerateRun": 44286110331,
+                  "goGenerateURL": "https://github.com/gvisor/gvisor/actions/runs/44286110331",
+                  "goGenerateState": "running",
+                  "limits": "No full CI clearance; additional failures remain possible."
+                },
+                {
+                  "observedAt": "2026-11-18T12:12:59.828888+00:00",
+                  "pr": 17545,
+                  "exactHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                  "state": "open",
+                  "mergeable": true,
+                  "merged": false,
+                  "mergedAt": null,
+                  "feedbackSince": "2026-11-18T10:53:50Z",
+                  "newFeedback": [],
+                  "DCO": "SUCCESS",
+                  "firstPass": {
+                    "build": 1688,
+                    "state": "passed",
+                    "failedAttempts": [],
+                    "sourceHeadVerifiedByHelper": true
+                  },
+                  "GitHubChecks": "all SUCCESS",
+                  "receipt": "own-dco-and-15181-20261118T121259Z.json"
+                }
+              ],
+              "latestReviewObservation": {
+                "checkedAt": "2026-11-18T21:05:51.124797+00:00",
+                "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "githubReviewDecision": "APPROVED",
+                "reviews": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABY4cH6Q",
+                    "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5964761065",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-11-18T20:44:15Z",
+                    "updatedAt": "2026-11-18T20:44:15Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "kerumeto",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "4e1667030ef7cce0777f3ba1aff1d74673896cf1"
+                    }
+                  }
+                ]
+              },
+              "maintainerRebaseRequest": {
+                "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994",
+                "author": "milantracy",
+                "body": "can you rebase and push again?",
+                "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "observedAt": "2026-11-18T20:06:11.890448+00:00",
+                "firstPass": {
+                  "build": 1772,
+                  "state": "SUCCESS"
+                },
+                "import17651": "closed without merge",
+                "owner": "root"
+              },
+              "amendmentPublicationCondition": {
+                "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                "owner": "root",
+                "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
+                "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
+                "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
+                "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+              },
+              "publicationConditionHistory": [
+                {
+                  "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                  "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                  "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+                  "owner": "root",
+                  "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+                }
+              ],
+              "readyLocalRebase": {
+                "head": "97b3315886b5346ef29a1cbe1c8d311844eafa92",
+                "base": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                "commits": 1,
+                "DCO": "Absent; no final signed source created",
+                "remotePublication": false,
+                "scope": "Prepared local candidate; public PR head unchanged",
+                "receipt": {
+                  "file": "human-signoff-rebases.json",
+                  "sha256": "c937bbd73eb37d22b9cfa1061efd1b750ff607c567299989eccaed046ee4f94d"
+                },
+                "qualification": {
+                  "run": 44392805761,
+                  "receipt": {
+                    "file": "nic-info-lock-44392805761-evidence.json",
+                    "sha256": "6a8d198c528a3c840f8b74c45ac056ba2ccfb38b22beade8ce832b5c0db5cfc4"
+                  },
+                  "scope": "Fresh both-architecture source and shared/exclusive-positive Nogo findings0; unlocked negative control exactlyone expected diagnostic per architecture. AMD64 worker; no native ARM runtime/performance claim.",
+                  "priorQueryFailureRetained": true
+                }
+              },
+              "latestCI": {
+                "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "observedAt": "2026-11-18T21:05:51.124797+00:00",
+                "firstPass": {
+                  "build": 1796,
+                  "state": "FAILED",
+                  "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
+                  "receipt": {
+                    "file": "sweep-current-1796.json",
+                    "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
+                  },
+                  "providerReceipt": {
+                    "file": "nic-info-current-provider-1796.json",
+                    "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
+                  }
+                },
+                "pipeline": {
+                  "build": 55376,
+                  "state": "FAILED",
+                  "receipt": {
+                    "file": "sweep-current-55376.json",
+                    "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
+                  },
+                  "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
+                }
+              },
+              "actionableComment": {
+                "kind": "comment",
+                "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "commentId": "IC_kwDOB9IlXs8AAAABoJ82Wg",
+                "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994"
+              }
+            }
+          }
+        ],
+        "acknowledgementHistory": [
+          {
+            "state": "awaiting contributor approval",
+            "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+            "body": "Added the DCO sign-off to the source commit; the code is unchanged. DCO now passes.\n\nPosted by Codex on behalf of @tamird.",
+            "humanRequestURL": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
+            "posted": false
+          }
+        ],
+        "acknowledgementDisposition": "Old own-DCO courtesy draft retained as history, not a pending new user decision or automatic posting task. Current requested action is the already-authorized rebase; no duplicate acknowledgement."
       },
       "dcoCoordination": {
         "owner": "root",
@@ -93952,15 +95214,15 @@
       "url": "https://github.com/google/gvisor/pull/17780",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
       "followup": {
         "owner": "root",
         "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
         "disposition": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
-        "nextAction": "Root preserves local4c0 and valid exact-code qualification while the actual DCO execution block remains. Continue exact published-head CI/reviewer/import obligations; no repeated contributor review or bypass.",
-        "recheckCondition": "Execution blocker, current source/check/review/import state or contributor steering changes.",
+        "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection.",
+        "recheckCondition": "Exact execution-review disposition, changed source/head or substantive reviewer feedback.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -94034,6 +95296,271 @@
                 "base": "b29c8320a862a77f4c55894d00c56eb5850c8066"
               }
             }
+          },
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+              "observedAt": "2026-11-18T20:06:11.890448+00:00",
+              "disposition": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
+              "nextAction": "Root preserves local4c0 and valid exact-code qualification while the actual DCO execution block remains. Continue exact published-head CI/reviewer/import obligations; no repeated contributor review or bypass.",
+              "recheckCondition": "Execution blocker, current source/check/review/import state or contributor steering changes.",
+              "evidence": [
+                "https://github.com/tamird/gvisor/actions/runs/44231839538",
+                "https://github.com/tamird/gvisor/actions/runs/44231202091",
+                "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08",
+                "https://github.com/tamird/gvisor/actions/runs/44254674522",
+                "https://github.com/tamird/gvisor/actions/runs/44258637313",
+                "https://github.com/tamird/gvisor/compare/b29c8320a...d9908cfeb",
+                "https://github.com/tamird/gvisor/actions/runs/44342260353",
+                "https://github.com/tamird/gvisor/actions/runs/44333507177",
+                "https://github.com/tamird/gvisor/actions/runs/44337126320",
+                "https://github.com/google/gvisor/pull/17780",
+                "https://github.com/tamird/gvisor/actions/runs/44379968874"
+              ],
+              "integratedProposal": {
+                "head": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+                "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "run": 44342260353,
+                "plan": "8a59640934f1a6adab3d4ef104e03ca03f33478f",
+                "state": "Historical qualified source; contributor requested changes, not approved",
+                "owner": "root",
+                "artifact": 14444468589,
+                "scope": "Functional integration; no throughput accuracy, Sentry runtime or statistical performance claim."
+              },
+              "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+              "submissionPolicy": {
+                "decision": "Upstream CONTRIBUTING now explicitly permits multiple commits per PR and maintainer squash merge; the tested/published four-commit topic is consistent with that convention.",
+                "policyCommit": "63ba875326b7f99528df0d1447e37e2d034e88fb",
+                "evidence": "https://github.com/gvisor/gvisor/commit/63ba875326b7f99528df0d1447e37e2d034e88fb",
+                "limits": "This documentation update does not change DCO requirements, current source approvals or the actual DCO execution blocker."
+              },
+              "technicalOwner": "root",
+              "contributorFeedback": {
+                "observedAt": "2026-11-18T15:09:12.764966+00:00",
+                "reviewedHeads": [
+                  "af131d57abcab71b361073a48efd8607959aa5ae",
+                  "2b27d0c3ad88e71cacf9e5b9602b7b8cbed6c69e",
+                  "414eb34cd3f58a727129972002622beddb35cc43"
+                ],
+                "requestedChanges": [
+                  "Use machine-readable producer output rather than repairing human-output parsers",
+                  "Confirm StopTimer removal history and separate restoration",
+                  "Move ResetTimer immediately before client.Run or justify timed setup"
+                ],
+                "preparedLocalCommits": [
+                  "5b9bd275ff5cbf983664478c9b7cdde4bb18328a",
+                  "b465ccd80edcd896d1288a65fff447bd4a0d69da",
+                  "322cb2fbb205272664a20aaa1c600520690e79a5",
+                  "8f8a2befc5be6aecfe73eab01b1b0039baaf2078",
+                  "d9908cfeb81ccdaa26a660403273c154ae7c37c6"
+                ],
+                "historyConfirmed": "ffa9a715aaf4 removed Node StopTimer while retaining stop-before-parsing comment; GetNativeContainer now precedes ResetTimer.",
+                "state": "Historical earlier feedback was implemented; d990 and final CF304 requested changes remain in settledReviews. Root is implementing the latest conditional feedback, with no pending publication approval question."
+              },
+              "revisionFeedback": {
+                "observedAt": "2026-11-18T17:06:19.046915+00:00",
+                "reviewedCommits": [
+                  "322cb2fbb205272664a20aaa1c600520690e79a5",
+                  "8f8a2befc5be6aecfe73eab01b1b0039baaf2078"
+                ],
+                "state": "Requested refinements qualified and published as PR17780",
+                "existingIperf3Source": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+                "separateIperf3Blockers": [
+                  "BCR11518 license export pending",
+                  "gVisor15146 license recognition hold"
+                ],
+                "heyDockerRemoval": "Separate follow-up; no image removal in current revision"
+              },
+              "preparedRevision": {
+                "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+                "branch": "review/hey-json-preflight-20261118",
+                "state": "Published upstream PR17780 after conditional LGTM refinements and exact-head qualification",
+                "scope": "Four commits: Node timing, readiness, byte output plumbing, revised strict Hey JSON. Iperf2 changes excluded.",
+                "producerPreflight": {
+                  "run": 44355192486,
+                  "state": "Dependency and all four producer captures passed; overall clean-source check failed after automatic Bazel module generation",
+                  "receipt": {
+                    "file": "hey-preflight-44355192486-evidence.json",
+                    "sha256": "76e8204c6578231857492bdaaf5ce626e09e8f3fff67f72e3594bab2f2074325"
+                  }
+                },
+                "localBranch": "review/benchmark-hey-json-review-20261118",
+                "qualificationOwner": "fuse_full20_resume",
+                "previousQualifiedHead": "90693321bbc6c431c7d93a9b433890d0cdb4f7a7",
+                "previousQualification": {
+                  "run": 44360905017,
+                  "state": "PASS within native AMD64 functional scopes",
+                  "receipt": {
+                    "file": "hey-functional-44360905017-evidence.json",
+                    "sha256": "1d03ce100b4dcb34ae7bf57e3e78880d2bab58a78689f2621030d7b67dd196b4"
+                  }
+                },
+                "reviewDelta": "Strengthen application-policy metric/failure assertions and preserve failure diagnostics; parser/schema/dependency/API/timing unchanged.",
+                "run": 44367383355,
+                "plan": "ad2ad856b030d876098d46965ec9ea6fc5278994",
+                "qualification": {
+                  "run": 44379968874,
+                  "state": "PASS native AMD64 tools/lint/five network consumers/GPU library build/four HTTPD N1 leaves; verified AMD64 C++ reuse",
+                  "receipt": {
+                    "file": "hey-final-44379968874-evidence.json",
+                    "sha256": "7c31a6df328ebd3e45e72558e36e4b4bf5662d9fe186daf649f7e01cd4b53d11"
+                  }
+                }
+              },
+              "separateFollowups": [
+                {
+                  "id": "iperf3-bcr-migration",
+                  "owner": "root",
+                  "state": "Existing separate work; blocked on license prerequisites",
+                  "source": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+                  "nextAction": "Resume existing standalone Iperf3 source after BCR11518 license export and gVisor15146 license-recognition hold are resolved; rebase and validate actual producer/endpoints before proposing its separate PR.",
+                  "recheckCondition": "Either prerequisite lands or its hold changes; current source or contributor decision changes."
+                },
+                {
+                  "id": "hey-without-docker-client",
+                  "owner": "root",
+                  "state": "Queued separate follow-up",
+                  "nextAction": "After current feedback is delivered, inspect reusable Bazel Hey executable from existing helper-image work16871 and harness native execution requirements; prepare a separate client migration without redoing producer packaging.",
+                  "recheckCondition": "Current Hey revision delivered or helper/execution prerequisites change."
+                }
+              ],
+              "previousContributorChangesRequested": {
+                "head": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
+                "url": "https://github.com/tamird/gvisor/commit/cf304b7355e0f45dbf699d318cb0be02acfc6ae8"
+              },
+              "publication": {
+                "url": "https://github.com/google/gvisor/pull/17780",
+                "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+                "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "approval": "User conditional LGTM; requested buffer returns and standard-library decoder implemented and independently reviewed",
+                "qualificationRun": 44379968874,
+                "bodyReadback": "exact",
+                "commits": 4,
+                "paths": 8
+              },
+              "initialLifecycleObservation": {
+                "checkedAt": "2026-11-18T19:37:52.780829+00:00",
+                "pullRequest": 17780,
+                "github": {
+                  "comments": [],
+                  "headRefOid": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+                  "mergeStateStatus": "BLOCKED",
+                  "mergeable": "MERGEABLE",
+                  "reviewDecision": "REVIEW_REQUIRED",
+                  "reviews": [],
+                  "statusCheckRollup": [
+                    {
+                      "__typename": "CheckRun",
+                      "completedAt": "0001-01-01T00:00:00Z",
+                      "conclusion": "",
+                      "detailsUrl": "https://github.com/gvisor/gvisor/actions/runs/44381793215/job/135075762181",
+                      "name": "assign",
+                      "startedAt": "2026-11-18T19:34:06Z",
+                      "status": "IN_PROGRESS",
+                      "workflowName": "Auto Assign"
+                    },
+                    {
+                      "__typename": "CheckRun",
+                      "completedAt": "2026-11-18T19:34:10Z",
+                      "conclusion": "SUCCESS",
+                      "detailsUrl": "https://github.com/gvisor/gvisor/actions/runs/44381792835/job/135075759516",
+                      "name": "close",
+                      "startedAt": "2026-11-18T19:34:06Z",
+                      "status": "COMPLETED",
+                      "workflowName": "Close Banned PRs"
+                    },
+                    {
+                      "__typename": "StatusContext",
+                      "context": "buildkite/first-pass/pr",
+                      "startedAt": "2026-11-18T19:34:02Z",
+                      "state": "PENDING",
+                      "targetUrl": "https://buildkite.com/gvisor/first-pass/builds/1778"
+                    },
+                    {
+                      "__typename": "CheckRun",
+                      "completedAt": "2026-11-18T19:34:01Z",
+                      "conclusion": "SUCCESS",
+                      "detailsUrl": "https://github.com/cncf/dco2",
+                      "name": "DCO",
+                      "startedAt": "2026-11-18T19:34:01Z",
+                      "status": "COMPLETED",
+                      "workflowName": ""
+                    }
+                  ]
+                },
+                "buildkite": {
+                  "build": {
+                    "number": 1778,
+                    "url": "https://buildkite.com/gvisor/first-pass/builds/1778",
+                    "state": "scheduled",
+                    "branch": "tamird:review/hey-json-preflight-20261118",
+                    "commit": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+                    "message": "Correct HTTP benchmark timing and reporting",
+                    "pull_request": "https://github.com/gvisor/gvisor/pull/17780"
+                  },
+                  "jobs": []
+                },
+                "owner": "root; assigned initial bounded followup completed by fuse_full20_resume",
+                "nextAction": "Consume First Pass1778 terminal jobs with existing Buildkite reader; respond to actual human review if received. No source action currently identified.",
+                "recheckCondition": "First Pass1778 state changes or review/comment arrives; root next lifecycle sweep should also recheck scheduled admission if still pending.",
+                "watcherStopped": true,
+                "unauthorizedActionsTaken": false
+              },
+              "firstPass": {
+                "build": 1778,
+                "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+                "state": "FAILED",
+                "provider": "Author GitHub ID1535036 reached30-day360000compute-minute quota",
+                "providerRejectedAttempts": 17,
+                "receipt": {
+                  "file": "hey-pr17780-firstpass1778-diagnosis.json",
+                  "sha256": "c93903f6d426379d0077520da33df94d996ad6afff594040febebaca7f17ffd2"
+                },
+                "allAttemptsReceipt": {
+                  "file": "sweep-first-pass-1778.json",
+                  "sha256": "9107e006123aba2484c7e94fdcce59711441a7feebede33e0119ef8a387cac66"
+                },
+                "earlierFailure": "Syscall shard0 socket_unix_unbound_seqpacket_test_runsc_systrap_shared: Watchdog.Start not called within30s; retry provider-rejected",
+                "owner": "root"
+              },
+              "importObservation": {
+                "checkedAt": "2026-11-18T20:06:11.890448+00:00",
+                "complete": true,
+                "state": "No matching export; not eligible without current approval/label prerequisites"
+              },
+              "amendmentPublicationCondition": {
+                "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                "owner": "root",
+                "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
+                "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
+                "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
+                "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+              },
+              "publicationConditionHistory": [
+                {
+                  "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                  "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                  "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+                  "owner": "root",
+                  "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+                }
+              ],
+              "readyLocalRebase": {
+                "head": "4c0d78d299fb043757dd69e50bc7bd838525a53a",
+                "base": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+                "commits": 4,
+                "DCO": "Absent; no final signed source created",
+                "remotePublication": false,
+                "scope": "Prepared local candidate; public PR head unchanged",
+                "receipt": {
+                  "file": "human-signoff-rebases.json",
+                  "sha256": "c937bbd73eb37d22b9cfa1061efd1b750ff607c567299989eccaed046ee4f94d"
+                }
+              }
+            }
           }
         ],
         "integratedProposal": {
@@ -94046,7 +95573,7 @@
           "artifact": 14444468589,
           "scope": "Functional integration; no throughput accuracy, Sentry runtime or statistical performance claim."
         },
-        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
         "submissionPolicy": {
           "decision": "Upstream CONTRIBUTING now explicitly permits multiple commits per PR and maintainer squash merge; the tested/published four-commit topic is consistent with that convention.",
           "policyCommit": "63ba875326b7f99528df0d1447e37e2d034e88fb",
@@ -94250,10 +95777,14 @@
         "amendmentPublicationCondition": {
           "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
           "owner": "root",
-          "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
-          "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
-          "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
-          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+          "state": "Execution-policy rejection before DCO addition; user decision settled, no new approval question",
+          "userDecision": "Existing amendment/rebase/code approval retained; user explicitly declined manual DCO mechanics. No human manual Git action is pending.",
+          "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection.",
+          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here.",
+          "receipt": {
+            "file": "human-signoff-rebases.json",
+            "sha256": "70b2f7f1f151175d26b74b009ed19fad2f2ee262adce63a21f2cf50ca125e94e"
+          }
         },
         "publicationConditionHistory": [
           {
@@ -125384,7 +126915,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-12T01:01:41+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "On Buildkite #54502 for #17495, Node 22.2.0 reported read ECONNRESET in internet/test-tls-autoselectfamily-servername.js. The same-source retry passed.",
       "findings": [
         {
@@ -125431,7 +126962,7 @@
           ]
         }
       ],
-      "nextStep": "The contributor approved 5bf936f9c. Ready for Tamir to add his personal DCO sign-off to the commit and submit the prefilled Node pull request. The release pinned by gVisor will still need the test backport.",
+      "nextStep": "Root verifies exact current Node source/policy and the already-approved5bf prepared delivery, then completes authorized publication if no actual execution restriction applies. Do not assume a personal-DCO decision is pending or import the separate gVisor execution rejection; report only a demonstrated policy/execution blocker.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -125496,6 +127027,19 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "followup": {
+        "qualificationHistory": [
+          {
+            "state": "Historical current fields before authorization reconciliation",
+            "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+            "fields": {}
+          }
+        ],
+        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+        "nextAction": "Root verifies exact current Node source/policy and the already-approved5bf prepared delivery, then completes authorized publication if no actual execution restriction applies. Do not assume a personal-DCO decision is pending or import the separate gVisor execution rejection; report only a demonstrated policy/execution blocker.",
+        "owner": "root",
+        "recheckCondition": "Exact policy/source/provenance verification or canonical PR feedback."
       }
     },
     {
@@ -128420,9 +129964,9 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-18T10:51:13.405419+00:00",
+      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
       "summary": "179 trailer-only DCO amendments are verified across the published manifests. Four previously held source PRs were certified after their maintainers closed the exact exports and requested sign-offs. All 184 reported own DCO checks pass in the latest snapshot. Twenty-one exact-source imports retain separate coordination; foreign certification and unreported checks remain outside that claim.",
-      "nextStep": "Finish current-head CI and maintainer integration for the four new DCO amendments; acknowledgement drafts await the contributor decision. Preserve the 21 open exact-import bindings and never rewrite the upstream export branches. Existing source-rebase workstreams retain their per-item state and decisions. Recheck actual CI, human feedback, imports and restored qualification access.",
+      "nextStep": "Four own-DCO amendments already passed exact-head CI with retry history preserved. Follow existing maintainer/import obligations and settled per-thread decisions; do not convert old courtesy acknowledgements into new pending contributor questions. Preserve21 import bindings and source-specific execution-policy blocks separately.",
       "completedMetadataAmendments": 179,
       "activeImportCoordination": [
         15106,
@@ -129211,5 +130755,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T21:49:57.504662+00:00"
+  "updatedAt": "2026-11-18T22:30:58.775869+00:00"
 }

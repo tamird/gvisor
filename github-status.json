@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T22:15:31.226949+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T21:49:57.504662+00:00",
+  "registryDate": "2026-11-18T22:30:58.775869+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447789,7 +447789,7 @@
         "owner": "tcp_conflict",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
-        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements."
+        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -447813,7 +447813,7 @@
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "Retention gate44254336532 fully verified PASS:600 actual iterations,zero skips/failures,two valid report arms,all six argv/sidecar audits,24 fileset checks,two nine-member runtime archives and clean source. Full symbolize inventory exposes a preservation defect:all2418 legacy generated .pb.go positions are absent from candidate;zero handwritten baseline positions lost. Pinned rules_go0.65 proto rule explicitly disables generated coverage. Original PR says keep existing exclusions; no approval to narrow coverage. Candidate7e amendment is held pending a faithful fix. Prior ARM startup+0.82%p=.006 and missing original RACE comparator remain.",
-        "nextAction": "Await the exact execution approval already requested. Then publish unchanged plan 046c87e012f49b26d52d1fc45f8189f3a1f0066b and dispatch one AMD64 NORMAL fidelity run for source 9ddd73c541c3b73558f3a10b0f8833b5586e9bc0. No run exists. Keep the reviewed files frozen; do not retry through another route after automatic rejection. Qualification and the original PR amendment decision remain pending."
+        "nextAction": "Root carries the faithful generated-protobuf coverage gate into a permanent Bazel owner/thin Action. Same exact CI-only046 publication/dispatch may be re-reviewed under the new standing CI grant; no pending human execution decision remains. Keep frozen reviewed bytes and earlier rejection history, do not launch the per-item driver or bypass a renewed denial. Original PR amendment remains unqualified and separate."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -448141,8 +448141,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
-        "disposition": "The actual-source guard and eight-alias correction is prepared and independently reviewed, but automatic approval review rejected its exact CI-only publication/dispatch action before execution. No new qualification or production pass is established.",
-        "nextAction": "Await the already-asked exact action authorization decision for localb35/plancabc. Preserve the original PR and all passed/failed evidence; do not retry or route around the action-specific execution rejection. If legitimately authorized, fresh actual-source owner tests precede cold links."
+        "disposition": "Exact CI-only source02fc/plan30f1 run44409216041 passed source lint, fresh changed codegen owner and production compiler/oracle checks on both architecture outputs. The earlier exact CI publication rejection is superseded by the new CI grant and actual execution. Original PR171979 remains unchanged; no runtime performance or full C++ qualification is inferred.",
+        "nextAction": "Root reviews the qualified current proposal and remaining runtime/performance scope through permanent Bazel targets and thin Actions. Reuse actual lint/functional/compiler receipts; no repeated contributor execution-approval question or per-item-driver retry."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxwQaXQ"
@@ -448810,7 +448810,7 @@
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
         "disposition": "Native ARM64 run44227886194 independently verifies485 actual cases: TCP62, e2e405, timestamp8, timestamp race8, Linux PAWS1 and netstack PAWS1; zero skips/failures, exact983dc3a/plan0ce3cf64, restored source clean. Prior AMD64 owner/shard/export/lint evidence remains scoped to its recorded run; original harness failure preserved. Functional architecture gap is closed; performance and final review remain open.",
-        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements."
+        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAfQ41NSQ",
@@ -449101,7 +449101,7 @@
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
         "disposition": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
-        "nextAction": "Root preserves approved11af and code-identical localf097 plus reply draft; upstream8f remains unchanged. Do not repeat the approval question or bypass the blocked DCO action."
+        "nextAction": "Root completes the already-authorized source amendment and approved reply once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_X2w"
@@ -453669,7 +453669,7 @@
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "disposition": "All eight checkpoint N1 rows and owning completion JSON passed, as did scoped namespace/lease/content cleanup. Final original-Docker restart failed after package restoration; original-store/image/daemon reattachment is unverified, so the run is not qualified.",
-        "nextAction": "Owner coverage_security_review diagnoses and prepares cleanup-only recovery for the final original-daemon restart. Reuse validated eight observations and immutable products; do not repeat workloads/cold links or claim whole-run restoration until the actual failure is resolved."
+        "nextAction": "Root evaluates a permanent Bazel benchmark-worker/setup and restoration owner before any further per-item execution. Frozen rollback-only1dc6 has root+independent peer source review PASS, but is held for mechanism migration, not user approval. Reuse all8 valid workload/completion records; old run remains FAILED and old daemon-start cause UNKNOWN. No cold links or eight-case repeat."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -455791,7 +455791,7 @@
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
         "disposition": "The published4e head has another approval, but new CI is blocked: First Pass1796 was rejected by the one-day compute quota; pipeline55376 treats the fork-prefixed branch as a fetch refspec and fails before source checks. The actual fork branch still exists.",
-        "nextAction": "Root preserves the qualified local97 rebase and handles the actual DCO execution block before publication. Track CI-provider quota and the source-bound old pre-command refspec failure separately; no retry, new amendment or acknowledgement."
+        "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzoKivw",
@@ -456082,7 +456082,7 @@
         "owner": "root",
         "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
         "disposition": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
-        "nextAction": "Root preserves local4c0 and valid exact-code qualification while the actual DCO execution block remains. Continue exact published-head CI/reviewer/import obligations; no repeated contributor review or bypass."
+        "nextAction": "Root completes the already-authorized source amendment once the actual DCO-addition execution-review rejection is resolved through its own review channel. User review/request is settled and the user declined manual signing; this is not pending a human decision. Preserve exact local candidate, validation and original public head; do not add certification indirectly or publish around the rejection."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzkVM_w"
@@ -459674,7 +459674,7 @@
         "since": "2026-11-18T21:49:57.504662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     "pr:16453": {
@@ -464501,7 +464501,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464510,7 +464510,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464519,7 +464519,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464528,7 +464528,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464537,7 +464537,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464546,7 +464546,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464555,7 +464555,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T21:49:57.504662+00:00"
+        "observedAt": "2026-11-18T22:30:58.775869+00:00"
       }
     }
   },
