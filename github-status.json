@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T09:50:18.269366+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T07:09:10.290929+00:00",
+  "registryDate": "2026-11-18T09:52:57.232471+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448020,7 +448020,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "The missing-only screen44261892579 passed native tmpfs/rootfs then stopped at native FUSE ENOENT; zero BASE/candidate observations. All preparation/manifests and cleanup verified. The first tiny probe44264852083 failed image acquisition before containers. Corrected immutable-digest probe44265522148 proves /dev/fuse absent inside old-config container and visible/openable with only its device mapping. This is prerequisite evidence, not actual FUSE mount/Ruby capability.",
-        "nextAction": "Finish review of the final protocol for published source db1c819898c4100058374e37801b5f83ac54d94b. Qualify a real native FUSE mount before expensive runtime work, three uncached owner smoke cases with fresh BEP/XML, and 20 remaining N1 observations. Runtime sources 1f33 and 1b37 remain distinct from the new harness. No qualification run has launched. Keep old Ruby controls historical and reuse startup controls only with exact subtree and image proof."
+        "nextAction": "Restore SSH agent authentication, then reverify frozen exact FUSE plan 1bd483969f7f10eaffa29ac1cb9711261ecc0675 and absent destination before publishing and dispatching once. Final protocol review passed; native FUSE gate precedes runtime builds, then three fresh uncached owner cases and 20 N1 benchmark observations. No run launched."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -450453,7 +450453,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "The missing-only screen44261892579 passed native tmpfs/rootfs then stopped at native FUSE ENOENT; zero BASE/candidate observations. All preparation/manifests and cleanup verified. The first tiny probe44264852083 failed image acquisition before containers. Corrected immutable-digest probe44265522148 proves /dev/fuse absent inside old-config container and visible/openable with only its device mapping. This is prerequisite evidence, not actual FUSE mount/Ruby capability.",
-        "nextAction": "Finish review of the final protocol for published source db1c819898c4100058374e37801b5f83ac54d94b. Qualify a real native FUSE mount before expensive runtime work, three uncached owner smoke cases with fresh BEP/XML, and 20 remaining N1 observations. Runtime sources 1f33 and 1b37 remain distinct from the new harness. No qualification run has launched. Keep old Ruby controls historical and reuse startup controls only with exact subtree and image proof."
+        "nextAction": "Restore SSH agent authentication, then reverify frozen exact FUSE plan 1bd483969f7f10eaffa29ac1cb9711261ecc0675 and absent destination before publishing and dispatching once. Final protocol review passed; native FUSE gate precedes runtime builds, then three fresh uncached owner cases and 20 N1 benchmark observations. No run launched."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -457293,7 +457293,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "pr:15183": {
@@ -461937,7 +461937,7 @@
         "since": "2026-11-18T05:17:02.746861+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "pr:17023": {
@@ -462356,7 +462356,7 @@
         "since": "2026-11-18T05:35:02.192622+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "pr:17122": {
@@ -463938,7 +463938,7 @@
         "since": "2026-11-18T04:43:17.763943+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:11090": {
@@ -464526,7 +464526,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464535,7 +464535,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464544,7 +464544,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464553,7 +464553,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464562,7 +464562,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464571,7 +464571,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464580,7 +464580,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464589,7 +464589,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     },
     "branch:benchmark-reliability": {
@@ -464598,7 +464598,7 @@
         "since": "2026-11-18T07:09:10.290929+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T07:09:10.290929+00:00"
+        "observedAt": "2026-11-18T09:52:57.232471+00:00"
       }
     }
   },
