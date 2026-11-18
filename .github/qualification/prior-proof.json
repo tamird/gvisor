@@ -1,0 +1,21 @@
+{
+  "run": 44241613500,
+  "artifact": 14399694366,
+  "artifactSHA256": "766aa51364bf5c646d22ab087fad13a61985be4e30b48fe44624b538e01675e7",
+  "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+  "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+  "plan": "bcd88c468a7e2aa0c0b901c8db63aeb3d476a14b",
+  "limits": "Prior job failed at BASE prewarmer traversal; native control and build identities retained, no BASE/candidate observations.",
+  "files": {
+    "prior-identity.json": "e30a3b3790beecd57b24eed4ad74cdeba905bea723464931f5668ff2a26fa78f",
+    "prior-outcome.json": "999a7ce4a28efb271fa82f6fbbd651dc354fd9af4c8d7f91c82ae9f1bf9cb33b",
+    "prior-native-startup.log": "5cf506f151553feb644f386b0b9d9411eae35a82b315f83da2fe4c6b2a9a00e3",
+    "prior-native-ruby.log": "1ddcd432ccf7b552b32d6fd82f266c78915abc97da1f02126a67e8498e92d763",
+    "prior-native-startup.json": "385fcf32bb9cc1a6be6b7b03272e76106042855dce9229d06b0543355dab9042",
+    "prior-native-ruby.json": "8e3caabd2064e9d7c1c45725bdb1a62c41c7a3585e41ffca0023ec4cc913071c",
+    "prior-frozen-harness.json": "53e4a6c4166042afea39ca6892e7c152981d10781a521401924b65bfe5ecaea1",
+    "prior-frozen-images.txt": "abde3b0dca701ee6ad29d8e1b3b246e20e844823f52d98b7e143e46d9f71298c",
+    "prior-base-runtime.json": "714a526c55eafd194ac86cf354d6c0bf5808d34707f900d0b7ce23a97a26d9a9",
+    "prior-candidate-runtime.json": "8e9d8b08de7222f468fbb10e3b6ad12d98c6589838adbd68bcfe465fb3ca8e76"
+  }
+}
