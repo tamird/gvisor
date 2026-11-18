@@ -91267,31 +91267,41 @@
       "id": "branch:benchmark-reliability",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/benchmark-reliability-20261118",
-      "head": "46ec4ba08f60c5a2e89269d09b2b970f3cde5685",
+      "ref": "review/benchmark-reliability-complete-20261118",
+      "head": "af131d57abcab71b361073a48efd8607959aa5ae",
       "title": "Fix network benchmark readiness and reporting",
-      "url": "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08",
+      "url": "https://github.com/tamird/gvisor/compare/b29c8320a...af131d57a",
       "group": "bazel",
-      "status": "Qualified; contributor publication decision pending",
-      "updatedAt": "2026-11-18T07:38:03.401208+00:00",
-      "summary": "One publication contains two independently reviewable fixes: readiness error propagation and Node client/timer cleanup, followed by Iperf aggregate/payload reporting. Exact qualified blobs and patch identities are preserved in the stack. Historical metrics keep their original definitions.",
+      "status": "Qualified; superseding contributor decision pending",
+      "updatedAt": "2026-11-18T07:42:24.729369+00:00",
+      "summary": "Three qualified fixes propagate readiness errors and clean up Node clients/timing, report Iperf aggregate payload metrics, and reject Hey client errors. Exact integrated owner/consumer check passes; old component controls and original metric limits retained. No upstream PR yet.",
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "46ec4ba08f60c5a2e89269d09b2b970f3cde5685",
-        "baseHead": "1f33fe3003455db178b97f3b43d3a012f1611994",
-        "url": "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08",
+        "head": "af131d57abcab71b361073a48efd8607959aa5ae",
+        "baseHead": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+        "url": "https://github.com/tamird/gvisor/compare/b29c8320a...af131d57a",
         "title": "Fix network benchmark readiness and reporting",
-        "summary": "Approve one upstream PR for both qualified commits. Full comparison covers the readiness commit and Iperf commit; no upstream PR has been opened.",
-        "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue after their readiness probe failed. Abort on returned errors before timed client requests. Clean up Node's native client and stop its timer before metric reporting and deferred cleanup.\n\nIperf selected a single connection even when parallel output included an aggregate summary. Select the final reported summary and use its payload size for MB/s instead of the write-buffer size. MB/s uses the stopped timer at Report, while bandwidth uses iperf's own reported interval. Neither measures physical wire throughput. Final ns/op can include work timed after Report.\n\nThese changes alter Node elapsed accounting and Iperf metric values. Comparisons must use one identical repaired harness across runtime arms; historical results retain their original definitions.\n\nMissing-image controls exercise returned readiness failures, and restored inputs check successful requests and client cleanup. Captured single, tiny and parallel Iperf outputs exercise the parser and public reporting boundary; the same reporting tests fail against the old helper.\n\nPosted by Codex on behalf of @tamird.\n"
+        "summary": "Supersedes pending two-commit proposal with the unchanged two patches plus qualified Hey client-error rejection. Exact integrated29-case/four-consumer qualification passes. No upstream PR.",
+        "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue after their readiness probe failed. Abort on returned errors before timed client requests. Clean up Node's native client and stop its timer before metric reporting and deferred cleanup.\n\nIperf selected a single connection even when parallel output included an aggregate summary. Select the final reported summary and use its payload size for MB/s instead of the write-buffer size. MB/s uses the stopped timer at Report, while bandwidth uses iperf's own reported interval. Neither measures physical wire throughput. Iperf's final ns/op can include work timed after Report.\n\nHey emitted finite request rates and average latencies even when its report included client timeout errors. Reject reports with an Error distribution section before publishing metrics. Keep HTTP status handling unchanged so intentional 404 workloads continue to work. This check rejects errors declared by the CLI; it does not establish complete response accounting for arbitrary reports.\n\nThese changes alter Node elapsed accounting and Iperf metric values. Comparisons must use one identical repaired harness across runtime arms; historical results retain their original definitions. A failed Hey workload must remain failed rather than becoming a finite-QPS performance result.\n\nMissing-image controls exercise returned readiness failures, and restored inputs check benchmark completion and client cleanup. Captured single, tiny and parallel Iperf outputs exercise the parser and public reporting boundary. Captured successful, 404 and timeout Hey reports exercise its public reporting boundary. The same reporting tests detect each old helper's defect.\n\nPosted by Codex on behalf of @tamird.\n",
+        "supersedes": {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "46ec4ba08f60c5a2e89269d09b2b970f3cde5685",
+          "baseHead": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "url": "https://github.com/tamird/gvisor/compare/1f33fe300...46ec4ba08",
+          "title": "Fix network benchmark readiness and reporting",
+          "summary": "Approve one upstream PR for both qualified commits. Full comparison covers the readiness commit and Iperf commit; no upstream PR has been opened.",
+          "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue after their readiness probe failed. Abort on returned errors before timed client requests. Clean up Node's native client and stop its timer before metric reporting and deferred cleanup.\n\nIperf selected a single connection even when parallel output included an aggregate summary. Select the final reported summary and use its payload size for MB/s instead of the write-buffer size. MB/s uses the stopped timer at Report, while bandwidth uses iperf's own reported interval. Neither measures physical wire throughput. Final ns/op can include work timed after Report.\n\nThese changes alter Node elapsed accounting and Iperf metric values. Comparisons must use one identical repaired harness across runtime arms; historical results retain their original definitions.\n\nMissing-image controls exercise returned readiness failures, and restored inputs check successful requests and client cleanup. Captured single, tiny and parallel Iperf outputs exercise the parser and public reporting boundary; the same reporting tests fail against the old helper.\n\nPosted by Codex on behalf of @tamird.\n"
+        }
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "46ec4ba08f60c5a2e89269d09b2b970f3cde5685",
-        "observedAt": "2026-11-18T07:38:03.401208+00:00",
-        "disposition": "Old two-commit contributor decision remains pending. Additional Hey fix ca053 qualified in44254674522, detecting declared client errors while preserving intentional404. Three exact qualified patches now form af131 on website-only refreshedbaseb29; no existing source patch changed. Integrated29-owner-case/four-consumer check44258637313 is live; no upstream PR.",
-        "nextAction": "Consume integrated44258637313 terminal artifacts. If qualified, present one clearly superseding three-commit contributor decision with exact rev-parse/range-diff, retained original controls and complete PRtext. Do not treat approval of oldtwo as approval of added Hey fix.",
-        "recheckCondition": "Integrated run becomes terminal, contributor decision, source/base change or new review finding.",
+        "sourceHead": "af131d57abcab71b361073a48efd8607959aa5ae",
+        "observedAt": "2026-11-18T07:42:24.729369+00:00",
+        "disposition": "Three qualified patches af131 passed integrated44258637313:exact29XML cases,zero skips/failures/errors,four consumers built,six original qualified blobs exact,clean source/index. Range-diff preserves two old patches and adds only Hey rejection, with website-only base refresh. Earlier component negatives and lints retained. Superseding contributor decision pending; no upstream PR.",
+        "nextAction": "On explicit approval of this three-commit proposal and complete body, reverify exact head/base and publish one upstream PR. Do not use approval of the old two-commit proposal as approval for the added Hey fix.",
+        "recheckCondition": "Contributor decision, source/base change, publication result or substantive feedback.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -91313,9 +91323,11 @@
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
           "run": 44258637313,
           "plan": "d7331492012e0a3c760d009cdef3259a5ca0e913",
-          "state": "running",
+          "state": "passed",
           "owner": "tcp_conflict",
-          "supersedingDecisionSent": false
+          "supersedingDecisionSent": false,
+          "artifact": 14408050244,
+          "artifactDigest": "565195f1fd2d50341d72c1dbb2dfac7627a2c20825b802c41d0bf671fbc52434"
         }
       }
     },
@@ -126079,5 +126091,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-18T07:38:03.401208+00:00"
+  "updatedAt": "2026-11-18T07:42:24.729369+00:00"
 }
