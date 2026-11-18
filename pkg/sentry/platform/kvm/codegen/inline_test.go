@@ -202,7 +202,7 @@ func TestProductionMmapHandlerApplicability(t *testing.T) {
 					symbols = append(symbols, elf.Symbol{Name: kvm + "." + name, Info: byte(elf.STT_FUNC), Section: 1})
 				}
 			}
-			archSource := readSource(t, "pkg/sentry/platform/kvm/machine_" + arch + ".go")
+			archSource := readSource(t, "pkg/sentry/platform/kvm/machine_"+arch+".go")
 			got, err := mmapHandlerApplicable(machine, symbols, machineSource, archSource)
 			if err != nil || got != (arch == "amd64") {
 				t.Fatalf("production source applicability on %s: got %t, %v", arch, got, err)
