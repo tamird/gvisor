@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T10:36:05.188941+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T10:08:52.027930+00:00",
+  "registryDate": "2026-11-18T10:51:13.405419+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447259,10 +447259,10 @@
       "number": 17545,
       "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
       "sourceNumber": 17545,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABn8RaEA",
-      "needsTriage": true,
+      "needsTriage": false,
       "createdAt": "2026-11-18T10:09:43Z",
       "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
       "author": "milantracy",
@@ -447278,10 +447278,10 @@
       "number": 17456,
       "head": "b0f308f6547907a11d07fff7805be7e01df05143",
       "sourceNumber": 17456,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABn8aVpQ",
-      "needsTriage": true,
+      "needsTriage": false,
       "createdAt": "2026-11-18T10:16:08Z",
       "url": "https://github.com/google/gvisor/pull/17456#issuecomment-6975559077",
       "author": "milantracy",
@@ -447297,10 +447297,10 @@
       "number": 17445,
       "head": "94c7a5be59a53b5bb8dd4221a12b51e60fca2409",
       "sourceNumber": 17445,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABn8bgOA",
-      "needsTriage": true,
+      "needsTriage": false,
       "createdAt": "2026-11-18T10:16:56Z",
       "url": "https://github.com/google/gvisor/pull/17445#issuecomment-6975578168",
       "author": "milantracy",
@@ -447316,10 +447316,10 @@
       "number": 17370,
       "head": "e9b31eddd7345586a03db99ec501ff4f2a5cc887",
       "sourceNumber": 17370,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABn8fHlQ",
-      "needsTriage": true,
+      "needsTriage": false,
       "createdAt": "2026-11-18T10:19:22Z",
       "url": "https://github.com/google/gvisor/pull/17370#issuecomment-6975637397",
       "author": "milantracy",
@@ -447335,14 +447335,14 @@
       "number": 17545,
       "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
       "sourceNumber": 17545,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABX3mZcw",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
       "author": "manninglucas",
       "updatedAt": "2026-11-18T10:30:43Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -456857,7 +456857,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "pr:15183": {
@@ -461501,7 +461501,7 @@
         "since": "2026-11-18T05:17:02.746861+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "pr:17023": {
@@ -461920,7 +461920,7 @@
         "since": "2026-11-18T05:35:02.192622+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "pr:17122": {
@@ -463502,7 +463502,7 @@
         "since": "2026-11-18T04:43:17.763943+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:11090": {
@@ -464090,7 +464090,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464099,7 +464099,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464108,7 +464108,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464117,7 +464117,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464126,7 +464126,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464135,7 +464135,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464144,7 +464144,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464153,7 +464153,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     },
     "branch:benchmark-reliability": {
@@ -464162,7 +464162,7 @@
         "since": "2026-11-18T07:09:10.290929+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T10:08:52.027930+00:00"
+        "observedAt": "2026-11-18T10:51:13.405419+00:00"
       }
     }
   },
