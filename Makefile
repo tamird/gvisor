@@ -499,6 +499,8 @@ docker-tests: integration-test-images $(RUNTIME_BIN)
 	@$(call install_runtime_noreload,$(RUNTIME)-netgofer-proxy-loopback,--netgofer=proxy-loopback) # Used by TestNetgoferProxy*.
 	@$(call install_runtime,$(RUNTIME)-cgroupv2,--in-sandbox-cgroup=v2) # Used by TestSystemd* and TestPIDFDSelftests.
 	@$(call test_runtime_cached,$(RUNTIME),-- $(INTEGRATION_TARGETS) //test/e2e:integration_runtime_test //test/e2e:runtime_in_docker_test //test/e2e:uds_proxy_test)
+	@$(call test_runtime_cached,runc,-- //test/benchmarks/fs/fsbench:fsbench_test)
+	@$(call test_runtime_cached,$(RUNTIME),-- //test/benchmarks/fs/fsbench:fsbench_test)
 .PHONY: docker-tests
 
 plugin-network-tests: integration-test-images $(RUNTIME_BIN)

@@ -1,6 +1,6 @@
 # Package fsbench provides utility functions for filesystem-related benchmarks.
 
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -22,4 +22,19 @@ go_library(
         "//test/metricsviz",
         "@com_github_docker_docker//api/types/container:go_default_library",
     ],
+)
+
+go_test(
+    name = "fsbench_test",
+    size = "small",
+    srcs = ["fsbench_test.go"],
+    args = ["-test.benchtime=1x"],
+    # Invalidate cached Docker results when the configured runtime changes.
+    data = ["//:release"],
+    embed = [":fsbench"],
+    # Requires Docker, the basic Alpine image, and the canonical FUSE server.
+    local = True,
+    tags = ["manual"],
+    visibility = ["//:sandbox"],
+    deps = ["//test/benchmarks/harness"],
 )
