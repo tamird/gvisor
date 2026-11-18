@@ -16,66 +16,52 @@ package tools
 
 import "testing"
 
-// TestHey checks the Hey parsers on sample output.
-func TestHey(t *testing.T) {
-	sampleData := `
-	Summary:
-          Total:	2.2391 secs
-          Slowest:	1.6292 secs
-          Fastest:	0.0066 secs
-          Average:	0.5351 secs
-          Requests/sec:	89.3202
+// These summaries were captured from the canonical Hey v0.1.5 image.
+const heySuccess = `{"requests":4,"seconds":0.002128464,"requests_per_second":1879.2894782340693,"average_latency_seconds":0.00101637925,"errors":{},"status_codes":{"200":4}}`
 
-          Total data:	841200 bytes
-          Size/request:	4206 bytes
+const heyNotFound = `{"requests":4,"seconds":0.001695339,"requests_per_second":2359.41012387493,"average_latency_seconds":0.0007628817499999999,"errors":{},"status_codes":{"404":4}}`
 
-        Response time histogram:
-          0.007 [1]	|
-          0.169 [0]	|
-          0.331 [149]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-          0.493 [0]	|
-          0.656 [0]	|
-          0.818 [0]	|
-          0.980 [0]	|
-          1.142 [0]	|
-          1.305 [0]	|
-          1.467 [49]	|■■■■■■■■■■■■■
-          1.629 [1]	|
+const heyTimeout = `{"requests":4,"seconds":2.001163301,"requests_per_second":1.9988373752412723,"average_latency_seconds":null,"errors":{"Get \"http://127.0.0.1:45711/timeout\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)":4},"status_codes":null}`
 
-
-        Latency distribution:
-          10% in 0.2149 secs
-          25% in 0.2449 secs
-          50% in 0.2703 secs
-          75% in 1.3315 secs
-          90% in 1.4045 secs
-          95% in 1.4232 secs
-          99% in 1.4362 secs
-
-        Details (average, fastest, slowest):
-          DNS+dialup:	0.0002 secs, 0.0066 secs, 1.6292 secs
-          DNS-lookup:	0.0000 secs, 0.0000 secs, 0.0000 secs
-          req write:	0.0000 secs, 0.0000 secs, 0.0012 secs
-          resp wait:	0.5225 secs, 0.0064 secs, 1.4346 secs
-          resp read:	0.0122 secs, 0.0001 secs, 0.2006 secs
-
-        Status code distribution:
-          [200]	200 responses
-	`
-	hey := Hey{}
-	want := 89.3202
-	got, err := hey.parseRequestsPerSecond(sampleData)
-	if err != nil {
-		t.Fatalf("failed to parse request per second with: %v", err)
-	} else if got != want {
-		t.Fatalf("got: %f, want: %f", got, want)
-	}
-
-	want = 0.5351
-	got, err = hey.parseAverageLatency(sampleData)
-	if err != nil {
-		t.Fatalf("failed to parse average latency with: %v", err)
-	} else if got != want {
-		t.Fatalf("got: %f, want: %f", got, want)
+// TestHeyReport checks the public reporting boundary, including failed requests.
+func TestHeyReport(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		output       string
+		wantReported bool
+		wantQPS      float64
+		wantAverage  float64
+	}{
+		{name: "success", output: heySuccess, wantReported: true, wantQPS: 1879.2894782340693, wantAverage: 0.00101637925},
+		{name: "notFound", output: heyNotFound, wantReported: true, wantQPS: 2359.41012387493, wantAverage: 0.0007628817499999999},
+		{name: "timeout", output: heyTimeout},
+		{name: "missingErrors", output: `{"requests_per_second":10,"average_latency_seconds":0.1}`},
+		{name: "missingLatency", output: `{"requests_per_second":10,"errors":{}}`},
+		{name: "zeroRate", output: `{"requests_per_second":0,"average_latency_seconds":0.1,"errors":{}}`},
+		{name: "negativeLatency", output: `{"requests_per_second":10,"average_latency_seconds":-1,"errors":{}}`},
+		{name: "malformed", output: `{`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reported := false
+			result := testing.Benchmark(func(b *testing.B) {
+				b.StopTimer()
+				hey := Hey{}
+				hey.Report(b, tc.output)
+				reported = true
+			})
+			if reported != tc.wantReported {
+				t.Fatalf("Report completed: got %t, want %t", reported, tc.wantReported)
+			}
+			if reported {
+				if got := result.Extra["requests_per_second.QPS"]; got != tc.wantQPS {
+					t.Errorf("requests per second: got %g, want %g", got, tc.wantQPS)
+				}
+				if got := result.Extra["average_latency.s"]; got != tc.wantAverage {
+					t.Errorf("average latency: got %g, want %g", got, tc.wantAverage)
+				}
+			} else if len(result.Extra) != 0 {
+				t.Fatalf("Report emitted metrics for invalid results: %v", result.Extra)
+			}
+		})
 	}
 }
