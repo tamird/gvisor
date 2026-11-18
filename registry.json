@@ -15746,12 +15746,12 @@
       "summary": "The requested post-#16046 rebase is published at 89bbc33772fd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved change is now PR #15651 at exact head c82a47083. No contributor decision remains; maintainer review and current-head CI are followed upstream.\n\nNegotiated timestamps are checked against TS.Recent before handshake, receive and TIME_WAIT state changes, with serial-number comparison and 24-day expiry on the stack clock. The reset exception and existing policy against TIME_WAIT assassination are retained. Three before assertions fail; the Linux reference, corrected packet tests, full owning TCP checks on both architectures, analyzers and lints pass. Existing RACK skips remain explicit. Validation and source composition are independently verified.",
       "url": "https://github.com/google/gvisor/pull/15651",
       "status": "open",
-      "updatedAt": "2026-11-18T08:22:46.540846+00:00",
+      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "followup": {
         "disposition": "Native ARM64 run44227886194 independently verifies485 actual cases: TCP62, e2e405, timestamp8, timestamp race8, Linux PAWS1 and netstack PAWS1; zero skips/failures, exact983dc3a/plan0ce3cf64, restored source clean. Prior AMD64 owner/shard/export/lint evidence remains scoped to its recorded run; original harness failure preserved. Functional architecture gap is closed; performance and final review remain open.",
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
-        "nextAction": "tcp_conflict prepares the shared full70-case BASE/RTO/atomic/PAWS capability/outcome executable, including nine known failedBASEleaves. Review and exact staged guard before launch; retain errors as failures, not finite throughput. Existing functional/performance evidence remains source-bound; full150-leaf/loss/statistical scope stays open. Root completes source/delivery decision after actual candidate outcomes.",
+        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15651",
           "https://github.com/tamird/gvisor/commit/c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
@@ -15771,8 +15771,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44227886194"
         ],
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-18T08:22:46.540846+00:00",
-        "recheckCondition": "Shared networking results, review findings, source/feedback change or contributor decision.",
+        "observedAt": "2026-11-18T09:21:28.062516+00:00",
+        "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
         "qualificationHistory": [
           {
             "disposition": "Prepared separate rebase candidate 0e5a957935 on current master. Its only topic change is the required nil SACK argument in the new SYN-RCVD ACK call; original PR source remains unchanged. Native qualification plan is prepared for publication.",
@@ -33448,14 +33448,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T08:22:46.540846+00:00",
+      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "summary": "Keep the congestion threshold across repeated timeouts without an advancing ACK and when a timeout interrupts fast recovery. Master already preserves cwnd and ssthresh on an idle zero-window probe. The amendment drops the duplicate early return and retains both TestZeroWindowSend assertions. Five original XML files contain 20 passing records with zero skips.",
       "followup": {
         "owner": "tcp_conflict",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "observedAt": "2026-11-18T08:22:46.540846+00:00",
+        "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
-        "nextAction": "tcp_conflict prepares the shared full70-case BASE/RTO/atomic/PAWS capability/outcome executable, including nine known failedBASEleaves. Review and exact staged guard before launch; retain errors as failures, not finite throughput. Existing functional/performance evidence remains source-bound; full150-leaf/loss/statistical scope stays open. Root completes source/delivery decision after actual candidate outcomes.",
+        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -33478,7 +33478,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44218955130",
           "https://github.com/tamird/gvisor/actions/runs/44218958456"
         ],
-        "recheckCondition": "Remaining qualification plan approved/completes, source/feedback changes or benchmark corrections qualify.",
+        "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -37182,13 +37182,13 @@
       "group": "bazel",
       "status": "open",
       "summary": "The report/KCOV capability gate passes, but the rules_go replacement drops all 2,418 generated protobuf coverage positions present in the baseline. Handwritten positions are preserved. Amendment held while the coverage owner prepares a faithful fix.",
-      "updatedAt": "2026-11-18T08:22:46.540846+00:00",
+      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "followup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "observedAt": "2026-11-18T08:22:46.540846+00:00",
+        "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Retention gate44254336532 fully verified PASS:600 actual iterations,zero skips/failures,two valid report arms,all six argv/sidecar audits,24 fileset checks,two nine-member runtime archives and clean source. Full symbolize inventory exposes a preservation defect:all2418 legacy generated .pb.go positions are absent from candidate;zero handwritten baseline positions lost. Pinned rules_go0.65 proto rule explicitly disables generated coverage. Original PR says keep existing exclusions; no approval to narrow coverage. Candidate7e amendment is held pending a faithful fix. Prior ARM startup+0.82%p=.006 and missing original RACE comparator remain.",
-        "nextAction": "Qualify published9ddd generated-coverage prototype using real ordinary/selected/excluded/mixed-embed provider probes plus full inventory and executed protobuf report. Two independent source reviews found no issue; semantic execution is pending. Restore faithful coverage before requesting amendment; old7e timing remains historical and is not transferred to new instrumentation.",
+        "nextAction": "Await the exact execution approval already requested. Then publish unchanged plan 046c87e012f49b26d52d1fc45f8189f3a1f0066b and dispatch one AMD64 NORMAL fidelity run for source 9ddd73c541c3b73558f3a10b0f8833b5586e9bc0. No run exists. Keep the reviewed files frozen; do not retry through another route after automatic rejection. Qualification and the original PR amendment decision remain pending.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -37346,7 +37346,7 @@
           "parent": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
           "ref": "review/coverage-generated-proto-20261118",
           "url": "https://github.com/tamird/gvisor/commit/9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
-          "state": "published; two independent source reviews found no issues; remote semantic/fidelity gate pending",
+          "state": "Published source and technically reviewed immutable fidelity plan; exact execution authorization pending after automatic-review rejection.",
           "scope": "Two upstream Starlark lines: own attr+generated sources use the existing coverage selection before embed merge; proto no longer forces coverage off. MODULE binds one new patch.",
           "requiredEvidence": [
             "ordinary/selected/excluded provider sets",
@@ -37354,7 +37354,30 @@
             "complete symbolization restores generated protobuf positions",
             "nonzero actual executed protobuf report",
             "native normal/race functional qualification before performance assessment"
-          ]
+          ],
+          "preparedPlan": "046c87e012f49b26d52d1fc45f8189f3a1f0066b",
+          "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
+          "planPublished": false,
+          "runCreated": false
+        },
+        "executionApproval": {
+          "status": "pending",
+          "owner": "root",
+          "reason": "Automatic approval review rejected exact public support publication/workflow dispatch despite standing authorization and forbade alternate execution routes. Exact user approval requested; no attempt after rejection.",
+          "destination": "tamird/gvisor:research/coverage-protobuf-fidelity-20261118",
+          "source": "9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
+          "plan": "046c87e012f49b26d52d1fc45f8189f3a1f0066b",
+          "workflow": "qualification.yml",
+          "workflowRef": "master",
+          "architecture": "amd64",
+          "expectedMinutes": [
+            20,
+            30
+          ],
+          "hardMinutesAfterGenericPreparation": 90,
+          "fileCount": 16,
+          "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
+          "recheckCondition": "Explicit user decision on this exact prepared payload; preserve frozen bytes."
         }
       },
       "evidence": [
@@ -49498,7 +49521,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-18T08:22:46.540846+00:00",
+      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49537,9 +49560,9 @@
       "followup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "observedAt": "2026-11-18T08:22:46.540846+00:00",
+        "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "The missing-only screen44261892579 passed native tmpfs/rootfs then stopped at native FUSE ENOENT; zero BASE/candidate observations. All preparation/manifests and cleanup verified. The first tiny probe44264852083 failed image acquisition before containers. Corrected immutable-digest probe44265522148 proves /dev/fuse absent inside old-config container and visible/openable with only its device mapping. This is prerequisite evidence, not actual FUSE mount/Ruby capability.",
-        "nextAction": "Qualify publishedbdc FuseFS-only device mapping with an actual native FUSE mount/Ruby gate before costly runtime builds; preserve f196 readiness and timer boundaries. Then run remaining source/mode outcomes under one frozen newharness. OldRuby controls remain historical because the binary changes; reuse startup only under exact subtree/image proof. Root reviews concrete executable/costs before launch; no source amendment approval yet.",
+        "nextAction": "Finish review of the final protocol for published source db1c819898c4100058374e37801b5f83ac54d94b. Qualify a real native FUSE mount before expensive runtime work, three uncached owner smoke cases with fresh BEP/XML, and 20 remaining N1 observations. Runtime sources 1f33 and 1b37 remain distinct from the new harness. No qualification run has launched. Keep old Ruby controls historical and reuse startup controls only with exact subtree and image proof.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49648,11 +49671,37 @@
           "actualOldConfig": "Devices empty; container not privileged; /data and /fuse exist, /dev/fuse absent and open returns ENOENT.",
           "controlledResult": "Only exact char10:229 /dev/fuse:rwm mapping added; container remains not privileged, open succeeds.",
           "mountOrWorkloadExecuted": false,
-          "repairState": "Committed and published; independent source review passed; actual mount/Ruby and source/mode qualification pending.",
+          "repairState": "Final two-commit source published; maintained actualFUSE smoke and CI runtime-cache input added, protocol/cost reviews pending; no qualification launched.",
           "retainedReadiness": "Preserve f196722413 readiness/exit observation; it did not introduce the missing device.",
           "repairHead": "bdc0d03ba1ee9803b8787b2b3a341f426475468a",
           "repairBase": "b29c8320a862a77f4c55894d00c56eb5850c8066",
-          "repairURL": "https://github.com/tamird/gvisor/commit/bdc0d03ba1ee9803b8787b2b3a341f426475468a"
+          "repairURL": "https://github.com/tamird/gvisor/commit/bdc0d03ba1ee9803b8787b2b3a341f426475468a",
+          "repairFinalHead": "db1c819898c4100058374e37801b5f83ac54d94b",
+          "repairFinalURL": "https://github.com/tamird/gvisor/commit/db1c819898c4100058374e37801b5f83ac54d94b",
+          "maintainedSmoke": "RealFSBenchmark basic/alpine mount; assertFUSEmagic and write/read, exactlyonechildcallback atN1. ExistingDocker recipe selectsnative andconfiguredruntime; source-built release declared in testdata, external comparator swaps still require uncached runs.",
+          "qualificationScope": "20remainingN1benchmark observations plus3freshfunctionalSmoke cases; nativeFUSE before expensive runtime preparation; runtime1f/1b distinctfromharnessSOURCE. ExactBEP/XML/identity andcleanup required.",
+          "qualificationBudget": {
+            "expectedMinutes": [
+              15,
+              30
+            ],
+            "bodyMinutes": 90,
+            "cleanupGraceSeconds": 180,
+            "inclusiveMinutesAfterGenericPreparation": 93,
+            "state": "Proposed; final executable/cost review pending"
+          }
+        },
+        "fuseContinuousCI": {
+          "upstream": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "pipeline": 55343,
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55343",
+          "overallState": "passed",
+          "rubyAttempts": 3,
+          "rubyAttemptsSoftFailed": true,
+          "finalJob": "01a1ed5f-7df5-45b9-bc3e-5f11e076209f",
+          "actualLog": "Native runtime=runc RubyNoOp clean/dirtyFUSE both reportNewServerENOENT. LaterRubySpec dirtybindfs is canceled, so finalexit-1 is not attributed only toFUSE. SomeSentryFUSE leaves complete.",
+          "selectionGap": "Master-onlysoft-failingbenchmark lane already includednative; not PR-blocking FUSEfixture coverage. Newsmall maintained owner smoke targets that specific gap.",
+          "causeLimit": "No claim thatf196 introduced missingdevice or that this fix resolves laterbenchmark cancellation."
         }
       },
       "dcoAmendment": {
@@ -57018,7 +57067,7 @@
       "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-18T07:51:06.529957+00:00",
+      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "summary": "The fork checker on fa6b9080f diagnosed 13 of 23 marked cases on each of AMD64 and ARM64, including wrong-owner use with both sets locked. It accepted all four valid uses. Six lifetime cases also went unreported: two unlock/relock sequences and four cases involving a waiter-list cursor. The native package ran five tests with no skips. A saved semaphore element retained its address across unlock and exposed the updated value and PID after relocking. In a test-only count predicate that released the mutex and called AbortWait, traversal visited one of three waiters and left the other two queued. The two production count predicates only read the semaphore value.",
       "evidence": [
         {
@@ -57120,9 +57169,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "observedAt": "2026-11-18T07:51:06.529957+00:00",
-        "disposition": "Reconciled exact8d8 proposal against currentb29 checker and semaphore source. Related16806 is merged, not a dependency blocker. Current field-access guards do not establish alias lifetimes; stable Set.sems member storage may validly survive unlock, while waiter cursor membership may change. Existing production count callbacks only read immutable waiter.value. Old proposal also predates the current int32 wake predicate; preserve that behavior on any rebase.",
-        "nextAction": "Design the checker contract at the owning alias/returned-value mechanism, distinguishing persistent slice-member ownership from mutable list cursor membership. Preserve current semaphore algorithm on any later rebase. Do not publish old annotation-only proposal or claim its13/23 diagnostic probe covers lifetime invalidation. Implementation must wait for the exclusively allocated checkout to be released; design can proceed from indexed objects.",
+        "observedAt": "2026-11-18T09:21:28.062516+00:00",
+        "disposition": "Recovered complete user changes-requested history: annotate member fields with protecting-lock link and retain sem.wakeWaiters() withoutSet parameter. Latest returned-reference question is answered by distinguishing stable slice storage from guarded access and mutable list cursors. Existingfa6 prototype354line checker is preserved, not recreated; its two lifetime/fourcursor cases were exploratory, not declared negative expectations. Current type aliases do not connect returned member lock toSet.mu.",
+        "nextAction": "Prepare the small owner-link revision and focused returned-lock alias contract using existing facts. Preserve the current int32 predicate and nested read-lock handling; do not use forced exemptions, pretend to acquire a lock, or add a general borrow-expiry project. Require canonical alias and restore tests, valid reference reuse after relocking, remote formatting and performance assessment. Disclose the existing interior-address limitation before requesting a contributor decision.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -57144,8 +57193,8 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "technicalOwner": "Agent",
-        "recheckCondition": "Coverage checkout release, concrete checker design disposition, current checker source change or contributor decision.",
+        "technicalOwner": "coverage_security_review",
+        "recheckCondition": "Concrete source/review/remote validation evidence, soundness issue in minimal return-alias contract or contributor decision.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -57169,7 +57218,19 @@
           "nextAction": "Design the checker contract at the owning alias/returned-value mechanism, distinguishing persistent slice-member ownership from mutable list cursor membership. Preserve current semaphore algorithm on any later rebase. Do not publish old annotation-only proposal or claim its13/23 diagnostic probe covers lifetime invalidation. Implementation must wait for the exclusively allocated checkout to be released; design can proceed from indexed objects.",
           "recheckCondition": "Coverage checkout release, concrete checker design disposition, current checker source change or contributor decision.",
           "runtimeOrCheckerTestsRun": false
-        }
+        },
+        "preparedPrerequisite": {
+          "number": 17127,
+          "upstreamHead": "52ff87dadb907e5facdee03b9ec746f1806a19e2",
+          "localRebase": "c4428378b2cb54c3c94a5c36aaedcbbcc3447513",
+          "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "stablePatchId": "cfcc3c79d9989299a06bc339126ced456687c711",
+          "authorDateBodyDCOExact": true,
+          "upstreamPRUpdated": false,
+          "deliveryOwner": "root",
+          "scope": "Reuse the existing approved real-queue clearing fix as an explicit prerequisite; do not duplicate it in owner-link work. Existing regression retained."
+        },
+        "preparationState": "Eight-path owner-link/return-alias revision in progress on the prepared prerequisite. Checker review passed; consumer/restore review, remote formatting and all execution remain pending."
       },
       "contributorChangesRequested": {
         "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -74095,7 +74156,7 @@
       "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
       "status": "Contributor approved; qualifying integration",
-      "updatedAt": "2026-11-18T08:22:46.540846+00:00",
+      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "summary": "Two peer queues can contend for the same TCP listener. Replacing the membership mutex with one atomic claim removed 63 net lines. On two AMD64 CPUs, rejected duplicate queue operations fell from 20.24 to 12.01 ns and a successful dequeue/requeue from 25.20 to 17.24 ns. The 16-pair benchmark measures queue operations. The ordinary and race TCP suites, both architecture analyzers and both single-processor scheduling controls passed.\n\nA fresh-connection HTTP/1.1 benchmark on two CPUs found no statistically distinguishable change with one or 16 concurrent clients (16 alternating pairs, 2,048 requests per sample). Every response matched. In a separate 16-client run on the parent, both TCP processors queued the listener. Of 2,235 duplicate enqueue attempts, 1,133 found the listener already queued on the other processor.",
       "evidence": [
         {
@@ -74118,9 +74179,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
-        "observedAt": "2026-11-18T08:22:46.540846+00:00",
+        "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Candidate1298a7c preserves the approved patch over merged prerequisite. Native TCP62 per architecture, race63 AMD64 and focused fairness fixtures passed. Saved missing-owner XML verifies e2e405+nogo1 per architecture, zero failures/skips; source lint passed both and AMD64 C++ lint passed. Original harness failures retained: terminal-control PASS prefix and unsupported per-architecture Nogo stdout marker. ARM64 C++ baseline limitation stays explicit. Performance and final independent source review remain open.",
-        "nextAction": "tcp_conflict prepares the shared full70-case BASE/RTO/atomic/PAWS capability/outcome executable, including nine known failedBASEleaves. Review and exact staged guard before launch; retain errors as failures, not finite throughput. Existing functional/performance evidence remains source-bound; full150-leaf/loss/statistical scope stays open. Root completes source/delivery decision after actual candidate outcomes.",
+        "nextAction": "The shared 70-case comparison across four runtimes has passed executable review. Await the exact user approval requested after automatic publication rejection, then publish unchanged local plan 2da1c9afe20217ba15542a884d88735501dd477c and dispatch one AMD64 run. No support plan or run was published. Retain failed baseline outcomes, existing source-bound evidence, and the broader 150-case, loss and statistical requirements.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a8e54633f",
           "https://github.com/google/gvisor/pull/17045",
@@ -74139,7 +74200,7 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "Networking qualification, review findings, upstream/source changes or publication gates complete.",
+        "recheckCondition": "Exact shared execution approval decision, actual candidate outcome results, current source/feedback or dependency change.",
         "qualificationHistory": [
           {
             "disposition": "Approved for publication after #17045 lands.",
@@ -95481,6 +95542,15 @@
       "type": "depends_on",
       "reason": "The new release contains the two backports introduced for the NVIDIA parser and Linux headers.",
       "evidence": "https://github.com/google/gvisor/pull/17114"
+    },
+    {
+      "from": "pr:17127",
+      "to": "branch:semaphore-waiter-lock",
+      "type": "depends_on",
+      "reason": "Reuse the already-approved real waiter-list clearing fix as the owner-link prerequisite, preserving its independent delivery and regression test.",
+      "evidence": [
+        "https://github.com/gvisor/gvisor/pull/17127"
+      ]
     }
   ],
   "investigations": [
@@ -107089,21 +107159,22 @@
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "currentHealth": {
-        "observedAt": "2026-11-18T08:22:46.540846+00:00",
+        "observedAt": "2026-11-18T09:37:58.499426+00:00",
         "owner": "root",
         "workflowState": "active",
         "actionsEnabled": true,
         "defaultWorkflowHead": "1748f943694d376fd26123b11009ab01ffa9b597",
         "cron": "7,17,27,37,47,57 * * * *",
-        "latestNativeScheduleRun": 44217928457,
-        "latestNativeScheduleAt": "2026-11-18T01:43:05Z",
+        "latestNativeScheduleRun": 44273240471,
+        "latestNativeScheduleAt": "2026-11-18T09:09:14Z",
         "latestNativeScheduleConclusion": "success",
         "currentManualSweep": 44265387900,
-        "currentSnapshotAt": "2026-11-18T08:18:37.110816+00:00",
+        "currentSnapshotAt": "2026-11-18T09:12:28.925717+00:00",
         "currentManualConclusion": "success",
-        "cause": "No disabled workflow or disabled Actions explains the missing schedule events; provider cause remains unknown. This matches the existing investigation, not a new diagnosed cause.",
-        "nextAction": "Use the existing snapshot-only collector during active lifecycle sweeps, consume its exact published state, and recheck native event creation. Do not create a competing scheduler or blindly re-register the active workflow.",
-        "recheckCondition": "A new native scheduled event, provider/activation change, manual collector failure or stale snapshot."
+        "cause": "One native scheduled run resumed successfully after the 01:43 run. This does not prove the configured ten-minute cadence; the earlier missing events remain unexplained.",
+        "nextAction": "Preserve this newer automated snapshot. Continue snapshot-only collection during active lifecycle sweeps and recheck native event creation; do not create a competing scheduler or blindly re-register the active workflow.",
+        "recheckCondition": "A new native scheduled event, provider/activation change, manual collector failure or stale snapshot.",
+        "currentSnapshotSource": "native scheduled run 44273240471"
       }
     },
     {
@@ -114567,7 +114638,7 @@
       "status": "active",
       "owner": "root",
       "group": "runtime",
-      "updatedAt": "2026-11-18T08:22:46.540846+00:00",
+      "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019. For #16887, the approved exact COMMENTED response was posted at 1668e58d4c0cb17ecb5fcf6457389575a3c01459. Await before/after results from an existing broad network benchmark before full approval; the response supplies no fresh runtime validation. Re-review new source or evidence.",
       "findings": [
@@ -115999,7 +116070,7 @@
       },
       "broadCategoryOutcomeScreen": {
         "owner": "tcp_conflict",
-        "state": "Executable preparation; not launched",
+        "state": "Technical executable reviews complete; public payload publication/dispatch blocked pending exact user approval.",
         "sources": {
           "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
           "rto": "f9446ddf973def4ce653acbb098532c2b1eb0ef0",
@@ -116020,8 +116091,18 @@
         "diagnosticArtifact": 14408396735,
         "diagnosticDigest": "9fadb55ba934d4e00ceedef18165d4ee7d70fe195ede5babb5fb1ab86695b7c1",
         "diagnosticResult": "Complete matched native/BASE capture. Native1000success/0errors in2.2300s; BASE302success/698timeouts in20.0631s. Source/Docker/AppArmor restored. Five-second response waves correlate with server keepalive but do not isolate cause. TcpExt counters are hardcoded zeros inBASE and cannot disprove packet loss.",
-        "nextAction": "Complete executable review and exact staged guard before one bounded full70×4 capability/outcome job; no tuning or resampling to forceBASEgreen.",
-        "recheckCondition": "Executable review, actual full outcome/identity/accounting result, source/feedback or cost decision."
+        "nextAction": "On exact user approval, publish unchanged2da1c9 with a lease on the existingaed source ref and dispatch one source-boundAMD64 outcome run. Freeze payload until decision; no duplicate or indirect execution.",
+        "recheckCondition": "Explicit user approval/hold of this exact payload; source/proof change requires reassessment.",
+        "source": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
+        "preparedPlan": "2da1c9afe20217ba15542a884d88735501dd477c",
+        "planPublished": false,
+        "runCreated": false,
+        "publicDestination": "tamird/gvisor:review/tcp-full-category-outcomes-20261118",
+        "publicBranchCurrentHead": "aed925f04bead9b3d6917fbab5aac656af4b7ef8",
+        "reviewedPayloadFiles": 19,
+        "reviewedPackageSHA256": "5e0d9a79b831d2cf9eb990259ab669922c92fe37eab59421b28b913c5c130126",
+        "localPlanProofSHA256": "5705072624a17ca8724f0735959e2aecaf2d97c34d9dae24437a9c40cbfabfbc",
+        "approvalReason": "Automatic approval review requires exact trusted user authorization to expose this reviewed support payload on the public fork; forbids alternate execution. User question pending."
       }
     },
     {
@@ -126240,5 +126321,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-18T08:22:46.540846+00:00"
+  "updatedAt": "2026-11-18T09:21:28.062516+00:00"
 }
