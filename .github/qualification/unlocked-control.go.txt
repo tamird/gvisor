@@ -1,0 +1,4 @@
+
+func unlockedNICInfoControl(s *Stack, n *nic) {
+	s.nicInfo(n, n.id)
+}

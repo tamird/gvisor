@@ -1,0 +1,23 @@
+{
+  "run": 44391189215,
+  "artifact": 14468512004,
+  "artifactSHA256": "203b5a333927e7ecd4b389c609aba4a849454a12d146df21efa2a62fb2c98f29",
+  "source": "97b3315886b5346ef29a1cbe1c8d311844eafa92",
+  "plan": "8f1978850948071f40ac71e0cdf8ba7616764c23",
+  "overall": "FAIL; post-BEPqueryflagmismatch",
+  "sourceFormatting": [
+    "goimportsPASS",
+    "buildifierPASS"
+  ],
+  "sourcePositive": "freshuncachedstack_nogoPASS",
+  "sourcePositiveBEPConfiguration": "05123793430e1820e76a0b7ba54f27cd398af88b7e7e0d2d108e506f0352fea0",
+  "rawFindingsRetained": false,
+  "controlsExecuted": false,
+  "cleanup": "source/indexclean;usernsrestored;final1",
+  "rawSHA256": {
+    "source-format.log": "048f6b2689ea084be55115fc86d2b309e321dda92c8f5bc0583b795fe5003ad6",
+    "source-positive.bep": "a5c3002597a24b98e3b42b8ff292fec08aa028d11b14a56a1f6156b029f2c5f7",
+    "source-positive-evidence/0/test.xml": "75307b063c00883a36008ed0abcb67efd3ae26980d2af5326c1d2e17130e7cea",
+    "source-positive-evidence/0/test.log": "ad108ae278f52de3305a06db4e95e8505bec7d6ce46d48f8475ea05a12a1cbd4"
+  }
+}

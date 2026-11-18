@@ -1,0 +1,13 @@
+
+// Qualification-only guarded calls for the NIC information contract.
+func sharedNICInfoControl(s *Stack, n *nic) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	s.nicInfo(n, n.id)
+}
+
+func exclusiveNICInfoControl(s *Stack, n *nic) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.nicInfo(n, n.id)
+}

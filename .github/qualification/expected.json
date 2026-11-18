@@ -1,0 +1,20 @@
+{
+  "source": "97b3315886b5346ef29a1cbe1c8d311844eafa92",
+  "base": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+  "nogoTargets": [
+    "//pkg/tcpip/stack:stack_nogo"
+  ],
+  "nativeTarget": "//unused:unused",
+  "analyzedArchitectures": [
+    "amd64",
+    "arm64"
+  ],
+  "oldCheckerPositiveControl": {
+    "path": "pkg/tcpip/stack/stack.go",
+    "line": 2964,
+    "category": "checklocks",
+    "messageContains": "to call nicInfo"
+  },
+  "stackGoSHA256": "47fad42f9429652661d54b017024f787533ef04fefa59d12fa3196d789b09178",
+  "negativeMeaning": "Expected unlocked-call rejection; legacy collector mode old is reused, not an old checker execution"
+}
