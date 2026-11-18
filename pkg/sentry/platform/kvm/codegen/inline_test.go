@@ -19,8 +19,11 @@ import (
 	"debug/dwarf"
 	"debug/elf"
 	"encoding/binary"
+	"os"
 	"strings"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
 func TestValidateActualSite(t *testing.T) {
@@ -170,6 +173,39 @@ func seccompMmapRules(m *machine) {}
 			got, err := mmapHandlerApplicable(tc.machine, tc.symbols, []byte(tc.source), tc.arch)
 			if (err != nil) != tc.wantErr || got != tc.want {
 				t.Fatalf("mmapHandlerApplicable = %t, %v; want %t, error=%t", got, err, tc.want, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestProductionMmapHandlerApplicability(t *testing.T) {
+	readSource := func(t *testing.T, path string) []byte {
+		t.Helper()
+		file, err := testutil.FindFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return data
+	}
+	machineSource := readSource(t, "pkg/sentry/platform/kvm/machine.go")
+	for _, arch := range []string{"amd64", "arm64"} {
+		t.Run(arch, func(t *testing.T) {
+			machine := elf.EM_AARCH64
+			var symbols []elf.Symbol
+			if arch == "amd64" {
+				machine = elf.EM_X86_64
+				for _, name := range []string{"seccompMmapHandler", "seccompMmapRules", "sigsysHandler.abi0", "addrOfSigsysHandler.abi0"} {
+					symbols = append(symbols, elf.Symbol{Name: kvm + "." + name, Info: byte(elf.STT_FUNC), Section: 1})
+				}
+			}
+			archSource := readSource(t, "pkg/sentry/platform/kvm/machine_" + arch + ".go")
+			got, err := mmapHandlerApplicable(machine, symbols, machineSource, archSource)
+			if err != nil || got != (arch == "amd64") {
+				t.Fatalf("production source applicability on %s: got %t, %v", arch, got, err)
 			}
 		})
 	}

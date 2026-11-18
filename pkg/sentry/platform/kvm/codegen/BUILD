@@ -20,6 +20,10 @@ go_test(
         "calls_test.go",
         "inline_test.go",
     ],
+    data = ["//pkg/sentry/platform/kvm:atomicptr_codegen_source_data"],
     embed = [":codegen"],
-    deps = ["//tools/checkescape"],
+    deps = [
+        "//pkg/test/testutil",
+        "//tools/checkescape",
+    ],
 )

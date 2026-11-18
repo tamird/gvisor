@@ -38,6 +38,17 @@ go_library(
     stateify = False,
 )
 
+filegroup(
+    name = "atomicptr_codegen_source_data",
+    testonly = True,
+    srcs = [
+        "machine.go",
+        "machine_amd64.go",
+        "machine_arm64.go",
+    ],
+    visibility = ["//pkg/sentry/platform/kvm/codegen:__pkg__"],
+)
+
 atomicptr_codegen_inputs(
     name = "atomicptr_codegen_inputs",
     testonly = True,

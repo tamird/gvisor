@@ -334,8 +334,11 @@ func mmapHandlerApplicable(machine elf.Machine, symbols []elf.Symbol, machineSou
 	}`
 	// Bind the only installation call and its immediately preceding condition.
 	// A changed source path requires the applicability assumption to be reviewed.
-	if strings.Count(source, "mapEntireAddressSpaceDefault") != 1 || strings.Count(source, "seccompMmapRules(") != 2 || !strings.Contains(source, installation) {
-		return false, fmt.Errorf("unexpected mmap handler installation source")
+	defaults := strings.Count(source, "mapEntireAddressSpaceDefault")
+	calls := strings.Count(source, "seccompMmapRules(")
+	conditional := strings.Contains(strings.Join(strings.Fields(source), " "), strings.Join(strings.Fields(installation), " "))
+	if defaults != 1 || calls != 2 || !conditional {
+		return false, fmt.Errorf("unexpected mmap handler installation source: defaults=%d calls=%d conditional=%t", defaults, calls, conditional)
 	}
 	for _, name := range []string{"seccompMmapHandler", "seccompMmapRules", "sigsysHandler", "addrOfSigsysHandler"} {
 		found := false
