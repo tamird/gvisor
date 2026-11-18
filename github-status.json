@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T03:44:19.635615+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T03:36:23.573474+00:00",
+  "registryDate": "2026-11-18T04:43:17.763943+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447747,14 +447747,14 @@
       "number": 17763,
       "head": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
       "sourceNumber": 17763,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABYqpJ6w",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/17763#pullrequestreview-5950294507",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-18T03:14:50Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -447765,15 +447765,15 @@
       "number": 17763,
       "head": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
       "sourceNumber": 17763,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABn1I45w",
-      "needsTriage": true,
+      "needsTriage": false,
       "createdAt": "2026-11-18T03:15:47Z",
       "url": "https://github.com/google/gvisor/pull/17763#issuecomment-6967933159",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-18T03:15:47Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -447966,8 +447966,8 @@
       "recordedFollowup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "disposition": "Normal AMD64 study44220494683 fully verified: all eight broad workload leaves,24 samples/source,50 balanced same-path visits, frozen harness/full releases, zero skips/failures, cleanup clean. All comparisons nonsignificant (p=.071–.736); no equivalence or benefit claim. Race44224377125 and corrected ARM capability44225345386 remain active. Original ARM package-spelling failure44224385958 retained. Report/KCOV consumption performance is unmeasured; full gate remains open.",
-        "nextAction": "Finish the active normal study and race pilot; launch the peer-reviewed ARM package-name recovery and validate exact mode/workload coverage. Cost remaining statistical runs from actual pilot evidence."
+        "disposition": "The studies measured non-race coverage binaries. AMD64 covered all eight workloads with 24 samples per source. ARM64 run 44231171716 verified 50 balanced visits, three workloads with 24 samples per source, stable filesets and clean restoration. StartupEmpty increased 0.82% (p=.006); pipe/thread ns/op decreased 1.55% (p=.002); process ns/op had p=.051. Preserve the coverage-mode startup cost. Historical ordinary uninstrumented section parity is separate evidence. The original race baseline fails capability re-execution on both architectures; candidate debug-mode workloads pass, while default-argument capability and comparative race timing remain unqualified.",
+        "nextAction": "Coverage owner diagnoses coverage-mode startup/init changes from existing artifacts, prepares costed candidate default-argument race capability, and owns report/KCOV consumption performance. Do not force a different baseline or resample the observed ARM cost to dismiss it."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -448014,8 +448014,8 @@
       "recordedFollowup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Approved O_PATH scope reply is posted. Conflict-only fork proposal5d776df85f08eec3cf37a9c2a78f34e1f173b2b2 is rebased onto1f33: both upstream random and VFIO setup blocks retained; all original topic change lines preserved. Original source remains c7aee950. Earlier VFIO evidence used a QEMU-emulated PCI/VFIO device inside KVM, not a physical TPU; source-bound remote harness recovery is in preparation.",
-        "nextAction": "Qualify ordinary affected consumers and recover the pinned KVM/QEMU VFIO Open workflow on authorized infrastructure. Keep hardware/virtualization limits explicit; no general O_PATH migration or source amendment before the exact decision."
+        "disposition": "Original PR stays c7aee950. Fork1b37f9cf adds the directly owning posix_error.h include to rebased5d776df8; runtime source/body/author/date/DCO unchanged. Initial consumer run found this direct-include lint error and a sudo TestRunner remap problem. KVM run44230374348 proves actual native/systrap/directfs VFIO Open on5d, but overall failed outer XML/ownership handling. Both source and support recoveries are owned; no physical TPU/ARM/performance inference. Recovery44237381349 is now verified successful at exact1b37:16 product file hashes/modes, actual native/systrap/directfs VFIO Open each1pass/no skips, outer Bazel3-case evidence and clean source restoration. Consumer44237348330 still awaits terminal reconciliation.",
+        "nextAction": "Qualify1b37f9cf through the minimal source-check and cause-based KVM recovery. Preserve actual old3-case execution evidence with its old source binding, finish required performance/final review, and obtain an exact amendment decision before replacing the original PR."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -448939,8 +448939,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
-        "disposition": "Exact candidate 983dc3a completed every actual remote command successfully: AMD64 build, ARM64 cross-build, native TCP62, timestamp8, timestamp race8, Linux/netstack PAWS one each, export provenance and both lints. Original harness failed only because it expected unsharded e2e XML; all four retained shards contain 405 unique passing cases, zero skips/failures. Original failure preserved. Native ARM64 execution and performance gates remain open. Independently reviewed missing-only native ARM64 run44227886194 is now dispatched on unchanged candidate983dc3a; plan0ce3cf64,180m body cap. No ARM execution success is asserted yet.",
-        "nextAction": "Root follows native ARM64 run44227886194 to terminal state and handles any actual failure. Finish shared-base broad network performance and final source review before an exact amendment decision; preserve corrected AMD64 evidence."
+        "disposition": "Native ARM64 run44227886194 independently verifies485 actual cases: TCP62, e2e405, timestamp8, timestamp race8, Linux PAWS1 and netstack PAWS1; zero skips/failures, exact983dc3a/plan0ce3cf64, restored source clean. Prior AMD64 owner/shard/export/lint evidence remains scoped to its recorded run; original harness failure preserved. Functional architecture gap is closed; performance and final review remain open.",
+        "nextAction": "Finish the existing shared-base broad network qualification and final source review before an exact amendment decision. Reuse both architectures’ actual functional evidence; do not rerun completed tests."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAfQ41NSQ",
@@ -450447,8 +450447,8 @@
       "recordedFollowup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Approved O_PATH scope reply is posted. Conflict-only fork proposal5d776df85f08eec3cf37a9c2a78f34e1f173b2b2 is rebased onto1f33: both upstream random and VFIO setup blocks retained; all original topic change lines preserved. Original source remains c7aee950. Earlier VFIO evidence used a QEMU-emulated PCI/VFIO device inside KVM, not a physical TPU; source-bound remote harness recovery is in preparation.",
-        "nextAction": "Qualify ordinary affected consumers and recover the pinned KVM/QEMU VFIO Open workflow on authorized infrastructure. Keep hardware/virtualization limits explicit; no general O_PATH migration or source amendment before the exact decision."
+        "disposition": "Original PR stays c7aee950. Fork1b37f9cf adds the directly owning posix_error.h include to rebased5d776df8; runtime source/body/author/date/DCO unchanged. Initial consumer run found this direct-include lint error and a sudo TestRunner remap problem. KVM run44230374348 proves actual native/systrap/directfs VFIO Open on5d, but overall failed outer XML/ownership handling. Both source and support recoveries are owned; no physical TPU/ARM/performance inference. Recovery44237381349 is now verified successful at exact1b37:16 product file hashes/modes, actual native/systrap/directfs VFIO Open each1pass/no skips, outer Bazel3-case evidence and clean source restoration. Consumer44237348330 still awaits terminal reconciliation.",
+        "nextAction": "Qualify1b37f9cf through the minimal source-check and cause-based KVM recovery. Preserve actual old3-case execution evidence with its old source binding, finish required performance/final review, and obtain an exact amendment decision before replacing the original PR."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -453761,8 +453761,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
-        "disposition": "The approved amendment is live as one commit and the answer was posted on Ayush’s original thread.",
-        "nextAction": "Await maintainer review of the published #17208. When reconciling #17208 with #17491, keep v2 support for split restore and the v1 inline reader. Run TestAsyncSaveToSubpages to check restored bytes and TestStatefileDumpMemoryFiles for the inline dump. The subpage test sets the block size to one quarter of the host page size, so it also exercises v2 on 4 KiB hosts. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 440aba98a0f5249ef2fd746a5cf47fafd560b6f3; observed 2026-11-17T19:29:29.454062+00:00): build 1554 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Current-base fork proposal d2c5c08 preserves published440aba98’s exact stable patch. Run44230748413 passed159 affected-owner cases,three candidate live systrap runs with both cross-engine direction leaves and both AMD64 lints. All three corresponding BASE runs also passed: the intended unreachable dump error was not reproduced, so the original job remains not-passed at that negative-control gate. Current CI1664/1665 preserved the same error in logs, but the uploader selected boot/gofer logs rather than checkpoint images; exact failed images were not recovered.",
+        "nextAction": "Reconcile the CI failure against representative full-suite/cgroupv2 context and the diagnostic artifact gap; do not repeat identical passing BASE samples as proof. Finish current-base/performance evidence and independent review before proposing the original PR amendment. Preserve the existing #17491 v2 split-restore/v1 inline-reader integration checks."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -457288,7 +457288,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "pr:15183": {
@@ -463920,6 +463920,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-18T03:43:48.027282+00:00"
+      },
+      "contributor-review": {
+        "scope": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
+        "since": "2026-11-18T04:43:17.763943+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:11090": {
@@ -464507,7 +464514,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464516,7 +464523,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464525,7 +464532,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464534,7 +464541,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464543,7 +464550,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464552,7 +464559,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464561,7 +464568,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464570,7 +464577,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T03:36:23.573474+00:00"
+        "observedAt": "2026-11-18T04:43:17.763943+00:00"
       }
     }
   },
