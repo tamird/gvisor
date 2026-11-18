@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T05:35:02.192622+00:00",
+    "updatedAt": "2026-11-18T05:53:00.594117+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33433,12 +33433,12 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T00:52:10.274668+00:00",
+      "updatedAt": "2026-11-18T05:53:00.594117+00:00",
       "summary": "Keep the congestion threshold across repeated timeouts without an advancing ACK and when a timeout interrupts fast recovery. Master already preserves cwnd and ssthresh on an idle zero-window probe. The amendment drops the duplicate early return and retains both TestZeroWindowSend assertions. Five original XML files contain 20 passing records with zero skips.",
       "followup": {
         "owner": "tcp_conflict",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "observedAt": "2026-11-18T02:45:00.167851+00:00",
+        "observedAt": "2026-11-18T05:53:00.594117+00:00",
         "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
         "nextAction": "Complete costed statistical qualification of remaining broad network categories and loss cases; correct separately the existing benchmark measurement and readiness defects through scoped source proposals. Preserve prior failed pilots and actual measurements.",
         "evidence": [
@@ -33493,6 +33493,16 @@
             "head": "f9446ddf973def4ce653acbb098532c2b1eb0ef0",
             "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
           }
+        },
+        "categoryPilot": {
+          "owner": "tcp_conflict",
+          "failedRun": 44238122262,
+          "source": "b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
+          "runtime": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "state": "Recovery preparation; not dispatched",
+          "disposition": "Prior33HTTPD leaves and4native controls demonstrate completed execution/finite summaries, not request-valid capability: raw status/error counts were not retained. High group deadline interrupted ninth case.",
+          "nextAction": "Review corrected diagnostic recorder/parser and bounded180m plan capturing all70Sentry leaves,4native light controls and1native high control. Reject calibration request errors and unknown raw accounting; preserve all original receipts. New33+4validity rechecks cost about108observed seconds plus about2.23GB static bodies; no statistical extension.",
+          "recheckCondition": "Stable executable/peer review and root authorization, exact new dispatch receipt, raw validity or budget evidence."
         }
       },
       "evidence": [
@@ -37153,13 +37163,13 @@
       "group": "bazel",
       "status": "open",
       "summary": "All four normal and race coverage binaries built and ran on native AMD64 after the rebase onto ae0f8d590. Both Sentry binaries mapped 9,195 kernel source positions, with no positions from the excluded packages. The rebase preserved the reviewed changes across all nine files.",
-      "updatedAt": "2026-11-18T05:17:02.746861+00:00",
+      "updatedAt": "2026-11-18T05:53:00.594117+00:00",
       "followup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "observedAt": "2026-11-18T05:17:02.746861+00:00",
+        "observedAt": "2026-11-18T05:53:00.594117+00:00",
         "disposition": "Candidate7eafb7af default-argument RACE capability is verified on AMD44240006357 (8leaves) and ARM44240001660 (3portable leaves), no skips/failures; debugfalse, reportunset, frozen products/images and clean restoration. This is candidate capability only: original BASE re-execution remains unusable, so paired RACE performance is unavailable. Non-race COVERAGE studies retain ARM startup+0.82%p=.006 and pipe/thread ns/op-1.55%p=.002; ordinary uninstrumented parity remains a separate historical scope.",
-        "nextAction": "Own terminal consumption of approved six-invocation report/KCOV pilot44241963234. Use existing source/init artifacts for the observed ARM coverage-mode startup cost; do not force a changed baseline or resample it away. Finish feature-cost/final review and exact amendment decision after remaining gates.",
+        "nextAction": "Consume corrected bounded report/KCOV pilot44246691602. Preserve both0-workload failures and exact historical comparisonBasebf5 for44190856301; candidate parent remains1f. Complete source-bound feature-cost assessment and exact amendment proposal after the gate, retaining ARM coverage startup cost and original unavailable paired RACE baseline.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -37181,7 +37191,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44230450058",
           "https://github.com/tamird/gvisor/actions/runs/44240006357",
           "https://github.com/tamird/gvisor/actions/runs/44240001660",
-          "https://github.com/tamird/gvisor/actions/runs/44241963234"
+          "https://github.com/tamird/gvisor/actions/runs/44241963234",
+          "https://github.com/tamird/gvisor/actions/runs/44246691602",
+          "https://github.com/tamird/gvisor/actions/runs/44246313719"
         ],
         "mergeable": "CONFLICTING",
         "recheckCondition": "Owned runs become terminal, new performance/review evidence, source changes or contributor decision.",
@@ -37232,6 +37244,26 @@
             "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
             "comparisonBase": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa"
           }
+        },
+        "reportGate": {
+          "owner": "coverage_security_review",
+          "currentRun": 44246691602,
+          "source": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+          "plan": "69344df54aa5f0d78a86149583c3a3aab513554a",
+          "state": "dispatched",
+          "scope": "Six matched100-repeat NORMAL coverage observations; expected35\u201350min, hard117m+180s. Not statistical or RACE qualification.",
+          "retainedFailures": [
+            {
+              "run": 44241963234,
+              "kind": "Actual7e runtime builds/versions/symbolization passed; undeclared unsuffixed harness targets stopped execution before workloads."
+            },
+            {
+              "run": 44246313719,
+              "kind": "Support staging failed on non-flat run.sh before source verification/tools/builds/workloads."
+            }
+          ],
+          "correction": "Exact source-generated directfs targets queried before rebuild; early per-arm runtime archives; flat regular entrypoint and byte-identical support verified against exact dispatcher guard.",
+          "recheckCondition": "Terminal exact run, query/identity/output/coverage validation failure or new source decision."
         }
       },
       "evidence": [
@@ -49375,7 +49407,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-18T05:35:02.192622+00:00",
+      "updatedAt": "2026-11-18T05:53:00.594117+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49414,9 +49446,9 @@
       "followup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "observedAt": "2026-11-18T05:35:02.192622+00:00",
+        "observedAt": "2026-11-18T05:53:00.594117+00:00",
         "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
-        "nextAction": "Owner systrap_regression publishes/launches the reviewed ordinary-gofer recovery exactly once within75m+180s, then consumes actual outcomes. Preserve failed44241613500 and prior source/support failures. Complete remaining performance/source/current-feedback gates and obtain exact amendment decision before replacing originalc7. No n24, physical TPU, ARM or current-BASE KVM negative-control claim is qualified.",
+        "nextAction": "Consume exact ordinary-gofer traversal recovery44245490184 (plan110b9cab85eb86169316d59f4151f0fbc02e07b4) within75m+180s and strict old-image/full-harness/runtime gates. Source review is now independently complete at exact1b. Originalc7 remains OPEN/CONFLICTING; the approved scope reply has no new maintainer response. Finish remaining performance limits and obtain exact contributor amendment decision before replacing the PR.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49434,9 +49466,10 @@
           "https://github.com/tamird/gvisor/actions/runs/44237381349",
           "https://github.com/tamird/gvisor/actions/runs/44237348330",
           "https://github.com/tamird/gvisor/actions/runs/44241402550",
-          "https://github.com/tamird/gvisor/actions/runs/44241613500"
+          "https://github.com/tamird/gvisor/actions/runs/44241613500",
+          "https://github.com/tamird/gvisor/actions/runs/44245490184"
         ],
-        "recheckCondition": "Exact recovery receipt or terminal result, immutable reuse/access preflight failure, new review/source evidence or contributor amendment decision.",
+        "recheckCondition": "Exact recovery terminal evidence, new maintainer scope reply, source/conflict change or contributor decision.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -49462,7 +49495,14 @@
             "recheckCondition": "Recovery qualification or performance evidence, maintainer scope response, source or contributor decision."
           }
         ],
-        "proposalHead": "1b37f9cfca65287f8c153314e392d4fbf7c4094b"
+        "proposalHead": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+        "currentSourceReview": {
+          "reviewer": "root",
+          "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+          "scope": "Complete six-file diff plus actual device client/server consumers, ownership, flags and test selection",
+          "finding": "No further concrete source issue; no execution/performance approval claimed.",
+          "observedAt": "2026-11-18T05:53:00.594117+00:00"
+        }
       },
       "dcoAmendment": {
         "oldHead": "ef55959ef13c80404a1efe7890044f9ca211f047",
@@ -76797,7 +76837,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T05:28:47.492315+00:00",
+      "updatedAt": "2026-11-18T05:53:00.594117+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire \u2192 graph \u2192 wire restore verified the guest\u2019s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -76923,9 +76963,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
-        "observedAt": "2026-11-18T05:28:47.492315+00:00",
-        "disposition": "Current-base fork proposal d2c5c08 preserves published440aba98\u2019s exact stable patch. Run44230748413 passed159 affected-owner cases,three candidate live systrap runs with both cross-engine direction leaves and both AMD64 lints. All three corresponding BASE runs also passed: the intended unreachable dump error was not reproduced, so the original job remains not-passed at that negative-control gate. Current CI1664/1665 preserved the same error in logs, but the uploader selected boot/gofer logs rather than checkpoint images; exact failed images were not recovered.",
-        "nextAction": "Own corrected inline-format negative control44244417672, exact SOURCEd2c5c08/BASE1f33/plan5f0185b46ff9371b6655d675aea8b33ce8f15c30. First44243638873 failed Bazel visibility analysis before tests; artifact and clean restoration verified. Peer-reviewed recovery adds only the exact SOURCE protobuf visibility prerequisite to the three-file test overlay, with unchanged BASE Go and52s cleanup. Keep live-CI reproduction inconclusive; complete remaining performance/source/split-inline compatibility gates before amendment decision.",
+        "observedAt": "2026-11-18T05:53:00.594117+00:00",
+        "disposition": "Current-base d2c5c08 preserves published440aba98 stable patch. Existing44230748413 verifies159 owner cases and three actual candidate/live BASE cross-engine visits, but live BASE also passed and exact CI unreachable cause is unproven. Corrected synthetic control44244417672 now proves the original current-BASE inline-format defect:4generic/legacy/split compatibility leaves pass, ZeroOwners/Inline fail on incorrect printed raw-region/graph-ID output in both text/HTML; candidate passes these identical fixtures in the earlier owner run. Actual XML/BEP and exact source clean restoration verified. First control44243638873 failed protobuf visibility analysis before tests and is retained.",
+        "nextAction": "Finish current-source/performance assessment for the exact d2c5c08 rebase and prepare a concrete amendment decision when qualified. Keep the live-CI error cause unproven; synthetic wrong output is separate evidence. Watch the unmerged foreign v2 split-checkpoint proposal for actual integration changes, not as a prerequisite that must land before this amendment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -76977,7 +77017,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44244417672"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Representative reproduction or exact failure-image evidence, qualification/review findings, source or contributor decision.",
+        "recheckCondition": "Performance/source review findings, actual CI failure-image evidence, related v2 proposal merge/source change, current PR feedback or contributor amendment decision.",
         "qualificationHistory": [
           {
             "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
@@ -76985,9 +77025,26 @@
             "disposition": "The approved amendment is live as one commit and the answer was posted on Ayush\u2019s original thread.",
             "nextAction": "Await maintainer review of the published #17208. When reconciling #17208 with #17491, keep v2 support for split restore and the v1 inline reader. Run TestAsyncSaveToSubpages to check restored bytes and TestStatefileDumpMemoryFiles for the inline dump. The subpage test sets the block size to one quarter of the host page size, so it also exercises v2 on 4 KiB hosts. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 440aba98a0f5249ef2fd746a5cf47fafd560b6f3; observed 2026-11-17T19:29:29.454062+00:00): build 1554 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
             "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+          },
+          {
+            "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
+            "observedAt": "2026-11-18T05:28:47.492315+00:00",
+            "disposition": "Current-base fork proposal d2c5c08 preserves published440aba98\u2019s exact stable patch. Run44230748413 passed159 affected-owner cases,three candidate live systrap runs with both cross-engine direction leaves and both AMD64 lints. All three corresponding BASE runs also passed: the intended unreachable dump error was not reproduced, so the original job remains not-passed at that negative-control gate. Current CI1664/1665 preserved the same error in logs, but the uploader selected boot/gofer logs rather than checkpoint images; exact failed images were not recovered.",
+            "nextAction": "Own corrected inline-format negative control44244417672, exact SOURCEd2c5c08/BASE1f33/plan5f0185b46ff9371b6655d675aea8b33ce8f15c30. First44243638873 failed Bazel visibility analysis before tests; artifact and clean restoration verified. Peer-reviewed recovery adds only the exact SOURCE protobuf visibility prerequisite to the three-file test overlay, with unchanged BASE Go and52s cleanup. Keep live-CI reproduction inconclusive; complete remaining performance/source/split-inline compatibility gates before amendment decision.",
+            "recheckCondition": "Representative reproduction or exact failure-image evidence, qualification/review findings, source or contributor decision."
           }
         ],
-        "proposalHead": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c"
+        "proposalHead": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+        "compatibilityWatch": {
+          "repo": "google/gvisor",
+          "number": 17491,
+          "head": "73f8612f2826a1a4661bb10ebc74e7a548d913fd",
+          "state": "OPEN",
+          "owner": "root",
+          "observedAt": "2026-11-18T05:53:00.594117+00:00",
+          "scope": "Existing related future compatibility only; no new implementation or outreach commitment. TestAsyncSaveToSubpages is absent from current base1f and was not part of current72-case pgalloc execution. Current native tests include TestAsyncSaveToPreservesContents.",
+          "nextAction": "If v2 lands or is explicitly stacked, preserve v2 split restore and v1 inline-reader behavior together; do not claim that proposed test already executed on plain current source."
+        }
       },
       "refinement": {
         "before": {
@@ -91008,7 +91065,7 @@
       "followup": {
         "owner": "tcp_conflict",
         "sourceHead": "b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
-        "observedAt": "2026-11-18T05:07:20.408252+00:00",
+        "observedAt": "2026-11-18T05:53:00.594117+00:00",
         "disposition": "Source b5933c08 is qualified by original builds/negative controls/lints plus successful44231839538 repaired positives. All6 printed leaves are finite and leave no containers; compiled harness hashes match the original run. Initial8-versus4 calibration-client harness failure remains retained. Two independent final source reviews found no issues.",
         "nextAction": "Follow the contributor decision and full lifecycle of branch:benchmark-reliability; keep separate original qualification receipts and historical metric definitions.",
         "recheckCondition": "Positive controls become terminal, review findings, category pilot or contributor decision.",
@@ -91028,14 +91085,17 @@
           }
         ],
         "categoryPilot": {
-          "run": 44238122262,
-          "state": "failure",
           "owner": "tcp_conflict",
-          "disposition": "Native controls and 33 exact HTTPD leaves completed; 170-second group deadline interrupted final high-concurrency case. Node/Ruby/Redis Sentry groups were not reached. Raw Hey output diagnosis and bounded incomplete-work recovery are in preparation; no statistical extension approved.",
-          "recheckCondition": "Reviewed lean recovery plan, raw-output diagnosis or exact recovery receipt."
+          "failedRun": 44238122262,
+          "source": "b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
+          "runtime": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "state": "Recovery preparation; not dispatched",
+          "disposition": "Prior33HTTPD leaves and4native controls demonstrate completed execution/finite summaries, not request-valid capability: raw status/error counts were not retained. High group deadline interrupted ninth case.",
+          "nextAction": "Review corrected diagnostic recorder/parser and bounded180m plan capturing all70Sentry leaves,4native light controls and1native high control. Reject calibration request errors and unknown raw accounting; preserve all original receipts. New33+4validity rechecks cost about108observed seconds plus about2.23GB static bodies; no statistical extension.",
+          "recheckCondition": "Stable executable/peer review and root authorization, exact new dispatch receipt, raw validity or budget evidence."
         }
       },
-      "updatedAt": "2026-11-18T05:07:20.408252+00:00"
+      "updatedAt": "2026-11-18T05:53:00.594117+00:00"
     },
     {
       "id": "branch:iperf-measurement",
@@ -125834,5 +125894,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-18T05:35:02.192622+00:00"
+  "updatedAt": "2026-11-18T05:53:00.594117+00:00"
 }

@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T05:03:39.606175+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T05:35:02.192622+00:00",
+  "registryDate": "2026-11-18T05:53:00.594117+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447969,7 +447969,7 @@
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "Candidate7eafb7af default-argument RACE capability is verified on AMD44240006357 (8leaves) and ARM44240001660 (3portable leaves), no skips/failures; debugfalse, reportunset, frozen products/images and clean restoration. This is candidate capability only: original BASE re-execution remains unusable, so paired RACE performance is unavailable. Non-race COVERAGE studies retain ARM startup+0.82%p=.006 and pipe/thread ns/op-1.55%p=.002; ordinary uninstrumented parity remains a separate historical scope.",
-        "nextAction": "Own terminal consumption of approved six-invocation report/KCOV pilot44241963234. Use existing source/init artifacts for the observed ARM coverage-mode startup cost; do not force a changed baseline or resample it away. Finish feature-cost/final review and exact amendment decision after remaining gates."
+        "nextAction": "Consume corrected bounded report/KCOV pilot44246691602. Preserve both0-workload failures and exact historical comparisonBasebf5 for44190856301; candidate parent remains1f. Complete source-bound feature-cost assessment and exact amendment proposal after the gate, retaining ARM coverage startup cost and original unavailable paired RACE baseline."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -448017,7 +448017,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
-        "nextAction": "Owner systrap_regression publishes/launches the reviewed ordinary-gofer recovery exactly once within75m+180s, then consumes actual outcomes. Preserve failed44241613500 and prior source/support failures. Complete remaining performance/source/current-feedback gates and obtain exact amendment decision before replacing originalc7. No n24, physical TPU, ARM or current-BASE KVM negative-control claim is qualified."
+        "nextAction": "Consume exact ordinary-gofer traversal recovery44245490184 (plan110b9cab85eb86169316d59f4151f0fbc02e07b4) within75m+180s and strict old-image/full-harness/runtime gates. Source review is now independently complete at exact1b. Originalc7 remains OPEN/CONFLICTING; the approved scope reply has no new maintainer response. Finish remaining performance limits and obtain exact contributor amendment decision before replacing the PR."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -450450,7 +450450,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
-        "nextAction": "Owner systrap_regression publishes/launches the reviewed ordinary-gofer recovery exactly once within75m+180s, then consumes actual outcomes. Preserve failed44241613500 and prior source/support failures. Complete remaining performance/source/current-feedback gates and obtain exact amendment decision before replacing originalc7. No n24, physical TPU, ARM or current-BASE KVM negative-control claim is qualified."
+        "nextAction": "Consume exact ordinary-gofer traversal recovery44245490184 (plan110b9cab85eb86169316d59f4151f0fbc02e07b4) within75m+180s and strict old-image/full-harness/runtime gates. Source review is now independently complete at exact1b. Originalc7 remains OPEN/CONFLICTING; the approved scope reply has no new maintainer response. Finish remaining performance limits and obtain exact contributor amendment decision before replacing the PR."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -453763,8 +453763,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
-        "disposition": "Current-base fork proposal d2c5c08 preserves published440aba98’s exact stable patch. Run44230748413 passed159 affected-owner cases,three candidate live systrap runs with both cross-engine direction leaves and both AMD64 lints. All three corresponding BASE runs also passed: the intended unreachable dump error was not reproduced, so the original job remains not-passed at that negative-control gate. Current CI1664/1665 preserved the same error in logs, but the uploader selected boot/gofer logs rather than checkpoint images; exact failed images were not recovered.",
-        "nextAction": "Own corrected inline-format negative control44244417672, exact SOURCEd2c5c08/BASE1f33/plan5f0185b46ff9371b6655d675aea8b33ce8f15c30. First44243638873 failed Bazel visibility analysis before tests; artifact and clean restoration verified. Peer-reviewed recovery adds only the exact SOURCE protobuf visibility prerequisite to the three-file test overlay, with unchanged BASE Go and52s cleanup. Keep live-CI reproduction inconclusive; complete remaining performance/source/split-inline compatibility gates before amendment decision."
+        "disposition": "Current-base d2c5c08 preserves published440aba98 stable patch. Existing44230748413 verifies159 owner cases and three actual candidate/live BASE cross-engine visits, but live BASE also passed and exact CI unreachable cause is unproven. Corrected synthetic control44244417672 now proves the original current-BASE inline-format defect:4generic/legacy/split compatibility leaves pass, ZeroOwners/Inline fail on incorrect printed raw-region/graph-ID output in both text/HTML; candidate passes these identical fixtures in the earlier owner run. Actual XML/BEP and exact source clean restoration verified. First control44243638873 failed protobuf visibility analysis before tests and is retained.",
+        "nextAction": "Finish current-source/performance assessment for the exact d2c5c08 rebase and prepare a concrete amendment decision when qualified. Keep the live-CI error cause unproven; synthetic wrong output is separate evidence. Watch the unmerged foreign v2 split-checkpoint proposal for actual integration changes, not as a prerequisite that must land before this amendment."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -457290,7 +457290,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "pr:15183": {
@@ -461934,7 +461934,7 @@
         "since": "2026-11-18T05:17:02.746861+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "pr:17023": {
@@ -462353,7 +462353,7 @@
         "since": "2026-11-18T05:35:02.192622+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "pr:17122": {
@@ -463935,7 +463935,7 @@
         "since": "2026-11-18T04:43:17.763943+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:11090": {
@@ -464523,7 +464523,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464532,7 +464532,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464541,7 +464541,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464550,7 +464550,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464559,7 +464559,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464568,7 +464568,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464577,7 +464577,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464586,7 +464586,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     },
     "branch:benchmark-reliability": {
@@ -464595,7 +464595,7 @@
         "since": "2026-11-18T05:07:20.408252+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T05:35:02.192622+00:00"
+        "observedAt": "2026-11-18T05:53:00.594117+00:00"
       }
     }
   },
