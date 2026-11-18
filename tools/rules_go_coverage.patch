@@ -1,0 +1,27 @@
+# Apply each library's coverage selection to its own generated Go sources,
+# including protobufs. Embedded libraries retain their separate coverage
+# selection when their GoInfo is merged.
+
+diff --git a/go/private/context.bzl b/go/private/context.bzl
+--- a/go/private/context.bzl
++++ b/go/private/context.bzl
+@@ -414,7 +414,7 @@
+         "mode": go.mode,
+         "srcs": srcs,
+         "embedsrcs": embedsrcs,
+-        "cover": depset(attr_srcs) if coverage_instrumented else depset(),
++        "cover": depset(srcs) if coverage_instrumented else depset(),
+         "x_defs": {},
+         "deps": deps,
+         "gc_goopts": _expand_opts(go, "gc_goopts", getattr(attr, "gc_goopts", [])),
+diff --git a/proto/def.bzl b/proto/def.bzl
+--- a/proto/def.bzl
++++ b/proto/def.bzl
+@@ -167,7 +167,6 @@
+         ctx.attr,
+         resolver = _proto_library_to_source,
+         generated_srcs = go_srcs,
+-        coverage_instrumented = False,
+     )
+     providers = [go_info]
+     output_groups = {
