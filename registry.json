@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T02:51:55.835560+00:00",
+    "updatedAt": "2026-11-18T02:57:42.449215+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24127,14 +24127,20 @@
       "status": "open",
       "summary": "October 23 direct provider read: exact f6966cdc4f19 remains OPEN and MERGEABLE, with REVIEW_REQUIRED and no human reviews. The only comment is the existing first-contributor automation. The existing work-map collector now refreshes only the two registered Node.js PRs; no repository-wide discovery is enabled. The live snapshot supplies current head, state, reviews and checks. No source fix or additional outreach is indicated.\n\nPreserved delivery record:\n\nThe user-approved change is delivered as nodejs/node#66874 at f6966cdc4f193bca98a9a49b4ac268bef52aedfe. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe one-line Node test expectation changes LazyCompile to the current JS function label. Native diagnostic532c showed the original180s failure and corrected1.189s body success. Root requested review/open-PR authorization once for exact06fd; no upstream PR has been opened. This native fixture proof does not clear the separate Node26 gVisor runtime result.\n\nThe first-contributor automation reports that a collaborator must approve Actions and start Jenkins. Its AgentScan note is a heuristic caution, not a human review or rejection; no response has been posted.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "root",
         "disposition": "Delivered; following current-head CI and maintainer review",
         "sourceHead": "f6966cdc4f193bca98a9a49b4ac268bef52aedfe",
         "observedAt": "2026-10-23T16:48:35.250327+00:00",
         "nextAction": "Follow this registered PR through the existing snapshot and route substantive current-head CI or maintainer feedback. No merge or duplicate contributor review is authorized.",
         "evidence": [
+          "https://github.com/nodejs/node/pull/66874",
           "https://github.com/nodejs/node/pull/66874"
-        ]
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "f6966cdc4f193bca98a9a49b4ac268bef52aedfe",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       },
       "updatedAt": "2026-10-23T17:32:07.387668+00:00",
       "evidence": [
@@ -44447,7 +44453,7 @@
         }
       ],
       "followup": {
-        "owner": "Maintainer review",
+        "owner": "root",
         "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
         "observedAt": "2026-11-17T16:45:09.051335Z",
         "disposition": "Published the already-approved amendment after #17612 landed. The rebase preserved the patch according to range-diff. Hosted tests, checker build, make lint and make lint-cc passed. Independent correctness, catch-all, style, documentation and free-range reviews found no substantive issues. GitHub reports the published head as mergeable. Added the contributor-authorized DCO sign-off as 6e4ccf0109 with an identical source tree; DCO passes. Upstream checks are still running.",
@@ -44457,8 +44463,14 @@
           "https://github.com/google/gvisor/pull/17612",
           "https://github.com/tamird/gvisor/commit/cfb38adfa3c60dbfd6f4f234cae63f03c76477bf",
           "https://github.com/tamird/gvisor/actions/runs/44125058497",
-          "https://github.com/tamird/gvisor/commit/6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef"
-        ]
+          "https://github.com/tamird/gvisor/commit/6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
+          "https://github.com/google/gvisor/pull/16663"
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     {
@@ -51073,7 +51085,22 @@
           "label": "Separate package-import job verified the original AMD64 and ARM64 erofs-utils layer digests on 9de063f59",
           "url": "https://github.com/tamird/gvisor/actions/runs/41138862683/artifacts/13018915238"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "9de063f595a7f0a0140e845bb23c2a0900a64059",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "9de063f595a7f0a0140e845bb23c2a0900a64059",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Reconcile current compressor CI and supplier review with the retained ten-test and layer-digest evidence; investigate any current package-import failure at its producer before revising source.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/bazel-contrib/rules_distroless/pull/293"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "pr:15972",
@@ -51191,7 +51218,7 @@
         }
       ],
       "followup": {
-        "owner": "gVisor maintainer",
+        "owner": "root",
         "sourceHead": "1f277200f591d460fd51232a799a7fc5e1f8511c",
         "observedAt": "2026-11-13T16:52:12.917441+00:00",
         "disposition": "Flozano completed the requested rebase and reported the repeated tests",
@@ -51204,8 +51231,14 @@
           "https://github.com/google/gvisor/commit/a6a26052f",
           "https://github.com/google/gvisor/pull/15972#pullrequestreview-5758454721",
           "https://github.com/google/gvisor/pull/15972#discussion_r4471155616",
-          "https://api.github.com/repos/google/gvisor/commits/a6a26052f/status"
-        ]
+          "https://api.github.com/repos/google/gvisor/commits/a6a26052f/status",
+          "https://github.com/google/gvisor/pull/15972"
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "1f277200f591d460fd51232a799a7fc5e1f8511c",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     {
@@ -51420,7 +51453,22 @@
           "at": "2026-11-03T11:41:38Z",
           "url": "https://github.com/google/gvisor/pull/15019#discussion_r4454183520"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "ed8a800c0c2d10916616ad2e0a791976fbd60274",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "ed8a800c0c2d10916616ad2e0a791976fbd60274",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Verify the current TIME_WAIT SYN-only forwarder guard and declined-forwarder tests against the complete reviewer thread; follow the source/import lifecycle without transferring old approval.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15019"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "pr:16865",
@@ -51517,7 +51565,22 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16445#discussion_r4444415641"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Reconcile the existing 128 KiB versus actual 1 KiB benchmark accounting defect with the prepared Iperf measurement correction; preserve historical topology results with their metric limits.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16445"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "branch:c-ares-config-header",
@@ -52822,7 +52885,22 @@
           "at": "2026-11-02T20:32:26Z"
         }
       ],
-      "number": 909
+      "number": 909,
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "89c57ee6988962eca89daeb32e07813981729fe2",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "89c57ee6988962eca89daeb32e07813981729fe2",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Follow current supplier checks and review for the freestanding pthread/dl opt-out; after merge, qualify dependent adoption against the actual landed revision.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/909"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "pr:16472",
@@ -52890,7 +52968,22 @@
           "at": "2026-11-05T11:11:29Z",
           "postedURL": "https://github.com/google/gvisor/pull/16472#issuecomment-6656511416"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Reconcile the current readahead source and review against the retained cold-restore improvement and warm asynchronous-buffering regression; keep legacy-decoder results separate.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16472"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "branch:governance-generator",
@@ -55532,7 +55625,22 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6575934131"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "65a40ff9c6e750d8d9b3dc0cb0e3fdc02dee6309",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "65a40ff9c6e750d8d9b3dc0cb0e3fdc02dee6309",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Check current linger-close review and CI; preserve the author decision to keep waiter registration optimization separate until this prerequisite merges.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16787"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -57850,7 +57958,22 @@
           "at": "2026-11-03T14:06:49Z",
           "url": "https://github.com/google/gvisor/pull/16793#discussion_r4455752167"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "8f7a1936f76cfcdf91ca815a4349471a80f3ded5",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "8f7a1936f76cfcdf91ca815a4349471a80f3ded5",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Verify the current reconnect receive state and AF_PACKET rejected-shutdown behavior against the complete review thread and exact test evidence; follow maintainer review without claiming fresh approval.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16793"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "pr:15867",
@@ -61228,7 +61351,22 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-02T16:36:54.632738+00:00",
-      "summary": "Anzal\u2019s Unix socket change installs a credential snapshot as part of Connect. The listener and socketpair credential follow-up builds on this change."
+      "summary": "Anzal\u2019s Unix socket change installs a credential snapshot as part of Connect. The listener and socketpair credential follow-up builds on this change.",
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Reconcile the current SO_PEERGROUPS credential snapshot and review, then refresh listener/socketpair dependents when the actual prerequisite lands.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/14999"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "branch:llvm-upstream-instrumentor-template",
@@ -61391,7 +61529,22 @@
           "label": "Linux Bazel checks, including the default, custom and repacked sets on AMD64 and ARM64",
           "url": "https://github.com/tamird/rules_distroless/actions/runs/41481142358/artifacts/13159617340"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "af1089c91c36bfc78719b2836c73d374a66ef092",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "af1089c91c36bfc78719b2836c73d374a66ef092",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Follow current supplier CI and review of all installed-package control records; verify dependent image adoption against the actual landed supplier revision.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/bazel-contrib/rules_distroless/pull/294"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:907",
@@ -65663,7 +65816,7 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "root",
         "sourceHead": "bce7246e29577b596d3861096e3f9d88b7eaba4d",
         "providerHead": "bce7246e29577b596d3861096e3f9d88b7eaba4d",
         "observedAt": "2026-11-05T15:56:30.976528Z",
@@ -65676,8 +65829,13 @@
           "https://github.com/google/gvisor/blob/fb98ff4ca/pkg/tcpip/stdclock_test.go",
           "https://github.com/golang/go/commit/16d46baf6",
           "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634",
-          "https://github.com/google/gvisor/pull/16952#issuecomment-6662368836"
-        ]
+          "https://github.com/google/gvisor/pull/16952#issuecomment-6662368836",
+          "https://github.com/google/gvisor/pull/16952"
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       },
       "reviewWatch": {
         "inspected": [
@@ -66313,7 +66471,7 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "root",
         "sourceHead": "f23070977169b4084ae8f4a0b18fa139404467e9",
         "observedAt": "2026-11-07T08:02:28+00:00",
         "disposition": "Both landing-order interactions documented by Aditya were reproduced. The independent Disorder control isolated the skipped Eifel response from genuine timeout and RACK loss.",
@@ -66324,8 +66482,14 @@
           "https://github.com/google/gvisor/pull/17023#issuecomment-6703237785",
           "https://github.com/tamird/gvisor/actions/runs/42351331112/artifacts/13566240801",
           "https://github.com/tamird/gvisor/actions/runs/42353074169/artifacts/13567040519",
-          "https://github.com/google/gvisor/issues/16670"
-        ]
+          "https://github.com/google/gvisor/issues/16670",
+          "https://github.com/google/gvisor/pull/17023"
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "f23070977169b4084ae8f4a0b18fa139404467e9",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     {
@@ -66521,19 +66685,25 @@
         }
       ],
       "followup": {
-        "owner": "gVisor maintainer",
+        "owner": "root",
         "sourceHead": "f38afb60d50809b6c44618f637ebbb6e56e3a750",
-        "providerHead": "f38afb60d50809b6c44618f637ebbb6e56e3a750",
+        "providerHead": "5f4e4e2e9f036fd40891f14167f3c20ec4b099f5",
         "observedAt": "2026-11-13T11:03:39+00:00",
         "disposition": "Aditya confirmed the resolution with #16596 after rebasing",
-        "nextAction": "Aditya will rebase if #16596 lands first. Recheck the Disorder case when the combination with #17023 changes.",
+        "nextAction": "Reconcile the current source 5f4e4e2e9f036fd40891f14167f3c20ec4b099f5 against the last reviewed source f38afb60d50809b6c44618f637ebbb6e56e3a750 and complete existing threads before relying on the older technical disposition. Aditya will rebase if #16596 lands first. Recheck the Disorder case when the combination with #17023 changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17022#issuecomment-6850802221",
           "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
           "https://github.com/tamird/gvisor/actions/runs/42269372740/artifacts/13528043589",
           "https://github.com/tamird/gvisor/actions/runs/42353074169/artifacts/13567040519",
-          "https://github.com/google/gvisor/issues/16670"
-        ]
+          "https://github.com/google/gvisor/issues/16670",
+          "https://github.com/google/gvisor/pull/17022"
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "mergeable": "MERGEABLE",
+        "priorSourceHead": "f38afb60d50809b6c44618f637ebbb6e56e3a750",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     {
@@ -71204,7 +71374,22 @@
           "note": "Posted the approved retry-counter finding on the original PR.",
           "postedURL": "https://github.com/google/gvisor/pull/16081#issuecomment-6689168373"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "1b9768b199524246fe8e4fa66a0b623069778780",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "1b9768b199524246fe8e4fa66a0b623069778780",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Reconcile the retained three failing burst-loss seeds with separate timeout-counter fix #17113; verify current source composition before another measurement or review conclusion.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16081"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "branch:tcp-rto-retry-budget",
@@ -72324,15 +72509,22 @@
         }
       ],
       "followup": {
-        "owner": "Maintainer",
+        "owner": "root",
         "sourceHead": "f8153eea979205e41395d1794d37d4e723b5f140",
         "observedAt": "2026-11-07T00:00:33.281Z",
         "disposition": "The author addressed the queue-lock review on 0a1579fd8.",
-        "nextAction": "Formal review is requested from Lucas Manning.",
+        "nextAction": "Reconcile the current source 1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac against the last reviewed source f8153eea979205e41395d1794d37d4e723b5f140 and complete existing threads before relying on the older technical disposition. Formal review is requested from Lucas Manning.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17118#discussion_r4497821040",
-          "https://github.com/google/gvisor/pull/17118#pullrequestreview-5807281816"
-        ]
+          "https://github.com/google/gvisor/pull/17118#pullrequestreview-5807281816",
+          "https://github.com/google/gvisor/pull/17118"
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
+        "mergeable": "MERGEABLE",
+        "priorSourceHead": "f8153eea979205e41395d1794d37d4e723b5f140",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     {
@@ -80820,7 +81012,7 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
         "observedAt": "2026-11-10T23:26:20+00:00",
         "disposition": "Answered Jay and published c534b7cb8. The unchanged WORKSPACE loadfiles regression passed with the revised Gazelle; the PR description also links the original downstream ARM64 vDSO build failure.",
@@ -80833,8 +81025,14 @@
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#discussion_r4515159129",
           "https://github.com/bazel-contrib/bazel-gazelle/pull/2510#issuecomment-6782048764",
           "https://github.com/tamird/gvisor/actions/runs/42922160423/artifacts/13812556771",
-          "https://github.com/tamird/bazel-gazelle/commit/c534b7cb8"
-        ]
+          "https://github.com/tamird/bazel-gazelle/commit/c534b7cb8",
+          "https://github.com/bazel-contrib/bazel-gazelle/pull/2510"
+        ],
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       },
       "refinement": {
         "before": {
@@ -82487,7 +82685,22 @@
           "at": "2026-11-09T15:41:58Z",
           "postedURL": "https://github.com/google/gvisor/pull/17264#pullrequestreview-5828361313"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Inspect the current MSG_MORE checkpoint tests and unresolved reader-consumption question in the existing write path; distinguish author-reported tests from independently verified current-head evidence.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17264"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "pr:17265",
@@ -82507,7 +82720,22 @@
           "label": "IPv4 and IPv6 segment input and reset count",
           "url": "https://github.com/google/gvisor/blob/71815c05082d0da50424737d5afbeacbd2608340/pkg/tcpip/stack/gro/gro_test.go#L195-L220"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "71815c05082d0da50424737d5afbeacbd2608340",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "71815c05082d0da50424737d5afbeacbd2608340",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Reconcile the revised adjacent-segment/reset test with the existing checksum review, then follow current source CI and maintainer feedback.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17265"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "branch:fuse-create-capability",
@@ -85916,7 +86144,22 @@
           "label": "PR source",
           "url": "https://github.com/google/gvisor/commit/f20fd5892"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "f20fd589275a6a8bbb60110e4858b5c7159b4893",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "f20fd589275a6a8bbb60110e4858b5c7159b4893",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Verify the current forwarding source and regression test against the retained independent #16742 fix; follow the existing Lucas/Zach requests without duplicate notifications.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17394"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "branch:netgofer-wait-for-idle-slot",
@@ -90031,7 +90274,22 @@
           "label": "Submitted Skylib revision",
           "url": "https://github.com/grpc/grpc/commit/bbdda5b82"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "bbdda5b82173f102ecc83d4690f53b3c8e125969",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "bbdda5b82173f102ecc83d4690f53b3c8e125969",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Follow current supplier CI and review of the Skylib symlink revision, preserving the approved filename behavior; handle any current maintainer feedback in its original thread.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/grpc/grpc/pull/43825"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "pr:bazel-contrib/rules_go:4774",
@@ -90083,7 +90341,22 @@
           "body": "An ordinary gVisor `//:release` build on Linux ARM64 used cached standard library archives containing `crypto/internal/sysrand/internal/seccomp`. The Go analyzer rejected that package because it was absent from the declared SDK sources. Four of the six cached `GoStdlib` outputs contained the same eight extra packages. Forcing fresh sandboxed stdlib actions let the release and its guest smoke test pass. The cache records do not identify how the original producers ran. [1]\n\nOn Linux AMD64, three fresh builds declared the same 5,931 SDK source paths. They used rules_go v0.63.0, Bazel 8.8.1 and Go 1.27.3, with race and cgo enabled. [2]\n\n```\n                               Archive packages   Listed packages\nSandboxed                                   370               370\nUnsandboxed                                 378               384\nUnsandboxed, declared sources only          370               370\n```\n\nBoth builders recursively copy the physical SDK's `src` directory into a temporary GOROOT. That makes files excluded by the SDK rule, including `net/internal/socktest`, visible to `go install` and `go list` outside a filesystem sandbox. The archive tree and JSON list cover different sets of packages. Comparing each against its own sandboxed inventory gave an exact match after the change. [3]\n\nWould you accept passing `GoSDK.srcs` to both builders and copying those files into the same relative paths under GOROOT? The proposal applies the tested production change to current master at f9689452c. Its package-list test leaves `net/internal/socktest` physically present in the SDK while omitting it from the source arguments. With rules_go as the root module, the original directory copy reported that package and the proposed builder omitted it. Both export modes passed on the proposal. [4] [5] [6]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41384780443/artifacts/13115172336\n[2]: https://github.com/tamird/gvisor/actions/runs/41387753944/artifacts/13116705064\n[3]: https://github.com/tamird/gvisor/blob/ffd865724/test/rbe/stdlib-sdk-receipt.json\n[4]: https://github.com/tamird/rules_go/commit/10f9a0f0d\n[5]: https://github.com/tamird/rules_go/actions/runs/41389254683/artifacts/13116369389\n[6]: https://github.com/tamird/rules_go/actions/runs/41389594631/artifacts/13116459720\n\nPosted by Codex on behalf of @tamird.",
           "postedURL": "https://github.com/bazel-contrib/rules_go/issues/4773"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "providerHead": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
+        "mergeable": "MERGEABLE",
+        "sourceHead": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
+        "observedAt": "2026-11-18T02:57:42.449215+00:00",
+        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
+        "nextAction": "Reconcile current supplier CI/review with declared-SDK package inventory evidence; ensure the existing package-list regression still covers the exact published revision.",
+        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "evidence": [
+          "https://github.com/bazel-contrib/rules_go/pull/4774"
+        ],
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+      }
     },
     {
       "id": "issue:bazel-contrib/rules_go:4773",

@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T02:49:56.432216+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T02:51:55.835560+00:00",
+  "registryDate": "2026-11-18T02:57:42.449215+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447115,7 +447115,7 @@
       "number": 2510,
       "head": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
       "sourceNumber": 2510,
-      "owner": "Upstream review",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOBrb7Vc8AAAABlC74MQ",
       "needsTriage": false,
@@ -447134,7 +447134,7 @@
       "number": 2510,
       "head": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
       "sourceNumber": 2510,
-      "owner": "Upstream review",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOBrb7Vc8AAAABlDchDw",
       "needsTriage": false,
@@ -447885,7 +447885,7 @@
       "recordedFollowup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "disposition": "AMD64 normal n24 study44220494683 is terminal successful; owner is validating raw evidence before interpretation. AMD64 race44224377125 and corrected ARM capability44225345386 remain active. Original ARM package-spelling failure44224385958 is retained; recovery was independently peer-reviewed. Full performance gate remains open.",
+        "disposition": "Normal AMD64 study44220494683 fully verified: all eight broad workload leaves,24 samples/source,50 balanced same-path visits, frozen harness/full releases, zero skips/failures, cleanup clean. All comparisons nonsignificant (p=.071–.736); no equivalence or benefit claim. Race44224377125 and corrected ARM capability44225345386 remain active. Original ARM package-spelling failure44224385958 retained. Report/KCOV consumption performance is unmeasured; full gate remains open.",
         "nextAction": "Finish the active normal study and race pilot; launch the peer-reviewed ARM package-name recovery and validate exact mode/workload coverage. Cost remaining statistical runs from actual pilot evidence."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
@@ -457207,7 +457207,7 @@
         "since": "2026-11-18T02:45:00.167851+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "pr:15183": {
@@ -464440,7 +464440,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464449,7 +464449,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464458,7 +464458,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464467,7 +464467,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464476,7 +464476,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464485,7 +464485,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464494,7 +464494,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464503,7 +464503,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T02:51:55.835560+00:00"
+        "observedAt": "2026-11-18T02:57:42.449215+00:00"
       }
     }
   },
