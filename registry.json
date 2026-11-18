@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T09:52:57.232471+00:00",
+    "updatedAt": "2026-11-18T10:08:52.027930+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57182,9 +57182,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
-        "observedAt": "2026-11-18T09:52:57.232471+00:00",
+        "observedAt": "2026-11-18T10:08:52.027930+00:00",
         "disposition": "Recovered complete user changes-requested history: annotate member fields with protecting-lock link and retain sem.wakeWaiters() withoutSet parameter. Latest returned-reference question is answered by distinguishing stable slice storage from guarded access and mutable list cursors. Existingfa6 prototype354line checker is preserved, not recreated; its two lifetime/fourcursor cases were exploratory, not declared negative expectations. Current type aliases do not connect returned member lock toSet.mu.",
-        "nextAction": "Complete the production-constructor test correction; independently review the final delta and qualify canonical formatter, checker, restore and functional tests remotely. Assess initialization/GC cost without claiming runtime neutrality or borrow lifetime safety. Then prepare an exact contributor decision.",
+        "nextAction": "Finish the source-bound canonical remote formatter/checklocks/stateify/restore/functional qualification plan and performance scope; review exact payload before publication. Preserve separate approved17127 prerequisite, guarded-access versus borrow-lifetime limitation, and initialization/GC cost uncertainty. Obtain exact contributor decision only after qualification.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -57207,7 +57207,7 @@
           "owner": "root"
         },
         "technicalOwner": "coverage_security_review",
-        "recheckCondition": "Final amended source/review, remote execution preparation or outcome, prerequisite/current feedback change or contributor decision.",
+        "recheckCondition": "Prepared remote plan/cost review, restored authentication, execution outcome, prerequisite/current feedback change or contributor decision.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -57243,8 +57243,8 @@
           "deliveryOwner": "root",
           "scope": "Reuse the existing approved real-queue clearing fix as an explicit prerequisite; do not duplicate it in owner-link work. Existing regression retained."
         },
-        "preparationState": "Local source 946083109e21dd555dac1d518d6c540868cfd24d committed above prepared prerequisite c442. Checker and consumer/restore independent reviews found no confirmed production defect. Writer is strengthening relock coverage through actual Registry.FindOrCreate because manual initialization missed the constructor boundary. Exclusive main checkout reassigned to writer. No source publication or remote execution.",
-        "preparedLocalRevision": "946083109e21dd555dac1d518d6c540868cfd24d"
+        "preparationState": "Final local source1752 above explicit c442 prerequisite. Root and independent checker/consumer/restore source reviews complete with no remaining finding. Constructor gap corrected through real Registry.FindOrCreate; stable handle/owner identity and real Save/Load tests retained. No publication, formatting, analyzer, functional or performance execution. Main checkout clean and released; technical owner prepares exact remote plan in scratch.",
+        "preparedLocalRevision": "1752d6197be03fe73519122946c8d360517b2b75"
       },
       "contributorChangesRequested": {
         "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -77214,9 +77214,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
-        "observedAt": "2026-11-18T07:51:06.529957+00:00",
+        "observedAt": "2026-11-18T10:08:52.027930+00:00",
         "disposition": "Current-base d2c5c08 preserves published440aba98 stable patch. Existing44230748413 verifies159 owner cases and three actual candidate/live BASE cross-engine visits, but live BASE also passed and exact CI unreachable cause is unproven. Corrected synthetic control44244417672 now proves the original current-BASE inline-format defect:4generic/legacy/split compatibility leaves pass, ZeroOwners/Inline fail on incorrect printed raw-region/graph-ID output in both text/HTML; candidate passes these identical fixtures in the earlier owner run. Actual XML/BEP and exact source clean restoration verified. First control44243638873 failed protobuf visibility analysis before tests and is retained.",
-        "nextAction": "systrap_regression prepares the eight-N1 four-leaf BASE/candidate checkpoint/restore capability/cost screen; root retains source/delivery ownership. Freeze exact baseline harness and complete releases, private checkpoint outputs and disk volume limits, actual no-skip systrap results. Review executable support before launch and cost full statistical scope from actual observations. runc intentionally skips; current live-CI error cause remains unproven.",
+        "nextAction": "On restoration of SSH agent authentication, verify frozen checkpoint plan 2f7e4f0bbcfce8d92eccf98732c54aeec39b967b, source ref and absent destination, then publish/dispatch once through the existing qualification workflow. Real process-group preflight must pass before package changes. Qualify all four canonical checkpoint/restore leaves for BASE/candidate with private payloads; use actual cost evidence before any statistical proposal.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -77268,7 +77268,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44244417672"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Executable cost-screen review, measured four-leaf capability/cost, source/feedback change or failure-image recovery.",
+        "recheckCondition": "SSH agent restored, source/support change, capability run terminal, current feedback or recoverable failure image.",
         "qualificationHistory": [
           {
             "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
@@ -77320,6 +77320,37 @@
           "limits": "No new source edits or launches from this scope assessment. No claimed allocation regression without measurements.",
           "screenOwner": "systrap_regression",
           "screenState": "executable support preparation; not dispatched"
+        },
+        "checkpointCostScreen": {
+          "owner": "systrap_regression",
+          "deliveryOwner": "root",
+          "source": "d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
+          "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "plan": "2f7e4f0bbcfce8d92eccf98732c54aeec39b967b",
+          "branch": "qualification/checkpoint-cost-screen-20261118",
+          "state": "Final root and independent executable review passed; local-only fixed plan, no publication or launch. Existing SSH authentication blocker remains; no retry without restored agent.",
+          "observations": 8,
+          "iterationsPerObservation": 1,
+          "leaves": [
+            "CheckpointEmpty",
+            "RestoreEmpty",
+            "CheckpointNginx",
+            "RestoreNginx"
+          ],
+          "bodyMinutes": 90,
+          "restorationGraceSeconds": 300,
+          "inclusiveMinutesAfterGenericPreparation": 95,
+          "nominalPhaseCapsMinutes": 71,
+          "cleanupAndChildStopSeconds": 289,
+          "files": 17,
+          "manifestSHA256": "7155fbe80597127f973700a4db45352c341bf275fcf2f49ff62474a4eef28f48",
+          "proofSHA256": "a7ccac67e002b6f1aeea8f6028604dd04bf2cc6a10daa679b2d4b29baf2362a6",
+          "actualRemotePreflightExecuted": false,
+          "packageMutationOrProjectExecution": false,
+          "checkpointPayloadUpload": false,
+          "statisticalQualification": false,
+          "expectedColdCost": "Unknown; caps are bounds, not a forecast.",
+          "observedAt": "2026-11-18T10:08:52.027930+00:00"
         }
       },
       "refinement": {
