@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T20:13:56.809299+00:00",
+    "updatedAt": "2026-11-18T20:59:19.864167+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2705,12 +2705,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-18T20:11:46.639485+00:00",
-      "summary": "The URI-only APT recovery passed acquisition/readiness and both production links. AMD64 inline evidence passed; required ARM inline evidence and action capture remain unresolved, so the full compiler gate is not qualified.",
+      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+      "summary": "The architecture revision passed fresh source lint and31codegen cases. Its compiler continuation built products but failed actual-source applicability and8-alias collection; the owner is preparing a cheap real-source guard check before missing-only continuation.",
       "followup": {
-        "disposition": "The URI-only APT recovery passed acquisition/readiness and both production links. AMD64 inline evidence passed; required ARM inline evidence and action capture remain unresolved, so the full compiler gate is not qualified.",
+        "disposition": "The architecture revision passed fresh source lint and31codegen cases. Its compiler continuation built products but failed actual-source applicability and8-alias collection; the owner is preparing a cheap real-source guard check before missing-only continuation.",
         "owner": "root",
-        "nextAction": "Owner systrap_regression audits retained443839 ARM reachability/compiler products and action capture1 before proposing only missing gates. Preserve all source/functional/lint passes and prior APT/format failures; no new run yet.",
+        "nextAction": "Owner systrap_regression verifies the actual unchanged source conditional and eight declared aliases cheaply, then resumes only unresolved compiler gates after review. Preserve prefix passes and all earlier failed acquisition/collector attempts.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
@@ -2730,8 +2730,8 @@
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-18T20:00:58.033079+00:00",
-        "recheckCondition": "Retained-product diagnosis, concrete missing-gate proposal, changed source/toolchain/configuration or actual new result.",
-        "curatedAt": "2026-11-18T20:11:46.639485+00:00",
+        "recheckCondition": "Actual-source/alias preflight or reviewed missing-only continuation result; no production/ARM/performance pass yet.",
+        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
         "historicalEvidenceCorrection": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
           "correction": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof.",
@@ -2828,15 +2828,15 @@
         ],
         "technicalOwner": "coverage_security_review",
         "compilerRecovery": {
-          "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+          "source": "d66785a6aef275d0e604f82fd7e46edc058e4786",
           "failedRun": 44379676578,
           "largePackageProbe": 44381907708,
           "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
-          "production": "Both production link commands passed; required full compiler gate remains NOT qualified",
+          "production": "Not qualified; inline/N/A and actual8-alias product proof remain required",
           "owner": "systrap_regression",
-          "recoveryRun": 44383929244,
+          "recoveryRun": 44393330444,
           "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
-          "state": "APT/readiness and both production links passed; AMD64 inline passed. Required ARM inline evidence and action capture1 failed; owner is investigating retained products, no full-gate qualification or new run.",
+          "state": "Builds completed, then the actual-source applicability guard rejected its conditional before inline/N/A validation; product capture still assumed6aliases instead of8. Neither production qualification nor a codegen regression is established.",
           "history": [
             {
               "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
@@ -2848,6 +2848,26 @@
               "recoveryRun": 44382830296,
               "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
               "state": "Failed before package mutation on a comment-only Deb822 paragraph; owner simplifying URI-only source preservation before continuation"
+            },
+            {
+              "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+              "failedRun": 44379676578,
+              "largePackageProbe": 44381907708,
+              "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
+              "production": "Both production link commands passed; required full compiler gate remains NOT qualified",
+              "owner": "systrap_regression",
+              "recoveryRun": 44383929244,
+              "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
+              "state": "APT/readiness and both production links passed; AMD64 inline passed. Required ARM inline evidence and action capture1 failed; owner is investigating retained products, no full-gate qualification or new run.",
+              "artifact": 14464909203,
+              "artifactSHA256": "b783d148c9abc87703690b39e44ca39d56f46deaacd383b5cb736f24842a7610",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44383929244",
+              "limits": "ARM handler reachability and action capture are under investigation; no proven codegen-regression claim and no ARM/full-gate pass.",
+              "receipt": {
+                "file": "atomicptr-uri-only-44383929244-evidence.json",
+                "sha256": "665500193f72b84ab21da6f7451ad492f83935bad39d6b4259e12e9fe8a9f6c0"
+              },
+              "diagnosis": "ARM mapEntireAddressSpaceDefault=true makes the sole handler-install branch dead; no live handler/assembly/Go ABI wrapper records in actual nm/DWARF. Action capture1 rejected proto-JSON omitted empty environment values. Owner/root reviewing the architecture-specific gate; no waiver, new run or full qualification."
             }
           ],
           "artifact": 14464909203,
@@ -2858,7 +2878,13 @@
             "file": "atomicptr-uri-only-44383929244-evidence.json",
             "sha256": "665500193f72b84ab21da6f7451ad492f83935bad39d6b4259e12e9fe8a9f6c0"
           },
-          "diagnosis": "ARM mapEntireAddressSpaceDefault=true makes the sole handler-install branch dead; no live handler/assembly/Go ABI wrapper records in actual nm/DWARF. Action capture1 rejected proto-JSON omitted empty environment values. Owner/root reviewing the architecture-specific gate; no waiver, new run or full qualification."
+          "diagnosis": "ARM mapEntireAddressSpaceDefault=true makes the sole handler-install branch dead; no live handler/assembly/Go ABI wrapper records in actual nm/DWARF. Action capture1 rejected proto-JSON omitted empty environment values. Owner/root reviewing the architecture-specific gate; no waiver, new run or full qualification.",
+          "prefixRun": 44391663447,
+          "prefixReceipt": {
+            "file": "atomicptr-architecture-44391663447-evidence.json",
+            "sha256": "7525b5fa4fe0e07c72c9a96497f6584d751ea6ba7055a43020e82edba1ab00a2"
+          },
+          "prefixScope": "Fresh source format/lint and full codegen owner31XML including all8named applicability subcases passed; outerURIspelling gate failed before production."
         }
       },
       "head": "17197905852cdebf53a1f60b9de9652ced640e7c",
@@ -25419,14 +25445,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T20:13:56.809299+00:00",
-      "summary": "The compiler-export runfile correction passed its targeted public integration preflight and final reviews. The already-asked single-commit amendment and reply decision is pending; upstream source is unchanged.",
+      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+      "summary": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
       "followup": {
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
         "observedAt": "2026-11-18T20:00:58.033079+00:00",
-        "disposition": "The compiler-export runfile correction passed its targeted public integration preflight and final reviews. The already-asked single-commit amendment and reply decision is pending; upstream source is unchanged.",
-        "nextAction": "Await the already-asked amendment and reply decision for11af. On approval, reverify exact old/new heads and publish the reviewed amendment/body/reply; preserve private compiler and broad qualification limits.",
+        "disposition": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
+        "nextAction": "Root preserves approved11af and code-identical localf097 plus reply draft; upstream8f remains unchanged. Do not repeat the approval question or bypass the blocked DCO action.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -25445,11 +25471,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9915-46a8-995f-da5317a484c1"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Contributor amendment/reply decision, source/base change or substantive new review finding.",
+        "recheckCondition": "Actual execution/certification blocker changes, contributor steering or substantive source/review change.",
         "preparedRevision": {
-          "head": "11af41f15e37b1ab4260735a25378a79085c770e",
+          "head": "f09702e855ccb3a0da8708479b3563d56da82768",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
-          "state": "Targeted fixture preflight PASS; final tree/delta reviews PASS; awaiting already-asked contributor amendment/reply decision",
+          "state": "Ready local docs-only rebase; targeted code qualification retained; publication execution blocked",
           "owner": "root",
           "limits": "Public AMD64 adapter cquery, goimports/buildifier and one fresh uncached compiler import identity case only; no full Nogo/private compiler/ARM/performance qualification.",
           "run": 44382753105,
@@ -25459,15 +25485,42 @@
           "receipt": {
             "file": "nogo-16098-44382753105-evidence.json",
             "sha256": "437adab0160bbd0dbcea6deb0a2d739ca63afbb7ef4ad824e143d0b1fd3dee10"
-          }
+          },
+          "previousApprovedHead": "11af41f15e37b1ab4260735a25378a79085c770e",
+          "differencesFromValidatedSource": [
+            "AGENTS.md",
+            "CONTRIBUTING.md"
+          ]
         },
-        "curatedAt": "2026-11-18T20:13:56.809299+00:00",
+        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
         "amendmentPublicationCondition": {
           "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
-          "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
-          "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
           "owner": "root",
-          "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+          "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
+          "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
+          "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
+          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+        },
+        "publicationConditionHistory": [
+          {
+            "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+            "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+            "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+            "owner": "root",
+            "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+          }
+        ],
+        "readyLocalRebase": {
+          "head": "f09702e855ccb3a0da8708479b3563d56da82768",
+          "base": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "commits": 1,
+          "DCO": "Absent; no final signed source created",
+          "remotePublication": false,
+          "scope": "Prepared local candidate; public PR head unchanged",
+          "receipt": {
+            "file": "human-signoff-rebases.json",
+            "sha256": "c937bbd73eb37d22b9cfa1061efd1b750ff607c567299989eccaed046ee4f94d"
+          }
         }
       },
       "evidence": [
@@ -25638,6 +25691,22 @@
           "baseHead": "cd5e5628a42fa74409864903aae50717b596f214",
           "outcome": "approved",
           "at": "2026-11-10T15:09:56+00:00"
+        },
+        {
+          "kind": "amendment",
+          "status": "pending",
+          "head": "11af41f15e37b1ab4260735a25378a79085c770e",
+          "baseHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
+          "url": "https://github.com/tamird/gvisor/commit/11af41f15e37b1ab4260735a25378a79085c770e",
+          "title": "Generate Nogo export data from source",
+          "body": "Generate export data during Nogo's existing source analysis and read it\nwith the supported x/tools API. Replace deprecated compiler-archive\ndecoding, reusing the type-checked package when serializing exports.\nDeclare standard-library exports per SDK and build mode.\n\nPreserve primary dependency imports ahead of import aliases, matching\nrules_go. The s2a token manager imports both protocol versions, while\nthe v2 package also aliases the v1 path; treating that alias as primary\notherwise collapses the distinct Identity types during source analysis.\n\nForward dependencies from source-only Go embeds to the consuming package\nwithout creating separate analysis actions for those sources.\n\nAnalyze protobuf packages when the build rules supply their generated\nGo sources. For rules that expose only compiled packages, import the\ntarget archive and its additional protobuf dependencies with the Go\nSDK. Convert these inputs to Nogo export data so all imports share one\npackage identity. Do not require other Go rule implementations to expose\nrules_go providers or protobuf compiler attributes.\n\nExempt only the unsafe-import filename diagnostic for generated .pb.go\nfiles, since protoc-gen-go emits unsafe descriptor access.\n\nOn one amd64 worker, serial warm-cache Nogo analysis of sync and\neventchannel and their dependencies took 83.5-85.4 s before and\n84.8-85.0 s after (two measured passes per revision). This includes\nstandard-library work, export writes and newly analyzed protobuf\ndependencies; compilation and downloads are excluded.\n\nExpose the compiler-import test fixture through a package-relative\nrunfile alias. Select its compiler export with the existing archive\nadapter so rules with multiple outputs do not require a singular\nrootpath, and FindFile does not receive a workspace-prefixed path.\n\nUpdated by Codex on behalf of @tamird.\n",
+          "replyBody": "Replaced the singular rootpath/environment-variable fixture with a package-relative runfile alias. The alias uses the existing compiler-export selector, so it handles the compiler export without assuming a single DefaultInfo output or passing a workspace prefix to FindFile. The current public Bazel provider emitted flags.x; adapter/runfile analysis and the uncached TestCompilerImportIdentity passed. I have not run the private internal compiler integration.\n\nPosted by Codex on behalf of @tamird.\n",
+          "reviewThreadURL": "https://github.com/gvisor/gvisor/pull/16098#discussion_r4619004827",
+          "summary": "Approve the already-proposed amendment and reply. Reuses the human-approved unchanged original patch after rebase; the three-path compiler-export fixture correction passed actual adapter/runfile analysis, formatting and fresh uncached TestCompilerImportIdentity. Proposed single-commit tree equals tested538. No full Nogo/private compiler/ARM/performance qualification claim. The existing question remains pending; any newly rebased/amended commit additionally needs the human personal final-commit signoff under upstream9ad3 policy before push for review.",
+          "requestedAt": "2026-11-18T20:00:58.033079+00:00",
+          "outcome": "approved",
+          "at": "2026-11-18T20:59:19.864167+00:00",
+          "note": "Contributor approved the proposed amendment and reply. The later mechanical execution was blocked before process start; approval is not a publication receipt."
         }
       ],
       "dcoAmendment": {
@@ -25661,19 +25730,6 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "11af41f15e37b1ab4260735a25378a79085c770e",
-        "baseHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
-        "url": "https://github.com/tamird/gvisor/commit/11af41f15e37b1ab4260735a25378a79085c770e",
-        "title": "Generate Nogo export data from source",
-        "body": "Generate export data during Nogo's existing source analysis and read it\nwith the supported x/tools API. Replace deprecated compiler-archive\ndecoding, reusing the type-checked package when serializing exports.\nDeclare standard-library exports per SDK and build mode.\n\nPreserve primary dependency imports ahead of import aliases, matching\nrules_go. The s2a token manager imports both protocol versions, while\nthe v2 package also aliases the v1 path; treating that alias as primary\notherwise collapses the distinct Identity types during source analysis.\n\nForward dependencies from source-only Go embeds to the consuming package\nwithout creating separate analysis actions for those sources.\n\nAnalyze protobuf packages when the build rules supply their generated\nGo sources. For rules that expose only compiled packages, import the\ntarget archive and its additional protobuf dependencies with the Go\nSDK. Convert these inputs to Nogo export data so all imports share one\npackage identity. Do not require other Go rule implementations to expose\nrules_go providers or protobuf compiler attributes.\n\nExempt only the unsafe-import filename diagnostic for generated .pb.go\nfiles, since protoc-gen-go emits unsafe descriptor access.\n\nOn one amd64 worker, serial warm-cache Nogo analysis of sync and\neventchannel and their dependencies took 83.5-85.4 s before and\n84.8-85.0 s after (two measured passes per revision). This includes\nstandard-library work, export writes and newly analyzed protobuf\ndependencies; compilation and downloads are excluded.\n\nExpose the compiler-import test fixture through a package-relative\nrunfile alias. Select its compiler export with the existing archive\nadapter so rules with multiple outputs do not require a singular\nrootpath, and FindFile does not receive a workspace-prefixed path.\n\nUpdated by Codex on behalf of @tamird.\n",
-        "replyBody": "Replaced the singular rootpath/environment-variable fixture with a package-relative runfile alias. The alias uses the existing compiler-export selector, so it handles the compiler export without assuming a single DefaultInfo output or passing a workspace prefix to FindFile. The current public Bazel provider emitted flags.x; adapter/runfile analysis and the uncached TestCompilerImportIdentity passed. I have not run the private internal compiler integration.\n\nPosted by Codex on behalf of @tamird.\n",
-        "reviewThreadURL": "https://github.com/gvisor/gvisor/pull/16098#discussion_r4619004827",
-        "summary": "Approve the already-proposed amendment and reply. Reuses the human-approved unchanged original patch after rebase; the three-path compiler-export fixture correction passed actual adapter/runfile analysis, formatting and fresh uncached TestCompilerImportIdentity. Proposed single-commit tree equals tested538. No full Nogo/private compiler/ARM/performance qualification claim. The existing question remains pending; any newly rebased/amended commit additionally needs the human personal final-commit signoff under upstream9ad3 policy before push for review.",
-        "requestedAt": "2026-11-18T20:00:58.033079+00:00"
       }
     },
     {
@@ -57600,8 +57656,8 @@
       "url": "https://github.com/tamird/gvisor/commit/09b196bf630b2a6be83ab28e6c7611f7e766a023",
       "group": "runtime",
       "status": "Agent work: functional gates passed; remaining qualification open",
-      "updatedAt": "2026-11-18T16:46:00.239336+00:00",
-      "summary": "The fork checker on fa6b9080f diagnosed 13 of 23 marked cases on each of AMD64 and ARM64, including wrong-owner use with both sets locked. It accepted all four valid uses. Six lifetime cases also went unreported: two unlock/relock sequences and four cases involving a waiter-list cursor. The native package ran five tests with no skips. A saved semaphore element retained its address across unlock and exposed the updated value and PID after relocking. In a test-only count predicate that released the mutex and called AbortWait, traversal visited one of three waiters and left the other two queued. The two production count predicates only read the semaphore value.",
+      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+      "summary": "The cheap AMD64 race Go owner passed8cases. Missing race release and three Sentry wrapper gates are running under the existing120-minute cap; no result is inferred before actual artifacts.",
       "evidence": [
         {
           "label": "Two architecture analyzers on all 23 marked cases in fa6b9080f",
@@ -57703,8 +57759,8 @@
         "owner": "root",
         "sourceHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
         "observedAt": "2026-11-18T16:46:00.239336+00:00",
-        "disposition": "Source gate and functional consumer gates verified from exact-source artifacts. Native30 cases were reused from44337494099; ordinary, save/restore and save/resume each passed30 fresh uncached cases in44347958039. No skip, cleanup failure or source change; no statistical performance or ARM execution claim.",
-        "nextAction": "Owner prepares missing-only ARM execution, race, C++ and performance qualification, reusing valid source/native evidence and unchanged compiler inputs. Keep prerequisite #17127 and explicit publication approval separate.",
+        "disposition": "The cheap AMD64 race Go owner passed8cases. Missing race release and three Sentry wrapper gates are running under the existing120-minute cap; no result is inferred before actual artifacts.",
+        "nextAction": "Owner fuse_full20_resume consumes the exact race consumer run and cleanup; retain all previous normal/source/native/C++ evidence and open prerequisite17127/nativeARM/performance obligations.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -57727,7 +57783,7 @@
           "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes."
         },
         "technicalOwner": "systrap_regression",
-        "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes.",
+        "recheckCondition": "Actual race terminal artifact/cleanup, prerequisite/source change or concrete next missing gate.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -58020,7 +58076,7 @@
             44316942020
           ]
         },
-        "curatedAt": "2026-11-18T16:46:00.239336+00:00",
+        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
         "preparedSyscallConsumer": {
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "8adfbf18fadfd0c5a5cd3c64528939c3c90b55ce",
@@ -58034,7 +58090,7 @@
             "file": "semaphore-44347958039-evidence.json",
             "sha256": "605844df24b02771650aca4998fb6259746de19bbff25d3f2a552f299250daa6"
           },
-          "limits": "ARM execution, race, full C++ qualification and performance remain open. SemOpRandom disables save in loop.",
+          "limits": "Normal90 pass retained; separate AMD64 raceGo8 passed and race release/consumers live. Native ARM/performance remain open; no overall completion claim.",
           "priorFailedRunsPreserved": [
             44337494099,
             44346644829
@@ -58048,6 +58104,28 @@
           },
           "run": 44254674522,
           "analyzedSources": 373
+        },
+        "raceOwnerQualification": {
+          "run": 44388076421,
+          "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+          "state": "VERIFIED PASS AMD64 Go race owner8 fresh cases/no skip/race report",
+          "receipt": {
+            "file": "semaphore-race-owner-44388076421-evidence.json",
+            "sha256": "7bfe5fa4de50a0c551dd527e94407d784425e37b2ef8435094b19963d21b12b4"
+          }
+        },
+        "raceConsumerQualification": {
+          "run": 44391986188,
+          "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+          "plan": "b4bc23328483393a3edcee1440fab7f08ac52012",
+          "state": "LIVE; no compiler/runtime result inferred",
+          "owner": "fuse_full20_resume",
+          "inclusiveMinutes": 120,
+          "receipt": {
+            "file": "semaphore-race-consumer-dispatch.json",
+            "sha256": "5dab6d431747110a045ea991d3a1177a6569fdcdb53563ef26b865b9abeea882"
+          },
+          "scope": "Only missing race release plus ordinary/save-restore/save-resume30each; fullopaque runtime/flavor/actualrestore/freshno-skip proofs required. Normal/source/nogo/Linux/CPP passed evidence reused."
         }
       },
       "contributorChangesRequested": {
@@ -78242,7 +78320,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T20:11:46.639485+00:00",
+      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire → graph → wire restore verified the guest’s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -78370,7 +78448,7 @@
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "observedAt": "2026-11-18T17:34:57.517822+00:00",
         "disposition": "Full8 run44350079319 passed BASE CheckpointEmpty N1, then the sampled-volume observer did not capture nonempty data. Namespace cleanup separately failed with retained task lease/blob references. Original Docker packages were restored before that failure, but original configuration/store/inventory restoration was not verified. No candidate result or product defect established.",
-        "nextAction": "Owner coverage_security_review uses the verified native cleanup API proof to prepare only the existing missing full8 recovery. Preserve prior443500 partial result and restoration failure; no workload or source-hook pass inferred.",
+        "nextAction": "Owner coverage_security_review completes the typed-JSON completion boundary and integrates the existing proved cleanup API before proposing the bounded missing full8 recovery. Preserve prior443500 partial/restoration failure and narrow native-only proof.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -78423,7 +78501,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44350079319"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Concrete reviewed full8 recovery proposal or changed cleanup/runtime/source inputs.",
+        "recheckCondition": "Concrete reviewed completion/integration or actual bounded recovery result.",
         "qualificationHistory": [
           {
             "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
@@ -78763,9 +78841,14 @@
             "scope": "Native containerd2.4.2 namespace/owned lease/rooted public marker cleanup API proof; exact original namespaces/images/containers/volumes unchanged and clean source. No source-hook, full8, package/configuration restoration or workload qualification.",
             "actualCommands": 43,
             "elapsedSeconds": 12
+          },
+          "completionIntegration": {
+            "owner": "coverage_security_review",
+            "state": "Preparing owning typed-JSON completion and existing native cleanup API integration; no source-hook or full8 qualification",
+            "prerequisite": "Native cleanup API probe44386251141PASS retained"
           }
         },
-        "curatedAt": "2026-11-18T20:11:46.639485+00:00",
+        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
         "technicalOwner": "coverage_security_review"
       },
       "refinement": {
@@ -92047,14 +92130,14 @@
       "url": "https://github.com/google/gvisor/pull/17545",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-18T20:13:56.809299+00:00",
+      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "The current head remains approved and First Pass1772 passed. A maintainer now requests a rebase and push; the prior public import17651 is closed without merge.",
-        "nextAction": "Root prepares and validates the requested rebase without adding a DCO trailer; the human must review and personally sign off the exact final commit before upstream push for review. Preserve historical approval and input scopes; no merge or import-source rewrite.",
-        "recheckCondition": "Prepared rebase, contributor amendment decision, source/import/review or CI change.",
+        "disposition": "The maintainer-requested local rebase passed fresh both-architecture source and locking-positive/negative Nogo checks. The published approved4e head is unchanged; no signed revision or amendment was created after the DCO execution block.",
+        "nextAction": "Root preserves qualified local97 and historical published4e approval; reconcile the actual DCO execution block before any upstream amendment. Do not duplicate manual-action requests or bypass the rejection.",
+        "recheckCondition": "Execution/certification condition, contributor/source/review/import or CI changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
           "https://github.com/google/gvisor/pull/17651",
@@ -92145,7 +92228,7 @@
           "humanRequestURL": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
           "posted": false
         },
-        "curatedAt": "2026-11-18T20:13:56.809299+00:00",
+        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -92217,10 +92300,41 @@
         },
         "amendmentPublicationCondition": {
           "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
-          "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
-          "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
           "owner": "root",
-          "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+          "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
+          "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
+          "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
+          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+        },
+        "publicationConditionHistory": [
+          {
+            "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+            "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+            "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+            "owner": "root",
+            "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+          }
+        ],
+        "readyLocalRebase": {
+          "head": "97b3315886b5346ef29a1cbe1c8d311844eafa92",
+          "base": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "commits": 1,
+          "DCO": "Absent; no final signed source created",
+          "remotePublication": false,
+          "scope": "Prepared local candidate; public PR head unchanged",
+          "receipt": {
+            "file": "human-signoff-rebases.json",
+            "sha256": "c937bbd73eb37d22b9cfa1061efd1b750ff607c567299989eccaed046ee4f94d"
+          },
+          "qualification": {
+            "run": 44392805761,
+            "receipt": {
+              "file": "nic-info-lock-44392805761-evidence.json",
+              "sha256": "6a8d198c528a3c840f8b74c45ac056ba2ccfb38b22beade8ce832b5c0db5cfc4"
+            },
+            "scope": "Fresh both-architecture source and shared/exclusive-positive Nogo findings0; unlocked negative control exactlyone expected diagnostic per architecture. AMD64 worker; no native ARM runtime/performance claim.",
+            "priorQueryFailureRetained": true
+          }
         }
       },
       "dcoCoordination": {
@@ -92254,7 +92368,7 @@
           "https://github.com/tamird/gvisor/commit/4e1667030ef7cce0777f3ba1aff1d74673896cf1"
         ]
       },
-      "summary": "The current head remains approved and First Pass1772 passed. A maintainer now requests a rebase and push; the prior public import17651 is closed without merge."
+      "summary": "The maintainer-requested local rebase passed fresh both-architecture source and locking-positive/negative Nogo checks. The published approved4e head is unchanged; no signed revision or amendment was created after the DCO execution block."
     },
     {
       "id": "pr:17546",
@@ -93384,15 +93498,15 @@
       "url": "https://github.com/google/gvisor/pull/17780",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-18T20:13:56.809299+00:00",
-      "summary": "Exact-head First Pass1778 failed: seventeen attempts were rejected before agent assignment by the30-day compute quota, and an earlier syscall shard failed a Watchdog.Start warning. Native Hey qualification remains valid; no Hey-path failure is established.",
+      "updatedAt": "2026-11-18T20:59:19.864167+00:00",
+      "summary": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
       "followup": {
         "owner": "root",
         "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Exact-head First Pass1778 failed: seventeen attempts were rejected before agent assignment by the30-day compute quota, and an earlier syscall shard failed a Watchdog.Start warning. Native Hey qualification remains valid; no Hey-path failure is established.",
-        "nextAction": "Root tracks the upstream30-day quota and separate syscall watchdog failure before any authorized retry; preserve passed exact-source local qualification. Review required; complete import lookup found no matching export.",
-        "recheckCondition": "Provider quota/CI disposition, reviewer feedback, source/base change or matching import.",
+        "disposition": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
+        "nextAction": "Root preserves local4c0 and valid exact-code qualification while the actual DCO execution block remains. Continue exact published-head CI/reviewer/import obligations; no repeated contributor review or bypass.",
+        "recheckCondition": "Execution blocker, current source/check/review/import state or contributor steering changes.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -93478,7 +93592,7 @@
           "artifact": 14444468589,
           "scope": "Functional integration; no throughput accuracy, Sentry runtime or statistical performance claim."
         },
-        "curatedAt": "2026-11-18T20:13:56.809299+00:00",
+        "curatedAt": "2026-11-18T20:59:19.864167+00:00",
         "submissionPolicy": {
           "source": "b29c8320a862a77f4c55894d00c56eb5850c8066",
           "url": "https://github.com/gvisor/gvisor/blob/b29c8320a862a77f4c55894d00c56eb5850c8066/CONTRIBUTING.md",
@@ -93681,10 +93795,32 @@
         },
         "amendmentPublicationCondition": {
           "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
-          "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
-          "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
           "owner": "root",
-          "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+          "state": "Automatic approval review blocked agent DCO addition before execution. No final signed commit, upstream amendment or reply was published.",
+          "userDecision": "The contributor declined a separate manual Git action and reaffirmed the prior review/agent-mechanics workflow; that decision does not remove the actual execution block.",
+          "nextAction": "Preserve reviewed local candidates and existing source. Do not duplicate the approval question or route around the automatic approval rejection.",
+          "recheckCondition": "Legitimate execution authorization/certification condition changes; no new review or mechanical action requested here."
+        },
+        "publicationConditionHistory": [
+          {
+            "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+            "policyURL": "https://github.com/gvisor/gvisor/commit/9ad3ba91c673248c8e522cbca3c37087375b3b25",
+            "condition": "For any future upstream revision, the human must review and personally sign off each exact final commit after the last amendment before it is pushed for review. Agent does not add DCO trailers. Existing published source and historical qualification remain unchanged.",
+            "owner": "root",
+            "state": "External human condition for future amendment; no blanket certification or duplicate approval question"
+          }
+        ],
+        "readyLocalRebase": {
+          "head": "4c0d78d299fb043757dd69e50bc7bd838525a53a",
+          "base": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
+          "commits": 4,
+          "DCO": "Absent; no final signed source created",
+          "remotePublication": false,
+          "scope": "Prepared local candidate; public PR head unchanged",
+          "receipt": {
+            "file": "human-signoff-rebases.json",
+            "sha256": "c937bbd73eb37d22b9cfa1061efd1b750ff607c567299989eccaed046ee4f94d"
+          }
         }
       },
       "settledReviews": [
@@ -128621,5 +128757,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T20:13:56.809299+00:00"
+  "updatedAt": "2026-11-18T20:59:19.864167+00:00"
 }

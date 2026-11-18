@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T20:06:11.890448+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T20:13:56.809299+00:00",
+  "registryDate": "2026-11-18T20:59:19.864167+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448179,8 +448179,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
-        "disposition": "The URI-only APT recovery passed acquisition/readiness and both production links. AMD64 inline evidence passed; required ARM inline evidence and action capture remain unresolved, so the full compiler gate is not qualified.",
-        "nextAction": "Owner systrap_regression audits retained443839 ARM reachability/compiler products and action capture1 before proposing only missing gates. Preserve all source/functional/lint passes and prior APT/format failures; no new run yet."
+        "disposition": "The architecture revision passed fresh source lint and31codegen cases. Its compiler continuation built products but failed actual-source applicability and8-alias collection; the owner is preparing a cheap real-source guard check before missing-only continuation.",
+        "nextAction": "Owner systrap_regression verifies the actual unchanged source conditional and eight declared aliases cheaply, then resumes only unresolved compiler gates after review. Preserve prefix passes and all earlier failed acquisition/collector attempts."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxwQaXQ"
@@ -449138,8 +449138,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
-        "disposition": "The compiler-export runfile correction passed its targeted public integration preflight and final reviews. The already-asked single-commit amendment and reply decision is pending; upstream source is unchanged.",
-        "nextAction": "Await the already-asked amendment and reply decision for11af. On approval, reverify exact old/new heads and publish the reviewed amendment/body/reply; preserve private compiler and broad qualification limits."
+        "disposition": "The contributor approved the reviewed Nogo amendment and reply. The docs-only fresh-base local candidate remains unpublished because automatic approval review rejected agent DCO addition before execution.",
+        "nextAction": "Root preserves approved11af and code-identical localf097 plus reply draft; upstream8f remains unchanged. Do not repeat the approval question or bypass the blocked DCO action."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_X2w"
@@ -453665,7 +453665,7 @@
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "disposition": "Full8 run44350079319 passed BASE CheckpointEmpty N1, then the sampled-volume observer did not capture nonempty data. Namespace cleanup separately failed with retained task lease/blob references. Original Docker packages were restored before that failure, but original configuration/store/inventory restoration was not verified. No candidate result or product defect established.",
-        "nextAction": "Owner coverage_security_review uses the verified native cleanup API proof to prepare only the existing missing full8 recovery. Preserve prior443500 partial result and restoration failure; no workload or source-hook pass inferred."
+        "nextAction": "Owner coverage_security_review completes the typed-JSON completion boundary and integrates the existing proved cleanup API before proposing the bounded missing full8 recovery. Preserve prior443500 partial/restoration failure and narrow native-only proof."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -455776,8 +455776,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-        "disposition": "The current head remains approved and First Pass1772 passed. A maintainer now requests a rebase and push; the prior public import17651 is closed without merge.",
-        "nextAction": "Root prepares and validates the requested rebase without adding a DCO trailer; the human must review and personally sign off the exact final commit before upstream push for review. Preserve historical approval and input scopes; no merge or import-source rewrite."
+        "disposition": "The maintainer-requested local rebase passed fresh both-architecture source and locking-positive/negative Nogo checks. The published approved4e head is unchanged; no signed revision or amendment was created after the DCO execution block.",
+        "nextAction": "Root preserves qualified local97 and historical published4e approval; reconcile the actual DCO execution block before any upstream amendment. Do not duplicate manual-action requests or bypass the rejection."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzgQHpA"
@@ -456066,8 +456066,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
-        "disposition": "Exact-head First Pass1778 failed: seventeen attempts were rejected before agent assignment by the30-day compute quota, and an earlier syscall shard failed a Watchdog.Start warning. Native Hey qualification remains valid; no Hey-path failure is established.",
-        "nextAction": "Root tracks the upstream30-day quota and separate syscall watchdog failure before any authorized retry; preserve passed exact-source local qualification. Review required; complete import lookup found no matching export."
+        "disposition": "Published Hey5d remains unchanged. The code-identical docs-only fresh-base four-commit candidate is ready locally, but DCO execution was blocked before any signed revision or upstream amendment.",
+        "nextAction": "Root preserves local4c0 and valid exact-code qualification while the actual DCO execution block remains. Continue exact published-head CI/reviewer/import obligations; no repeated contributor review or bypass."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzkVM_w"
@@ -459206,13 +459206,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-18T20:05:20.391426+00:00"
-      },
-      "contributor-review": {
-        "scope": "11af41f15e37b1ab4260735a25378a79085c770e",
-        "since": "2026-11-18T20:00:58.033079+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
       }
     },
     "pr:16101": {
@@ -464493,7 +464486,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
+        "observedAt": "2026-11-18T20:59:19.864167+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464502,7 +464495,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
+        "observedAt": "2026-11-18T20:59:19.864167+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464511,7 +464504,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
+        "observedAt": "2026-11-18T20:59:19.864167+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464520,7 +464513,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
+        "observedAt": "2026-11-18T20:59:19.864167+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464529,7 +464522,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
+        "observedAt": "2026-11-18T20:59:19.864167+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464538,7 +464531,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
+        "observedAt": "2026-11-18T20:59:19.864167+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464547,7 +464540,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T20:13:56.809299+00:00"
+        "observedAt": "2026-11-18T20:59:19.864167+00:00"
       }
     }
   },
