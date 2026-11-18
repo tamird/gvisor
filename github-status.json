@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T14:40:03.825316+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T13:38:30.011543+00:00",
+  "registryDate": "2026-11-18T14:44:15.260922+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447547,7 +447547,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "The missing-only screen44261892579 passed native tmpfs/rootfs then stopped at native FUSE ENOENT; zero BASE/candidate observations. All preparation/manifests and cleanup verified. The first tiny probe44264852083 failed image acquisition before containers. Corrected immutable-digest probe44265522148 proves /dev/fuse absent inside old-config container and visible/openable with only its device mapping. This is prerequisite evidence, not actual FUSE mount/Ruby capability.",
-        "nextAction": "Finish exact frozen rev3 security-diagnostic review and root protocol approval before preparation/publication/launch. Diagnose actual native FUSE mount EPERM from selected owned-container/process security evidence, preserving primary failure. Full20 observations/Smoke and ordinary-path performance qualification remain incomplete; do not infer AppArmor or capability cause."
+        "nextAction": "Writer completes maintained Smoke identity/cleanup and freshness correction; root and TCP re-review exact delta before native validation publication/launch. Keep original upstream PR unchanged. Full20 and performance qualification remain open."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -447804,7 +447804,7 @@
         "owner": "root",
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
         "disposition": "The earlier later-generator-change rationale was incorrect:9e17 and171979 have identical atomicptr template/typeparams fixtures and the visitor differs only by one import blank line. Pre-DCO0e41 and171979 have identical trees. Historical Go1.27.2 codegen remains relevant to those exact inputs; current Go1.27.3/toolchain and upstream consumer inputs still require fresh source-bound proof. Prepared local4109 addresses complete typeparameter scope, composite type arguments/indexed calls, known imported selectors under anon mode, and the used-atomic-pointer FD growth copy contract. Full static source reviews are complete; no new compilation, test, restore, codegen, stack-budget or performance result is claimed.",
-        "nextAction": "Complete exact prepared current-source gate executable review and cost decision before authorized qualification. Preserve public171979 unchanged and all historical failure evidence. Prototype static review is complete but actual generator/golden/generated compilation, providers/DWARF/current SDK caller/stack and cost proof are pending. Upstream amendment still requires the exact source decision."
+        "nextAction": "Finish exact provider/first-proof executable review, then run the canonical cold current-source proof with measured cost. Preserve public171979 unchanged; actual formatting, generator compilation, production provider/action/DWARF bindings, current SDK instruction/frame evidence and runtime/performance remain open."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxwQaXQ"
@@ -449980,7 +449980,7 @@
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "disposition": "The missing-only screen44261892579 passed native tmpfs/rootfs then stopped at native FUSE ENOENT; zero BASE/candidate observations. All preparation/manifests and cleanup verified. The first tiny probe44264852083 failed image acquisition before containers. Corrected immutable-digest probe44265522148 proves /dev/fuse absent inside old-config container and visible/openable with only its device mapping. This is prerequisite evidence, not actual FUSE mount/Ruby capability.",
-        "nextAction": "Finish exact frozen rev3 security-diagnostic review and root protocol approval before preparation/publication/launch. Diagnose actual native FUSE mount EPERM from selected owned-container/process security evidence, preserving primary failure. Full20 observations/Smoke and ordinary-path performance qualification remain incomplete; do not infer AppArmor or capability cause."
+        "nextAction": "Writer completes maintained Smoke identity/cleanup and freshness correction; root and TCP re-review exact delta before native validation publication/launch. Keep original upstream PR unchanged. Full20 and performance qualification remain open."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -453336,7 +453336,7 @@
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
         "disposition": "Current-base d2c5c08 preserves published440aba98 stable patch. Existing44230748413 verifies159 owner cases and three actual candidate/live BASE cross-engine visits, but live BASE also passed and exact CI unreachable cause is unproven. Corrected synthetic control44244417672 now proves the original current-BASE inline-format defect:4generic/legacy/split compatibility leaves pass, ZeroOwners/Inline fail on incorrect printed raw-region/graph-ID output in both text/HTML; candidate passes these identical fixtures in the earlier owner run. Actual XML/BEP and exact source clean restoration verified. First control44243638873 failed protobuf visibility analysis before tests and is retained.",
-        "nextAction": "Root completes the latest stage single-cleanup correction and exact frozen protocol review before publishing any checkpoint recovery. Original19-file70a plan is obsolete and unpublished; retain44301734441 precondition failure. No new package/store rollback or eight N1 study has executed."
+        "nextAction": "Consume exact D2/51b run44326611869, verify dependency and restoration evidence before interpreting eight N1 samples. Preserve both earlier failures. No successful package/store rollback or benchmark result is yet established."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyIjFw"
@@ -464039,7 +464039,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464048,7 +464048,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464057,7 +464057,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464066,7 +464066,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464075,7 +464075,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464084,7 +464084,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464093,7 +464093,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464102,7 +464102,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     },
     "branch:benchmark-reliability": {
@@ -464111,7 +464111,7 @@
         "since": "2026-11-18T07:09:10.290929+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T13:38:30.011543+00:00"
+        "observedAt": "2026-11-18T14:44:15.260922+00:00"
       }
     }
   },
