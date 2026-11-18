@@ -1,0 +1,5 @@
+goos: linux
+goarch: arm64
+BenchmarkHackbench/ipcMode.pipe/processMode.thread-4         	       1	10162137162 ns/op	         0.006000 execution_time.s	         0.006000 execution_time_per_loop.s
+BenchmarkHackbench/ipcMode.socket/processMode.process-4      	       1	10166750887 ns/op	         0.01500 execution_time.s	         0.01500 execution_time_per_loop.s
+PASS
