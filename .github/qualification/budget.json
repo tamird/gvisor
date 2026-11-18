@@ -1,0 +1,103 @@
+{
+  "status": "Prepared canonical reload continuation; actual cheap preflight44366606003 PASS",
+  "harnessSource": "4f51c3b3a663f39cb1dec661f83406e4f014348a",
+  "sourceParent": "db1c819898c4100058374e37801b5f83ac54d94b",
+  "runtimeBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+  "runtimeCandidate": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+  "expectedMinutesProvisional": [
+    15,
+    30
+  ],
+  "priorMeasuredStagedSeconds": 536,
+  "newOwnerAndColdLintCostsMeasured": true,
+  "bodyDeadlineMinutes": 85,
+  "cleanupGraceSeconds": 240,
+  "inclusiveMinutes": 89,
+  "cleanupSeconds": 169,
+  "activeChildStopSeconds": 31,
+  "cleanupAndChildStopSeconds": 200,
+  "phaseCapsMinutes": {
+    "publicExecutionProbe": 0.75,
+    "apparmorSetup": 0.5,
+    "runtimeFetch": 2,
+    "benchmarkAlpineLoad": 3,
+    "rubyImagePull": 5,
+    "basicAlpinePullAfterNativeGate": 3,
+    "harnessAndFsConsumerBuild": 10,
+    "cquery": 1,
+    "harnessFreeze": 1,
+    "harnessManifest": 0.5,
+    "harnessArchive": 1,
+    "fourNativeRubyGates": 4,
+    "candidateReleaseCopy": 8,
+    "twoRuntimeManifests": 1,
+    "twoRuntimeArchives": 2,
+    "twoSourceOwnerSmokes": 6,
+    "finalBazelShutdown": 1,
+    "sourceBenchmarkCases": 12,
+    "freshNativeOwnerWithWarmDeclaredRelease": 5,
+    "baseReleaseCopy": 8,
+    "ownedGroupControl": 0.5,
+    "dockerVersionGuard": 0.16666666666666666
+  },
+  "nominalPhaseCapsMinutes": 75.41666666666667,
+  "benchmarkObservations": {
+    "freshNativeRuby": 4,
+    "sourceRuby": 14,
+    "sourceStartup": 2,
+    "total": 20,
+    "N": 1
+  },
+  "additionalFunctionalOwnerTests": {
+    "native": 1,
+    "base": 1,
+    "candidate": 1,
+    "requiredCase": "TestFuseSmoke",
+    "requiredChildN": 1,
+    "requiredCompletedWorkloadCallbacks": 1,
+    "forcedUncached": true,
+    "actualBEPXMLCopiedImmediately": true
+  },
+  "nativeFUSEBeforeOwnerReleaseOrComparatorBuilds": true,
+  "oldRubyControlsHistoricalOnly": true,
+  "priorNativeStartupReuse": "No native-result reuse; compare only complete prior startup product inputs.",
+  "hostDropCaches": false,
+  "statisticalQualification": false,
+  "fullCategoryQualification": false,
+  "volume": "18RubyNoOp workloads+2empty startups, plus3AlpineFUSE smoke write/read workloads; /files and/tmp setup copy/metadata and image pulls add unmeasuredIO; no hardIO/peak-memory bound",
+  "runtimeBuildOrder": [
+    "candidate1b",
+    "base1f",
+    "restoreharnessSOURCE",
+    "nativeOwner",
+    "sourceOwners",
+    "Bazelshutdown",
+    "sourceBenchmarkCases"
+  ],
+  "independentRequiredGates": {
+    "source": {
+      "run": 44353837005,
+      "status": "verified PASS; do not repeat"
+    },
+    "compiler": {
+      "run": 44353853397,
+      "status": "verified native AMD64 PASS; do not repeat"
+    },
+    "performance": "N1 capability screen only; statistical/full-category/physical-device scopes remain open"
+  },
+  "freshNativeReason": "Prior44328398694 native runtime identity was not recorded sufficiently to assert identical new-worker runc. Rerun measured ~24-second FUSE/Smoke calls rather than add a reuse-proof mechanism.",
+  "runtimeTransport": "Actual44340508483 tested permitted artifact download returned403; canonical exact-source rebuild under unchanged permissions, immediately archive/reproduce full9 manifests.",
+  "prerequisitePreflight": {
+    "run": 44366606003,
+    "source": "4f51c3b3a663f39cb1dec661f83406e4f014348a",
+    "plan": "95410ff18839d09f1fb6a4d012854e5aa08b3719",
+    "status": "Actual six native cycles and full original state restoration PASS",
+    "actualDockerVersion": "28.0.4"
+  },
+  "observedOwnerAndLintCosts": {
+    "latestNativeSmokeStageSeconds": 18.422,
+    "sourceLintWholeJobSeconds": 142,
+    "cppLintWholeJobSeconds": 752,
+    "scope": "Owner stage vs whole CI job durations distinguished; Sentry activation/cold continuation costs remain workload dependent"
+  }
+}
