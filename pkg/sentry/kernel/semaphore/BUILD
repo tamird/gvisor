@@ -50,5 +50,6 @@ go_test(
         "//pkg/sentry/contexttest",  # keep
         "//pkg/sentry/kernel/auth",  # keep
         "//pkg/sentry/kernel/ipc",  # keep
+        "//pkg/state",
     ],
 )

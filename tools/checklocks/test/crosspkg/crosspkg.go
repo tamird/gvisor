@@ -177,3 +177,31 @@ func RequirePrivateStruct() {}
 // ExcludePrivateStruct requires the private struct's mutex not to be held.
 // +checklocksexclude:privateFieldStruct.mu
 func ExcludePrivateStruct() {}
+
+// ReturnAliasOwner owns the mutex protecting each returned member.
+type ReturnAliasOwner struct {
+	Mu     sync.Mutex
+	member ReturnAliasMember
+}
+
+// ReturnAliasMember retains the original owner's mutex.
+type ReturnAliasMember struct {
+	Mu *sync.Mutex
+
+	// +checklocks:Mu
+	Value int
+}
+
+// Member returns a stable member without acquiring its mutex.
+//
+// +checklocksalias:owner.Mu=member.Mu
+func (owner *ReturnAliasOwner) Member() (member *ReturnAliasMember) {
+	return &owner.member
+}
+
+// Modify requires the original owner's mutex.
+//
+// +checklocks:member.Mu
+func (member *ReturnAliasMember) Modify() {
+	member.Value++
+}

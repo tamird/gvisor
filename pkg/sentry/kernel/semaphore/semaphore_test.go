@@ -15,6 +15,9 @@
 package semaphore
 
 import (
+	"bytes"
+	"reflect"
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -23,6 +26,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/contexttest"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/ipc"
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 func executeOps(ctx context.Context, t *testing.T, set *Set, ops []linux.Sembuf, block bool) chan struct{} {
@@ -59,6 +63,7 @@ func signalled(ch chan struct{}) bool {
 func TestBasic(t *testing.T) {
 	ctx := contexttest.Context(t)
 	set := &Set{obj: &ipc.Object{ID: 123}, sems: make([]sem, 1)}
+	set.initSemaphores()
 	ops := []linux.Sembuf{
 		{SemOp: 1},
 	}
@@ -80,6 +85,7 @@ func TestBasic(t *testing.T) {
 func TestWaitForZero(t *testing.T) {
 	ctx := contexttest.Context(t)
 	set := &Set{obj: &ipc.Object{ID: 123}, sems: make([]sem, 1)}
+	set.initSemaphores()
 	ops := []linux.Sembuf{
 		{SemOp: 0},
 	}
@@ -119,6 +125,7 @@ func TestWaitForZero(t *testing.T) {
 func TestNoWait(t *testing.T) {
 	ctx := contexttest.Context(t)
 	set := &Set{obj: &ipc.Object{ID: 123}, sems: make([]sem, 1)}
+	set.initSemaphores()
 	ops := []linux.Sembuf{
 		{SemOp: 1},
 	}
@@ -142,6 +149,7 @@ func TestNoWait(t *testing.T) {
 func TestWaitMinInt16(t *testing.T) {
 	ctx := contexttest.Context(t)
 	set := &Set{obj: &ipc.Object{ID: 123}, sems: make([]sem, 1)}
+	set.initSemaphores()
 	ops := []linux.Sembuf{
 		{SemOp: valueMax},
 	}
@@ -151,12 +159,13 @@ func TestWaitMinInt16(t *testing.T) {
 	ops[0].SemFlg = linux.IPC_NOWAIT
 	set.mu.Lock()
 	_, _, err := set.executeOps(ctx, ops, 123)
+	value := set.findSem(0).value
 	set.mu.Unlock()
 	if err != linuxerr.ErrWouldBlock {
 		t.Fatalf("ExecuteOps(ops) wrong result, got: %v, expected: %v", err, linuxerr.ErrWouldBlock)
 	}
-	if got := set.sems[0].value; got != valueMax {
-		t.Fatalf("semaphore value got: %d, expected: %d", got, valueMax)
+	if value != valueMax {
+		t.Fatalf("semaphore value got: %d, expected: %d", value, valueMax)
 	}
 
 	ops[0].SemFlg = 0
@@ -166,6 +175,7 @@ func TestWaitMinInt16(t *testing.T) {
 func TestWaitMinInt16NotWoken(t *testing.T) {
 	ctx := contexttest.Context(t)
 	set := &Set{obj: &ipc.Object{ID: 123}, sems: make([]sem, 1)}
+	set.initSemaphores()
 	ch := executeOps(ctx, t, set, []linux.Sembuf{{SemOp: -32768}}, true)
 
 	executeOps(ctx, t, set, []linux.Sembuf{{SemOp: 1}}, false)
@@ -215,5 +225,62 @@ func TestUnregister(t *testing.T) {
 		if !signalled(ch) {
 			t.Fatalf("channel %d should have been signalled", i)
 		}
+	}
+}
+
+// A semaphore is stable storage; releasing the mutex does not expire its handle.
+func TestMemberAfterRelock(t *testing.T) {
+	ctx := contexttest.Context(t)
+	registry := NewRegistry(auth.NewRootUserNamespace())
+	set, err := registry.FindOrCreate(ctx, 123, 2, linux.FileMode(0600), true, true, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	set.mu.Lock()
+	member := set.findSem(1)
+	member.value = 7
+	member.pid = 123
+	set.mu.Unlock()
+
+	set.mu.Lock()
+	defer set.mu.Unlock()
+	if member != set.findSem(1) || member.mu != &set.mu {
+		t.Fatal("semaphore handle lost its original owner")
+	}
+	member.wakeWaiters()
+	if member.value != 7 || member.pid != 123 {
+		t.Fatalf("member after relock: value=%d pid=%d", member.value, member.pid)
+	}
+}
+
+func TestRestoreMutexLinks(t *testing.T) {
+	original := &Set{sems: make([]sem, 2)}
+	original.initSemaphores()
+	original.mu.Lock()
+	original.findSem(0).value = 7
+	original.findSem(1).pid = 123
+	original.mu.Unlock()
+
+	if got, want := original.findSem(0).StateFields(), []string{"value", "pid"}; !slices.Equal(got, want) {
+		t.Fatalf("saved semaphore fields = %v, want %v", got, want)
+	}
+	var data bytes.Buffer
+	if _, err := state.Save(t.Context(), &data, &original); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("sem size=%d; encoded state bytes=%d", reflect.TypeFor[sem]().Size(), data.Len())
+	var restored *Set
+	if _, err := state.Load(t.Context(), &data, &restored); err != nil {
+		t.Fatal(err)
+	}
+	for i := range restored.sems {
+		if restored.findSem(int32(i)).mu != &restored.mu {
+			t.Fatalf("restored semaphore %d has the wrong mutex", i)
+		}
+	}
+	restored.mu.Lock()
+	defer restored.mu.Unlock()
+	if restored.findSem(0).value != 7 || restored.findSem(1).pid != 123 {
+		t.Fatal("restoring mutex links changed saved semaphore values")
 	}
 }

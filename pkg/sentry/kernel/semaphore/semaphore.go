@@ -16,6 +16,7 @@
 package semaphore
 
 import (
+	gocontext "context"
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -89,14 +90,20 @@ type Set struct {
 
 // sem represents a single semaphore from a set.
 //
-// Its fields are protected by the owning Set.mu. sem has no pointer to its
-// Set, so checklocks cannot infer that mutex from membership in Set.sems.
-//
 // +stateify savable
 type sem struct {
-	value   int16
+	// mu points to the owning Set.mu. It is immutable after initialization
+	// and is reconstructed after restore rather than saved.
+	mu *sync.Mutex `state:"nosave"`
+
+	// +checklocks:mu
+	value int16
+
+	// +checklocks:mu
+	pid int32
+
+	// +checklocks:mu
 	waiters waiterList `state:"zerovalue"`
-	pid     int32
 }
 
 // waiter represents a caller that is waiting for the semaphore value to
@@ -259,6 +266,8 @@ func (r *Registry) newSetLocked(ctx context.Context, key ipc.Key, creator *auth.
 		sems:       make([]sem, nsems),
 	}
 
+	set.initSemaphores()
+
 	err := r.reg.Register(set)
 	if err != nil {
 		return nil, err
@@ -356,10 +365,24 @@ func (s *Set) Unlock() {
 	s.mu.Unlock()
 }
 
+// initSemaphores initializes derived mutex links before the set is used.
+func (s *Set) initSemaphores() {
+	for i := range s.sems {
+		s.sems[i].mu = &s.mu
+	}
+}
+
+// afterLoad reconstructs the immutable links to the restored set's mutex.
+func (s *Set) afterLoad(gocontext.Context) {
+	s.initSemaphores()
+}
+
 // findSem returns the semaphore at num, or nil if num is out of range.
-// It reads only the immutable slice header. Access to the returned semaphore's
-// mutable fields requires s.mu; sem has no link back to s for checklocks.
-func (s *Set) findSem(num int32) *sem {
+// The slice storage is immutable, so the handle remains usable after relocking.
+// Access to its mutable fields requires the owning mutex.
+//
+// +checklocksalias:s.mu=member.mu
+func (s *Set) findSem(num int32) (member *sem) {
 	if num < 0 || int(num) >= s.Size() {
 		return nil
 	}
@@ -482,7 +505,7 @@ func (s *Set) SetValAll(ctx context.Context, vals []uint16, creds *auth.Credenti
 	}
 
 	for i, val := range vals {
-		sem := &s.sems[i]
+		sem := s.findSem(int32(i))
 
 		// TODO(gvisor.dev/issue/137): Clear undo entries in all processes.
 		sem.value = int16(val)
@@ -525,8 +548,8 @@ func (s *Set) GetValAll(creds *auth.Credentials) ([]uint16, error) {
 	}
 
 	vals := make([]uint16, s.Size())
-	for i, sem := range s.sems {
-		vals[i] = uint16(sem.value)
+	for i := range s.sems {
+		vals[i] = uint16(s.findSem(int32(i)).value)
 	}
 	return vals, nil
 }
@@ -641,11 +664,11 @@ func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (ch
 	// Changes to semaphores go to this slice temporarily until they all succeed.
 	tmpVals := make([]int16, len(s.sems))
 	for i := range s.sems {
-		tmpVals[i] = s.sems[i].value
+		tmpVals[i] = s.findSem(int32(i)).value
 	}
 
 	for _, op := range ops {
-		sem := &s.sems[op.SemNum]
+		sem := s.findSem(int32(op.SemNum))
 		if op.SemOp == 0 {
 			// Handle 'wait for zero' operation.
 			if tmpVals[op.SemNum] != 0 {
@@ -685,14 +708,14 @@ func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (ch
 	// All operations succeeded, apply them.
 	// TODO(gvisor.dev/issue/137): handle undo operations.
 	for _, op := range ops {
-		sem := &s.sems[op.SemNum]
+		sem := s.findSem(int32(op.SemNum))
 		sem.value = tmpVals[op.SemNum]
 		sem.pid = pid
 	}
 	// A multi-operation waiter may now hit an error before reaching the
 	// semaphore on which it blocked.
 	for i := range s.sems {
-		s.sems[i].wakeWaiters()
+		s.findSem(int32(i)).wakeWaiters()
 	}
 	s.opTime = ktime.NowFromContext(ctx)
 	return nil, 0, nil
@@ -706,7 +729,7 @@ func (s *Set) AbortWait(num int32, ch chan struct{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	sem := &s.sems[num]
+	sem := s.findSem(num)
 	for w := sem.waiters.Front(); w != nil; w = w.Next() {
 		if w.ch == ch {
 			sem.waiters.Remove(w)
@@ -724,17 +747,17 @@ func (s *Set) Destroy() {
 	// operations and return error.
 	s.dead = true
 	for i := range s.sems {
-		waiters := &s.sems[i].waiters
-		for w := waiters.Front(); w != nil; w = w.Next() {
+		sem := s.findSem(int32(i))
+		for w := sem.waiters.Front(); w != nil; w = w.Next() {
 			w.ch <- struct{}{}
 		}
-		waiters.Reset()
+		sem.waiters.Reset()
 	}
 }
 
 // wakeWaiters goes over all waiters and checks which of them can be notified.
 //
-// Preconditions: The owning Set.mu must be held.
+// +checklocks:s.mu
 func (s *sem) wakeWaiters() {
 	// Note that this will release all waiters waiting for 0 too.
 	for w := s.waiters.Front(); w != nil; {

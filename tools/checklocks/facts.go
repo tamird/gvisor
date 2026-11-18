@@ -290,6 +290,11 @@ type returnGuard struct {
 
 // resolveCommon implements resolution for both cases.
 func (r *returnGuard) resolveCommon(rv any) resolvedValue {
+	// Deferred calls return a nil *ssa.Call from Value(). The
+	// interface conversion at resolveCall preserves that typed nil.
+	if call, ok := rv.(*ssa.Call); ok && call == nil {
+		return resolvedValue{}
+	}
 	if rv == nil {
 		// For defers and other objects, this may be nil. This is
 		// handled in state.go in the actual lock checking logic. This
@@ -343,8 +348,17 @@ type functionGuardInfo struct {
 	Exclusive bool
 }
 
+// functionAlias asserts that a returned lock refers to a parameter's lock.
+// Like type aliases, this is a declared invariant, not an inferred lock effect.
+type functionAlias struct {
+	Parameter *parameterGuard
+	Result    *returnGuard
+}
+
 // lockFunctionFacts apply on every method.
 type lockFunctionFacts struct {
+	Aliases []functionAlias
+
 	// HeldOnEntry tracks the names and number of parameter (including receiver)
 	// lockFuncfields that guard calls to this function.
 	//
@@ -385,6 +399,55 @@ type lockFunctionFacts struct {
 
 // AFact implements analysis.Fact.AFact.
 func (*lockFunctionFacts) AFact() {}
+
+func (lff *lockFunctionFacts) addAlias(pc *passContext, d *ast.FuncDecl, name string) {
+	parts := strings.Split(name, "=")
+	if len(parts) != 2 {
+		pc.maybeFail(d.Pos(), "invalid annotation %s for alias", name)
+		return
+	}
+	left, leftObj, ok := pc.resolveFunctionGuard(d, parts[0], true /* allowReturn */)
+	if !ok {
+		return
+	}
+	right, rightObj, ok := pc.resolveFunctionGuard(d, parts[1], true /* allowReturn */)
+	if !ok {
+		return
+	}
+	if _, returned := left.(*returnGuard); returned {
+		left, right = right, left
+		leftObj, rightObj = rightObj, leftObj
+	}
+	parameter, parameterOK := left.(*parameterGuard)
+	result, resultOK := right.(*returnGuard)
+	if !parameterOK || !resultOK {
+		pc.maybeFail(d.Pos(), "function alias %s requires one parameter lock and one returned lock", name)
+		return
+	}
+	indirectLock := func(obj types.Object) bool {
+		switch obj.Type().Underlying().(type) {
+		case *types.Pointer, *types.Interface:
+			return true
+		default:
+			return false
+		}
+	}
+	if !aliasPathHasPtrOrIface(parameter.FieldList) && !aliasPathHasPtrOrIface(result.FieldList) && !indirectLock(leftObj) && !indirectLock(rightObj) {
+		pc.maybeFail(d.Pos(), "alias annotation %s requires a pointer or interface lock", name)
+		return
+	}
+	if !pc.validateMutex(d.Pos(), leftObj, true /* exclusive */) || !pc.validateMutex(d.Pos(), rightObj, true /* exclusive */) {
+		return
+	}
+	for _, existing := range lff.Aliases {
+		if existing.Parameter.Index == parameter.Index && existing.Result.Index == result.Index &&
+			fieldListEqual(existing.Parameter.FieldList, parameter.FieldList) && fieldListEqual(existing.Result.FieldList, result.FieldList) {
+			pc.maybeFail(d.Pos(), "alias annotation %s is redundant", name)
+			return
+		}
+	}
+	lff.Aliases = append(lff.Aliases, functionAlias{Parameter: parameter, Result: result})
+}
 
 // checkGuard validates the guardName.
 func (lff *lockFunctionFacts) checkGuard(pc *passContext, d *ast.FuncDecl, guardName string, exclusive bool, allowReturn bool) (functionGuardInfo, bool) {
@@ -1043,6 +1106,7 @@ func (pc *passContext) functionFacts(d *ast.FuncDecl) {
 				lff.Ignore = true
 			},
 			checkLocksReadAny:        func(string) { pc.maybeFail(d.Pos(), "checklocksreadany is only valid on fields") },
+			checkLocksAlias:          func(name string) { lff.addAlias(pc, d, name) },
 			checkLocksAnnotation:     func(guardName string) { lff.addGuardedBy(pc, d, guardName, true /* exclusive */) },
 			checkLocksAnnotationRead: func(guardName string) { lff.addGuardedBy(pc, d, guardName, false /* exclusive */) },
 			checkLocksAcquires:       func(guardName string) { lff.addAcquires(pc, d, guardName, true /* exclusive */) },
@@ -1055,7 +1119,7 @@ func (pc *passContext) functionFacts(d *ast.FuncDecl) {
 	}
 
 	// Export the function facts if there is anything to save.
-	if lff.Ignore || len(lff.HeldOnEntry) > 0 || len(lff.HeldOnExit) > 0 || len(lff.ExcludedOnEntry) > 0 {
+	if lff.Ignore || len(lff.Aliases) > 0 || len(lff.HeldOnEntry) > 0 || len(lff.HeldOnExit) > 0 || len(lff.ExcludedOnEntry) > 0 {
 		funcObj := pc.pass.TypesInfo.Defs[d.Name].(*types.Func)
 		pc.pass.ExportObjectFact(funcObj, &lff)
 	}

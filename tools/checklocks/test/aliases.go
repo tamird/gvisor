@@ -14,7 +14,11 @@
 
 package test
 
-import "sync"
+import (
+	"sync"
+
+	"gvisor.dev/gvisor/tools/checklocks/test/crosspkg"
+)
 
 // +checklocksalias:inner.mu=mu
 type aliasOuter struct {
@@ -198,4 +202,110 @@ func testAliasBranchExtraLock(a, b *aliasBranchOuter, visit bool) bool { // +che
 	visitAliasBranchInner(a.inner)
 	b.mu.Lock()
 	return true // +checklocksfail=return with unexpected locks held
+}
+
+type returnedAliasOwner struct {
+	mu     sync.RWMutex
+	member returnedAliasMember
+}
+
+type returnedAliasMember struct {
+	mu *sync.RWMutex
+
+	// +checklocks:mu
+	value int
+}
+
+// +checklocksalias:owner.mu=member.mu
+func (owner *returnedAliasOwner) memberHandle() (member *returnedAliasMember) {
+	return &owner.member
+}
+
+// +checklocksalias:member.mu=owner.mu
+func (owner *returnedAliasOwner) tupleHandle() (member *returnedAliasMember, ok bool) {
+	return &owner.member, true
+}
+
+func testReturnedAlias(owner, other *returnedAliasOwner) {
+	member := owner.memberHandle()
+	member.value++ // +checklocksfail=invalid field access|invalid field access
+	owner.mu.Lock()
+	member.value++
+	owner.mu.Unlock()
+	member.value++ // +checklocksfail=invalid field access|invalid field access
+	other.mu.Lock()
+	member.value++ // +checklocksfail=invalid field access|invalid field access
+	other.mu.Unlock()
+	owner.mu.Lock()
+	member.value++ // The stable handle remains valid after relocking.
+	owner.mu.Unlock()
+}
+
+func testReturnedAliasReadMode(owner *returnedAliasOwner) {
+	owner.mu.RLock()
+	member := owner.memberHandle()
+	_ = member.value
+	member.value++ // +checklocksfail=invalid field access
+	owner.mu.RUnlock()
+}
+
+func testReturnedTupleAlias(owner *returnedAliasOwner) {
+	owner.mu.Lock()
+	member, _ := owner.tupleHandle()
+	member.value++
+	owner.mu.Unlock()
+	member.value++ // +checklocksfail=invalid field access|invalid field access
+}
+
+// An unused returned lock is not an acquisition that must be balanced.
+func testReturnedAliasUnused(owner *returnedAliasOwner) {
+	owner.memberHandle()
+	owner.tupleHandle()
+	defer owner.memberHandle()
+	defer owner.tupleHandle()
+}
+
+// +checklocksalias:a.mu=b.mu
+func testReturnedAliasParameters(a, b *returnedAliasOwner) {} // +checklocksfail=requires one parameter lock and one returned lock
+
+// +checklocksalias:owner.mu
+func testReturnedAliasMalformed(owner *returnedAliasOwner) {} // +checklocksfail=invalid annotation
+
+// +checklocksalias:owner.mu=member.mu
+// +checklocksalias:member.mu=owner.mu
+func testReturnedAliasDuplicate(owner *returnedAliasOwner) (member *returnedAliasMember) { // +checklocksfail=is redundant
+	return &owner.member
+}
+
+func testImportedReturnedAlias(owner, other *crosspkg.ReturnAliasOwner) {
+	member := owner.Member()
+	member.Modify() // +checklocksfail=must hold
+	other.Mu.Lock()
+	member.Modify() // +checklocksfail=must hold
+	other.Mu.Unlock()
+	owner.Mu.Lock()
+	member.Modify()
+	owner.Mu.Unlock()
+	owner.Mu.Lock()
+	member.Modify()
+	owner.Mu.Unlock()
+}
+
+type returnedValueMutex struct {
+	mu sync.Mutex
+}
+
+// +checklocksalias:owner.mu=member.mu
+func testReturnedValueMutexAlias(owner *aliasOuter) (member *returnedValueMutex) { // +checklocksfail=requires a pointer or interface lock
+	return nil
+}
+
+// +checklocksalias:mu=result
+func returnedMutexIdentity(mu *sync.Mutex) (result *sync.Mutex) {
+	return mu
+}
+
+func testBareReturnedMutexAlias(mu *sync.Mutex) {
+	mu.Lock()
+	returnedMutexIdentity(mu).Unlock()
 }

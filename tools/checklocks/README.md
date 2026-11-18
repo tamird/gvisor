@@ -200,6 +200,37 @@ Additional variants of the `+checklocks` annotation are supported for functions:
 
 For examples of these cases see the tests.
 
+#### Returned Lock Aliases
+
+A function can declare that a lock reachable from a named result is the same
+lock as one reachable from a receiver or parameter:
+
+```go
+// +checklocksalias:set.mu=member.mu
+func (set *semaphoreSet) findMember(index int) (member *semaphore) {
+    return &set.members[index]
+}
+```
+
+One side must resolve to a parameter (including the receiver), and the other to
+a named result. At least one lock must be a pointer or interface, or be reached
+through one. The declaration is an asserted invariant for every non-nil result;
+checklocks does not infer or verify that the function initializes the link.
+Construction and restoration must establish the relationship, and the link must
+remain unchanged while the returned handle is used.
+
+The alias connects lock identities at the caller. It does not acquire either
+lock. A stable member can remain usable after unlocking and relocking its
+original owner, but access to its guarded fields still requires that lock.
+Acquiring an unrelated owner's mutex does not satisfy the guard.
+
+These annotations do not add borrowed-reference lifetime tracking. Field guards
+are checked when a field address is formed, not when a previously retained
+interior pointer is later dereferenced. A list cursor may become stale across a
+lock release even when its containing object's address remains valid. An alias
+must not be presented as proof that such cursors or escaped interior pointers
+remain valid.
+
 ### Type Alias Annotations
 
 Types may declare aliases between locks that are structurally equivalent across

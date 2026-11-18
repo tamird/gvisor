@@ -688,6 +688,15 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 		}
 	}
 
+	// A declared return alias connects identities without acquiring a lock.
+	// Unobserved tuple results and deferred return values need no alias.
+	for _, alias := range lff.Aliases {
+		result := alias.Result.resolveCall(pc, ls, args, callValue)
+		if result.valid() {
+			ls.addAlias(alias.Parameter.resolveCall(pc, ls, args, callValue), result)
+		}
+	}
+
 	// Update all lock state accordingly.
 	pc.postFunctionCallUpdate(call, lff, ls)
 
