@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T19:22:58.577211+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T19:14:36.701603+00:00",
+  "registryDate": "2026-11-18T19:41:39.857079+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -443015,6 +443015,211 @@
         },
         "description": "No matching public export was found in the complete lookup."
       }
+    },
+    {
+      "number": 17780,
+      "repo": "google/gvisor",
+      "title": "Correct HTTP benchmark timing and reporting",
+      "url": "https://github.com/google/gvisor/pull/17780",
+      "status": "open",
+      "ref": "review/hey-json-preflight-20261118",
+      "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+      "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+      "branchHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-11-18T19:41:41.364681+00:00",
+      "headCommittedAt": "2026-11-18T19:14:45Z",
+      "headHistoryComplete": true,
+      "headRebasedFrom": null,
+      "headIntroducedAt": null,
+      "headOwner": "tamird",
+      "headRepo": "tamird/gvisor",
+      "authorLogin": "tamird",
+      "updatedAt": "2026-11-18T19:39:16Z",
+      "createdAt": "2026-11-18T19:33:57Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": "REVIEW_REQUIRED",
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [
+        {
+          "__typename": "User",
+          "login": "kerumeto"
+        },
+        {
+          "__typename": "User",
+          "login": "parth-opensrc"
+        }
+      ],
+      "codeOwnerRequests": [],
+      "reviewRequestsComplete": true,
+      "labels": [],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": []
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 9,
+        "reportedTotal": 9,
+        "supersededContexts": [],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfc0vJ2A",
+            "name": "gazelle",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/44382520611/job/135078332888",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Gazelle",
+            "workflowId": "W_kwDOB9IlXs4WaLny",
+            "runNumber": 7998,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfc0vHIw",
+            "name": "generate",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/44382520573/job/135078332195",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Go",
+            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+            "runNumber": 67844,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfc0vLpQ",
+            "name": "lint",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/44382520868/job/135078333349",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Lint",
+            "workflowId": "W_kwDOB9IlXs4UkKPI",
+            "runNumber": 11407,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfcySQBQ",
+            "name": "assign",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/44381793215/job/135075762181",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Auto Assign",
+            "workflowId": "W_kwDOB9IlXs4SzK41",
+            "runNumber": 3866,
+            "runAttempt": 1,
+            "purpose": "reviewer-assignment"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfcySFnA",
+            "name": "close",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/44381792835/job/135075759516",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Close Banned PRs",
+            "workflowId": "W_kwDOB9IlXs4UKTw0",
+            "runNumber": 3338,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfc0vJ9g",
+            "name": "label",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/44382520675/job/135078332918",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Labeler",
+            "workflowId": "MDg6V29ya2Zsb3cxMTAyMTgx",
+            "runNumber": 60802,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfc0vLtw",
+            "name": "fileheader",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/44382520709/job/135078333367",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "License header",
+            "workflowId": "W_kwDOB9IlXs4U0Mzi",
+            "runNumber": 10442,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAANziFBXg",
+            "name": "buildkite/first-pass/pr",
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/1778",
+            "description": "Build #1778 started",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAfcyRKvA",
+            "name": "DCO",
+            "state": "SUCCESS",
+            "url": "https://github.com/cncf/dco2",
+            "kind": "check-run",
+            "app": "DCO-2",
+            "appSlug": "dco-2",
+            "appId": "A_kwHOAM1Res4ADt-2",
+            "workflow": null,
+            "workflowId": null,
+            "runNumber": null,
+            "runAttempt": null,
+            "purpose": "validation"
+          }
+        ]
+      },
+      "reviewDecision": "REVIEW_REQUIRED",
+      "approvedHead": null,
+      "approvedAt": null,
+      "checkedAt": "2026-11-18T19:41:41.364681+00:00",
+      "importsComplete": false,
+      "imports": []
     }
   ],
   "issues": {
@@ -445476,14 +445681,14 @@
       "sourceNumber": 16098,
       "owner": "Agent",
       "claimed": false,
-      "overdue": false,
+      "overdue": true,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
       "createdAt": "2026-11-18T18:38:18Z",
       "url": "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
       "author": "rexren-gif",
       "updatedAt": "2026-11-18T18:38:18Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -447335,7 +447540,7 @@
       "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5962828893",
       "author": "rexren-gif",
       "updatedAt": "2026-11-18T18:38:18Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -447552,8 +447757,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Native source4f evidence and separate AMD64 source/C++ lint passes are retained. Cheap native Docker reload/runtime-argument/restoration preflight44366606003 passed; this is not Sentry qualification. Canonical full20+3 continuation44375905083 completed with workflow success; its existing owner is auditing actual scope before any functional qualification claim.",
-        "nextAction": "Existing FUSE owner consumes the exact canonical-reload full20+3 continuation and cleanup artifacts. Preserve successful native/lint evidence and all prior activation failures; no statistical performance claim."
+        "disposition": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
+        "nextAction": "Use the completed capability/cost evidence to prepare the remaining balanced statistical and broad-workload gates; keep physical-device/ARM gaps explicit and preserve all earlier failed attempts."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -447809,8 +448014,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
-        "disposition": "Compiler dependency/readiness passed and both production ELF/archive products were retained, but44349748867 is a semantic failure despite GitHub success. No current compiler/DWARF qualification; original upstream171979 remains unchanged.",
-        "nextAction": "Review exact c679 reader/test and collector/failure-propagation corrections, then run missing-only qualification. Preserve unaffected source470 Go/golden evidence and require rerun of the changed codegen owner."
+        "disposition": "The c679 source lint and changed codegen owner passed. The compiler-only continuation stopped at APT acquisition; a bounded exact-large-package probe now verifies the official HTTPS route while the EC2 HTTP route times out. Production qualification remains incomplete.",
+        "nextAction": "Owner systrap_regression is preparing the task-scoped HTTPS APT recovery, preserving package signature/hash checks and existing time caps, then resuming only missing compiler/production gates."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxwQaXQ"
@@ -448768,8 +448973,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
-        "disposition": "Approved amendment 66eb27741 is published on the open, mergeable PR as one commit.",
-        "nextAction": "Follow upstream review and CI on 66eb27741. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 8f15f127381605e0d3254cbdb5818bb594db0364; observed 2026-11-17T19:29:29.454062+00:00): build 1463 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated."
+        "disposition": "Confirmed the current review finding: singular rootpath fails with multiple compiler outputs, and FindFile expects a project-relative path. A fresh-base proposal reuses the existing export selector through a runfile alias; upstream source is unchanged.",
+        "nextAction": "Owner coverage_security_review is exercising configured provider/runfile analysis and the single compiler-import identity test before proposing an upstream amendment for user review."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_X2w"
@@ -449985,8 +450190,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "Native source4f evidence and separate AMD64 source/C++ lint passes are retained. Cheap native Docker reload/runtime-argument/restoration preflight44366606003 passed; this is not Sentry qualification. Canonical full20+3 continuation44375905083 completed with workflow success; its existing owner is auditing actual scope before any functional qualification claim.",
-        "nextAction": "Existing FUSE owner consumes the exact canonical-reload full20+3 continuation and cleanup artifacts. Preserve successful native/lint evidence and all prior activation failures; no statistical performance claim."
+        "disposition": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
+        "nextAction": "Use the completed capability/cost evidence to prepare the remaining balanced statistical and broad-workload gates; keep physical-device/ARM gaps explicit and preserve all earlier failed attempts."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -452383,9 +452588,9 @@
       "importedSourceHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
-        "disposition": "CI #17552 at 16ae0d214494989dfdf98e09815c365832308756: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Preserve the explicit contributor decision declining a CI post. Retain tested include changes; revisit only if the author asks or new diagnostic evidence changes the diagnosis. Internal maintainer owns any private correction."
+        "sourceHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
+        "disposition": "Author DCO-only revision; four newly requested direct headers remain unapplied. The earlier declined CI post remains settled.",
+        "nextAction": "Await author header changes, then inspect current-head CI and source. Preserve the older tested proposal and the declined CI-post decision."
       }
     },
     {
@@ -455396,7 +455601,7 @@
         "owner": "root",
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
         "disposition": "The maintainer closed the old exact export and requested source DCO certification. The standing-authorized sign-off amendment is published with identical tree, parents, original author/date and original message body. DCO passes on the exact new source head. First Pass and Go generation are still running; no terminal source failure was observed in the bounded check. Exact-head First Pass and GitHub/DCO checks now pass; the PR remains open, mergeable and unmerged. Earlier failed automatic attempts remain recorded in currentCI.",
-        "nextAction": "Follow existing human review and import obligations; exact-head First Pass and GitHub/DCO checks passed. Preserve the recorded failed automatic attempts and their passing retries; no merge, new approval or performance waiver is implied."
+        "nextAction": "Follow maintainer submission, matching import/closure and exact-head checks on the approved DCO-signed head."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzgQHpA"
@@ -464055,13 +464260,29 @@
         "observedAt": "2026-11-18T19:22:47.006896+00:00"
       }
     },
+    "pr:17780": {
+      "checks-pending": {
+        "scope": "17780:5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+        "since": "2026-11-18T19:41:39.857079+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-18T19:41:41.364681+00:00"
+      },
+      "maintainer-review": {
+        "scope": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+        "since": "2026-11-18T19:41:39.857079+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-18T19:41:41.364681+00:00"
+      }
+    },
     "branch:bazel-python-release": {
       "contributor-review": {
         "scope": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
+        "observedAt": "2026-11-18T19:41:39.857079+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464070,7 +464291,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
+        "observedAt": "2026-11-18T19:41:39.857079+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464079,7 +464300,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
+        "observedAt": "2026-11-18T19:41:39.857079+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464088,7 +464309,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
+        "observedAt": "2026-11-18T19:41:39.857079+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464097,7 +464318,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
+        "observedAt": "2026-11-18T19:41:39.857079+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464106,7 +464327,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
+        "observedAt": "2026-11-18T19:41:39.857079+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464115,16 +464336,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
-      }
-    },
-    "branch:benchmark-reliability": {
-      "changes-requested": {
-        "scope": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
-        "since": "2026-11-18T19:14:36.701603+00:00",
-        "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-11-18T19:14:36.701603+00:00"
+        "observedAt": "2026-11-18T19:41:39.857079+00:00"
       }
     }
   },

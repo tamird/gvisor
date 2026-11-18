@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T19:14:36.701603+00:00",
+    "updatedAt": "2026-11-18T19:41:39.857079+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2705,12 +2705,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-18T17:34:57.517822+00:00",
-      "summary": "Measured reply posted; awaiting reviewer response. Follow the original reviewer thread. No contributor response authorization remains.\n\nPreserved proposal and evidence:\n\nEtienne’s request for inlining evidence now has a bounded, independently reviewed compiler result for the unchanged public proposal 9e17fdee. With pinned Go 1.27.2, selected old/new Load, Store and Swap probes have identical emitted bytes, relocations and stack frames on AMD64 and ARM64. The real KVM go:nosplit Load consumer has no AtomicPtr wrapper call on either CPU; deliberate noinline controls retain their calls. ARM64 linking and both AMD64 correctness tests passed. The original codegen job remains FAIL because two qualifier analyzer owners rejected a missing package comment. A separate comment-only follow-up passes both analyzer owners on both CPUs, without repeating codegen. These results do not establish a timing gain, full-runsc stack budget or future universal inlining guarantee. The measured reply is now posted in the original thread; the public source remains unchanged.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
+      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+      "summary": "The c679 source lint and changed codegen owner passed. The compiler-only continuation stopped at APT acquisition; a bounded exact-large-package probe now verifies the official HTTPS route while the EC2 HTTP route times out. Production qualification remains incomplete.",
       "followup": {
-        "disposition": "Compiler dependency/readiness passed and both production ELF/archive products were retained, but44349748867 is a semantic failure despite GitHub success. No current compiler/DWARF qualification; original upstream171979 remains unchanged.",
+        "disposition": "The c679 source lint and changed codegen owner passed. The compiler-only continuation stopped at APT acquisition; a bounded exact-large-package probe now verifies the official HTTPS route while the EC2 HTTP route times out. Production qualification remains incomplete.",
         "owner": "root",
-        "nextAction": "Review exact c679 reader/test and collector/failure-propagation corrections, then run missing-only qualification. Preserve unaffected source470 Go/golden evidence and require rerun of the changed codegen owner.",
+        "nextAction": "Owner systrap_regression is preparing the task-scoped HTTPS APT recovery, preserving package signature/hash checks and existing time caps, then resuming only missing compiler/production gates.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
@@ -2729,8 +2729,8 @@
         ],
         "sourceHead": "17197905852cdebf53a1f60b9de9652ced640e7c",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-18T17:34:57.517822+00:00",
-        "recheckCondition": "Owning-fix review or actual qualification result; published source, human/import/dependency changes.",
+        "observedAt": "2026-11-18T19:41:39.857079+00:00",
+        "recheckCondition": "Recovery terminal result, changed source/compiler/configuration or actual infrastructure evidence.",
         "curatedAt": "2026-11-18T17:34:57.517822+00:00",
         "historicalEvidenceCorrection": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
@@ -2826,7 +2826,18 @@
             }
           }
         ],
-        "technicalOwner": "coverage_security_review"
+        "technicalOwner": "coverage_security_review",
+        "compilerRecovery": {
+          "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+          "failedRun": 44379676578,
+          "largePackageProbe": 44381907708,
+          "probeScope": "Same pinned 21069414-byte gcc13 package: HTTP EC2 timeout at60s, official HTTPS full verified SHA in1.844s; no installation or source execution",
+          "production": "not qualified",
+          "owner": "systrap_regression",
+          "recoveryRun": 44382830296,
+          "plan": "9b88fc440a598a2dcc335a20bc2eb8f0afc0eff7",
+          "state": "Failed before package mutation on a comment-only Deb822 paragraph; owner simplifying URI-only source preservation before continuation"
+        }
       },
       "head": "17197905852cdebf53a1f60b9de9652ced640e7c",
       "evidence": [
@@ -25386,14 +25397,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:43.853615+00:00",
-      "summary": "The approved amendment 66eb27741 is published as one mergeable commit. It passes Nogo’s export, archive and import arguments through the Bazel Args objects master now creates. All 28 public test records passed on 66eb27741. A separate archive-only fixture passed using two compiler archives. The retained logs for the checker, eventchannel and sync each show the AMD64 and ARM64 filters running. Google’s private build has not run.\n\nEarlier qualification:\n\nOn AMD64 and ARM64, the checker, eventchannel (generated protobuf), sync (generated constants), and a fixture using the historical Go adapter with two real compiler archives passed. Public source-only and archive-only rules took their respective paths. The private Google build was not exercised.",
+      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+      "summary": "Confirmed the current review finding: singular rootpath fails with multiple compiler outputs, and FindFile expects a project-relative path. A fresh-base proposal reuses the existing export selector through a runfile alias; upstream source is unchanged.",
       "followup": {
         "owner": "root",
         "sourceHead": "8f15f127381605e0d3254cbdb5818bb594db0364",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Approved amendment 66eb27741 is published on the open, mergeable PR as one commit.",
-        "nextAction": "Follow upstream review and CI on 66eb27741. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 8f15f127381605e0d3254cbdb5818bb594db0364; observed 2026-11-17T19:29:29.454062+00:00): build 1463 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated.",
+        "observedAt": "2026-11-18T19:41:39.857079+00:00",
+        "disposition": "Confirmed the current review finding: singular rootpath fails with multiple compiler outputs, and FindFile expects a project-relative path. A fresh-base proposal reuses the existing export selector through a runfile alias; upstream source is unchanged.",
+        "nextAction": "Owner coverage_security_review is exercising configured provider/runfile analysis and the single compiler-import identity test before proposing an upstream amendment for user review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -25412,7 +25423,16 @@
           "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9915-46a8-995f-da5317a484c1"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "recheckCondition": "Actual preflight result, source/review change or contributor decision.",
+        "preparedRevision": {
+          "head": "538e220b3d87f549b2f3bfe16e1076011f901283",
+          "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "state": "Cheap integration preflight live; not qualified or published upstream",
+          "owner": "coverage_security_review",
+          "limits": "Actual internal compiler environment unavailable; no private integration pass claim.",
+          "run": 44382753105,
+          "plan": "39496579770cc5a692522c9b8ad67bc4b991d172"
+        }
       },
       "evidence": [
         {
@@ -49777,8 +49797,8 @@
       "title": "Open exclusive devices only when the application opens them",
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
-      "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-18T19:14:36.701603+00:00",
+      "summary": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
+      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49817,9 +49837,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "observedAt": "2026-11-18T19:14:36.701603+00:00",
-        "disposition": "Native source4f evidence and separate AMD64 source/C++ lint passes are retained. Cheap native Docker reload/runtime-argument/restoration preflight44366606003 passed; this is not Sentry qualification. Canonical full20+3 continuation44375905083 completed with workflow success; its existing owner is auditing actual scope before any functional qualification claim.",
-        "nextAction": "Existing FUSE owner consumes the exact canonical-reload full20+3 continuation and cleanup artifacts. Preserve successful native/lint evidence and all prior activation failures; no statistical performance claim.",
+        "observedAt": "2026-11-18T19:41:39.857079+00:00",
+        "disposition": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
+        "nextAction": "Use the completed capability/cost evidence to prepare the remaining balanced statistical and broad-workload gates; keep physical-device/ARM gaps explicit and preserve all earlier failed attempts.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49848,7 +49868,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44353853397",
           "https://github.com/tamird/gvisor/actions/runs/44355859825"
         ],
-        "recheckCondition": "Actual full20+3 terminal evidence or source/human/contributor change.",
+        "recheckCondition": "Missing-gate plan/qualification result, source or runtime input change, human feedback.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -50063,6 +50083,16 @@
               "sha256": "61b4c42b35dfebff4faaf061448be582dcd5294ff6dd34e8d8f00f2afab31858"
             },
             "scope": "Native-runc6cycles only; canonical test-owned runtime CLI registration/reload retained for full20 continuation"
+          }
+        },
+        "latestQualification": {
+          "run": 44375905083,
+          "source": "4f51c3b3a663f39cb1dec661f83406e4f014348a",
+          "runtimeCandidate": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+          "state": "PASS full20 N1 and all3 fresh Smoke cases; cleanup PASS",
+          "receipt": {
+            "file": "fuse-full20-44375905083-evidence.json",
+            "sha256": "e3c91ef99cabc15d3ffe492a6e8082e96961fd0cec20abf93dce44f7c745fdeb"
           }
         }
       },
@@ -52197,13 +52227,13 @@
       "repo": "google/gvisor",
       "number": 16445,
       "ref": "pr-moby-bench",
-      "head": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+      "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
       "title": "Docker-in-gVisor network benchmark",
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "The nested Docker benchmark credits 128 KiB for a transfer that sends and receives 1 KiB. Use measured throughput for the topology comparison.",
+      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+      "summary": "The rebased Docker-in-gVisor benchmark removes the incorrect shared SetBytes128KiB assignment; current topology/readiness/cleanup changes and measurements still need review.",
       "evidence": [
         {
           "label": "15 native transfer cases with sender and receiver byte counts",
@@ -52231,17 +52261,37 @@
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+        "providerHead": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
         "mergeable": "MERGEABLE",
-        "sourceHead": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+        "sourceHead": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
         "observedAt": "2026-11-18T02:57:42.449215+00:00",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Reconcile the existing 128 KiB versus actual 1 KiB benchmark accounting defect with the prepared Iperf measurement correction; preserve historical topology results with their metric limits.",
-        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "disposition": "The rebased Docker-in-gVisor benchmark removes the incorrect shared SetBytes128KiB assignment; current topology/readiness/cleanup changes and measurements still need review.",
+        "nextAction": "Review the actual new source and First Pass1770. Preserve historical metric limits; keep the separate BCR/Iperf3 prerequisites.",
+        "recheckCondition": "Author reply, source/head, required CI or prerequisite changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16445"
         ],
-        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
+        "latestSourceTriage": {
+          "oldHead": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+          "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+          "oldParent": "0503af6713d15e92b6842cb5fb04fc6a7acab0cc",
+          "newParent": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "topicPaths": [
+            "Makefile",
+            "images/moby/Dockerfile.x86_64",
+            "test/benchmarks/ding/BUILD",
+            "test/benchmarks/ding/moby_test.go",
+            "test/benchmarks/tools/iperf.go",
+            "test/moby/BUILD",
+            "test/moby/moby_test.go",
+            "test/moby/mobyutil/BUILD",
+            "test/moby/mobyutil/mobyutil.go"
+          ],
+          "accountingChange": "@@ -55,7 +55,6 @@ func (i *Iperf) Report(b *testing.B, output string) {\n \tif err != nil {\n \t\tb.Fatalf(\"failed to parse bandwitdth from %s: %v\", output, err)\n \t}\n-\tb.SetBytes(128 * 1024) // Measure Bytes/sec for b.N, although below is iperf output.\n \tReportCustomMetric(b, bW*1024, \"bandwidth\" /*metric name*/, \"bytes_per_second\" /*unit*/)\n }\n ",
+          "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
+          "CI": "FirstPass1770 pending at direct check"
+        }
       }
     },
     {
@@ -62505,18 +62555,18 @@
       "url": "https://github.com/google/gvisor/pull/14999",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T19:14:36.701603+00:00",
-      "summary": "Anzal’s Unix socket change installs a credential snapshot as part of Connect. The listener and socketpair credential follow-up builds on this change.",
+      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+      "summary": "Posted the approved source-bound lint, stale description and native/Sentry case-coverage follow-up on the unchanged author head.",
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
         "mergeable": "MERGEABLE",
         "sourceHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
-        "observedAt": "2026-11-18T19:14:36.701603+00:00",
-        "disposition": "The author pinged for review at unchanged bdf1068. Source-bound First Pass394 repeats four clang-format locations and the missing direct NGROUPS_MAX provider header across three attempts. A lost-agent AMD64 shard passed its retry. No technical approval or source repair is inferred.",
-        "nextAction": "Root completes the exact-head SO_PEERGROUPS review and prepares the precise author reply for approval before posting. Verify the direct header owner before proposing a correction; preserve listener/socketpair dependency holds.",
-        "recheckCondition": "Author source/header/format fix, new substantive feedback, actual CI result, review decision or contributor reply approval.",
+        "observedAt": "2026-11-18T19:41:39.857079+00:00",
+        "disposition": "Posted the approved source-bound lint, stale description and native/Sentry case-coverage follow-up on the unchanged author head.",
+        "nextAction": "Await author lint/description changes and named native/Sentry test evidence; re-review the actual updated source before any technical approval.",
+        "recheckCondition": "Author reply, source/head or CI change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14999"
         ],
@@ -62541,6 +62591,14 @@
             "sha256": "04bc976255df33029ba02577be3cf785cbcf143f08cb43982e436f9e3f150936"
           },
           "limits": "Unposted precise reply exists; no source changes, rerun or LGTM by this agent"
+        },
+        "postedFollowup": {
+          "head": "bdf1068d1ad7ecd626d71553e361402f966e223d",
+          "id": 6989296123,
+          "url": "https://github.com/gvisor/gvisor/pull/14999#issuecomment-6989296123",
+          "body": "On bdf1068, First Pass 394 still fails clang-format in socket_unix_peercred.cc and include-cleaner for NGROUPS_MAX. Could you fix those lint failures and update the PR description’s limitation about SOCK_SEQPACKET? The current code handles both STREAM and SEQPACKET. Could you also identify which new peer-group cases ran under native Linux and Sentry, including any CAP_SETGID skips? The passing syscall shard statuses don’t establish that coverage.\n\nPosted by Codex on behalf of @tamird.",
+          "readback": "verified",
+          "connectorWrite": "403; existing CLI identity tamird used"
         }
       }
     },
@@ -88342,7 +88400,32 @@
           "https://buildkite.com/gvisor/first-pass/builds/1580#01a1eae1-b221-472e-b7a6-08733d039b47"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "latestReviewObservation": {
+          "checkedAt": "2026-11-18T19:22:58.577211+00:00",
+          "head": "60a7129eb22bacfcddb598d35f78f1d022047473",
+          "githubReviewDecision": "REVIEW_REQUIRED",
+          "reviews": [
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABY2Z2oQ",
+              "url": "https://github.com/google/gvisor/pull/17416#pullrequestreview-5962626721",
+              "body": "",
+              "state": "APPROVED",
+              "submittedAt": "2026-11-18T18:24:25Z",
+              "updatedAt": "2026-11-18T18:24:25Z",
+              "authorAssociation": "CONTRIBUTOR",
+              "author": {
+                "login": "rexren-gif",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "60a7129eb22bacfcddb598d35f78f1d022047473"
+              }
+            }
+          ]
+        },
+        "curatedAt": "2026-11-18T19:41:39.857079+00:00"
       },
       "number": 17416,
       "dcoAmendment": {
@@ -89519,7 +89602,32 @@
           "https://github.com/tamird/gvisor/commit/3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9",
           "https://buildkite.com/gvisor/first-pass/builds/1587",
           "https://buildkite.com/gvisor/first-pass/builds/1587#01a1eae1-b40d-4b62-bb80-fddf4d659f0b"
-        ]
+        ],
+        "latestReviewObservation": {
+          "checkedAt": "2026-11-18T19:22:58.577211+00:00",
+          "head": "3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9",
+          "githubReviewDecision": "REVIEW_REQUIRED",
+          "reviews": [
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABY2Uxtg",
+              "url": "https://github.com/google/gvisor/pull/17470#pullrequestreview-5962543542",
+              "body": "",
+              "state": "APPROVED",
+              "submittedAt": "2026-11-18T18:19:17Z",
+              "updatedAt": "2026-11-18T18:19:17Z",
+              "authorAssociation": "CONTRIBUTOR",
+              "author": {
+                "login": "rexren-gif",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9"
+              }
+            }
+          ]
+        },
+        "curatedAt": "2026-11-18T19:41:39.857079+00:00"
       },
       "dcoAmendment": {
         "oldHead": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -91580,12 +91688,12 @@
       "repo": "google/gvisor",
       "number": 17083,
       "ref": "samridh/unix-connect-wait",
-      "head": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
+      "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
       "title": "unix: block connect(2) while the accept queue is full",
       "url": "https://github.com/google/gvisor/pull/17083",
       "status": "open",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
-      "summary": "The C++ lint job on Copybara import #17531 and its first retry reported the same 11 missing-include warnings in accept_bind.cc. The approved source at 65afc4e12 has the same file. A five-line fix adds four direct includes and the Bazel logging dependency. The project’s pinned clang-tidy reproduced all 11 warnings on the source and passed on the fix.",
+      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+      "summary": "Author DCO-only revision; four newly requested direct headers remain unapplied. The earlier declined CI post remains settled.",
       "evidence": [
         {
           "label": "Copybara import #17531",
@@ -91628,15 +91736,35 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
+        "sourceHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "CI #17552 at 16ae0d214494989dfdf98e09815c365832308756: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Preserve the explicit contributor decision declining a CI post. Retain tested include changes; revisit only if the author asks or new diagnostic evidence changes the diagnosis. Internal maintainer owns any private correction.",
+        "disposition": "Author DCO-only revision; four newly requested direct headers remain unapplied. The earlier declined CI post remains settled.",
+        "nextAction": "Await author header changes, then inspect current-head CI and source. Preserve the older tested proposal and the declined CI-post decision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
           "https://buildkite.com/gvisor/internal/builds/36539"
         ],
-        "recheckCondition": "New exact-import head/check result or maintainer supplies the original failure diagnostic."
+        "recheckCondition": "Author reply, source/head, required CI or prerequisite changes.",
+        "providerHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
+        "latestSourceTriage": {
+          "oldHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
+          "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
+          "sameTree": true,
+          "tree": "69ba4d8ab6d463797236466103a01ed6c386b8bc",
+          "sameParents": true,
+          "sameAuthor": true,
+          "onlySignoff": true,
+          "newHumanRequest": [
+            {
+              "url": "https://github.com/gvisor/gvisor/pull/17083#discussion_r4619380714",
+              "body": "Please add the direct includes needed by the new tests. The [C++ lint job](https://buildkite.com/gvisor/first-pass/builds/1182#01a1cc20-cb9f-405d-a1f9-144065604fc6) fails with `misc-include-cleaner` diagnostics for `pid_t`, the BPF opcodes, `PR_SET_NO_NEW_PRIVS`/`PR_SET_SECCOMP`, and `TEST_PCHECK` in this file. That run used `65afc4e121`; the current `5ef0a9f233` has the identical source tree. Adding `<sys/types.h>`, `<linux/bpf_common.h>`, `<linux/prctl.h>`, and `\"test/util/logging.h\"` should address these failures in `make lint-cc`.\n\nCodex posting on behalf of Ayush",
+              "commit": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
+              "author": "ayushr2"
+            }
+          ],
+          "CI": "FirstPass1756 pending at direct check; no source/infra failure classification",
+          "nextAction": "Author applies direct includes; preserve user's declined earlier CI post, no duplicate outreach"
+        }
       }
     },
     {
@@ -91826,8 +91954,8 @@
         "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
         "observedAt": "2026-11-18T10:42:43.629789+00:00",
         "disposition": "The maintainer closed the old exact export and requested source DCO certification. The standing-authorized sign-off amendment is published with identical tree, parents, original author/date and original message body. DCO passes on the exact new source head. First Pass and Go generation are still running; no terminal source failure was observed in the bounded check. Exact-head First Pass and GitHub/DCO checks now pass; the PR remains open, mergeable and unmerged. Earlier failed automatic attempts remain recorded in currentCI.",
-        "nextAction": "Follow existing human review and import obligations; exact-head First Pass and GitHub/DCO checks passed. Preserve the recorded failed automatic attempts and their passing retries; no merge, new approval or performance waiver is implied.",
-        "recheckCondition": "Current-head CI changes or becomes terminal, maintainer integration/new feedback, an actual new import, source movement or acknowledgement approval.",
+        "nextAction": "Follow maintainer submission, matching import/closure and exact-head checks on the approved DCO-signed head.",
+        "recheckCondition": "Matching import/closure, source, CI or substantive feedback changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
           "https://github.com/google/gvisor/pull/17651",
@@ -91918,7 +92046,7 @@
           "humanRequestURL": "https://github.com/google/gvisor/pull/17545#issuecomment-6975412752",
           "posted": false
         },
-        "curatedAt": "2026-11-18T12:19:41.750038+00:00",
+        "curatedAt": "2026-11-18T19:41:39.857079+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -91933,7 +92061,48 @@
             "goGenerateState": "running",
             "limits": "No full CI clearance; additional failures remain possible."
           }
-        ]
+        ],
+        "latestReviewObservation": {
+          "checkedAt": "2026-11-18T19:22:58.577211+00:00",
+          "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+          "githubReviewDecision": "APPROVED",
+          "reviews": [
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABX3mZcw",
+              "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
+              "body": "LGTM. Replaces the prose lock precondition on `(*Stack).nicInfo` with `// +checklocksread:s.mu`, matching both `RLock`-holding callers (`SingleNICInfo` and `NICInfo`).\n\n---\n[🤖] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-By: Gemini Carbon",
+              "state": "APPROVED",
+              "submittedAt": "2026-11-13T19:23:47Z",
+              "updatedAt": "2026-11-18T10:30:43Z",
+              "authorAssociation": "CONTRIBUTOR",
+              "author": {
+                "login": "manninglucas",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "4e1667030ef7cce0777f3ba1aff1d74673896cf1"
+              }
+            },
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABY3L_Kw",
+              "url": "https://github.com/google/gvisor/pull/17545#pullrequestreview-5963448107",
+              "body": "",
+              "state": "APPROVED",
+              "submittedAt": "2026-11-18T19:19:38Z",
+              "updatedAt": "2026-11-18T19:19:38Z",
+              "authorAssociation": "MEMBER",
+              "author": {
+                "login": "milantracy",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "4e1667030ef7cce0777f3ba1aff1d74673896cf1"
+              }
+            }
+          ]
+        }
       },
       "dcoCoordination": {
         "owner": "root",
@@ -92655,7 +92824,32 @@
           "https://buildkite.com/gvisor/first-pass/builds/1606#01a1eae3-d160-41f8-aad9-b411cfc9ff16"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "latestReviewObservation": {
+          "checkedAt": "2026-11-18T19:22:58.577211+00:00",
+          "head": "1692a9405af5de11203c7cd913ead169f8f06936",
+          "githubReviewDecision": "REVIEW_REQUIRED",
+          "reviews": [
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABY3LuFw",
+              "url": "https://github.com/google/gvisor/pull/17641#pullrequestreview-5963443735",
+              "body": "",
+              "state": "APPROVED",
+              "submittedAt": "2026-11-18T19:19:22Z",
+              "updatedAt": "2026-11-18T19:19:22Z",
+              "authorAssociation": "CONTRIBUTOR",
+              "author": {
+                "login": "carzh",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "1692a9405af5de11203c7cd913ead169f8f06936"
+              }
+            }
+          ]
+        },
+        "curatedAt": "2026-11-18T19:41:39.857079+00:00"
       },
       "dcoAmendment": {
         "oldHead": "5b433add43739d73d320b1dc029a5e5e26405ad7",
@@ -93061,24 +93255,24 @@
       }
     },
     {
-      "id": "branch:benchmark-reliability",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:17780",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/hey-json-preflight-20261118",
-      "head": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
+      "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
       "title": "Correct HTTP benchmark timing and reporting",
-      "url": "https://github.com/tamird/gvisor/compare/b29c8320a862a77f4c55894d00c56eb5850c8066...cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
+      "url": "https://github.com/google/gvisor/pull/17780",
       "group": "bazel",
-      "status": "Agent work: conditional review feedback being implemented",
-      "updatedAt": "2026-11-18T19:14:36.701603+00:00",
-      "summary": "CF304 qualification and final reviews passed, then the contributor gave conditional LGTM and requested bytes.Buffer output and standard-library strict JSON revisions. Root is implementing that feedback. No upstream approval; Iperf3 and removing the Hey Docker client remain separate follow-ups.",
+      "status": "open",
+      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+      "summary": "Published the reviewed four-commit HTTP benchmark correction. Buffer output and standard JSON decoding are qualified; DCO passes and required First Pass1778 is scheduled. Iperf3 and Docker removal remain separate.",
       "followup": {
         "owner": "root",
-        "sourceHead": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
-        "observedAt": "2026-11-18T19:14:36.701603+00:00",
-        "disposition": "CF304 qualification and final reviews passed, then the contributor gave conditional LGTM and requested bytes.Buffer output and standard-library strict JSON revisions. Root is implementing that feedback. No upstream approval; Iperf3 and removing the Hey Docker client remain separate follow-ups.",
-        "nextAction": "Root implements the requested bytes.Buffer output and standard-library JSON decoder revision, then validates affected interfaces and re-reviews before proposing publication.",
-        "recheckCondition": "Prepared feedback revision, actual affected qualification, source/base change or contributor decision.",
+        "sourceHead": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+        "observedAt": "2026-11-18T19:41:39.857079+00:00",
+        "disposition": "Published the reviewed four-commit HTTP benchmark correction. Buffer output and standard JSON decoding are qualified; DCO passes and required First Pass1778 is scheduled. Iperf3 and Docker removal remain separate.",
+        "nextAction": "Follow exact-head First Pass1778, substantive feedback, mergeability and any matching import. Preserve native-only qualification limits; do not repeat passed functional gates absent changed inputs.",
+        "recheckCondition": "First Pass1778 admission/terminal result, human feedback, source/base change or matching import.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -93088,7 +93282,9 @@
           "https://github.com/tamird/gvisor/compare/b29c8320a...d9908cfeb",
           "https://github.com/tamird/gvisor/actions/runs/44342260353",
           "https://github.com/tamird/gvisor/actions/runs/44333507177",
-          "https://github.com/tamird/gvisor/actions/runs/44337126320"
+          "https://github.com/tamird/gvisor/actions/runs/44337126320",
+          "https://github.com/google/gvisor/pull/17780",
+          "https://github.com/tamird/gvisor/actions/runs/44379968874"
         ],
         "qualificationHistory": [
           {
@@ -93198,7 +93394,7 @@
             "322cb2fbb205272664a20aaa1c600520690e79a5",
             "8f8a2befc5be6aecfe73eab01b1b0039baaf2078"
           ],
-          "state": "CF304 qualified; conditional LGTM with further output-buffer and standard-library strict JSON changes requested",
+          "state": "Requested refinements qualified and published as PR17780",
           "existingIperf3Source": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
           "separateIperf3Blockers": [
             "BCR11518 license export pending",
@@ -93207,9 +93403,9 @@
           "heyDockerRemoval": "Separate follow-up; no image removal in current revision"
         },
         "preparedRevision": {
-          "head": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
+          "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
           "branch": "review/hey-json-preflight-20261118",
-          "state": "Historical CF304 qualified; conditional review changes now being implemented",
+          "state": "Published upstream PR17780 after conditional LGTM refinements and exact-head qualification",
           "scope": "Four commits: Node timing, readiness, byte output plumbing, revised strict Hey JSON. Iperf2 changes excluded.",
           "producerPreflight": {
             "run": 44355192486,
@@ -93220,7 +93416,7 @@
             }
           },
           "localBranch": "review/benchmark-hey-json-review-20261118",
-          "qualificationOwner": "systrap_regression",
+          "qualificationOwner": "fuse_full20_resume",
           "previousQualifiedHead": "90693321bbc6c431c7d93a9b433890d0cdb4f7a7",
           "previousQualification": {
             "run": 44360905017,
@@ -93234,13 +93430,12 @@
           "run": 44367383355,
           "plan": "ad2ad856b030d876098d46965ec9ea6fc5278994",
           "qualification": {
-            "run": 44367383355,
+            "run": 44379968874,
+            "state": "PASS native AMD64 tools/lint/five network consumers/GPU library build/four HTTPD N1 leaves; verified AMD64 C++ reuse",
             "receipt": {
-              "file": "hey-functional-44367383355-evidence.json",
-              "sha256": "4b4db03aeb018308c9d772b94799cc63b8552c182e27d4f6545492e6e7d4516a"
-            },
-            "scope": "tools10, source lint, five consumer builds, native HTTPD4 N1; unchanged GPU906 build and AMD64 CPP input reuse",
-            "exactHeadReviews": "All assigned final source/delta roles passed; no unresolved findings"
+              "file": "hey-final-44379968874-evidence.json",
+              "sha256": "7c31a6df328ebd3e45e72558e36e4b4bf5662d9fe186daf649f7e01cd4b53d11"
+            }
           }
         },
         "separateFollowups": [
@@ -93259,7 +93454,89 @@
             "nextAction": "After current feedback is delivered, inspect reusable Bazel Hey executable from existing helper-image work16871 and harness native execution requirements; prepare a separate client migration without redoing producer packaging.",
             "recheckCondition": "Current Hey revision delivered or helper/execution prerequisites change."
           }
-        ]
+        ],
+        "previousContributorChangesRequested": {
+          "head": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
+          "url": "https://github.com/tamird/gvisor/commit/cf304b7355e0f45dbf699d318cb0be02acfc6ae8"
+        },
+        "publication": {
+          "url": "https://github.com/google/gvisor/pull/17780",
+          "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+          "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "approval": "User conditional LGTM; requested buffer returns and standard-library decoder implemented and independently reviewed",
+          "qualificationRun": 44379968874,
+          "bodyReadback": "exact",
+          "commits": 4,
+          "paths": 8
+        },
+        "initialLifecycleObservation": {
+          "checkedAt": "2026-11-18T19:37:52.780829+00:00",
+          "pullRequest": 17780,
+          "github": {
+            "comments": [],
+            "headRefOid": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+            "mergeStateStatus": "BLOCKED",
+            "mergeable": "MERGEABLE",
+            "reviewDecision": "REVIEW_REQUIRED",
+            "reviews": [],
+            "statusCheckRollup": [
+              {
+                "__typename": "CheckRun",
+                "completedAt": "0001-01-01T00:00:00Z",
+                "conclusion": "",
+                "detailsUrl": "https://github.com/gvisor/gvisor/actions/runs/44381793215/job/135075762181",
+                "name": "assign",
+                "startedAt": "2026-11-18T19:34:06Z",
+                "status": "IN_PROGRESS",
+                "workflowName": "Auto Assign"
+              },
+              {
+                "__typename": "CheckRun",
+                "completedAt": "2026-11-18T19:34:10Z",
+                "conclusion": "SUCCESS",
+                "detailsUrl": "https://github.com/gvisor/gvisor/actions/runs/44381792835/job/135075759516",
+                "name": "close",
+                "startedAt": "2026-11-18T19:34:06Z",
+                "status": "COMPLETED",
+                "workflowName": "Close Banned PRs"
+              },
+              {
+                "__typename": "StatusContext",
+                "context": "buildkite/first-pass/pr",
+                "startedAt": "2026-11-18T19:34:02Z",
+                "state": "PENDING",
+                "targetUrl": "https://buildkite.com/gvisor/first-pass/builds/1778"
+              },
+              {
+                "__typename": "CheckRun",
+                "completedAt": "2026-11-18T19:34:01Z",
+                "conclusion": "SUCCESS",
+                "detailsUrl": "https://github.com/cncf/dco2",
+                "name": "DCO",
+                "startedAt": "2026-11-18T19:34:01Z",
+                "status": "COMPLETED",
+                "workflowName": ""
+              }
+            ]
+          },
+          "buildkite": {
+            "build": {
+              "number": 1778,
+              "url": "https://buildkite.com/gvisor/first-pass/builds/1778",
+              "state": "scheduled",
+              "branch": "tamird:review/hey-json-preflight-20261118",
+              "commit": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+              "message": "Correct HTTP benchmark timing and reporting",
+              "pull_request": "https://github.com/gvisor/gvisor/pull/17780"
+            },
+            "jobs": []
+          },
+          "owner": "root; assigned initial bounded followup completed by fuse_full20_resume",
+          "nextAction": "Consume First Pass1778 terminal jobs with existing Buildkite reader; respond to actual human review if received. No source action currently identified.",
+          "recheckCondition": "First Pass1778 state changes or review/comment arrives; root next lifecycle sweep should also recheck scheduled admission if still pending.",
+          "watcherStopped": true,
+          "unauthorizedActionsTaken": false
+        }
       },
       "settledReviews": [
         {
@@ -93308,22 +93585,30 @@
           "outcome": "changes-requested",
           "at": "2026-11-18T19:14:36.701603+00:00",
           "note": "Conditional LGTM; contributor requested considering bytes.Buffer output objects and standard-library JSON Decoder.DisallowUnknownFields. Root is implementing the requested revision; this is not upstream publication approval."
+        },
+        {
+          "kind": "proposal",
+          "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+          "baseHead": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+          "url": "https://github.com/google/gvisor/pull/17780",
+          "title": "Correct HTTP benchmark timing and reporting",
+          "body": "Static HTTP and Node benchmarks discarded readiness errors and could continue against an unavailable server. Propagate those errors and restore the Node timer stop removed in ffa9a715aaf4, which retained the comment saying to stop before parsing.\n\nRequest a small multiline JSON report from pinned Hey v0.1.5, with its schema next to the template. Preserve the producer's request rate and latency, including the latency value when some requests fail. Quote latency because Hey emits NaN when all requests fail. Reject invalid statistics and request errors before reporting metrics; intentional HTTP 404 responses remain valid results. Use the standard JSON decoder to reject unknown fields and trailing data.\n\nReturn the stdout and stderr buffers so callers can select bytes or strings, and update the Stable Diffusion consumer. Share Hey execution across the HTTP, Node and Ruby benchmarks, parsing stdout separately from stderr. Time client container startup and execution, with command/client setup before ResetTimer and output retrieval, metric reporting and cleanup after StopTimer. Preserve stdout and stderr when client execution fails.\n\nThe elapsed accounting changes, and structured latency retains precision that the old text report rounded. Comparisons must use the same harness and producer across runtime arms; earlier harness results are not a neutral performance baseline.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "approved",
+          "at": "2026-11-18T19:41:39.857079+00:00",
+          "note": "Conditional LGTM fulfilled by buffer API and standard decoder refinements; exact-head qualification and independent reviews passed. Published and read back."
         }
       ],
       "refinement": {
         "before": {
-          "head": "d9908cfeb81ccdaa26a660403273c154ae7c37c6",
+          "head": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066"
         },
         "after": {
-          "head": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
+          "head": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066"
         }
       },
-      "contributorChangesRequested": {
-        "head": "cf304b7355e0f45dbf699d318cb0be02acfc6ae8",
-        "url": "https://github.com/tamird/gvisor/commit/cf304b7355e0f45dbf699d318cb0be02acfc6ae8"
-      }
+      "number": 17780
     },
     {
       "id": "branch:tracker-proposal-ranges",
@@ -128187,5 +128472,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-18T19:14:36.701603+00:00"
+  "updatedAt": "2026-11-18T19:41:39.857079+00:00"
 }
