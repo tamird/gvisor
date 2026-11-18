@@ -1,0 +1,88 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //test/syscalls:iouring_test_native
+-----------------------------------------------------------------------------
++ [[ -n /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3109/execroot/_main/bazel-out/aarch64-fastbuild/testlogs/test/syscalls/iouring_test_native/test.outputs ]]
++ mkdir -p /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3109/execroot/_main/bazel-out/aarch64-fastbuild/testlogs/test/syscalls/iouring_test_native/test.outputs
++ chmod a+rwx /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3109/execroot/_main/bazel-out/aarch64-fastbuild/testlogs/test/syscalls/iouring_test_native/test.outputs
++ exec test/runner/runner_/runner --platform=native --platform-support=32BIT:TRUE,ALIGNMENT_CHECK:TRUE,INT3:TRUE,MULTIPROCESS:TRUE,VSYSCALL:TRUE --network=none --use-tmpfs=False --fusefs=False --file-access=exclusive --overlay=False --add-host-uds=False --add-host-connector=False --add-host-fifo=False --add-host-random=False --add-host-tty=False --strace=True --debug=True --container=False --one-sandbox=True --iouring=True --directfs=False --leak-check=False --save=False --save-resume=False --nftables=False --kvm-use-cpu-nums=False --in-sandbox-cgroup=v1 test/syscalls/linux/iouring_test
+I1118 00:23:21.849969      12 main.go:235] Executing: [/home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/sandbox/linux-sandbox/3109/execroot/_main/bazel-out/aarch64-fastbuild/bin/test/syscalls/iouring_test_native.runfiles/_main/test/syscalls/linux/iouring_test --gtest_filter=IOUringTest.ValidFD:IOUringTest.ParamsNonZeroResv:IOUringTest.ZeroCQEntries:IOUringTest.ZeroCQEntriesLessThanSQEntries:IOUringTest.UnsupportedFlags:IOUringTest.MMapMUnMapWork:IOUringTest.MMapWrongOffset:IOUringTest.MMapOffsets:IOUringTest.ReturnedParamsValues:IOUringTest.SqeIndexArrayCacheAligned:IOUringTest.SingleNOPTest:IOUringTest.QueueingNOPTest:IOUringTest.MultipleNOPTest:IOUringTest.MultiThreadedNOPTest:IOUringTest.InvalidOpCodeTest:IOUringTest.CorruptRingHeader:IOUringTest.SQERingBuffersWrapAroundTest:IOUringTest.NonNullSigsetTest:IOUringTest.OverflowCQTest:IOUringTest.SingleREADVTest:IOUringTest.ReadvEmptyFile:IOUringTest.ThreeREADVSingleEnterTest:IOUringTest.ReadClosedFD:IOUringTest.ShortReadREADVTest:IOUringTest.NoReadPermissionsREADVTest:IOUringTest.READVWithInvalidSqeFieldValue]
+Note: Google Test filter = IOUringTest.ValidFD:IOUringTest.ParamsNonZeroResv:IOUringTest.ZeroCQEntries:IOUringTest.ZeroCQEntriesLessThanSQEntries:IOUringTest.UnsupportedFlags:IOUringTest.MMapMUnMapWork:IOUringTest.MMapWrongOffset:IOUringTest.MMapOffsets:IOUringTest.ReturnedParamsValues:IOUringTest.SqeIndexArrayCacheAligned:IOUringTest.SingleNOPTest:IOUringTest.QueueingNOPTest:IOUringTest.MultipleNOPTest:IOUringTest.MultiThreadedNOPTest:IOUringTest.InvalidOpCodeTest:IOUringTest.CorruptRingHeader:IOUringTest.SQERingBuffersWrapAroundTest:IOUringTest.NonNullSigsetTest:IOUringTest.OverflowCQTest:IOUringTest.SingleREADVTest:IOUringTest.ReadvEmptyFile:IOUringTest.ThreeREADVSingleEnterTest:IOUringTest.ReadClosedFD:IOUringTest.ShortReadREADVTest:IOUringTest.NoReadPermissionsREADVTest:IOUringTest.READVWithInvalidSqeFieldValue
+[==========] Running 26 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 26 tests from IOUringTest
+[ RUN      ] IOUringTest.ValidFD
+[       OK ] IOUringTest.ValidFD (0 ms)
+[ RUN      ] IOUringTest.ParamsNonZeroResv
+[       OK ] IOUringTest.ParamsNonZeroResv (0 ms)
+[ RUN      ] IOUringTest.ZeroCQEntries
+[       OK ] IOUringTest.ZeroCQEntries (0 ms)
+[ RUN      ] IOUringTest.ZeroCQEntriesLessThanSQEntries
+[       OK ] IOUringTest.ZeroCQEntriesLessThanSQEntries (0 ms)
+[ RUN      ] IOUringTest.UnsupportedFlags
+test/syscalls/linux/io_uring.cc:143: Skipped
+!IsRunningOnGvisor()
+
+[  SKIPPED ] IOUringTest.UnsupportedFlags (0 ms)
+[ RUN      ] IOUringTest.MMapMUnMapWork
+[       OK ] IOUringTest.MMapMUnMapWork (171 ms)
+[ RUN      ] IOUringTest.MMapWrongOffset
+[       OK ] IOUringTest.MMapWrongOffset (0 ms)
+[ RUN      ] IOUringTest.MMapOffsets
+[       OK ] IOUringTest.MMapOffsets (0 ms)
+[ RUN      ] IOUringTest.ReturnedParamsValues
+test/syscalls/linux/io_uring.cc:235: Skipped
+!IsRunningOnGvisor()
+
+[  SKIPPED ] IOUringTest.ReturnedParamsValues (0 ms)
+[ RUN      ] IOUringTest.SqeIndexArrayCacheAligned
+[       OK ] IOUringTest.SqeIndexArrayCacheAligned (0 ms)
+[ RUN      ] IOUringTest.SingleNOPTest
+[       OK ] IOUringTest.SingleNOPTest (0 ms)
+[ RUN      ] IOUringTest.QueueingNOPTest
+[       OK ] IOUringTest.QueueingNOPTest (0 ms)
+[ RUN      ] IOUringTest.MultipleNOPTest
+[       OK ] IOUringTest.MultipleNOPTest (0 ms)
+[ RUN      ] IOUringTest.MultiThreadedNOPTest
+[       OK ] IOUringTest.MultiThreadedNOPTest (0 ms)
+[ RUN      ] IOUringTest.InvalidOpCodeTest
+[       OK ] IOUringTest.InvalidOpCodeTest (0 ms)
+[ RUN      ] IOUringTest.CorruptRingHeader
+[       OK ] IOUringTest.CorruptRingHeader (0 ms)
+[ RUN      ] IOUringTest.SQERingBuffersWrapAroundTest
+[       OK ] IOUringTest.SQERingBuffersWrapAroundTest (0 ms)
+[ RUN      ] IOUringTest.NonNullSigsetTest
+test/syscalls/linux/io_uring.cc:625: Skipped
+!IsRunningOnGvisor()
+
+[  SKIPPED ] IOUringTest.NonNullSigsetTest (0 ms)
+[ RUN      ] IOUringTest.OverflowCQTest
+test/syscalls/linux/io_uring.cc:651: Skipped
+!IsRunningOnGvisor()
+
+[  SKIPPED ] IOUringTest.OverflowCQTest (0 ms)
+[ RUN      ] IOUringTest.SingleREADVTest
+[       OK ] IOUringTest.SingleREADVTest (0 ms)
+[ RUN      ] IOUringTest.ReadvEmptyFile
+[       OK ] IOUringTest.ReadvEmptyFile (0 ms)
+[ RUN      ] IOUringTest.ThreeREADVSingleEnterTest
+[       OK ] IOUringTest.ThreeREADVSingleEnterTest (0 ms)
+[ RUN      ] IOUringTest.ReadClosedFD
+[       OK ] IOUringTest.ReadClosedFD (0 ms)
+[ RUN      ] IOUringTest.ShortReadREADVTest
+[       OK ] IOUringTest.ShortReadREADVTest (0 ms)
+[ RUN      ] IOUringTest.NoReadPermissionsREADVTest
+[       OK ] IOUringTest.NoReadPermissionsREADVTest (0 ms)
+[ RUN      ] IOUringTest.READVWithInvalidSqeFieldValue
+[       OK ] IOUringTest.READVWithInvalidSqeFieldValue (0 ms)
+[----------] 26 tests from IOUringTest (173 ms total)
+
+[----------] Global test environment tear-down
+[==========] 26 tests from 1 test suite ran. (173 ms total)
+[  PASSED  ] 22 tests.
+[  SKIPPED ] 4 tests, listed below:
+[  SKIPPED ] IOUringTest.UnsupportedFlags
+[  SKIPPED ] IOUringTest.ReturnedParamsValues
+[  SKIPPED ] IOUringTest.NonNullSigsetTest
+[  SKIPPED ] IOUringTest.OverflowCQTest
+Failed to match any benchmarks against regex: .
+PASS

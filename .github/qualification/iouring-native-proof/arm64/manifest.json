@@ -1,0 +1,32 @@
+{
+  "identity": {
+    "source": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
+    "plan": "1d74d97c85c573ab9d12be099233fc88ae4ea1d4",
+    "architecture": "arm64",
+    "run": "44206353404",
+    "attempt": "1",
+    "sourceVerified": true,
+    "base": "1f33fe3003455db178b97f3b43d3a012f1611994"
+  },
+  "originalOutcome": {
+    "source": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
+    "plan": "1d74d97c85c573ab9d12be099233fc88ae4ea1d4",
+    "toolingScope": "bazel-9.3.1",
+    "actualFinalHead": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
+    "trackedWorktreeDirty": false,
+    "indexDirty": false,
+    "gitInspectionErrors": {},
+    "architecture": "arm64",
+    "steps": {
+      "prepare": "success",
+      "tools": "success",
+      "qualify": "failure"
+    },
+    "status": "not-passed"
+  },
+  "commands": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543\tnative\t0\nab45538513c30723c6fe2cdcfc36d1a6fd96f543\tbuild\t0\nab45538513c30723c6fe2cdcfc36d1a6fd96f543\tlint\t0\nab45538513c30723c6fe2cdcfc36d1a6fd96f543\tlint-cc\t0\n",
+  "files": {
+    "test.xml": "aefe1301328ee6585c067dafc9d2fd8164208a190f8ad81a1465bd50b05567eb",
+    "test.log": "dcb578db963f1a7ccea9d27f37cb5578c6c9ad409b398456ad84159bbad75045"
+  }
+}
