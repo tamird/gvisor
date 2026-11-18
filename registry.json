@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T05:17:02.746861+00:00",
+    "updatedAt": "2026-11-18T05:35:02.192622+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49375,7 +49375,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-11-18T05:17:02.746861+00:00",
+      "updatedAt": "2026-11-18T05:35:02.192622+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49414,9 +49414,9 @@
       "followup": {
         "owner": "systrap_regression",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "observedAt": "2026-11-18T05:17:02.746861+00:00",
-        "disposition": "Original PR staysc7aee950; candidate1b37f9cf preserves rebased runtime changes and adds the direct posix_error.h owner include. Strict native owner recovery44241402550 verifies3PASSED BEP actions and55XMLcases=53pass+2source-required UDS skips, no errors/unexpected skips. Reuse exact1b builds/both lints44237348330 and KVM44237381349 native/systrap/directfs Open. KVM is QEMU-emulated PCI capability, not physical TPU or a current-BASE negative comparison. All original failed receipts remain retained.",
-        "nextAction": "Consume approved bounded ordinary-gofer capability pilot44241613500, reconcile full-source review/current feedback/conflict state, and prepare the exact amendment for contributor decision. No broader filesystem variants, n24 comparison, physical TPU or ARM claim is qualified.",
+        "observedAt": "2026-11-18T05:35:02.192622+00:00",
+        "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
+        "nextAction": "Owner systrap_regression publishes/launches the reviewed ordinary-gofer recovery exactly once within75m+180s, then consumes actual outcomes. Preserve failed44241613500 and prior source/support failures. Complete remaining performance/source/current-feedback gates and obtain exact amendment decision before replacing originalc7. No n24, physical TPU, ARM or current-BASE KVM negative-control claim is qualified.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -49436,7 +49436,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44241402550",
           "https://github.com/tamird/gvisor/actions/runs/44241613500"
         ],
-        "recheckCondition": "Recovery qualification or performance evidence, maintainer scope response, source or contributor decision.",
+        "recheckCondition": "Exact recovery receipt or terminal result, immutable reuse/access preflight failure, new review/source evidence or contributor amendment decision.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -49452,6 +49452,13 @@
             "observedAt": "2026-11-18T04:14:40.243881+00:00",
             "disposition": "Original PR stays c7aee950. Fork1b37f9cf adds the directly owning posix_error.h include to rebased5d776df8; runtime source/body/author/date/DCO unchanged. Initial consumer run found this direct-include lint error and a sudo TestRunner remap problem. KVM run44230374348 proves actual native/systrap/directfs VFIO Open on5d, but overall failed outer XML/ownership handling. Both source and support recoveries are owned; no physical TPU/ARM/performance inference. Recovery44237381349 is now verified successful at exact1b37:16 product file hashes/modes, actual native/systrap/directfs VFIO Open each1pass/no skips, outer Bazel3-case evidence and clean source restoration. Consumer44237348330 still awaits terminal reconciliation.",
             "nextAction": "Qualify1b37f9cf through the minimal source-check and cause-based KVM recovery. Preserve actual old3-case execution evidence with its old source binding, finish required performance/final review, and obtain an exact amendment decision before replacing the original PR.",
+            "recheckCondition": "Recovery qualification or performance evidence, maintainer scope response, source or contributor decision."
+          },
+          {
+            "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
+            "observedAt": "2026-11-18T05:17:02.746861+00:00",
+            "disposition": "Original PR staysc7aee950; candidate1b37f9cf preserves rebased runtime changes and adds the direct posix_error.h owner include. Strict native owner recovery44241402550 verifies3PASSED BEP actions and55XMLcases=53pass+2source-required UDS skips, no errors/unexpected skips. Reuse exact1b builds/both lints44237348330 and KVM44237381349 native/systrap/directfs Open. KVM is QEMU-emulated PCI capability, not physical TPU or a current-BASE negative comparison. All original failed receipts remain retained.",
+            "nextAction": "Consume approved bounded ordinary-gofer capability pilot44241613500, reconcile full-source review/current feedback/conflict state, and prepare the exact amendment for contributor decision. No broader filesystem variants, n24 comparison, physical TPU or ARM claim is qualified.",
             "recheckCondition": "Recovery qualification or performance evidence, maintainer scope response, source or contributor decision."
           }
         ],
@@ -63991,7 +63998,7 @@
       "group": "bazel",
       "status": "open",
       "summary": "Buildkite build 53913 ran the two governance comparisons in the dedicated job and all three unit jobs. The proposed revision keeps them in the unit jobs and runs license verification on the agent. Native Make verified all 220 entries and rejected a catalog missing abseil-cpp.",
-      "updatedAt": "2026-11-17T20:13:53.813850+00:00",
+      "updatedAt": "2026-11-18T05:24:21.084067+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -64065,9 +64072,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "2a2862327306d9b0bc53dfffaa6e649837352e8d",
-        "observedAt": "2026-11-17T20:13:53.813850+00:00",
-        "disposition": "Published the contributor-approved validated rebase with an exact old-head lease. GitHub confirms head 2a28623273 is mergeable and DCO passes. Native license/governance checks, both lint targets and two independent reviews passed. Required upstream first-pass remains failed and Pipeline validation is not established.",
-        "nextAction": "Follow exact current-head required CI and maintainer review/import. Diagnose the new first-pass failure through its original provider result; do not retry during quota admission failure or infer missing Pipeline success. Preserve all required gates.",
+        "observedAt": "2026-11-18T05:24:21.084067+00:00",
+        "disposition": "Exact2a286232 remains OPEN/MERGEABLE, GitHub checks and DCO pass. First Pass1619 did not receive an agent: explicit provider stack_error_detail says author daily36000-minute quota was reached. No retry is pending or recorded. The job is retryable, but the public provider session is anonymous and cannot retry; no existing Buildkite API token is available. Required Etienne/relkochta reviews remain pending and no human feedback is present.",
+        "nextAction": "Keep source unchanged and follow the existing reviewer requests. CI needs an authenticated Buildkite maintainer retry of First Pass1619 when admission is available; current tooling cannot perform it. Do not manufacture a source commit, bypass checks, or duplicate the declined CI-owner outreach. Reconcile any real retry and full-pipeline result at exact2a286232.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16904",
           "https://github.com/tamird/gvisor/commit/d51e6c370",
@@ -64076,9 +64083,18 @@
           "https://github.com/tamird/gvisor/actions/runs/44151120232",
           "https://github.com/gvisor/gvisor/pull/16904"
         ],
-        "recheckCondition": "Current-head CI changes, CI operator clarifies admission/queue/trigger policy, maintainer feedback arrives, or upstream/source heads change.",
+        "recheckCondition": "Authenticated Buildkite retry capability, a provider retry/new admission result, review/CI/head change or contributor instruction.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "mergeable": "MERGEABLE"
+        "mergeable": "MERGEABLE",
+        "qualificationHistory": [
+          {
+            "sourceHead": "2a2862327306d9b0bc53dfffaa6e649837352e8d",
+            "observedAt": "2026-11-17T20:13:53.813850+00:00",
+            "disposition": "Published the contributor-approved validated rebase with an exact old-head lease. GitHub confirms head 2a28623273 is mergeable and DCO passes. Native license/governance checks, both lint targets and two independent reviews passed. Required upstream first-pass remains failed and Pipeline validation is not established.",
+            "nextAction": "Follow exact current-head required CI and maintainer review/import. Diagnose the new first-pass failure through its original provider result; do not retry during quota admission failure or infer missing Pipeline success. Preserve all required gates.",
+            "recheckCondition": "Current-head CI changes, CI operator clarifies admission/queue/trigger policy, maintainer feedback arrives, or upstream/source heads change."
+          }
+        ]
       },
       "refinement": {
         "before": {
@@ -72541,7 +72557,7 @@
       "url": "https://github.com/google/gvisor/pull/17118",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-07T00:00:33.281Z",
+      "updatedAt": "2026-11-18T05:33:28.596246+00:00",
       "summary": "The revised queue checks and charges memory under q.mu. Queued ACKs, FINs and resets have their own budget so unread data cannot crowd them out. The author added a test in which eight callers contend for one remaining data slot. Tamir has replied on the original thread.",
       "evidence": [
         {
@@ -72585,15 +72601,15 @@
       "followup": {
         "owner": "root",
         "sourceHead": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
-        "observedAt": "2026-11-18T03:02:09.172958+00:00",
+        "observedAt": "2026-11-18T05:33:28.596246+00:00",
         "disposition": "Root and independent peer reconciled the complete old topic (merge-base f51a205 to f8153ee) with current squashed topic1faa3f. All353 topic change lines match except eight int/int64 adaptation groups required by upstream int64 buffer/accounting types. Thresholds, locking, ownership actions and test bodies otherwise unchanged. This is a rebase assessment only; no new full-PR approval, execution or performance claim.",
-        "nextAction": "Follow current CI and existing Lucas review request. Before full approval, inspect the exact current performance disclosures and any changed feedback rather than treating old review as current approval.",
+        "nextAction": "On contributor approval, reverify exact current source and submit the prepared COMMENTED review. Keep full approval gated on existing network-category before/after evidence and raw tables; preserve current pending Lucas request and prior rebase/queue-lock evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17118#discussion_r4497821040",
           "https://github.com/google/gvisor/pull/17118#pullrequestreview-5807281816",
           "https://github.com/google/gvisor/pull/17118"
         ],
-        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+        "currentStateObservedAt": "2026-11-18T05:28:47.492315+00:00",
         "providerHead": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
         "mergeable": "MERGEABLE",
         "priorSourceHead": "f8153eea979205e41395d1794d37d4e723b5f140",
@@ -72617,7 +72633,30 @@
           "evidence": [
             "https://github.com/gvisor/gvisor/commit/1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac"
           ]
+        },
+        "performanceAssessment": {
+          "observedAt": "2026-11-18T05:28:47.492315+00:00",
+          "sourceHead": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
+          "disclosure": "Historical automated review on f815 reports microbenchmark and send_recv component n10, without current broad workload data in the PR body.",
+          "qualification": "No full current-head performance approval or new execution is claimed.",
+          "nextAction": "Finish complete current-source review and prepare an evidence-specific contributor review decision; obtain relevant broad workload before/after evidence before full approval."
+        },
+        "currentSourceReview": {
+          "head": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
+          "observedAt": "2026-11-18T05:33:28.596246+00:00",
+          "scope": "Complete five-file topic, enqueue/dequeue/freeze state, owner credit and final release, sole segment clone/send split path, atomic receive accounting, queue tests and syscall unread-data test. No new execution.",
+          "finding": "No further concrete source issue identified."
         }
+      },
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
+        "url": "https://github.com/google/gvisor/pull/17118",
+        "title": "Submit current-source review with performance gate",
+        "summary": "Approve COMMENTED review only; current source review found no further issue, while broad network benchmark evidence remains required before full approval. No rerun or full approval is claimed.",
+        "body": "The enqueue checks now run under q.mu, addressing my concurrency concern. I reviewed the complete current change, including the previous-owner credit and unread-data regression test, and found no further source issues.\n\nBefore full approval, I still need before/after results from the existing network benchmark category, including the relevant variants and raw benchstat tables. The historical microbenchmark and send_recv results on f8153eea9 do not cover that scope. I have not rerun tests or benchmarks.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-18T05:33:28.596246+00:00"
       }
     },
     {
@@ -76758,7 +76797,7 @@
       "url": "https://github.com/google/gvisor/pull/17208",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T05:17:02.746861+00:00",
+      "updatedAt": "2026-11-18T05:28:47.492315+00:00",
       "summary": "The ordinary statefile command recognizes Sentry checkpoints by their CPUID FeatureSet and Kernel roots and preserves generic text and HTML for other roots. In a native ARM64 autosave comparison, both text and HTML reported all 63 wire and 62 graph regions, versus four in each image on the previous default. All four output digests matched the direct CLI. Both images restored PID 1 and two 8,192-byte files, and the reader rejected the missing and extra private MemoryFile controls for each layout.\n\nOn AMD64, stock failed to dump two of eight guest checkpoints. It read ordinary saved page data as a stream header in both. The other six stock dumps exited successfully but produced different text. #17208 dumped all eight unchanged files. Every wire \u2192 graph \u2192 wire restore verified the guest\u2019s 768 KiB memory mapping.",
       "evidence": [
         {
@@ -76884,9 +76923,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
-        "observedAt": "2026-11-18T05:17:02.746861+00:00",
+        "observedAt": "2026-11-18T05:28:47.492315+00:00",
         "disposition": "Current-base fork proposal d2c5c08 preserves published440aba98\u2019s exact stable patch. Run44230748413 passed159 affected-owner cases,three candidate live systrap runs with both cross-engine direction leaves and both AMD64 lints. All three corresponding BASE runs also passed: the intended unreachable dump error was not reproduced, so the original job remains not-passed at that negative-control gate. Current CI1664/1665 preserved the same error in logs, but the uploader selected boot/gofer logs rather than checkpoint images; exact failed images were not recovered.",
-        "nextAction": "Peer-review the prepared bounded synthetic inline-format BASE control, then run it if accepted: exact six already-passing SOURCE fixture cases through unchanged BASE Statefile.writeTo with only test files/deps adjusted. Keep live-CI reproduction inconclusive and avoid another identical passing workload. Complete performance/full-source review and #17491 split/inline compatibility before amendment decision.",
+        "nextAction": "Own corrected inline-format negative control44244417672, exact SOURCEd2c5c08/BASE1f33/plan5f0185b46ff9371b6655d675aea8b33ce8f15c30. First44243638873 failed Bazel visibility analysis before tests; artifact and clean restoration verified. Peer-reviewed recovery adds only the exact SOURCE protobuf visibility prerequisite to the three-file test overlay, with unchanged BASE Go and52s cleanup. Keep live-CI reproduction inconclusive; complete remaining performance/source/split-inline compatibility gates before amendment decision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17208",
           "https://github.com/tamird/gvisor/commit/912702589",
@@ -76933,7 +76972,9 @@
           "https://github.com/tamird/gvisor/commit/d2c5c08fa3753bcf14ea6015fad547ee8f3d531c",
           "https://github.com/tamird/gvisor/actions/runs/44230748413",
           "https://buildkite.com/gvisor/first-pass/builds/1664",
-          "https://buildkite.com/gvisor/first-pass/builds/1665"
+          "https://buildkite.com/gvisor/first-pass/builds/1665",
+          "https://github.com/tamird/gvisor/actions/runs/44243638873",
+          "https://github.com/tamird/gvisor/actions/runs/44244417672"
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "Representative reproduction or exact failure-image evidence, qualification/review findings, source or contributor decision.",
@@ -125793,5 +125834,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-18T05:17:02.746861+00:00"
+  "updatedAt": "2026-11-18T05:35:02.192622+00:00"
 }
