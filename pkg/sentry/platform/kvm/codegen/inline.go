@@ -279,3 +279,74 @@ func NoSplit(filename string, source []byte, functionName string) error {
 	}
 	return nil
 }
+
+// MmapHandlerApplicable checks the source and ELF evidence for the mmap handler.
+// ARM64 maps the entire address space, so its production link omits this path.
+func MmapHandlerApplicable(path string, machineSource, archSource []byte) (bool, error) {
+	file, err := elf.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer file.Close()
+	symbols, err := file.Symbols()
+	if err != nil {
+		return false, err
+	}
+	return mmapHandlerApplicable(file.Machine, symbols, machineSource, archSource)
+}
+
+func mmapHandlerApplicable(machine elf.Machine, symbols []elf.Symbol, machineSource, archSource []byte) (bool, error) {
+	if machine != elf.EM_X86_64 && machine != elf.EM_AARCH64 {
+		return false, fmt.Errorf("unexpected production ELF machine %v", machine)
+	}
+	normalize := func(source []byte) (string, error) {
+		positions := token.NewFileSet()
+		file, err := parser.ParseFile(positions, "source.go", source, 0)
+		if err != nil {
+			return "", err
+		}
+		var result bytes.Buffer
+		if err := format.Node(&result, positions, file); err != nil {
+			return "", err
+		}
+		return result.String(), nil
+	}
+	arch, err := normalize(archSource)
+	if err != nil {
+		return false, err
+	}
+	want := "false"
+	if machine == elf.EM_AARCH64 {
+		want = "true"
+	}
+	if strings.Count(arch, "mapEntireAddressSpaceDefault") != 1 || !strings.Contains(arch, "const mapEntireAddressSpaceDefault = "+want+"\n") {
+		return false, fmt.Errorf("address-space default does not match %v", machine)
+	}
+	source, err := normalize(machineSource)
+	if err != nil {
+		return false, err
+	}
+	const installation = `mapEntireAddressSpace := forceMappingEntireAddressSpace || mapEntireAddressSpaceDefault
+	if mapEntireAddressSpace {
+		archOverrideFaultBlocks()
+	} else {
+		seccompMmapRules(m)
+	}`
+	// Bind the only installation call and its immediately preceding condition.
+	// A changed source path requires the applicability assumption to be reviewed.
+	if strings.Count(source, "mapEntireAddressSpaceDefault") != 1 || strings.Count(source, "seccompMmapRules(") != 2 || !strings.Contains(source, installation) {
+		return false, fmt.Errorf("unexpected mmap handler installation source")
+	}
+	for _, name := range []string{"seccompMmapHandler", "seccompMmapRules", "sigsysHandler", "addrOfSigsysHandler"} {
+		found := false
+		for _, symbol := range symbols {
+			if symbol.Section != elf.SHN_UNDEF && elf.ST_TYPE(symbol.Info) == elf.STT_FUNC && (symbol.Name == kvm+"."+name || strings.HasPrefix(symbol.Name, kvm+"."+name+".")) {
+				found = true
+			}
+		}
+		if found != (machine == elf.EM_X86_64) {
+			return false, fmt.Errorf("unexpected production TEXT presence for %s on %v: %t", name, machine, found)
+		}
+	}
+	return machine == elf.EM_X86_64, nil
+}

@@ -85,6 +85,8 @@ def _inputs_impl(ctx):
             ("pkg/sentry/kernel/atomicptr_descriptor.go", kernel),
             ("pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go", kvm),
             ("pkg/sentry/platform/kvm/atomicptr_machine.go", kvm),
+            ("pkg/sentry/platform/kvm/machine.go", kvm),
+            ("pkg/sentry/platform/kvm/machine_%s.go" % arch, kvm),
         ]:
             matches = [file for file in archive_data.srcs if file.short_path == logical]
             if len(matches) != 1:

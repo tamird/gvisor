@@ -166,12 +166,31 @@ func TestAtomicPtrProductionCodegen(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
+			machineSource := codegenSource(t, record, "pkg/sentry/platform/kvm/machine.go")
+			archPath := "pkg/sentry/platform/kvm/machine_" + record.Arch + ".go"
+			archSource := codegenSource(t, record, archPath)
+			sourceHashes["pkg/sentry/platform/kvm/machine.go"] = fmt.Sprintf("%x", sha256.Sum256(machineSource))
+			sourceHashes[archPath] = fmt.Sprintf("%x", sha256.Sum256(archSource))
+			applicable, err := codegen.MmapHandlerApplicable(artifacts["elf"], machineSource, archSource)
+			if err != nil {
+				t.Fatal(err)
+			}
+			applicableSites := sites
+			if !applicable {
+				if record.Arch != "arm64" || len(sites) != 7 || sites[0].Receiver != "machinePool[i]" {
+					t.Fatalf("unexpected inapplicable production site: %v", sites)
+				}
+				applicableSites = sites[1:]
+				report["notApplicableSites"] = sites[:1]
+				report["notApplicableReason"] = "ARM64 constant maps the entire address space; sole mmap trap installation is unreachable and its handler/assembly/ABI function symbols are absent from the production ELF"
+			}
+			report["applicableSites"] = applicableSites
 			records, err := codegen.Read(artifacts["elf"], record.Arch)
 			report["liveInlineRecords"] = records
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := codegen.Validate(records, sites); err != nil {
+			if err := codegen.Validate(records, applicableSites); err != nil {
 				t.Fatal(err)
 			}
 			ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)

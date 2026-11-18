@@ -17,6 +17,7 @@ package codegen
 import (
 	"bytes"
 	"debug/dwarf"
+	"debug/elf"
 	"encoding/binary"
 	"strings"
 	"testing"
@@ -126,5 +127,50 @@ func TestCompilationUnitWithoutLines(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Fatalf("read(selected=%t) = %v, want %q", selected, err, want)
 		}
+	}
+}
+
+func TestMmapHandlerApplicability(t *testing.T) {
+	const machineSource = `package kvm
+func newMachine() {
+	mapEntireAddressSpace := forceMappingEntireAddressSpace || mapEntireAddressSpaceDefault
+	if mapEntireAddressSpace {
+		archOverrideFaultBlocks()
+	} else {
+		seccompMmapRules(m)
+	}
+}
+func seccompMmapRules(m *machine) {}
+`
+	amdSource := []byte("package kvm\nconst mapEntireAddressSpaceDefault = false\n")
+	armSource := []byte("package kvm\nconst mapEntireAddressSpaceDefault = true\n")
+	var live []elf.Symbol
+	for _, name := range []string{"seccompMmapHandler", "seccompMmapRules", "sigsysHandler.abi0", "addrOfSigsysHandler.abi0"} {
+		live = append(live, elf.Symbol{Name: kvm + "." + name, Info: byte(elf.STT_FUNC), Section: 1})
+	}
+	for _, tc := range []struct {
+		name    string
+		machine elf.Machine
+		symbols []elf.Symbol
+		arch    []byte
+		source  string
+		want    bool
+		wantErr bool
+	}{
+		{name: "amd64_live", machine: elf.EM_X86_64, symbols: live, arch: amdSource, source: machineSource, want: true},
+		{name: "arm64_not_live", machine: elf.EM_AARCH64, arch: armSource, source: machineSource},
+		{name: "arm64_changed_default", machine: elf.EM_AARCH64, arch: amdSource, source: machineSource, wantErr: true},
+		{name: "arm64_live_symbol", machine: elf.EM_AARCH64, symbols: live[:1], arch: armSource, source: machineSource, wantErr: true},
+		{name: "amd64_missing_handler", machine: elf.EM_X86_64, symbols: live[1:], arch: amdSource, source: machineSource, wantErr: true},
+		{name: "changed_installation", machine: elf.EM_AARCH64, arch: armSource, source: strings.Replace(machineSource, "if mapEntireAddressSpace", "if otherCondition", 1), wantErr: true},
+		{name: "extra_installation", machine: elf.EM_AARCH64, arch: armSource, source: machineSource + "func another() { seccompMmapRules(m) }\n", wantErr: true},
+		{name: "wrong_machine", machine: elf.EM_NONE, arch: armSource, source: machineSource, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := mmapHandlerApplicable(tc.machine, tc.symbols, []byte(tc.source), tc.arch)
+			if (err != nil) != tc.wantErr || got != tc.want {
+				t.Fatalf("mmapHandlerApplicable = %t, %v; want %t, error=%t", got, err, tc.want, tc.wantErr)
+			}
+		})
 	}
 }
