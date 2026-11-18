@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T00:52:35.859319+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T00:29:25.139190+00:00",
+  "registryDate": "2026-11-18T00:52:10.274668+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448307,8 +448307,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "52ed6dad4b746b3eb9eb109e40ca3286e67b7d3e",
-        "disposition": "Conflict repair f9446ddf is published only as a fork proposal. Native functional qualification passed on AMD64; ARM64 passed the same functional owners and source lint but failed the known baseline io_uring C++ lint diagnostic. Per architecture: 62 TCP, 414 end-to-end, 23 RACK, 16 native packet and 16 netstack packet cases, no skips/failures. Performance qualification remains open. Two bounded capability pilots, full iperf variants and existing loss benchmark, are running; neither is statistical performance evidence.",
-        "nextAction": "Inspect both pilots through completion, diagnose capability/harness failures, and use actual execution time to partition all relevant networking variants and loss modes for sufficient paired sampling. Finish full-source adversarial review before requesting the original PR amendment."
+        "disposition": "Functional qualification remains verified. Initial iperf pilot 44207851100 passed all eight variants but each ran with N=1, transferring only a tiny volume; it is capability evidence, not statistical throughput evidence. Fixed-volume full-category pilot 55492e84 is dispatched. Loss pilots 44207884803 and 44209196768 both failed before transfers: helper namespace execution could not access the task path, including after task-local mode correction. Root owns bounded ancestor/mount/namespace diagnosis 958bf534 before any further loss benchmark retry.",
+        "nextAction": "Consume the fixed-volume iperf pilot and host-access diagnosis. Prove any access correction with the actual helper before rerunning loss transfers; use actual volume, iteration counts and timings to plan all relevant network variants and sufficient paired samples. Preserve both failed attempts and the open performance gate."
       },
       "conflictObservedSince": "2026-11-14T02:14:23.011470+00:00"
     },
@@ -448331,8 +448331,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c2799abaab7899bcec8f02cfa5e53edd8c4dc1ce",
-        "disposition": "Focused qualification 44190856301 executed all 24 normal/race KCOV cases per architecture without skips, retaining debug logs with report collection disabled; the default-on report control and source lint passed. AMD64 C++ lint passed. ARM64 C++ lint failed, and standalone exact-base control 44196026066 reproduced the same io_uring diagnostic. The earlier missing-ancestor control did not run and remains a failed attempt. Independent source reviews found no source issue, but coverage-binary startup/runtime performance remains unmeasured. Bounded AMD64 pilot 44208124597 failed during the old baseline coverage build because /usr/bin/aarch64-linux-gnu-gcc was absent on the hosted worker. No benchmark executed. Root/tcp_conflict owns the necessary remote host-toolchain preparation; original failed result and exact plan ff0990b09bd00da593e32370ff81a51e95179ddb remain recorded.",
-        "nextAction": "Add the verified missing remote cross compiler prerequisites, inspect the corrected support plan and rerun the bounded capability pilot. Resolve real failures before planning sufficient existing broad benchmark sampling. Keep original PR unchanged until performance qualification and contributor approval."
+        "disposition": "Functional coverage qualification and the pre-existing ARM lint diagnosis remain verified. Pilot 44208124597 failed because the old export graph needed an absent ARM cross compiler. Corrected toolchain pilot 44208817043 then hit its ten-minute apt timeout while packages were downloading; no build or benchmark ran. Same-source recovery 058a3eec installs the same packages with bounded thirty-minute cap and transport timeouts; explicit phase caps plus termination grace remain below the hosted job limit. No performance result is inferred.",
+        "nextAction": "Inspect the recovered prerequisite/capability pilot, diagnose actual failures, then use measured costs to qualify coverage startup/runtime with sufficient broad samples. Keep original PR unchanged until qualification and contributor approval."
       },
       "conflictObservedSince": "2026-11-13T22:05:46.828170+00:00"
     },
@@ -448499,8 +448499,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
-        "disposition": "Controlled replication 44196112563 passed its execution gates and again measured a slowdown: optimized getpid +1.20% (p=.003, n=24), ordinary getpid +1.26% (p=.032, n=24). Preserve the original optimized getpid +3.22% (p=.008) result. Same-base A/A differences were nonsignificant; the candidate and base used different paths, so that confound and complete runtime layout remain unresolved. Identical hot stub instructions do not establish full-process equivalence. No original PR amendment is published.",
-        "nextAction": "Root owns full-runtime diagnosis with systrap_regression preparing the bounded artifact-only plan and independent harness review. Build matched --nostamp opaque releases and compare complete ELF code/data/layout before selecting another measurement or proposing a source change. Do not dismiss the adverse results."
+        "disposition": "Full-runtime artifact diagnosis 44208843653 verified all nine archived ELF identities: eight including runsc are byte-identical; gvisor_sentry differs only in 93 build-ID bytes and 118 embedded-stub bytes. All section layouts and Go code/data match; no unexplained bytes remain in that new matched build. These were not the retained full ELFs of the earlier performance runs, so this cannot retroactively establish their cause. Both optimized-getpid slowdowns (+3.22%, p=.008; +1.20%, p=.003) and ordinary-getpid +1.26% (p=.032), A/A results and path confound remain material.",
+        "nextAction": "Root/systrap_regression owns a bounded same-path, balanced benchmark plan using complete matched --nostamp releases and an unchanged frozen harness. Verify whole-runtime identities and eliminate build activity during measurement; do not invent a source fix or dismiss the adverse measurements."
       },
       "conflictObservedSince": "2026-11-13T22:05:51.472667+00:00"
     },
@@ -449347,8 +449347,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
-        "disposition": "Prepared separate rebase candidate 0e5a957935 on current master. Its only topic change is the required nil SACK argument in the new SYN-RCVD ACK call; original PR source remains unchanged. Native qualification plan is prepared for publication.",
-        "nextAction": "Launch the prepared native TCP/timestamp/PAWS/export qualification for 0e5a957935, review results and obtain independent review before asking for the source amendment decision. Preserve original PR source until approval."
+        "disposition": "Fork proposal 983dc3a36b4c481da9911e05b97d7a02b18b8e71 mechanically rebases the prepared PAWS repair onto 1f33; range-diff is unchanged. The original PR remains d531ad7020. First plan 44209699406 failed before any project action because --version followed Bazel startup options. The one-line harness correction is dispatched in 44210296597; no source qualification result is inferred.",
+        "nextAction": "Inspect the bounded native TCP/timestamp/race, Linux-then-netstack PAWS, canonical Go export and lint run. Diagnose actual failures, finish independent full-source review and performance qualification before requesting the original PR amendment."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAfQ41NSQ",
@@ -457696,7 +457696,7 @@
         "since": "2026-11-17T22:54:58.728628+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "pr:15183": {
@@ -461074,7 +461074,7 @@
         "since": "2026-11-17T19:10:34.089237+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "pr:16745": {
@@ -464927,7 +464927,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464936,7 +464936,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464945,7 +464945,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464954,7 +464954,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464963,7 +464963,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464972,7 +464972,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -464981,7 +464981,7 @@
         "since": "2026-11-09T17:17:34+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464990,7 +464990,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T00:29:25.139190+00:00"
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
+      }
+    },
+    "branch:iouring-syscall-constants": {
+      "contributor-review": {
+        "scope": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
+        "since": "2026-11-18T00:52:10.274668+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-18T00:52:10.274668+00:00"
       }
     }
   },
