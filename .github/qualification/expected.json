@@ -1,0 +1,40 @@
+{
+  "source": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+  "base": "4ca1ad5d5b713613bc6b8c6f42b0b91720bd97cb",
+  "sourceBlobs": {
+    "MODULE.bazel": "c59259b36ec79f3a84625c81e01c3839a740e275",
+    "go.mod": "6efaf3884e6b48c9ecb9ff3c622e3aec8d03d371",
+    "go.sum": "7835f843768bb04feaadb125707099d71e15b67b",
+    "images/benchmarks/hey/Dockerfile": "58c49354f8edee8dbeb0739fc54b011dd9741dcb",
+    "pkg/test/dockerutil/container.go": "43d73c21626587fdb2ca2c537134a92106c885a2",
+    "test/benchmarks/network/network.go": "dbe40ad8eb3dae5640978a68c658d4c4917d5a83",
+    "test/benchmarks/network/node_test.go": "306874d2ceb9dc1a895d9b168feca49e2d4d62d7",
+    "test/benchmarks/network/ruby_test.go": "2e59cc41ca882408bfef4548729ee4050458dceb",
+    "test/benchmarks/tools/BUILD": "701588b0b9b50cef465ee495f6dbdc97dd32a992",
+    "test/benchmarks/tools/hey.go": "7532c01604e6aaf02621eb86362fb035216472ae",
+    "test/benchmarks/tools/hey_test.go": "dc6e4393ca603f2d5c7d6a5c3670e02591b320d0",
+    "test/gpu/stablediffusion/stablediffusion.go": "f2c525dd38a7889bbcb1688e033ba4f24d2f086b"
+  },
+  "nativeLeaves": {
+    "native-httpd": [
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.1",
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.25",
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.100",
+      "BenchmarkContinuousHttpd/filesize.10Kb/concurrency.1000"
+    ]
+  },
+  "integrationBase": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+  "buildTargets": [
+    "//test/benchmarks/network:iperf_test",
+    "//test/benchmarks/network:nginx_test",
+    "//test/benchmarks/network:httpd_test",
+    "//test/benchmarks/network:node_test",
+    "//test/benchmarks/network:ruby_test",
+    "//test/gpu/stablediffusion:stablediffusion"
+  ],
+  "requiredToolsCases": [
+    "TestHeyRequestErrors",
+    "TestHeyRequestErrors/success",
+    "TestHeyRequestErrors/partialFailure"
+  ]
+}

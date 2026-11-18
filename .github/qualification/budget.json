@@ -1,0 +1,46 @@
+{
+  "source": "5d3c5b90a3be5a7d485f5b70240ae09dd0e00b9c",
+  "bodyMinutes": 55,
+  "cleanupGraceSeconds": 120,
+  "inclusiveMinutes": 57,
+  "expectedMinutesConditional": [
+    8,
+    15
+  ],
+  "expectedLimit": "Existing successful ad2 workflow reused; removed module query; GPU library shares existing 15-minute compiler cap.",
+  "listedPhaseMinutes": 50.85,
+  "phaseCapsMinutes": {
+    "bindSource": 0.5,
+    "groupControl": 0.25,
+    "userns": 0.1,
+    "toolsOwner": 10,
+    "testlogsInfo": 1,
+    "toolsEvidence": 0.5,
+    "sourceLint": 10,
+    "heyImage": 5,
+    "httpdImage": 3,
+    "utilImage": 3,
+    "nativeHttpd": 2,
+    "nativeEvidence": 0.5,
+    "fiveConsumerBuilds": 15
+  },
+  "cleanupUpperBoundSeconds": 111,
+  "cleanupCapsSeconds": {
+    "stageWrapperStopWait": 20,
+    "ownedContainersStageAndStop": 36,
+    "BazelShutdown": 20,
+    "AppArmorRestore": 5,
+    "sourceAndIndexChecks": 12,
+    "sourceDiffAndThreeDependencyFiles": 12,
+    "receiptMargin": 6
+  },
+  "priorRun": 44342260353,
+  "priorObservedBazelSeconds": {
+    "toolsOwner": 17.611,
+    "sourceLintFirstBuild": 86.473,
+    "sourceLintSecondBuild": 3.195,
+    "fiveConsumerBuilds": 269.54
+  },
+  "scope": "Fresh full tools owner, source lint, five network consumer binaries plus GPU library build, native HTTPD four N1 leaves. No GPU execution/statistical performance claim.",
+  "CppGate": "Separate input-closure reuse assessment; not chained to functional status"
+}
