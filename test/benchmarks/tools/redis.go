@@ -44,6 +44,7 @@ func (r *Redis) MakeCmd(host string, port, requests int) []string {
 // Report parses output from redis-benchmark client and reports metrics.
 func (r *Redis) Report(b *testing.B, output string) {
 	b.Helper()
+	recordBenchmarkOutput(b, "redis", output)
 	lines := strings.Split(output, "\n")
 	if len(lines) < 2 {
 		b.Fatalf("redis-benchmark failed to parse redis output: %s", output)

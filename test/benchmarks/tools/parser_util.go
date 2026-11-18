@@ -15,7 +15,10 @@
 package tools
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -195,4 +198,29 @@ func ParseCustomMetric(value, metric string) (*Metric, error) {
 		}
 	}
 	return &Metric{Name: name, Unit: unit, Sample: sample}, nil
+}
+
+func recordBenchmarkOutput(b *testing.B, tool, output string) {
+	b.Helper()
+	directory := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if directory == "" {
+		b.Fatal("raw benchmark output requires TEST_UNDECLARED_OUTPUTS_DIR")
+	}
+	data, err := json.Marshal(struct {
+		Benchmark string `json:"benchmark"`
+		N         int    `json:"n"`
+		Tool      string `json:"tool"`
+		Output    string `json:"output"`
+	}{Benchmark: b.Name(), N: b.N, Tool: tool, Output: output})
+	if err != nil {
+		b.Fatalf("encode raw benchmark output: %v", err)
+	}
+	directory = filepath.Join(directory, "raw-clients")
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		b.Fatalf("create raw benchmark output directory: %v", err)
+	}
+	name := fmt.Sprintf("%s-%s-%d.json", tool, strings.ReplaceAll(b.Name(), "/", "_"), b.N)
+	if err := os.WriteFile(filepath.Join(directory, name), data, 0644); err != nil {
+		b.Fatalf("write raw benchmark output: %v", err)
+	}
 }

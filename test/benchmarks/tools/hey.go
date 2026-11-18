@@ -45,6 +45,7 @@ func (h *Hey) MakeCmd(host string, port int) []string {
 // Report parses output from 'hey' and reports metrics.
 func (h *Hey) Report(b *testing.B, output string) {
 	b.Helper()
+	recordBenchmarkOutput(b, "hey", output)
 	requests, err := h.parseRequestsPerSecond(output)
 	if err != nil {
 		b.Fatalf("failed to parse requests per second: %v", err)
