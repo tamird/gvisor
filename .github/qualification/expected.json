@@ -1,0 +1,578 @@
+{
+  "source": "02fc62f697b2957e37d53be359ba820676c0e738",
+  "base": "b35ded894d3e1f6982cdb6fe13a2ba3b76343188",
+  "topicSource": "4109d106c6dd35082501c24bfd7a640bc444fc7c",
+  "upstreamBase": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+  "sourceSHA256": {
+    "MODULE.bazel": "4ccec2c2c939ac16fa6707cc39721dca12a43b3db75f4b7a02eceaf1c1230fbd",
+    "go.mod": "78219c72507a1cd85cfed7a5a4ac4c6cf16ab248c6c0d772c9cd74f135b381ad",
+    "pkg/sentry/kernel/fd_table_unsafe.go": "05f0501826f5f6abf2583377811dd3c42e39a6c92e6eafc55f3a32e9f3e9eb1b",
+    "pkg/sentry/platform/kvm/BUILD": "43edaf34b32f13342f5610ceed55aee532026f4be2e0d2cbc7dc0b11f3f6d2f2",
+    "pkg/sentry/platform/kvm/atomicptr_codegen.bzl": "6ab4b25d61a5635d963b1efeeeb298e68dbf101ebae9d3315e513e9a576e4455",
+    "pkg/sentry/platform/kvm/atomicptr_codegen_test.go": "5f997e470c0ca7cb5af75497958ad5da397b4db9518405bb81ed8db024f7520c",
+    "pkg/sentry/platform/kvm/codegen/BUILD": "94a6438ad7b59063d08fad25902a1775a5a1ff00cee789309767f4bcd434fa17",
+    "pkg/sentry/platform/kvm/codegen/README.md": "5602e6b66a658f5f3f2b28f2eefe4a9b2b96c62e0adcccd162a03f15af22ce06",
+    "pkg/sentry/platform/kvm/codegen/calls.go": "7a5f5351dbeeb596c70c5938f2941b330f3af2e57c63a09c8b0143e5b20a5084",
+    "pkg/sentry/platform/kvm/codegen/calls_test.go": "66715352e843ac16c96bf9eac1da6d2b5b990d68341c6537471d22b94d80570f",
+    "pkg/sentry/platform/kvm/codegen/inline.go": "d3b423af73489755b4bb08ff5a6b9f5fcfc33bcc75c6c3f7928ebda069749ec6",
+    "pkg/sentry/platform/kvm/codegen/inline_test.go": "34658746fbdf30006475609a92b772f33b059e567d1c897f724e5b497b2cf194",
+    "pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go": "90b658acfb0bf5f1d76380653db57d6878af59cb6d3f6efcae0db599e0930dfa",
+    "pkg/sync/atomicptr/generic_atomicptr.go": "ecd7427861fdf397a96fdedf61ca5345d9654b4d8627d39f22e6931a9acefe08",
+    "runsc/cmd/sentry/BUILD": "346b91a42180bb25781f0ab8276a148e40e0f3ceaba5a257452d364fbdb89d74",
+    "tools/arch.bzl": "8227df04ffcc0f9a0d35dc9f8577485fa759dbbbf3e392ca29aa6eaa1ec139f2",
+    "tools/bazeldefs/go.bzl": "c09f065f4a1b4ee7743144c763c7629442761e0022f3fdba03948f444fb3eed9",
+    "tools/checkescape/BUILD": "937fd910c8ab14969941ee89c6012981f0fe31fdbc78b48bc66d40b7f9b3177e",
+    "tools/checkescape/checkescape.go": "f580dff63d3c502312df691addf72deae740694b826785abe3485d2813074313",
+    "pkg/sentry/platform/kvm/machine.go": "07b7197b7ec1ec1b77e03fb2e58c33b022a3c2333f16b64786e0fcef3038d1ee",
+    "pkg/sentry/platform/kvm/machine_amd64.go": "61201b6f0c5de11397bea816362a91f69865d141cae88be9ea21be117f0bca8e",
+    "pkg/sentry/platform/kvm/machine_arm64.go": "fd65d22c14f9ed443bf4b8be89df9e66718c489bda6d13ffe3beda52bf4489c2"
+  },
+  "scope": "First canonical production caller proof; no runtime execution or performance sampling",
+  "requiredTopLevelCases": {
+    "//pkg/sentry/platform/kvm/codegen:codegen_test": [
+      "TestBindProductionSourceSite",
+      "TestNoSplit",
+      "TestValidateActualSite",
+      "TestValidateCalls",
+      "TestCompilationUnitWithoutLines",
+      "TestMmapHandlerApplicability",
+      "TestProductionMmapHandlerApplicability"
+    ],
+    "//tools/checkescape:checkescape_test": [
+      "TestAnnotationSyntax",
+      "TestCallTargetIdentity"
+    ],
+    "//pkg/sentry/platform/kvm:atomicptr_codegen_test": [
+      "TestAtomicPtrProductionCodegen"
+    ],
+    "//tools/go_generics/tests/all_stmts:all_stmts_test": [],
+    "//tools/go_generics/tests/all_types:all_types_test": [],
+    "//tools/go_generics/tests/anon:anon_test": [],
+    "//tools/go_generics/tests/consts:consts_test": [],
+    "//tools/go_generics/tests/imports:imports_test": [],
+    "//tools/go_generics/tests/remove_typedef:remove_typedef_test": [],
+    "//tools/go_generics/tests/simple:simple_test": [],
+    "//tools/go_generics/tests/typeparams:typeparams_test": [],
+    "//tools/go_generics/tests/typeparams:typeparams_compile_test": [
+      "TestForwardTypeParams",
+      "TestIndexedCalls"
+    ],
+    "//tools/go_generics/go_merge:go_merge_test": [
+      "TestMergeDeclarations",
+      "TestMergeImportsCommentsAndConstraints",
+      "TestMergeErrors"
+    ]
+  },
+  "baseParent": "d66785a6aef275d0e604f82fd7e46edc058e4786",
+  "generatedSources": [
+    "pkg/sentry/platform/kvm/atomicptr_machine.go",
+    "pkg/sentry/kernel/atomicptr_bucket_slice.go",
+    "pkg/sentry/kernel/atomicptr_bucket.go",
+    "pkg/sentry/kernel/atomicptr_descriptor.go"
+  ],
+  "goldenTargets": [
+    "//tools/go_generics/tests/all_stmts:all_stmts_test",
+    "//tools/go_generics/tests/all_types:all_types_test",
+    "//tools/go_generics/tests/anon:anon_test",
+    "//tools/go_generics/tests/consts:consts_test",
+    "//tools/go_generics/tests/imports:imports_test",
+    "//tools/go_generics/tests/remove_typedef:remove_typedef_test",
+    "//tools/go_generics/tests/simple:simple_test",
+    "//tools/go_generics/tests/typeparams:typeparams_test"
+  ],
+  "reusedQualification": {
+    "receiptSHA256": "027c7c31a82ce9cb17717bf5fad41c31a5c872caaede02ca3bdc3681aad4aa88",
+    "receipt": {
+      "observedAt": "2026-11-18T15:32:55.160942+00:00",
+      "run": 44335049809,
+      "source": "470473026e48772e9abfa41b7bebb03848f7cefb",
+      "plan": "3e1fde29c790b73a21ad9422d79f5e7b0546b8cc",
+      "overall": "FAILED; eight golden invocation failures preserved",
+      "artifact": 14439914364,
+      "artifactSHA256": "4d5f11c32cedc6da44362cbacfb9b9012f73ffe72f178b50e84b3c81359a406f",
+      "finalSourceAndIndexClean": true,
+      "sourceLintAndFormat": "PASS109.328seconds; allfivechecks",
+      "passedOwnerRecords": [
+        {
+          "label": "//tools/go_generics/go_merge:go_merge_test",
+          "caseRecords": 6,
+          "topLevelFunctions": [
+            "TestMergeDeclarations",
+            "TestMergeErrors",
+            "TestMergeImportsCommentsAndConstraints"
+          ],
+          "cases": [
+            "TestMergeDeclarations",
+            "TestMergeErrors",
+            "TestMergeErrors/import_name_conflict",
+            "TestMergeErrors/invalid_source",
+            "TestMergeErrors/package_mismatch",
+            "TestMergeImportsCommentsAndConstraints"
+          ],
+          "uncached": true,
+          "xmlSHA256": "6c3e9627dbaa614e90dd8fce3ec03f00ce511836215cb62430d3b0a2ec85b721",
+          "testLogSHA256": "2e663e163ff1fbcc1c9934bdb555b7d419572515e5193f0419fe639909fdfb6b"
+        },
+        {
+          "label": "//tools/go_generics/tests/typeparams:typeparams_compile_test",
+          "caseRecords": 2,
+          "topLevelFunctions": [
+            "TestForwardTypeParams",
+            "TestIndexedCalls"
+          ],
+          "cases": [
+            "TestForwardTypeParams",
+            "TestIndexedCalls"
+          ],
+          "uncached": true,
+          "xmlSHA256": "06d51512eed2ebaff98585a704c0085a556c0c3bba131961ca71088cd9c3dd06",
+          "testLogSHA256": "eeac9dbf30c578712052d5e3279c0ebfbaa8bb5aa2032463304aae57b1c1bf23"
+        },
+        {
+          "label": "//tools/checkescape:checkescape_test",
+          "caseRecords": 24,
+          "topLevelFunctions": [
+            "TestAnnotationSyntax",
+            "TestCallTargetIdentity"
+          ],
+          "cases": [
+            "TestAnnotationSyntax",
+            "TestAnnotationSyntax///_+checkescape",
+            "TestAnnotationSyntax///_+checkescape:all",
+            "TestAnnotationSyntax///_+checkescape:hard",
+            "TestAnnotationSyntax///_+checkescape:local,hard",
+            "TestAnnotationSyntax///_+checkescape=all",
+            "TestAnnotationSyntax///_+checkescape_:all",
+            "TestAnnotationSyntax///_+checkescape_all",
+            "TestCallTargetIdentity",
+            "TestCallTargetIdentity/entry",
+            "TestCallTargetIdentity/malformed_offset",
+            "TestCallTargetIdentity/memory",
+            "TestCallTargetIdentity/negative_offset",
+            "TestCallTargetIdentity/numeric",
+            "TestCallTargetIdentity/other_relocation",
+            "TestCallTargetIdentity/package_hyphen",
+            "TestCallTargetIdentity/positive_offset",
+            "TestCallTargetIdentity/retpoline_entry",
+            "TestCallTargetIdentity/retpoline_offset",
+            "TestCallTargetIdentity/symbolized_memory",
+            "TestCallTargetIdentity/unnamed_entry",
+            "TestCallTargetIdentity/unnamed_entry_arm64",
+            "TestCallTargetIdentity/unnamed_negative_offset",
+            "TestCallTargetIdentity/unnamed_offset"
+          ],
+          "uncached": true,
+          "xmlSHA256": "fd69e36305fae9ea7c584ee679860c6649ee3a8c29dde51bb5b756d2e76ed809",
+          "testLogSHA256": "5b7a17d59f0d51f510bdfe24c37ee19d080eb9ceda0a17936538e3fad81ba9d5"
+        },
+        {
+          "label": "//pkg/sentry/platform/kvm/codegen:codegen_test",
+          "caseRecords": 21,
+          "topLevelFunctions": [
+            "TestBindProductionSourceSite",
+            "TestNoSplit",
+            "TestValidateActualSite",
+            "TestValidateCalls"
+          ],
+          "cases": [
+            "TestBindProductionSourceSite",
+            "TestNoSplit",
+            "TestNoSplit/directive",
+            "TestNoSplit/missing",
+            "TestNoSplit/ordinary_comment",
+            "TestValidateActualSite",
+            "TestValidateActualSite/empty_range",
+            "TestValidateActualSite/missing_concrete_caller",
+            "TestValidateActualSite/missing_range",
+            "TestValidateActualSite/valid",
+            "TestValidateActualSite/wrong_file",
+            "TestValidateActualSite/wrong_line",
+            "TestValidateActualSite/wrong_origin",
+            "TestValidateActualSite/wrong_owner",
+            "TestValidateCalls",
+            "TestValidateCalls/generic_helper",
+            "TestValidateCalls/missing_owner",
+            "TestValidateCalls/no_calls",
+            "TestValidateCalls/ordinary_call",
+            "TestValidateCalls/unresolved",
+            "TestValidateCalls/wrapper"
+          ],
+          "uncached": true,
+          "xmlSHA256": "42f6a1802c5c160e472f2abafc000892bc0b090a868452aa771d9d6983765339",
+          "testLogSHA256": "f6e6c96b7ca335c986634b48326e65cc08a722c400e831860f62b8d5b5831a35"
+        }
+      ],
+      "passedXMLCaseRecords": 53,
+      "passedTopLevelFunctions": 11,
+      "failedGoldenOwners": [
+        {
+          "label": "//tools/go_generics/tests/all_stmts:all_stmts_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        },
+        {
+          "label": "//tools/go_generics/tests/typeparams:typeparams_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        },
+        {
+          "label": "//tools/go_generics/tests/imports:imports_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        },
+        {
+          "label": "//tools/go_generics/tests/remove_typedef:remove_typedef_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        },
+        {
+          "label": "//tools/go_generics/tests/simple:simple_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        },
+        {
+          "label": "//tools/go_generics/tests/all_types:all_types_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        },
+        {
+          "label": "//tools/go_generics/tests/consts:consts_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        },
+        {
+          "label": "//tools/go_generics/tests/anon:anon_test",
+          "cause": "Native comparison binary rejected extra Go test arguments before comparing golden/generated files",
+          "goldenMismatchEstablished": false
+        }
+      ],
+      "notReached": [
+        "crosscompilerinstall/readiness",
+        "productionSentrybuilds",
+        "provider/action/DWARF proof"
+      ],
+      "minimalRecovery": "Same source470; run only8goldens withoutGo-specific testargs, reuse exactlint+4nativeGo-owner evidence, keepGo-specific args onlyforGo productiontarget. No source modification needed.",
+      "evidenceReuseBoundary": "Per-owner actual successful TestResult/Summary/XML and target completion retained despite overall invocation FAIL; not relabeled as passing originaljob",
+      "rawBepSHA256": "737efff35e3da2597f261e6167f7a35bd0ec57755792776e707cdaa15de048e6"
+    },
+    "sourceAndToolchainInputsSHA256": {
+      "MODULE.bazel": "4ccec2c2c939ac16fa6707cc39721dca12a43b3db75f4b7a02eceaf1c1230fbd",
+      "go.mod": "78219c72507a1cd85cfed7a5a4ac4c6cf16ab248c6c0d772c9cd74f135b381ad",
+      "pkg/sentry/kernel/fd_table_unsafe.go": "05f0501826f5f6abf2583377811dd3c42e39a6c92e6eafc55f3a32e9f3e9eb1b",
+      "pkg/sentry/platform/kvm/BUILD": "7d4216808b90ad8184dbf04b7213252424ec72902cd76f8dc0ea7e6a06186d70",
+      "pkg/sentry/platform/kvm/atomicptr_codegen.bzl": "2c6af0f5ba151593f38f8ef4d082071d199db323dbff9f18ed31fbd13f552215",
+      "pkg/sentry/platform/kvm/atomicptr_codegen_test.go": "0f25eb0ea02aed7dd9f3f7dd2aaee3d44af903a8091471383f9b08a644071e86",
+      "pkg/sentry/platform/kvm/codegen/BUILD": "8d5c88c6f396166c9595bc9e963fb8ea267922e43fe3fd36f1586e9526c399da",
+      "pkg/sentry/platform/kvm/codegen/README.md": "5602e6b66a658f5f3f2b28f2eefe4a9b2b96c62e0adcccd162a03f15af22ce06",
+      "pkg/sentry/platform/kvm/codegen/calls.go": "7a5f5351dbeeb596c70c5938f2941b330f3af2e57c63a09c8b0143e5b20a5084",
+      "pkg/sentry/platform/kvm/codegen/calls_test.go": "66715352e843ac16c96bf9eac1da6d2b5b990d68341c6537471d22b94d80570f",
+      "pkg/sentry/platform/kvm/codegen/inline.go": "04432ceb6ae0d33eaafc7cf3b7d40d5ab649fa8684e5a1892764300c1cc01c99",
+      "pkg/sentry/platform/kvm/codegen/inline_test.go": "1c743d5ae8eb17de0345650da66837e9c02ec68168859a2ad60954ba3f571c1f",
+      "pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go": "90b658acfb0bf5f1d76380653db57d6878af59cb6d3f6efcae0db599e0930dfa",
+      "pkg/sync/atomicptr/generic_atomicptr.go": "ecd7427861fdf397a96fdedf61ca5345d9654b4d8627d39f22e6931a9acefe08",
+      "runsc/cmd/sentry/BUILD": "346b91a42180bb25781f0ab8276a148e40e0f3ceaba5a257452d364fbdb89d74",
+      "tools/arch.bzl": "8227df04ffcc0f9a0d35dc9f8577485fa759dbbbf3e392ca29aa6eaa1ec139f2",
+      "tools/bazeldefs/go.bzl": "c09f065f4a1b4ee7743144c763c7629442761e0022f3fdba03948f444fb3eed9",
+      "tools/checkescape/BUILD": "937fd910c8ab14969941ee89c6012981f0fe31fdbc78b48bc66d40b7f9b3177e",
+      "tools/checkescape/checkescape.go": "f580dff63d3c502312df691addf72deae740694b826785abe3485d2813074313"
+    },
+    "declaredSDK": "go1.27.3",
+    "bazel": "9.3.1",
+    "configurationFlags": [
+      "--config=x86_64",
+      "-c",
+      "opt",
+      "--strip=never",
+      "--nostamp",
+      "--jobs=3",
+      "--enable_runfiles",
+      "--remote_executor=",
+      "--remote_cache=",
+      "--bes_backend="
+    ],
+    "scope": "Exact-source prior lint and4Goowners only; prioroverallFAIL and8usagefailures retained. No binary/cache transfer claimed."
+  },
+  "reusedGoldenQualification": {
+    "receipt": {
+      "run": 44338516920,
+      "artifact": 14442588523,
+      "artifactSHA256": "6ba56cfbebdc4e89af8ef343b3095332e6dcc471a4f678b48fa027ba4cf8f8e4",
+      "identity": {
+        "source": "470473026e48772e9abfa41b7bebb03848f7cefb",
+        "plan": "cae009561106abf661c8e73491a8abf3c660b598",
+        "architecture": "amd64",
+        "run": "44338516920",
+        "attempt": "1",
+        "sourceVerified": true,
+        "base": "9dbe0f7b5259b370831efb69d53c46877d8ada81"
+      },
+      "outcome": {
+        "source": "470473026e48772e9abfa41b7bebb03848f7cefb",
+        "plan": "cae009561106abf661c8e73491a8abf3c660b598",
+        "toolingScope": "bazel-9.3.1",
+        "actualFinalHead": "470473026e48772e9abfa41b7bebb03848f7cefb",
+        "trackedWorktreeDirty": false,
+        "indexDirty": false,
+        "gitInspectionErrors": {},
+        "architecture": "amd64",
+        "steps": {
+          "prepare": "success",
+          "tools": "success",
+          "qualify": "failure"
+        },
+        "status": "not-passed"
+      },
+      "goldens": [
+        {
+          "label": "//tools/go_generics/tests/remove_typedef:remove_typedef_test",
+          "xmlSHA256": "f919940a4c33ccd8a8c576b8efb162685a6b9015ab31d65acbae5bb3f9920928",
+          "caseCount": 1,
+          "passed": true
+        },
+        {
+          "label": "//tools/go_generics/tests/imports:imports_test",
+          "xmlSHA256": "0015ae0cb611fe3d8b1f8286d619fed87fb9823ae93986a387c63f159bbab961",
+          "caseCount": 1,
+          "passed": true
+        },
+        {
+          "label": "//tools/go_generics/tests/anon:anon_test",
+          "xmlSHA256": "f906e7a1031506fefb724d94078651eef6f71c7fb40bd4a9335c1e2099283649",
+          "caseCount": 1,
+          "passed": true
+        },
+        {
+          "label": "//tools/go_generics/tests/all_stmts:all_stmts_test",
+          "xmlSHA256": "adef00041d6a995c1ad22dec5a957dd6a94bb2c34f98b9e799060f689c280e53",
+          "caseCount": 1,
+          "passed": true
+        },
+        {
+          "label": "//tools/go_generics/tests/simple:simple_test",
+          "xmlSHA256": "b623fe76fdefdc844cd8f202443d80c33c2cab617d77921291355e1b5f2a48dc",
+          "caseCount": 1,
+          "passed": true
+        },
+        {
+          "label": "//tools/go_generics/tests/typeparams:typeparams_test",
+          "xmlSHA256": "bbb10252cfaa867494c47c5ed8648047af2027d569098566985878917445300b",
+          "caseCount": 1,
+          "passed": true
+        },
+        {
+          "label": "//tools/go_generics/tests/all_types:all_types_test",
+          "xmlSHA256": "4647af4252eb35727747c91bcddc31bae4db4199d631c5ba02cb2d90bec289cb",
+          "caseCount": 1,
+          "passed": true
+        },
+        {
+          "label": "//tools/go_generics/tests/consts:consts_test",
+          "xmlSHA256": "0081c9010e551ca728fad599261b6b6c1d635a8acaccd75a0ea75daa1fff7512",
+          "caseCount": 1,
+          "passed": true
+        }
+      ],
+      "goldenInvocationExit": "0",
+      "stages": "userns-setup\t18\t0\nowner-query\t10036\t0\ngolden-comparisons\t86786\t0\napt-index\t31363\t0\ncross-compiler-prerequisite\t480018\t124\n",
+      "dependencyFailure": "cross compiler install timeout124 at480.018s during package downloads; no compiler readiness or production caller proof reached",
+      "priorEvidence": "unchanged exact-source lint +4Go owners53XML/11functions from44335049809 retained in reused-functional-evidence.json",
+      "nextAction": "dependency-only readiness probe with bounded actual network diagnosis before production proof; do not repeat lint/Go owners/goldens",
+      "cleanup": "exact source restored, tracked worktree/index clean; original AppArmor value restored in failed log"
+    },
+    "receiptSHA256": "bc748a6148eff905e5ec6018d9d055ca910b4095348581f1ad3c6c51d1145f34",
+    "sourceAndToolchainInputsSHA256": {
+      "MODULE.bazel": "4ccec2c2c939ac16fa6707cc39721dca12a43b3db75f4b7a02eceaf1c1230fbd",
+      "go.mod": "78219c72507a1cd85cfed7a5a4ac4c6cf16ab248c6c0d772c9cd74f135b381ad",
+      "pkg/sentry/kernel/fd_table_unsafe.go": "05f0501826f5f6abf2583377811dd3c42e39a6c92e6eafc55f3a32e9f3e9eb1b",
+      "pkg/sentry/platform/kvm/BUILD": "7d4216808b90ad8184dbf04b7213252424ec72902cd76f8dc0ea7e6a06186d70",
+      "pkg/sentry/platform/kvm/atomicptr_codegen.bzl": "2c6af0f5ba151593f38f8ef4d082071d199db323dbff9f18ed31fbd13f552215",
+      "pkg/sentry/platform/kvm/atomicptr_codegen_test.go": "0f25eb0ea02aed7dd9f3f7dd2aaee3d44af903a8091471383f9b08a644071e86",
+      "pkg/sentry/platform/kvm/codegen/BUILD": "8d5c88c6f396166c9595bc9e963fb8ea267922e43fe3fd36f1586e9526c399da",
+      "pkg/sentry/platform/kvm/codegen/README.md": "5602e6b66a658f5f3f2b28f2eefe4a9b2b96c62e0adcccd162a03f15af22ce06",
+      "pkg/sentry/platform/kvm/codegen/calls.go": "7a5f5351dbeeb596c70c5938f2941b330f3af2e57c63a09c8b0143e5b20a5084",
+      "pkg/sentry/platform/kvm/codegen/calls_test.go": "66715352e843ac16c96bf9eac1da6d2b5b990d68341c6537471d22b94d80570f",
+      "pkg/sentry/platform/kvm/codegen/inline.go": "04432ceb6ae0d33eaafc7cf3b7d40d5ab649fa8684e5a1892764300c1cc01c99",
+      "pkg/sentry/platform/kvm/codegen/inline_test.go": "1c743d5ae8eb17de0345650da66837e9c02ec68168859a2ad60954ba3f571c1f",
+      "pkg/sentry/platform/kvm/seccomp_mmap_unsafe.go": "90b658acfb0bf5f1d76380653db57d6878af59cb6d3f6efcae0db599e0930dfa",
+      "pkg/sync/atomicptr/generic_atomicptr.go": "ecd7427861fdf397a96fdedf61ca5345d9654b4d8627d39f22e6931a9acefe08",
+      "runsc/cmd/sentry/BUILD": "346b91a42180bb25781f0ab8276a148e40e0f3ceaba5a257452d364fbdb89d74",
+      "tools/arch.bzl": "8227df04ffcc0f9a0d35dc9f8577485fa759dbbbf3e392ca29aa6eaa1ec139f2",
+      "tools/bazeldefs/go.bzl": "c09f065f4a1b4ee7743144c763c7629442761e0022f3fdba03948f444fb3eed9",
+      "tools/checkescape/BUILD": "937fd910c8ab14969941ee89c6012981f0fe31fdbc78b48bc66d40b7f9b3177e",
+      "tools/checkescape/checkescape.go": "f580dff63d3c502312df691addf72deae740694b826785abe3485d2813074313"
+    }
+  },
+  "reuseSource": "470473026e48772e9abfa41b7bebb03848f7cefb",
+  "reuseChangedInputs": [
+    "pkg/sentry/platform/kvm/BUILD",
+    "pkg/sentry/platform/kvm/atomicptr_codegen.bzl",
+    "pkg/sentry/platform/kvm/atomicptr_codegen_test.go",
+    "pkg/sentry/platform/kvm/codegen/BUILD",
+    "pkg/sentry/platform/kvm/codegen/inline.go",
+    "pkg/sentry/platform/kvm/codegen/inline_test.go"
+  ],
+  "reuseScope": "Other3 Go owners and8 goldens only; changed codegen owner and source lint rerun. Historical source470 53XML/11functions includes old codegen result, not claimed newsource pass.",
+  "reusedCurrentPrefix": {
+    "receipt": {
+      "run": 44378538905,
+      "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+      "plan": "d0e8ba951727180888555b46b0ca198083c4e794",
+      "artifactID": 14461973431,
+      "artifactSHA256": "aef94a04aac1b5bc54905bfc145d702de0893f98d11557f1ec50cf7e179e71df",
+      "overall": "FAILURE retained",
+      "sourceLintPassed": true,
+      "changedOwnerPassed": true,
+      "caseCount": 22,
+      "names": [
+        "TestBindProductionSourceSite",
+        "TestCompilationUnitWithoutLines",
+        "TestNoSplit",
+        "TestNoSplit/directive",
+        "TestNoSplit/missing",
+        "TestNoSplit/ordinary_comment",
+        "TestValidateActualSite",
+        "TestValidateActualSite/empty_range",
+        "TestValidateActualSite/missing_concrete_caller",
+        "TestValidateActualSite/missing_range",
+        "TestValidateActualSite/valid",
+        "TestValidateActualSite/wrong_file",
+        "TestValidateActualSite/wrong_line",
+        "TestValidateActualSite/wrong_origin",
+        "TestValidateActualSite/wrong_owner",
+        "TestValidateCalls",
+        "TestValidateCalls/generic_helper",
+        "TestValidateCalls/missing_owner",
+        "TestValidateCalls/no_calls",
+        "TestValidateCalls/ordinary_call",
+        "TestValidateCalls/unresolved",
+        "TestValidateCalls/wrapper"
+      ],
+      "configuration": "19e30eec1c9e8f626768a7bf2b1b46eb8ad9d791db47829befe7ecf3b7ae9304",
+      "rawBEPAndXML": {
+        "source-lint.log": "49d4d04d1b29bba30cb2ebd0654cdecb0b456a3b15f023d822fed2dc7908118e",
+        "changed-codegen-owner.bep": "ab5d937bd91714308bbae57c74bea36ee4617075551a29c06227d1f8619496f5",
+        "changed-codegen-owner-evidence/0/test.xml": "1ab7d9abd04c06bc429ab16d5238d4a3b33aabaf5ab12830229d821bed704774",
+        "changed-codegen-owner-evidence/0/test.log": "0baa8d9c93f0015522de9ba751ff9220b10daa257e26a58cfd7bdd751c9a7568",
+        "stages.tsv": "39f0f10345a12fc51e45217c361e9a0c6990678372abaca683d2688b1c5f0db4"
+      },
+      "cause": "Support run_test extra --test_arg positional values entered owner-label list; canonical test passed, collector label count rejected; no dependency/production reached",
+      "cleanSource": {
+        "source": "c679388288a8661039c3ddb0d644f1a875c6140f",
+        "plan": "d0e8ba951727180888555b46b0ca198083c4e794",
+        "toolingScope": "bazel-9.3.1",
+        "actualFinalHead": "c679388288a8661039c3ddb0d644f1a875c6140f",
+        "trackedWorktreeDirty": false,
+        "indexDirty": false,
+        "gitInspectionErrors": {},
+        "architecture": "amd64",
+        "steps": {
+          "prepare": "success",
+          "tools": "success",
+          "qualify": "failure"
+        },
+        "status": "not-passed"
+      },
+      "scope": "Reuse this exact source lint and changed-owner22XML only; original overall failure not relabeled."
+    },
+    "receiptSHA256": "5bf4cd6221f94f93a4e08eb177d079c267ee5721ae9ea8a58bf27e32c09f7736"
+  },
+  "armHandlerNotApplicableReason": "ARM64 constant maps the entire address space; sole mmap trap installation is unreachable and its handler/assembly/ABI function symbols are absent from the production ELF",
+  "state": "Local recovery draft; no sourcecommit/plan/push until root and peer review closure",
+  "reuseAddedInputs": [
+    "pkg/sentry/platform/kvm/machine.go",
+    "pkg/sentry/platform/kvm/machine_amd64.go",
+    "pkg/sentry/platform/kvm/machine_arm64.go"
+  ],
+  "requiredCases": {
+    "//pkg/sentry/platform/kvm/codegen:codegen_test": [
+      "TestMmapHandlerApplicability/amd64_live",
+      "TestMmapHandlerApplicability/arm64_not_live",
+      "TestMmapHandlerApplicability/arm64_changed_default",
+      "TestMmapHandlerApplicability/arm64_live_symbol",
+      "TestMmapHandlerApplicability/amd64_missing_handler",
+      "TestMmapHandlerApplicability/changed_installation",
+      "TestMmapHandlerApplicability/extra_installation",
+      "TestMmapHandlerApplicability/wrong_machine",
+      "TestProductionMmapHandlerApplicability/amd64",
+      "TestProductionMmapHandlerApplicability/arm64"
+    ]
+  },
+  "reusedQualifiedInspector": {
+    "receipt": {
+      "run": 44391663447,
+      "source": "d66785a6aef275d0e604f82fd7e46edc058e4786",
+      "plan": "8f6feaf6c8f714b562a797e2f290711b7c760d7e",
+      "artifactID": 14467932309,
+      "artifactSHA256": "665d15974ec33920c5904104f974452ebb799274adc91285fc2251eaa809df78",
+      "overall": "FAILURE retained",
+      "sourceLintPassed": true,
+      "changedOwnerPassed": true,
+      "observedCases": 31,
+      "names": [
+        "TestBindProductionSourceSite",
+        "TestCompilationUnitWithoutLines",
+        "TestMmapHandlerApplicability",
+        "TestMmapHandlerApplicability/amd64_live",
+        "TestMmapHandlerApplicability/amd64_missing_handler",
+        "TestMmapHandlerApplicability/arm64_changed_default",
+        "TestMmapHandlerApplicability/arm64_live_symbol",
+        "TestMmapHandlerApplicability/arm64_not_live",
+        "TestMmapHandlerApplicability/changed_installation",
+        "TestMmapHandlerApplicability/extra_installation",
+        "TestMmapHandlerApplicability/wrong_machine",
+        "TestNoSplit",
+        "TestNoSplit/directive",
+        "TestNoSplit/missing",
+        "TestNoSplit/ordinary_comment",
+        "TestValidateActualSite",
+        "TestValidateActualSite/empty_range",
+        "TestValidateActualSite/missing_concrete_caller",
+        "TestValidateActualSite/missing_range",
+        "TestValidateActualSite/valid",
+        "TestValidateActualSite/wrong_file",
+        "TestValidateActualSite/wrong_line",
+        "TestValidateActualSite/wrong_origin",
+        "TestValidateActualSite/wrong_owner",
+        "TestValidateCalls",
+        "TestValidateCalls/generic_helper",
+        "TestValidateCalls/missing_owner",
+        "TestValidateCalls/no_calls",
+        "TestValidateCalls/ordinary_call",
+        "TestValidateCalls/unresolved",
+        "TestValidateCalls/wrapper"
+      ],
+      "allEightRequiredSubcasesPresent": true,
+      "configuration": "19e30eec1c9e8f626768a7bf2b1b46eb8ad9d791db47829befe7ecf3b7ae9304",
+      "rawMemberSHA256": {
+        "source-lint.log": "77f3acd3036a1996d3c0035f30be6a26a9b176fd9ba7c7fb1ec56a8620a30898",
+        "changed-codegen-owner.bep": "a75f1596c22c215073760d646a5f7bb6dadd7f35a148d59d71439ba9dbe02816",
+        "changed-codegen-owner-evidence/0/test.xml": "ba350645e18469ff0f9e3e5a5432f1468629109bb76810df7200ad6944d4a33e",
+        "changed-codegen-owner-evidence/0/test.log": "8228d088cfcde40b2c4c90be280d0abb97f72c8176462e39a0fdb4c9a7178b1f",
+        "original-ubuntu.sources": "fc0fadce467e557a358c63f5532de4590c02933dfff8016028bb0a319b0e8b44",
+        "official-apt-source.log": "11a90817d9ffff32cc68f9dd7a9a567579d38ffa6b56c5e4355e5fd1819dc53e",
+        "stages.tsv": "67a4e2774f6ad163c40b47be01571f524af0731753a8cc30f7f2618434bab37b"
+      },
+      "outcome": {
+        "source": "d66785a6aef275d0e604f82fd7e46edc058e4786",
+        "plan": "8f6feaf6c8f714b562a797e2f290711b7c760d7e",
+        "toolingScope": "bazel-9.3.1",
+        "actualFinalHead": "d66785a6aef275d0e604f82fd7e46edc058e4786",
+        "trackedWorktreeDirty": false,
+        "indexDirty": false,
+        "gitInspectionErrors": {},
+        "architecture": "amd64",
+        "steps": {
+          "prepare": "success",
+          "tools": "success",
+          "qualify": "failure"
+        },
+        "status": "not-passed"
+      },
+      "firstFailure": "247ms sourcecopy rejected actual known securityUbuntu HTTPURI without trailing slash; noAPT orproduction action",
+      "nextAction": "Accept exact observed same-host URI spelling; reuse actuald667 lint/owner/named8 passes, continuecompileronly."
+    },
+    "receiptSHA256": "7525b5fa4fe0e07c72c9a96497f6584d751ea6ba7055a43020e82edba1ab00a2"
+  },
+  "historicalInspectorSource": "c679388288a8661039c3ddb0d644f1a875c6140f",
+  "qualifiedInspectorSource": "d66785a6aef275d0e604f82fd7e46edc058e4786"
+}
