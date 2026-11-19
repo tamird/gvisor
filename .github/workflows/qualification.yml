@@ -25,6 +25,11 @@ on:
         default: test
         type: choice
         options: [test, aquery, run]
+      run_arguments:
+        description: JSON string array passed to the tool when command is run
+        required: false
+        default: '[]'
+        type: string
       architecture:
         required: true
         type: choice
@@ -187,6 +192,7 @@ jobs:
       SOURCE: ${{ inputs.source }}
       TARGETS: ${{ inputs.targets }}
       BAZEL_COMMAND: ${{ inputs.command }}
+      BAZEL_RUN_ARGUMENTS: ${{ inputs.run_arguments || '[]' }}
       BAZEL_RACE: ${{ inputs.race }}
       PLAN: ${{ inputs.plan }}
       QUAL_ARCH: ${{ inputs.architecture }}
@@ -265,9 +271,15 @@ jobs:
               export QUALIFICATION_BAZEL="$results/bazel"
               QUALIFICATION_BAZEL_OPTIONS_JSON=$(python3 -c 'import json, sys; print(json.dumps(sys.argv[1:]))' "${options[@]}")
               export QUALIFICATION_BAZEL_OPTIONS_JSON
-              "$results/bazel" run "${options[@]}" \
+              python3 - "$results/bazel" run "${options[@]}" \
                 --build_event_json_file="$results/events.json" --profile="$results/profile.gz" \
-                "${targets[0]}" 2>&1 | tee "$results/bazel.log"
+                "${targets[0]}" <<'PY' 2>&1 | tee "$results/bazel.log"
+          import json, os, sys
+          arguments = json.loads(os.environ['BAZEL_RUN_ARGUMENTS'])
+          if not isinstance(arguments, list) or any(not isinstance(value, str) or '\0' in value for value in arguments):
+              raise SystemExit('run_arguments must be a JSON array of strings without NUL characters')
+          os.execv(sys.argv[1], sys.argv[1:] + ['--', *arguments])
+          PY
               ;;
             aquery)
               "$results/bazel" aquery "${options[@]}" --output=jsonproto \
