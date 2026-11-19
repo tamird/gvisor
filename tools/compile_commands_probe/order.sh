@@ -7,7 +7,7 @@ for option in json.loads(os.environ['QUALIFICATION_BAZEL_OPTIONS_JSON']):
     sys.stdout.write(option + '\0')
 OPTIONS
 )
-target=//test/gpu:gpu_driver_versions_proto
+target=//test/gpu:gpu_driver_versions_cc_proto
 "$QUALIFICATION_BAZEL" build "${options[@]}" --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs --output_groups=cc_compile_inputs "$target"
 generator_options=(--resolve "--bazel-command=$QUALIFICATION_BAZEL")
 for option in "${options[@]}"; do generator_options+=("--bazelopt=$option"); done
