@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T03:50:53.908887+00:00",
+    "updatedAt": "2026-11-19T05:30:14.788590+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10722,8 +10722,8 @@
       "title": "Run lint checks with declared Bazel inputs and tools",
       "url": "https://github.com/tamird/gvisor/tree/rbe-lint-integration-cleanup",
       "group": "rbe",
-      "status": "Fork lint and license evidence closed; upstream extraction separate",
-      "updatedAt": "2026-11-19T03:50:53.908887+00:00",
+      "status": "Declared formatter checks and callers pass; actual fixer fixture analysis failure remains",
+      "updatedAt": "2026-11-19T05:30:14.788590+00:00",
       "summary": "All five declared lint checkers now pass together in the independently reviewed eleven-owner shared invocation at integration 11890. The maintained cleanup 31c also passes its focused Buildifier correction (outcome 210875, peer 54a59). Earlier evidence separately closes complete 488-file C/C++ formatter parity, source-packaged cpplint, declared fixers, exact checker input subsets, formatter SDK 1.27 and default compiler SDK 1.26.3. Original analysis, formatting and metadata failures remain retained. The earlier audit recovered the three lint records but still failed full Fetch/Verify on retained audit issues. The later scoped fork integration, including the exact codespell wheel record, closed canonical Fetch and Verify for 1,349 entries at a0f1a1bb, committed as rbe-license-completion@324068a710. Original audit failures remain historical evidence; no separate user policy decision is pending. Upstream extraction and contributor review remain pending.",
       "followup": {
         "branchRefObservation": {
@@ -10738,12 +10738,57 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Coverage/root finish the permanent Bazel-owned lint extraction and qualify actual source formatting. Preserve canonical goimports-format-only behavior and exclusions; no LLVM, pip, or per-item workflow.",
-        "recheckCondition": "Exact lint source candidate and canonical validation result; root owns source delivery and any required review.",
+        "nextAction": "Root/coverage add explicit main=\"fixer_test.py\" at the owning configured py_test, then validate only the actual fixer gate with existing Bazel infrastructure. Preserve passing source/caller gates and all retained failures; final fixture qualification remains open.",
+        "recheckCondition": "Exact owning BUILD correction and actual fixture result; root controls source review/publication. No new contributor decision or workflow is required.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "31c359732e108552f6af11d1ab383e48495dee4b",
-        "curatedAt": "2026-11-19T03:50:53.908887+00:00",
-        "disposition": "Active bounded extraction from existing31c onto fresh5be: declared Goimports/Buildifier and shared source inputs only. Implementation and source-format qualification owned by coverage/root; not yet qualified."
+        "curatedAt": "2026-11-19T05:30:14.788590+00:00",
+        "disposition": "Permanent Goimports/Buildifier source checks and native caller regressions pass. The final actual-fixer fixture did not execute: with_cfg renamed the underlying py_test and its implicit main path was absent. This is a declared BUILD integration defect, not a formatter runtime failure or contributor decision.",
+        "permanentFormatterMilestone": {
+          "source": "964802301303265de28e539c87b835498b21a081",
+          "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
+          "scope": "Declared Goimports/Buildifier and source inputs; canonical format-only/exclusion behavior and native caller continuation retained. No LLVM, pip, or general framework.",
+          "selectedAliasNegative": {
+            "run": 44455418262,
+            "state": "Expected selected mode120000 alias rejected before formatter actions",
+            "receipt": {
+              "file": "formatter-negative-44455418262-evidence.json",
+              "sha256": "4d8fb48c1cd91cd182343bb4c6eeb44d0dc8fd46c51c7cf49efffff26bcef68e"
+            }
+          },
+          "originalPositive": {
+            "run": 44455420221,
+            "state": "Goimports passed; Buildifier found two real whitespace errors, subsequently corrected",
+            "receipt": {
+              "file": "formatter-positive-44455420221-evidence.json",
+              "sha256": "f97466e7b3cc954072e483d5106069c3664a83350043092e1ebd597ef5ad9026"
+            }
+          },
+          "combinedPositive": {
+            "run": 44457519169,
+            "state": "Both declared formatters fresh remote PASS alongside the scoped source gates",
+            "receipt": {
+              "file": "prepared-integration-44457519169-evidence.json",
+              "sha256": "b9e38075c85e365bf333b69b750bef6637f6c188aa6e89ca3ea16721bb56fe54"
+            }
+          },
+          "callers": {
+            "run": 44460418333,
+            "state": "Three fresh remote wrappers PASS; native lint regression log confirms eight cases; fixer binaries built, not invoked",
+            "receipt": {
+              "file": "formatter-caller-44460418333-evidence.json",
+              "sha256": "c8a53cb8d9b507aa570c23584ea35837ac4601cc37c1497161afe8fa9f0490ba"
+            }
+          },
+          "actualFixer": {
+            "run": 44464546970,
+            "state": "FAIL in analysis: implicit fixer_test_/fixer_test.py missing; no fixture execution or XML. Buildifier fresh PASS; Goimports/native regressions valid cache PASS; source and credential cleanup PASS.",
+            "receipt": {
+              "file": "formatter-fixer-44464546970-evidence.json",
+              "sha256": "3f0df4e1377bbaa2474979e6333670f79b2ae6b4d7fa1d81f41b541973ed33df"
+            }
+          }
+        }
       }
     },
     {
@@ -41484,7 +41529,7 @@
           "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-19T03:50:53.908887+00:00",
+      "updatedAt": "2026-11-19T05:30:14.788590+00:00",
       "status": "open",
       "summary": "The published single commit 6cb9d5004 is mergeable. The rebase preserved all 78 changed lines. The Bazel changelog action emitted UTC midnight for a dated release and the Unix epoch for an untagged build under both UTC and Pacific/Honolulu.\n\nEarlier qualification on 8311c4cdb:\n\nThe changelog used the worker’s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
       "refinement": {
@@ -41500,8 +41545,8 @@
         "owner": "root",
         "sourceHead": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
         "observedAt": "2026-11-11T21:53:08+00:00",
-        "disposition": "Permanent declared-binary changelog behavior target now PASS on actual fresh remote execution:7XML0fail/skip. Prior runfiles integration failure resolved and retained. Final local14ee tree equals tested6db; source formatting remains active work, not a contributor decision.",
-        "nextAction": "Root/coverage finish canonical source-format qualification, then complete final source review and fresh publication lease. Preserve historical package evidence separately; no full-package or lint claim from behavior test.",
+        "disposition": "Permanent changelog behavior passed fresh remote execution; the combined declared-source integration now also passes source formatting and reuses the seven-case behavior result. Exact proposal 14ee is remotely published; original source PR remains unchanged. Prior runfiles integration failure remains resolved historical evidence.",
+        "nextAction": "Root completes final source review and publication decision using the exact qualified proposal, fresh upstream/base and source/fork leases. No manual signing task or duplicate no-diff approval request.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
@@ -41511,8 +41556,8 @@
           "https://github.com/gvisor/gvisor/pull/17678"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Exact source-format qualification terminal result, final source review/head/base freshness, source/import feedback or lifecycle change.",
-        "curatedAt": "2026-11-19T03:50:53.908887+00:00",
+        "recheckCondition": "Exact proposal/source/base or qualification changes, final review decision, source/import CI or substantive feedback; root remains accountable.",
+        "curatedAt": "2026-11-19T05:30:14.788590+00:00",
         "priorImportNextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17678,
@@ -41602,7 +41647,7 @@
           "parent": "4c51f97bef8ab4452cdfaca1b6b58c92fdfb1d58",
           "sameFinalSourceTree": true,
           "scope": "Validated test commit with mechanical DCO; Debian test runfiles correction folded into its logical test commit.",
-          "state": "Prepared local only; final source tree independently verified identical to tested candidate. Standing DCO mechanically applied; no source PR push.",
+          "state": "Published proposal ref verified at exact head; source PR head remains unchanged. Final source tree equals the qualified candidate.",
           "receipt": {
             "file": "validated-test-dco-candidates-20261119.json",
             "sha256": "3cc5e90ee2dee684465623f3c81566c0aeaa558adcff3ccdaa13ad284243df28"
@@ -41624,7 +41669,25 @@
             },
             "activeFixOwner": "fuse_full20_resume"
           }
-        ]
+        ],
+        "publishedProposal": {
+          "repo": "tamird/gvisor",
+          "ref": "review/debian-changelog-refresh-20261119",
+          "head": "14ee4cb6a4d22248050c122113616c70364960cf",
+          "url": "https://github.com/tamird/gvisor/commit/14ee4cb6a4d22248050c122113616c70364960cf",
+          "state": "Exact remote ref verified; no source PR amendment"
+        },
+        "preparedSourceIntegration": {
+          "run": 44457519169,
+          "source": "8f3df93c1ec5fe8b15e676ae4c8c899c8b15e2db",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44457519169",
+          "receipt": {
+            "file": "prepared-integration-44457519169-evidence.json",
+            "sha256": "b9e38075c85e365bf333b69b750bef6637f6c188aa6e89ca3ea16721bb56fe54"
+          },
+          "state": "Goimports/Buildifier fresh remote PASS; unchanged Debian seven XML or secfuzz three XML passed from valid remote cache. Other HTTP targets are compile/TestMain only.",
+          "limits": "No full Debian package, fuzz-counter uniqueness, full filter corpus, or timed benchmark claim."
+        }
       },
       "dcoCoordination": {
         "owner": "root",
@@ -43428,7 +43491,7 @@
       "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-19T03:50:53.908887+00:00",
+      "updatedAt": "2026-11-19T05:30:14.788590+00:00",
       "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The generator splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
       "evidence": [
         {
@@ -43472,8 +43535,8 @@
         "owner": "root",
         "sourceHead": "d6275511008e4970b13afec999be79bb8358fd1b",
         "observedAt": "2026-11-08T13:23:10Z",
-        "disposition": "Fresh generated-implementation Go owner PASS:3XML0fail/skip, exact local035aad source tree equals tested2fe with mechanical DCO applied. No source PR push. No fresh8192 counter-uniqueness/full-corpus/performance claim.",
-        "nextAction": "Root/coverage finish source-format qualification and assess exact historical instrumentation/corpus evidence reuse before broader claim; final source review and fresh publication lease remain owned work.",
+        "disposition": "Generated-implementation bits and declared formatting passed; exact proposal 035aad is remotely published with unchanged qualified tree. Specialized instrumentation and current filter corpus remain separate explicit evidence gates, not replaced by ordinary bits or formatting results.",
+        "nextAction": "Root resolves the recorded original-instrumentation evidence gap and current dependency-wide fuzz corpus gate through permanent Bazel owners before a broader qualification claim; preserve existing approval and publication boundaries.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16604",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...de106f647e5e2157aa3d6ac91d09727f698daca4",
@@ -43485,8 +43548,8 @@
           "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362",
           "https://github.com/gvisor/gvisor/pull/17677"
         ],
-        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
-        "curatedAt": "2026-11-19T03:50:53.908887+00:00",
+        "recheckCondition": "Exact proposal/source/base or qualification changes, final review decision, source/import CI or substantive feedback; root remains accountable.",
+        "curatedAt": "2026-11-19T05:30:14.788590+00:00",
         "priorImportNextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17677,
@@ -43565,12 +43628,38 @@
           "parent": "7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a",
           "sameFinalSourceTree": true,
           "scope": "Validated fuzz-tag selection test commit with mechanical DCO; final tree and parent preserved.",
-          "state": "Prepared local only; final source tree independently verified identical to tested candidate. Standing DCO mechanically applied; no source PR push.",
+          "state": "Published proposal ref verified at exact head; source PR head remains unchanged. Final source tree equals the qualified candidate.",
           "receipt": {
             "file": "validated-test-dco-candidates-20261119.json",
             "sha256": "3cc5e90ee2dee684465623f3c81566c0aeaa558adcff3ccdaa13ad284243df28"
           },
           "remainingGate": "Canonical source-format qualification active; preserve source approvals, no human signing task or duplicate decision."
+        },
+        "publishedProposal": {
+          "repo": "tamird/gvisor",
+          "ref": "review/secfuzz-bounded-refresh-20261119",
+          "head": "035aadce3f14e3ee2848cb7c16dabf3340008d10",
+          "url": "https://github.com/tamird/gvisor/commit/035aadce3f14e3ee2848cb7c16dabf3340008d10",
+          "state": "Exact remote ref verified; no source PR amendment"
+        },
+        "preparedSourceIntegration": {
+          "run": 44457519169,
+          "source": "8f3df93c1ec5fe8b15e676ae4c8c899c8b15e2db",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44457519169",
+          "receipt": {
+            "file": "prepared-integration-44457519169-evidence.json",
+            "sha256": "b9e38075c85e365bf333b69b750bef6637f6c188aa6e89ca3ea16721bb56fe54"
+          },
+          "state": "Goimports/Buildifier fresh remote PASS; unchanged Debian seven XML or secfuzz three XML passed from valid remote cache. Other HTTP targets are compile/TestMain only.",
+          "limits": "No full Debian package, fuzz-counter uniqueness, full filter corpus, or timed benchmark claim."
+        },
+        "instrumentationReuseAssessment": {
+          "receipt": {
+            "file": "secfuzz-original-proof-reuse-assessment.json",
+            "sha256": "73bf7141790328a96fd07dde95eee728587846fdaf946fb85de75027898f9c1f"
+          },
+          "state": "Original generated source and Go 1.27.3 SDK declaration match; actual original compiler flags and specialized checker are unavailable. Rules_go changed 0.63 to 0.65; this alone establishes neither validity nor invalidity. Filter production rules changed, so historical corpus PASS is not a current corpus proof.",
+          "nextGate": "Verify dependency-wide fuzz configuration for //runsc/boot/filter:filter_fuzz_test; consumer-only gotags cannot select its imported secfuzz implementation. Recover the original uniqueness checker/compiler inputs or migrate that checker into the owning Bazel test. Ordinary bits tests do not prove 8,192 unique instrumentation counters."
         }
       },
       "number": 16604,
@@ -95622,19 +95711,19 @@
       "repo": "google/gvisor",
       "number": 17546,
       "ref": "proposal/http-benchmark-readiness-errors",
-      "head": "d24b09dfc0bf359e062d42e08d788b99b1a25161",
+      "head": "f3c485cd64fe2d802cbec5891f537f797e76a3c1",
       "title": "Stop HTTP benchmarks when the server probe fails",
       "url": "https://github.com/google/gvisor/pull/17546",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-19T03:50:53.908887+00:00",
+      "updatedAt": "2026-11-19T05:30:14.788590+00:00",
       "followup": {
-        "sourceHead": "d24b09dfc0bf359e062d42e08d788b99b1a25161",
+        "sourceHead": "f3c485cd64fe2d802cbec5891f537f797e76a3c1",
         "owner": "root",
-        "nextAction": "Root follows First Pass1846 to terminal and integrates landed909c3dce2 (#17735) during eligible fresh-base source delivery; the Pipeline failure came from the obsolete repository hook in oldd24b, not current5be. Etienne approved exactd24b; no new hook patch, retry, outreach, import/merge or source-regression claim. Earlier quota failure remains historical.",
+        "nextAction": "Root follows substantive review/import lifecycle changes. After this independent PR lands or imports, rebase #17780 and remove only its redundant readiness commit while preserving these detailed errors and the timing, buffers and Hey work. No closure, merge, notification or new prerequisite is implied.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "FirstPass1846 terminal or exact-head checks change; root owning-hook/source integration decision, source/head/import lifecycle or substantive new maintainer feedback. Preserve earlier approval/qualification boundaries.",
+        "recheckCondition": "New substantive review, exact-head check/source/import lifecycle change, or landing/import that triggers the existing #17780 ordering follow-up.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17546",
           "https://github.com/tamird/gvisor/commit/92c2c4ff86b674a8d910e2227312e161f1d4613d",
@@ -95642,7 +95731,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1595",
           "https://buildkite.com/gvisor/first-pass/builds/1595#01a1eae2-d8d3-44a3-9041-9a08f1e12ce4"
         ],
-        "curatedAt": "2026-11-19T03:50:53.908887+00:00",
+        "curatedAt": "2026-11-19T05:30:14.788590+00:00",
         "freshApprovalAndCI": {
           "sourceHead": "d24b09dfc0bf359e062d42e08d788b99b1a25161",
           "approval": {
@@ -95678,7 +95767,21 @@
           "DCO": "SUCCESS",
           "imports": "Complete canonical lookup has no matching public export; no imported/merged claim."
         },
-        "priorNextActionBeforeFreshApproval": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source d24b09dfc0bf359e062d42e08d788b99b1a25161; observed 2026-11-17T19:29:29.454062+00:00): build 1595 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "priorNextActionBeforeFreshApproval": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source d24b09dfc0bf359e062d42e08d788b99b1a25161; observed 2026-11-17T19:29:29.454062+00:00): build 1595 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "currentPublishedLifecycle": {
+          "head": "f3c485cd64fe2d802cbec5891f537f797e76a3c1",
+          "base": "5be33d2bea487d01b7506d2aff0bb15d44bc2170",
+          "state": "OPEN; MERGEABLE; all seven reported checks PASS; GitHub REVIEW_REQUIRED",
+          "firstPass": 1849,
+          "duration": "35m48s",
+          "retryHistory": "cgroupv2 container_test first attempt failed; provider retry passed. No manual retry.",
+          "reviewNuance": "Same Etienne review ID5968782217 and submittedAt03:12:04 now provider-bound to f3; no new post-amendment human review event claimed.",
+          "receipt": {
+            "file": "http-readiness-17546-published-lifecycle-evidence.json",
+            "sha256": "56663009763f7f3241120e54656f0d729c38b242f88d16169f3511e521320ef9"
+          }
+        },
+        "disposition": "Published fresh f3 integrates the landed obsolete-hook removal through base5be and passes current-head First Pass1849 plus all six GitHub checks. Earlier old-head hook failure is resolved by the fresh base; provider retry history retained. Review/import/merge authority holds remain."
       },
       "dcoAmendment": {
         "oldHead": "92c2c4ff86b674a8d910e2227312e161f1d4613d",
@@ -133242,5 +133345,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T03:50:53.908887+00:00"
+  "updatedAt": "2026-11-19T05:30:14.788590+00:00"
 }
