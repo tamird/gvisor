@@ -20,8 +20,10 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"os/exec"
@@ -791,12 +793,11 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (result error) {
 			if err != nil {
 				return err
 			}
-			scanner := bufio.NewScanner(f)
-			for scanner.Scan() {
-				if line := scanner.Text(); isWarning(line) {
-					warningsFound = append(warningsFound, strings.TrimSpace(line))
-				}
+			warnings, readErr := readLogWarnings(f)
+			if err := errors.Join(readErr, f.Close()); err != nil {
+				return fmt.Errorf("read log %s: %w", file.Name(), err)
 			}
+			warningsFound = append(warningsFound, warnings...)
 		}
 		if len(warningsFound) > 0 {
 			return fmt.Errorf("warnings found: %s", warningsFound)
@@ -814,6 +815,23 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (result error) {
 	}
 
 	return err
+}
+
+func readLogWarnings(r io.Reader) ([]string, error) {
+	reader := bufio.NewReader(r)
+	var warnings []string
+	for {
+		line, err := reader.ReadString('\n')
+		if isWarning(strings.TrimRight(line, "\r\n")) {
+			warnings = append(warnings, strings.TrimSpace(line))
+		}
+		if err == io.EOF {
+			return warnings, nil
+		}
+		if err != nil {
+			return warnings, err
+		}
+	}
 }
 
 // Regex matching some performance-related warnings that are safe to ignore in tests.
