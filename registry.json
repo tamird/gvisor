@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T18:59:24.568877+00:00",
+    "updatedAt": "2026-11-19T19:21:16.819846+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -99552,13 +99552,13 @@
       "title": "Preserve public Buildkite metadata",
       "url": "https://github.com/tamird/gvisor/commit/dae23235455b78c2e1d3e4d569534aae1423eb35",
       "group": "rbe",
-      "status": "Qualified metadata follow-up; source decision and typing prerequisite pending",
-      "summary": "Second topic: metadata retained by default, full messages/raw pull_request preserved and derived fields owned once. Both architectures strict checks and33reader cases, consumer inspection, independent reviews and live1935 pre-agent diagnostic pass. Existing exactdae source question pending; publication remains a separate one-commit PR after typing prerequisite lands.",
+      "status": "On hold: migration direction and source revision",
+      "summary": "Qualified source preserved. The user requested revision of the first topic and then held further Buildkite/typechecker investment while considering a standard compilation-database replacement and Bazel/RBE migration. This proposal is not approved or awaiting an active source-review answer; no upstream publication occurred.",
       "followup": {
         "owner": "root",
         "sourceHead": "dae23235455b78c2e1d3e4d569534aae1423eb35",
-        "nextAction": "Await existingdae source decision and actual first-topic merge. Preserve qualified one-commit delta; after prerequisite landing refresh/requalify affected inputs and open its separate standalone PR. No duplicate review or mechanical DCO question.",
-        "recheckCondition": "Existing source decision, actual typing prerequisite landing or substantive source/consumer feedback.",
+        "nextAction": "Root assesses a standard compilation-database replacement and prepares the requested Bazel/RBE migration proposal. Preserve both qualified refs and evidence; hold further Buildkite/typechecker work and source publication until direction is resolved. Do not repeat either source-review question.",
+        "recheckCondition": "User direction on the migration proposal or standard compilation-database replacement, or explicit release of the hold.",
         "body": "Buildkite can reject a job before assigning an agent, leaving its log empty. The public job record includes stack_error_detail, but the failed-job serializer discarded it and hid compute-quota admission failures.\n\nPreserve that optional provider detail alongside the job outcome. Cover a pre-agent failure with an empty log and keep the field absent when the provider supplies none.\n\nPrepared with assistance from OpenAI Codex under my review.\n",
         "qualification": {
           "buildkite-pre-agent-44514167163-evidence.json": {
@@ -99571,7 +99571,7 @@
           }
         },
         "localRef": "review/buildkite-pre-agent-errors-20261119",
-        "baselineDecision": "25948 baseline LGTM remains historical; user did not approve91c/6ac. User requests typechecking first, then metadata retention, with pyright+mypy+ty at maximally strict supported settings and pyproject.toml modern dependency management.",
+        "baselineDecision": "The user's 25948 baseline LGTM is historical only. It does not approve 830 or dae. The user revised the first-topic request and then held both topics pending migration direction.",
         "revision": {
           "source": "a53a36a5d3facfe0f0e3e6b7011d98ab1d88207d",
           "ciSource": "440a79a0a5c0dd382e0e48fd59900652432b21bf",
@@ -99622,7 +99622,7 @@
             "sha256": "ff6a74427edcdd6176712e67604de206202a4f0ba71d797b15ece7d2bfefb8b3"
           }
         },
-        "remainingRetention": "Second topic remains open after strict typechecker delivery. Previously qualified retention behavior is historical, not present in the current original-reader first topic.",
+        "remainingRetention": "Held with the revised first topic pending migration direction; preserve qualified dae and its evidence without further implementation or publication.",
         "executionBlocker": {
           "state": "Superseded candidate-specific history; no manual DCO decision pending",
           "history": "Automatic review had rejected old91c/6ac certification operation. Those source proposals were subsequently declined for revision.",
@@ -99641,8 +99641,8 @@
             "sha256": "f77ba8b9050491ca15ffb83943dbd8e0c44d41ad5c521f3cf948234c0a162c90"
           }
         },
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "Second topic: metadata retained by default, full messages/raw pull_request preserved and derived fields owned once. Both architectures strict checks and33reader cases, consumer inspection, independent reviews and live1935 pre-agent diagnostic pass. Existing exactdae source question pending; publication remains a separate one-commit PR after typing prerequisite lands.",
+        "curatedAt": "2026-11-19T19:21:16.819846+00:00",
+        "disposition": "Qualified source preserved. The user requested revision of the first topic and then held further Buildkite/typechecker investment while considering a standard compilation-database replacement and Bazel/RBE migration. This proposal is not approved or awaiting an active source-review answer; no upstream publication occurred.",
         "settledBaselineHistory": [
           {
             "proposal": {
@@ -99666,12 +99666,24 @@
               "summary": "One source-review/standalone-PR question sent for830; do not repeat. Strict mypy/Pyright/Ty and30reader cases pass onAMD/ARM. Both independent findings resolved and re-reviewed. Metadata retention is separate; no approval inferred.",
               "reviewCommand": "git range-diff 6ac227c10^! 830655390^!"
             },
-            "disposition": "User already LGTM25948 baseline, then requested revisions. No pending25948 human decision; strict-checker first topic requires fresh review after completion."
+            "disposition": "Superseded projection; no approval inferred. The earlier curator incorrectly applied the historical 25948 baseline LGTM narrative to this different proposal. Preserve this record as history; the current proposal is held under the user's revised direction."
+          },
+          {
+            "proposal": {
+              "kind": "proposal",
+              "status": "pending",
+              "head": "dae23235455b78c2e1d3e4d569534aae1423eb35",
+              "url": "https://github.com/tamird/gvisor/commit/dae23235455b78c2e1d3e4d569534aae1423eb35",
+              "title": "Preserve public Buildkite metadata",
+              "summary": "One second-topic source-review question sent fordae; do not repeat. Approval authorizes future publication after the typing prerequisite lands, not a two-commit PR or merge.",
+              "reviewCommand": "git range-diff 91c4167e^! dae232354^!"
+            },
+            "disposition": "User requested revision of the first topic, then held further Buildkite/typechecker investment while considering a standard compilation-database replacement and Bazel/RBE migration. This source question is inactive under that hold; no source approval or publication authorization is inferred."
           }
         ],
         "qualifiedFirstTopic": {
           "source": "83065539037ea2d55a33e66e0f5dc433851a454f",
-          "state": "PASS all3 checkers and30reader cases onAMD/ARM; pinnedTy0.0.107 accepts both strict-analysis semantics. Original URL-error fallback restored. Independent packaging/correctness/style re-review has no findings. One exact contributor decision pending.",
+          "state": "Qualified historical source and receipts preserved; currently held, with no active approval question or publication authorization.",
           "receipt": {
             "file": "python-triple-830-current-handoff.json",
             "sha256": "d2ef21bb98ace32270abcbd4e4f1b2d591198cdcaeeb61384358c47d29278fa1"
@@ -99680,10 +99692,10 @@
         "secondRetentionTopic": {
           "source": "dae23235455b78c2e1d3e4d569534aae1423eb35",
           "parent": "83065539037ea2d55a33e66e0f5dc433851a454f",
-          "state": "Prepared fork-only narrow second topic; affectedAMD44590922618 in qualification. No upstream opening or source approval inferred; one-commit delivery waits prerequisite policy.",
+          "state": "Qualified historical source and receipts preserved; currently held, with no active approval question or publication authorization.",
           "scope": "Reader metadata defaults retained, selectedjobs/derivedaliases owned once; no tool/config change."
         },
-        "observedAt": "2026-11-19T18:59:24.568877+00:00",
+        "observedAt": "2026-11-19T19:21:16.819846+00:00",
         "retentionQualification": {
           "source": "dae23235455b78c2e1d3e4d569534aae1423eb35",
           "state": "PASS AMD/ARM all3maxstrict+33reader cases; both independent reviews no findings; live realquota reason retained through public CLI.",
@@ -99697,19 +99709,10 @@
           }
         }
       },
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
-      "nextStep": "Await existingdae source decision and actual first-topic merge. Preserve qualified one-commit delta; after prerequisite landing refresh/requalify affected inputs and open its separate standalone PR. No duplicate review or mechanical DCO question.",
-      "recheckCondition": "Existing source decision, actual typing prerequisite landing or substantive source/consumer feedback.",
-      "ref": "research/buildkite-metadata-typed-current",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "dae23235455b78c2e1d3e4d569534aae1423eb35",
-        "url": "https://github.com/tamird/gvisor/commit/dae23235455b78c2e1d3e4d569534aae1423eb35",
-        "title": "Preserve public Buildkite metadata",
-        "summary": "One second-topic source-review question sent fordae; do not repeat. Approval authorizes future publication after the typing prerequisite lands, not a two-commit PR or merge.",
-        "reviewCommand": "git range-diff 91c4167e^! dae232354^!"
-      }
+      "updatedAt": "2026-11-19T19:21:16.819846+00:00",
+      "nextStep": "Root assesses a standard compilation-database replacement and prepares the requested Bazel/RBE migration proposal. Preserve both qualified refs and evidence; hold further Buildkite/typechecker work and source publication until direction is resolved. Do not repeat either source-review question.",
+      "recheckCondition": "User direction on the migration proposal or standard compilation-database replacement, or explicit release of the hold.",
+      "ref": "research/buildkite-metadata-typed-current"
     },
     {
       "id": "pr:17816",
@@ -99767,37 +99770,42 @@
       "title": "Check maintained Python tools with strict typing",
       "url": "https://github.com/tamird/gvisor/commit/83065539037ea2d55a33e66e0f5dc433851a454f",
       "group": "rbe",
-      "status": "Qualified first topic; contributor review pending",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
+      "status": "On hold: migration direction and source revision",
+      "updatedAt": "2026-11-19T19:21:16.819846+00:00",
       "followup": {
         "owner": "root",
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
+        "curatedAt": "2026-11-19T19:21:16.819846+00:00",
         "sourceHead": "83065539037ea2d55a33e66e0f5dc433851a454f",
-        "observedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "First topic: three strict Bazel checkers with modern pyproject/hashed lock and necessary typing in three maintained programs. AMD/ARM qualification, both review fixes and independent re-review complete; exact830 source decision pending.",
+        "observedAt": "2026-11-19T19:21:16.819846+00:00",
+        "disposition": "Qualified source preserved. The user requested revision of the first topic and then held further Buildkite/typechecker investment while considering a standard compilation-database replacement and Bazel/RBE migration. This proposal is not approved or awaiting an active source-review answer; no upstream publication occurred.",
         "qualification": {
           "source": "83065539037ea2d55a33e66e0f5dc433851a454f",
-          "state": "PASS all3 checkers and30reader cases onAMD/ARM; pinnedTy0.0.107 accepts both strict-analysis semantics. Original URL-error fallback restored. Independent packaging/correctness/style re-review has no findings. One exact contributor decision pending.",
+          "state": "Historical qualification PASS preserved at this exact source; the source proposal is held for revision/direction and is not approved.",
           "receipt": {
             "file": "python-triple-830-current-handoff.json",
             "sha256": "d2ef21bb98ace32270abcbd4e4f1b2d591198cdcaeeb61384358c47d29278fa1"
           }
         },
-        "nextAction": "Await the existing830 contributor source decision once. On approval add authorized DCO and publish one standalone PR, then follow exact-head CI/review/import and prerequisite landing; no manual certification question.",
-        "recheckCondition": "Existing source decision or substantive source/review/check/dependency change."
+        "nextAction": "Root assesses a standard compilation-database replacement and prepares the requested Bazel/RBE migration proposal. Preserve both qualified refs and evidence; hold further Buildkite/typechecker work and source publication until direction is resolved. Do not repeat either source-review question.",
+        "recheckCondition": "User direction on the migration proposal or standard compilation-database replacement, or explicit release of the hold.",
+        "settledBaselineHistory": [
+          {
+            "proposal": {
+              "kind": "proposal",
+              "status": "pending",
+              "head": "83065539037ea2d55a33e66e0f5dc433851a454f",
+              "url": "https://github.com/tamird/gvisor/commit/83065539037ea2d55a33e66e0f5dc433851a454f",
+              "title": "Check maintained Python tools with strict typing",
+              "summary": "One source-review/standalone-PR question sent for830; do not repeat. Strict mypy/Pyright/Ty and30reader cases pass onAMD/ARM. Both independent findings resolved and re-reviewed. Metadata retention is separate; no approval inferred.",
+              "reviewCommand": "git range-diff 6ac227c10^! 830655390^!"
+            },
+            "disposition": "User requested revision of the first topic, then held further Buildkite/typechecker investment while considering a standard compilation-database replacement and Bazel/RBE migration. This source question is inactive under that hold; no source approval or publication authorization is inferred."
+          }
+        ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "83065539037ea2d55a33e66e0f5dc433851a454f",
-        "url": "https://github.com/tamird/gvisor/commit/83065539037ea2d55a33e66e0f5dc433851a454f",
-        "title": "Check maintained Python tools with strict typing",
-        "summary": "One source-review/standalone-PR question sent for830; do not repeat. Strict mypy/Pyright/Ty and30reader cases pass onAMD/ARM. Both independent findings resolved and re-reviewed. Metadata retention is separate; no approval inferred.",
-        "reviewCommand": "git range-diff 6ac227c10^! 830655390^!"
-      },
-      "summary": "First topic: three strict Bazel checkers with modern pyproject/hashed lock and necessary typing in three maintained programs. AMD/ARM qualification, both review fixes and independent re-review complete; exact830 source decision pending.",
-      "nextStep": "Await the existing830 contributor source decision once. On approval add authorized DCO and publish one standalone PR, then follow exact-head CI/review/import and prerequisite landing; no manual certification question.",
-      "recheckCondition": "Existing source decision or substantive source/review/check/dependency change."
+      "summary": "Qualified source preserved. The user requested revision of the first topic and then held further Buildkite/typechecker investment while considering a standard compilation-database replacement and Bazel/RBE migration. This proposal is not approved or awaiting an active source-review answer; no upstream publication occurred.",
+      "nextStep": "Root assesses a standard compilation-database replacement and prepares the requested Bazel/RBE migration proposal. Preserve both qualified refs and evidence; hold further Buildkite/typechecker work and source publication until direction is resolved. Do not repeat either source-review question.",
+      "recheckCondition": "User direction on the migration proposal or standard compilation-database replacement, or explicit release of the hold."
     }
   ],
   "edges": [
@@ -103824,7 +103832,7 @@
       "from": "branch:buildkite-pre-agent-details",
       "to": "branch:python-strict-typechecking",
       "type": "depends_on",
-      "reason": "User requested strict type checking first. The qualified second-topic commit is based on830; deliver it as a separate one-commit PR after that prerequisite lands.",
+      "reason": "The preserved dae commit is based on 830. Both proposals are held under the user's revised migration direction; this Git dependency does not authorize either publication or commit to the former PR sequence.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/dae23235455b78c2e1d3e4d569534aae1423eb35",
         "https://github.com/tamird/gvisor/commit/83065539037ea2d55a33e66e0f5dc433851a454f"
@@ -135210,5 +135218,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T18:59:24.568877+00:00"
+  "updatedAt": "2026-11-19T19:21:16.819846+00:00"
 }
