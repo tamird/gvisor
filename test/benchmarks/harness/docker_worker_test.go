@@ -34,6 +34,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
+	"github.com/moby/sys/mountinfo"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
@@ -259,6 +260,14 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 		t.Fatal(err)
 	}
 	socket := filepath.Join(root, "docker.sock")
+	dataRoot := filepath.Join(root, "data")
+	execRoot := filepath.Join(root, "e")
+	// Docker-managed containerd reserves space for socket suffixes.
+	managedSocket := filepath.Join(execRoot, "containerd", "containerd.sock.ttrpc")
+	if len(managedSocket) > 104 {
+		os.RemoveAll(root)
+		t.Fatalf("owned containerd socket path is too long: %d bytes", len(managedSocket))
+	}
 	if len(socket) >= 108 {
 		os.RemoveAll(root)
 		t.Fatalf("owned Docker socket path is too long: %d bytes", len(socket))
@@ -269,8 +278,8 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 		"bridge":    "none",
 		"iptables":  false,
 		"ip6tables": false,
-		"data-root": filepath.Join(root, "data"),
-		"exec-root": filepath.Join(root, "exec"),
+		"data-root": dataRoot,
+		"exec-root": execRoot,
 		"pidfile":   filepath.Join(root, "docker.pid"),
 	})
 	if err != nil {
@@ -336,14 +345,48 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 				t.Logf("owned Docker daemon log tail: %s", data)
 			}
 		}
+		rootCleaned := false
 		if stopped {
-			if err := os.RemoveAll(root); err != nil {
-				t.Errorf("remove owned Docker files: %v", err)
+			// Docker marks a data-root self-mount for shutdown cleanup. A
+			// startup failure can leave that mount after the process exits.
+			marker, markerErr := os.Lstat(filepath.Join(execRoot, "unmount-on-shutdown"))
+			mounted, mountErr := mountinfo.Mounted(dataRoot)
+			if os.IsNotExist(mountErr) {
+				mounted, mountErr = false, nil
+			}
+			switch {
+			case markerErr != nil && !os.IsNotExist(markerErr):
+				t.Errorf("inspect owned Docker unmount marker: %v", markerErr)
+			case markerErr == nil && !marker.Mode().IsRegular():
+				t.Error("owned Docker unmount marker is not regular")
+			case mountErr != nil:
+				t.Errorf("inspect owned Docker data-root mount: %v", mountErr)
+			case mounted && markerErr != nil:
+				t.Error("owned Docker data-root mount has no shutdown marker; retaining files")
+			default:
+				if mounted {
+					unmountErr := syscall.Unmount(dataRoot, 0)
+					mounted, mountErr = mountinfo.Mounted(dataRoot)
+					if mountErr != nil || mounted {
+						t.Errorf("owned Docker data-root remains mounted: unmount=%v, mounted=%t, inspect=%v", unmountErr, mounted, mountErr)
+						break
+					}
+					if unmountErr != nil && unmountErr != syscall.EINVAL {
+						t.Errorf("unmount owned Docker data-root: %v", unmountErr)
+						break
+					}
+				}
+				if err := os.RemoveAll(root); err != nil {
+					t.Errorf("remove owned Docker files: %v", err)
+				} else {
+					rootCleaned = true
+				}
 			}
 		}
 		if err := json.NewEncoder(os.Stdout).Encode(struct {
 			DaemonStopped bool `json:"owned_daemon_stopped"`
-		}{stopped}); err != nil {
+			RootCleaned   bool `json:"owned_daemon_files_removed"`
+		}{stopped, rootCleaned}); err != nil {
 			t.Errorf("write daemon cleanup metadata: %v", err)
 		}
 	})
