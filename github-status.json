@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T13:05:35.665043+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T12:00:52.475051+00:00",
+  "registryDate": "2026-11-19T13:07:38.019316+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447165,7 +447165,7 @@
       "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7009949471",
       "author": "jakecastelli",
       "updatedAt": "2026-11-19T13:04:50Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -447177,8 +447177,8 @@
       "repo": "google/gvisor",
       "number": 17374,
       "head": "b04021b975f4eb1087ffaf46152dfe966bb62305",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Follow provider package-repository recovery and the existing maintainer review. Preserve completed source review and the outstanding broad before/after workload requirement. No source rewrite, courtesy reply or blind retry.",
+      "claimed": true,
       "firstObservedHead": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
       "reviewHead": null,
       "kind": "inline",
@@ -447197,8 +447197,8 @@
       "repo": "google/gvisor",
       "number": 16887,
       "head": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Await before/after results from an existing broad network benchmark before full approval. Do not substitute the reported component samples. Re-review changed source or new author evidence while preserving Botir's source ownership.",
+      "claimed": true,
       "firstObservedHead": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
       "reviewHead": null,
       "kind": "comment",
@@ -447209,7 +447209,7 @@
       "threadId": null,
       "rootURL": null,
       "rootId": null,
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     },
@@ -448438,7 +448438,7 @@
         "owner": "systrap_regression",
         "sourceHead": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
         "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve nybidari internal dependency and landing coordination.",
-        "nextAction": "Advance the remaining netgofer functional evidence and separate EOF diagnosis. Preserve the private importing dependency; no original-PR push, blind retry or performance/import-completion claim."
+        "nextAction": "Owner consumes the single live200-repeat diagnostic to capture the first failing goroutine profile. Preserve parent/candidate failures, private import hold and separate EOF/race/performance obligations. No automatic repeat or causal claim."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0QEaKw"
@@ -453771,9 +453771,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "b7c893c00bd638a62f42d9c9151e4993b66576fb",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Root completes the checksum producer/consumer and revised adjacent-segment/reset-test review on the identical current source. Preserve Botir source ownership; no source edits, runtime validation or posted review is inferred."
+        "sourceHead": "b90cd49da574e19ecfa51decee22213d2936d61a",
+        "disposition": "Complete source review found no further issues in the checksum producer/consumer, PacketBuffer lifetime or revised GRO/reset oracle. No independent runtime, race or broad performance qualification is claimed.",
+        "nextAction": "Follow existing requested maintainer review, exact-head CI and outstanding broad workload evidence. No courtesy comment, repeated notification or full approval."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0kT4gQ"
@@ -454523,9 +454523,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "7a76e29df38e1627c28a852d936c83bec6e9ac67",
+        "sourceHead": "b04021b975f4eb1087ffaf46152dfe966bb62305",
         "disposition": "Full source review completed and exact COMMENTED response delivered at the current head. This answers the invitation with a response, not source approval. Root verified tamird absent from the native requested_reviewers response after submission; our formal native request was consumed.",
-        "nextAction": "Await before/after results from an existing broad workload benchmark before full approval. Re-review new source or evidence; do not substitute component samples or claim fresh runtime validation. Keep the outstanding broad benchmark approval obligation separate from the consumed native request."
+        "nextAction": "Follow provider package-repository recovery and the existing maintainer review. Preserve completed source review and the outstanding broad before/after workload requirement. No source rewrite, courtesy reply or blind retry."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0jfjpg"
@@ -464072,7 +464072,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464081,7 +464081,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464090,7 +464090,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464099,7 +464099,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464108,7 +464108,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464117,7 +464117,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464126,7 +464126,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464135,7 +464135,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     },
     "branch:buildkite-pre-agent-details": {
@@ -464144,7 +464144,7 @@
         "since": "2026-11-19T12:00:52.475051+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+        "observedAt": "2026-11-19T13:07:38.019316+00:00"
       }
     }
   },
