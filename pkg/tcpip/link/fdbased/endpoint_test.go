@@ -781,6 +781,75 @@ func TestCloseReleasesStopFDs(t *testing.T) {
 	}
 }
 
+func TestPeerCloseStopsDispatch(t *testing.T) {
+	for _, mode := range []PacketDispatchMode{Readv, RecvMMsg} {
+		t.Run(fmt.Sprint(mode), func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			closed := make(chan tcpip.Error, 1)
+			ep, err := New(&Options{
+				FDs: []int{fds[0]}, MTU: 1500, PacketDispatchMode: mode,
+				ClosedFunc: func(err tcpip.Error) { closed <- err },
+			})
+			if err != nil {
+				unix.Close(fds[0])
+				unix.Close(fds[1])
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				// Closing the reader also releases a dispatcher that fails to
+				// recognize peer closure, so a failed assertion can clean up.
+				unix.Close(fds[0])
+				ep.Attach(nil)
+				ep.Close()
+			})
+			// Make EOF the first read, without relying on the poll path.
+			unix.Close(fds[1])
+			ep.Attach(&fakeNetworkDispatcher{})
+			select {
+			case <-closed:
+			case <-time.After(time.Second):
+				t.Fatal("dispatcher did not report peer closure")
+			}
+			ep.Wait()
+		})
+	}
+}
+
+func TestSeqpacketEmptyMessageAndEOF(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC|unix.SOCK_NONBLOCK, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[0])
+	defer func() {
+		if fds[1] >= 0 {
+			unix.Close(fds[1])
+		}
+	}()
+	if _, err := unix.SendmsgN(fds[1], nil, nil, nil, 0); err != nil {
+		t.Fatal(err)
+	}
+	for _, peerClosed := range []bool{false, true} {
+		if peerClosed {
+			unix.Close(fds[1])
+			fds[1] = -1
+		}
+		if n, _, err := unix.Recvfrom(fds[0], make([]byte, 1), 0); n != 0 || err != nil {
+			t.Fatalf("peerClosed=%v: Recvfrom = %d, %v; want 0, nil", peerClosed, n, err)
+		}
+		poll := []unix.PollFd{{Fd: int32(fds[0]), Events: unix.POLLIN}}
+		if _, err := unix.Poll(poll, 0); err != nil {
+			t.Fatal(err)
+		}
+		if got := poll[0].Revents&unix.POLLHUP != 0; got != peerClosed {
+			t.Errorf("peerClosed=%v: POLLHUP=%v", peerClosed, got)
+		}
+	}
+}
+
 func TestMain(m *testing.M) {
 	refs.SetLeakMode(refs.LeaksPanic)
 	code := m.Run()
