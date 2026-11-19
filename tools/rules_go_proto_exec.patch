@@ -13,10 +13,10 @@
 -    # resolves to the same platform as the one resolved for the binary.
 -    # Note that this exec platform matching is still fragile; the proper fix
 -    # is to create proper toolchains for the protoc compiler.
-+    # Generate sources on a platform that can run the Go compiler tools.
++    # Match the compiler rules' Go and optional C toolchain requirements.
      exec_groups = {
 -        "internal_use_only_go_proto_gen": exec_group(),
-+        "internal_use_only_go_proto_gen": exec_group(toolchains = [GO_TOOLCHAIN]),
++        "internal_use_only_go_proto_gen": exec_group(toolchains = [GO_TOOLCHAIN] + CGO_TOOLCHAINS),
      },
  )
  # go_proto_library is a rule that takes a proto_library (in the proto
