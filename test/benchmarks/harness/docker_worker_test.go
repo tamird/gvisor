@@ -40,7 +40,7 @@ import (
 var (
 	alpineArchive   = flag.String("alpine-archive", "", "declared Alpine Docker-save archive")
 	workerRuntime   = flag.String("runtime", "runc", "runtime under test: runc or runsc")
-	runscEntrypoint = flag.String("runsc", "", "assembled entrypoint of the declared complete release")
+	runscEntrypoint = flag.String("release-runsc", "", "assembled entrypoint of the declared complete release")
 )
 
 func TestDockerWorker(t *testing.T) {

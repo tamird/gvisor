@@ -67,7 +67,7 @@ go_test(
     args = [
         "--alpine-archive=$(rootpath //images/basic:alpine_archive)",
         "--runtime=runsc",
-        "--runsc=$(rootpath :runsc_entrypoint)",
+        "--release-runsc=$(rootpath :runsc_entrypoint)",
     ],
     data = [
         ":runsc_entrypoint",
