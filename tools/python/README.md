@@ -9,8 +9,9 @@ bazel test --keep_going //tools/python:mypy_test //tools/python:pyright_test //t
 ```
 
 The maintained `make unit-tests` suite selects these targets through `tools/...`.
-The current integration preflight checks `tools/compat/realpath.py`; the reader,
-compile-command generator, tests, and other Python programs are not yet covered.
+The shared source list checks the Buildkite reader, `tools/compat/realpath.py`,
+and `tools/gen_compile_commands.py`. Tests and other Python programs are not
+yet covered.
 
 Regenerate the Bazel dependency lock from the authoritative dependency group:
 

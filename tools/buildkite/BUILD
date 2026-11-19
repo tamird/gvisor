@@ -7,6 +7,11 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    ["buildkite.py"],
+    visibility = ["//tools/python:__pkg__"],
+)
+
 py_library(
     name = "buildkite_lib",
     srcs = ["buildkite.py"],

@@ -10,8 +10,11 @@ package(
 
 exports_files(["requirements_lock.txt"])
 
-# Start with the existing typed program to validate checker integration.
-_SOURCES = ["//tools:compat/realpath.py"]
+_SOURCES = [
+    "//tools/buildkite:buildkite.py",
+    "//tools:compat/realpath.py",
+    "//tools:gen_compile_commands.py",
+]
 _SOURCE_ARGS = ["$(rootpath %s)" % source for source in _SOURCES]
 _DATA = ["//:pyproject.toml"] + _SOURCES
 
