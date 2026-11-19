@@ -298,7 +298,11 @@ check_clang_tidy() {
       echo "lint: generate it with //tools/compile_commands" >&2
       return 1
     fi
-    local -a generator_options=(--resolve "--bazel-command=${BAZEL[0]}")
+    local -a generator_options=(
+      --resolve
+      --replace=-fno-canonical-system-headers=
+      "--bazel-command=${BAZEL[0]}"
+    )
     local i option
     for ((i = 1; i < ${#BAZEL[@]}; i++)); do
       generator_options+=("--bazelsupopt=${BAZEL[i]}")

@@ -123,10 +123,7 @@ def main():
         errors[source] = failed
 
   if errors:
-    print(
-        f"clang-tidy: {len(errors)} file(s) failed to analyze.",
-        file=sys.stderr,
-    )
+    print(f"clang-tidy: {len(errors)} file(s) failed to analyze.", file=sys.stderr)
     for source in sorted(errors):
       for line in errors[source][:5]:
         print(f"  {line}", file=sys.stderr)

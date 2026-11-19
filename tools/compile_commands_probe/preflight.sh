@@ -22,7 +22,7 @@ native_source=false
 if [[ -f "$bin/pkg/compile_commands_probe/generated/source.cc" ]]; then native_source=true; fi
 "$bazel" build "${options[@]}" --remote_download_outputs=all   --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs   --output_groups=cc_compile_inputs --build_event_publish_all_actions   --build_event_json_file="$results/aspect-prerequisites-events.json" "$target"
 test -f "$bin/pkg/compile_commands_probe/generated/source.cc"
-tool_options=(--resolve "--bazel-command=$bazel"
+tool_options=(--resolve --replace=-fno-canonical-system-headers= "--bazel-command=$bazel"
   --bazelsupopt=--max_idle_secs=10800
   --bazelopt=--copt=-DCOMPILE_COMMANDS_PROBE=1)
 for option in "${options[@]}"; do tool_options+=("--bazelopt=$option"); done
