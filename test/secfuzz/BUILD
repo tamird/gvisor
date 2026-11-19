@@ -33,6 +33,7 @@ go_test(
     size = "small",
     srcs = ["coverage_test.go"],
     embed = [":secfuzz"],
+    gotags = ["fuzz"],
     deps = ["//pkg/bpf"],
 )
 
