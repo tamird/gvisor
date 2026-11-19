@@ -1,6 +1,7 @@
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_python//python:defs.bzl", "py_test")
 load("//tools/bazeldefs:coverage_analysis_test.bzl", "coverage_selection_test")
 
 package(
@@ -38,4 +39,20 @@ coverage_selection_test(
         ":own",
         ":embedded",
     ],
+)
+
+py_test(
+    name = "legacy_inventory_test",
+    size = "large",
+    srcs = ["legacy_inventory_test.py"],
+    args = [
+        "$(rlocationpath //runsc/cmd/sentry:gvisor_sentry_coverage)",
+        "$(rlocationpath :testdata/legacy-1f33fe3003.txt.gz)",
+    ],
+    data = [
+        "testdata/legacy-1f33fe3003.txt.gz",
+        "//runsc/cmd/sentry:gvisor_sentry_coverage",
+    ],
+    tags = ["manual"],
+    deps = ["@rules_python//python/runfiles"],
 )
