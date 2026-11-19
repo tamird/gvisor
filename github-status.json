@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T20:38:03.279983+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T19:51:39.905270+00:00",
+  "registryDate": "2026-11-19T20:46:06.528200+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447729,9 +447729,9 @@
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
-        "disposition": "Fresh isolated Git reproduction proves already-landed profiles break the current stash transaction. Eight-case fix qualified, but user revoked its approval because of the new publisher helper and test bloat. Public e049 remains unchanged; replacement is local-only and touches one existing script.",
-        "nextAction": "Keep #17492 unchanged. Present only the local one-file correction after removing the production extraction and test harness from the proposal; qualification scaffolding stays CI-only. No DCO addition or upstream amendment before renewed source approval."
+        "sourceHead": "e43439f069dca7a417d93d5d7faca311366fed59",
+        "disposition": "The user-approved minimal amendment is published as e43439f069dca7a417d93d5d7faca311366fed59. It changes one existing script18+/6-, matches the reviewed769 tree, and carries verified normal signing and DCO. Native GitHub reports mergeable=true and mergeable_state=blocked; root follows exact-head CI and existing review. The revoked736 proposal remains unapproved.",
+        "nextAction": "Root follows exact publishede434 CI and existing review through completion, and verifies PR metadata refresh separately. No source approval, DCO question or conflict repair remains. Do not merge without exact authorization or rerun unchanged transaction validation."
       },
       "conflictObservedSince": "2026-11-19T02:26:00.189263+00:00"
     },
@@ -455407,9 +455407,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
-        "disposition": "Fresh isolated Git reproduction proves already-landed profiles break the current stash transaction. Eight-case fix qualified, but user revoked its approval because of the new publisher helper and test bloat. Public e049 remains unchanged; replacement is local-only and touches one existing script.",
-        "nextAction": "Keep #17492 unchanged. Present only the local one-file correction after removing the production extraction and test harness from the proposal; qualification scaffolding stays CI-only. No DCO addition or upstream amendment before renewed source approval."
+        "sourceHead": "e43439f069dca7a417d93d5d7faca311366fed59",
+        "disposition": "The user-approved minimal amendment is published as e43439f069dca7a417d93d5d7faca311366fed59. It changes one existing script18+/6-, matches the reviewed769 tree, and carries verified normal signing and DCO. Native GitHub reports mergeable=true and mergeable_state=blocked; root follows exact-head CI and existing review. The revoked736 proposal remains unapproved.",
+        "nextAction": "Root follows exact publishede434 CI and existing review through completion, and verifies PR metadata refresh separately. No source approval, DCO question or conflict repair remains. Do not merge without exact authorization or rerun unchanged transaction validation."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx-A0Q"
@@ -464231,7 +464231,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464240,7 +464240,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464249,7 +464249,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464258,7 +464258,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464267,7 +464267,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464276,7 +464276,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464285,7 +464285,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464294,7 +464294,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-19T20:46:06.528200+00:00"
       }
     }
   },

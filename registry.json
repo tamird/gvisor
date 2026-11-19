@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T19:51:39.905270+00:00",
+    "updatedAt": "2026-11-19T20:46:06.528200+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -94945,13 +94945,13 @@
       "repo": "google/gvisor",
       "number": 17492,
       "ref": "research/pgo-commit-before-rebase",
-      "head": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
+      "head": "e43439f069dca7a417d93d5d7faca311366fed59",
       "title": "pgo: commit newly generated profiles before rebasing",
       "url": "https://github.com/google/gvisor/pull/17492",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
-      "summary": "Fresh isolated Git reproduction proves already-landed profiles break the current stash transaction. Eight-case fix qualified, but user revoked its approval because of the new publisher helper and test bloat. Public e049 remains unchanged; replacement is local-only and touches one existing script.",
+      "updatedAt": "2026-11-19T20:46:06.528200+00:00",
+      "summary": "The user-approved minimal amendment is published as e43439f069dca7a417d93d5d7faca311366fed59. It changes one existing script18+/6-, matches the reviewed769 tree, and carries verified normal signing and DCO. Native GitHub reports mergeable=true and mergeable_state=blocked; root follows exact-head CI and existing review. The revoked736 proposal remains unapproved.",
       "evidence": [
         {
           "label": "Ten native publisher cases",
@@ -94959,12 +94959,12 @@
         }
       ],
       "followup": {
-        "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
+        "sourceHead": "e43439f069dca7a417d93d5d7faca311366fed59",
         "owner": "root",
-        "nextAction": "Keep #17492 unchanged. Present only the local one-file correction after removing the production extraction and test harness from the proposal; qualification scaffolding stays CI-only. No DCO addition or upstream amendment before renewed source approval.",
-        "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "User decision on the reduced patch or substantive source/CI/maintainer change.",
+        "nextAction": "Root follows exact publishede434 CI and existing review through completion, and verifies PR metadata refresh separately. No source approval, DCO question or conflict repair remains. Do not merge without exact authorization or rerun unchanged transaction validation.",
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-11-19T20:46:06.528200+00:00",
+        "recheckCondition": "Exact-head CI or review/import changes, PR metadata refresh, or substantive source feedback.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17492",
           "https://github.com/tamird/gvisor/commit/2ca38c700a1f17a2520e456022b2840285296185",
@@ -94972,12 +94972,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/1597",
           "https://buildkite.com/gvisor/first-pass/builds/1597#01a1eae2-d917-47f8-9341-8795c3baf72f"
         ],
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "Fresh isolated Git reproduction proves already-landed profiles break the current stash transaction. Eight-case fix qualified, but user revoked its approval because of the new publisher helper and test bloat. Public e049 remains unchanged; replacement is local-only and touches one existing script.",
-        "currentConflictAssessment": {
-          "file": "17492-conflict-current-assessment.json",
-          "sha256": "04cdd9bd7526fb6b29e01b7944523b7d3bab4042241963f3f377b686c4a65cd9"
-        },
+        "curatedAt": "2026-11-19T20:46:06.528200+00:00",
+        "disposition": "The user-approved minimal amendment is published as e43439f069dca7a417d93d5d7faca311366fed59. It changes one existing script18+/6-, matches the reviewed769 tree, and carries verified normal signing and DCO. Native GitHub reports mergeable=true and mergeable_state=blocked; root follows exact-head CI and existing review. The revoked736 proposal remains unapproved.",
         "permanentTransactionBaseline": {
           "productionSource": "b75c76bbee31f309bd3a7bdb125a4b28e96086a1",
           "ciSource": "cbb9a918c4197ddbb9131f9482ba001987a246ce",
@@ -95002,14 +94998,30 @@
           }
         },
         "minimalLocalProposal": {
-          "source": "218947da02d0b792a57d2455686f9f4610e42b8a",
-          "state": "Unapproved/local-only: one existing commit-update.sh,18insertions6deletions; no publish.sh, BUILD or tests added. Authentication prefix unchanged; transaction statement bytes equal the qualified prior component.",
-          "receipt": {
+          "source": "7697bb811ad0873f69349173a2a3d049e48641c2",
+          "state": "User approved exact769 amendment and DCO. Tree-identical signed revisione434 is verified published to the existing PR branch; one script18+/6-. Prior8 transaction cases reused; independent review passed. No approval question remains; revoked736 stays unapproved.",
+          "baselineReceipt": {
             "file": "pgo-minimal-local-proposal.json",
             "sha256": "16ff2feff945923d6ab3d2f308b68e0af8b7a52a66fb08a0294a0a10c7948985"
-          }
+          },
+          "base": "981cd1bb7dca55249095787f4701eeffc9f94d6d",
+          "patchEquivalentTo": "218947da02d0b792a57d2455686f9f4610e42b8a",
+          "ref": "research/pgo-minimal-review-20261119",
+          "url": "https://github.com/tamird/gvisor/commit/7697bb811ad0873f69349173a2a3d049e48641c2",
+          "reviewedSource": "7697bb811ad0873f69349173a2a3d049e48641c2",
+          "publishedSource": "e43439f069dca7a417d93d5d7faca311366fed59"
         },
-        "publisherLimit": "No profile generation, provider authentication or private PGO3910 first-cause claim. Existing inaccessible-pipeline evidence remains separate."
+        "publisherLimit": "No profile generation, provider authentication or private PGO3910 first-cause claim. Existing inaccessible-pipeline evidence remains separate.",
+        "priorConflictAssessment": {
+          "file": "17492-conflict-current-assessment.json",
+          "sha256": "04cdd9bd7526fb6b29e01b7944523b7d3bab4042241963f3f377b686c4a65cd9"
+        },
+        "currentConflictAssessment": {
+          "head": "e43439f069dca7a417d93d5d7faca311366fed59",
+          "mergeable": true,
+          "mergeableState": "blocked",
+          "state": "Conflict resolved by the approved published rebase; exact-head checks and review remain for root to follow."
+        }
       },
       "dcoAmendment": {
         "oldHead": "2ca38c700a1f17a2520e456022b2840285296185",
@@ -95033,8 +95045,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Keep #17492 unchanged. Present only the local one-file correction after removing the production extraction and test harness from the proposal; qualification scaffolding stays CI-only. No DCO addition or upstream amendment before renewed source approval.",
-      "recheckCondition": "User decision on the reduced patch or substantive source/CI/maintainer change."
+      "nextStep": "Root follows exact publishede434 CI and existing review through completion, and verifies PR metadata refresh separately. No source approval, DCO question or conflict repair remains. Do not merge without exact authorization or rerun unchanged transaction validation.",
+      "recheckCondition": "Exact-head CI or review/import changes, PR metadata refresh, or substantive source feedback."
     },
     {
       "id": "branch:gazelle-public-go-repository-config",
@@ -134878,10 +134890,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
-      "summary": "Correctness XML controls, normal release compiler, formatter-library preflight, shared scheduler support and paired native/runsc worker execution are qualified. Prior runtime cleanup failures remain visible. No automatic execution-review block remains.",
-      "nextStep": "Existing owner advances one-worker paired Bazel mode declaring both immutable Sentry releases, serial balanced AB/BA, effective per-container affinity and raw samples. Cheap actual pair preflight precedes full150-leaf/n24/statistical study; preserve valid build/correctness caches.",
-      "recheckCondition": "Paired-mode source/design and actual capability gate; full controlled samples or substantive source/toolchain change.",
+      "updatedAt": "2026-11-19T20:42:34.380196+00:00",
+      "summary": "The shared workflow supports standard Bazel run tools at258019304. Compilation-database candidate dabc04c653 is blocked: its pinned Linux AMD64 binary needs newer libc than maintained Ubuntu22, and default generation44607556214 failed with cause not yet established. Paired A/A execution passes functionally, but material same-source noise remains; discarded server warmup is under diagnosis. No full-performance or upstream-source qualification is claimed.",
+      "nextStep": "The compilation-database owner supplies a compatible tool and proves the actual Ubuntu22 caller, then diagnoses default generation. The benchmark owner checks A/A cause run44609912003 with warmup of the actual measured Node process and observed Redis CPU placement, establishing stability before expanded counts or candidate comparisons. Root follows the existing migration-issue publication decision; that draft remains private and unposted. Full150-leaf/n24 qualification remains open.",
+      "recheckCondition": "Actual supplier/default-generation evidence, A/A stability or warmup diagnosis, the existing issue decision, or explicit user direction.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -134923,6 +134935,38 @@
         {
           "label": "Published permanent Bazel source for CI-only qualification",
           "url": "https://github.com/tamird/gvisor/commit/991b9ec3dd2f7016ebbf4df0abce461552837ca7"
+        },
+        {
+          "label": "Shared standard Bazel run mode",
+          "url": "https://github.com/tamird/gvisor/commit/2580193042f7f123438fc70643badd90530198b2"
+        },
+        {
+          "label": "Released compilation-database tool feasibility; small graph only",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44601814260"
+        },
+        {
+          "label": "Compilation-database source formatting passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44607551013"
+        },
+        {
+          "label": "Default compilation-database generation failed; diagnosis owned",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44607556214"
+        },
+        {
+          "label": "One-worker reused ABBA capability pilot; no statistical conclusion",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44603774732"
+        },
+        {
+          "label": "N5000 calibration pilot; order drift remains",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44605525445"
+        },
+        {
+          "label": "A/A functional and process-identity preflight; stability still open",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44607218146"
+        },
+        {
+          "label": "Current measured-process warmup A/A cause check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44609912003"
         }
       ],
       "followup": {
@@ -134944,12 +134988,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
-        "nextAction": "Existing owner advances one-worker paired Bazel mode declaring both immutable Sentry releases, serial balanced AB/BA, effective per-container affinity and raw samples. Cheap actual pair preflight precedes full150-leaf/n24/statistical study; preserve valid build/correctness caches.",
-        "recheckCondition": "Paired-mode source/design and actual capability gate; full controlled samples or substantive source/toolchain change.",
+        "curatedAt": "2026-11-19T20:42:34.380196+00:00",
+        "nextAction": "The compilation-database owner supplies a compatible tool and proves the actual Ubuntu22 caller, then diagnoses default generation. The benchmark owner checks A/A cause run44609912003 with warmup of the actual measured Node process and observed Redis CPU placement, establishing stability before expanded counts or candidate comparisons. Root follows the existing migration-issue publication decision; that draft remains private and unposted. Full150-leaf/n24 qualification remains open.",
+        "recheckCondition": "Actual supplier/default-generation evidence, A/A stability or warmup diagnosis, the existing issue decision, or explicit user direction.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Correctness XML controls, normal release compiler, formatter-library preflight, shared scheduler support and paired native/runsc worker execution are qualified. Prior runtime cleanup failures remain visible. No automatic execution-review block remains.",
+        "disposition": "The shared workflow supports standard Bazel run tools at258019304. Compilation-database candidate dabc04c653 is blocked: its pinned Linux AMD64 binary needs newer libc than maintained Ubuntu22, and default generation44607556214 failed with cause not yet established. Paired A/A execution passes functionally, but material same-source noise remains; discarded server warmup is under diagnosis. No full-performance or upstream-source qualification is claimed.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135110,7 +135154,7 @@
             "sha256": "bf4a997a1b88d30d3f00746c5a289caae552c9ccdd8c10f4f3103777efae23bf"
           }
         },
-        "currentGateSummary": "Coverage native NORMAL/RACE correctness passes on AMD64 and ARM64; current matched AMD NORMAL legacy static parity passes. Controlled performance and remaining worker/runtime capabilities stay open.",
+        "currentGateSummary": "Recorded Coverage NORMAL/RACE and static-parity gates remain qualified at their exact sources. Standard compilation-database smoke passed; Ubuntu22 tool compatibility and real default generation are blocked. A/A stability and full150/n24 controlled performance remain open.",
         "legacyParity": {
           "source": "6759f7e7bbbbea2125d89d7c9fc1a39eeb2f091d",
           "run": 44574573815,
@@ -135358,5 +135402,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T19:51:39.905270+00:00"
+  "updatedAt": "2026-11-19T20:46:06.528200+00:00"
 }
