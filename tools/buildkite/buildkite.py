@@ -283,8 +283,8 @@ def _pull_request_branch(owner: str, repo: str, number: int) -> str:
     head = _object(_object(_fetch_json(url), url).get("head"), url + ": head")
   except Error as e:
     raise Error(f"{e}; GitHub allows 60 API requests per hour") from e
-  repo = head.get("repo")
-  repo_info = _object({} if repo is None else repo, url + ": head.repo")
+  repo_value = head.get("repo")
+  repo_info = _object({} if repo_value is None else repo_value, url + ": head.repo")
   if repo_info.get("full_name") == f"{owner}/{repo}":
     return _string(head.get("ref"), url + ": head.ref")
   return _string(head.get("label"), url + ": head.label")
@@ -681,7 +681,7 @@ def failed(
         if all_attempts or e[1].get("retry") not in ("passed", "failed")
     ]
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-      list(pool.map(lambda e: _add_log(build, *e, excerpt_lines), todo))
+      list(pool.map(lambda e: _add_log(build, *e, excerpt_lines=excerpt_lines), todo))
   infos = [i for _, i, _ in entries]
   result: FailedResult = {"build": _build_info(b), "jobs": infos}
   if unattributed:

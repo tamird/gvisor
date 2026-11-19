@@ -450,8 +450,9 @@ class FailedTest(unittest.TestCase):
                command="buildkite-agent pipeline upload .buildkite/first-pass.yaml",
                started_at=None, agent_query_rules=[],
                future={"nested": [None, [], {}, False, ""]},
-               attempt=99, retry="provider value", url="provider URL",
+               attempt=99, url="provider URL",
                annotated_targets=[{"target": "provider value"}])
+    job["retry"] = "provider value"
     original = copy.deepcopy(job)
     info = buildkite.job_info(_BUILD, job, [], None)
     self.assertEqual(job, original)

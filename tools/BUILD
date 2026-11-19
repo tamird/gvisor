@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
+load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
 
@@ -104,4 +105,16 @@ py_test(
         "lint.sh",
         "//:.clang-format",
     ],
+)
+
+py_library(
+    name = "gen_compile_commands_lib",
+    srcs = ["gen_compile_commands.py"],
+    imports = ["."],
+)
+
+py_test(
+    name = "gen_compile_commands_test",
+    srcs = ["gen_compile_commands_test.py"],
+    deps = [":gen_compile_commands_lib"],
 )
