@@ -313,7 +313,6 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string, bridge b
 	}
 	if bridge {
 		delete(settings, "bridge")
-		settings["iptables"] = true
 		settings["ip-forward"] = true
 	}
 	config, err := json.Marshal(settings)
@@ -570,9 +569,9 @@ func testDockerBridge(t *testing.T, ctx context.Context, cli *client.Client, ima
 			}
 		})
 		created, err := cli.ContainerCreate(ctx, &container.Config{
-			Image:  image,
-			Env:    []string{"RESPONSE_TOKEN=" + token},
-			Cmd:    []string{"sh", "-c", `set -eu
+			Image: image,
+			Env:   []string{"RESPONSE_TOKEN=" + token},
+			Cmd: []string{"sh", "-c", `set -eu
 command -v nc >/dev/null
 command -v wget >/dev/null
 while :; do
