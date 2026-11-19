@@ -107,6 +107,7 @@ def _release_files_impl(ctx):
     runfiles = ctx.runfiles(files = outputs)
     return [
         ReleaseInfo(runsc = runsc),
+        OutputGroupInfo(runsc = depset([runsc])),
         DefaultInfo(
             files = depset(outputs),
             default_runfiles = runfiles,
