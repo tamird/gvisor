@@ -182,7 +182,7 @@ jobs:
   bazel:
     if: inputs.targets != '' && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/master'
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: 15
+    timeout-minutes: ${{ inputs.command == 'run' && 30 || 15 }}
     env:
       SOURCE: ${{ inputs.source }}
       TARGETS: ${{ inputs.targets }}
@@ -227,6 +227,7 @@ jobs:
       - name: Run Bazel correctness targets
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GITHUB_TOKEN: ${{ inputs.command == 'run' && github.token || '' }}
         run: |
           set -euo pipefail
           results="$RUNNER_TEMP/bazel-qualification"
