@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T22:02:17.641189+00:00",
+    "updatedAt": "2026-11-19T22:31:35.101324+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44365,8 +44365,8 @@
       "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-19T22:02:17.641189+00:00",
-      "summary": "The bounded counter recovery test44622042580 passed fresh remote execution with three real counter bytes, a stable false control and one true-branch edge. This resolves the fixture compilation obstacle for that small control only. The actual generated-source oracle remains in implementation; no8,192-pair counter or new source/publication claim is made.",
+      "updatedAt": "2026-11-19T22:31:35.101324+00:00",
+      "summary": "The real generated-source oracle workflow44628753098 completed successfully after graph audit, but its runtime/counter result still requires the instrumentation owner audit. The earlier three-byte control remains valid only in its stated scope. No8,192-pair result or new source/publication claim is inferred from workflow status.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -44409,8 +44409,8 @@
         "owner": "coverage_security_review",
         "sourceHead": "7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a",
         "observedAt": "2026-11-08T13:23:10Z",
-        "disposition": "The bounded counter recovery test44622042580 passed fresh remote execution with three real counter bytes, a stable false control and one true-branch edge. This resolves the fixture compilation obstacle for that small control only. The actual generated-source oracle remains in implementation; no8,192-pair counter or new source/publication claim is made.",
-        "nextAction": "coverage_security_review implements and remotely validates the real generated-source instrumentation test, using the passing small control as evidence of the fixture mechanism. Root follows the existing published7cc PR lifecycle. Do not infer8,192 coverage or source approval from the three-byte control.",
+        "disposition": "The real generated-source oracle workflow44628753098 completed successfully after graph audit, but its runtime/counter result still requires the instrumentation owner audit. The earlier three-byte control remains valid only in its stated scope. No8,192-pair result or new source/publication claim is inferred from workflow status.",
+        "nextAction": "coverage_security_review audits actual generated-source oracle44628753098 execution, counters and controls before granting8,192-pair credit. Root follows the existing published7cc PR lifecycle. Keep source qualification and any later publication decision separate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16604",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...de106f647e5e2157aa3d6ac91d09727f698daca4",
@@ -44421,10 +44421,11 @@
           "https://app.buildbuddy.io/invocation/ffb30ec2-2ae4-46e9-8d6a-8b913509d48b",
           "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362",
           "https://github.com/gvisor/gvisor/pull/17677",
-          "https://github.com/tamird/gvisor/actions/runs/44622042580"
+          "https://github.com/tamird/gvisor/actions/runs/44622042580",
+          "https://github.com/tamird/gvisor/actions/runs/44628753098"
         ],
-        "recheckCondition": "Actual generated-source oracle execution, owner recovery result or substantive original-PR/source feedback.",
-        "curatedAt": "2026-11-19T22:02:17.641189+00:00",
+        "recheckCondition": "Owner-verified oracle runtime/count evidence or substantive source/PR feedback.",
+        "curatedAt": "2026-11-19T22:31:35.101324+00:00",
         "priorImportNextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17677,
@@ -44618,8 +44619,8 @@
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
       },
-      "nextStep": "coverage_security_review implements and remotely validates the real generated-source instrumentation test, using the passing small control as evidence of the fixture mechanism. Root follows the existing published7cc PR lifecycle. Do not infer8,192 coverage or source approval from the three-byte control.",
-      "recheckCondition": "Actual generated-source oracle execution, owner recovery result or substantive original-PR/source feedback."
+      "nextStep": "coverage_security_review audits actual generated-source oracle44628753098 execution, counters and controls before granting8,192-pair credit. Root follows the existing published7cc PR lifecycle. Keep source qualification and any later publication decision separate.",
+      "recheckCondition": "Owner-verified oracle runtime/count evidence or substantive source/PR feedback."
     },
     {
       "id": "pr:16606",
@@ -134906,10 +134907,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T22:02:17.641189+00:00",
-      "summary": "Compilation-database source66b3aa2ebada8335bfbeb8c7139c434e71a8bc51 has passing failure-propagation regression, Buildifier and spelling gates; actual callers44622300025 remain under validation, so the source is unqualified. The resource probe verified request5CPU/500M, an observed8-vCPU/524MiB worker and separate Redis CPU4 placement. Unchanged-profile four-visit N5000 control44623852583 is live; stability and full150/n24 performance remain unproven.",
-      "nextStep": "The compilation-database owner follows actual callers44622300025 and verifies final inventory/caller behavior before review or publication. The benchmark owner evaluates the existing unchanged-profile control44623852583 without repeating unchanged runs or expanding candidate/sample scope before A/A stability. Root follows the existing private migration-issue decision.",
-      "recheckCondition": "Actual caller/control outcomes, final source/inventory and review evidence, generated instrumentation evidence or the existing issue decision.",
+      "updatedAt": "2026-11-19T22:31:35.101324+00:00",
+      "summary": "Source6a9fd82e3ba076ce8dc82d6990af45135e5e404c has a passing direct clang-tidy preflight using the supported generator replacement option and a fail-closed consumer. Corrected full callers44627962399 and affected gates still need audit. Earlier two5593-entry databases with zero missing paths remain valid inventory evidence; success from the old wrapper is not compiler proof. Same-source A/A still fails stability; independent reading found no timer/configuration defect.",
+      "nextStep": "The compilation-database owner audits corrected full callers and affected gates before certification or source review/publication. The benchmark owner adds minimal phase visibility to diagnose the demonstrated same-source variation; do not repeat unchanged controls or expand candidate/sample scope. Root follows the existing private migration-issue decision; full150/n24 remains open.",
+      "recheckCondition": "Audited corrected-caller/compiler results, verified generated-source oracle evidence, phase-diagnostic/A/A stability evidence or the existing issue decision.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135039,6 +135040,14 @@
         {
           "label": "Unchanged-profile four-visit N5000 control",
           "url": "https://github.com/tamird/gvisor/actions/runs/44623852583"
+        },
+        {
+          "label": "Corrected fail-closed real-caller qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44627962399"
+        },
+        {
+          "label": "Generated-source oracle workflow; runtime/count audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44628753098"
         }
       ],
       "followup": {
@@ -135060,12 +135069,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T22:02:17.641189+00:00",
-        "nextAction": "The compilation-database owner follows actual callers44622300025 and verifies final inventory/caller behavior before review or publication. The benchmark owner evaluates the existing unchanged-profile control44623852583 without repeating unchanged runs or expanding candidate/sample scope before A/A stability. Root follows the existing private migration-issue decision.",
-        "recheckCondition": "Actual caller/control outcomes, final source/inventory and review evidence, generated instrumentation evidence or the existing issue decision.",
+        "curatedAt": "2026-11-19T22:31:35.101324+00:00",
+        "nextAction": "The compilation-database owner audits corrected full callers and affected gates before certification or source review/publication. The benchmark owner adds minimal phase visibility to diagnose the demonstrated same-source variation; do not repeat unchanged controls or expand candidate/sample scope. Root follows the existing private migration-issue decision; full150/n24 remains open.",
+        "recheckCondition": "Audited corrected-caller/compiler results, verified generated-source oracle evidence, phase-diagnostic/A/A stability evidence or the existing issue decision.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Compilation-database source66b3aa2ebada8335bfbeb8c7139c434e71a8bc51 has passing failure-propagation regression, Buildifier and spelling gates; actual callers44622300025 remain under validation, so the source is unqualified. The resource probe verified request5CPU/500M, an observed8-vCPU/524MiB worker and separate Redis CPU4 placement. Unchanged-profile four-visit N5000 control44623852583 is live; stability and full150/n24 performance remain unproven.",
+        "disposition": "Source6a9fd82e3ba076ce8dc82d6990af45135e5e404c has a passing direct clang-tidy preflight using the supported generator replacement option and a fail-closed consumer. Corrected full callers44627962399 and affected gates still need audit. Earlier two5593-entry databases with zero missing paths remain valid inventory evidence; success from the old wrapper is not compiler proof. Same-source A/A still fails stability; independent reading found no timer/configuration defect.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135226,7 +135235,7 @@
             "sha256": "bf4a997a1b88d30d3f00746c5a289caae552c9ccdd8c10f4f3103777efae23bf"
           }
         },
-        "currentGateSummary": "Recorded Coverage NORMAL/RACE and parity evidence is retained. Compilation-database failure propagation and source-format gates pass, but actual caller validation remains open. The worker resource/Redis-placement probe passes; A/A stability and full150/n24 performance are not established.",
+        "currentGateSummary": "Recorded Coverage NORMAL/RACE/parity and earlier complete-input inventory evidence is retained. Corrected clang-tidy preflight passes; full consumer/compiler audit is pending. Oracle workflow success awaits actual count audit. A/A still fails stability, so full150/n24 performance remains open.",
         "legacyParity": {
           "source": "6759f7e7bbbbea2125d89d7c9fc1a39eeb2f091d",
           "run": 44574573815,
@@ -135474,5 +135483,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T22:02:17.641189+00:00"
+  "updatedAt": "2026-11-19T22:31:35.101324+00:00"
 }
