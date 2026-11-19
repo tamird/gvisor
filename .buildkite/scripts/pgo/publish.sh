@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -euxo pipefail
+
+today="$1"
+repo_url="$2"
+pgo_branch_name="$3"
+
+# Commit new and modified profiles together before rebasing them onto master.
+git add -- runsc/profiles/data
+if git diff --cached --quiet -- runsc/profiles/data; then
+  echo 'The generated PGO profiles are unchanged.' >&2
+  exit 0
+else
+  diff_status=$?
+  [[ "$diff_status" -eq 1 ]] || exit "$diff_status"
+fi
+git checkout -b "$pgo_branch_name"
+git status
+
+# Commit and push PR branch.
+export GIT_AUTHOR_NAME=gvisor-bot
+export GIT_AUTHOR_EMAIL=gvisor-bot@google.com
+export GIT_COMMITTER_NAME=gvisor-bot
+export GIT_COMMITTER_EMAIL=gvisor-bot@google.com
+git commit -m "Update runsc profiles for PGO (profile-guided optimizations), $today." -- runsc/profiles/data
+git pull --rebase=true --autostash "$repo_url" master
+if git diff --quiet FETCH_HEAD HEAD; then
+  echo 'The generated PGO profiles are already on master.' >&2
+  exit 0
+else
+  diff_status=$?
+  [[ "$diff_status" -eq 1 ]] || exit "$diff_status"
+fi
+git push --set-upstream "$repo_url" "$pgo_branch_name"
+
+# Send PR.
+# The 'yes' command will fail when the `gh` command closes its stdin,
+# which the `pipefail` option treats as a total failure.
+# So disable this option for this particular command.
+set +o pipefail
+yes '' | gh pr --repo="$repo_url" create \
+  --title="Update runsc profiles for PGO (profile-guided optimizations), $today." \
+  --body='This PR updates the runsc profiles for PGO (profile-guided optimizations).' \
+  --label=pgo-update --label='ready to pull' \
+  --base=master --head="$pgo_branch_name"
+set -o pipefail
+
+echo 'PGO profile update PR created.' >&2
