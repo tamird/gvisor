@@ -144,9 +144,7 @@ class LintTest(unittest.TestCase):
     )
     self.assert_failed(result, "clang-tidy")
     self.assertIn("generator-stopped", result.stderr)
-    prepare, generate = [c.split() for c in self.bazel_log.read_text().splitlines()]
-    self.assertEqual(prepare[:4], ["--startup=1", "build", "--opt=1", "--opt=2"])
-    self.assertIn("--output_groups=cc_compile_inputs", prepare)
+    (generate,) = [c.split() for c in self.bazel_log.read_text().splitlines()]
     self.assertEqual(generate[:4], ["--startup=1", "run", "--opt=1", "--opt=2"])
     self.assertIn("--platforms=@platforms//host", generate)
     self.assertIn("--bazel-command=bazel", generate)

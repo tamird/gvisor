@@ -31,8 +31,8 @@ def _cc_compile_inputs_impl(target, ctx):
     if CcInfo in target:
         inputs.append(target[CcInfo].compilation_context.headers)
 
-    # Generated sources are compiled, so they are entries in the database in
-    # their own right; the header set above does not include them.
+    # Generated sources may be declared as inputs or exposed as outputs, as
+    # cc_proto_library does. The header set above does not include them.
     inputs.append(depset([
         f
         for f in getattr(ctx.rule.files, "srcs", []) + target[DefaultInfo].files.to_list()

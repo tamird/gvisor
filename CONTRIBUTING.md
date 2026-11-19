@@ -97,7 +97,7 @@ bazel build --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
 The first command runs the maintained generator recommended in [Bazel's IDE
 documentation](https://bazel.build/install/ide#autocomplete-for-source-code).
 The second materializes generated sources and headers without compiling the
-tests.
+tests. Run it last so that Bazel leaves their execution-root paths available.
 After reloading the editor window, clangd should work.
 
 ### Other Editors
