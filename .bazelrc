@@ -77,6 +77,7 @@ build:buildbuddy-cache --remote_cache=grpcs://remote.buildbuddy.io
 build:buildbuddy-cache --remote_timeout=60s
 build:buildbuddy --config=buildbuddy-cache
 build:buildbuddy --remote_executor=grpcs://remote.buildbuddy.io
+build:buildbuddy --jobs=HOST_CPUS*4
 build:buildbuddy --extra_execution_platforms=//tools/bazeldefs:remote_linux_amd64,//tools/bazeldefs:remote_linux_arm64
 
 # Coral C/C++ tools are host files, not declared remote action inputs.
