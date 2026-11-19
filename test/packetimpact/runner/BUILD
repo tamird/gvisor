@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test")
+load(":defs.bzl", "PACKETIMPACT_EXEC_PROPERTIES")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -41,7 +42,7 @@ go_test(
         "main.go",
         "worker_test.go",
     ],
-    exec_properties = {"test.workload-isolation-type": "firecracker"},
+    exec_properties = PACKETIMPACT_EXEC_PROPERTIES,
     pure = True,
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],
