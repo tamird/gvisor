@@ -7,6 +7,14 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    [
+        "compat/realpath.py",
+        "gen_compile_commands.py",
+    ],
+    visibility = ["//tools/python:__pkg__"],
+)
+
 bool_setting(
     name = "export_go_sources",
     build_setting_default = False,
