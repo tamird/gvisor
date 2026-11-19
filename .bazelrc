@@ -89,3 +89,7 @@ build:buildbuddy-cache --modify_execution_info=^(Cpp.*|CcStrip)$=+no-remote
 # Native C actions use the pinned execution image and must not fall back to host tools.
 build:buildbuddy --//tools/bazeldefs:rbe_native_c=true
 build:buildbuddy --modify_execution_info=^(Cpp.*|CcStrip)$=-no-remote,^(Cpp.*|CcStrip)$=+no-local
+
+# The two immutable runtime repositories own separate Sysmsg native-C flags.
+build:buildbuddy --@benchmark_runtime_base//tools/bazeldefs:rbe_native_c=true
+build:buildbuddy --@benchmark_runtime_candidate//tools/bazeldefs:rbe_native_c=true
