@@ -338,6 +338,17 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 		if stopped {
 			return false, nil
 		}
+		if errno == unix.ECONNRESET {
+			// Hangup can accompany queued packets. For SOCK_SEQPACKET,
+			// TIOCINQ counts bytes past any remaining empty records.
+			queued, err := unix.IoctlGetInt(d.fd, unix.TIOCINQ)
+			if err != nil {
+				return false, tcpip.TranslateErrno(err.(unix.Errno))
+			}
+			if queued > 0 {
+				return true, nil
+			}
+		}
 		if errno != 0 && errno != unix.EINTR {
 			return false, tcpip.TranslateErrno(errno)
 		}

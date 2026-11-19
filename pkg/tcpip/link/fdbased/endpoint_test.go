@@ -782,15 +782,24 @@ func TestCloseReleasesStopFDs(t *testing.T) {
 }
 
 func TestPeerCloseStopsDispatch(t *testing.T) {
-	for _, mode := range []PacketDispatchMode{Readv, RecvMMsg} {
-		t.Run(fmt.Sprint(mode), func(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		mode      PacketDispatchMode
+		halfClose bool
+	}{
+		{"Readv", Readv, false},
+		{"RecvMMsg", RecvMMsg, false},
+		{"Readv_half_close", Readv, true},
+		{"RecvMMsg_half_close", RecvMMsg, true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
 			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
 			if err != nil {
 				t.Fatal(err)
 			}
 			closed := make(chan tcpip.Error, 1)
 			ep, err := New(&Options{
-				FDs: []int{fds[0]}, MTU: 1500, PacketDispatchMode: mode,
+				FDs: []int{fds[0]}, MTU: 1500, PacketDispatchMode: test.mode,
 				ClosedFunc: func(err tcpip.Error) { closed <- err },
 			})
 			if err != nil {
@@ -806,7 +815,19 @@ func TestPeerCloseStopsDispatch(t *testing.T) {
 				ep.Close()
 			})
 			// Make EOF the first read, without relying on the poll path.
-			unix.Close(fds[1])
+			if test.halfClose {
+				defer unix.Close(fds[1])
+				if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+					t.Fatal(err)
+				}
+				poll := []unix.PollFd{{Fd: int32(fds[0]), Events: unix.POLLIN | unix.POLLRDHUP}}
+				if _, err := unix.Poll(poll, 0); err != nil {
+					t.Fatal(err)
+				}
+				t.Logf("peer write shutdown poll events=%#x", poll[0].Revents)
+			} else {
+				unix.Close(fds[1])
+			}
 			ep.Attach(&fakeNetworkDispatcher{})
 			select {
 			case <-closed:
@@ -823,10 +844,14 @@ func TestRecvMMsgEmptyPackets(t *testing.T) {
 		name          string
 		emptyMessages int
 		closePeer     bool
+		halfClose     bool
 	}{
-		{"1", 1, false},
-		{"8", MaxMsgsPerRecv, false},
-		{"closed_peer", MaxMsgsPerRecv, true},
+		{"1", 1, false, false},
+		{"8", MaxMsgsPerRecv, false, false},
+		{"closed_peer", MaxMsgsPerRecv, true, false},
+		{"closed_peer_two_batches", 2 * MaxMsgsPerRecv, true, false},
+		{"half_closed_peer", MaxMsgsPerRecv, false, true},
+		{"half_closed_peer_two_batches", 2 * MaxMsgsPerRecv, false, true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
@@ -854,6 +879,10 @@ func TestRecvMMsgEmptyPackets(t *testing.T) {
 			if test.closePeer {
 				unix.Close(fds[1])
 				fds[1] = -1
+			} else if test.halfClose {
+				if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+					t.Fatal(err)
+				}
 			}
 			sink := &fakeNetworkDispatcher{}
 			d, err := newRecvMMsgDispatcher(fds[0], &endpoint{dispatcher: sink}, &Options{ProcessorsPerChannel: 1})
@@ -867,10 +896,9 @@ func TestRecvMMsgEmptyPackets(t *testing.T) {
 					pkt.DecRef()
 				}
 			}()
-			for i := 0; i < 2 && len(sink.pkts) == 0; i++ {
+			for i := 0; i < test.emptyMessages/MaxMsgsPerRecv+2 && len(sink.pkts) == 0; i++ {
 				if ok, err := d.dispatch(); !ok || err != nil {
-					n, _, flags, from, peekErr := unix.Recvmsg(fds[0], make([]byte, 1), nil, unix.MSG_PEEK|unix.MSG_DONTWAIT|unix.MSG_TRUNC)
-					t.Fatalf("dispatch() = %v, %v before queued packet; peek = %d, flags=%#x, from=%#v, err=%v", ok, err, n, flags, from, peekErr)
+					t.Fatalf("dispatch() = %v, %v before queued packet", ok, err)
 				}
 			}
 			if len(sink.pkts) != 1 {
@@ -878,6 +906,13 @@ func TestRecvMMsgEmptyPackets(t *testing.T) {
 			}
 			if got := sink.pkts[0].Data().AsRange().ToSlice(); !bytes.Equal(got, packet) {
 				t.Errorf("received %x, want %x", got, packet)
+			}
+			if test.closePeer || test.halfClose {
+				ok, err := d.dispatch()
+				_, reset := err.(*tcpip.ErrConnectionReset)
+				if ok || (err != nil && !reset) {
+					t.Fatalf("dispatch() after draining closed peer = %v, %v", ok, err)
+				}
 			}
 		})
 	}
@@ -904,62 +939,6 @@ func TestRecvMMsgEmptyPacketsStop(t *testing.T) {
 	d.Stop()
 	if ok, err := d.dispatch(); ok || err != nil {
 		t.Fatalf("stopped dispatch() = %v, %v; want false, nil", ok, err)
-	}
-}
-
-func TestSeqpacketReceiveQueue(t *testing.T) {
-	for _, test := range []struct {
-		name          string
-		emptyMessages int
-		payload       bool
-		closePeer     bool
-	}{
-		{"live_empty", 1, false, false},
-		{"live_empty_batches_then_payload", 2 * MaxMsgsPerRecv, true, false},
-		{"closed_empty_batches_then_payload", 2 * MaxMsgsPerRecv, true, true},
-		{"closed_empty", 1, false, true},
-		{"closed_drained", 0, false, true},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer unix.Close(fds[0])
-			defer func() {
-				if fds[1] >= 0 {
-					unix.Close(fds[1])
-				}
-			}()
-			for i := 0; i < test.emptyMessages; i++ {
-				if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
-					t.Fatal(err)
-				}
-			}
-			if test.payload {
-				if err := unix.Sendmsg(fds[1], []byte{1, 2, 3, 4}, nil, nil, 0); err != nil {
-					t.Fatal(err)
-				}
-			}
-			if test.closePeer {
-				unix.Close(fds[1])
-				fds[1] = -1
-			}
-			for i := 0; i < test.emptyMessages+2; i++ {
-				queued, err := unix.IoctlGetInt(fds[0], unix.TIOCINQ)
-				if err != nil {
-					t.Fatal(err)
-				}
-				n, _, flags, _, err := unix.Recvmsg(fds[0], make([]byte, 8), nil, unix.MSG_DONTWAIT)
-				t.Logf("read=%d: queued=%d n=%d flags=%#x err=%v", i, queued, n, flags, err)
-				if err == unix.EAGAIN {
-					break
-				}
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
-		})
 	}
 }
 
