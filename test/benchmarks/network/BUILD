@@ -61,8 +61,8 @@ benchmark_test(
     args = [
         "--owned-docker",
         "--worker-image-archives=$(rootpath //images:benchmark_node_archive),$(rootpath //images:benchmark_hey_archive),$(rootpath //images:benchmark_util_archive),$(rootpath //images/basic:benchmark_redis_archive)",
-        "-test.run=^$",
-        "-test.bench=^BenchmarkNode$",
+        "-test.run=^$$",
+        "-test.bench=^BenchmarkNode$$",
         "-test.benchtime=25x",
     ],
     data = [
