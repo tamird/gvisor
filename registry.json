@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T23:11:17.717161+00:00",
+    "updatedAt": "2026-11-19T23:21:48.031196+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55150,13 +55150,13 @@
       "repo": "google/gvisor",
       "number": 16445,
       "ref": "pr-moby-bench",
-      "head": "7983609ee995f119b6755dc03540322af8456592",
+      "head": "1910e8b0ee325bcf578c40ea7f8401040501b332",
       "title": "Docker-in-gVisor network benchmark",
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T21:28:44.768286+00:00",
-      "summary": "Head7983609ee differs from the reviewed84b source only by the requested three-line ShouldRun guard before topology setup. Root verified the source and complete thread; author reply4634949016 says Added. The sharding finding is addressed. FirstPass1975 and all six native checks pass, but actual benchmark execution and before/after performance evidence remain author-owned requirements. No new reply or approval question is needed.",
+      "updatedAt": "2026-11-19T23:21:48.031196+00:00",
+      "summary": "Root inspected current1910e8b against7983609: only three setup comments were added; executable benchmark and setup code are unchanged. The unchanged Added reply4634949016 and requested sharding fix are handled on this head. Kerumeto and EtiennePerot approve current1910; FirstPass1992/main55456 remain pending at this inspection. Actual native/Sentry benchmark execution and broad before/after performance evidence remain author-owned requirements.",
       "evidence": [
         {
           "label": "15 native transfer cases with sender and receiver byte counts",
@@ -55218,13 +55218,13 @@
       ],
       "followup": {
         "owner": "root",
-        "currentStateObservedAt": "2026-11-19T21:28:44.768286+00:00",
-        "providerHead": "7983609ee995f119b6755dc03540322af8456592",
+        "currentStateObservedAt": "2026-11-19T23:21:48.031196+00:00",
+        "providerHead": "1910e8b0ee325bcf578c40ea7f8401040501b332",
         "mergeable": "MERGEABLE",
-        "sourceHead": "7983609ee995f119b6755dc03540322af8456592",
-        "observedAt": "2026-11-19T21:28:44.768286+00:00",
-        "disposition": "Head7983609ee differs from the reviewed84b source only by the requested three-line ShouldRun guard before topology setup. Root verified the source and complete thread; author reply4634949016 says Added. The sharding finding is addressed. FirstPass1975 and all six native checks pass, but actual benchmark execution and before/after performance evidence remain author-owned requirements. No new reply or approval question is needed.",
-        "nextAction": "Root has handled the current source and author reply. Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval. Do not repeat the source fix, courtesy reply or review question.",
+        "sourceHead": "1910e8b0ee325bcf578c40ea7f8401040501b332",
+        "observedAt": "2026-11-19T23:21:48.031196+00:00",
+        "disposition": "Root inspected current1910e8b against7983609: only three setup comments were added; executable benchmark and setup code are unchanged. The unchanged Added reply4634949016 and requested sharding fix are handled on this head. Kerumeto and EtiennePerot approve current1910; FirstPass1992/main55456 remain pending at this inspection. Actual native/Sentry benchmark execution and broad before/after performance evidence remain author-owned requirements.",
+        "nextAction": "Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval; root follows current-head CI and evidence. Do not repeat the source fix, courtesy reply or review question.",
         "recheckCondition": "Author supplies execution/performance evidence, changes source or conversation, or relevant current-head checks change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16445",
@@ -55251,7 +55251,7 @@
           "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
           "CI": "Exact-head First Pass1770 SUCCESS at20:06 snapshot"
         },
-        "curatedAt": "2026-11-19T21:28:44.768286+00:00",
+        "curatedAt": "2026-11-19T23:21:48.031196+00:00",
         "currentSourceReview": {
           "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
           "finding": "namedLogger drops Skipf and bypasses DING-only topology partition selection",
@@ -55334,7 +55334,7 @@
           }
         ]
       },
-      "nextStep": "Root has handled the current source and author reply. Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval. Do not repeat the source fix, courtesy reply or review question.",
+      "nextStep": "Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval; root follows current-head CI and evidence. Do not repeat the source fix, courtesy reply or review question.",
       "recheckCondition": "Author supplies execution/performance evidence, changes source or conversation, or relevant current-head checks change."
     },
     {
@@ -135495,5 +135495,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T23:11:17.717161+00:00"
+  "updatedAt": "2026-11-19T23:21:48.031196+00:00"
 }
