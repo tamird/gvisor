@@ -15,10 +15,13 @@
 package secfuzz_test
 
 import (
+	"encoding/json"
+	"runtime"
 	"slices"
 	"testing"
 	_ "unsafe"
 
+	"gvisor.dev/gvisor/pkg/bpf"
 	"gvisor.dev/gvisor/test/secfuzz"
 )
 
@@ -32,24 +35,73 @@ func TestFuzzInstrumentation(t *testing.T) {
 	if len(counters) == 0 {
 		t.Fatal("the compiler emitted no fuzz coverage counters")
 	}
-	clear(counters)
-	secfuzz.InstrumentationProbe(false)
-	baseline := slices.Clone(counters)
-	clear(counters)
-	secfuzz.InstrumentationProbe(false)
-	if !slices.Equal(counters, baseline) {
-		t.Fatal("the repeated false control changed fuzz coverage")
+	programs := [...]struct {
+		name   string
+		record func([]bool)
+	}{
+		{"first", secfuzz.RecordFirstCoverage},
+		{"second", secfuzz.RecordSecondCoverage},
 	}
-	clear(counters)
-	secfuzz.InstrumentationProbe(true)
-	newEdges := 0
-	for i, count := range counters {
-		if count != 0 && baseline[i] == 0 {
-			newEdges++
+	const limit = bpf.MaxInstructions
+	candidates := make([][][]int, len(programs))
+	owners := make([]int, len(counters))
+	for p, program := range programs {
+		covered := make([]bool, limit)
+		clear(counters)
+		program.record(covered)
+		baseline := slices.Clone(counters)
+		clear(counters)
+		program.record(covered)
+		if !slices.Equal(counters, baseline) {
+			t.Fatalf("%s: repeated false control changed fuzz coverage", program.name)
+		}
+		candidates[p] = make([][]int, limit)
+		// A fixed length prevents dispatcher coverage from identifying the PC.
+		for pc := range covered {
+			covered[pc] = true
+			clear(counters)
+			program.record(covered)
+			for offset, count := range counters {
+				if count == 0 {
+					continue
+				}
+				// Count every positive hit, including hits also in the control.
+				owners[offset]++
+				if baseline[offset] == 0 {
+					candidates[p][pc] = append(candidates[p][pc], offset)
+				}
+			}
+			covered[pc] = false
 		}
 	}
-	if newEdges == 0 {
-		t.Fatal("the true branch added no fuzz coverage")
+	witnesses := make(map[string][]int, len(programs))
+	for p, program := range programs {
+		witnesses[program.name] = make([]int, limit)
+		for pc := range limit {
+			witness := -1
+			for _, offset := range candidates[p][pc] {
+				if owners[offset] == 1 {
+					witness = offset
+					break
+				}
+			}
+			if witness < 0 {
+				t.Fatalf("%s instruction %d has no globally exclusive counter (%d true-only candidates)", program.name, pc, len(candidates[p][pc]))
+			}
+			witnesses[program.name][pc] = witness
+		}
 	}
-	t.Logf("fuzz counters: %d bytes, %d new true-branch edges", len(counters), newEdges)
+	proof, err := json.Marshal(struct {
+		Runtime      string           `json:"runtime"`
+		CounterBytes int              `json:"counter_bytes"`
+		Witnesses    map[string][]int `json:"witnesses"`
+	}{
+		Runtime:      runtime.Version(),
+		CounterBytes: len(counters),
+		Witnesses:    witnesses,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(proof))
 }

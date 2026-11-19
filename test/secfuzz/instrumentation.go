@@ -14,15 +14,20 @@
 
 package secfuzz
 
-import "sync/atomic"
+import "gvisor.dev/gvisor/pkg/bpf"
 
-var probeValue atomic.Uint32
-
-// InstrumentationProbe conditionally increments an atomic value.
+// RecordFirstCoverage translates the first program's instruction coverage.
 //
 //go:noinline
-func InstrumentationProbe(taken bool) {
-	if taken {
-		probeValue.Add(1)
-	}
+func RecordFirstCoverage(covered []bool) {
+	var f Fuzzee
+	countExecutedLinesProgram1(bpf.ExecutionMetrics{Coverage: covered}, &f)
+}
+
+// RecordSecondCoverage translates the second program's instruction coverage.
+//
+//go:noinline
+func RecordSecondCoverage(covered []bool) {
+	var f Fuzzee
+	countExecutedLinesProgram2(bpf.ExecutionMetrics{Coverage: covered}, &f)
 }

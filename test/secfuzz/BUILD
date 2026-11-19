@@ -39,9 +39,11 @@ go_test(
 go_library(
     name = "instrumented",
     testonly = 1,
-    srcs = ["instrumentation_probe.go"],
+    srcs = ["instrumentation.go"],
+    embed = [":secfuzz"],
     gc_goopts = ["-d=libfuzzer"],
     stateify = False,
+    deps = ["//pkg/bpf"],
 )
 
 go_test(
@@ -57,7 +59,10 @@ go_test(
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
-    deps = [":instrumented"],
+    deps = [
+        ":instrumented",
+        "//pkg/bpf",
+    ],
 )
 
 run_binary(
