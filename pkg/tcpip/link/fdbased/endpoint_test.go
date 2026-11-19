@@ -781,6 +781,168 @@ func TestCloseReleasesStopFDs(t *testing.T) {
 	}
 }
 
+func TestPeerCloseStopsDispatch(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		mode      PacketDispatchMode
+		halfClose bool
+	}{
+		{"Readv", Readv, false},
+		{"RecvMMsg", RecvMMsg, false},
+		{"Readv_half_close", Readv, true},
+		{"RecvMMsg_half_close", RecvMMsg, true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			closed := make(chan tcpip.Error, 1)
+			ep, err := New(&Options{
+				FDs: []int{fds[0]}, MTU: 1500, PacketDispatchMode: test.mode,
+				ClosedFunc: func(err tcpip.Error) { closed <- err },
+			})
+			if err != nil {
+				unix.Close(fds[0])
+				unix.Close(fds[1])
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				// Closing the reader also releases a dispatcher that fails to
+				// recognize peer closure, so a failed assertion can clean up.
+				unix.Close(fds[0])
+				ep.Attach(nil)
+				ep.Close()
+			})
+			// Make EOF the first read, without relying on the poll path.
+			if test.halfClose {
+				defer unix.Close(fds[1])
+				if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				unix.Close(fds[1])
+			}
+			ep.Attach(&fakeNetworkDispatcher{})
+			select {
+			case <-closed:
+			case <-time.After(time.Second):
+				t.Fatal("dispatcher did not report peer closure")
+			}
+			ep.Wait()
+		})
+	}
+}
+
+func TestRecvMMsgEmptyPackets(t *testing.T) {
+	type peerState int
+	const (
+		peerOpen peerState = iota
+		peerClosed
+		peerWriteClosed
+	)
+	for _, test := range []struct {
+		name          string
+		emptyMessages int
+		peer          peerState
+	}{
+		{"1", 1, peerOpen},
+		{"8", MaxMsgsPerRecv, peerOpen},
+		{"closed_peer", MaxMsgsPerRecv, peerClosed},
+		{"closed_peer_two_batches", 2 * MaxMsgsPerRecv, peerClosed},
+		{"half_closed_peer", MaxMsgsPerRecv, peerWriteClosed},
+		{"half_closed_peer_two_batches", 2 * MaxMsgsPerRecv, peerWriteClosed},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer func() {
+				if fds[1] >= 0 {
+					unix.Close(fds[1])
+				}
+			}()
+			for i := 0; i < test.emptyMessages; i++ {
+				if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			packet := []byte{
+				0x45, 0, 0, 24, 0, 0, 0, 0, 64, byte(header.TCPProtocolNumber), 0, 0,
+				192, 168, 0, 1, 192, 168, 0, 2, 0, 80, 0, 81,
+			}
+			if err := unix.Sendmsg(fds[1], packet, nil, nil, 0); err != nil {
+				t.Fatal(err)
+			}
+			switch test.peer {
+			case peerClosed:
+				unix.Close(fds[1])
+				fds[1] = -1
+			case peerWriteClosed:
+				if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+					t.Fatal(err)
+				}
+			}
+			sink := &fakeNetworkDispatcher{}
+			d, err := newRecvMMsgDispatcher(fds[0], &endpoint{dispatcher: sink}, &Options{ProcessorsPerChannel: 1})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer d.close()
+			defer d.release()
+			defer func() {
+				for _, pkt := range sink.pkts {
+					pkt.DecRef()
+				}
+			}()
+			for i := 0; i < test.emptyMessages/MaxMsgsPerRecv+2 && len(sink.pkts) == 0; i++ {
+				if ok, err := d.dispatch(); !ok || err != nil {
+					t.Fatalf("dispatch() = %v, %v before queued packet", ok, err)
+				}
+			}
+			if len(sink.pkts) != 1 {
+				t.Fatalf("received %d packets, want 1", len(sink.pkts))
+			}
+			if got := sink.pkts[0].Data().AsRange().ToSlice(); !bytes.Equal(got, packet) {
+				t.Errorf("received %x, want %x", got, packet)
+			}
+			if test.peer != peerOpen {
+				ok, err := d.dispatch()
+				_, reset := err.(*tcpip.ErrConnectionReset)
+				if ok || (err != nil && !reset) {
+					t.Fatalf("dispatch() after draining closed peer = %v, %v", ok, err)
+				}
+			}
+		})
+	}
+}
+
+func TestRecvMMsgEmptyPacketsStop(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[0])
+	defer unix.Close(fds[1])
+	for i := 0; i < MaxMsgsPerRecv; i++ {
+		if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d, err := newRecvMMsgDispatcher(fds[0], &endpoint{}, &Options{ProcessorsPerChannel: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.close()
+	defer d.release()
+	d.Stop()
+	if ok, err := d.dispatch(); ok || err != nil {
+		t.Fatalf("stopped dispatch() = %v, %v; want false, nil", ok, err)
+	}
+}
+
 func TestMain(m *testing.M) {
 	refs.SetLeakMode(refs.LeaksPanic)
 	code := m.Run()

@@ -310,15 +310,19 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 
 	defer d.pkts.Reset()
 
+	allEmpty := true
 	for k := 0; k < nMsgs; k++ {
 		n := int(d.msgHdrs[k].Len)
+		// Mark that this iovec has been processed.
+		d.msgHdrs[k].Msg.Iovlen = 0
+		if n == 0 {
+			continue
+		}
+		allEmpty = false
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 			Payload: d.bufs[k].pullBuffer(n),
 		})
 		d.pkts.PushBack(pkt)
-
-		// Mark that this iovec has been processed.
-		d.msgHdrs[k].Msg.Iovlen = 0
 
 		if d.e.parseInboundHeader(pkt, addr) {
 			pkt.RXChecksumValidated = d.e.caps&stack.CapabilityRXChecksumOffload != 0
@@ -326,6 +330,29 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 		}
 	}
 	d.mgr.wakeReady()
+	if allEmpty {
+		// An empty message and a closed SOCK_SEQPACKET peer both read as
+		// zero bytes. Poll distinguishes peer closure and also observes Stop
+		// without treating an empty message from a live peer as EOF.
+		stopped, errno := rawfile.BlockingPollUntilStopped(d.EFD, d.fd, unix.POLLIN|unix.POLLRDHUP)
+		if stopped {
+			return false, nil
+		}
+		if errno == unix.ECONNRESET {
+			// Hangup can accompany queued packets. For Unix SOCK_SEQPACKET
+			// sockets, TIOCINQ counts bytes past remaining empty records.
+			queued, err := unix.IoctlGetInt(d.fd, unix.TIOCINQ)
+			if err != nil {
+				return false, tcpip.TranslateErrno(err.(unix.Errno))
+			}
+			if queued > 0 {
+				return true, nil
+			}
+		}
+		if errno != 0 && errno != unix.EINTR {
+			return false, tcpip.TranslateErrno(errno)
+		}
+	}
 
 	return true, nil
 }
