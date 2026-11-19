@@ -98,6 +98,9 @@ py_test(
 )
 
 exports_files(
-    ["build_cover.sh", "go-allow-internal.patch"],
+    [
+        "build_cover.sh",
+        "go-allow-internal.patch",
+    ],
     visibility = ["//runsc/cmd/sentry:__pkg__"],
 )

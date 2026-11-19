@@ -197,7 +197,10 @@ genrule(
         "@platforms//os:linux",
     ],
     executable = True,
-    tags = ["manual", "no-local"],
+    tags = [
+        "manual",
+        "no-local",
+    ],
     tools = ["//tools:build_cover.sh"],
     visibility = ["//tools/bazeldefs/tests/coverage:__pkg__"],
 )
