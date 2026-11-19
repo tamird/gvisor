@@ -470,11 +470,11 @@ func (c *Container) Logs(ctx context.Context) (string, error) {
 }
 
 // OutputStreams gets the container's stdout and stderr streams separately.
-func (c *Container) OutputStreams(ctx context.Context) ([]byte, []byte, error) {
+func (c *Container) OutputStreams(ctx context.Context) (*bytes.Buffer, *bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	err := c.logs(ctx, &stdout, &stderr)
-	return stdout.Bytes(), stderr.Bytes(), err
+	return &stdout, &stderr, err
 }
 
 func (c *Container) logs(ctx context.Context, stdout, stderr *bytes.Buffer) error {

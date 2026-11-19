@@ -31,7 +31,7 @@ import (
 // redis instance and returns the data in its response. The test loops through
 // increasing amounts of concurrency for requests.
 func BenchmarkNode(b *testing.B) {
- harness.StartWorker(b)
+	harness.StartWorker(b)
 	concurrency := []int{1, 5, 10, 25}
 	for _, c := range concurrency {
 		param := tools.Parameter{

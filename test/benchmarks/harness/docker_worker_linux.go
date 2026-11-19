@@ -31,14 +31,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
-// StartDockerDaemon starts a daemon whose storage, socket and child processes
+// startDockerDaemon starts a daemon whose storage, socket and child processes
 // belong to this test. Its cleanup runs after container and client cleanup.
-func StartDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge bool) (string, string, string) {
+func startDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge bool) (string, string, string) {
 	t.Helper()
 	interfaces, err := net.Interfaces()
 	if err != nil {
@@ -303,23 +304,29 @@ func StartDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge b
 func StartWorker(b *testing.B) {
 	b.Helper()
 	if !*ownedDocker {
-	 return
+		return
 	}
 	if *workerArchives == "" {
-	 b.Fatal("owned Docker worker requires declared image archives")
+		b.Fatal("owned Docker worker requires declared image archives")
 	}
 	ctx, cancel := context.WithTimeout(b.Context(), 2*time.Minute)
 	defer cancel()
 	runsc := ""
 	if *workerRunsc != "" {
-	 path, err := testutil.FindFile(*workerRunsc)
-	 if err != nil { b.Fatal(err) }
-	 path, err = filepath.Abs(path)
-	 if err != nil { b.Fatal(err) }
-	 runsc, err = filepath.EvalSymlinks(path)
-	 if err != nil { b.Fatal(err) }
+		path, err := testutil.FindFile(*workerRunsc)
+		if err != nil {
+			b.Fatal(err)
+		}
+		path, err = filepath.Abs(path)
+		if err != nil {
+			b.Fatal(err)
+		}
+		runsc, err = filepath.EvalSymlinks(path)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
-	host, selectedRuntime, configPath := StartDockerDaemon(b, ctx, runsc, true)
+	host, selectedRuntime, configPath := startDockerDaemon(b, ctx, runsc, true)
 	b.Setenv("DOCKER_HOST", host)
 	// Native benchmark clients must continue to use runc.
 	b.Setenv("UNSANDBOXED_RUNTIME", "runc")
@@ -327,43 +334,86 @@ func StartWorker(b *testing.B) {
 	dockerutil.SetRuntime(selectedRuntime)
 	b.Cleanup(func() { dockerutil.SetRuntime(oldRuntime) })
 	oldConfig := flag.Lookup("config_path").Value.String()
-	if err := flag.Set("config_path", configPath); err != nil { b.Fatal(err) }
+	if err := flag.Set("config_path", configPath); err != nil {
+		b.Fatal(err)
+	}
 	b.Cleanup(func() {
-	 if err := flag.Set("config_path", oldConfig); err != nil { b.Error(err) }
+		if err := flag.Set("config_path", oldConfig); err != nil {
+			b.Error(err)
+		}
 	})
 	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
-	if err != nil { b.Fatal(err) }
-	defer cli.Close()
-	for _, archive := range strings.Split(*workerArchives, ",") {
-	 path, err := testutil.FindFile(archive)
-	 if err != nil { b.Fatal(err) }
-	 f, err := os.Open(path)
-	 if err != nil { b.Fatal(err) }
-	 loaded, err := cli.ImageLoad(ctx, f)
-	 closeErr := f.Close()
-	 if err != nil { b.Fatalf("load declared image %q: %v", archive, err) }
-	 if closeErr != nil { loaded.Body.Close(); b.Fatal(closeErr) }
-	 if !loaded.JSON { loaded.Body.Close(); b.Fatal("image load did not return JSON") }
-	 decoder := json.NewDecoder(loaded.Body)
-	 for {
-	  var message struct {
-	   Error string `json:"error"`
-	   ErrorDetail *struct { Message string `json:"message"` } `json:"errorDetail"`
-	  }
-	  err := decoder.Decode(&message)
-	  if err == io.EOF { break }
-	  if err != nil { loaded.Body.Close(); b.Fatalf("image-load response: %v", err) }
-	  if message.Error != "" || message.ErrorDetail != nil {
-	   loaded.Body.Close()
-	   b.Fatalf("image load failed: %+v", message)
-	  }
-	 }
-	 if err := loaded.Body.Close(); err != nil { b.Fatal(err) }
+	if err != nil {
+		b.Fatal(err)
 	}
+	defer cli.Close()
 	version, err := cli.ServerVersion(ctx)
-	if err != nil { b.Fatalf("owned Docker server version: %v", err) }
+	if err != nil {
+		b.Fatalf("owned Docker server version: %v", err)
+	}
 	if version.Arch != runtime.GOARCH || version.Os != "linux" {
-	 b.Fatalf("owned Docker server is %s/%s, want linux/%s", version.Os, version.Arch, runtime.GOARCH)
+		b.Fatalf("owned Docker server is %s/%s, want linux/%s", version.Os, version.Arch, runtime.GOARCH)
+	}
+	parts := strings.Split(version.Version, ".")
+	if len(parts) < 3 {
+		b.Fatalf("invalid Docker server version %q", version.Version)
+	}
+	major, majorErr := strconv.Atoi(parts[0])
+	minor, minorErr := strconv.Atoi(parts[1])
+	if majorErr != nil || minorErr != nil || major < 17 || (major == 17 && minor < 9) {
+		b.Fatalf("Docker server version %q is not supported; require at least 17.09", version.Version)
+	}
+	for _, archive := range strings.Split(*workerArchives, ",") {
+		loadDockerImage(b, ctx, cli, archive)
+	}
+	images, err := cli.ImageList(ctx, image.ListOptions{})
+	if err != nil {
+		b.Fatalf("list loaded Docker images: %v", err)
+	}
+	for _, loaded := range images {
+		b.Logf("loaded Docker image: ID=%s tags=%q", loaded.ID, loaded.RepoTags)
 	}
 	b.Logf("owned Docker worker: server=%s architecture=%s runtime=%s", version.Version, version.Arch, selectedRuntime)
+}
+
+// loadDockerImage loads one declared Docker-save archive into the owned daemon.
+func loadDockerImage(t testing.TB, ctx context.Context, cli *client.Client, archive string) {
+	t.Helper()
+	path, err := testutil.FindFile(archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	loaded, err := cli.ImageLoad(ctx, f)
+	if err != nil {
+		t.Fatalf("load declared image %q: %v", archive, err)
+	}
+	defer loaded.Body.Close()
+	if !loaded.JSON {
+		t.Fatal("image load did not return JSON")
+	}
+	decoder := json.NewDecoder(loaded.Body)
+	for {
+		var message struct {
+			Error string `json:"error"`
+			ErrorDetail *struct {
+				Message string `json:"message"`
+			} `json:"errorDetail"`
+		}
+		if err := decoder.Decode(&message); err == io.EOF {
+			break
+		} else if err != nil {
+			t.Fatalf("image-load response: %v", err)
+		}
+		if message.Error != "" {
+			t.Fatalf("image load: %s", message.Error)
+		}
+		if message.ErrorDetail != nil {
+			t.Fatalf("image load: %s", message.ErrorDetail.Message)
+		}
+	}
 }

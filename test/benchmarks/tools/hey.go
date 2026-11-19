@@ -15,10 +15,12 @@
 package tools
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"math"
 	"testing"
-
-	"github.com/go-json-experiment/json"
 )
 
 // Quote latency so Hey's NaN when all requests fail remains valid JSON.
@@ -60,8 +62,13 @@ func (h *Hey) MakeCmd(host string, port int) []string {
 func (h *Hey) Report(b *testing.B, output []byte) {
 	b.Helper()
 	var report heyReport
-	if err := json.Unmarshal(output, &report, json.RejectUnknownMembers(true)); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&report); err != nil {
 		b.Fatalf("failed to parse hey output: %v\n%s", err, output)
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		b.Fatalf("unexpected trailing hey output: %s", output)
 	}
 	if report.Errors == nil || len(report.Errors) != 0 {
 		b.Fatalf("hey request error accounting is missing or reports errors: %s", output)
@@ -69,7 +76,7 @@ func (h *Hey) Report(b *testing.B, output []byte) {
 	if report.RequestsPerSecond <= 0 {
 		b.Fatalf("invalid hey request rate: %v", report.RequestsPerSecond)
 	}
-	if report.AverageLatency == nil || *report.AverageLatency < 0 {
+	if report.AverageLatency == nil || *report.AverageLatency < 0 || math.IsNaN(*report.AverageLatency) || math.IsInf(*report.AverageLatency, 0) {
 		b.Fatalf("invalid hey average latency in output: %s", output)
 	}
 	ReportCustomMetric(b, report.RequestsPerSecond, "requests_per_second" /*metric name*/, "QPS" /*unit*/)

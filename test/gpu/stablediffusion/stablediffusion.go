@@ -66,7 +66,7 @@ func (dr *dockerRunner) Run(ctx context.Context, image string, argv []string) ([
 	if streamsErr != nil {
 		return nil, nil, fmt.Errorf("could not get container output streams: %v", streamsErr)
 	}
-	return stdout, stderr, nil
+	return stdout.Bytes(), stderr.Bytes(), nil
 }
 
 // XL generates images using Stable Diffusion XL.

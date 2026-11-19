@@ -21,6 +21,7 @@ go_library(
         "//pkg/cleanup",
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
+        "@com_github_docker_docker//api/types/image:go_default_library",
         "@com_github_docker_docker//api/types/mount:go_default_library",
         "@com_github_docker_docker//client:go_default_library",
     ],
@@ -31,6 +32,7 @@ go_test(
     size = "small",
     timeout = "moderate",
     srcs = ["docker_worker_test.go"],
+    embed = [":harness"],
     args = ["--alpine-archive=$(rootpath //images/basic:alpine_archive)"],
     data = ["//images/basic:alpine_archive"],
     exec_properties = {
@@ -41,7 +43,6 @@ go_test(
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],
     deps = [
-        ":harness",
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/container:go_default_library",
         "@com_github_docker_docker//api/types/mount:go_default_library",
@@ -70,6 +71,7 @@ go_test(
     size = "small",
     timeout = "moderate",
     srcs = ["docker_worker_test.go"],
+    embed = [":harness"],
     args = [
         "--alpine-archive=$(rootpath //images/basic:alpine_archive)",
         "--worker-runtime=runsc",
@@ -88,7 +90,6 @@ go_test(
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],
     deps = [
-        ":harness",
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/container:go_default_library",
         "@com_github_docker_docker//api/types/mount:go_default_library",

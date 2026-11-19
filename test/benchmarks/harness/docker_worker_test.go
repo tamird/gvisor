@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package harness_test
+package harness
 
 import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
 	"flag"
-	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -35,7 +34,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"gvisor.dev/gvisor/pkg/test/testutil"
- "gvisor.dev/gvisor/test/benchmarks/harness"
 )
 
 var (
@@ -84,7 +82,7 @@ func testDockerWorker(t *testing.T, bridge bool) {
 	default:
 		t.Fatalf("unsupported worker runtime %q", *workerRuntime)
 	}
-	host, selectedRuntime, _ := harness.StartDockerDaemon(t, ctx, runsc, bridge)
+	host, selectedRuntime, _ := startDockerDaemon(t, ctx, runsc, bridge)
 	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
 	if err != nil {
 		t.Fatal(err)
@@ -114,43 +112,7 @@ func testDockerWorker(t *testing.T, bridge bool) {
 	if versions.Client == "" || versions.Server != version.Version {
 		t.Fatalf("Docker CLI versions = %+v, API server = %q", versions, version.Version)
 	}
-	archive, err := testutil.FindFile(*alpineArchive)
-	if err != nil {
-		t.Fatal(err)
-	}
-	f, err := os.Open(archive)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
-	loaded, err := cli.ImageLoad(ctx, f)
-	if err != nil {
-		t.Fatalf("load declared Alpine image: %v", err)
-	}
-	defer loaded.Body.Close()
-	if !loaded.JSON {
-		t.Fatal("image load did not return JSON")
-	}
-	decoder := json.NewDecoder(loaded.Body)
-	for {
-		var message struct {
-			Error       string `json:"error"`
-			ErrorDetail *struct {
-				Message string `json:"message"`
-			} `json:"errorDetail"`
-		}
-		if err := decoder.Decode(&message); err == io.EOF {
-			break
-		} else if err != nil {
-			t.Fatalf("image-load response: %v", err)
-		}
-		if message.Error != "" {
-			t.Fatalf("image load: %s", message.Error)
-		}
-		if message.ErrorDetail != nil {
-			t.Fatalf("image load: %s", message.ErrorDetail.Message)
-		}
-	}
+	loadDockerImage(t, ctx, cli, *alpineArchive)
 	image, err := cli.ImageInspect(ctx, "gvisor.dev/images/basic/alpine:latest")
 	if err != nil {
 		t.Fatal(err)

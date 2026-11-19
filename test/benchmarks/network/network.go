@@ -84,11 +84,11 @@ func runHey(b *testing.B, ctx context.Context, client *dockerutil.Container, opt
 	if err != nil {
 		b.Fatalf("failed to read hey output: %v", err)
 	}
-	if len(stderr) != 0 {
+	if stderr.Len() != 0 {
 		b.Logf("hey stderr: %s", stderr)
 	}
 	if waitErr != nil {
 		b.Fatalf("hey failed: %v\nstdout: %s", waitErr, stdout)
 	}
-	hey.Report(b, stdout)
+	hey.Report(b, stdout.Bytes())
 }
