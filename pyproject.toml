@@ -1,0 +1,128 @@
+[dependency-groups]
+typecheck = [
+    "mypy==2.4.1",
+    "pyright[nodejs]==1.1.414",
+    "ty==0.0.107",
+]
+
+[tool.mypy]
+python_version = "3.11"
+platform = "linux"
+strict = true
+disallow_any_unimported = true
+disallow_any_expr = true
+disallow_any_decorated = true
+disallow_any_explicit = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+warn_incomplete_stub = true
+warn_unreachable = true
+strict_equality_for_none = true
+extra_checks = true
+incremental = false
+cache_dir = "/dev/null"
+enable_error_code = ["possibly-undefined", "redundant-expr", "truthy-bool", "truthy-iterable", "ignore-without-code", "unused-awaitable", "redundant-self", "unused-ignore", "explicit-override", "unimported-reveal", "mutable-override", "exhaustive-match"]
+
+[tool.ty.environment]
+python-version = "3.11"
+python-platform = "linux"
+
+[tool.ty.rules]
+all = "error"
+
+[tool.pyright]
+pythonVersion = "3.11"
+pythonPlatform = "Linux"
+typeCheckingMode = "strict"
+reportGeneralTypeIssues = "error"
+reportPropertyTypeMismatch = "error"
+reportFunctionMemberAccess = "error"
+reportMissingImports = "error"
+reportMissingModuleSource = "error"
+reportInvalidTypeForm = "error"
+reportMissingTypeStubs = "error"
+reportImportCycles = "error"
+reportUnusedImport = "error"
+reportUnusedClass = "error"
+reportUnusedFunction = "error"
+reportUnusedVariable = "error"
+reportDuplicateImport = "error"
+reportWildcardImportFromLibrary = "error"
+reportAbstractUsage = "error"
+reportArgumentType = "error"
+reportAssertTypeFailure = "error"
+reportAssignmentType = "error"
+reportAttributeAccessIssue = "error"
+reportCallIssue = "error"
+reportInconsistentOverload = "error"
+reportIndexIssue = "error"
+reportInvalidTypeArguments = "error"
+reportNoOverloadImplementation = "error"
+reportOperatorIssue = "error"
+reportOptionalSubscript = "error"
+reportOptionalMemberAccess = "error"
+reportOptionalCall = "error"
+reportOptionalIterable = "error"
+reportOptionalContextManager = "error"
+reportOptionalOperand = "error"
+reportRedeclaration = "error"
+reportReturnType = "error"
+reportTypedDictNotRequiredAccess = "error"
+reportUntypedFunctionDecorator = "error"
+reportUntypedClassDecorator = "error"
+reportUntypedBaseClass = "error"
+reportUntypedNamedTuple = "error"
+reportPrivateUsage = "error"
+reportTypeCommentUsage = "error"
+reportPrivateImportUsage = "error"
+reportConstantRedefinition = "error"
+reportDeprecated = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
+reportOverlappingOverload = "error"
+reportPossiblyUnboundVariable = "error"
+reportMissingSuperCall = "error"
+reportUninitializedInstanceVariable = "error"
+reportInvalidStringEscapeSequence = "error"
+reportUnknownParameterType = "error"
+reportUnknownArgumentType = "error"
+reportUnknownLambdaType = "error"
+reportUnknownVariableType = "error"
+reportUnknownMemberType = "error"
+reportMissingParameterType = "error"
+reportMissingTypeArgument = "error"
+reportInvalidTypeVarUse = "error"
+reportCallInDefaultInitializer = "error"
+reportUnnecessaryIsInstance = "error"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryContains = "error"
+reportAssertAlwaysTrue = "error"
+reportSelfClsParameterName = "error"
+reportImplicitStringConcatenation = "error"
+reportUnboundVariable = "error"
+reportUnhashable = "error"
+reportUndefinedVariable = "error"
+reportInvalidStubStatement = "error"
+reportIncompleteStub = "error"
+reportUnsupportedDunderAll = "error"
+reportUnusedCallResult = "error"
+reportUnusedCoroutine = "error"
+reportUnusedExcept = "error"
+reportUnusedExpression = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportMatchNotExhaustive = "error"
+reportUnreachable = "error"
+reportImplicitOverride = "error"
+
+strictListInference = true
+strictSetInference = true
+strictDictionaryInference = true
+analyzeUnannotatedFunctions = true
+strictParameterNoneValue = true
+enableReachabilityAnalysis = true
+disableBytesTypePromotions = true
+enableTypeIgnoreComments = false
+deprecateTypingAliases = true
+

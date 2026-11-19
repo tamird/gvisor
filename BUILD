@@ -29,6 +29,11 @@ exports_files([
     "ADOPTERS.md",
 ])
 
+exports_files(
+    ["pyproject.toml"],
+    visibility = ["//tools/python:__pkg__"],
+)
+
 write_source_files(
     name = "governance-regen",
     files = {
