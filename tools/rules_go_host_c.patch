@@ -1,0 +1,70 @@
+Coral exposes host C tools without declaring their bytes as action inputs.
+Keep only actions that can use those tools out of remote execution and caching.
+Remove this exception after the hermetic LLVM replacement declares and qualifies
+the compiler, linker, sysroot and runtime-library input closure.
+
+diff --git a/go/private/actions/compilepkg.bzl b/go/private/actions/compilepkg.bzl
+--- a/go/private/actions/compilepkg.bzl
++++ b/go/private/actions/compilepkg.bzl
+@@ -179,6 +179,10 @@
+         inputs_transitive.append(cgo_inputs)
+         inputs_transitive.append(go.cc_toolchain_files)
+         env["CC"] = go.cgo_tools.c_compiler_path
++        if go.cgo_tools.c_compiler_path.startswith("/"):
++            # Host C tools are not declared action inputs.
++            execution_requirements = dict(execution_requirements)
++            execution_requirements["no-remote"] = "1"
+         if cppopts:
+             compile_args.add("-cppflags", quote_opts(cppopts))
+         if copts:
+diff --git a/go/private/actions/stdlib.bzl b/go/private/actions/stdlib.bzl
+--- a/go/private/actions/stdlib.bzl
++++ b/go/private/actions/stdlib.bzl
+@@ -77,7 +77,11 @@
+ def _stdlib_execution_requirements(go):
+     # Non-pure stdlib actions run cgo and pass C toolchain paths through
+     # CGO_CFLAGS/CGO_LDFLAGS. Bazel does not path-map environment values.
+-    return SUPPORTS_PATH_MAPPING_REQUIREMENT if go.mode.pure else {}
++    if go.mode.pure:
++        return SUPPORTS_PATH_MAPPING_REQUIREMENT
++    if go.cgo_tools.c_compiler_path.startswith("/"):
++        return {"no-remote": "1"}
++    return {}
+ 
+ def _build_env(go):
+     env = go.env
+diff --git a/go/private/actions/link.bzl b/go/private/actions/link.bzl
+--- a/go/private/actions/link.bzl
++++ b/go/private/actions/link.bzl
+@@ -83,8 +83,12 @@
+     tool_args = go.tool_args(go)
+ 
+     # use ar tool from cc toolchain if cc toolchain provides it
++    extar = None
+     if go.cgo_tools and go.cgo_tools.ar_path and go.cgo_tools.ar_path.endswith("ar"):
+-        tool_args.add("-extar", go.cgo_tools.ar_path)
++        extar = go.cgo_tools.ar_path
++        tool_args.add("-extar", extar)
++
++    execution_requirements = {}
+ 
+     # Add in any mode specific behaviours
+     if go.mode.race:
+@@ -98,6 +102,9 @@
+         tool_args.add("-linkmode", "internal")
+     else:
+         extld = extld_from_cc_toolchain(go)
++        if (extld and extld[1].startswith("/")) or (extar and extar.startswith("/")):
++            # Auto links can invoke these host tools without an explicit linkmode.
++            execution_requirements["no-remote"] = "1"
+         tool_args.add_all(extld)
+         if extld and (go.static_link or
+                       go.mode.race or
+@@ -235,6 +242,7 @@
+         env = go.env,
+         toolchain = GO_TOOLCHAIN_LABEL,
+         exec_group = exec_group,
++        execution_requirements = execution_requirements,
+     )
+ 
+ def _extract_extldflags(gc_linkopts, extldflags):
