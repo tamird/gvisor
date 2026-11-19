@@ -30,8 +30,7 @@ def main() -> int:
   if not args:
     return 1
   for path in args:
-    sys.stdout.write(_realpath(path))
-    sys.stdout.write("\n")
+    print(_realpath(path))
   return 0
 
 

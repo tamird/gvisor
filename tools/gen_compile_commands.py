@@ -22,10 +22,10 @@ import os
 import pathlib
 import shlex
 import subprocess
-import sys
+from typing import cast
 
 
-def _bazel(bazel, options, command, *args):
+def _bazel(bazel: list[str], options: list[str], command: str, *args: str) -> str:
   """Runs a bazel command with the given options, returning its stdout."""
 
   return subprocess.run(
@@ -36,11 +36,13 @@ def _bazel(bazel, options, command, *args):
   ).stdout
 
 
-def _compile_actions(bazel, options, targets):
-  """Yields the C++ compile actions for the targets' dependencies."""
+def _compile_arguments(
+    bazel: list[str], options: list[str], targets: list[str]
+) -> list[list[str]]:
+  """Returns the compiler arguments for the targets' C++ dependencies."""
 
   query = 'mnemonic("CppCompile", deps({}))'.format(" union ".join(targets))
-  return json.loads(
+  decoded: object = json.loads(
       _bazel(
           bazel,
           options,
@@ -49,32 +51,58 @@ def _compile_actions(bazel, options, targets):
           "--noshow_progress",
           query,
       )
-  )["actions"]
+  )
+  if not isinstance(decoded, dict):
+    raise ValueError("Bazel aquery output must be an object")
+  records = cast(dict[object, object], decoded).get("actions")
+  if not isinstance(records, list):
+    raise ValueError("Bazel aquery actions must be an array")
+  commands: list[list[str]] = []
+  for record in cast(list[object], records):
+    if not isinstance(record, dict):
+      raise ValueError("Bazel aquery action must be an object")
+    value = cast(dict[object, object], record).get("arguments")
+    if not isinstance(value, list):
+      raise ValueError("Bazel compile action arguments must be an array of strings")
+    arguments: list[str] = []
+    for arg in cast(list[object], value):
+      if not isinstance(arg, str):
+        raise ValueError("Bazel compile action arguments must be an array of strings")
+      arguments.append(arg)
+    commands.append(arguments)
+  return commands
 
 
-def main():
+class _Args(argparse.Namespace):
+  bazel: str = "bazel"
+  bazel_options: str = ""
+  targets: list[str] = []
+
+
+def main() -> int:
   parser = argparse.ArgumentParser(
       description="Generates compile_commands.json for gVisor's C++ code."
   )
-  parser.add_argument(
+  _ = parser.add_argument(
       "--bazel",
       default="bazel",
       help=(
           "Bazel command, including any startup options (default: %(default)s)."
       ),
   )
-  parser.add_argument(
+  _ = parser.add_argument(
       "--bazel-options",
       default="",
       help="Options passed through to Bazel calls.",
   )
-  parser.add_argument(
+  default_targets: list[str] = ["//test/...", "//tools/..."]
+  _ = parser.add_argument(
       "targets",
       nargs="*",
-      default=["//test/...", "//tools/..."],
+      default=default_targets,
       help="Bazel targets to index (default: %(default)s).",
   )
-  args = parser.parse_args()
+  args = parser.parse_args(namespace=_Args())
   targets = args.targets
   bazel = shlex.split(args.bazel)
   options = shlex.split(args.bazel_options)
@@ -82,7 +110,7 @@ def main():
   workspace = pathlib.Path(__file__).parent.parent.resolve()
   os.chdir(workspace)
 
-  _bazel(
+  _ = _bazel(
       bazel,
       options,
       "build",
@@ -94,10 +122,9 @@ def main():
       _bazel(bazel, options, "info", "execution_root").strip()
   )
 
-  database = []
-  seen = set()
-  for action in _compile_actions(bazel, options, targets):
-    arguments = action["arguments"]
+  database: list[dict[str, str | list[str]]] = []
+  seen: set[pathlib.Path] = set()
+  for arguments in _compile_arguments(bazel, options, targets):
     if "-c" not in arguments:
       continue
     source = pathlib.Path(arguments[arguments.index("-c") + 1])

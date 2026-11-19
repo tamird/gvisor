@@ -315,21 +315,27 @@ class FetchTest(unittest.TestCase):
           self.fetch(self.http_error(code))
     with self.assertRaisesRegex(buildkite.Error, "bad JSON"):
       self.fetch(b"<html>")
+    for reason in ("", "timed out"):
+      error = urllib.error.URLError(reason)
+      with self.subTest(reason=reason):
+        with self.assertRaises(buildkite.Error) as raised:
+          self.fetch(*[error] * 3)
+        self.assertEqual(str(raised.exception), f"https://x/y: {reason or error}")
 
   def test_records(self):
     url = "https://x/data/jobs?state=failed"
     pages = FakeFetch({
-        url: {"records": [1], "has_next_page": True, "end_cursor": "c1"},
-        url + "&after=c1": {"records": [2], "has_next_page": False},
+        url: {"records": [{"id": 1}], "has_next_page": True, "end_cursor": "c1"},
+        url + "&after=c1": {"records": [{"id": 2}], "has_next_page": False},
     })
     with mock.patch.object(buildkite, "_fetch", pages):
-      self.assertEqual(buildkite._fetch_records(url), [1, 2])
+      self.assertEqual(buildkite._fetch_records(url), [{"id": 1}, {"id": 2}])
 
     # A server that repeats the cursor must not cause an endless loop.
     loop = FakeFetch({
-        url: {"records": [1], "has_next_page": True, "end_cursor": "c1"},
+        url: {"records": [{"id": 1}], "has_next_page": True, "end_cursor": "c1"},
         url + "&after=c1": {
-            "records": [2],
+            "records": [{"id": 2}],
             "has_next_page": True,
             "end_cursor": "c1",
         },
@@ -340,6 +346,21 @@ class FetchTest(unittest.TestCase):
         records = buildkite._fetch_records(url)
     self.assertEqual(len(records), buildkite._MAX_PAGES)
     self.assertIn("truncated", stderr.getvalue())
+
+  def test_invalid_record_pages(self):
+    url = "https://x/data/jobs"
+    for page, message in [
+        ([], "expected an object"),
+        ({"records": {}}, "expected an array of objects"),
+        ({"records": [7]}, "expected an object"),
+        ({"records": [], "end_cursor": 7}, "end_cursor: expected a string"),
+        ({"records": [], "has_next_page": "false"}, "expected a boolean"),
+    ]:
+      with self.subTest(page=page), mock.patch.object(
+          buildkite, "_fetch", FakeFetch({url: page})
+      ):
+        with self.assertRaisesRegex(buildkite.Error, message):
+          buildkite._fetch_records(url)
 
 
 class AnnotationTest(unittest.TestCase):

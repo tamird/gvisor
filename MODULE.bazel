@@ -88,6 +88,15 @@ python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
+python_pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+python_pip.parse(
+    extra_hub_aliases = {"ty": ["bin/ty"]},
+    hub_name = "python_typecheck_pip",
+    python_version = "3.11",
+    requirements_lock = "//tools/python:requirements_lock.txt",
+)
+use_repo(python_pip, "python_typecheck_pip")
+
 ### Crosstool
 coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
 use_repo(coral_crosstool_extension, "coral_crosstool")
