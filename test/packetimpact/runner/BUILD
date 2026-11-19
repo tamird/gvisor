@@ -44,7 +44,11 @@ go_test(
     ],
     exec_properties = PACKETIMPACT_EXEC_PROPERTIES,
     pure = True,
-    tags = ["manual"],
+    # Hosted ARM VMs lack the required nftables support (BuildBuddy #13523).
+    tags = ["manual"] + select({
+        "//tools/bazeldefs:arm64": ["no-remote-exec"],
+        "//conditions:default": [],
+    }),
     target_compatible_with = ["@platforms//os:linux"],
     deps = [
         "//test/packetimpact/dut",
