@@ -25,6 +25,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -32,6 +33,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"gvisor.dev/gvisor/pkg/test/testutil"
@@ -44,6 +46,15 @@ var (
 )
 
 func TestDockerWorker(t *testing.T) {
+	testDockerWorker(t, false)
+}
+
+func TestDockerBridgeWorker(t *testing.T) {
+	testDockerWorker(t, true)
+}
+
+func testDockerWorker(t *testing.T, bridge bool) {
+	t.Helper()
 	if *alpineArchive == "" {
 		t.Fatal("a declared Alpine archive is required")
 	}
@@ -74,7 +85,7 @@ func TestDockerWorker(t *testing.T) {
 	default:
 		t.Fatalf("unsupported worker runtime %q", *workerRuntime)
 	}
-	host, selectedRuntime := startDockerDaemon(t, ctx, runsc)
+	host, selectedRuntime := startDockerDaemon(t, ctx, runsc, bridge)
 	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
 	if err != nil {
 		t.Fatal(err)
@@ -147,6 +158,10 @@ func TestDockerWorker(t *testing.T) {
 	}
 	if image.Architecture != runtime.GOARCH {
 		t.Fatalf("loaded image architecture = %q, want %q", image.Architecture, runtime.GOARCH)
+	}
+	if bridge {
+		testDockerBridge(t, ctx, cli, image.ID, selectedRuntime)
+		return
 	}
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "input"), []byte("host\n"), 0600); err != nil {
@@ -246,7 +261,7 @@ printf 'container\n' > /shared/output`},
 
 // startDockerDaemon starts a daemon whose storage, socket and child processes
 // belong to this test. Its cleanup runs after container and client cleanup.
-func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string, string) {
+func startDockerDaemon(t *testing.T, ctx context.Context, runsc string, bridge bool) (string, string) {
 	t.Helper()
 	interfaces, err := net.Interfaces()
 	if err != nil {
@@ -255,6 +270,18 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 	for _, iface := range interfaces {
 		if iface.Name == "docker0" {
 			t.Fatal("fresh Docker worker already has a docker0 bridge")
+		}
+	}
+	var parentNet string
+	var forwarding []byte
+	if bridge {
+		parentNet, err = os.Readlink("/proc/self/ns/net")
+		if err != nil {
+			t.Fatal(err)
+		}
+		forwarding, err = os.ReadFile("/proc/sys/net/ipv4/ip_forward")
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 	root, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "dockerd-")
@@ -275,7 +302,7 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 		t.Fatalf("owned Docker socket path is too long: %d bytes", len(socket))
 	}
 	configPath := filepath.Join(root, "daemon.json")
-	config, err := json.Marshal(map[string]any{
+	settings := map[string]any{
 		"hosts":     []string{"unix://" + socket},
 		"bridge":    "none",
 		"iptables":  false,
@@ -283,7 +310,13 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 		"data-root": dataRoot,
 		"exec-root": execRoot,
 		"pidfile":   filepath.Join(root, "docker.pid"),
-	})
+	}
+	if bridge {
+		delete(settings, "bridge")
+		settings["iptables"] = true
+		settings["ip-forward"] = true
+	}
+	config, err := json.Marshal(settings)
 	if err != nil {
 		os.RemoveAll(root)
 		t.Fatal(err)
@@ -303,6 +336,9 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 	// Keep Docker mounts out of the test's mount namespace. Go marks the
 	// child namespace recursively private before exec.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Unshareflags: syscall.CLONE_NEWNS}
+	if bridge {
+		cmd.SysProcAttr.Unshareflags |= syscall.CLONE_NEWNET
+	}
 	var exited chan error
 	t.Cleanup(func() {
 		stopped := true
@@ -333,6 +369,25 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 			if err := syscall.Kill(-pgid, 0); err != syscall.ESRCH {
 				t.Errorf("owned Docker process group remains: %v", err)
 				stopped = false
+			}
+		}
+		if bridge {
+			current, err := os.Readlink("/proc/self/ns/net")
+			if err != nil || current != parentNet {
+				t.Errorf("parent network namespace changed: %q, %v", current, err)
+			}
+			currentForwarding, err := os.ReadFile("/proc/sys/net/ipv4/ip_forward")
+			if err != nil || string(currentForwarding) != string(forwarding) {
+				t.Errorf("parent IP forwarding changed: %q, %v", currentForwarding, err)
+			}
+			interfaces, err := net.Interfaces()
+			if err != nil {
+				t.Errorf("list parent interfaces after Docker cleanup: %v", err)
+			}
+			for _, iface := range interfaces {
+				if iface.Name == "docker0" {
+					t.Error("Docker bridge appeared in the parent network namespace")
+				}
 			}
 		}
 		if err := log.Close(); err != nil {
@@ -430,6 +485,12 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 	}
 	exited = make(chan error, 1)
 	go func() { exited <- cmd.Wait() }()
+	if bridge {
+		childNet, err := os.Readlink("/proc/" + strconv.Itoa(cmd.Process.Pid) + "/ns/net")
+		if err != nil || childNet == parentNet {
+			t.Fatalf("Docker network namespace is not private: %q, %v", childNet, err)
+		}
+	}
 	cli, err := client.NewClientWithOpts(client.WithHost("unix://"+socket), client.WithAPIVersionNegotiation())
 	if err != nil {
 		t.Fatal(err)
@@ -459,4 +520,111 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 			}
 		}
 	}
+}
+
+// testDockerBridge checks the named-peer and outbound-IP paths used by the
+// benchmark harness. Docker links supply the peer name through /etc/hosts.
+func testDockerBridge(t *testing.T, ctx context.Context, cli *client.Client, image, selectedRuntime string) {
+	t.Helper()
+	const ownerLabel = "gvisor.dev/docker-worker-preflight"
+	bridge, err := cli.NetworkInspect(ctx, "bridge", network.InspectOptions{})
+	if err != nil || bridge.Driver != "bridge" || len(bridge.Containers) != 0 {
+		t.Fatalf("initial Docker bridge = %+v, %v", bridge, err)
+	}
+	// This cleanup runs after both container cleanups and before client cleanup.
+	t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		bridge, err := cli.NetworkInspect(cleanupCtx, "bridge", network.InspectOptions{})
+		if err != nil || len(bridge.Containers) != 0 {
+			t.Errorf("Docker bridge retains endpoints: %+v, %v", bridge.Containers, err)
+		}
+	})
+	create := func(runtime, token string, links []string) string {
+		t.Helper()
+		name := "gvisor-bridge-worker-" + strings.ToLower(rand.Text())
+		if _, err := cli.ContainerInspect(ctx, name); !errdefs.IsNotFound(err) {
+			t.Fatalf("bridge container name is not absent: %v", err)
+		}
+		t.Cleanup(func() {
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			owned, err := cli.ContainerInspect(cleanupCtx, name)
+			if errdefs.IsNotFound(err) {
+				return
+			}
+			if err != nil {
+				t.Errorf("inspect bridge container: %v", err)
+				return
+			}
+			if owned.Config == nil || owned.Config.Labels[ownerLabel] != name || owned.Image != image || owned.HostConfig == nil || owned.HostConfig.Runtime != runtime {
+				t.Error("bridge container ownership changed; refusing cleanup")
+				return
+			}
+			if err := cli.ContainerRemove(cleanupCtx, owned.ID, container.RemoveOptions{Force: true}); err != nil {
+				t.Errorf("remove bridge container: %v", err)
+				return
+			}
+			if _, err := cli.ContainerInspect(cleanupCtx, owned.ID); !errdefs.IsNotFound(err) {
+				t.Errorf("bridge container remains: %v", err)
+			}
+		})
+		created, err := cli.ContainerCreate(ctx, &container.Config{
+			Image:  image,
+			Env:    []string{"RESPONSE_TOKEN=" + token},
+			Cmd:    []string{"sh", "-c", `set -eu
+command -v nc >/dev/null
+command -v wget >/dev/null
+while :; do
+  printf 'HTTP/1.1 200 OK\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s\n' "$(( ${#RESPONSE_TOKEN} + 1 ))" "$RESPONSE_TOKEN" | nc -l -p 8080 >/dev/null
+done`},
+			Labels: map[string]string{ownerLabel: name},
+		}, &container.HostConfig{Runtime: runtime, NetworkMode: "bridge", Links: links}, nil, nil, name)
+		if err != nil {
+			t.Fatalf("create bridge container: %v", err)
+		}
+		if err := cli.ContainerStart(ctx, created.ID, container.StartOptions{}); err != nil {
+			t.Fatalf("start bridge container: %v", err)
+		}
+		return name
+	}
+	serverToken, clientToken := rand.Text(), rand.Text()
+	server := create(selectedRuntime, serverToken, nil)
+	peer := create("runc", clientToken, []string{server + ":server"})
+	serverInfo, err := cli.ContainerInspect(ctx, server)
+	if err != nil || serverInfo.NetworkSettings == nil {
+		t.Fatalf("inspect selected bridge container: %v", err)
+	}
+	peerInfo, err := cli.ContainerInspect(ctx, peer)
+	if err != nil || peerInfo.NetworkSettings == nil {
+		t.Fatalf("inspect native bridge container: %v", err)
+	}
+	serverIP, peerIP := serverInfo.NetworkSettings.IPAddress, peerInfo.NetworkSettings.IPAddress
+	if net.ParseIP(serverIP).To4() == nil || net.ParseIP(peerIP).To4() == nil || serverIP == peerIP {
+		t.Fatalf("invalid default-bridge addresses: selected=%q native=%q", serverIP, peerIP)
+	}
+	bridge, err = cli.NetworkInspect(ctx, "bridge", network.InspectOptions{})
+	if err != nil || len(bridge.Containers) != 2 || bridge.Containers[serverInfo.ID].EndpointID == "" || bridge.Containers[peerInfo.ID].EndpointID == "" {
+		t.Fatalf("bridge does not contain the two owned endpoints: %+v, %v", bridge.Containers, err)
+	}
+	fetch := func(from, url, token string) {
+		t.Helper()
+		for attempt := 0; ; attempt++ {
+			output, err := exec.CommandContext(ctx, "docker", "--host="+cli.DaemonHost(), "exec", from, "wget", "-T", "1", "-q", "-O", "-", url).CombinedOutput()
+			if err == nil {
+				if string(output) != token+"\n" {
+					t.Fatalf("bridge HTTP response from %s to %s = %q, want exact peer token", from, url, output)
+				}
+				return
+			}
+			info, inspectErr := cli.ContainerInspect(ctx, from)
+			if attempt == 29 || inspectErr != nil || info.State == nil || !info.State.Running {
+				t.Fatalf("bridge HTTP from %s to %s: %v: %s (inspect: %v)", from, url, err, output, inspectErr)
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+	fetch(peer, "http://server:8080/", serverToken)
+	fetch(server, "http://"+peerIP+":8080/", clientToken)
+	t.Logf("bridge traffic passed: selected runtime %s, named peer via Docker link, native peer via inspected IPv4", selectedRuntime)
 }
