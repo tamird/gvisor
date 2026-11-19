@@ -36,13 +36,12 @@ class LintTest(unittest.TestCase):
     self.root = pathlib.Path(self.temp.name)
     self.cache = self.root / "cache"
     self.bin = self.root / "bin"
-    self.execroot = self.root / "execroot"
     self.bazel_log = self.root / "bazel.log"
+    self.home_log = self.root / "home.log"
     self.env = dict(os.environ, LINT_CACHE_DIR=str(self.cache))
     self.env["PATH"] = str(self.bin) + os.pathsep + self.env["PATH"]
     self.cache.mkdir()
     self.bin.mkdir()
-    self.execroot.mkdir()
     self.versions = dict(
         re.findall(
             r'^declare -r ([A-Z_]+)_VERSION="([^"]+)"$',
@@ -52,26 +51,23 @@ class LintTest(unittest.TestCase):
     )
     self.tool(self.bin / "git", "printf 'tracked source\\0'")
     self.tool(self.bin / "curl", "echo unexpected-download >&2; exit 42")
-    # goimports is built with Bazel, then found at the execroot-relative path
-    # that cquery prints.
-    self.tool(
-        self.bin / "bazel",
-        f'echo "$*" >> "{self.bazel_log}"\n'
-        'case " $* " in\n'
-        f'  *" info "*) echo "{self.execroot}" ;;\n'
-        '  *" cquery "*) echo "goimports goimports" ;;\n'
-        "esac",
+    self.bazel()
+    self.tool(self.formatter("clang-format"), "exit 0")
+
+  def bazel(self, failure: str | None = None) -> None:
+    body = (
+        f'printf "%s\\n" "$*" >> "{self.bazel_log}"\n'
+        f'printf "%s" "$HOME" > "{self.home_log}"\n'
     )
-    for name in ("goimports", "clang-format", "buildifier"):
-      self.tool(self.formatter(name), "exit 0")
+    if failure:
+      body += f'case "$*" in *"{failure}"*) echo bazel-failed >&2; exit 7;; esac\n'
+    self.tool(self.bin / "bazel", body)
 
   def tool(self, path: pathlib.Path, body: str) -> None:
     path.write_text("#!/bin/sh\n" + body + "\n")
     path.chmod(0o755)
 
   def formatter(self, name: str) -> pathlib.Path:
-    if name == "goimports":
-      return self.execroot / "goimports"
     version = self.versions[name.upper().replace("-", "_")]
     return self.cache / f"{name}-{version}"
 
@@ -97,41 +93,44 @@ class LintTest(unittest.TestCase):
     self.assertEqual(success.returncode, 0, success.stderr)
     for name in names:
       self.assertIn(f"PASS  {name}", success.stderr)
-    # Exercise plain pipeline, captured output and --fix status handling.
+    self.assertEqual(self.bazel_log.read_text().splitlines(), [
+        "test --test_output=errors //tools/lint:goimports",
+        "test --test_output=errors //tools/lint:buildifier",
+    ])
+    self.tool(self.formatter("clang-format"), "exit 7")
+    self.assert_failed(self.lint("clang-format"), "clang-format")
+
+  def test_bazel_check_and_fix_failures(self) -> None:
     for args in (
-        ("goimports",),
-        ("clang-format",),
-        ("buildifier",),
-        ("--fix", "goimports"),
+        ("goimports",), ("buildifier",),
+        ("--fix", "goimports"), ("--fix", "buildifier"),
     ):
-      name = args[-1]
       with self.subTest(args=args):
-        self.tool(self.formatter(name), "exit 7")
-        self.assert_failed(self.lint(*args), name)
-        self.tool(self.formatter(name), "exit 0")
+        self.bazel("//tools/lint:" + args[-1])
+        result = self.lint(*args)
+        self.assert_failed(result, args[-1])
+        self.assertIn("bazel-failed", result.stderr)
 
-  def test_bazel_options(self) -> None:
-    result = self.lint(
-        "--bazel=bazel --startup=1",
-        "--bazel-options=--opt=1 --opt=2",
-        "goimports",
-    )
-    self.assertEqual(result.returncode, 0, result.stderr)
-    self.assertIn("PASS  goimports", result.stderr)
-    commands = [c.split() for c in self.bazel_log.read_text().splitlines()]
-    self.assertEqual(
-        [c[:4] for c in commands],
-        [
-            ["--startup=1", command, "--opt=1", "--opt=2"]
-            for command in ("build", "info", "cquery")
-        ],
-    )
-
-  def test_bazel_failure(self) -> None:
-    self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
-    result = self.lint("goimports")
-    self.assert_failed(result, "goimports")
-    self.assertIn("bazel-build-failed", result.stderr)
+  def test_bazel_options_and_home(self) -> None:
+    for fix in (False, True):
+      with self.subTest(fix=fix):
+        self.bazel_log.unlink(missing_ok=True)
+        args = [
+            "--bazel=bazel --startup=1",
+            "--bazel-options=--opt=1 --opt=2",
+        ]
+        if fix:
+          args.append("--fix")
+        result = self.lint(*args, "goimports", "buildifier")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        commands = [c.split() for c in self.bazel_log.read_text().splitlines()]
+        self.assertEqual(commands, [
+            ["--startup=1", "run" if fix else "test", "--opt=1", "--opt=2"]
+            + ([] if fix else ["--test_output=errors"])
+            + ["//tools/lint:" + name + ("_fix" if fix else "")]
+            for name in ("goimports", "buildifier")
+        ])
+        self.assertEqual(self.home_log.read_text(), os.environ.get("HOME", ""))
 
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
@@ -141,19 +140,40 @@ class LintTest(unittest.TestCase):
     self.assert_failed(result, "clang-format")
     self.assertIn("formatter-crashed", result.stderr)
     self.assertIn("PASS  buildifier", result.stderr)
+    self.tool(self.formatter("clang-format"), "exit 0")
+    self.bazel("//tools/lint:goimports")
+    result = self.lint("goimports", "clang-format", "buildifier")
+    self.assert_failed(result, "goimports")
+    self.assertIn("PASS  clang-format", result.stderr)
+    self.assertIn("PASS  buildifier", result.stderr)
+
+  def test_fix_excludes_nonfixable_checks(self) -> None:
+    result = self.lint("--fix", "goimports", "spelling", "buildifier", "actions")
+    self.assertEqual(result.returncode, 0, result.stderr)
+    self.assertEqual(self.bazel_log.read_text().splitlines(), [
+        "run //tools/lint:goimports_fix",
+        "run //tools/lint:buildifier_fix",
+    ])
+
+  def test_rejects_invalid_selection(self) -> None:
+    for args in (("goimports", "unknown"), ("--fix", "spelling")):
+      with self.subTest(args=args):
+        result = self.lint(*args)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertFalse(self.bazel_log.exists(), "invalid selection invoked Bazel")
 
   def test_installer_failure(self) -> None:
-    # Both failures occur in an installer command substitution. A stale cache
-    # entry must not be made executable by commands following the failure.
-    self.formatter("buildifier").chmod(0o644)
-    result = self.lint("buildifier")
-    self.assert_failed(result, "buildifier")
+    # The remaining native formatter must not make a stale cache executable
+    # after an installer failure in a command substitution.
+    self.formatter("clang-format").chmod(0o644)
+    result = self.lint("clang-format")
+    self.assert_failed(result, "clang-format")
     self.assertIn("unexpected-download", result.stderr)
-    self.assertEqual(self.formatter("buildifier").stat().st_mode & 0o111, 0)
-    # mktemp adds another substitution, whose status local must not mask.
+    self.assertEqual(self.formatter("clang-format").stat().st_mode & 0o111, 0)
+    # A failed temporary-file allocation must not be masked by local assignment.
     self.tool(self.bin / "mktemp", "echo temporary-file-failed >&2; exit 7")
-    result = self.lint("buildifier", "goimports")
-    self.assert_failed(result, "buildifier")
+    result = self.lint("clang-format", "goimports")
+    self.assert_failed(result, "clang-format")
     self.assertIn("temporary-file-failed", result.stderr)
     self.assertNotIn("unexpected-download", result.stderr)
     self.assertIn("PASS  goimports", result.stderr)
