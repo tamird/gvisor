@@ -119,7 +119,7 @@ func runRuby(b *testing.B, hey *tools.Hey) {
 		Image:      "benchmarks/hey",
 		Links:      []string{rubyApp.MakeLink("ruby")},
 		CpusetCpus: harness.ClientCPUSet(),
-	}, hey, heyCmd...)
+	}, hey, "measured", []*dockerutil.Container{rubyApp, redis}, heyCmd...)
 }
 
 func TestMain(m *testing.M) {

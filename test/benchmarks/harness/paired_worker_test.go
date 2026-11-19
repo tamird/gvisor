@@ -184,7 +184,7 @@ func TestPairedBenchmark(t *testing.T) {
 				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime,
 				"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup),
 				"--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet(),
-				"--node-redis-cpuset="+*pairedRedisCPUs)
+				"--node-redis-cpuset="+*pairedRedisCPUs, "--hey-phase-diagnostics")
 			var observed chan error
 			var stopObserver context.CancelFunc
 			if *pairedObserve {

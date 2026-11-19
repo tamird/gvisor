@@ -129,7 +129,7 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		defer warmupClient.CleanUp(ctx)
 		// Warm the same server process whose requests will be measured.
 		// The final runHey resets timing and replaces the warmup metrics.
-		runHey(b, ctx, warmupClient, opts, &warmup, warmup.MakeCmd("node", port)...)
+		runHey(b, ctx, warmupClient, opts, &warmup, "warmup", []*dockerutil.Container{nodeApp, redis}, warmup.MakeCmd("node", port)...)
 		// ResetTimer preserves timer state; restore the running setup timer
 		// before the final runHey resets it for measured requests.
 		b.StartTimer()
@@ -138,7 +138,7 @@ func runNode(b *testing.B, hey *tools.Hey) {
 	// The client runs on native runc.
 	client := clientMachine.GetNativeContainer(ctx, b)
 	defer client.CleanUp(ctx)
-	runHey(b, ctx, client, opts, hey, hey.MakeCmd("node", port)...)
+	runHey(b, ctx, client, opts, hey, "measured", []*dockerutil.Container{nodeApp, redis}, hey.MakeCmd("node", port)...)
 }
 
 func TestMain(m *testing.M) {

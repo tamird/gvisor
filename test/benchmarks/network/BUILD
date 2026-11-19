@@ -17,6 +17,7 @@ go_library(
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
+        "@org_golang_x_sys//unix:go_default_library",
     ],
 )
 
