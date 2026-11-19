@@ -177,7 +177,7 @@ def _fetch(url: str) -> bytes:
       if last:
         reason = e.reason if isinstance(e, urllib.error.URLError) else e
         raise Error(f"{url}: {reason}") from e
-    time.sleep(2**attempt)
+    time.sleep(2.0**attempt)
   raise AssertionError("unreachable")
 
 
@@ -213,6 +213,11 @@ def _string(value: object, context: str) -> str:
   return value
 
 
+def _group(match: re.Match[str], number: int) -> str:
+  value: object = match.group(number)
+  return _string(value, "regular-expression group")
+
+
 def _optional_string(value: object, context: str) -> str | None:
   return None if value is None else _string(value, context)
 
@@ -240,10 +245,11 @@ def _fetch_records(url: str) -> list[dict[str, object]]:
   page_url = url
   for _ in range(_MAX_PAGES):
     page = _object(_fetch_json(page_url), page_url)
-    records.extend(_records(page.get("records", []), page_url))
+    value = page.get("records")
+    records.extend(_records([] if value is None else value, page_url))
     cursor = _optional_string(page.get("end_cursor"), page_url + ": end_cursor")
     has_next_page = _boolean(page.get("has_next_page"), page_url + ": has_next_page")
-    if not has_next_page or not cursor:
+    if not has_next_page or cursor is None or cursor == "":
       return records
     sep = "&" if "?" in url else "?"
     page_url = f"{url}{sep}after={urllib.parse.quote(cursor)}"
@@ -259,7 +265,7 @@ def _latest_build(org: str, pipeline: str, branch: str) -> int:
   m = re.search(rf"/{re.escape(org)}/{re.escape(pipeline)}/builds/(\d+)", page)
   if not m:
     raise Error(f"no builds of {org}/{pipeline} on branch {branch!r}")
-  return int(m.group(1))
+  return int(_group(m, 1))
 
 
 def _pull_request_branch(owner: str, repo: str, number: int) -> str:
@@ -314,7 +320,7 @@ def parse_ref(
 
   m = _BUILD_URL_RE.search(ref)
   if m:
-    return Build(m.group(1), m.group(2), int(m.group(3)))
+    return Build(_group(m, 1), _group(m, 2), int(_group(m, 3)))
   pull = _PULL_URL_RE.search(ref)
   if "://" in ref and not pull:
     raise Error(f"{ref}: not a Buildkite build or GitHub pull request URL")
@@ -339,9 +345,9 @@ def parse_job_url(url: str) -> tuple[Build, str]:
   if m is None:
     raise Error(f"{url}: not a Buildkite job URL")
   job = _JOB_IN_URL_RE.search(url, m.end())
-  if not job:
+  if job is None:
     raise Error(f"{url}: not a Buildkite job URL")
-  return Build(m.group(1), m.group(2), int(m.group(3))), job.group(1)
+  return Build(_group(m, 1), _group(m, 2), int(_group(m, 3))), _group(job, 1)
 
 
 def _compact(d: dict[str, object]) -> dict[str, object]:
@@ -381,7 +387,7 @@ def clean_log(raw: bytes) -> list[str]:
 
   lines = raw.decode("utf-8", "replace").split("\n")
   if not lines[-1]:
-    lines.pop()
+    _ = lines.pop()
   for i, line in enumerate(lines):
     line = _ESCAPE_RE.sub("", line)
     # Keep only the text after the last carriage return, as a terminal shows.
@@ -436,19 +442,19 @@ def analyze_log(lines: list[str], excerpt_lines: int) -> dict[str, object]:
     if fail_indent is not None and line.strip() and indent <= fail_indent:
       fail_indent = None
     if m := _GO_TEST_RE.match(line):
-      go_test, context = m.group(1), 0
+      go_test, context = _group(m, 1), 0
     elif m := _GO_RESULT_RE.match(line):
-      messages, context = go_messages.pop(m.group(3), []), 0
-      if m.group(2) == "FAIL":
+      messages, context = go_messages.pop(_group(m, 3), []), 0
+      if _group(m, 2) == "FAIL":
         add(line)
         for message in messages:
           add(message)
-        fail_indent = len(m.group(1))
+        fail_indent = len(_group(m, 1))
     elif m := _GO_MESSAGE_RE.match(line):
       context = 0
       if fail_indent is not None:
         add(line)
-      elif go_test:
+      elif go_test is not None and go_test != "":
         go_messages.setdefault(go_test, []).append(line)
     elif _FAILURE_LINE_RE.match(line):
       context = _ASSERTION_LINES if line.endswith(": Failure") else 0
@@ -478,7 +484,7 @@ def target_statuses(lines: list[str]) -> dict[str, str]:
   """Returns the Bazel status of each test target in the summary of a log."""
 
   return {
-      m.group(1): m.group(2)
+      _group(m, 1): _group(m, 2)
       for line in lines
       if (m := _TARGET_STATUS_RE.match(line))
   }
@@ -503,7 +509,8 @@ def parse_failures_annotation(body: str) -> tuple[dict[str, list[dict[str, str]]
 
   targets: dict[str, list[dict[str, str]]] = {}
   unattributed: list[str] = []
-  for href, target in re.findall(r'<a href="([^"]+)">([^<]+)</a>', body):
+  for match in re.finditer(r'<a href="([^"]+)">([^<]+)</a>', body):
+    href, target = _group(match, 1), _group(match, 2)
     href = html.unescape(href)
     target = html.unescape(target).strip()
     m = _ARTIFACT_URL_RE.match(href)
@@ -511,11 +518,11 @@ def parse_failures_annotation(body: str) -> tuple[dict[str, list[dict[str, str]]
       unattributed.append(target)
       continue
     entry = {"target": target, "test_log_url": href}
-    job_targets = targets.setdefault(m.group(1), [])
+    job_targets = targets.setdefault(_group(m, 1), [])
     if entry not in job_targets:
       job_targets.append(entry)
-  for target in re.findall(r"<li>\s*(//[^<\s]+) \(no upload\)", body):
-    unattributed.append(html.unescape(target))
+  for match in re.finditer(r"<li>\s*(//[^<\s]+) \(no upload\)", body):
+    unattributed.append(html.unescape(_group(match, 1)))
   return targets, list(dict.fromkeys(unattributed))
 
 
@@ -567,7 +574,7 @@ def job_info(
   """
 
   name = _optional_string(job.get("name"), "job.name")
-  if not name:
+  if name is None or name == "":
     value = job.get("step")
     step = _object({} if value is None else value, "job.step")
     name = _optional_string(step.get("label"), "job.step.label")
@@ -654,20 +661,23 @@ def failed(
     if outcome(j) not in listed:
       continue
     retry = _optional_string(j.get("retried_in_job_uuid"), "job.retried_in_job_uuid")
-    if retry:
+    if retry is not None and retry != "":
       # A retry that is not in the list yet did not start.
       retry = outcome(jobs[retry]) if retry in jobs else "pending"
     annotated = targets.get(_string(j.get("id"), "job.id"), [])
     entries.append((j, job_info(build, j, annotated, retry), annotated))
-  if regex:
+  if regex is not None:
     entries = [(j, i, t) for j, i, t in entries if _matches(regex, i, t)]
-  entries.sort(
-      key=lambda e: (
-          _optional_string(e[1].get("name"), "job.name") or "",
-          _integer(e[1].get("parallel_job"), "job.parallel_job", -1),
-          _integer(e[1]["attempt"], "job.attempt"),
-      )
-  )
+  def entry_key(
+      entry: tuple[dict[str, object], dict[str, object], list[dict[str, str]]]
+  ) -> tuple[str, int, int]:
+    return (
+        _optional_string(entry[1].get("name"), "job.name") or "",
+        _integer(entry[1].get("parallel_job"), "job.parallel_job", -1),
+        _integer(entry[1]["attempt"], "job.attempt"),
+    )
+
+  entries.sort(key=entry_key)
   if logs:
     todo = [
         e
@@ -681,7 +691,11 @@ def failed(
       _add_log(build, job, info, annotated, excerpt_lines)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-      _ = list(pool.map(add_log, todo))
+      futures: list[concurrent.futures.Future[None]] = [
+          pool.submit(add_log, entry) for entry in todo
+      ]
+      for future in futures:
+        future.result()
   infos = [i for _, i, _ in entries]
   result: FailedResult = {"build": _build_info(b), "jobs": infos}
   if unattributed:
@@ -814,5 +828,6 @@ if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
   except BrokenPipeError:
     # The reader of stdout, such as head(1), exited early.
-    os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+    stdout_fd: int = sys.stdout.fileno()
+    _ = os.dup2(os.open(os.devnull, os.O_WRONLY), stdout_fd)
     sys.exit(1)

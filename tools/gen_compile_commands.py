@@ -95,10 +95,11 @@ def main() -> int:
       default="",
       help="Options passed through to Bazel calls.",
   )
+  default_targets: list[str] = ["//test/...", "//tools/..."]
   _ = parser.add_argument(
       "targets",
       nargs="*",
-      default=["//test/...", "//tools/..."],
+      default=default_targets,
       help="Bazel targets to index (default: %(default)s).",
   )
   args = parser.parse_args(namespace=_Args())

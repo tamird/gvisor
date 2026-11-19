@@ -319,17 +319,17 @@ class FetchTest(unittest.TestCase):
   def test_records(self):
     url = "https://x/data/jobs?state=failed"
     pages = FakeFetch({
-        url: {"records": [1], "has_next_page": True, "end_cursor": "c1"},
-        url + "&after=c1": {"records": [2], "has_next_page": False},
+        url: {"records": [{"id": 1}], "has_next_page": True, "end_cursor": "c1"},
+        url + "&after=c1": {"records": [{"id": 2}], "has_next_page": False},
     })
     with mock.patch.object(buildkite, "_fetch", pages):
-      self.assertEqual(buildkite._fetch_records(url), [1, 2])
+      self.assertEqual(buildkite._fetch_records(url), [{"id": 1}, {"id": 2}])
 
     # A server that repeats the cursor must not cause an endless loop.
     loop = FakeFetch({
-        url: {"records": [1], "has_next_page": True, "end_cursor": "c1"},
+        url: {"records": [{"id": 1}], "has_next_page": True, "end_cursor": "c1"},
         url + "&after=c1": {
-            "records": [2],
+            "records": [{"id": 2}],
             "has_next_page": True,
             "end_cursor": "c1",
         },
