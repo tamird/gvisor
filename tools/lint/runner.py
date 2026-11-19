@@ -36,6 +36,8 @@ def manifest(path: Path) -> list[str]:
   for name in value:
     if not isinstance(name, str) or not name:
       raise ValueError(f"{path}: expected a nonempty source path, got {name!r}")
+    if "\n" in name:
+      raise ValueError(f"{path}: source path contains a newline: {name!r}")
     source = PurePosixPath(name)
     if source.is_absolute() or ".." in source.parts:
       raise ValueError(f"{path}: source path is not project-relative: {name!r}")

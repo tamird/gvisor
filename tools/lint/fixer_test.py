@@ -92,7 +92,7 @@ class FixerTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(source.read_text(), original.replace(before, after, 1))
         if fixer == BAZEL_FIX:
-          self.assertIn("(formatted)", result.stdout)
+          self.assertIn("(formatted)", result.stdout + result.stderr)
         result = subprocess.run(
             [fixer, "--sources=" + str(manifest)], cwd=subdirectory, env=env,
             capture_output=True, text=True, check=False,
@@ -102,6 +102,26 @@ class FixerTest(unittest.TestCase):
         result = check()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(unselected.read_text(), "package    unselected\n")
+
+  def test_reject_newline_before_fixing(self) -> None:
+    with tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"]) as directory:
+      root = Path(directory)
+      original = "package    fixture\n"
+      names = ("a.go", "b.go", "a.go\nb.go")
+      for name in names:
+        (root / name).write_text(original)
+      manifest = root / "sources.json"
+      manifest.write_text(json.dumps(["a.go\nb.go"]))
+      env = dict(os.environ, BUILD_WORKSPACE_DIRECTORY=directory,
+                 BUILD_WORKING_DIRECTORY=directory)
+      result = subprocess.run(
+          [GO_FIX, "--sources=" + str(manifest)], cwd=root, env=env,
+          capture_output=True, text=True, check=False,
+      )
+      self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+      self.assertIn("source path contains a newline", result.stderr)
+      for name in names:
+        self.assertEqual((root / name).read_text(), original)
 
 
 if __name__ == "__main__":
