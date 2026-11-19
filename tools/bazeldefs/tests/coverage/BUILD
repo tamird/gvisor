@@ -55,6 +55,7 @@ py_test(
     srcs = ["inventory_test.py"],
     args = ["$(rlocationpath :inventory_sentry)"],
     data = [":inventory_sentry"],
+    stamp = -1,
     tags = ["manual"],
     deps = ["@rules_python//python/runfiles"],
 )
