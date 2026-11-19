@@ -19,12 +19,14 @@
 import os
 import pathlib
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
 import unittest
 
 LINT = pathlib.Path(sys.argv.pop(1)).absolute()
+PUBLIC_BUILDIFIER = pathlib.Path(sys.argv.pop(1)).resolve()
 
 
 class LintTest(unittest.TestCase):
@@ -113,6 +115,23 @@ class LintTest(unittest.TestCase):
         self.tool(self.formatter(name), "exit 7")
         self.assert_failed(self.lint(*args), name)
         self.tool(self.formatter(name), "exit 0")
+
+  def test_public_buildifier_without_runfiles_environment(self) -> None:
+    build_file = self.root / "BUILD"
+    build_file.write_text('filegroup(name="probe")\n')
+    self.tool(self.bin / "git", "printf '%s\0' " + shlex.quote(str(build_file)))
+    self.formatter("buildifier").unlink()
+    self.formatter("buildifier").symlink_to(PUBLIC_BUILDIFIER)
+    for key in tuple(self.env):
+      if key.startswith("RUNFILES_") or key in ("BUILD_WORKING_DIRECTORY", "BUILD_WORKSPACE_DIRECTORY"):
+        del self.env[key]
+    self.assert_failed(self.lint("buildifier"), "buildifier")
+    fixed = self.lint("--fix", "buildifier")
+    self.assertEqual(fixed.returncode, 0, fixed.stdout + fixed.stderr)
+    self.assertEqual(build_file.read_text(), 'filegroup(name = "probe")\n')
+    checked = self.lint("buildifier")
+    self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+    print("Public Buildifier: bare executable, no inherited runfiles, check/fix/check passed")
 
   def test_bazel_options(self) -> None:
     result = self.lint(

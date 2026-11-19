@@ -89,10 +89,12 @@ exports_files([
 
 py_test(
     name = "lint_test",
+    tags = ["local"],
     srcs = ["lint_test.py"],
-    args = ["$(rootpath :lint.sh)"],
+    args = ["$(rootpath :lint.sh)", "$(rootpath @buildifier_prebuilt//:buildifier)"],
     data = [
         "lint.sh",
         "//:.clang-format",
+        "@buildifier_prebuilt//:buildifier",
     ],
 )
