@@ -36,6 +36,7 @@ go_test(
     },
     pure = True,
     tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/container:go_default_library",
@@ -80,6 +81,7 @@ go_test(
     },
     pure = True,
     tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/container:go_default_library",
