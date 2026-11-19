@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-18T23:21:49.882507+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-18T23:27:40.021573+00:00",
+  "registryDate": "2026-11-19T00:15:13.095068+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448165,7 +448165,7 @@
         "owner": "root",
         "sourceHead": "698999a443ac6d2b1a564292b78020da109a4cad",
         "disposition": "Native Linux transport, systrap restore and both architecture analyzers verified on the published rebase.",
-        "nextAction": "Follow maintainer review and the import of the published revision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "nextAction": "Follow maintainer review and the import of the published revision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks. Exact obsolete fork-run cancellation is provider-state blocked: standard and force-cancel409 contradict queued/zero-job GETs. This is not a pending human decision; preserve superseding evidence and use only existing lifecycle rechecks."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANx0Wwjg"
@@ -459644,7 +459644,7 @@
         "since": "2026-11-18T21:49:57.504662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     },
     "pr:16453": {
@@ -464471,7 +464471,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464480,7 +464480,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464489,7 +464489,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464498,7 +464498,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464507,7 +464507,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464516,7 +464516,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464525,7 +464525,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-18T23:27:40.021573+00:00"
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+      }
+    },
+    "pr:nodejs/node:67595": {
+      "contributor-review": {
+        "scope": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+        "since": "2026-11-19T00:15:13.095068+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-19T00:15:13.095068+00:00"
       }
     }
   },

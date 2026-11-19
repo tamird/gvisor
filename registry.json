@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-18T23:27:40.021573+00:00",
+    "updatedAt": "2026-11-19T00:15:13.095068+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44,7 +44,7 @@
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
-      "lastResult": "Exact canonical merged-only cleanup deleted80 fork source branches. All remote refs are absent and all archived tips are direct parents of canonical archivebae526b. No local branch or broader retention deletion is implied.",
+      "lastResult": "Removed 148 local branches and 67 fork branches. Local branches went from 2,704 to 2,556 and fork branches from 3,676 to 3,609. The 227 open upstream PR heads and 1 open fork PR head all matched their published branches. refs/branch-cleanup/archive at 3f221e657 preserves 177 distinct tips and all 148 original local reflogs.",
       "owner": "root",
       "observedAt": "2026-11-18T06:58:20.703035+00:00",
       "nextAction": "Exact merged-only operation is complete. Preserve both prior fail-closed API attempts and archive recovery. Broader79-plan/local/unmerged/user-owned cleanup remains NOT implicitly authorized; no repeat of the completed operation.",
@@ -96,6 +96,16 @@
           "file": "branch-cleanup-merged-final-verification.json",
           "sha256": "c1b76962464ede7894bef3ca2700d5265b2801eb1f1535da61a42e0366ce0771"
         }
+      },
+      "lastCompletedAt": "2026-11-13T03:43:50+00:00",
+      "lastCompletedScope": "Exact preserved last full local/fork audit; limited80-ref merged-only cleanup remains separately recorded and does not advance the broader audit clock.",
+      "collectorInvariantRepair": {
+        "failedRun": 44426088826,
+        "cause": "Writer removed lastCompletedAt while retaining lastResult; existing canonical branch_cleanup_handoff rejected the unequal presence before snapshot publication.",
+        "correction": "Restore exact historical full-audit time/result together; retain80-ref mergedOnlyCompletion and its proof separately.",
+        "clockAdvanced": false,
+        "qa": "Existing staged-tree QA now invokes the actual candidate branch_cleanup_handoff; old7aef fails the same owner invariant.",
+        "apiClockUntilRecovery": "2026-11-18T23:21:49.882507+00:00"
       }
     }
   },
@@ -2633,13 +2643,13 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-17T19:05:00.391405+00:00",
+      "updatedAt": "2026-11-19T00:15:13.095068+00:00",
       "summary": "The published context-only rebase 65a54cd87 is mergeable. All 200 added and removed lines match the previous change after accounting for indentation, and the surrounding restore guard remains intact. All three Nogo targets passed using native macOS Bazel launchers, each checking Linux AMD64 and ARM64 findings. Native Linux Bazel passed all five targets uncached. All six abstract socket namespace cases passed in systrap with 142 restore invocations. Each of the three Nogo owners passed its Linux AMD64 and ARM64 checks. The initial Go transport invocation returned PASS with empty nonverbose XML. A second, uncached run of that package produced 13 passing XML records with no skips, including TestEnqueueRightsOwnership and all seven of its subcases.\n\nEarlier qualification:\n\nThe requested post-#16046 rebase is published at 048d2635a582 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-approved Unix-only change is delivered at a76235cf8 and PR #14338 is ready for maintainer review. Seven fresh unit, race and analyzer actions passed before delivery. The original b912f6375 source and nine residual TCP/UDP/fragmentation paths remain preserved; no contributor decision remains for this delivery. Current-head GitHub checks and review are tracked separately.\n\nEarlier observations:\n\nThe separate Unix-only proposal at a76235cf8 has passed its seven-action validation and independent reviews. The user has been asked to review that exact proposal and authorize replacing this broad draft. This live b912f6375 PR remains draft and unchanged; its proposed-update link carries the separate contributor decision.\n\nEarlier observations:\n\nA separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366–#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
       "followup": {
         "disposition": "Native Linux transport, systrap restore and both architecture analyzers verified on the published rebase.",
         "owner": "root",
         "sourceHead": "698999a443ac6d2b1a564292b78020da109a4cad",
-        "nextAction": "Follow maintainer review and the import of the published revision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "nextAction": "Follow maintainer review and the import of the published revision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks. Exact obsolete fork-run cancellation is provider-state blocked: standard and force-cancel409 contradict queued/zero-job GETs. This is not a pending human decision; preserve superseding evidence and use only existing lifecycle rechecks.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14338",
           "https://github.com/google/gvisor/pull/14338#issuecomment-6080694275",
@@ -2656,7 +2666,52 @@
         ],
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:05:00.391405+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change."
+        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.",
+        "qualificationHistory": [
+          {
+            "state": "Historical current state before scoped qualification results",
+            "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+            "fields": {
+              "disposition": "Native Linux transport, systrap restore and both architecture analyzers verified on the published rebase.",
+              "owner": "root",
+              "sourceHead": "698999a443ac6d2b1a564292b78020da109a4cad",
+              "nextAction": "Follow maintainer review and the import of the published revision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/14338",
+                "https://github.com/google/gvisor/pull/14338#issuecomment-6080694275",
+                "https://github.com/tamird/gvisor/commit/048d2635a582ab85720274b3cd8e515a781a3409",
+                "https://github.com/tamird/gvisor/commit/65a54cd87",
+                "https://github.com/tamird/gvisor/actions/runs/43096485597",
+                "https://github.com/tamird/gvisor/actions/runs/43105440950",
+                "https://github.com/tamird/gvisor/actions/runs/43105440950/artifacts/13894402364",
+                "https://github.com/tamird/gvisor/actions/runs/43108334219",
+                "https://github.com/tamird/gvisor/actions/runs/43108334219/artifacts/13894349383",
+                "https://github.com/gvisor/gvisor/pull/14338",
+                "https://github.com/tamird/gvisor/commit/65a54cd879a8ed66ac93d2ec15ab39bbf94e8d95",
+                "https://github.com/tamird/gvisor/commit/698999a443ac6d2b1a564292b78020da109a4cad"
+              ],
+              "mergeable": "MERGEABLE",
+              "observedAt": "2026-11-17T19:05:00.391405+00:00",
+              "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change."
+            }
+          }
+        ],
+        "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+        "staleForkRunCancellation": {
+          "state": "Provider server-state inconsistency; cancellation NOT completed, no human authorization hold",
+          "owner": "root",
+          "runs": [
+            43098556726,
+            43096485597
+          ],
+          "observed": "Both native standard and force-cancel POSTs409 not queued while GET reports queued with0jobs/0artifacts",
+          "sourceDisposition": "Old replaced65a run has no unique gate; other old attempt superseded by guarded43105440950 plus43108334219. Current6989 and65a trees identical; valid native/Nogo/restore and transport prefixes preserved with actual whole-run failure distinctions.",
+          "nextAction": "Recheck only exact runIDs in existing sweep; if provider state admits cancellation and scope remains obsolete/no needed jobs, cancel and verify terminal. Otherwise GitHub service/support resolution is external. No repeated mutation, new source/ref or replacement job.",
+          "receipt": {
+            "file": "stale-two-ci-cancellation-audit.json",
+            "sha256": "dcf07312216939dea8c1a21a50501fd6e6880c8e3101d95cfa0f24eb92c10cfa"
+          }
+        }
       },
       "head": "698999a443ac6d2b1a564292b78020da109a4cad",
       "evidence": [
@@ -96692,7 +96747,7 @@
       "url": "https://github.com/tamird/gvisor/commit/6c1e76eba",
       "group": "bazel",
       "status": "Deployed; collector verified",
-      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
+      "updatedAt": "2026-11-19T00:15:13.095068+00:00",
       "summary": "The published metadata checker now accepts canonical validated multi-commit comparison links while requiring card and decision heads/URLs to agree. A local-only correction initially left collector44247469558 failing; the code-only publication6c1e76 and collector44248606045 succeeded. Exact staged code+paired metadata validation now gates the shared publisher.",
       "followup": {
         "owner": "root",
@@ -96704,7 +96759,38 @@
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44247469558",
           "https://github.com/tamird/gvisor/actions/runs/44248606045"
-        ]
+        ],
+        "qualificationHistory": [
+          {
+            "state": "Historical current state before scoped qualification results",
+            "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "6c1e76eba4b346a4462b23b73d2024ec7396408f",
+              "observedAt": "2026-11-18T06:58:20.703035+00:00",
+              "disposition": "Independent review confirmed the two-line delta preserves canonical owner/repo/full-head/base URL validation. Five metadata CLI cases pass intended outcomes; actual old staged tree541 is rejected and new6c1 accepted. Live snapshot checked06:07UTC has no untriaged feedback/incoming requests or changed tracked PR head/state.",
+              "nextAction": "Follow exact staged publication validation and collector health; keep manual existing-goal sweeps while verifying scheduled observations, without creating a competing monitor.",
+              "recheckCondition": "Collector/publication validation failure, source/schema change or fresh feedback.",
+              "evidence": [
+                "https://github.com/tamird/gvisor/actions/runs/44247469558",
+                "https://github.com/tamird/gvisor/actions/runs/44248606045"
+              ]
+            }
+          }
+        ],
+        "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+        "writerQARepair": {
+          "failedRefresh": 44426088826,
+          "cause": "Missing historical branch cleanup timestamp paired with retained result",
+          "fix": "Restore exact historical pair; keep80-ref subset separate",
+          "ownerValidation": "Actual existing canonical branch_cleanup_handoff now invoked by validate-tracker-tree.py on staged code/registry/snapshot, not a mirrored fixture",
+          "oldNegative": "Exact published7aef fails the actual owner with the observed ValueError",
+          "failedReceipt": {
+            "file": "qualification-results-refresh-failed.log",
+            "sha256": "ef1f7ec33c7e2f0400a71136a27247c01c3e7fd4d5bfff0a4e80062b515760d2"
+          },
+          "newRefresh": "One standard existing workflow recovery after validated publication; API clock remains23:21 until actual success"
+        }
       }
     },
     {
@@ -96743,14 +96829,14 @@
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-18T23:27:40.021573+00:00",
-      "summary": "The already-approved deterministic TLS fallback test is published on fresh main. Exact approved test blobs and title/body, normal identity, DCO and Assisted disclosure were verified. The final commit-message check passed; upstream runtime/build/coverage checks were still running at the recorded direct observation. No current-main runtime qualification or historical external-reset cause is inferred.",
+      "updatedAt": "2026-11-19T00:15:13.095068+00:00",
+      "summary": "Exact15c2ed remains MERGEABLE with member bnb approval and passing commit/JS/C++/documentation/tarball checks. The Internet job failed unchanged test-dns-any with external queryAny EREFUSED sip2sip.info, recurring on an independent source. The new parallel TLS case was not invoked there. One native failed-job retry was denied403 requiring repository admin rights; remaining runtime/coverage CI is still live at the scoped observation.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Approved exact test postimages rebased through the own-fork GitData API; normal author/committer/DCO/Assisted and exact title/body readbacks verified. No local checkout or foreign gVisor objects were needed.",
-        "nextAction": "Follow canonical Node.js#67595 at15c2ed through actual upstream CI and maintainer review; no personal-DCO/submission decision remains. Preserve old5bf qualification/version scopes. After upstream landing, the existing pinned Node22 image backport remains a separate recorded need.",
-        "recheckCondition": "Node67595 source, CI, human review or landing/backport event.",
+        "disposition": "Exact15c2ed remains MERGEABLE with member bnb approval and passing commit/JS/C++/documentation/tarball checks. The Internet job failed unchanged test-dns-any with external queryAny EREFUSED sip2sip.info, recurring on an independent source. The new parallel TLS case was not invoked there. One native failed-job retry was denied403 requiring repository admin rights; remaining runtime/coverage CI is still live at the scoped observation.",
+        "nextAction": "Root follows actual remaining upstream runtime/coverage and human events. An existing Node administrator must perform the native Internet-job rerun; no source fix, alternate retry/access path or new CI authorization is inferred. The exact public maintainer-rerun comment draft already has a legitimate pending approval question; do not post or ask again until that existing decision.",
+        "recheckCondition": "Existing comment-draft decision, actual upstream job/review result or maintainer rerun/source event.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -96772,14 +96858,122 @@
             "state": "Initial publication commitlint failed only because a blank line separated Assisted-by from the final trailer block; exact same tree/parent correction passed",
             "run": 44418619891
           }
-        ]
+        ],
+        "qualificationHistory": [
+          {
+            "state": "Historical current state before scoped qualification results",
+            "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+              "disposition": "Approved exact test postimages rebased through the own-fork GitData API; normal author/committer/DCO/Assisted and exact title/body readbacks verified. No local checkout or foreign gVisor objects were needed.",
+              "nextAction": "Follow canonical Node.js#67595 at15c2ed through actual upstream CI and maintainer review; no personal-DCO/submission decision remains. Preserve old5bf qualification/version scopes. After upstream landing, the existing pinned Node22 image backport remains a separate recorded need.",
+              "recheckCondition": "Node67595 source, CI, human review or landing/backport event.",
+              "publishedDelivery": {
+                "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
+                "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+                "mergeableAtDirectReadback": "MERGEABLE",
+                "commitMessageCheck": "PASS44418978601",
+                "otherCI": "Running at direct readback; next canonical snapshot must observe this newly registered PR",
+                "receipt": {
+                  "file": "node-tls-remote-delivery-intent.json",
+                  "sha256": "82cd8e139de7869666f144ff9a1d57ff095645f128a80092eaa741a0d8e820cb"
+                }
+              },
+              "history": [
+                {
+                  "source": "5bf936f9c9cfbf1c059847b3c681fb71dd15a250",
+                  "scope": "Approved original code and prior Node22/native/Sentry tests retain exact versions"
+                },
+                {
+                  "source": "d4e54a16913ba10954039f6971bcd467534a76b4",
+                  "state": "Initial publication commitlint failed only because a blank line separated Assisted-by from the final trailer block; exact same tree/parent correction passed",
+                  "run": 44418619891
+                }
+              ]
+            }
+          }
+        ],
+        "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+        "internetFailure": {
+          "run": 44418983458,
+          "job": 135206784153,
+          "passedCases": 36,
+          "failedCases": 1,
+          "test": "test/internet/test-dns-any.js",
+          "error": "queryAny EREFUSED sip2sip.info",
+          "newParallelTLSInvoked": false,
+          "independentSiblingRun": 44419183222,
+          "sourceUnchanged": true,
+          "noTransientFlakeOrBaselineClaim": true,
+          "receipt": {
+            "file": "node-tls67595-internet-terminal-assessment.json",
+            "sha256": "db2dafb62f7a8eb57e6503b49b3cdec1f29c318a7f16cff2808cc11256a040c9"
+          }
+        },
+        "nativeRetry": {
+          "state": "DENIED actual403 Must have admin rights to Repository; no job launched",
+          "method": "POST",
+          "path": "/repos/nodejs/node/actions/jobs/135206784153/rerun",
+          "apiVersion": "2026-03-10",
+          "attempts": 1,
+          "minimumExternalAction": "Existing Node repository administrator rerun",
+          "notPendingUserCIApproval": true,
+          "noWorkaround": true,
+          "receipt": {
+            "file": "node-tls67595-internet-retry-receipt.json",
+            "sha256": "cdfa16a5b56f8f6c60a99ad96322a81224a3885f33779bb41fdd26e01f12a627"
+          }
+        },
+        "memberReview": {
+          "author": "bnb",
+          "association": "MEMBER",
+          "state": "APPROVED",
+          "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+          "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
+          "receipt": {
+            "file": "node-tls67595-current-primary-reviews.json",
+            "sha256": "954f4d91480438f21c60e916a58b7509ad8ce179ae24d035e5749a9a36a07bf9"
+          }
+        },
+        "otherUserReview": "2246250622 COMMENTED supports present implementation and notes only a hypothetical future DNS-mock API change; no current defect or source fix requested. Root reviewed/owns disposition; no new commitment.",
+        "currentDirectObservation": {
+          "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+          "mergeable": "MERGEABLE",
+          "passedChecks": 23,
+          "failed": [
+            "test-internet"
+          ],
+          "remaining": [
+            "coverage-linux",
+            "coverage-windows",
+            "test-linux (ubuntu-24.04)",
+            "test-macOS",
+            "test-linux (ubuntu-24.04-arm)",
+            "test-tarball-linux"
+          ],
+          "receipt": {
+            "file": "node-tls67595-nextbatch-current.json",
+            "sha256": "8a63b83f4cbcd030f584237b5500701e1bb05ea8141d25add14eca57ec02480e"
+          },
+          "notCanonicalSnapshotClock": true
+        }
       },
       "evidence": [
         {
           "label": "Published exact final Node source",
           "url": "https://github.com/tamird/node/commit/15c2edb5708cf8ac75b01360cff2372ecee0be23"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+        "url": "https://github.com/nodejs/node/pull/67595",
+        "title": "Request a maintainer rerun of the failed Internet job",
+        "body": "Could a maintainer rerun the failed Internet job? It failed in test-dns-any.js because queryAny('sip2sip.info') returned EREFUSED. An independent run hit the same failure one second later. The new parallel TLS test is not part of make test-internet. My rerun request returned 403, requiring repository admin rights.\n\nFailed job: https://github.com/nodejs/node/actions/runs/44418983458/job/135206784153\nIndependent run: https://github.com/nodejs/node/actions/runs/44419183222\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Existing root-asked approval question for this exact new public comment, not another CI/code/DCO approval. Do not send or re-ask while pending."
+      }
     }
   ],
   "edges": [
@@ -131630,39 +131824,39 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-18T23:27:40.021573+00:00",
-      "summary": "Permanent opt-in BuildBuddy/shared-cache source991b9ec is published only on a CI ref. It adds Bazel config, two execution platforms and a credential helper with tests/docs. No real authenticated RBE/cache probe has run and no improvement is measured. The exact one-file default-fork dispatcher update was rejected twice by automatic execution review; the existing exact execution override question is not a contributor code-approval request.",
-      "nextStep": "Resolve only the already-requested exact execution override for tamird/gvisor master1748→4bf58 without workaround, then use permanent Bazel owners/thin Actions for an actual pure-Go RBE/cache and credential-redaction proof. Review the Cgo/host-tool exceptions at their owning rules before broader actions. Do not launch the held per-item legacy drivers or claim remote execution/cache improvement before evidence.",
-      "recheckCondition": "Exact execution-review disposition, permanent source/owning-rule review or actual authenticated RBE/cache result.",
+      "updatedAt": "2026-11-19T00:15:13.095068+00:00",
+      "summary": "The exact default-dispatcher execution block is RESOLVED by its approved1748→4bf58 update/readback. Corrected CI-only source8b ran two permanent Bazel targets on remote execution: cold worker444227 had416remote runner entries/727s; identical fresh worker444250 had416shared remote-cache hits/85s and zero remote-execution runner entries. This is one scoped cold/warm capability pair, not performance or whole-portfolio qualification. Named-unit artifact evidence remains incomplete.",
+      "nextStep": "Root continues permanent Bazel/worker convergence: fix structured Go/Python result publication at its owning test/workflow boundaries, prove the actual host-C/Cgo exception graph with canonical aquery, then qualify the required architecture/mode matrix and performance scopes separately. Reuse source/input-bound results and products; do not restart held legacy per-item drivers or describe the small probe as completing all qualification.",
+      "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
       "source": {
-        "head": "991b9ec3dd2f7016ebbf4df0abce461552837ca7",
+        "head": "8b3ccc9dc9104c412e819190452b413e0949e652",
+        "parent": "991b9ec3dd2f7016ebbf4df0abce461552837ca7",
         "ref": "qualification/bazel-buildbuddy-20261118",
-        "purpose": "CI-only; no DCO or upstream PR publication",
-        "publicationReceipt": {
-          "file": "bazel-buildbuddy-source-publication.json",
-          "sha256": "96ba46d1edc10a896f645913f991bbdfd2094142320039264d8e36491f8d93bd"
+        "purpose": "CI-only; no DCO/upstream PR",
+        "scope": "Canonical BuildBuddy profiles, credential helper and precise Coral/host-C exceptions committed; native aquery/full matrix still pending",
+        "preparedReceipt": {
+          "file": "bazel-host-c-source-prepared.json",
+          "sha256": "51e45cea4e65b72959fabb0ae57a302c74ad4a1d0f99b56438ee95f3e3d5daa8"
         },
-        "preparedSourceReceipt": {
-          "file": "bazel-buildbuddy-source-prepared.json",
-          "sha256": "1544b5ea27880e662a0fdabfbf3c33921711dbe17d7b8a105b5e00bb872a5bd2"
+        "publicationReceipt": {
+          "file": "bazel-host-c-source-publication.json",
+          "sha256": "05e67e6235745bfdda99cbcad76986227c15f827973e78eaeb3dabca50065545"
         }
       },
       "executionBlock": {
-        "state": "Automatic execution-review rejection before update, twice; exact override requested",
+        "state": "RESOLVED: exact manual execution override succeeded; master4bf58 readback verified",
         "operation": {
           "repo": "tamird/gvisor",
           "branch": "master",
-          "expected": "1748f943694d376fd26123b11009ab01ffa9b597",
-          "target": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
+          "old": "1748f943694d376fd26123b11009ab01ffa9b597",
+          "new": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
           "force": false
         },
-        "scope": "Only .github/workflows/qualification.yml; own fork verified unprotected",
-        "reason": "Review treated the direct default-branch update as crossing a review boundary without exact trusted authorization; repeated request with primary fork/unprotected evidence was also rejected.",
+        "notPendingHumanDecision": true,
         "notContributorCodeApproval": true,
-        "noBypass": true,
         "receipt": {
           "file": "bazel-workflow-default-ref-blocked.json",
-          "sha256": "7b44d94db80ccac002c76c8c49496e05f37e2694e3d6fc5a2cb26314af91d005"
+          "sha256": "fd51559b903ce2175975ae7fd1f2abe6360fc88dbf041955275e2b3db24de649"
         }
       },
       "measuredBaseline": {
@@ -131686,10 +131880,10 @@
         }
       },
       "cgoExceptionDraft": {
-        "state": "Scratch owning-rule draft under review; not integrated or executed",
+        "state": "Owning host-C exceptions committed in CI-only8b; static source review retained; actual canonical graph proof remains pending",
         "receipt": {
-          "file": "rbe-host-c-owner-draft.json",
-          "sha256": "0870c60e539c0599c88f5de7ed253a45c1934c3f5bfaeb52469803c5622e3f12"
+          "file": "bazel-host-c-source-prepared.json",
+          "sha256": "51e45cea4e65b72959fabb0ae57a302c74ad4a1d0f99b56438ee95f3e3d5daa8"
         }
       },
       "evidence": [
@@ -131697,8 +131891,88 @@
           "label": "Published permanent Bazel source for CI-only qualification",
           "url": "https://github.com/tamird/gvisor/commit/991b9ec3dd2f7016ebbf4df0abce461552837ca7"
         }
-      ]
+      ],
+      "followup": {
+        "qualificationHistory": [
+          {
+            "state": "Historical current state before scoped qualification results",
+            "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+            "fields": {}
+          }
+        ],
+        "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+        "nextAction": "Root continues permanent Bazel/worker convergence: fix structured Go/Python result publication at its owning test/workflow boundaries, prove the actual host-C/Cgo exception graph with canonical aquery, then qualify the required architecture/mode matrix and performance scopes separately. Reuse source/input-bound results and products; do not restart held legacy per-item drivers or describe the small probe as completing all qualification.",
+        "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
+        "owner": "root",
+        "sourceHead": "8b3ccc9dc9104c412e819190452b413e0949e652",
+        "disposition": "The exact default-dispatcher execution block is RESOLVED by its approved1748→4bf58 update/readback. Corrected CI-only source8b ran two permanent Bazel targets on remote execution: cold worker444227 had416remote runner entries/727s; identical fresh worker444250 had416shared remote-cache hits/85s and zero remote-execution runner entries. This is one scoped cold/warm capability pair, not performance or whole-portfolio qualification. Named-unit artifact evidence remains incomplete."
+      },
+      "executionHistory": [
+        {
+          "state": "Automatic execution-review rejection before update, twice; exact override requested",
+          "operation": {
+            "repo": "tamird/gvisor",
+            "branch": "master",
+            "expected": "1748f943694d376fd26123b11009ab01ffa9b597",
+            "target": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
+            "force": false
+          },
+          "scope": "Only .github/workflows/qualification.yml; own fork verified unprotected",
+          "reason": "Review treated the direct default-branch update as crossing a review boundary without exact trusted authorization; repeated request with primary fork/unprotected evidence was also rejected.",
+          "notContributorCodeApproval": true,
+          "noBypass": true,
+          "receipt": {
+            "file": "bazel-workflow-default-ref-blocked.json",
+            "sha256": "7b44d94db80ccac002c76c8c49496e05f37e2694e3d6fc5a2cb26314af91d005"
+          }
+        }
+      ],
+      "firstActualAttempt": {
+        "run": 44421191684,
+        "source": "991b9ec3dd2f7016ebbf4df0abce461552837ca7",
+        "state": "FAILED wrong undeclared seqnum label and Python helper import; actual remote authentication/TestRunner prefix passed",
+        "receipt": {
+          "file": "bazel-rbe-44421191684-evidence.json",
+          "sha256": "23d765f32701bc01828049e8218785cdf467edd53293b6f5c659ca8f345e974c"
+        },
+        "notSuccessfulUnitQualification": true
+      },
+      "actualRemoteCachePair": {
+        "source": "8b3ccc9dc9104c412e819190452b413e0949e652",
+        "targets": [
+          "//pkg/atomicbitops:atomicbitops_test",
+          "//tools/buildbuddy:credential_helper_test"
+        ],
+        "first": {
+          "run": 44422718096,
+          "runnerId": 1000085388,
+          "jobSeconds": 727,
+          "remoteRunnerEntries": 416,
+          "BEPBothTargets": "PASSED uncached remoteTestRunner"
+        },
+        "second": {
+          "run": 44425010884,
+          "runnerId": 1000085389,
+          "jobSeconds": 85,
+          "sharedRemoteCacheHits": 416,
+          "remoteExecutionRunnerEntries": 0,
+          "BEPBothTargets": "PASSED cached reuse, not new test execution"
+        },
+        "sameEffectiveInputsAndOptionsVerified": true,
+        "rawActionsExecutedIncludesCacheLookups": true,
+        "notStatisticalPerformanceMeasurement": true,
+        "receipt": {
+          "file": "bazel-rbe-fresh-worker-cache-proof.json",
+          "sha256": "820aedead65dcdbee39c3103e929ddfd4d2ed07bebec234bb322d2d2d79cbe69"
+        },
+        "limits": [
+          "Only pureGo/Python standard targets; no Sentry/race/ARM/Cgo or per-case coverage qualification",
+          "GoXML empty and Python configured artifact outputs missed by convenience symlink; named cases/skips not established",
+          "Host-C exception aquery boundary and native full matrix remain pending",
+          "No complete cleanup-file absence or arbitrary-secret-value proof inferred"
+        ]
+      }
     }
   ],
-  "updatedAt": "2026-11-18T23:27:40.021573+00:00"
+  "updatedAt": "2026-11-19T00:15:13.095068+00:00"
 }
