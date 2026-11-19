@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
@@ -76,4 +77,24 @@ run_binary(
         "$(location secfuzz_covermeup.go)",
     ],
     tool = "//test/secfuzz/coveragegen",
+)
+
+sh_test(
+    name = "instrumentation_format_test",
+    srcs = ["instrumentation_format_test.sh"],
+    args = [
+        "$(rootpath @org_golang_x_tools//cmd/goimports)",
+        "$(rootpath @com_github_bazelbuild_buildtools//buildifier)",
+        "$(rootpath instrumentation.go)",
+        "$(rootpath fuzz_instrumentation_test.go)",
+        "$(rootpath BUILD)",
+    ],
+    data = [
+        "BUILD",
+        "fuzz_instrumentation_test.go",
+        "instrumentation.go",
+        "@com_github_bazelbuild_buildtools//buildifier",
+        "@org_golang_x_tools//cmd/goimports",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],
 )
