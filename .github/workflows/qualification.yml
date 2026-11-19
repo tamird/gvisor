@@ -250,7 +250,7 @@ jobs:
           esac
           case "$BAZEL_COMMAND" in
             test)
-              "$results/bazel" test "${options[@]}" \
+              "$results/bazel" test "${options[@]}" --test_env=GO_TEST_WRAP_TESTV=1 \
                 --build_event_json_file="$results/events.json" --profile="$results/profile.gz" \
                 "${targets[@]}" 2>&1 | tee "$results/bazel.log"
               ;;
