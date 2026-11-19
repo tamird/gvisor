@@ -28,6 +28,21 @@ bazel test --keep_going --config=buildbuddy --config=x86_64 \
 workers separately from target toolchains. A successful cross-compile alone does
 not establish native ARM64 test execution.
 
+The execution platforms pin BuildBuddy's public Ubuntu 24.04 image by its
+multi-architecture digest. Its userspace must load C/C++ binaries built on the
+Ubuntu 24.04 build workers. Check the real C++ loader and namespace operations
+before a full runtime build:
+
+```sh
+bazel test --keep_going --config=buildbuddy --config=x86_64 \
+  --credential_helper="remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)" \
+  //runsc/specutils/safemount_test:safemount_test \
+  //test/syscalls/coverage:uname_loader_test
+```
+
+The loader check runs the maintained Uname case directly, without building a
+Sentry or release fileset. Repeat with `aarch64` for the ARM64 worker.
+
 Keep correctness results and compiled artifacts cached. For a required fresh
 measurement, apply `--nocache_test_results` to the benchmark invocation; keep the
 build cache enabled. Controlled before/after measurements remain separate from
