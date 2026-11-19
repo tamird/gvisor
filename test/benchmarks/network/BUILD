@@ -106,11 +106,11 @@ benchmark_test(
     ],
     data = [
         "//:release",
-        "//test/benchmarks/harness:runsc_entrypoint",
         "//images:benchmark_hey_archive",
         "//images:benchmark_node_archive",
         "//images:benchmark_util_archive",
         "//images/basic:benchmark_redis_archive",
+        "//test/benchmarks/harness:runsc_entrypoint",
     ],
     embed = [":network"],
     exec_properties = {
