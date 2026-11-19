@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -43,7 +44,8 @@ func TestDockerWorker(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
 	defer cancel()
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	host := startDockerDaemon(t, ctx)
+	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,5 +206,126 @@ printf 'container\n' > /shared/output`},
 	info, err := os.Lstat(filepath.Join(dir, "fifo"))
 	if err != nil || info.Mode()&os.ModeNamedPipe == 0 {
 		t.Fatalf("bind-mounted FIFO = %v, %v", info, err)
+	}
+}
+
+// startDockerDaemon starts a daemon whose storage, socket and child processes
+// belong to this test. Its cleanup runs after container and client cleanup.
+func startDockerDaemon(t *testing.T, ctx context.Context) string {
+	t.Helper()
+	root, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "dockerd-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	socket := filepath.Join(root, "docker.sock")
+	if len(socket) >= 108 {
+		os.RemoveAll(root)
+		t.Fatalf("owned Docker socket path is too long: %d bytes", len(socket))
+	}
+	configPath := filepath.Join(root, "daemon.json")
+	config, err := json.Marshal(map[string]any{
+		"hosts": []string{"unix://" + socket},
+		"data-root": filepath.Join(root, "data"),
+		"exec-root": filepath.Join(root, "exec"),
+		"pidfile": filepath.Join(root, "docker.pid"),
+	})
+	if err != nil {
+		os.RemoveAll(root)
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(configPath, config, 0600); err != nil {
+		os.RemoveAll(root)
+		t.Fatal(err)
+	}
+	logPath := filepath.Join(root, "daemon.log")
+	log, err := os.Create(logPath)
+	if err != nil {
+		os.RemoveAll(root)
+		t.Fatal(err)
+	}
+	cmd := exec.Command("dockerd", "--config-file="+configPath)
+	cmd.Stdout, cmd.Stderr = log, log
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	var exited chan error
+	t.Cleanup(func() {
+		stopped := true
+		if cmd.Process != nil {
+			pgid := cmd.Process.Pid
+			if err := syscall.Kill(-pgid, syscall.SIGTERM); err != nil && err != syscall.ESRCH {
+				t.Errorf("terminate owned Docker group: %v", err)
+			}
+			deadline := time.Now().Add(10 * time.Second)
+			for syscall.Kill(-pgid, 0) == nil && time.Now().Before(deadline) {
+				time.Sleep(20 * time.Millisecond)
+			}
+			if err := syscall.Kill(-pgid, 0); err != syscall.ESRCH {
+				if err := syscall.Kill(-pgid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
+					t.Errorf("kill owned Docker group: %v", err)
+				}
+			}
+			select {
+			case <-exited:
+			case <-time.After(2 * time.Second):
+				t.Error("owned Docker leader was not reaped")
+				stopped = false
+			}
+			deadline = time.Now().Add(2 * time.Second)
+			for syscall.Kill(-pgid, 0) == nil && time.Now().Before(deadline) {
+				time.Sleep(20 * time.Millisecond)
+			}
+			if err := syscall.Kill(-pgid, 0); err != syscall.ESRCH {
+				t.Errorf("owned Docker process group remains: %v", err)
+				stopped = false
+			}
+		}
+		if err := log.Close(); err != nil {
+			t.Errorf("close Docker log: %v", err)
+		}
+		if t.Failed() {
+			f, err := os.Open(logPath)
+			if err == nil {
+				defer f.Close()
+				if info, err := f.Stat(); err == nil && info.Size() > 8192 {
+					f.Seek(-8192, io.SeekEnd)
+				}
+				data, _ := io.ReadAll(io.LimitReader(f, 8192))
+				t.Logf("owned Docker daemon log tail: %s", data)
+			}
+		}
+		if stopped {
+			if err := os.RemoveAll(root); err != nil {
+				t.Errorf("remove owned Docker files: %v", err)
+			}
+		}
+		if err := json.NewEncoder(os.Stdout).Encode(struct {
+			DaemonStopped bool `json:"owned_daemon_stopped"`
+		}{stopped}); err != nil {
+			t.Errorf("write daemon cleanup metadata: %v", err)
+		}
+	})
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("start owned Docker daemon: %v", err)
+	}
+	exited = make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
+	cli, err := client.NewClientWithOpts(client.WithHost("unix://"+socket), client.WithAPIVersionNegotiation())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cli.Close()
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case err := <-exited:
+			exited <- err
+			t.Fatalf("owned Docker daemon exited before readiness: %v", err)
+		case <-ctx.Done():
+			t.Fatalf("owned Docker daemon readiness: %v", ctx.Err())
+		case <-ticker.C:
+			if _, err := cli.Ping(ctx); err == nil {
+				return "unix://" + socket
+			}
+		}
 	}
 }

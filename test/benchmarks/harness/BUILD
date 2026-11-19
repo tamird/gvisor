@@ -31,7 +31,7 @@ go_test(
     args = ["--alpine-archive=$(rootpath //images/basic:alpine_archive)"],
     data = ["//images/basic:alpine_archive"],
     exec_properties = {
-        "test.init-dockerd": "true",
+        "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
     },
     pure = True,
