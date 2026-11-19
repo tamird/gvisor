@@ -96,3 +96,6 @@ build:buildbuddy --modify_execution_info=^GoStdlib(List)?$=-no-remote,^GoStdlib(
 
 # Native-image Go links use the same CPU-constrained compiler and archiver.
 build:buildbuddy --modify_execution_info=^GoLink$=-no-remote,^GoLink$=+no-local
+
+# Native-image cgo packages use the CPU-constrained RBE C toolchain.
+build:buildbuddy --modify_execution_info=^GoCompilePkg$=-no-remote,^GoCompilePkg$=+no-local
