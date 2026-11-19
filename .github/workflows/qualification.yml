@@ -256,7 +256,7 @@ jobs:
               ;;
             aquery)
               "$results/bazel" aquery "${options[@]}" --output=jsonproto \
-                "set(${targets[*]})" > "$results/actions.json"
+                "deps(set(${targets[*]}))" > "$results/actions.json"
               ;;
             *) exit 1 ;;
           esac
