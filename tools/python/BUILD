@@ -28,5 +28,6 @@ py_console_script_binary(
         "//tools:gen_compile_commands.py",
         "//tools/buildkite:buildkite.py",
     ],
+    legacy_create_init = False,
     target_compatible_with = ["@platforms//os:linux"],
 )
