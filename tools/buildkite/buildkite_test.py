@@ -15,12 +15,12 @@
 """Tests for buildkite.py. These tests do not use the network."""
 
 import contextlib
+import copy
 import http.client
 import io
 import json
 import os
 import subprocess
-from typing import Any
 import unittest
 from unittest import mock
 import urllib.error
@@ -33,11 +33,11 @@ _BUILD_URL = "https://buildkite.com/gvisor/pipeline/builds/1"
 _BUILD = buildkite.Build("gvisor", "pipeline", 1)
 
 
-def _no_branch(org, pipeline, branch):
+def _no_branch(org: str, pipeline: str, branch: str) -> int:
   raise AssertionError(f"unexpected branch lookup: {org}/{pipeline} {branch}")
 
 
-def _no_pull_request(owner, repo, number):
+def _no_pull_request(owner: str, repo: str, number: int) -> str:
   raise AssertionError(f"unexpected lookup: {owner}/{repo}#{number}")
 
 
@@ -55,11 +55,11 @@ def _artifact_url(job_id: str, target: str) -> str:
 class FakeFetch:
   """Replaces buildkite._fetch with fixed responses, by URL."""
 
-  def __init__(self, responses: dict[str, Any]):
+  def __init__(self, responses: dict[str, object]) -> None:
     self.responses = responses
-    self.urls = []
+    self.urls: list[str] = []
 
-  def __call__(self, url):
+  def __call__(self, url: str) -> bytes:
     self.urls.append(url)
     if url not in self.responses:
       raise buildkite.Error(f"{url}: not found")
@@ -71,7 +71,9 @@ class FakeFetch:
     return json.dumps(body).encode()
 
 
-def _job(n, name, retry=None, **fields):
+def _job(
+    n: int, name: str | None, retry: int | None = None, **fields: object
+) -> dict[str, object]:
   return {
       "id": _job_id(n),
       "type": "script",
@@ -84,7 +86,7 @@ def _job(n, name, retry=None, **fields):
   }
 
 
-def _build_responses() -> dict[str, Any]:
+def _build_responses() -> dict[str, object]:
   """Returns the responses of a build with these jobs.
 
   - Container tests: attempt 1 and its retry, attempt 2, fail container_test.
@@ -319,17 +321,17 @@ class FetchTest(unittest.TestCase):
   def test_records(self):
     url = "https://x/data/jobs?state=failed"
     pages = FakeFetch({
-        url: {"records": [1], "has_next_page": True, "end_cursor": "c1"},
-        url + "&after=c1": {"records": [2], "has_next_page": False},
+        url: {"records": [{"id": 1}], "has_next_page": True, "end_cursor": "c1"},
+        url + "&after=c1": {"records": [{"id": 2}], "has_next_page": False},
     })
     with mock.patch.object(buildkite, "_fetch", pages):
-      self.assertEqual(buildkite._fetch_records(url), [1, 2])
+      self.assertEqual(buildkite._fetch_records(url), [{"id": 1}, {"id": 2}])
 
     # A server that repeats the cursor must not cause an endless loop.
     loop = FakeFetch({
-        url: {"records": [1], "has_next_page": True, "end_cursor": "c1"},
+        url: {"records": [{"id": 1}], "has_next_page": True, "end_cursor": "c1"},
         url + "&after=c1": {
-            "records": [2],
+            "records": [{"id": 2}],
             "has_next_page": True,
             "end_cursor": "c1",
         },
@@ -340,6 +342,21 @@ class FetchTest(unittest.TestCase):
         records = buildkite._fetch_records(url)
     self.assertEqual(len(records), buildkite._MAX_PAGES)
     self.assertIn("truncated", stderr.getvalue())
+
+  def test_invalid_record_pages(self):
+    url = "https://x/data/jobs"
+    for page, message in [
+        ([], "expected an object"),
+        ({"records": {}}, "expected an array of objects"),
+        ({"records": [7]}, "expected an object"),
+        ({"records": [], "end_cursor": 7}, "end_cursor: expected a string"),
+        ({"records": [], "has_next_page": "false"}, "expected a boolean"),
+    ]:
+      with self.subTest(page=page), mock.patch.object(
+          buildkite, "_fetch", FakeFetch({url: page})
+      ):
+        with self.assertRaisesRegex(buildkite.Error, message):
+          buildkite._fetch_records(url)
 
 
 class AnnotationTest(unittest.TestCase):
@@ -392,7 +409,9 @@ class OutcomeTest(unittest.TestCase):
 
 class FailedTest(unittest.TestCase):
 
-  def failed(self, responses=None, **kwargs):
+  def failed(
+      self, responses: dict[str, object] | None = None, **kwargs
+  ) -> buildkite.FailedResult:
     fetch = FakeFetch(responses or _build_responses())
     with mock.patch.object(buildkite, "_fetch", fetch):
       return buildkite.failed(_BUILD, **kwargs)
@@ -421,10 +440,43 @@ class FailedTest(unittest.TestCase):
         [job] = result["jobs"]
         self.assertEqual(job["exit_status"], 80)
         self.assertEqual(job["log"], {})
-        if error is None:
-          self.assertNotIn("stack_error_detail", job)
-        else:
-          self.assertEqual(job["stack_error_detail"], error)
+        self.assertEqual(job["stack_error_detail"], error)
+        self.assertIsNone(job["started_at"])
+        self.assertIsNone(job["agent_assigned_at"])
+
+  def test_preserves_job_metadata(self):
+    job = _job(1, None, retries_count=2, parallel_group_index=0,
+               step={"label": "Pipeline upload"},
+               command="buildkite-agent pipeline upload .buildkite/first-pass.yaml",
+               started_at=None, agent_query_rules=[],
+               future={"nested": [None, [], {}, False, ""]},
+               attempt=99, retry="provider value", url="provider URL",
+               annotated_targets=[{"target": "provider value"}])
+    original = copy.deepcopy(job)
+    info = buildkite.job_info(_BUILD, job, [], None)
+    self.assertEqual(job, original)
+    for field in ("command", "started_at", "agent_query_rules", "future", "step"):
+      self.assertEqual(info[field], job[field])
+    self.assertEqual(info["name"], "Pipeline upload")
+    self.assertEqual(info["parallel_job"], 0)
+    self.assertEqual(info["attempt"], 3)
+    self.assertEqual(info["url"], f"{_BUILD_URL}#{_job_id(1)}")
+    self.assertNotIn("retry", info)
+    self.assertNotIn("annotated_targets", info)
+
+  def test_invalid_consumed_job_fields(self):
+    for fields, message in [
+        ({"id": 7}, "job.id: expected a string"),
+        ({"name": []}, "job.name: expected a string"),
+        ({"name": None, "step": []}, "job.step: expected an object"),
+        ({"retries_count": True}, "expected an integer"),
+        ({"retries_count": "2"}, "expected an integer"),
+        ({"retries_count": -1}, "expected a nonnegative integer"),
+    ]:
+      with self.subTest(fields=fields):
+        job = dict(_job(1, "Job"), **fields)
+        with self.assertRaisesRegex(buildkite.Error, message):
+          buildkite.job_info(_BUILD, job, [], None)
 
   def test_failed(self):
     self.assertEqual(
@@ -439,6 +491,10 @@ class FailedTest(unittest.TestCase):
             },
             "jobs": [
                 {
+                    "id": _job_id(1),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(2),
                     "name": "Container tests",
                     "state": "finished",
                     "exit_status": 2,
@@ -451,6 +507,11 @@ class FailedTest(unittest.TestCase):
                     }],
                 },
                 {
+                    "id": _job_id(2),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": None,
+                    "retries_count": 1,
                     "name": "Container tests",
                     "state": "finished",
                     "exit_status": 2,
@@ -462,6 +523,11 @@ class FailedTest(unittest.TestCase):
                     }],
                 },
                 {
+                    "id": _job_id(5),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(6),
+                    "exit_status": None,
                     "name": "Docker tests",
                     "state": "finished",
                     "attempt": 1,
@@ -469,6 +535,10 @@ class FailedTest(unittest.TestCase):
                     "url": f"{_BUILD_URL}#{_job_id(5)}",
                 },
                 {
+                    "id": _job_id(10),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(11),
                     "name": "Go tests",
                     "state": "finished",
                     "exit_status": -1,
@@ -477,6 +547,11 @@ class FailedTest(unittest.TestCase):
                     "url": f"{_BUILD_URL}#{_job_id(10)}",
                 },
                 {
+                    "id": _job_id(3),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(4),
+                    "parallel_group_index": 3,
                     "name": "Syscall tests",
                     "parallel_job": 3,
                     "state": "finished",
@@ -490,6 +565,10 @@ class FailedTest(unittest.TestCase):
                     }],
                 },
                 {
+                    "id": _job_id(8),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(9),
                     "name": "Unit tests",
                     "state": "finished",
                     "exit_status": 2,
@@ -546,7 +625,11 @@ class FailedTest(unittest.TestCase):
             ],
         },
     )
-    self.assertEqual(container["annotated_targets"][0]["status"], "FAILED")
+    self.assertEqual(container["annotated_targets"], [{
+        "target": "//runsc/container:container_test",
+        "test_log_url": _artifact_url(_job_id(2), "container"),
+        "status": "FAILED",
+    }])
     self.assertEqual(by_name("Docker tests", 1)["log_error"], "lost")
     self.assertEqual(by_name("Unit tests", 1)["log"], {"excerpt": ["ok"]})
     # The logs of attempts whose retry finished are not downloaded, and
