@@ -38,6 +38,7 @@ def cc_pie_obj(name, srcs, outs):
               "-fno-asynchronous-unwind-tables " +
               "-fno-stack-protector " +
               "-c $$(echo $(SRCS) | tr ' ' '\n' | grep -v -E '.h$$') -o $@",
+        tags = ["no-remote"],
         toolchains = [
             ":no_pie_cc_flags",
             cc_toolchain,
