@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T00:56:53.487149+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T00:39:33.110112+00:00",
+  "registryDate": "2026-11-19T01:19:23.138983+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448642,8 +448642,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
-        "nextAction": "Use the completed capability/cost evidence to prepare the remaining balanced statistical and broad-workload gates; keep physical-device/ARM gaps explicit and preserve all earlier failed attempts."
+        "disposition": "Original c7 PR remains CONFLICTING and untouched. Fresh mechanical65c candidate on213 preserves qualified1b topic apart from removed old DCO; shared df9 CI preflight44432455349 passed45 cases and skipped4 (2HardLink/2UDS). Not physical ARM/full consumer/performance proof.",
+        "nextAction": "Root owns source-review/publication resolution and missing permanent Bazel consumer/device/KVM/current-base gates; qualify exact required runtime/configuration and performance separately. Existing full20 historical proof retained; do not call the new preflight full qualification."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -451075,8 +451075,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
-        "disposition": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
-        "nextAction": "Use the completed capability/cost evidence to prepare the remaining balanced statistical and broad-workload gates; keep physical-device/ARM gaps explicit and preserve all earlier failed attempts."
+        "disposition": "Original c7 PR remains CONFLICTING and untouched. Fresh mechanical65c candidate on213 preserves qualified1b topic apart from removed old DCO; shared df9 CI preflight44432455349 passed45 cases and skipped4 (2HardLink/2UDS). Not physical ARM/full consumer/performance proof.",
+        "nextAction": "Root owns source-review/publication resolution and missing permanent Bazel consumer/device/KVM/current-base gates; qualify exact required runtime/configuration and performance separately. Existing full20 historical proof retained; do not call the new preflight full qualification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHYQw"
@@ -457191,8 +457191,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Exact15c2ed MERGEABLE with bnb member approval. Native Linux AMD/ARM jobs passed310 C++ cases each and7733/7729 selected JS cases; aggregate reporter does not expose the new TLS named row. Internet failed unchanged DNS queryAny EREFUSED, independently recurring; native retry denied403 admin rights. Only coverage-linux remained live at direct observation; no new code fix requested.",
-        "nextAction": "Root follows actual remaining upstream runtime/coverage and human events. An existing Node administrator must perform the native Internet-job rerun; no source fix, alternate retry/access path or new CI authorization is inferred. The exact public maintainer-rerun comment draft already has a legitimate pending approval question; do not post or ask again until that existing decision."
+        "disposition": "All known checks are terminal on exact15c2ed, including coverage-linux SUCCESS01:06Z; only the known Internet DNS EREFUSED failure remains. Native Linux aggregate results/member approval preserved; no named TLS-row inference. Native failed-job retry denied403 admin rights; existing public maintainer-rerun comment approval remains pending.",
+        "nextAction": "Root follows the existing exact comment-draft decision and any maintainer Internet rerun/review/import event. No new CI/source/code approval or retry is required or inferred."
       },
       "actionCheckIds": [
         "CR_kwDOAZ7xs88AAAAfevPMmQ"
@@ -460469,6 +460469,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-19T00:56:17.723537+00:00"
+      },
+      "contributor-review": {
+        "scope": "84b18c285d0be31bb58ecdf1721da2de312aee01",
+        "since": "2026-11-19T01:19:23.138983+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "pr:16453": {
@@ -464943,7 +464950,7 @@
         "since": "2026-11-19T00:15:13.095068+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "pr:bazelbuild/bazel-central-registry:11314": {
@@ -465311,7 +465318,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465320,7 +465327,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465329,7 +465336,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465338,7 +465345,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -465347,7 +465354,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465356,7 +465363,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465365,7 +465372,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465374,7 +465381,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+      }
+    },
+    "branch:lisafs-hardlink-capability": {
+      "contributor-review": {
+        "scope": "fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
+        "since": "2026-11-19T01:19:23.138983+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-19T01:19:23.138983+00:00"
       }
     }
   },

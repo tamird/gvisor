@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T00:39:33.110112+00:00",
+    "updatedAt": "2026-11-19T01:19:23.138983+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50906,7 +50906,7 @@
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
-      "updatedAt": "2026-11-18T19:41:39.857079+00:00",
+      "updatedAt": "2026-11-19T01:19:23.138983+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -50946,8 +50946,8 @@
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
         "observedAt": "2026-11-18T19:41:39.857079+00:00",
-        "disposition": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
-        "nextAction": "Use the completed capability/cost evidence to prepare the remaining balanced statistical and broad-workload gates; keep physical-device/ARM gaps explicit and preserve all earlier failed attempts.",
+        "disposition": "Original c7 PR remains CONFLICTING and untouched. Fresh mechanical65c candidate on213 preserves qualified1b topic apart from removed old DCO; shared df9 CI preflight44432455349 passed45 cases and skipped4 (2HardLink/2UDS). Not physical ARM/full consumer/performance proof.",
+        "nextAction": "Root owns source-review/publication resolution and missing permanent Bazel consumer/device/KVM/current-base gates; qualify exact required runtime/configuration and performance separately. Existing full20 historical proof retained; do not call the new preflight full qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
           "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
@@ -51007,6 +51007,241 @@
             "disposition": "Candidate1b37 has accounted AMD builds/both lints, strict owner recovery53pass+2intentional UDS skips, and native/systrap/directfs KVM Open capability. Ordinary-gofer pilot44241613500 failed at BASE prewarmer execEACCES before either source observation; all9runtime members and directory/file modes verify, native2case controls passed, and Docker/source restored. Verified plan created a private0700 ancestor; no live ancestor stat survived. Recovery isolates only public runtime files in0711 exec root, preserves private0700 work/config/results, tests actual dropped UID/GID traversal and configured Docker launch, and strictly binds reused native controls to images/full harness/runtime hashes. Independent review and root review passed after bounded cleanup signal correction.",
             "nextAction": "Prepare the remaining relevant broad filesystem/startup variant capability/cost screen and bounded balanced statistical plan before launch. Preserve successful N1 capability and all earlier failed traversal receipts; no physical TPU/ARM/statistical approval is claimed. Root handles current-base publication readiness and exact amendment decision after qualification.",
             "recheckCondition": "Exact recovery terminal evidence, new maintainer scope reply, source/conflict change or contributor decision."
+          },
+          {
+            "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
+              "observedAt": "2026-11-18T19:41:39.857079+00:00",
+              "disposition": "The full20 N1 capability screen and three fresh uncached Smoke cases passed, with complete cleanup. Separate source/C++ lint results remain valid. Statistical/full-category, physical-device and ARM validation are not established.",
+              "nextAction": "Use the completed capability/cost evidence to prepare the remaining balanced statistical and broad-workload gates; keep physical-device/ARM gaps explicit and preserve all earlier failed attempts.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/16743#discussion_r4582400440",
+                "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/devutil/devutil.go",
+                "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/pkg/sentry/fsimpl/gofer/inode_impl.go",
+                "https://github.com/tamird/gvisor/blob/ef55959ef13c80404a1efe7890044f9ca211f047/runsc/gofer/fs/lisafs.go",
+                "https://github.com/gvisor/gvisor/pull/16743",
+                "https://github.com/tamird/gvisor/commit/ef55959ef13c80404a1efe7890044f9ca211f047",
+                "https://github.com/tamird/gvisor/commit/c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
+                "https://buildkite.com/gvisor/first-pass/builds/1608",
+                "https://buildkite.com/gvisor/first-pass/builds/1608#01a1eae5-3bd8-44b4-9976-04821d411f30",
+                "https://github.com/tamird/gvisor/commit/5d776df85f08eec3cf37a9c2a78f34e1f173b2b2",
+                "https://github.com/tamird/gvisor/commit/1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+                "https://github.com/tamird/gvisor/actions/runs/44229379105",
+                "https://github.com/tamird/gvisor/actions/runs/44230374348",
+                "https://github.com/tamird/gvisor/actions/runs/44237381349",
+                "https://github.com/tamird/gvisor/actions/runs/44237348330",
+                "https://github.com/tamird/gvisor/actions/runs/44241402550",
+                "https://github.com/tamird/gvisor/actions/runs/44241613500",
+                "https://github.com/tamird/gvisor/actions/runs/44245490184",
+                "https://github.com/tamird/gvisor/actions/runs/44249884428",
+                "https://github.com/tamird/gvisor/actions/runs/44261892579",
+                "https://github.com/tamird/gvisor/actions/runs/44264852083",
+                "https://github.com/tamird/gvisor/actions/runs/44265522148",
+                "https://github.com/tamird/gvisor/actions/runs/44351677781",
+                "https://github.com/tamird/gvisor/actions/runs/44353837005",
+                "https://github.com/tamird/gvisor/actions/runs/44353853397",
+                "https://github.com/tamird/gvisor/actions/runs/44355859825"
+              ],
+              "recheckCondition": "Missing-gate plan/qualification result, source or runtime input change, human feedback.",
+              "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+              "mergeable": "CONFLICTING",
+              "proposalHead": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+              "currentSourceReview": {
+                "reviewer": "root",
+                "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+                "scope": "Complete six-file diff plus actual device client/server consumers, ownership, flags and test selection",
+                "finding": "No further concrete source issue; no execution/performance approval claimed.",
+                "observedAt": "2026-11-18T05:53:00.594117+00:00"
+              },
+              "capabilityResult": {
+                "run": 44249884428,
+                "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+                "plan": "08e1d357c42bc3f170c5c078a5acbcb1f8dfebae",
+                "status": "verified success",
+                "artifact": 14403976729,
+                "artifactSHA256": "7dcb30b70a0cec48be7d6a1b087a2fcbc6ecf43be08f4b3036bb270d867a9660",
+                "scope": "Four N1 existing StartupEmpty/RubyNoOp leaves across BASE/candidate; no effect inference. Actual mapped-actor probe, all executable access, real Docker launches, strict prior images/full harness/both9-member runtimes and clean source/Docker/public-root removal verified."
+              },
+              "baseObservation": {
+                "head": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "prior": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "observedAt": "2026-11-18T06:58:20.703035+00:00",
+                "verifiedRange": "Only website/_includes/footer-links.html changed; prior source/results retain exact bindings. Local merge-tree output is not hosting-service mergeability evidence."
+              },
+              "missingCapabilityScreen": {
+                "run": 44261892579,
+                "plan": "334c0f416bfdf0ad1c851d3b48d0db0aa6445846",
+                "source": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+                "base": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "state": "failed at native FUSE prerequisite before source observations",
+                "owner": "systrap_regression",
+                "observations": 19,
+                "statisticalQualification": false,
+                "artifact": 14408648199,
+                "artifactDigest": "6307211fcb2f4041693b6434888d9aaa702a4c65246fc354202bedf6cf80fb89",
+                "passedNativeMounts": [
+                  "tmpfs",
+                  "rootfs"
+                ],
+                "sourceObservations": 0
+              },
+              "fusePrerequisite": {
+                "owner": "systrap_regression",
+                "failedAcquisitionRun": 44264852083,
+                "recoveryRun": 44265522148,
+                "plan": "08b08e5f536142aed472262a24159cb874c4745d",
+                "artifact": 14410091207,
+                "artifactDigest": "92363cf628c483dbb598f75572d6c9557219c7554c07766a08ee9219095853a7",
+                "captureComplete": true,
+                "actualOldConfig": "Devices empty; container not privileged; /data and /fuse exist, /dev/fuse absent and open returns ENOENT.",
+                "controlledResult": "Only exact char10:229 /dev/fuse:rwm mapping added; container remains not privileged, open succeeds.",
+                "mountOrWorkloadExecuted": false,
+                "repairState": "All setup and harness builds passed; native runc FUSE server creation failed with operation not permitted at fuse.go:74. The full20 N1 study did not run. Device mapping was fixed, but the EPERM cause is not established; default container security profiles/capability context require direct diagnosis.",
+                "retainedReadiness": "Preserve f196722413 readiness/exit observation; it did not introduce the missing device.",
+                "repairHead": "bdc0d03ba1ee9803b8787b2b3a341f426475468a",
+                "repairBase": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "repairURL": "https://github.com/tamird/gvisor/commit/bdc0d03ba1ee9803b8787b2b3a341f426475468a",
+                "repairFinalHead": "db1c819898c4100058374e37801b5f83ac54d94b",
+                "repairFinalURL": "https://github.com/tamird/gvisor/commit/db1c819898c4100058374e37801b5f83ac54d94b",
+                "maintainedSmoke": "RealFSBenchmark basic/alpine mount; assertFUSEmagic and write/read, exactlyonechildcallback atN1. ExistingDocker recipe selectsnative andconfiguredruntime; source-built release declared in testdata, external comparator swaps still require uncached runs.",
+                "qualificationScope": "20remainingN1benchmark observations plus3freshfunctionalSmoke cases; nativeFUSE before expensive runtime preparation; runtime1f/1b distinctfromharnessSOURCE. ExactBEP/XML/identity andcleanup required.",
+                "qualificationBudget": {
+                  "expectedMinutes": [
+                    15,
+                    30
+                  ],
+                  "bodyMinutes": 90,
+                  "cleanupGraceSeconds": 180,
+                  "inclusiveMinutesAfterGenericPreparation": 93,
+                  "state": "Root and independent protocol review passed; 93 minutes inclusive after generic preparation."
+                },
+                "qualificationPublication": {
+                  "owner": "root",
+                  "plan": "1bd483969f7f10eaffa29ac1cb9711261ecc0675",
+                  "source": "db1c819898c4100058374e37801b5f83ac54d94b",
+                  "branch": "qualification/vfio-fuse-smoke-screen-20261118",
+                  "proofSHA256": "50e542e70178aa901fe8f4595feb8be0fd4822680dac4260c6ab7a74161d532e",
+                  "files": 23,
+                  "status": "Published/read back; run44302039946 FAILED at native FUSE gate before full observations",
+                  "published": true,
+                  "dispatched": true,
+                  "destinationAbsentVerified": false,
+                  "observedAt": "2026-11-18T09:52:57.232471+00:00",
+                  "run": 44302039946,
+                  "dispatchReceipt": {
+                    "source": "db1c819898c4100058374e37801b5f83ac54d94b",
+                    "plan": "1bd483969f7f10eaffa29ac1cb9711261ecc0675",
+                    "branch": "qualification/vfio-fuse-smoke-screen-20261118",
+                    "architecture": "amd64",
+                    "state": "identified",
+                    "dispatchOutput": "https://github.com/tamird/gvisor/actions/runs/44302039946",
+                    "runId": 44302039946
+                  },
+                  "priorTransportBlocker": "SSH agent refusal and HTTPS workflow-permission rejection were retained historical failures; the authorized reviewed retry succeeded.",
+                  "artifact": 14427151466,
+                  "artifactSHA256": "580f94e2044038a6e315816bf85775b3e35a5b2cb931b8d6503f90d2ac3e7db9"
+                },
+                "securityDiagnosticPreparation": {
+                  "owner": "root",
+                  "source": "db1c819898c4100058374e37801b5f83ac54d94b",
+                  "plan": "c6f16bec9a27c3b74e70d5a4c98b89902bb7b645",
+                  "run": 44319733405,
+                  "state": "FAILED native mount; complete security capture verified",
+                  "receipt": {
+                    "file": "fuse-security-44319733405-evidence.json",
+                    "sha256": "77a350e32217e4ebbc0fbd7cd7587bef359a6ceb65be10f259a26b3e7395c070"
+                  },
+                  "observed": "Exact privileged exec had SYS_ADMIN but retained seccomp2 and docker-default AppArmor; native mount EPERM. Capture does not identify the unique denying policy. Whole-group preflight and cleanup passed."
+                },
+                "mountPermissionRecovery": {
+                  "owner": "coverage_security_review",
+                  "source": "4f51c3b3a663f39cb1dec661f83406e4f014348a",
+                  "state": "VERIFIED PASS: native Ruby N1 and maintained TestFuseSmoke; full20/Sentry/performance still open",
+                  "sourceReceipt": {
+                    "file": "fuse-mount-permissions-source-prepared.json",
+                    "sha256": "fa8c2f954fe5d1826d9a756e231a93a2ec9db0a9feec57b2f90663878700015d"
+                  },
+                  "sourceChange": "FuseFS-only creation SYS_ADMIN and apparmor=unconfined; retain default seccomp/device/privileged exec.",
+                  "protocol": "Published and executed47-minute-cap native validation44328398694: one Ruby N1 and maintained TestFuseSmoke verified. Full20/Sentry/performance remain open.",
+                  "blocker": null,
+                  "plan": "ac45af3fa3ca0d0bee4699bebe4150dab570d106",
+                  "run": 44328398694,
+                  "receipt": {
+                    "file": "fuse-mount-44328398694-evidence.json",
+                    "sha256": "b2d8cd4358f9ad5396740003b44d16246ee1d2d1e7cc84755e0ee558d0a9752c"
+                  }
+                }
+              },
+              "fuseContinuousCI": {
+                "upstream": "b29c8320a862a77f4c55894d00c56eb5850c8066",
+                "pipeline": 55343,
+                "url": "https://buildkite.com/gvisor/pipeline/builds/55343",
+                "overallState": "passed",
+                "rubyAttempts": 3,
+                "rubyAttemptsSoftFailed": true,
+                "finalJob": "01a1ed5f-7df5-45b9-bc3e-5f11e076209f",
+                "actualLog": "Native runtime=runc RubyNoOp clean/dirtyFUSE both reportNewServerENOENT. LaterRubySpec dirtybindfs is canceled, so finalexit-1 is not attributed only toFUSE. SomeSentryFUSE leaves complete.",
+                "selectionGap": "Master-onlysoft-failingbenchmark lane already includednative; not PR-blocking FUSEfixture coverage. Newsmall maintained owner smoke targets that specific gap.",
+                "causeLimit": "No claim thatf196 introduced missingdevice or that this fix resolves laterbenchmark cancellation."
+              },
+              "curatedAt": "2026-11-18T19:14:36.701603+00:00",
+              "technicalOwner": "fuse_full20_resume",
+              "full20Recovery": {
+                "owner": "fuse_full20_resume",
+                "source": "4f51c3b3a663f39cb1dec661f83406e4f014348a",
+                "runtimeBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "runtimeCandidate": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+                "state": "Workflow SUCCESS; terminal artifact audit pending, no full20 qualification inferred",
+                "benchmarkObservations": 20,
+                "smokeCases": 3,
+                "inclusiveMinutes": 89,
+                "nativeResultsReused": false,
+                "sourceLintAndCpp": "Separate AMD64 source lint and373-source C++ gates PASS; functional full20+3 incomplete",
+                "run": 44375905083,
+                "plan": "03f1c31361899413bb2cb8d0b4680b7a5dbbb059",
+                "priorFailure": {
+                  "file": "fuse-full20-44351677781-evidence.json",
+                  "sha256": "6f7ca10fdb6da1b641eda1fdfde78a581fe416f431e677065dddcd762f38599e"
+                },
+                "sourceLint": {
+                  "state": "PASS",
+                  "run": 44353837005,
+                  "receipt": {
+                    "file": "fuse-source-lint-44353837005-evidence.json",
+                    "sha256": "994a793b80142ebb11bb0424815bf897c66f104984a4d03a10093fcbca4c4dc1"
+                  }
+                },
+                "cppLint": {
+                  "state": "PASS;373 sources",
+                  "run": 44353853397,
+                  "receipt": {
+                    "file": "fuse-cpp-lint-44353853397-evidence.json",
+                    "sha256": "1835610ccd1dea0b44553d37155c88228a69deaae21f3e319a1f8078f65e596f"
+                  }
+                },
+                "canonicalReload": {
+                  "run": 44366606003,
+                  "state": "PASS native Docker28.0.4 mechanics and original config/runtime restoration",
+                  "receipt": {
+                    "file": "vfio-reload-44366606003-evidence.json",
+                    "sha256": "61b4c42b35dfebff4faaf061448be582dcd5294ff6dd34e8d8f00f2afab31858"
+                  },
+                  "scope": "Native-runc6cycles only; canonical test-owned runtime CLI registration/reload retained for full20 continuation"
+                }
+              },
+              "latestQualification": {
+                "run": 44375905083,
+                "source": "4f51c3b3a663f39cb1dec661f83406e4f014348a",
+                "runtimeCandidate": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
+                "state": "PASS full20 N1 and all3 fresh Smoke cases; cleanup PASS",
+                "receipt": {
+                  "file": "fuse-full20-44375905083-evidence.json",
+                  "sha256": "e3c91ef99cabc15d3ffe492a6e8082e96961fd0cec20abf93dce44f7c745fdeb"
+                }
+              }
+            }
           }
         ],
         "proposalHead": "1b37f9cfca65287f8c153314e392d4fbf7c4094b",
@@ -51148,7 +51383,7 @@
           "selectionGap": "Master-onlysoft-failingbenchmark lane already includednative; not PR-blocking FUSEfixture coverage. Newsmall maintained owner smoke targets that specific gap.",
           "causeLimit": "No claim thatf196 introduced missingdevice or that this fix resolves laterbenchmark cancellation."
         },
-        "curatedAt": "2026-11-18T19:14:36.701603+00:00",
+        "curatedAt": "2026-11-19T01:19:23.138983+00:00",
         "technicalOwner": "fuse_full20_resume",
         "full20Recovery": {
           "owner": "fuse_full20_resume",
@@ -51202,6 +51437,10 @@
             "file": "fuse-full20-44375905083-evidence.json",
             "sha256": "e3c91ef99cabc15d3ffe492a6e8082e96961fd0cec20abf93dce44f7c745fdeb"
           }
+        },
+        "currentBazelPreflight": {
+          "file": "vfio-bazel-current-44432455349-evidence.json",
+          "sha256": "b8cca7290b1cfddce28db24cec6868f42ba6776ae79a289791ca9dc49f36bf78"
         }
       },
       "dcoAmendment": {
@@ -53335,12 +53574,12 @@
       "repo": "google/gvisor",
       "number": 16445,
       "ref": "pr-moby-bench",
-      "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+      "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
       "title": "Docker-in-gVisor network benchmark",
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
+      "updatedAt": "2026-11-19T01:19:23.138983+00:00",
       "summary": "The full current nine-file topic review found no additional source defects and confirmed the earlier accounting/setup/profile/cleanup concerns are addressed. Current native/Sentry ten-topology execution and distinct metric evidence remain necessary; approval to post the prepared COMMENTED review is pending.",
       "evidence": [
         {
@@ -53364,17 +53603,31 @@
           "outcome": "approved",
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16445#discussion_r4444415641"
+        },
+        {
+          "kind": "review",
+          "status": "pending",
+          "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+          "url": "https://github.com/google/gvisor/pull/16445",
+          "title": "Review current Docker-in-gVisor benchmark revision",
+          "body": "The current e264e33d addresses the accounting, setup, profile-path and canceled-context cleanup concerns. I reviewed the complete current source and found no further source issues.\n\nBefore full approval, I still need current native and Sentry results for the ten topologies, evidence that canceled setup cleans up its containers and concurrent DINGs retain separate profiles, and measurement results that distinguish whole-invocation ns/op from iperf transfer bandwidth. First Pass 1770 passed, but this benchmark is manual, so that status does not establish those results. I have not rerun tests or benchmarks.\n\nPosted by Codex on behalf of @tamird.\n",
+          "event": "COMMENTED",
+          "summary": "Approve posting the already-proposed source review and evidence request; no full approval or execution claim.",
+          "requestedAt": "2026-11-18T21:49:57.504662+00:00",
+          "outcome": "superseded",
+          "at": "2026-11-19T01:19:23.138983+00:00",
+          "note": "New84b source and confirmed sharding finding supersede this unposted e264 draft; not posted or declined."
         }
       ],
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+        "providerHead": "84b18c285d0be31bb58ecdf1721da2de312aee01",
         "mergeable": "MERGEABLE",
-        "sourceHead": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+        "sourceHead": "84b18c285d0be31bb58ecdf1721da2de312aee01",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "The full current nine-file topic review found no additional source defects and confirmed the earlier accounting/setup/profile/cleanup concerns are addressed. Current native/Sentry ten-topology execution and distinct metric evidence remain necessary; approval to post the prepared COMMENTED review is pending.",
-        "nextAction": "Await the already-asked contributor decision on posting the exact COMMENTED review. Preserve author ownership and require current execution, cleanup/profile regression and distinct ns/op-versus-iperf results before full technical approval.",
+        "disposition": "New84b author responses/source consumed; root confirmed namedLogger loses Skipf, bypassing DING-only benchmark shard selection. FirstPass1824PASS does not execute manual DING benchmark.",
+        "nextAction": "Root follows existing exact84b COMMENTED proposal decision; author owns sharding correction and current topology/cancellation/profile/measurement evidence. Do not post or re-ask pending question.",
         "recheckCondition": "Existing review-posting decision, author evidence/source reply or current CI change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16445"
@@ -53400,28 +53653,85 @@
           "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
           "CI": "Exact-head First Pass1770 SUCCESS at20:06 snapshot"
         },
-        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+        "curatedAt": "2026-11-19T01:19:23.138983+00:00",
         "currentSourceReview": {
-          "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
-          "scope": "Full nine-file current topic and complete review discussion",
-          "confirmedAdditionalCodeFindings": [],
-          "receipt": {
-            "file": "16445-current-source-review.json",
-            "sha256": "be5140f65ed21f2f83e8c9cf9a885c5ed3466a9bab7a2ab2e2982586b767d16a"
+          "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
+          "finding": "namedLogger drops Skipf and bypasses DING-only topology partition selection",
+          "draft": {
+            "file": "16445-84b-current-review-draft.json",
+            "sha256": "e7141dae52f7dc61ae87a2f5c8a46f276dcab3a926679a85a5ee720791998de5"
           },
-          "execution": "Not rerun; native/Sentry ten-topology and cleanup/profile/measurement gates unresolved"
-        }
+          "execution": "Not run; FirstPass1824PASS is not manual benchmark proof"
+        },
+        "qualificationHistory": [
+          {
+            "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+            "fields": {
+              "owner": "root",
+              "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+              "providerHead": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+              "mergeable": "MERGEABLE",
+              "sourceHead": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+              "observedAt": "2026-11-18T20:06:11.890448+00:00",
+              "disposition": "The full current nine-file topic review found no additional source defects and confirmed the earlier accounting/setup/profile/cleanup concerns are addressed. Current native/Sentry ten-topology execution and distinct metric evidence remain necessary; approval to post the prepared COMMENTED review is pending.",
+              "nextAction": "Await the already-asked contributor decision on posting the exact COMMENTED review. Preserve author ownership and require current execution, cleanup/profile regression and distinct ns/op-versus-iperf results before full technical approval.",
+              "recheckCondition": "Existing review-posting decision, author evidence/source reply or current CI change.",
+              "evidence": [
+                "https://github.com/google/gvisor/pull/16445"
+              ],
+              "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
+              "latestSourceTriage": {
+                "oldHead": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+                "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+                "oldParent": "0503af6713d15e92b6842cb5fb04fc6a7acab0cc",
+                "newParent": "1f33fe3003455db178b97f3b43d3a012f1611994",
+                "topicPaths": [
+                  "Makefile",
+                  "images/moby/Dockerfile.x86_64",
+                  "test/benchmarks/ding/BUILD",
+                  "test/benchmarks/ding/moby_test.go",
+                  "test/benchmarks/tools/iperf.go",
+                  "test/moby/BUILD",
+                  "test/moby/moby_test.go",
+                  "test/moby/mobyutil/BUILD",
+                  "test/moby/mobyutil/mobyutil.go"
+                ],
+                "accountingChange": "@@ -55,7 +55,6 @@ func (i *Iperf) Report(b *testing.B, output string) {\n \tif err != nil {\n \t\tb.Fatalf(\"failed to parse bandwitdth from %s: %v\", output, err)\n \t}\n-\tb.SetBytes(128 * 1024) // Measure Bytes/sec for b.N, although below is iperf output.\n \tReportCustomMetric(b, bW*1024, \"bandwidth\" /*metric name*/, \"bytes_per_second\" /*unit*/)\n }\n ",
+                "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
+                "CI": "Exact-head First Pass1770 SUCCESS at20:06 snapshot"
+              },
+              "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+              "currentSourceReview": {
+                "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+                "scope": "Full nine-file current topic and complete review discussion",
+                "confirmedAdditionalCodeFindings": [],
+                "receipt": {
+                  "file": "16445-current-source-review.json",
+                  "sha256": "be5140f65ed21f2f83e8c9cf9a885c5ed3466a9bab7a2ab2e2982586b767d16a"
+                },
+                "execution": "Not rerun; native/Sentry ten-topology and cleanup/profile/measurement gates unresolved"
+              }
+            }
+          }
+        ]
       },
       "contributorReview": {
         "kind": "review",
         "status": "pending",
-        "head": "e264e33d8c7f55d34f4096b832fa45d6dec866ac",
+        "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
         "url": "https://github.com/google/gvisor/pull/16445",
-        "title": "Review current Docker-in-gVisor benchmark revision",
-        "body": "The current e264e33d addresses the accounting, setup, profile-path and canceled-context cleanup concerns. I reviewed the complete current source and found no further source issues.\n\nBefore full approval, I still need current native and Sentry results for the ten topologies, evidence that canceled setup cleans up its containers and concurrent DINGs retain separate profiles, and measurement results that distinguish whole-invocation ns/op from iperf transfer bandwidth. First Pass 1770 passed, but this benchmark is manual, so that status does not establish those results. I have not rerun tests or benchmarks.\n\nPosted by Codex on behalf of @tamird.\n",
+        "title": "Review current DING benchmark sharding regression",
+        "summary": "Existing once-asked current84b COMMENTED review proposal with one inline finding; no posting or full approval.",
+        "body": "The earlier runtime-selection, cleanup and byte-accounting findings are addressed in the current source. I found one regression in the new logger wrapping, noted inline. Current native/Sentry topology results and cancellation/profile/stability evidence are still needed before full approval. I have not run the benchmarks.\n\nPosted by Codex on behalf of @tamird.",
         "event": "COMMENTED",
-        "summary": "Approve posting the already-proposed source review and evidence request; no full approval or execution claim.",
-        "requestedAt": "2026-11-18T21:49:57.504662+00:00"
+        "comments": [
+          {
+            "path": "test/benchmarks/ding/moby_test.go",
+            "line": 142,
+            "side": "RIGHT",
+            "body": "Wrapping the first DING now drops *testing.B.Skipf: namedLogger embeds testutil.Logger, which only exposes Name and Logf. dockerutil.ensureShouldRun returns immediately for loggers without Skipf, so DING-only topologies such as DINGToDING bypass benchmark partition selection and run on every shard.\n\nCould you check testutil.ShouldRun(b.Name()) once at the start of each b.Run callback, before topology setup, while keeping these distinct profile names? Forwarding Skipf under the /dingN names would instead shard individual containers, potentially assigning the containers of one topology to different partitions."
+          }
+        ]
       }
     },
     {
@@ -93429,12 +93739,12 @@
       "repo": "hermeticbuild/hermetic-llvm",
       "number": 938,
       "ref": "toolchain-stage-config",
-      "head": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
+      "head": "4a6473ccf89a8bd1851b5354eef9a517f951ec86",
       "title": "Share toolchain args and features across runtime stages",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/938",
       "status": "open",
-      "updatedAt": "2026-11-18T20:11:46.639485+00:00",
-      "summary": "The supplier-owned head is unchanged, but current base895a19 now conflicts. Prior46-check pass and caller-configuration review remain historical; dependency landing is blocked.",
+      "updatedAt": "2026-11-19T01:19:23.138983+00:00",
+      "summary": "Rebased4a6473 clears the old conflict. Complete current nine-file source/thread review found no concrete issue; caller-config fix preserved exactly and upstream963 response-file features carried into both sets. Current46 CI jobs pass; cached test results are not new uncached execution.",
       "evidence": [
         {
           "label": "Three-file correction on #938",
@@ -93481,24 +93791,48 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
+        "sourceHead": "4a6473ccf89a8bd1851b5354eef9a517f951ec86",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "mergeable": "CONFLICTING",
+        "mergeable": "MERGEABLE",
         "base": "895a19cc2162f79696fda4b67df3d17d5d1a1e47",
-        "disposition": "The supplier-owned head is unchanged, but current base895a19 now conflicts. Prior46-check pass and caller-configuration review remain historical; dependency landing is blocked.",
-        "nextAction": "Root tracks supplier author resolution of the actual merge conflict, then rechecks the changed source and qualifies dependent gVisor adoption against the landed revision. No new external outreach or supplier source edit authorized.",
+        "disposition": "Rebased4a6473 clears the old conflict. Complete current nine-file source/thread review found no concrete issue; caller-config fix preserved exactly and upstream963 response-file features carried into both sets. Current46 CI jobs pass; cached test results are not new uncached execution.",
+        "nextAction": "Root follows supplier review/merge, then qualifies gVisor adoption against actual landed source/toolchain/configuration inputs and caller copts/features, glibc/musl and libc++ include/module-map contracts. No supplier edit/outreach/new commitment.",
         "recheckCondition": "Supplier head/base/conflict resolution, review/CI or merge change.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/938#issuecomment-6965808544",
           "https://github.com/hermeticbuild/hermetic-llvm/commit/2cc45ff9bec63826318f7f35e736187ad0eb72db"
         ],
-        "curatedAt": "2026-11-18T20:11:46.639485+00:00",
-        "conflictObservation": {
-          "head": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
-          "base": "895a19cc2162f79696fda4b67df3d17d5d1a1e47",
-          "checkedAt": "2026-11-18T20:06:11.890448+00:00",
-          "owner": "root",
-          "externalDependency": "Supplier author TrapsterDK"
+        "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+        "qualificationHistory": [
+          {
+            "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
+              "observedAt": "2026-11-18T20:06:11.890448+00:00",
+              "mergeable": "CONFLICTING",
+              "base": "895a19cc2162f79696fda4b67df3d17d5d1a1e47",
+              "disposition": "The supplier-owned head is unchanged, but current base895a19 now conflicts. Prior46-check pass and caller-configuration review remain historical; dependency landing is blocked.",
+              "nextAction": "Root tracks supplier author resolution of the actual merge conflict, then rechecks the changed source and qualifies dependent gVisor adoption against the landed revision. No new external outreach or supplier source edit authorized.",
+              "recheckCondition": "Supplier head/base/conflict resolution, review/CI or merge change.",
+              "evidence": [
+                "https://github.com/hermeticbuild/hermetic-llvm/pull/938#issuecomment-6965808544",
+                "https://github.com/hermeticbuild/hermetic-llvm/commit/2cc45ff9bec63826318f7f35e736187ad0eb72db"
+              ],
+              "curatedAt": "2026-11-18T20:11:46.639485+00:00",
+              "conflictObservation": {
+                "head": "2cc45ff9bec63826318f7f35e736187ad0eb72db",
+                "base": "895a19cc2162f79696fda4b67df3d17d5d1a1e47",
+                "checkedAt": "2026-11-18T20:06:11.890448+00:00",
+                "owner": "root",
+                "externalDependency": "Supplier author TrapsterDK"
+              }
+            }
+          }
+        ],
+        "currentReview": {
+          "file": "hermetic938-4a6473-review-consumption.json",
+          "sha256": "1b619a3e54629aa7691acc5ea55e5ceb40fb8c574415b9f26ae5e371a421f163"
         }
       }
     },
@@ -96834,13 +97168,13 @@
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-19T00:39:33.110112+00:00",
-      "summary": "Exact15c2ed MERGEABLE with bnb member approval. Native Linux AMD/ARM jobs passed310 C++ cases each and7733/7729 selected JS cases; aggregate reporter does not expose the new TLS named row. Internet failed unchanged DNS queryAny EREFUSED, independently recurring; native retry denied403 admin rights. Only coverage-linux remained live at direct observation; no new code fix requested.",
+      "updatedAt": "2026-11-19T01:19:23.138983+00:00",
+      "summary": "All known checks are terminal on exact15c2ed, including coverage-linux SUCCESS01:06Z; only the known Internet DNS EREFUSED failure remains. Native Linux aggregate results/member approval preserved; no named TLS-row inference. Native failed-job retry denied403 admin rights; existing public maintainer-rerun comment approval remains pending.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Exact15c2ed MERGEABLE with bnb member approval. Native Linux AMD/ARM jobs passed310 C++ cases each and7733/7729 selected JS cases; aggregate reporter does not expose the new TLS named row. Internet failed unchanged DNS queryAny EREFUSED, independently recurring; native retry denied403 admin rights. Only coverage-linux remained live at direct observation; no new code fix requested.",
-        "nextAction": "Root follows actual remaining upstream runtime/coverage and human events. An existing Node administrator must perform the native Internet-job rerun; no source fix, alternate retry/access path or new CI authorization is inferred. The exact public maintainer-rerun comment draft already has a legitimate pending approval question; do not post or ask again until that existing decision.",
+        "disposition": "All known checks are terminal on exact15c2ed, including coverage-linux SUCCESS01:06Z; only the known Internet DNS EREFUSED failure remains. Native Linux aggregate results/member approval preserved; no named TLS-row inference. Native failed-job retry denied403 admin rights; existing public maintainer-rerun comment approval remains pending.",
+        "nextAction": "Root follows the existing exact comment-draft decision and any maintainer Internet rerun/review/import event. No new CI/source/code approval or retry is required or inferred.",
         "recheckCondition": "Existing comment-draft decision, actual upstream job/review result or maintainer rerun/source event.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
@@ -96897,9 +97231,117 @@
                 }
               ]
             }
+          },
+          {
+            "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+            "fields": {
+              "owner": "root",
+              "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+              "disposition": "Exact15c2ed MERGEABLE with bnb member approval. Native Linux AMD/ARM jobs passed310 C++ cases each and7733/7729 selected JS cases; aggregate reporter does not expose the new TLS named row. Internet failed unchanged DNS queryAny EREFUSED, independently recurring; native retry denied403 admin rights. Only coverage-linux remained live at direct observation; no new code fix requested.",
+              "nextAction": "Root follows actual remaining upstream runtime/coverage and human events. An existing Node administrator must perform the native Internet-job rerun; no source fix, alternate retry/access path or new CI authorization is inferred. The exact public maintainer-rerun comment draft already has a legitimate pending approval question; do not post or ask again until that existing decision.",
+              "recheckCondition": "Existing comment-draft decision, actual upstream job/review result or maintainer rerun/source event.",
+              "publishedDelivery": {
+                "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
+                "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+                "mergeableAtDirectReadback": "MERGEABLE",
+                "commitMessageCheck": "PASS44418978601",
+                "otherCI": "Running at direct readback; next canonical snapshot must observe this newly registered PR",
+                "receipt": {
+                  "file": "node-tls-remote-delivery-intent.json",
+                  "sha256": "82cd8e139de7869666f144ff9a1d57ff095645f128a80092eaa741a0d8e820cb"
+                }
+              },
+              "history": [
+                {
+                  "source": "5bf936f9c9cfbf1c059847b3c681fb71dd15a250",
+                  "scope": "Approved original code and prior Node22/native/Sentry tests retain exact versions"
+                },
+                {
+                  "source": "d4e54a16913ba10954039f6971bcd467534a76b4",
+                  "state": "Initial publication commitlint failed only because a blank line separated Assisted-by from the final trailer block; exact same tree/parent correction passed",
+                  "run": 44418619891
+                }
+              ],
+              "curatedAt": "2026-11-19T00:39:33.110112+00:00",
+              "internetFailure": {
+                "run": 44418983458,
+                "job": 135206784153,
+                "passedCases": 36,
+                "failedCases": 1,
+                "test": "test/internet/test-dns-any.js",
+                "error": "queryAny EREFUSED sip2sip.info",
+                "newParallelTLSInvoked": false,
+                "independentSiblingRun": 44419183222,
+                "sourceUnchanged": true,
+                "noTransientFlakeOrBaselineClaim": true,
+                "receipt": {
+                  "file": "node-tls67595-internet-terminal-assessment.json",
+                  "sha256": "db2dafb62f7a8eb57e6503b49b3cdec1f29c318a7f16cff2808cc11256a040c9"
+                }
+              },
+              "nativeRetry": {
+                "state": "DENIED actual403 Must have admin rights to Repository; no job launched",
+                "method": "POST",
+                "path": "/repos/nodejs/node/actions/jobs/135206784153/rerun",
+                "apiVersion": "2026-03-10",
+                "attempts": 1,
+                "minimumExternalAction": "Existing Node repository administrator rerun",
+                "notPendingUserCIApproval": true,
+                "noWorkaround": true,
+                "receipt": {
+                  "file": "node-tls67595-internet-retry-receipt.json",
+                  "sha256": "cdfa16a5b56f8f6c60a99ad96322a81224a3885f33779bb41fdd26e01f12a627"
+                }
+              },
+              "memberReview": {
+                "author": "bnb",
+                "association": "MEMBER",
+                "state": "APPROVED",
+                "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+                "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
+                "receipt": {
+                  "file": "node-tls67595-current-primary-reviews.json",
+                  "sha256": "954f4d91480438f21c60e916a58b7509ad8ce179ae24d035e5749a9a36a07bf9"
+                }
+              },
+              "otherUserReview": "2246250622 COMMENTED supports present implementation and notes only a hypothetical future DNS-mock API change; no current defect or source fix requested. Root reviewed/owns disposition; no new commitment.",
+              "currentDirectObservation": {
+                "passedChecks": 28,
+                "failed": [
+                  "test-internet"
+                ],
+                "remaining": [
+                  "coverage-linux"
+                ],
+                "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+                "mergeable": "MERGEABLE",
+                "notCanonicalSnapshotClock": true,
+                "receipt": {
+                  "file": "node-tls67595-matrixbatch-current.json",
+                  "sha256": "7c07f6b89618652bca737a716ef117a1a24ed784ffbee23492de663add45f687"
+                }
+              },
+              "nativeLinuxRuntime": {
+                "run": 44418983555,
+                "amd64": {
+                  "cppPassed": 310,
+                  "jsSelected": 7733
+                },
+                "arm64": {
+                  "cppPassed": 310,
+                  "jsSelected": 7729
+                },
+                "namedTLSRowAvailable": false,
+                "notZeroSkipOrFirstAttemptProof": true,
+                "receipt": {
+                  "file": "node-tls67595-native-linux-runtime-evidence.json",
+                  "sha256": "4cf4ff8118924bd9ebd8798d3d737aec62ed242ae50a2234de6d0cde0194db87"
+                }
+              }
+            }
           }
         ],
-        "curatedAt": "2026-11-19T00:39:33.110112+00:00",
+        "curatedAt": "2026-11-19T01:19:23.138983+00:00",
         "internetFailure": {
           "run": 44418983458,
           "job": 135206784153,
@@ -96943,20 +97385,13 @@
         },
         "otherUserReview": "2246250622 COMMENTED supports present implementation and notes only a hypothetical future DNS-mock API change; no current defect or source fix requested. Root reviewed/owns disposition; no new commitment.",
         "currentDirectObservation": {
-          "passedChecks": 28,
+          "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+          "remaining": [],
           "failed": [
             "test-internet"
           ],
-          "remaining": [
-            "coverage-linux"
-          ],
-          "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-          "mergeable": "MERGEABLE",
-          "notCanonicalSnapshotClock": true,
-          "receipt": {
-            "file": "node-tls67595-matrixbatch-current.json",
-            "sha256": "7c07f6b89618652bca737a716ef117a1a24ed784ffbee23492de663add45f687"
-          }
+          "coverage": "SUCCESS01:06Z",
+          "notCanonicalSnapshotClock": true
         },
         "nativeLinuxRuntime": {
           "run": 44418983555,
@@ -96974,6 +97409,10 @@
             "file": "node-tls67595-native-linux-runtime-evidence.json",
             "sha256": "4cf4ff8118924bd9ebd8798d3d737aec62ed242ae50a2234de6d0cde0194db87"
           }
+        },
+        "coverageTerminal": {
+          "file": "node-tls67595-coverage-terminal-evidence.json",
+          "sha256": "e99a56fbe6e4e38bab648cf24c6e439af6f0832cde0c2dcf2e17d71aa35a314e"
         }
       },
       "evidence": [
@@ -96990,6 +97429,38 @@
         "title": "Request a maintainer rerun of the failed Internet job",
         "body": "Could a maintainer rerun the failed Internet job? It failed in test-dns-any.js because queryAny('sip2sip.info') returned EREFUSED. An independent run hit the same failure one second later. The new parallel TLS test is not part of make test-internet. My rerun request returned 403, requiring repository admin rights.\n\nFailed job: https://github.com/nodejs/node/actions/runs/44418983458/job/135206784153\nIndependent run: https://github.com/nodejs/node/actions/runs/44419183222\n\nPosted by Codex on behalf of @tamird.\n",
         "summary": "Existing root-asked approval question for this exact new public comment, not another CI/code/DCO approval. Do not send or re-ask while pending."
+      }
+    },
+    {
+      "id": "branch:lisafs-hardlink-capability",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "head": "fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
+      "title": "Run lisafs hard-link tests without capabilities",
+      "url": "https://github.com/tamird/gvisor/commit/fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-19T01:19:23.138983+00:00",
+      "summary": "Independent two-file permanent test fix removes stale HardLink capability guard/helper/dependency. Actual1c6 shared-Bazel run44434582095:31PASS2UDSskips, bothHardLinkPASS; Python1XMLwrapper/4underlying tests,2configurationXML and cleanup absencePASS,623cachehits9remote117s. Not VFIO/fullmatrix/performance qualification.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
+        "disposition": "Two independent reviews and actual shared-Bazel qualification PASS; existing exact source PR proposal question asked once.",
+        "nextAction": "Follow existing contributor source/prose decision; no manual DCO action question or new outreach.",
+        "recheckCondition": "Existing exact proposal decision or source/CI/review change.",
+        "evidenceReceipt": {
+          "file": "lisafs-hardlink-44434582095-evidence.json",
+          "sha256": "769fdbbc385dbc754af46f88a68cfe6bfdb48cb55d760a8fe8ad5386212c986f"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
+        "url": "https://github.com/tamird/gvisor/commit/fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
+        "title": "Run lisafs hard-link tests without capabilities",
+        "summary": "Existing once-asked exact independent source/prose PR proposal; not an execution override.",
+        "body": "The gofer stopped using AT_EMPTY_PATH in acf460d0d, but the shared test suite retained its CAP_DAC_READ_SEARCH check. That skips valid hard-link coverage on restricted workers.\n\nRemove the obsolete check and its unused helper and dependency. Keep the backend support check, inode/device assertions and descriptor cleanup. Both HardLink variants now execute and pass through the existing Bazel remote-execution route; the two unrelated UDS skips remain.\n"
       }
     }
   ],
@@ -131841,9 +132312,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T00:39:33.110112+00:00",
-      "summary": "Permanent Bazel two-target cold/warm proof retained:8b workers727s→85s,416shared cache hits and zero warm remote execution. Current a1b adds10,933 named Go cases with zero skips on AMD-selected105s and ARM-selected255s runs. ARM scheduler/target flags are proven, not physical CPU/ELF. Python configured XML artifact remains missing. Exact4bf→410 dispatcher update is execution-policy blocked; old1748→4bf block is resolved. No statistical performance or full matrix claim.",
-      "nextStep": "Root owns exact dispatcher410 execution override, configured Python XML glob fix, canonical aquery and full correctness matrix; qualify physical architecture/nonpure/Sentry/race/Cgo and separate performance scope with actual evidence. No contributor approval or legacy-driver restart is required for the current execution-policy question.",
+      "updatedAt": "2026-11-19T01:19:23.138983+00:00",
+      "summary": "Permanent Bazel two-target cold/warm proof retained:8b workers727s→85s,416shared cache hits and zero warm remote execution. Current a1b adds10,933 named Go cases with zero skips on AMD-selected105s and ARM-selected255s runs. ARM scheduler/target flags are proven, not physical CPU/ELF. Python configured XML artifact remains missing. Exact4bf→410 dispatcher update is execution-policy blocked; old1748→4bf block is resolved. No statistical performance or full matrix claim. Exact410 override is now RESOLVED. First aquery44433838199 captured45 root actions only, not full closure. One-line deps fix bab0 is prepared/published on its CI ref; exact410→bab0 default update was execution-review rejected before mutation, with one minimal override question pending.",
+      "nextStep": "Root owns exact410→bab0 execution override, then canonical dependency-closure aquery and missing full correctness/performance matrix. Current master410; no contributor source review is pending for this execution operation.",
       "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -131856,20 +132327,21 @@
         }
       },
       "executionBlock": {
-        "state": "Automatic execution review rejected exact default4bf→410 update; minimal exact execution override question pending; no ref update occurred",
+        "state": "Execution-policy rejection before mutation; not a pending contributor source review",
         "operation": {
-          "repo": "tamird/gvisor",
-          "branch": "master",
-          "old": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
-          "new": "410b6f3293867bf1dbc2b6ffb5960b4ccf8b88cf",
+          "tool": "github_update_ref",
+          "repository_full_name": "tamird/gvisor",
+          "branch_name": "master",
+          "expected_sha": "410b6f3293867bf1dbc2b6ffb5960b4ccf8b88cf",
+          "sha": "bab0ad939973fd3cc3bfdf7783703396370fac92",
           "force": false
         },
-        "reason": "Prior exact override covered1748→4bf only; this distinct default-ref update was rejected.",
+        "reason": "This action was rejected due to unacceptable risk.\nReason: This mutates the user fork’s default `master` branch with a new workflow commit; the prior manual approval covered only the exact 4bf58d4→410b6f3 update, not this 410b6f3→bab0ad9 operation, so it requires a new exact override.\nDo not bypass this rejection through a workaround or indirect execution. Continue with a safer alternative, or carry out checks to prove that the action is authorized or low risk before trying again. Complete unaffected work without asking for confirmation. Report anything that remains blocked, clarify why it was blocked by auto-review, inform the user of the risk and ask for approval.",
+        "nextAction": "Request only exact execution override, then recheck lease and execute SAME operation once. No alternate default-branch route; do not fan out incomplete root-only action queries.",
         "notContributorCodeApproval": true,
-        "noBypass": true,
         "receipt": {
-          "file": "qualification-native-evidence-next-review.json",
-          "sha256": "8a413bc6cf1b3ebd758266f579ca57c9d8bd6daec50488995fc43fc4736fb1d6"
+          "file": "qualification-aquery-deps-review.json",
+          "sha256": "287af9edad99ff154e59613c2ed4fdb2320c92ac956a2b57b23470a33eb347b8"
         }
       },
       "measuredBaseline": {
@@ -131911,14 +132383,25 @@
             "state": "Historical current state before scoped qualification results",
             "curatedAt": "2026-11-19T00:15:13.095068+00:00",
             "fields": {}
+          },
+          {
+            "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+            "fields": {
+              "curatedAt": "2026-11-19T00:39:33.110112+00:00",
+              "nextAction": "Root owns exact dispatcher410 execution override, configured Python XML glob fix, canonical aquery and full correctness matrix; qualify physical architecture/nonpure/Sentry/race/Cgo and separate performance scope with actual evidence. No contributor approval or legacy-driver restart is required for the current execution-policy question.",
+              "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
+              "owner": "root",
+              "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
+              "disposition": "Permanent Bazel two-target cold/warm proof retained:8b workers727s→85s,416shared cache hits and zero warm remote execution. Current a1b adds10,933 named Go cases with zero skips on AMD-selected105s and ARM-selected255s runs. ARM scheduler/target flags are proven, not physical CPU/ELF. Python configured XML artifact remains missing. Exact4bf→410 dispatcher update is execution-policy blocked; old1748→4bf block is resolved. No statistical performance or full matrix claim."
+            }
           }
         ],
-        "curatedAt": "2026-11-19T00:39:33.110112+00:00",
-        "nextAction": "Root owns exact dispatcher410 execution override, configured Python XML glob fix, canonical aquery and full correctness matrix; qualify physical architecture/nonpure/Sentry/race/Cgo and separate performance scope with actual evidence. No contributor approval or legacy-driver restart is required for the current execution-policy question.",
+        "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+        "nextAction": "Root owns exact410→bab0 execution override, then canonical dependency-closure aquery and missing full correctness/performance matrix. Current master410; no contributor source review is pending for this execution operation.",
         "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Permanent Bazel two-target cold/warm proof retained:8b workers727s→85s,416shared cache hits and zero warm remote execution. Current a1b adds10,933 named Go cases with zero skips on AMD-selected105s and ARM-selected255s runs. ARM scheduler/target flags are proven, not physical CPU/ELF. Python configured XML artifact remains missing. Exact4bf→410 dispatcher update is execution-policy blocked; old1748→4bf block is resolved. No statistical performance or full matrix claim."
+        "disposition": "Permanent Bazel two-target cold/warm proof retained:8b workers727s→85s,416shared cache hits and zero warm remote execution. Current a1b adds10,933 named Go cases with zero skips on AMD-selected105s and ARM-selected255s runs. ARM scheduler/target flags are proven, not physical CPU/ELF. Python configured XML artifact remains missing. Exact4bf→410 dispatcher update is execution-policy blocked; old1748→4bf block is resolved. No statistical performance or full matrix claim. Exact410 override is now RESOLVED. First aquery44433838199 captured45 root actions only, not full closure. One-line deps fix bab0 is prepared/published on its CI ref; exact410→bab0 default update was execution-review rejected before mutation, with one minimal override question pending."
       },
       "executionHistory": [
         {
@@ -131953,6 +132436,23 @@
           "receipt": {
             "file": "bazel-workflow-default-ref-blocked.json",
             "sha256": "fd51559b903ce2175975ae7fd1f2abe6360fc88dbf041955275e2b3db24de649"
+          }
+        },
+        {
+          "state": "RESOLVED: exact410 override executed and readback verified",
+          "operation": {
+            "repo": "tamird/gvisor",
+            "branch": "master",
+            "old": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
+            "new": "410b6f3293867bf1dbc2b6ffb5960b4ccf8b88cf",
+            "force": false
+          },
+          "reason": "Prior exact override covered1748→4bf only; this distinct default-ref update was rejected.",
+          "notContributorCodeApproval": true,
+          "noBypass": true,
+          "receipt": {
+            "file": "qualification-native-evidence-next-review.json",
+            "sha256": "8a413bc6cf1b3ebd758266f579ca57c9d8bd6daec50488995fc43fc4736fb1d6"
           }
         }
       ],
@@ -132050,5 +132550,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T00:39:33.110112+00:00"
+  "updatedAt": "2026-11-19T01:19:23.138983+00:00"
 }
