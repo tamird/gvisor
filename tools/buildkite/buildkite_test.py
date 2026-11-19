@@ -315,6 +315,12 @@ class FetchTest(unittest.TestCase):
           self.fetch(self.http_error(code))
     with self.assertRaisesRegex(buildkite.Error, "bad JSON"):
       self.fetch(b"<html>")
+    for reason in ("", "timed out"):
+      error = urllib.error.URLError(reason)
+      with self.subTest(reason=reason):
+        with self.assertRaises(buildkite.Error) as raised:
+          self.fetch(*[error] * 3)
+        self.assertEqual(str(raised.exception), f"https://x/y: {reason or error}")
 
   def test_records(self):
     url = "https://x/data/jobs?state=failed"

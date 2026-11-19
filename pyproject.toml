@@ -30,6 +30,10 @@ python-platform = "linux"
 [tool.ty.rules]
 all = "error"
 
+[tool.ty.analysis]
+strict-equality-semantics = true
+strict-generic-narrowing = true
+
 [tool.pyright]
 pythonVersion = "3.11"
 pythonPlatform = "Linux"

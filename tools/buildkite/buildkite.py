@@ -176,7 +176,7 @@ def _fetch(url: str) -> bytes:
     except (OSError, http.client.HTTPException) as e:
       if last:
         reason = e.reason if isinstance(e, urllib.error.URLError) else e
-        raise Error(f"{url}: {reason}") from e
+        raise Error(f"{url}: {reason or e}") from e
     time.sleep(2.0**attempt)
   raise AssertionError("unreachable")
 
