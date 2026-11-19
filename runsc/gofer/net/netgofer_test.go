@@ -25,6 +25,7 @@ import (
 	"net/netip"
 	"os"
 	"os/exec"
+	"runtime/pprof"
 	"strings"
 	"sync"
 	"syscall"
@@ -48,6 +49,8 @@ import (
 	"gvisor.dev/gvisor/runsc/flag"
 	egressfilter "gvisor.dev/gvisor/runsc/gofer/net/egressfilter"
 )
+
+var proxyCleanupStacks sync.Once
 
 var (
 	testServerAddr4 = netip.AddrFrom4([4]byte{198, 51, 100, 1})
@@ -352,6 +355,11 @@ func startInProcessProxy(t *testing.T, n *Netgofer) *stack.Stack {
 			}
 		case <-time.After(5 * time.Second):
 			t.Error("runProxyMode() did not exit after UDS peer closed")
+			proxyCleanupStacks.Do(func() {
+				if err := pprof.Lookup("goroutine").WriteTo(os.Stderr, 2); err != nil {
+					t.Errorf("write goroutine profile after proxy cleanup timeout: %v", err)
+				}
+			})
 		}
 	})
 	return clientStack
