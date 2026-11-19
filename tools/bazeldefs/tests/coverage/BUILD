@@ -101,6 +101,7 @@ py_test(
         "//:gopath",
         "//runsc/cmd/sentry:legacy_current_sentry_cov",
     ],
+    main = "inventory_test.py",
     stamp = -1,
     tags = ["manual"],
     target_compatible_with = [
