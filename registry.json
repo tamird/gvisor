@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T23:21:48.031196+00:00",
+    "updatedAt": "2026-11-19T23:42:55.136002+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134907,10 +134907,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T23:11:17.717161+00:00",
-      "summary": "Compilation-database source6a9fd82e3ba076ce8dc82d6990af45135e5e404c remains qualified and published only to its fork review ref. The existing upstream-PR source decision is pending; no DCO or upstream PR exists. Phase-enabled N5000 control44634253034 is under qualification after successful phase plumbing; A/A stability and candidate comparisons remain held.",
-      "nextStep": "Root awaits the existing exact compilation-database source decision once, without publishing the private draft body or creating another decision frame. The oracle owner checks fresh integration before review. The benchmark owner audits the phase-enabled control44634253034 before further diagnosis or any candidate/sample expansion. The separate private migration-issue decision remains pending; full150/n24 performance stays open.",
-      "recheckCondition": "Existing source or issue decision, fresh oracle integration/review handoff, or audited phase-control and A/A stability evidence.",
+      "updatedAt": "2026-11-19T23:42:55.136002+00:00",
+      "summary": "Compilation-database source6a9fd82 remains qualified on its fork review ref; existing source and migration-issue decisions remain pending, with no upstream publication or DCO. Recovered N5000 same-source control44638386463 passed correctness, product identity and cleanup but failed stability: within-arm spans5.335%/9.253%, apparent same-source difference−2.115%; no cause is established. Warmup-only20000 sensitivity control44639617368 is running with four measuredN5000 visits unchanged. Packet worker recovery44639155098 passed one actual case with zero skips and cleanup after declaring required IPv6 capability; this is not full TCP qualification.",
+      "nextStep": "Benchmark owner audits warmup-only sensitivity control before another cause action; candidate/sample expansion stays held. Packet owner qualifies actual functional gates on mechanical current-base candidate0599e3ee48269fe406553488d229732cf0134d09. Root awaits existing compdb/secfuzz source decisions and private issue decision without repeated questions or publishing draft bodies. Full150/n24 performance remains open.",
+      "recheckCondition": "Audited sensitivity-control or actual packet-functional results, substantive source/review feedback, or an answer to an existing publication decision.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135060,6 +135060,18 @@
         {
           "label": "Phase-enabled N5000 control; no stability conclusion",
           "url": "https://github.com/tamird/gvisor/actions/runs/44634253034"
+        },
+        {
+          "label": "Recovered same-source control: functional pass, stability failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44638386463"
+        },
+        {
+          "label": "Warmup-only sensitivity control; result pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44639617368"
+        },
+        {
+          "label": "Actual IPv6-enabled packet worker: one case, zero skips",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44639155098"
         }
       ],
       "followup": {
@@ -135081,12 +135093,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T23:11:17.717161+00:00",
-        "nextAction": "Root awaits the existing exact compilation-database source decision once, without publishing the private draft body or creating another decision frame. The oracle owner checks fresh integration before review. The benchmark owner audits the phase-enabled control44634253034 before further diagnosis or any candidate/sample expansion. The separate private migration-issue decision remains pending; full150/n24 performance stays open.",
-        "recheckCondition": "Existing source or issue decision, fresh oracle integration/review handoff, or audited phase-control and A/A stability evidence.",
+        "curatedAt": "2026-11-19T23:42:55.136002+00:00",
+        "nextAction": "Benchmark owner audits warmup-only sensitivity control before another cause action; candidate/sample expansion stays held. Packet owner qualifies actual functional gates on mechanical current-base candidate0599e3ee48269fe406553488d229732cf0134d09. Root awaits existing compdb/secfuzz source decisions and private issue decision without repeated questions or publishing draft bodies. Full150/n24 performance remains open.",
+        "recheckCondition": "Audited sensitivity-control or actual packet-functional results, substantive source/review feedback, or an answer to an existing publication decision.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Compilation-database source6a9fd82e3ba076ce8dc82d6990af45135e5e404c remains qualified and published only to its fork review ref. The existing upstream-PR source decision is pending; no DCO or upstream PR exists. Phase-enabled N5000 control44634253034 is under qualification after successful phase plumbing; A/A stability and candidate comparisons remain held.",
+        "disposition": "Compilation-database source6a9fd82 remains qualified on its fork review ref; existing source and migration-issue decisions remain pending, with no upstream publication or DCO. Recovered N5000 same-source control44638386463 passed correctness, product identity and cleanup but failed stability: within-arm spans5.335%/9.253%, apparent same-source difference−2.115%; no cause is established. Warmup-only20000 sensitivity control44639617368 is running with four measuredN5000 visits unchanged. Packet worker recovery44639155098 passed one actual case with zero skips and cleanup after declaring required IPv6 capability; this is not full TCP qualification.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135495,5 +135507,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T23:21:48.031196+00:00"
+  "updatedAt": "2026-11-19T23:42:55.136002+00:00"
 }
