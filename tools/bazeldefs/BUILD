@@ -7,6 +7,12 @@ package(
 )
 
 bzl_library(
+    name = "coverage_analysis_test_bzl",
+    srcs = ["coverage_analysis_test.bzl"],
+    deps = ["@io_bazel_rules_go//go:def"],
+)
+
+bzl_library(
     name = "platforms_bzl",
     srcs = ["platforms.bzl"],
     visibility = ["//:sandbox"],
