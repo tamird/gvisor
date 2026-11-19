@@ -41,10 +41,14 @@ class FlakeTest(unittest.TestCase):
                          "exitCode": 2, "failedState": "finished", "pr": 17269}])
         self.assertEqual(snapshot["pipelines"]["pipeline"]["pending"], [])
 
-    def test_first_attempt_times_out_before_a_successful_retry(self):
+    def test_recovery_preserves_state_and_pr_identity_across_transfer(self):
         first = dict(job(FIRST, False, LAST), state="timed_out", exit_status=-1)
-        result, = ci.recoveries("release", 42, BUILD, {FIRST: first, LAST: job(LAST, True)})
-        self.assertEqual((result["failedState"], result["exitCode"]), ("timed_out", -1))
+        for repo, number in (("google/gvisor", 17269), ("gvisor/gvisor", 17269), ("other/gvisor", None)):
+            with self.subTest(repo=repo):
+                build = dict(BUILD, pull_request={"url": f"https://github.com/{repo}/pull/17269"})
+                result, = ci.recoveries("release", 42, build, {FIRST: first, LAST: job(LAST, True)})
+                self.assertEqual((result["failedState"], result["exitCode"]), ("timed_out", -1))
+                self.assertEqual(result.get("pr"), number)
 
     def test_missing_cyclic_or_wrong_shard_successor_is_incomplete(self):
         start = job(FIRST, False, SECOND)

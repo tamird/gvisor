@@ -10,6 +10,8 @@ from urllib.error import HTTPError
 from urllib.parse import quote, urlsplit
 from urllib.request import Request, urlopen
 
+from github_identity import repository_url
+
 
 PIPELINES = ("pipeline", "pgo-profiles", "release")
 ROOT = "https://buildkite.com/gvisor"
@@ -114,7 +116,7 @@ def recoveries(slug: str, number: int, build: dict, jobs: dict[str, dict]) -> li
         record = {"pipeline": slug, "build": number, "head": build["commit_id"], "job": name,
                   "failedJob": start_id, "failedState": start["state"], "passedJob": last["id"], "finishedAt": finished,
                   "exitCode": start.get("exit_status") if type(start.get("exit_status")) is int else None}
-        if isinstance(pr := build.get("pull_request"), dict) and (match := PR.fullmatch(str(pr.get("url")))):
+        if isinstance(pr := build.get("pull_request"), dict) and (match := PR.fullmatch(repository_url(str(pr.get("url"))))):
             record["pr"] = int(match[1])
         records.append(record)
     if retrying - traversed:
