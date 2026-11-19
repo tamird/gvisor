@@ -49,7 +49,10 @@ go_cov(
     ],
     pure = True,
     race = "off",
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//debian:__pkg__",
+        "//tools/bazeldefs/tests/coverage:__pkg__",
+    ],
     deps = [
         "//runsc/cgoextras",
         "//runsc/cli/sentrycli",
