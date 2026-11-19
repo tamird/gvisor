@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T03:05:19.288814+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T02:51:50.481387+00:00",
+  "registryDate": "2026-11-19T03:26:16.447636+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448767,8 +448767,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
-        "disposition": "Original e049 PGO publisher PR now conflicts with master5be. Merged17699 fixes untracked stash inclusion, but does not establish the complete concurrent-rebase/no-op transaction contract. Publisher3909 GitHubPENDING; canonical Buildkite403 leaves actual job outcome unknown.",
-        "nextAction": "Root assigned exclusive systrap writer to minimal permanent Bazel Git transaction regression and residual repair using isolated temporary Git remotes, no generation/network. Preserve current publicPR/no closure or rebase claim; actual publisher3909 outcome remains unknown."
+        "disposition": "Original e049 remains conflicting; current extracted production transaction is byte-identical to5be. Permanent baseline44448480054 failed after fresh local test execution, but hidden test diagnostics were omitted and CASdownload500 leaves actual cause unknown. Do not label it the intended already-landed regression yet.",
+        "nextAction": "Root retains baseline prefix/failure and owns combined artifact/aquery workflow correction; after diagnostics are available identify actual firstcause before changing production. Local byte-exact fixture strengthening remains unqualified; no profile generation or new orchestration."
       },
       "conflictObservedSince": "2026-11-19T02:26:00.189263+00:00"
     },
@@ -456228,8 +456228,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
-        "disposition": "Original e049 PGO publisher PR now conflicts with master5be. Merged17699 fixes untracked stash inclusion, but does not establish the complete concurrent-rebase/no-op transaction contract. Publisher3909 GitHubPENDING; canonical Buildkite403 leaves actual job outcome unknown.",
-        "nextAction": "Root assigned exclusive systrap writer to minimal permanent Bazel Git transaction regression and residual repair using isolated temporary Git remotes, no generation/network. Preserve current publicPR/no closure or rebase claim; actual publisher3909 outcome remains unknown."
+        "disposition": "Original e049 remains conflicting; current extracted production transaction is byte-identical to5be. Permanent baseline44448480054 failed after fresh local test execution, but hidden test diagnostics were omitted and CASdownload500 leaves actual cause unknown. Do not label it the intended already-landed regression yet.",
+        "nextAction": "Root retains baseline prefix/failure and owns combined artifact/aquery workflow correction; after diagnostics are available identify actual firstcause before changing production. Local byte-exact fixture strengthening remains unqualified; no profile generation or new orchestration."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx-A0Q"
@@ -460271,7 +460271,7 @@
         "since": "2026-11-19T01:19:23.138983+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "pr:16453": {
@@ -464704,7 +464704,7 @@
         "since": "2026-11-19T00:15:13.095068+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "pr:bazelbuild/bazel-central-registry:11314": {
@@ -465072,7 +465072,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465081,7 +465081,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465090,7 +465090,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465099,7 +465099,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -465108,7 +465108,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465117,7 +465117,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465126,7 +465126,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465135,7 +465135,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     },
     "branch:lisafs-hardlink-capability": {
@@ -465144,7 +465144,7 @@
         "since": "2026-11-19T01:19:23.138983+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T02:51:50.481387+00:00"
+        "observedAt": "2026-11-19T03:26:16.447636+00:00"
       }
     }
   },
