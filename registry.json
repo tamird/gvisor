@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T00:15:13.095068+00:00",
+    "updatedAt": "2026-11-19T00:39:33.110112+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31999,23 +31999,13 @@
       "title": "Submit Benchmark automatic BCR release publishing",
       "url": "https://github.com/google/benchmark/issues/1634",
       "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
-      "status": "Human submission required",
+      "status": "Exact source and prose review pending",
       "summary": "Benchmark v1.10.0 required a separate manual Bazel Central Registry submission. The proposed workflow would open a registry pull request from a release account for each stable version. It preserves the listed module maintainer and the current presubmit matrix. Native macOS ARM64 Bazel 8.5.1 built all three //:all targets in 25 actions. The workflow passed actionlint and its pinned publisher inputs and registry matrix were checked. Two real archive replays passed. The final 253-entry source archive embedded the exact commit ID and repeated byte for byte. All source and tests match the qualified tree 67f61169f.",
-      "humanAction": {
-        "status": "pending",
-        "kind": "submission",
-        "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
-        "title": "Review and personally submit the Benchmark release workflow",
-        "summary": "The reviewed source is on your personal fork. Inspect the commit and use the prefilled form to personally submit the pull request. Benchmark asks the contributor to understand and produce the submission and disclose AI assistance.",
-        "body": "Inspect the local commit and compare it with the earlier draft in ~/code/benchmark.\n\ngit -C ~/code/benchmark show e80986b50\ngit -C ~/code/benchmark range-diff 913b8dbc7^! e80986b50^!\n\nProposed pull request title\nOpen a BCR pull request for each stable release\n\nProposed pull request body\n\nBenchmark v1.10.0 needed a separate registry submission before Bazel users could select it [1]. This makes each stable GitHub release open that pull request. The source archive is attached to the draft once, so Bazel verifies the same bytes on retries. The existing module maintainer and registry build matrix carry forward.\n\n**Before merge**\n\n- [ ] Choose a release account and its fork of bazel-central-registry. Agree who will store and rotate its publishing token.\n- [ ] Confirm a listed module maintainer will review the account's non-draft entries. RE2 and J2CL use this split [2][3].\n\n**After merge**\n\n- [ ] Once, set the Actions variable `BCR_REGISTRY_FORK` and secret `BCR_PUBLISH_TOKEN`. The source repository grants the pinned workflow read access, as Brotli does [4].\n- [ ] For the first stable tag containing the new templates and each stable release after it, push the annotated tag at the version bump. Attach `benchmark-<version>.tar.gz` from that commit to the draft before publishing it. ArrayRecord likewise attaches the source before opening its registry PR [5].\n- [ ] Once BCR checks pass, have the listed maintainer review the entry. If the release job fails, fix the cause and choose **Re-run failed jobs** on its original run.\n\nOpenAI Codex researched the precedents and drafted the workflow, templates and release instructions.\n\n[1]: https://github.com/bazelbuild/bazel-central-registry/pull/11314\n[2]: https://github.com/bazelbuild/bazel-central-registry/pull/6424\n[3]: https://github.com/bazelbuild/bazel-central-registry/pull/11379\n[4]: https://github.com/google/brotli/blob/2654c9dd5/.github/workflows/publish_to_bcr.yaml\n[5]: https://github.com/google/array_record/blob/5873cf86d/.github/workflows/publish_release.yml",
-        "url": "https://github.com/google/benchmark/compare/main...tamird:review/benchmark-bcr-release-checklist?expand=1&title=Open+a+BCR+pull+request+for+each+stable+release&body=Benchmark+v1.10.0+needed+a+separate+registry+submission+before+Bazel+users+could+select+it+%5B1%5D.+This+makes+each+stable+GitHub+release+open+that+pull+request.+The+source+archive+is+attached+to+the+draft+once%2C+so+Bazel+verifies+the+same+bytes+on+retries.+The+existing+module+maintainer+and+registry+build+matrix+carry+forward.%0A%0A%2A%2ABefore+merge%2A%2A%0A%0A-+%5B+%5D+Choose+a+release+account+and+its+fork+of+bazel-central-registry.+Agree+who+will+store+and+rotate+its+publishing+token.%0A-+%5B+%5D+Confirm+a+listed+module+maintainer+will+review+the+account%27s+non-draft+entries.+RE2+and+J2CL+use+this+split+%5B2%5D%5B3%5D.%0A%0A%2A%2AAfter+merge%2A%2A%0A%0A-+%5B+%5D+Once%2C+set+the+Actions+variable+%60BCR_REGISTRY_FORK%60+and+secret+%60BCR_PUBLISH_TOKEN%60.+The+source+repository+grants+the+pinned+workflow+read+access%2C+as+Brotli+does+%5B4%5D.%0A-+%5B+%5D+For+the+first+stable+tag+containing+the+new+templates+and+each+stable+release+after+it%2C+push+the+annotated+tag+at+the+version+bump.+Attach+%60benchmark-%3Cversion%3E.tar.gz%60+from+that+commit+to+the+draft+before+publishing+it.+ArrayRecord+likewise+attaches+the+source+before+opening+its+registry+PR+%5B5%5D.%0A-+%5B+%5D+Once+BCR+checks+pass%2C+have+the+listed+maintainer+review+the+entry.+If+the+release+job+fails%2C+fix+the+cause+and+choose+%2A%2ARe-run+failed+jobs%2A%2A+on+its+original+run.%0A%0AOpenAI+Codex+researched+the+precedents+and+drafted+the+workflow%2C+templates+and+release+instructions.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F11314%0A%5B2%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F6424%0A%5B3%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F11379%0A%5B4%5D%3A+https%3A%2F%2Fgithub.com%2Fgoogle%2Fbrotli%2Fblob%2F2654c9dd5%2F.github%2Fworkflows%2Fpublish_to_bcr.yaml%0A%5B5%5D%3A+https%3A%2F%2Fgithub.com%2Fgoogle%2Farray_record%2Fblob%2F5873cf86d%2F.github%2Fworkflows%2Fpublish_release.yml",
-        "policyURL": "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md"
-      },
       "followup": {
         "owner": "root",
         "sourceHead": "e80986b5007460a9bf77c718d5e2daa247c4d841",
-        "disposition": "Human submission required by the upstream contribution policy",
-        "nextAction": "Review the source on your fork and the release-manager checklist, then personally submit the prefilled pull request with AI disclosure if proceeding.",
+        "disposition": "Exact source/prose approval remains pending; personal mechanical submission is not required",
+        "nextAction": "Root follows the existing exact review decision without re-asking. After approval, authorized submission may use the approved AI-disclosed draft; release-account/config decisions remain before-merge maintainer setup, not access grants.",
         "evidence": [
           "https://github.com/google/benchmark/issues/1634",
           "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md",
@@ -32023,7 +32013,11 @@
           "https://github.com/tamird/benchmark/commit/e80986b50"
         ],
         "technicalOwner": "tamird",
-        "recheckCondition": "Recheck on new issue feedback, provider state change, linked fix landing/release or a dependency requiring fresh qualification."
+        "recheckCondition": "Recheck on new issue feedback, provider state change, linked fix landing/release or a dependency requiring fresh qualification.",
+        "policyReconciliation": {
+          "file": "benchmark-1634-policy-reconciliation.json",
+          "sha256": "4b7747be140ddd2709c6b8f412b85e58ff343049cdda3bbc8cec91a728988e70"
+        }
       },
       "evidence": [
         {
@@ -32051,7 +32045,18 @@
           "url": "https://github.com/tamird/benchmark/commit/e80986b50"
         }
       ],
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00"
+      "updatedAt": "2026-11-19T00:39:33.110112+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "review",
+        "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
+        "title": "Review and approve the Benchmark release workflow",
+        "summary": "Review and understand the exact source and disclosed AI-assisted proposal. Policy requires human ownership and approval, not personally clicking Submit; after approval an authorized agent may submit.",
+        "body": "Inspect the local commit and compare it with the earlier draft in ~/code/benchmark.\n\ngit -C ~/code/benchmark show e80986b50\ngit -C ~/code/benchmark range-diff 913b8dbc7^! e80986b50^!\n\nProposed pull request title\nOpen a BCR pull request for each stable release\n\nProposed pull request body\n\nBenchmark v1.10.0 needed a separate registry submission before Bazel users could select it [1]. This makes each stable GitHub release open that pull request. The source archive is attached to the draft once, so Bazel verifies the same bytes on retries. The existing module maintainer and registry build matrix carry forward.\n\n**Before merge**\n\n- [ ] Choose a release account and its fork of bazel-central-registry. Agree who will store and rotate its publishing token.\n- [ ] Confirm a listed module maintainer will review the account's non-draft entries. RE2 and J2CL use this split [2][3].\n\n**After merge**\n\n- [ ] Once, set the Actions variable `BCR_REGISTRY_FORK` and secret `BCR_PUBLISH_TOKEN`. The source repository grants the pinned workflow read access, as Brotli does [4].\n- [ ] For the first stable tag containing the new templates and each stable release after it, push the annotated tag at the version bump. Attach `benchmark-<version>.tar.gz` from that commit to the draft before publishing it. ArrayRecord likewise attaches the source before opening its registry PR [5].\n- [ ] Once BCR checks pass, have the listed maintainer review the entry. If the release job fails, fix the cause and choose **Re-run failed jobs** on its original run.\n\nOpenAI Codex researched the precedents and drafted the workflow, templates and release instructions.\n\n[1]: https://github.com/bazelbuild/bazel-central-registry/pull/11314\n[2]: https://github.com/bazelbuild/bazel-central-registry/pull/6424\n[3]: https://github.com/bazelbuild/bazel-central-registry/pull/11379\n[4]: https://github.com/google/brotli/blob/2654c9dd5/.github/workflows/publish_to_bcr.yaml\n[5]: https://github.com/google/array_record/blob/5873cf86d/.github/workflows/publish_release.yml",
+        "url": "https://github.com/google/benchmark/issues/1634",
+        "policyURL": "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md",
+        "submissionURL": "https://github.com/google/benchmark/compare/main...tamird:review/benchmark-bcr-release-checklist?expand=1&title=Open+a+BCR+pull+request+for+each+stable+release&body=Benchmark+v1.10.0+needed+a+separate+registry+submission+before+Bazel+users+could+select+it+%5B1%5D.+This+makes+each+stable+GitHub+release+open+that+pull+request.+The+source+archive+is+attached+to+the+draft+once%2C+so+Bazel+verifies+the+same+bytes+on+retries.+The+existing+module+maintainer+and+registry+build+matrix+carry+forward.%0A%0A%2A%2ABefore+merge%2A%2A%0A%0A-+%5B+%5D+Choose+a+release+account+and+its+fork+of+bazel-central-registry.+Agree+who+will+store+and+rotate+its+publishing+token.%0A-+%5B+%5D+Confirm+a+listed+module+maintainer+will+review+the+account%27s+non-draft+entries.+RE2+and+J2CL+use+this+split+%5B2%5D%5B3%5D.%0A%0A%2A%2AAfter+merge%2A%2A%0A%0A-+%5B+%5D+Once%2C+set+the+Actions+variable+%60BCR_REGISTRY_FORK%60+and+secret+%60BCR_PUBLISH_TOKEN%60.+The+source+repository+grants+the+pinned+workflow+read+access%2C+as+Brotli+does+%5B4%5D.%0A-+%5B+%5D+For+the+first+stable+tag+containing+the+new+templates+and+each+stable+release+after+it%2C+push+the+annotated+tag+at+the+version+bump.+Attach+%60benchmark-%3Cversion%3E.tar.gz%60+from+that+commit+to+the+draft+before+publishing+it.+ArrayRecord+likewise+attaches+the+source+before+opening+its+registry+PR+%5B5%5D.%0A-+%5B+%5D+Once+BCR+checks+pass%2C+have+the+listed+maintainer+review+the+entry.+If+the+release+job+fails%2C+fix+the+cause+and+choose+%2A%2ARe-run+failed+jobs%2A%2A+on+its+original+run.%0A%0AOpenAI+Codex+researched+the+precedents+and+drafted+the+workflow%2C+templates+and+release+instructions.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F11314%0A%5B2%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F6424%0A%5B3%5D%3A+https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel-central-registry%2Fpull%2F11379%0A%5B4%5D%3A+https%3A%2F%2Fgithub.com%2Fgoogle%2Fbrotli%2Fblob%2F2654c9dd5%2F.github%2Fworkflows%2Fpublish_to_bcr.yaml%0A%5B5%5D%3A+https%3A%2F%2Fgithub.com%2Fgoogle%2Farray_record%2Fblob%2F5873cf86d%2F.github%2Fworkflows%2Fpublish_release.yml"
+      }
     },
     {
       "id": "pr:16337",
@@ -96829,12 +96834,12 @@
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-19T00:15:13.095068+00:00",
-      "summary": "Exact15c2ed remains MERGEABLE with member bnb approval and passing commit/JS/C++/documentation/tarball checks. The Internet job failed unchanged test-dns-any with external queryAny EREFUSED sip2sip.info, recurring on an independent source. The new parallel TLS case was not invoked there. One native failed-job retry was denied403 requiring repository admin rights; remaining runtime/coverage CI is still live at the scoped observation.",
+      "updatedAt": "2026-11-19T00:39:33.110112+00:00",
+      "summary": "Exact15c2ed MERGEABLE with bnb member approval. Native Linux AMD/ARM jobs passed310 C++ cases each and7733/7729 selected JS cases; aggregate reporter does not expose the new TLS named row. Internet failed unchanged DNS queryAny EREFUSED, independently recurring; native retry denied403 admin rights. Only coverage-linux remained live at direct observation; no new code fix requested.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Exact15c2ed remains MERGEABLE with member bnb approval and passing commit/JS/C++/documentation/tarball checks. The Internet job failed unchanged test-dns-any with external queryAny EREFUSED sip2sip.info, recurring on an independent source. The new parallel TLS case was not invoked there. One native failed-job retry was denied403 requiring repository admin rights; remaining runtime/coverage CI is still live at the scoped observation.",
+        "disposition": "Exact15c2ed MERGEABLE with bnb member approval. Native Linux AMD/ARM jobs passed310 C++ cases each and7733/7729 selected JS cases; aggregate reporter does not expose the new TLS named row. Internet failed unchanged DNS queryAny EREFUSED, independently recurring; native retry denied403 admin rights. Only coverage-linux remained live at direct observation; no new code fix requested.",
         "nextAction": "Root follows actual remaining upstream runtime/coverage and human events. An existing Node administrator must perform the native Internet-job rerun; no source fix, alternate retry/access path or new CI authorization is inferred. The exact public maintainer-rerun comment draft already has a legitimate pending approval question; do not post or ask again until that existing decision.",
         "recheckCondition": "Existing comment-draft decision, actual upstream job/review result or maintainer rerun/source event.",
         "publishedDelivery": {
@@ -96894,7 +96899,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T00:15:13.095068+00:00",
+        "curatedAt": "2026-11-19T00:39:33.110112+00:00",
         "internetFailure": {
           "run": 44418983458,
           "job": 135206784153,
@@ -96938,25 +96943,37 @@
         },
         "otherUserReview": "2246250622 COMMENTED supports present implementation and notes only a hypothetical future DNS-mock API change; no current defect or source fix requested. Root reviewed/owns disposition; no new commitment.",
         "currentDirectObservation": {
-          "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-          "mergeable": "MERGEABLE",
-          "passedChecks": 23,
+          "passedChecks": 28,
           "failed": [
             "test-internet"
           ],
           "remaining": [
-            "coverage-linux",
-            "coverage-windows",
-            "test-linux (ubuntu-24.04)",
-            "test-macOS",
-            "test-linux (ubuntu-24.04-arm)",
-            "test-tarball-linux"
+            "coverage-linux"
           ],
+          "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+          "mergeable": "MERGEABLE",
+          "notCanonicalSnapshotClock": true,
           "receipt": {
-            "file": "node-tls67595-nextbatch-current.json",
-            "sha256": "8a63b83f4cbcd030f584237b5500701e1bb05ea8141d25add14eca57ec02480e"
+            "file": "node-tls67595-matrixbatch-current.json",
+            "sha256": "7c07f6b89618652bca737a716ef117a1a24ed784ffbee23492de663add45f687"
+          }
+        },
+        "nativeLinuxRuntime": {
+          "run": 44418983555,
+          "amd64": {
+            "cppPassed": 310,
+            "jsSelected": 7733
           },
-          "notCanonicalSnapshotClock": true
+          "arm64": {
+            "cppPassed": 310,
+            "jsSelected": 7729
+          },
+          "namedTLSRowAvailable": false,
+          "notZeroSkipOrFirstAttemptProof": true,
+          "receipt": {
+            "file": "node-tls67595-native-linux-runtime-evidence.json",
+            "sha256": "4cf4ff8118924bd9ebd8798d3d737aec62ed242ae50a2234de6d0cde0194db87"
+          }
         }
       },
       "evidence": [
@@ -131824,39 +131841,35 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T00:15:13.095068+00:00",
-      "summary": "The exact default-dispatcher execution block is RESOLVED by its approved1748→4bf58 update/readback. Corrected CI-only source8b ran two permanent Bazel targets on remote execution: cold worker444227 had416remote runner entries/727s; identical fresh worker444250 had416shared remote-cache hits/85s and zero remote-execution runner entries. This is one scoped cold/warm capability pair, not performance or whole-portfolio qualification. Named-unit artifact evidence remains incomplete.",
-      "nextStep": "Root continues permanent Bazel/worker convergence: fix structured Go/Python result publication at its owning test/workflow boundaries, prove the actual host-C/Cgo exception graph with canonical aquery, then qualify the required architecture/mode matrix and performance scopes separately. Reuse source/input-bound results and products; do not restart held legacy per-item drivers or describe the small probe as completing all qualification.",
+      "updatedAt": "2026-11-19T00:39:33.110112+00:00",
+      "summary": "Permanent Bazel two-target cold/warm proof retained:8b workers727s→85s,416shared cache hits and zero warm remote execution. Current a1b adds10,933 named Go cases with zero skips on AMD-selected105s and ARM-selected255s runs. ARM scheduler/target flags are proven, not physical CPU/ELF. Python configured XML artifact remains missing. Exact4bf→410 dispatcher update is execution-policy blocked; old1748→4bf block is resolved. No statistical performance or full matrix claim.",
+      "nextStep": "Root owns exact dispatcher410 execution override, configured Python XML glob fix, canonical aquery and full correctness matrix; qualify physical architecture/nonpure/Sentry/race/Cgo and separate performance scope with actual evidence. No contributor approval or legacy-driver restart is required for the current execution-policy question.",
       "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
       "source": {
-        "head": "8b3ccc9dc9104c412e819190452b413e0949e652",
-        "parent": "991b9ec3dd2f7016ebbf4df0abce461552837ca7",
+        "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
+        "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
         "ref": "qualification/bazel-buildbuddy-20261118",
-        "purpose": "CI-only; no DCO/upstream PR",
-        "scope": "Canonical BuildBuddy profiles, credential helper and precise Coral/host-C exceptions committed; native aquery/full matrix still pending",
-        "preparedReceipt": {
-          "file": "bazel-host-c-source-prepared.json",
-          "sha256": "51e45cea4e65b72959fabb0ae57a302c74ad4a1d0f99b56438ee95f3e3d5daa8"
-        },
+        "purpose": "CI-only; no upstream PR",
         "publicationReceipt": {
-          "file": "bazel-host-c-source-publication.json",
-          "sha256": "05e67e6235745bfdda99cbcad76986227c15f827973e78eaeb3dabca50065545"
+          "file": "native-go-xml-source-publication.json",
+          "sha256": "4e1bb767f9ce2810f872e960578c29cd6cb5e6f62514e8cbd5a2af9300d96cee"
         }
       },
       "executionBlock": {
-        "state": "RESOLVED: exact manual execution override succeeded; master4bf58 readback verified",
+        "state": "Automatic execution review rejected exact default4bf→410 update; minimal exact execution override question pending; no ref update occurred",
         "operation": {
           "repo": "tamird/gvisor",
           "branch": "master",
-          "old": "1748f943694d376fd26123b11009ab01ffa9b597",
-          "new": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
+          "old": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
+          "new": "410b6f3293867bf1dbc2b6ffb5960b4ccf8b88cf",
           "force": false
         },
-        "notPendingHumanDecision": true,
+        "reason": "Prior exact override covered1748→4bf only; this distinct default-ref update was rejected.",
         "notContributorCodeApproval": true,
+        "noBypass": true,
         "receipt": {
-          "file": "bazel-workflow-default-ref-blocked.json",
-          "sha256": "fd51559b903ce2175975ae7fd1f2abe6360fc88dbf041955275e2b3db24de649"
+          "file": "qualification-native-evidence-next-review.json",
+          "sha256": "8a413bc6cf1b3ebd758266f579ca57c9d8bd6daec50488995fc43fc4736fb1d6"
         }
       },
       "measuredBaseline": {
@@ -131900,12 +131913,12 @@
             "fields": {}
           }
         ],
-        "curatedAt": "2026-11-19T00:15:13.095068+00:00",
-        "nextAction": "Root continues permanent Bazel/worker convergence: fix structured Go/Python result publication at its owning test/workflow boundaries, prove the actual host-C/Cgo exception graph with canonical aquery, then qualify the required architecture/mode matrix and performance scopes separately. Reuse source/input-bound results and products; do not restart held legacy per-item drivers or describe the small probe as completing all qualification.",
+        "curatedAt": "2026-11-19T00:39:33.110112+00:00",
+        "nextAction": "Root owns exact dispatcher410 execution override, configured Python XML glob fix, canonical aquery and full correctness matrix; qualify physical architecture/nonpure/Sentry/race/Cgo and separate performance scope with actual evidence. No contributor approval or legacy-driver restart is required for the current execution-policy question.",
         "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
         "owner": "root",
-        "sourceHead": "8b3ccc9dc9104c412e819190452b413e0949e652",
-        "disposition": "The exact default-dispatcher execution block is RESOLVED by its approved1748→4bf58 update/readback. Corrected CI-only source8b ran two permanent Bazel targets on remote execution: cold worker444227 had416remote runner entries/727s; identical fresh worker444250 had416shared remote-cache hits/85s and zero remote-execution runner entries. This is one scoped cold/warm capability pair, not performance or whole-portfolio qualification. Named-unit artifact evidence remains incomplete."
+        "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
+        "disposition": "Permanent Bazel two-target cold/warm proof retained:8b workers727s→85s,416shared cache hits and zero warm remote execution. Current a1b adds10,933 named Go cases with zero skips on AMD-selected105s and ARM-selected255s runs. ARM scheduler/target flags are proven, not physical CPU/ELF. Python configured XML artifact remains missing. Exact4bf→410 dispatcher update is execution-policy blocked; old1748→4bf block is resolved. No statistical performance or full matrix claim."
       },
       "executionHistory": [
         {
@@ -131924,6 +131937,22 @@
           "receipt": {
             "file": "bazel-workflow-default-ref-blocked.json",
             "sha256": "7b44d94db80ccac002c76c8c49496e05f37e2694e3d6fc5a2cb26314af91d005"
+          }
+        },
+        {
+          "state": "RESOLVED: exact manual execution override succeeded; master4bf58 readback verified",
+          "operation": {
+            "repo": "tamird/gvisor",
+            "branch": "master",
+            "old": "1748f943694d376fd26123b11009ab01ffa9b597",
+            "new": "4bf58d4384f3db818c6b6e56dea8ce3bda311c97",
+            "force": false
+          },
+          "notPendingHumanDecision": true,
+          "notContributorCodeApproval": true,
+          "receipt": {
+            "file": "bazel-workflow-default-ref-blocked.json",
+            "sha256": "fd51559b903ce2175975ae7fd1f2abe6360fc88dbf041955275e2b3db24de649"
           }
         }
       ],
@@ -131971,8 +132000,55 @@
           "Host-C exception aquery boundary and native full matrix remain pending",
           "No complete cleanup-file absence or arbitrary-secret-value proof inferred"
         ]
+      },
+      "sourceHistory": [
+        {
+          "head": "8b3ccc9dc9104c412e819190452b413e0949e652",
+          "parent": "991b9ec3dd2f7016ebbf4df0abce461552837ca7",
+          "ref": "qualification/bazel-buildbuddy-20261118",
+          "purpose": "CI-only; no DCO/upstream PR",
+          "scope": "Canonical BuildBuddy profiles, credential helper and precise Coral/host-C exceptions committed; native aquery/full matrix still pending",
+          "preparedReceipt": {
+            "file": "bazel-host-c-source-prepared.json",
+            "sha256": "51e45cea4e65b72959fabb0ae57a302c74ad4a1d0f99b56438ee95f3e3d5daa8"
+          },
+          "publicationReceipt": {
+            "file": "bazel-host-c-source-publication.json",
+            "sha256": "05e67e6235745bfdda99cbcad76986227c15f827973e78eaeb3dabca50065545"
+          }
+        }
+      ],
+      "nativeGoXML": {
+        "run": 44427296360,
+        "seconds": 105,
+        "namedCases": 10933,
+        "skips": 0,
+        "failures": 0,
+        "remoteCacheHits": 415,
+        "remoteExecutions": 1,
+        "scope": "Changed GoTestRunner remote; Python cached PASS but configured XML artifact still missing from old glob",
+        "receipt": {
+          "file": "bazel-rbe-44427296360-evidence.json",
+          "sha256": "1fbe4d71be7f531df518450cbf3216db1091eb8a5c2b769396feca19ba3ad586"
+        }
+      },
+      "armSelectedGoXML": {
+        "run": 44428418650,
+        "seconds": 255,
+        "namedCases": 10933,
+        "skips": 0,
+        "failures": 0,
+        "uncachedRemoteTargets": 2,
+        "remoteExecutions": 56,
+        "remoteCacheHits": 360,
+        "targetPlatform": "//tools/bazeldefs:linux_arm64",
+        "scope": "Scheduler ARM target/configuration proven; physical CPU and ELF not captured. No nonpure/Cgo/Sentry/semaphore8 qualification.",
+        "receipt": {
+          "file": "bazel-rbe-44428418650-evidence.json",
+          "sha256": "27e3c7be14201ee18b255457cc5d4be30e4db2c48461ca2b72e26684381fe36f"
+        }
       }
     }
   ],
-  "updatedAt": "2026-11-19T00:15:13.095068+00:00"
+  "updatedAt": "2026-11-19T00:39:33.110112+00:00"
 }

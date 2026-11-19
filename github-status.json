@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T00:21:25.050593+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T00:15:13.095068+00:00",
+  "registryDate": "2026-11-19T00:39:33.110112+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448305,7 +448305,7 @@
       "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966989929",
       "author": "2246250622",
       "updatedAt": "2026-11-19T00:13:24Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -457095,7 +457095,7 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Exact15c2ed remains MERGEABLE with member bnb approval and passing commit/JS/C++/documentation/tarball checks. The Internet job failed unchanged test-dns-any with external queryAny EREFUSED sip2sip.info, recurring on an independent source. The new parallel TLS case was not invoked there. One native failed-job retry was denied403 requiring repository admin rights; remaining runtime/coverage CI is still live at the scoped observation.",
+        "disposition": "Exact15c2ed MERGEABLE with bnb member approval. Native Linux AMD/ARM jobs passed310 C++ cases each and7733/7729 selected JS cases; aggregate reporter does not expose the new TLS named row. Internet failed unchanged DNS queryAny EREFUSED, independently recurring; native retry denied403 admin rights. Only coverage-linux remained live at direct observation; no new code fix requested.",
         "nextAction": "Root follows actual remaining upstream runtime/coverage and human events. An existing Node administrator must perform the native Internet-job rerun; no source fix, alternate retry/access path or new CI authorization is inferred. The exact public maintainer-rerun comment draft already has a legitimate pending approval question; do not post or ask again until that existing decision."
       },
       "actionCheckIds": [
@@ -460372,7 +460372,7 @@
         "since": "2026-11-18T21:49:57.504662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "pr:16453": {
@@ -464847,7 +464847,7 @@
         "since": "2026-11-19T00:15:13.095068+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "pr:bazelbuild/bazel-central-registry:11314": {
@@ -465222,7 +465222,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465231,7 +465231,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465240,7 +465240,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465249,7 +465249,16 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
+      }
+    },
+    "issue:google/benchmark:1634": {
+      "contributor-review": {
+        "scope": "e80986b5007460a9bf77c718d5e2daa247c4d841",
+        "since": "2026-11-19T00:39:33.110112+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465258,7 +465267,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465267,7 +465276,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465276,7 +465285,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T00:15:13.095068+00:00"
+        "observedAt": "2026-11-19T00:39:33.110112+00:00"
       }
     }
   },
