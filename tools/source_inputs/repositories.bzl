@@ -50,6 +50,7 @@ def _analysis_sources_impl(ctx):
             if stage != "0" or mode not in ["100644", "100755"]:
                 fail("Selected analysis source must be an indexed regular file: " + entry)
             source = root.get_child(name)
+
             # Reject aliases before watching or mirroring their referents.
             if str(source.realpath) != str(root.realpath.get_child(name)):
                 fail("Selected analysis source must not be a symlink: " + name)
