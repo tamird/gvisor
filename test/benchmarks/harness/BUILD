@@ -143,6 +143,9 @@ go_test(
         "--paired-leaves=1",
         "--paired-observe-affinity=true",
         "--paired-node-warmup-requests=250",
+        "--client-cpuset=0-1",
+        "--server-cpuset=2-3",
+        "--paired-redis-cpuset=4",
         "--paired-image-archives='$(rootpaths //test/benchmarks/network:node_worker_images)'",
         "-test.run=^TestPairedBenchmark$$",
     ],
@@ -157,6 +160,8 @@ go_test(
     ],
     embed = [":harness"],
     exec_properties = {
+        "test.EstimatedCPU": "5",
+        "test.EstimatedMemory": "500M",
         "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
     },
@@ -176,5 +181,6 @@ go_test(
         "@com_github_docker_docker//api/types/network:go_default_library",
         "@com_github_docker_docker//client:go_default_library",
         "@com_github_docker_docker//errdefs:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
     ],
 )

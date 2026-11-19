@@ -35,6 +35,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
+	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
@@ -49,6 +50,7 @@ var (
 	pairedBenchtime   = flag.String("paired-benchtime", "1000x", "ordinary Go benchmark time or operation count")
 	pairedBlocks      = flag.Int("paired-blocks", 1, "number of balanced BASE/CANDIDATE/CANDIDATE/BASE blocks")
 	pairedLeaves      = flag.Int("paired-leaves", 4, "number of selected benchmark leaves per visit")
+	pairedRedisCPUs   = flag.String("paired-redis-cpuset", "", "explicit CPU affinity for the native Redis backend")
 	pairedNodeWarmup  = flag.Int("paired-node-warmup-requests", 0, "warmup requests for each actual Node server process")
 	pairedWarmups     = flag.Int("paired-warmup-pairs", 0, "unmeasured warmup visits for each runtime before balanced blocks")
 	pairedObserve     = flag.Bool("paired-observe-affinity", false, "inspect actual workload affinity during capability preflight")
@@ -57,6 +59,15 @@ var (
 func TestPairedBenchmark(t *testing.T) {
 	if *pairedBlocks < 1 || *pairedLeaves < 1 || *pairedWarmups < 0 {
 		t.Fatal("paired blocks and leaves must be positive")
+	}
+	var available unix.CPUSet
+	if err := unix.SchedGetaffinity(0, &available); err != nil {
+		t.Fatal(err)
+	}
+	for cpu := 0; cpu <= 4; cpu++ {
+		if !available.IsSet(cpu) {
+			t.Fatalf("required worker CPU %d is unavailable; affinity: %v", cpu, available)
+		}
 	}
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Minute)
 	defer cancel()
@@ -171,7 +182,9 @@ func TestPairedBenchmark(t *testing.T) {
 			cmd := exec.CommandContext(ctx, binary,
 				"-test.v=false", "--runtime="+runtimes[index], "--config_path="+config,
 				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime,
-				"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup))
+				"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup),
+				"--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet(),
+				"--node-redis-cpuset="+*pairedRedisCPUs)
 			var observed chan error
 			var stopObserver context.CancelFunc
 			if *pairedObserve {
@@ -295,7 +308,10 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			if kind == "benchmarks/hey" {
 				want = ClientCPUSet()
 			}
-			if kind != "benchmarks/redis" && (want == "" || state.HostConfig.CpusetCpus != want || effective != want) {
+			if kind == "benchmarks/redis" {
+				want = *pairedRedisCPUs
+			}
+			if (kind != "benchmarks/redis" || want != "") && (want == "" || state.HostConfig.CpusetCpus != want || effective != want) {
 				return fmt.Errorf("workload %s requested CPUs %q, effective %q, want %q", kind, state.HostConfig.CpusetCpus, effective, want)
 			}
 			executable := "/proc/" + strconv.Itoa(state.State.Pid) + "/exe"

@@ -27,7 +27,10 @@ import (
 	"gvisor.dev/gvisor/test/metricsviz"
 )
 
-var nodeWarmupRequests = flag.Int("node-warmup-requests", 0, "requests to warm each actual Node server before measurement")
+var (
+	nodeWarmupRequests = flag.Int("node-warmup-requests", 0, "requests to warm each actual Node server before measurement")
+	nodeRedisCPUs      = flag.String("node-redis-cpuset", "", "explicit CPU affinity for the native Redis backend")
+)
 
 // BenchmarkNode runs requests using 'hey' against a Node server run on
 // 'runtime'. The server responds to requests by grabbing some data in a
@@ -78,7 +81,8 @@ func runNode(b *testing.B, hey *tools.Hey) {
 	// Spawn a redis instance for the app to use.
 	redis := serverMachine.GetNativeContainer(ctx, b)
 	if err := redis.Spawn(ctx, dockerutil.RunOpts{
-		Image: "benchmarks/redis",
+		Image:      "benchmarks/redis",
+		CpusetCpus: *nodeRedisCPUs,
 	}); err != nil {
 		b.Fatalf("failed to spawn redis instance: %v", err)
 	}

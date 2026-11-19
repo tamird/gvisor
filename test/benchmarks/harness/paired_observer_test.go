@@ -161,6 +161,9 @@ func recordCPUResources(visit int, trigger string, active map[int]string, produc
 				cpus = strings.TrimSpace(value)
 			}
 		}
+		if role == "runsc-gofer" && cpus != ServerCPUSet() {
+			return fmt.Errorf("active Gofer CPUs %q, want %q", cpus, ServerCPUSet())
+		}
 		processes[pid] = process{role, cpus, string(membership)}
 		for _, line := range strings.Split(strings.TrimSpace(string(membership)), "\n") {
 			parts := strings.SplitN(line, ":", 3)
