@@ -54,3 +54,9 @@ sh_binary(
     srcs = ["caller.sh"],
     args = ["lint"],
 )
+
+sh_binary(
+    name = "caller_both",
+    srcs = ["caller.sh"],
+    args = ["devcontainer", "lint"],
+)

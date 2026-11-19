@@ -16,13 +16,14 @@ exec "$QUALIFICATION_BAZEL" "$1" "${options[@]}" "${@:2}"
 SHIM
 chmod +x "$shim/bazel"
 export PATH="$shim:$PATH"
+for caller in "$@"; do
 status=0
-case "$1" in
+case "$caller" in
   devcontainer) bash tools/devcontainer-init.sh || status=$? ;;
   lint) LINT_CACHE_DIR="$RUNNER_TEMP/bazel-qualification/lint-cache" bash tools/lint.sh --bazel="$shim/bazel" clang-tidy || status=$? ;;
   *) exit 2 ;;
 esac
-python3 - "$1" "$status" <<'VERIFY'
+python3 - "$caller" "$status" <<'VERIFY'
 import json,sys
 from pathlib import Path
 entries=json.loads(Path('compile_commands.json').read_text())
@@ -30,4 +31,6 @@ missing=[entry['file'] for entry in entries if not (Path(entry['directory']) / e
 print(json.dumps({'caller':sys.argv[1], 'callerExitStatus':int(sys.argv[2]), 'databaseEntries':len(entries),'missingEntryFiles':len(missing),'missingExamples':missing[:10]}))
 assert entries and not missing
 VERIFY
-exit "$status"
+if [[ "$status" -ne 0 ]]; then exit "$status"; fi
+if [[ "$caller" == devcontainer && "$#" -gt 1 ]]; then rm compile_commands.json; fi
+done
