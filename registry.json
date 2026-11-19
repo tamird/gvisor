@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T19:21:16.819846+00:00",
+    "updatedAt": "2026-11-19T19:51:39.905270+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -95980,15 +95980,15 @@
       "title": "Check the stack read lock when collecting NIC information",
       "url": "https://github.com/google/gvisor/pull/17545",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-11-19T08:32:44.165346+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-19T19:51:39.905270+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "b268d5a615c56fe1d40014ef7807bfa0b04f0e6d",
-        "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1810 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
-        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it.",
-        "recheckCondition": "Genuine reviewer/import/source change, actual provider quota recovery or required check result.",
+        "observedAt": "2026-11-19T19:51:39.905270+00:00",
+        "disposition": "Merged as e009ed0ed55d15be6070bbf968ff14f82c41b6b7 at 2026-11-19T18:54:28Z. Source review and quota obligations are complete. Exact local and fork source refs are absent. Export17651 remains closed unmerged and foreign-owned; preserve its history and branch.",
+        "nextAction": "Source lifecycle complete. Preserve existing archive/import history; no branch deletion, quota retry, review request or source push is needed. Any reappearing ref must pass the existing cleanup eligibility/archive process.",
+        "recheckCondition": "An archive/ref discrepancy or substantive post-merge regression.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17545#pullrequestreview-5896771955",
           "https://github.com/google/gvisor/pull/17651",
@@ -96054,33 +96054,7 @@
             "nextAction": "Follow current exact-source import #17651 and maintainer review. The experimental assisted APPROVED review requests no fix or reply; GitHub aggregate review remains REVIEW_REQUIRED. No outgoing acknowledgement is needed. DCO import coordination: Root coordinates #17651 at 6979be9a6fea. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
           }
         ],
-        "currentCI": {
-          "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-          "observedAt": "2026-11-18T21:05:51.124797+00:00",
-          "firstPass": {
-            "build": 1796,
-            "state": "FAILED",
-            "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
-            "receipt": {
-              "file": "sweep-current-1796.json",
-              "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
-            },
-            "providerReceipt": {
-              "file": "nic-info-current-provider-1796.json",
-              "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
-            }
-          },
-          "pipeline": {
-            "build": 55376,
-            "state": "FAILED",
-            "receipt": {
-              "file": "sweep-current-55376.json",
-              "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
-            },
-            "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
-          }
-        },
-        "curatedAt": "2026-11-19T08:32:44.165346+00:00",
+        "curatedAt": "2026-11-19T19:51:39.905270+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -96140,19 +96114,6 @@
             }
           ]
         },
-        "maintainerRebaseRequest": {
-          "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994",
-          "author": "milantracy",
-          "body": "can you rebase and push again?",
-          "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-          "observedAt": "2026-11-18T20:06:11.890448+00:00",
-          "firstPass": {
-            "build": 1772,
-            "state": "SUCCESS"
-          },
-          "import17651": "closed without merge",
-          "owner": "root"
-        },
         "publicationConditionHistory": [
           {
             "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
@@ -96195,38 +96156,6 @@
             "priorQueryFailureRetained": true
           },
           "supersededBy": "b268d5a615c56fe1d40014ef7807bfa0b04f0e6d"
-        },
-        "latestCI": {
-          "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-          "observedAt": "2026-11-18T21:05:51.124797+00:00",
-          "firstPass": {
-            "build": 1796,
-            "state": "FAILED",
-            "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
-            "receipt": {
-              "file": "sweep-current-1796.json",
-              "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
-            },
-            "providerReceipt": {
-              "file": "nic-info-current-provider-1796.json",
-              "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
-            }
-          },
-          "pipeline": {
-            "build": 55376,
-            "state": "FAILED",
-            "receipt": {
-              "file": "sweep-current-55376.json",
-              "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
-            },
-            "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
-          }
-        },
-        "actionableComment": {
-          "kind": "comment",
-          "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
-          "commentId": "IC_kwDOB9IlXs8AAAABoJ82Wg",
-          "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994"
         },
         "qualificationHistory": [
           {
@@ -96741,6 +96670,83 @@
               ],
               "acknowledgementDisposition": "Old own-DCO courtesy draft retained as history, not a pending new user decision or automatic posting task. Current requested action is the already-authorized rebase; no duplicate acknowledgement."
             }
+          },
+          {
+            "curatedAt": "2026-11-19T19:51:39.905270+00:00",
+            "reason": "Source merged; former quota/review obligations are historical only.",
+            "fields": {
+              "currentCI": {
+                "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "observedAt": "2026-11-18T21:05:51.124797+00:00",
+                "firstPass": {
+                  "build": 1796,
+                  "state": "FAILED",
+                  "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
+                  "receipt": {
+                    "file": "sweep-current-1796.json",
+                    "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
+                  },
+                  "providerReceipt": {
+                    "file": "nic-info-current-provider-1796.json",
+                    "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
+                  }
+                },
+                "pipeline": {
+                  "build": 55376,
+                  "state": "FAILED",
+                  "receipt": {
+                    "file": "sweep-current-55376.json",
+                    "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
+                  },
+                  "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
+                }
+              },
+              "latestCI": {
+                "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "observedAt": "2026-11-18T21:05:51.124797+00:00",
+                "firstPass": {
+                  "build": 1796,
+                  "state": "FAILED",
+                  "provider": "GitHub author1535036 reached1-day36000compute-minute quota before agent assignment",
+                  "receipt": {
+                    "file": "sweep-current-1796.json",
+                    "sha256": "27a0b59622f63e07b8e0c42aa4e3a31a913e9ca95609e838247beab35af9e271"
+                  },
+                  "providerReceipt": {
+                    "file": "nic-info-current-provider-1796.json",
+                    "sha256": "1da345483a1403641ccaab38a0ae93fa5324a4c2e0ca7105ea3a28a7284ea864"
+                  }
+                },
+                "pipeline": {
+                  "build": 55376,
+                  "state": "FAILED",
+                  "receipt": {
+                    "file": "sweep-current-55376.json",
+                    "sha256": "e9eef4c1f34b5db87093cde2410862fe5ac64f86c12075bc4f869486a008546d"
+                  },
+                  "cause": "Published old pre-command invokes git fetch origin on tamird:proposal/check-nic-info-stack-lock; Git parses tamird as refspec source and cannot find it. Exact fork branch readback still4e1667030ef7cce0777f3ba1aff1d74673896cf1, not deleted."
+                }
+              },
+              "maintainerRebaseRequest": {
+                "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994",
+                "author": "milantracy",
+                "body": "can you rebase and push again?",
+                "sourceHead": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "observedAt": "2026-11-18T20:06:11.890448+00:00",
+                "firstPass": {
+                  "build": 1772,
+                  "state": "SUCCESS"
+                },
+                "import17651": "closed without merge",
+                "owner": "root"
+              },
+              "actionableComment": {
+                "kind": "comment",
+                "head": "4e1667030ef7cce0777f3ba1aff1d74673896cf1",
+                "commentId": "IC_kwDOB9IlXs8AAAABoJ82Wg",
+                "url": "https://github.com/google/gvisor/pull/17545#issuecomment-6989755994"
+              }
+            }
           }
         ],
         "acknowledgementHistory": [
@@ -96798,6 +96804,33 @@
             "file": "nic-info-lock-44392805761-evidence.json",
             "sha256": "6a8d198c528a3c840f8b74c45ac056ba2ccfb38b22beade8ce832b5c0db5cfc4"
           }
+        },
+        "mergeCompletion": {
+          "sourcePR": 17545,
+          "sourceHead": "b268d5a615c56fe1d40014ef7807bfa0b04f0e6d",
+          "mergeCommit": "e009ed0ed55d15be6070bbf968ff14f82c41b6b7",
+          "mergedAt": "2026-11-19T18:54:28Z",
+          "actualForkRef": "refs/heads/proposal/check-nic-info-stack-lock",
+          "forkRef": null,
+          "localRef": null,
+          "upstreamCompare": {
+            "status": "diverged",
+            "ahead_by": 16,
+            "behind_by": 1,
+            "merge_base": "9ad3ba91c673248c8e522cbca3c37087375b3b25"
+          },
+          "cleanup": "Exact source fork and local refs are absent; no deletion/archive mutation is needed. Source tip is not upstream-ancestor, so any reappearing ref must pass the existing cleanup eligibility/archive rules.",
+          "foreignImport": {
+            "number": 17651,
+            "state": "closed",
+            "merged": false,
+            "closedAt": "2026-11-18T10:09:28Z",
+            "repo": "gvisor/gvisor",
+            "ref": "test/cl1021192898",
+            "head": "6979be9a6fea6502fdc870961e6abcb69e23251d",
+            "action": "Preserve foreign branch/history; no writes."
+          },
+          "observedAt": "2026-11-19T19:49:45.153833+00:00"
         }
       },
       "dcoCoordination": {
@@ -96831,7 +96864,9 @@
           "https://github.com/tamird/gvisor/commit/4e1667030ef7cce0777f3ba1aff1d74673896cf1"
         ]
       },
-      "summary": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1810 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass."
+      "summary": "Merged as e009ed0ed55d15be6070bbf968ff14f82c41b6b7 at 2026-11-19T18:54:28Z. Source review and quota obligations are complete. Exact local and fork source refs are absent. Export17651 remains closed unmerged and foreign-owned; preserve its history and branch.",
+      "nextStep": "Source lifecycle complete. Preserve existing archive/import history; no branch deletion, quota retry, review request or source push is needed. Any reappearing ref must pass the existing cleanup eligibility/archive process.",
+      "recheckCondition": "An archive/ref discrepancy or substantive post-merge regression."
     },
     {
       "id": "pr:17546",
@@ -99125,14 +99160,14 @@
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "All known checks are terminal on exact15c2ed, including coverage-linux SUCCESS01:06Z; only the known Internet DNS EREFUSED failure remains. Native Linux aggregate results/member approval preserved; no named TLS-row inference. Native failed-job retry denied403 admin rights; existing public maintainer-rerun comment approval remains pending.",
+      "updatedAt": "2026-11-19T19:51:39.905270+00:00",
+      "summary": "Internet44418983458 attempt2 passed on exact15c2ed. The approved full-CI request7012503607 already addresses maintainer instruction7009949471. Full Jenkins CI and landing remain a maintainer dependency; private Jenkins visibility is not established.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "The maintainer-started test-internet attempt2 passed. Current GitHub checks pass and review is approved, but Jake Castelli explicitly requires a full CI run before landing; that separate gate is not inferred complete.",
-        "nextAction": "Follow the now-requested maintainer full CI and landing response. Do not repeat the request, add another mention or treat GitHub Actions alone as the full Jenkins gate.",
-        "recheckCondition": "Actual full-CI event, substantive maintainer reply, source or review change.",
+        "disposition": "Internet44418983458 attempt2 passed on exact15c2ed. The approved full-CI request7012503607 already addresses maintainer instruction7009949471. Full Jenkins CI and landing remain a maintainer dependency; private Jenkins visibility is not established.",
+        "nextAction": "Root follows the already-requested maintainer full CI and landing response. Preserve the posted request and exact source; do not repeat the ping or infer the private full-CI gate from GitHub Actions.",
+        "recheckCondition": "Actual full-CI event, substantive maintainer response, source/review change or landing.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -99296,39 +99331,54 @@
                 }
               }
             }
+          },
+          {
+            "curatedAt": "2026-11-19T19:51:39.905270+00:00",
+            "reason": "Internet attempt2 passed and the approved full-CI request was posted; prior failure/rerun-denial fields are historical.",
+            "fields": {
+              "internetFailure": {
+                "run": 44418983458,
+                "job": 135206784153,
+                "passedCases": 36,
+                "failedCases": 1,
+                "test": "test/internet/test-dns-any.js",
+                "error": "queryAny EREFUSED sip2sip.info",
+                "newParallelTLSInvoked": false,
+                "independentSiblingRun": 44419183222,
+                "sourceUnchanged": true,
+                "noTransientFlakeOrBaselineClaim": true,
+                "receipt": {
+                  "file": "node-tls67595-internet-terminal-assessment.json",
+                  "sha256": "db2dafb62f7a8eb57e6503b49b3cdec1f29c318a7f16cff2808cc11256a040c9"
+                }
+              },
+              "nativeRetry": {
+                "state": "DENIED actual403 Must have admin rights to Repository; no job launched",
+                "method": "POST",
+                "path": "/repos/nodejs/node/actions/jobs/135206784153/rerun",
+                "apiVersion": "2026-03-10",
+                "attempts": 1,
+                "minimumExternalAction": "Existing Node repository administrator rerun",
+                "notPendingUserCIApproval": true,
+                "noWorkaround": true,
+                "receipt": {
+                  "file": "node-tls67595-internet-retry-receipt.json",
+                  "sha256": "cdfa16a5b56f8f6c60a99ad96322a81224a3885f33779bb41fdd26e01f12a627"
+                }
+              },
+              "currentDirectObservation": {
+                "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+                "remaining": [],
+                "failed": [
+                  "test-internet"
+                ],
+                "coverage": "SUCCESS01:06Z",
+                "notCanonicalSnapshotClock": true
+              }
+            }
           }
         ],
-        "curatedAt": "2026-11-19T16:20:03.380488+00:00",
-        "internetFailure": {
-          "run": 44418983458,
-          "job": 135206784153,
-          "passedCases": 36,
-          "failedCases": 1,
-          "test": "test/internet/test-dns-any.js",
-          "error": "queryAny EREFUSED sip2sip.info",
-          "newParallelTLSInvoked": false,
-          "independentSiblingRun": 44419183222,
-          "sourceUnchanged": true,
-          "noTransientFlakeOrBaselineClaim": true,
-          "receipt": {
-            "file": "node-tls67595-internet-terminal-assessment.json",
-            "sha256": "db2dafb62f7a8eb57e6503b49b3cdec1f29c318a7f16cff2808cc11256a040c9"
-          }
-        },
-        "nativeRetry": {
-          "state": "DENIED actual403 Must have admin rights to Repository; no job launched",
-          "method": "POST",
-          "path": "/repos/nodejs/node/actions/jobs/135206784153/rerun",
-          "apiVersion": "2026-03-10",
-          "attempts": 1,
-          "minimumExternalAction": "Existing Node repository administrator rerun",
-          "notPendingUserCIApproval": true,
-          "noWorkaround": true,
-          "receipt": {
-            "file": "node-tls67595-internet-retry-receipt.json",
-            "sha256": "cdfa16a5b56f8f6c60a99ad96322a81224a3885f33779bb41fdd26e01f12a627"
-          }
-        },
+        "curatedAt": "2026-11-19T19:51:39.905270+00:00",
         "memberReview": {
           "author": "bnb",
           "association": "MEMBER",
@@ -99341,15 +99391,6 @@
           }
         },
         "otherUserReview": "2246250622 COMMENTED supports present implementation and notes only a hypothetical future DNS-mock API change; no current defect or source fix requested. Root reviewed/owns disposition; no new commitment.",
-        "currentDirectObservation": {
-          "source": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-          "remaining": [],
-          "failed": [
-            "test-internet"
-          ],
-          "coverage": "SUCCESS01:06Z",
-          "notCanonicalSnapshotClock": true
-        },
         "nativeLinuxRuntime": {
           "run": 44418983555,
           "amd64": {
@@ -99389,7 +99430,104 @@
             "file": "node67595-full-ci-approved-reply-posted.json",
             "sha256": "ce1e53b68c118fd9ec1dc4674bbf78cbef91342fe11232cf8dd1cff9b521e40a"
           }
-        }
+        },
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Awaiting maintainer full CI",
+            "nextAction": "Root follows the already-requested maintainer full CI and landing response. Preserve the posted request and exact source; do not repeat the ping or infer the private full-CI gate from GitHub Actions.",
+            "evidence": [
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7009949471",
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7012503607",
+              "https://github.com/nodejs/node/actions/runs/44418983458"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+              "approvedAt": "2026-11-18T23:35:42Z",
+              "headCommittedAt": "2026-11-18T23:13:47Z",
+              "headIntroducedAt": "2026-11-18T23:14:18Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABoQXNCw",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-6996479243",
+                    "body": "## [Codecov](https://app.codecov.io/gh/nodejs/node/pull/67595?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs) Report\n:white_check_mark: All modified and coverable lines are covered by tests.\n:white_check_mark: Project coverage is 90.70%. Comparing base ([`b7df44b`](https://app.codecov.io/gh/nodejs/node/commit/b7df44bf9c85a6104b9158b616999e3d2c58be5d?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)) to head ([`15c2edb`](https://app.codecov.io/gh/nodejs/node/commit/15c2edb5708cf8ac75b01360cff2372ecee0be23?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)).\n\n<details><summary>Additional details and impacted files</summary>\n\n\n\n```diff\n@@            Coverage Diff             @@\n##             main   #67595      +/-   ##\n==========================================\n- Coverage   90.73%   90.70%   -0.03%     \n==========================================\n  Files         801      801              \n  Lines      280787   280787              \n  Branches    54221    54202      -19     \n==========================================\n- Hits       254765   254700      -65     \n- Misses      16203    16261      +58     \n- Partials     9819     9826       +7     \n```\n[see 40 files with indirect coverage changes](https://app.codecov.io/gh/nodejs/node/pull/67595/indirect-changes?src=pr&el=tree-more&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)\n</details>\n<details><summary> :rocket: New features to boost your workflow: </summary>\n\n- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.\n- :package: [JS Bundle Analysis](https://docs.codecov.com/docs/javascript-bundle-analysis): Save yourself from yourself by tracking and limiting bundle sizes in JS merges.\n</details>",
+                    "createdAt": "2026-11-19T01:06:34Z",
+                    "updatedAt": "2026-11-19T01:06:34Z",
+                    "author": {
+                      "login": "codecov",
+                      "__typename": "Bot"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABoaY7gQ",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7006993281",
+                    "body": "Is this ready to land? The `test-internet` failure appears to be unrelated.",
+                    "createdAt": "2026-11-19T10:52:20Z",
+                    "updatedAt": "2026-11-19T10:52:20Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABodNXHw",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7009949471",
+                    "body": "I have rerun the GHA for the Test internet job, once its green, we will need a full CI run before we can land it.",
+                    "createdAt": "2026-11-19T13:04:50Z",
+                    "updatedAt": "2026-11-19T13:04:50Z",
+                    "author": {
+                      "login": "jakecastelli",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABofpQNw",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7012503607",
+                    "body": "Could you start full CI now that `test-internet` is green?\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-11-19T14:46:46Z",
+                    "updatedAt": "2026-11-19T14:46:46Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOAZ7xs88AAAABY6iWEA",
+                    "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-11-18T23:35:42Z",
+                    "updatedAt": "2026-11-18T23:35:42Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "bnb",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "15c2edb5708cf8ac75b01360cff2372ecee0be23"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23"
+            }
+          }
+        ],
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       },
       "evidence": [
         {
@@ -99410,7 +99548,9 @@
           "at": "2026-11-19T10:56:57.629184+00:00",
           "note": "User posted a shorter landing-status question directly; do not post the verbose rerun draft or ask again."
         }
-      ]
+      ],
+      "nextStep": "Root follows the already-requested maintainer full CI and landing response. Preserve the posted request and exact source; do not repeat the ping or infer the private full-CI gate from GitHub Actions.",
+      "recheckCondition": "Actual full-CI event, substantive maintainer response, source/review change or landing."
     },
     {
       "id": "branch:lisafs-hardlink-capability",
@@ -135218,5 +135358,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T19:21:16.819846+00:00"
+  "updatedAt": "2026-11-19T19:51:39.905270+00:00"
 }

@@ -448,10 +448,10 @@ function sourceFixRecovery(node, nodes = model?.nodes || []) {
     detail: `CI remedy #${remedy.number} merged as ${recovery.fixCommit.slice(0, 9)}. Verified ancestry shows ${pr.head.slice(0, 9)} lacks it; rebase this source branch and verify its new checks. Existing failures and review holds remain visible.` };
 }
 const TRIAGED_REASONS = new Set(["author-feedback", "maintainer-import-checks", "author-conflicts", "maintainer-review"]);
-function evidenceJSON(value) {
+function evidenceJSON(value, ignoredKey) {
   // Object key order is not evidence; array order is retained from the snapshot.
-  if (Array.isArray(value)) return `[${value.map(evidenceJSON).join(",")}]`;
-  if (value && typeof value === "object") return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${evidenceJSON(value[key])}`).join(",")}}`;
+  if (Array.isArray(value)) return `[${value.map(item => evidenceJSON(item, ignoredKey)).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.keys(value).filter(key => key !== ignoredKey).sort().map(key => `${JSON.stringify(key)}:${evidenceJSON(value[key], ignoredKey)}`).join(",")}}`;
   return JSON.stringify(value);
 }
 function attentionDispositionEvidence(node, reason, replacementId, nodes = model?.nodes || []) {
@@ -502,7 +502,8 @@ function attentionDisposition(node, reason) {
   // transfers an open PR’s review work to a separate change.
   if (!record?.binding || record.action === "batch-cleanup" || !record.title || !record.nextAction || !record.evidence?.length) return null;
   const current = attentionDispositionEvidence(node, reason, record.replacement);
-  return current && evidenceJSON(current) === evidenceJSON(record.binding) ? record : null;
+  const ignoredKey = reason === "author-feedback" ? "authorAssociation" : undefined;
+  return current && evidenceJSON(current, ignoredKey) === evidenceJSON(record.binding, ignoredKey) ? record : null;
 }
 function reviewedAmendment(node) {
   const pr = node.github, proof = node.reapproval;

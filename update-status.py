@@ -330,6 +330,15 @@ def feedback_claimed(source: dict, item: dict, followup: dict, assigned: bool) -
     return bool(followup.get("owner") and (assigned and (observed or unedited) or observed and linked))
 
 
+def feedback_evidence(value: object) -> object:
+    """Exclude repository membership from consumed-feedback identity."""
+    if isinstance(value, dict):
+        return {key: feedback_evidence(item) for key, item in value.items() if key != "authorAssociation"}
+    if isinstance(value, list):
+        return [feedback_evidence(item) for item in value]
+    return value
+
+
 def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     """Put human feedback before routine checks, without treating replies as resolution."""
     nodes, branches = registry_source_indexes()
@@ -365,7 +374,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
         triaged = (pr.get("reviewsComplete") and pr.get("threads", {}).get("complete")
                    and pr.get("feedback", {}).get("complete") and node.get("head", pr["head"]) == pr["head"]
                    and any(record.get("reason") == "author-feedback" and record.get("action") != "batch-cleanup"
-                           and record.get("binding") == binding
+                           and feedback_evidence(record.get("binding")) == feedback_evidence(binding)
                            for record in followup.get("attentionDispositions", [])))
         rebase = current_rebase_request(pr, OWNER) if pr is source else None
         for item in items:

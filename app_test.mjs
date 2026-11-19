@@ -1687,6 +1687,15 @@ test('retained triaged reasons consistently move to external follow-up without r
     assert.ok(reasons.some(reason => reason.id === record.reason && reason.owner === 'agent'), node.id);
     node.followup.attentionDispositions = [record];
   }
+  const authorFeedback = sourceNodes.find(node => node.number === 15670);
+  const review = authorFeedback.github.feedback.items.find(item => item.kind === 'review');
+  context.nodeInput = authorFeedback;
+  const association = review.authorAssociation;
+  review.authorAssociation = 'MEMBER';
+  const observed = JSON.stringify(authorFeedback.github);
+  assert.ok(vm.runInContext('attentionDisposition(nodeInput, "author-feedback")', context));
+  assert.equal(JSON.stringify(authorFeedback.github), observed);
+  review.authorAssociation = association;
   context.nodeInput = sourceNodes.find(node => node.number === 13803);
   assert.ok(!vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "maintainer-review")', context));
   const replacement = context.nodesInput.find(node => node.number === 13826);
@@ -1752,6 +1761,10 @@ test('new feedback, changed approval and explicit assignments invalidate the rev
     node => { node.github.reviewsComplete = false; },
     node => { node.github.approvedAt = '2026-10-21T08:00:00Z'; },
     node => { node.github.feedback.items.find(item => item.kind === 'inline').body = 'Please change this implementation.'; },
+    node => { node.github.feedback.items.find(item => item.kind === 'review').updatedAt = '2026-10-21T08:00:00Z'; },
+    node => { node.github.feedback.items.find(item => item.kind === 'review').state = 'CHANGES_REQUESTED'; },
+    node => { node.github.feedback.items.find(item => item.kind === 'review').author.login = 'another-reviewer'; },
+    node => { node.github.feedback.items.find(item => item.kind === 'review').author.__typename = 'Bot'; },
     node => { node.github.feedback.items.push({ kind: 'inline', id: 'new-reply', threadId: 'new-thread',
       author: { login: 'reviewer' }, body: 'Another issue', createdAt: '2026-10-21T08:00:00Z', isResolved: false }); },
     node => { const comment = node.github.feedback.items.find(item => item.kind === 'comment');

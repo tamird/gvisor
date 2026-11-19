@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T19:44:55.511332+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T19:21:16.819846+00:00",
+  "registryDate": "2026-11-19T19:51:39.905270+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -445694,26 +445694,6 @@
   "reviewerHandoff": [
     {
       "repo": "google/gvisor",
-      "number": 16098,
-      "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-      "sourceNumber": 16098,
-      "owner": "Agent",
-      "claimed": false,
-      "overdue": true,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
-      "createdAt": "2026-11-18T18:38:18Z",
-      "url": "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
-      "author": "rexren-gif",
-      "updatedAt": "2026-11-18T18:38:18Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16076,
       "head": "63bcfa2ad44882db0ecd5afab16df8c5e285e485",
       "sourceNumber": 16076,
@@ -447393,25 +447373,6 @@
       "url": "https://github.com/google/gvisor/pull/16391#pullrequestreview-5702454397",
       "author": "zkoopmans",
       "updatedAt": "2026-11-19T06:04:07Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "nodejs/node",
-      "number": 67595,
-      "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-      "sourceNumber": 67595,
-      "owner": "Agent",
-      "kind": "comment",
-      "id": "IC_kwDOAZ7xs88AAAABodNXHw",
-      "needsTriage": true,
-      "createdAt": "2026-11-19T13:04:50Z",
-      "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7009949471",
-      "author": "jakecastelli",
-      "updatedAt": "2026-11-19T13:04:50Z",
       "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
@@ -464270,7 +464231,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464279,7 +464240,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464288,7 +464249,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464297,7 +464258,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464306,7 +464267,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464315,7 +464276,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464324,7 +464285,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464333,7 +464294,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T19:21:16.819846+00:00"
+        "observedAt": "2026-11-19T19:51:39.905270+00:00"
       }
     }
   },

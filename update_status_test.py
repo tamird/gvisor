@@ -1474,7 +1474,7 @@ class CollectorHistoryTest(unittest.TestCase):
         pr.update(reviewDecision="APPROVED", approvedHead=pr["head"])
         finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
                    "isOutdated": False, "body": "[🤖] Recycled allocation is slower.", "createdAt": OLD,
-                   "updatedAt": OLD, "url": pr["url"] + "#discussion_r1",
+                   "updatedAt": OLD, "authorAssociation": "CONTRIBUTOR", "url": pr["url"] + "#discussion_r1",
                    "author": {"login": "reviewer", "__typename": "User"}}
         pr["feedback"]["items"] = [finding]
         pr["threads"] = {"complete": True, "total": 1, "unresolved": 1}
@@ -1503,6 +1503,15 @@ class CollectorHistoryTest(unittest.TestCase):
             self.assertEqual(updater.reviewer_handoff([{**pr, "status": "merged"}], previous), [])
             del disposition["action"]
             self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+            with mock.patch.dict(finding, {"authorAssociation": "MEMBER"}):
+                observed = copy.deepcopy(pr)
+                self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+                self.assertEqual(pr, observed)
+                for change in ({"body": "A revised finding."}, {"updatedAt": LATER},
+                               {"author": {"login": "another-reviewer", "__typename": "User"}},
+                               {"state": "CHANGES_REQUESTED"}):
+                    with self.subTest(change=change), mock.patch.dict(finding, change):
+                        self.assertTrue(updater.reviewer_handoff([pr], previous))
             reply = {**finding, "id": "reply", "createdAt": LATER, "updatedAt": LATER,
                      "body": "I am measuring the affected path.", "author": {"login": "tamird", "__typename": "User"}}
             pr["feedback"]["items"].append(reply)
