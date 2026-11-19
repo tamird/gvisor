@@ -89,3 +89,7 @@ build:buildbuddy-cache --modify_execution_info=^(Cpp.*|CcStrip)$=+no-remote
 # Native C actions use the pinned execution image and must not fall back to host tools.
 build:buildbuddy --//tools/bazeldefs:rbe_native_c=true
 build:buildbuddy --modify_execution_info=^(Cpp.*|CcStrip)$=-no-remote,^(Cpp.*|CcStrip)$=+no-local
+
+# Native-image stdlib C tools are supplied by the CPU-constrained RBE image.
+# Keep ordinary/cache-only host guards and forbid local fallback here.
+build:buildbuddy --modify_execution_info=^GoStdlib(List)?$=-no-remote,^GoStdlib(List)?$=+no-local
