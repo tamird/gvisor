@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Exposes the generated files a C++ compile reads.
-
-Used by tools/gen_compile_commands.py to avoid compiling the whole test suite
-to generate compile_commands.json for clangd.
-"""
+"""Materializes generated C++ sources and headers for compilation databases."""
 
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
@@ -24,7 +20,11 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 _CC_SRC_EXTENSIONS = (".c", ".cc", ".cpp", ".cxx", ".c++", ".S", ".s", ".inc")
 
 def _cc_compile_inputs_impl(target, ctx):
-    inputs = []
+    inputs = [
+        getattr(dep[OutputGroupInfo], "cc_compile_inputs", depset())
+        for dep in getattr(ctx.rule.attr, "deps", [])
+        if OutputGroupInfo in dep
+    ]
 
     # Transitively covers every header the target may include, generated ones
     # included, plus the _virtual_includes symlink trees that -I flags name.

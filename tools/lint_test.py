@@ -16,6 +16,8 @@
 
 """Checks failure propagation through the public lint entrypoint."""
 
+import contextlib
+import json
 import os
 import pathlib
 import re
@@ -23,6 +25,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+import clang_tidy
 
 LINT = pathlib.Path(sys.argv.pop(1)).absolute()
 
@@ -127,6 +131,29 @@ class LintTest(unittest.TestCase):
         ],
     )
 
+  def test_compile_commands_bazel_options(self) -> None:
+    self.tool(
+        self.bin / "bazel",
+        f'echo "$*" >> "{self.bazel_log}"\n'
+        'case " $* " in *" run "*) echo generator-stopped >&2; exit 7;; esac',
+    )
+    result = self.lint(
+        "--bazel=bazel --startup=1",
+        "--bazel-options=--opt=1 --opt=2",
+        "clang-tidy",
+    )
+    self.assert_failed(result, "clang-tidy")
+    self.assertIn("generator-stopped", result.stderr)
+    prepare, generate = [c.split() for c in self.bazel_log.read_text().splitlines()]
+    self.assertEqual(prepare[:4], ["--startup=1", "build", "--opt=1", "--opt=2"])
+    self.assertIn("--output_groups=cc_compile_inputs", prepare)
+    self.assertEqual(generate[:4], ["--startup=1", "run", "--opt=1", "--opt=2"])
+    self.assertIn("--platforms=@platforms//host", generate)
+    self.assertIn("--bazel-command=bazel", generate)
+    self.assertIn("--bazelsupopt=--startup=1", generate)
+    self.assertIn("--bazelopt=--opt=1", generate)
+    self.assertIn("--bazelopt=--opt=2", generate)
+
   def test_bazel_failure(self) -> None:
     self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
     result = self.lint("goimports")
@@ -165,6 +192,34 @@ class LintTest(unittest.TestCase):
     (self.cache / f"codespell-{self.versions['CODESPELL']}").mkdir()
     self.tool(self.bin / "python3", "exit 0")
     self.assert_failed(self.lint("spelling"), "spelling")
+
+
+class ClangTidySourcesTest(unittest.TestCase):
+
+  def test_compilation_directory(self) -> None:
+    with tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"]) as temp:
+      root = pathlib.Path(temp)
+      workspace, execroot = root / "workspace", root / "execroot"
+      workspace.mkdir()
+      execroot.mkdir()
+      relative, absolute = workspace / "relative.cc", workspace / "absolute.cc"
+      relative.touch()
+      absolute.touch()
+      (execroot / "relative.cc").symlink_to(relative)
+      outside = root / "external.cc"
+      outside.touch()
+      database = workspace / "compile_commands.json"
+      database.write_text(json.dumps([
+          {"directory": str(execroot), "file": "relative.cc"},
+          {"directory": str(execroot), "file": "relative.cc"},
+          {"directory": str(execroot), "file": str(absolute)},
+          {"directory": str(root), "file": "external.cc"},
+      ]))
+      with contextlib.chdir(root):
+        self.assertEqual(
+            clang_tidy._sources(database, workspace),
+            [pathlib.Path("absolute.cc"), pathlib.Path("relative.cc")],
+        )
 
 
 if __name__ == "__main__":

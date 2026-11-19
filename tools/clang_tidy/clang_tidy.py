@@ -38,7 +38,7 @@ def _sources(database, workspace):
   out = []
   seen = set()
   for entry in entries:
-    path = pathlib.Path(os.path.realpath(entry["file"]))
+    path = pathlib.Path(entry["directory"], entry["file"]).resolve()
     try:
       relative = path.relative_to(workspace)
     except ValueError:
